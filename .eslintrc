@@ -1,0 +1,7 @@
+{
+  "extends": ["airbnb", "prettier", "@hapi/eslint-config-hapi"],
+  "plugins": ["prettier"],
+  "rules": {
+    "prettier/prettier": "error"
+  }
+}

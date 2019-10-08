@@ -1,0 +1,42 @@
+{
+  "name": "hapi-starter-kit",
+  "version": "1.0.1",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "nodemon -e ts  --exec \"npm run compile\"",
+    "compile": "tsc && node ./build/main.js",
+    "test": "lab -a @hapi/code -L"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@hapi/boom": "^8.0.1",
+    "@hapi/glue": "^6.2.0",
+    "@hapi/hapi": "^18.4.0",
+    "@hapi/inert": "^5.2.2",
+    "@hapi/joi": "^16.1.7",
+    "@hapi/nes": "^11.2.2",
+    "@hapi/vision": "^5.5.4",
+    "filepaths": "^0.3.0",
+    "hapi-pino": "^6.1.0",
+    "hapi-swagger": "^10.1.2",
+    "mongoose": "^5.7.3"
+  },
+  "devDependencies": {
+    "@hapi/eslint-config-hapi": "^12.3.0",
+    "@hapi/eslint-plugin-hapi": "^4.3.4",
+    "@types/hapi": "^18.0.2",
+    "@types/node": "^12.7.11",
+    "eslint": "^6.5.1",
+    "eslint-config-airbnb": "^18.0.1",
+    "eslint-config-prettier": "^6.4.0",
+    "eslint-config-standard": "^14.1.0",
+    "eslint-plugin-import": "^2.18.2",
+    "eslint-plugin-node": "^10.0.0",
+    "eslint-plugin-prettier": "^3.1.1",
+    "eslint-plugin-promise": "^4.2.1",
+    "eslint-plugin-standard": "^4.0.1"
+  }
+}
