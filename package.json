@@ -12,6 +12,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@hapi/basic": "^5.1.1",
+    "@hapi/bell": "^11.1.0",
     "@hapi/boom": "^8.0.1",
     "@hapi/glue": "^6.2.0",
     "@hapi/hapi": "^18.4.0",

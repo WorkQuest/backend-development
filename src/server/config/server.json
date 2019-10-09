@@ -2,5 +2,23 @@
   "server": {
     "host": "localhost",
     "port": 3000
+  },
+  "auth": {
+    "vk": {
+      "id": 7163882,
+      "secret": "Ve0UAz6Xz2TVPgGHwVfi",
+      "scope": 4194306,
+      "cookie_password": "asedrfhijkuaserfvghuy"
+    },
+    "fb": {
+      "id": 490956658300191,
+      "secret": "36a0e2391f655dae1550c4c713b9342b",
+      "cookie_password": "eioakwawsedopfghnujiaeawsediop"
+    },
+    "google": {
+      "id": "672144519276-eq0ecpgrbtvs45p2ulr150smu6sank4i.apps.googleusercontent.com",
+      "secret": "s84AcJ8t4jx-b-v6ZegHxsc-",
+      "cookie_password": "ewujikfdawsediosedrfhajuwsediol"
+    }
   }
 }
