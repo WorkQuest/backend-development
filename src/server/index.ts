@@ -5,6 +5,7 @@ import * as Vision from '@hapi/vision';
 import * as Pino from 'hapi-pino';
 import * as Bell from '@hapi/bell';
 import * as Basic from '@hapi/basic';
+import * as dotenv from 'dotenv';
 import {basicAuthHandler} from './utils/auth';
 
 const HapiSwagger = require('hapi-swagger');
@@ -19,6 +20,7 @@ import routes from './routes/public';
 
 const init = async () => {
   // Инициализируем сервер
+  dotenv.config();
   const server = await new Hapi.Server(Config.server);
 
   // Регистрируем расширения
@@ -35,23 +37,23 @@ const init = async () => {
   // Авторизация через соцсети
   server.auth.strategy('google', 'bell', {
     provider: 'Google',
-    clientId: Config.auth.google.id,
-    clientSecret: Config.auth.google.secret,
-    password: Config.auth.google.cookie_password,
+    clientId: process.env.auth_google_id,
+    clientSecret: process.env.auth_google_secret,
+    password: process.env.auth_google_secret,
     isSecure: false
   });
   server.auth.strategy('fb', 'bell', {
     provider: 'Facebook',
-    clientId: Config.auth.fb.id,
-    clientSecret: Config.auth.fb.secret,
-    password: Config.auth.fb.cookie_password,
+    clientId: Number(process.env.auth_fb_id),
+    clientSecret: process.env.auth_fb_secret,
+    password: process.env.auth_fb_cookie_password,
     isSecure: false
   });
   server.auth.strategy('vk', 'bell', {
     provider: 'VK',
-    clientId: Config.auth.vk.id,
-    clientSecret: Config.auth.vk.secret,
-    password: Config.auth.vk.cookie_password,
+    clientId: Number(process.env.auth_vk_id),
+    clientSecret: process.env.auth_vk_secret,
+    password: process.env.auth_vk_cookie_password,
     isSecure: false
   });
 
