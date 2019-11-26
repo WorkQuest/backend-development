@@ -6,6 +6,7 @@ import * as Pino from 'hapi-pino';
 import * as Bell from '@hapi/bell';
 import * as Basic from '@hapi/basic';
 import * as dotenv from 'dotenv';
+dotenv.config();
 import {basicAuthHandler} from './utils/auth';
 
 const HapiSwagger = require('hapi-swagger');
@@ -20,7 +21,6 @@ import routes from './routes/public';
 
 const init = async () => {
   // Инициализируем сервер
-  dotenv.config();
   const server = await new Hapi.Server(Config.server);
 
   // Регистрируем расширения
@@ -36,29 +36,29 @@ const init = async () => {
 
   // Авторизация через соцсети
   server.auth.strategy('google', 'bell', {
-    provider: 'Google',
+    provider: 'google',
     clientId: process.env.auth_google_id,
     clientSecret: process.env.auth_google_secret,
     password: process.env.auth_google_secret,
     isSecure: false
   });
   server.auth.strategy('fb', 'bell', {
-    provider: 'Facebook',
-    clientId: Number(process.env.auth_fb_id),
+    provider: 'facebook',
+    clientId: process.env.auth_fb_id,
     clientSecret: process.env.auth_fb_secret,
     password: process.env.auth_fb_cookie_password,
     isSecure: false
   });
   server.auth.strategy('vk', 'bell', {
-    provider: 'VK',
-    clientId: Number(process.env.auth_vk_id),
+    provider: 'vk',
+    clientId: process.env.auth_vk_id,
     clientSecret: process.env.auth_vk_secret,
     password: process.env.auth_vk_cookie_password,
     isSecure: false
   });
 
   // Авторизация стандартная (логин+пароль)
-  server.auth.strategy('simple', 'basic', { basicAuthHandler });
+  server.auth.strategy('simple', 'basic', { validate: basicAuthHandler });
 
 
   // Загружаем маршруты
