@@ -16,6 +16,7 @@ import * as SwaggerOptions from './config/swagger.json';
 SwaggerOptions.info.version = Package.version;
 
 import routes from './routes/public';
+import basicAuthHandler from './utils/auth';
 
 const init = async () => {
   // Инициализируем сервер
@@ -58,7 +59,6 @@ const init = async () => {
 
   // Авторизация стандартная (логин+пароль)
   server.auth.strategy('simple', 'basic', { basicAuthHandler });
-
 
   // Загружаем маршруты
   server.route(routes);
