@@ -1,8 +1,6 @@
-const basicAuthHandler = async( request, username, password, h ) => {
+export default async (request, username, password, h) => {
   let isValid = true;
   let credentials = {};
 
-  return { isValid, credentials }
+  return { isValid, credentials };
 };
-
-export {basicAuthHandler};

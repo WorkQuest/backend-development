@@ -5,8 +5,8 @@ import * as Vision from '@hapi/vision';
 import * as Pino from 'hapi-pino';
 import * as Bell from '@hapi/bell';
 import * as Basic from '@hapi/basic';
+
 import * as dotenv from 'dotenv';
-import {basicAuthHandler} from './utils/auth';
 
 const HapiSwagger = require('hapi-swagger');
 
@@ -17,6 +17,7 @@ import * as SwaggerOptions from './config/swagger.json';
 SwaggerOptions.info.version = Package.version;
 
 import routes from './routes/public';
+import basicAuthHandler from './utils/auth';
 
 const init = async () => {
   // Инициализируем сервер
@@ -35,31 +36,31 @@ const init = async () => {
   ]);
 
   // Авторизация через соцсети
-  server.auth.strategy('google', 'bell', {
-    provider: 'Google',
-    clientId: process.env.auth_google_id,
-    clientSecret: process.env.auth_google_secret,
-    password: process.env.auth_google_secret,
-    isSecure: false
-  });
-  server.auth.strategy('fb', 'bell', {
-    provider: 'Facebook',
-    clientId: Number(process.env.auth_fb_id),
-    clientSecret: process.env.auth_fb_secret,
-    password: process.env.auth_fb_cookie_password,
-    isSecure: false
-  });
-  server.auth.strategy('vk', 'bell', {
-    provider: 'VK',
-    clientId: Number(process.env.auth_vk_id),
-    clientSecret: process.env.auth_vk_secret,
-    password: process.env.auth_vk_cookie_password,
-    isSecure: false
-  });
+  // server.auth.strategy('google', 'bell', {
+  //   provider: 'Google',
+  //   clientId: process.env.auth_google_id,
+  //   clientSecret: process.env.auth_google_secret,
+  //   password: process.env.auth_google_secret,
+  //   isSecure: false
+  // });
+  // server.auth.strategy('fb', 'bell', {
+  //   provider: 'Facebook',
+  //   clientId: Number(process.env.auth_fb_id),
+  //   clientSecret: process.env.auth_fb_secret,
+  //   password: process.env.auth_fb_cookie_password,
+  //   isSecure: false
+  // });
+  // server.auth.strategy('vk', 'bell', {
+  //   provider: 'VK',
+  //   clientId: Number(process.env.auth_vk_id),
+  //   clientSecret: process.env.auth_vk_secret,
+  //   password: process.env.auth_vk_cookie_password,
+  //   isSecure: false
+  // });
 
   // Авторизация стандартная (логин+пароль)
-  server.auth.strategy('simple', 'basic', { basicAuthHandler });
-
+  server.auth.strategy('simple', 'basic', { validate: basicAuthHandler });
+  //server.auth.default('simple');
 
   // Загружаем маршруты
   server.route(routes);

@@ -22,6 +22,7 @@
     "@hapi/nes": "^11.2.2",
     "@hapi/vision": "^5.5.4",
     "@types/dotenv": "^6.1.1",
+    "dotenv": "^8.2.0",
     "filepaths": "^0.3.0",
     "hapi-pino": "^6.1.0",
     "hapi-swagger": "^10.1.2",
