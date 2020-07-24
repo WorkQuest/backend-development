@@ -1,3 +1,8 @@
 import * as main from './server';
 
-main.init();
+try{
+  main.init();
+
+} catch (e) {
+  console.error(e);
+}

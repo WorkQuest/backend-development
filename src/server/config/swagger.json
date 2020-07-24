@@ -1,11 +1,12 @@
 {
   "pathPrefixSize": 2,
   "basePath": "/api/",
+  "host": "http://localhost:3000",
   "grouping": "tags",
   "info": {
     "title": "API Documentation",
     "version": "",
-    "description": "[SOCKET](/documentation?tags=SOCKET)"
+    "description": ""
   },
   "jsonPath": "/documentation.json",
   "documentationPath": "/documentation",
