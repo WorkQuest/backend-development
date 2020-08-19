@@ -39,21 +39,6 @@
 Все возможные ошибки (за исключением общих ошибок сервера, маркирующихся 000) должны быть описаны в файле `ERRORS.md` в корне репозитория,
 а также рекомендуется перечислять возможные ошибки в описании методов в документации.
 
-### Пагинация
-`GET - /api/projects?offset=10&limit=10`
-
-Стандартный ответ с пагинацией:
-```json
-{
-  "ok": true,
-  "result": {
-    "count": 10,
-    "items": []
-  }
-}
-```
-Используйте заготовку `outputPaginationSchema('items', Joi.object({}))`
-
 ### Ошибки `Invalid payload`
 
 ```json
@@ -69,6 +54,22 @@
 }
 ```
 
+### Пагинация
+`GET - /api/projects?offset=10&limit=10`
+
+Стандартный ответ с пагинацией:
+```json
+{
+  "ok": true,
+  "result": {
+    "count": 10,
+    "items": []
+  }
+}
+```
+Используйте заготовку `outputPaginationSchema('items', Joi.object({}))`
+
+
 ### Версионирование API
 `/api/v1 /api/v2 ...`
 
@@ -81,3 +82,12 @@
 TODO: Обсудить возможную миграцию с sequelize в связке с sequelize-typescript на typeorm, в связи 
 с обновлением sequelize до v6, и отставанием за ним sequelize-typescript
 
+### Job scheduling
+TODO: Обсудить возможную миграцию
+
+### PM2
+Используем `pm2 start app.json` и `pm2 reload app.json` для бесшовного деплоя сервера без даунтайма.
+
+### Полезные ссылки
+
+- [Использование отладчика WebStorm для TS файлов](https://te.legra.ph/Ispolzovanie-WebStorm-dlya-otladki-TypeScript-proektov-08-18) 

@@ -4,16 +4,17 @@ import * as Inert from '@hapi/inert';
 import * as Vision from '@hapi/vision';
 import * as Pino from 'hapi-pino';
 import * as Basic from '@hapi/basic';
-import * as SwaggerOptions from './config/swagger.json';
 import * as HapiCors from 'hapi-cors'
 import * as HapiBearer from 'hapi-auth-bearer-token';
+import * as HapiPulse from 'hapi-pulse'
 import routes from './routes';
 import config from './config/config';
+
 import { handleValidationError, responseHandler } from './utils';
-import { accessValidate, refreshValidate } from './utils/auth';
+import { accessValidate, refreshValidate } from './utils/auth'
 
 const HapiSwagger = require('hapi-swagger');
-
+import SwaggerOptions from './config/swagger';
 const Package = require('../../package.json');
 
 SwaggerOptions.info.version = Package.version;
@@ -87,6 +88,13 @@ const init = async () => {
   server.route(routes);
   // Error handler
   server.ext('onPreResponse', responseHandler);
+  await server.register({
+    plugin: HapiPulse,
+    options: {
+      timeout: 15000,
+      signals: ['SIGINT']
+    }
+  })
   // Enable CORS (Do it last required!)
   await server.register({
     plugin: HapiCors,
