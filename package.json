@@ -6,6 +6,7 @@
   "scripts": {
     "start": "nodemon -e ts  --exec \"npm run compile\"",
     "compile": "tsc && node ./build/main.js",
+    "build": "tsc",
     "test": "lab -a @hapi/code -L"
   },
   "keywords": [],

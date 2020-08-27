@@ -2,7 +2,7 @@
   "apps": [
     {
       "name": "backend",
-      "exec_mode": "cluster",
+      "exec_mode": "fork",
       "instances": "1",
       "script": "./build/main.js",
       "autorestart": true,
