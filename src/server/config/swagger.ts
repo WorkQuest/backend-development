@@ -1,7 +1,7 @@
 export default {
   'pathPrefixSize': 2,
   'basePath': '/api/',
-  'host': 'http://localhost:3000',
+  'host': 'hapi-starter-kit.crypton.studio',
   'grouping': 'tags',
   'info': {
     'title': 'API Documentation',
