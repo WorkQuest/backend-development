@@ -40,7 +40,7 @@ export function totpValidate(totp: string, secret: string): boolean{
 
 export function responseHandler(r, h) {
   if (r.response.isBoom && r.response.data) {
-    if (r.response.data.custom) {
+    if (r.response.data.api) {
       r.response = h.response({
         ok: false,
         code: r.response.data.code,
