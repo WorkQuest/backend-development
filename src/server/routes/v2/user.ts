@@ -1,8 +1,6 @@
 import { getUser } from '../../api/v2/user';
 import { outputOkSchema } from '../../schemes';
-
-import * as Joi from '@hapi/joi'
-
+import * as Joi from 'joi'
 
 export default [{
   method: 'GET',

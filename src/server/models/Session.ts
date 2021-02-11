@@ -2,7 +2,7 @@ import { BelongsTo, Column, DataType, ForeignKey, Model } from 'sequelize-typesc
 import { getUUID } from '../utils';
 import { User } from './User';
 
-export class Session extends Model<Session> {
+export class Session extends Model {
   @Column({ primaryKey: true, type: DataType.STRING, defaultValue: () => getUUID() }) id: string;
   @ForeignKey(() => User) @Column(DataType.STRING) userId: string;
 

@@ -2,6 +2,8 @@ import * as jwt from 'jsonwebtoken';
 import config from '../config/config';
 import { error } from './index';
 import { User } from '../models/User';
+import { Session } from '../models/Session';
+import { Errors } from './errors';
 
 
 export const generateJwt = (data: object) => {
@@ -15,40 +17,27 @@ export const decodeJwt = async (token: string, secret: string) => {
   try {
     return await jwt.verify(token, secret);
   } catch (e) {
-    let code = e.name === 'TokenExpiredError' ? 401001 : 401002
+    let code = e.name === 'TokenExpiredError' ? Errors.TokenExpired : Errors.TokenInvalid
     let msg = e.name === 'TokenExpiredError' ? 'Token expired' : 'Token invalid'
-    return error(code, msg, {});
+    throw error(code, msg, {});
   }
 };
 
-export const accessValidate = async (r, token) => {
-  let data = await decodeJwt(token, config.auth.jwt.access.secret);
+export type validateFunc = (r, token: string) => Promise<any>;
 
-  if (!data.isBoom) {
-    let user = await User.findByPk(data.id);
+// Fabric which returns token validate function depending on token type
+export function tokenValidate(tokenType: 'access' | 'refresh'): validateFunc {
+  return async function(r, token: string) {
+    let data = await decodeJwt(token, config.auth.jwt[tokenType].secret);
+
+    let { user } = await Session.findByPk(data.id, {
+      include: [{model: User}]
+    });
 
     if (user) {
-      return { isValid: true, credentials: user, artifacts: { token, type: 'access' } };
+      return { isValid: true, credentials: user, artifacts: { token, type: tokenType } };
     } else {
-      return error(401004, 'User not found', {});
+      throw error(Errors.SessionNotFound, 'User not found', {});
     }
-  } else {
-    return data
   }
-};
-
-export const refreshValidate = async (r, token) => {
-  let data = await decodeJwt(token, config.auth.jwt.refresh.secret);
-
-  if (!data.isBoom) {
-    let user = await User.findByPk(data.id);
-
-    if (user) {
-      return { isValid: true, credentials: user, artifacts: { token, type: 'refresh' } };
-    } else {
-      return error(401004, 'User not found', {});
-    }
-  } else {
-    return data;
-  }
-};
+}

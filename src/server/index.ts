@@ -11,7 +11,7 @@ import routes from './routes';
 import config from './config/config';
 
 import { handleValidationError, responseHandler } from './utils';
-import { accessValidate, refreshValidate } from './utils/auth'
+import { tokenValidate } from './utils/auth';
 
 const HapiSwagger = require('hapi-swagger');
 import SwaggerOptions from './config/swagger';
@@ -75,14 +75,13 @@ const init = async () => {
   // server.auth.strategy('simple', 'basic', { validate: basicAuthHandler });
 
   // JWT Auth
-  server.auth.strategy('jwt-access', 'bearer-access-token', {
-    validate: accessValidate
+  server.auth.strategy("jwt-access", "bearer-access-token", {
+    validate: tokenValidate("access")
   });
-  server.auth.strategy('jwt-refresh', 'bearer-access-token', {
-    validate: refreshValidate
+  server.auth.strategy("jwt-refresh", "bearer-access-token", {
+    validate: tokenValidate("refresh")
   });
-
-  server.auth.default('jwt-access')
+  server.auth.default("jwt-access");
 
   // Загружаем маршруты
   server.route(routes);

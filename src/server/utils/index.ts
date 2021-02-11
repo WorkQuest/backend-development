@@ -39,33 +39,44 @@ export function totpValidate(totp: string, secret: string): boolean{
 }
 
 export function responseHandler(r, h) {
-  if (r.response.isBoom && r.response.data) {
-    if (r.response.data.api) {
-      r.response = h.response({
-        ok: false,
-        code: r.response.data.code,
-        data: r.response.data.data,
-        msg: r.response.output.payload.message
-      }).code(Math.floor(r.response.data.code / 1000));
-      return h.continue;
-    } else {
-      r.response = h.response({
-        ok: false,
-        code: Math.floor(r.response.output.statusCode * 1000),
-        data: {},
-        msg: r.response.message
-      })
-      return h.continue;
-    }
-  } else {
+  // Handle default hapi errors (like not found, etc.)
+  if (r.response.isBoom && r.response.data === null) {
+    r.response = h.response({
+      ok: false,
+      code: Math.floor(r.response.output.statusCode * 1000),
+      data: {},
+      msg: r.response.message
+    }).code(r.response.output.statusCode)
     return h.continue;
   }
+  // Handle custom api error
+  if (r.response.isBoom && r.response.data.api) {
+    r.response = h.response({
+      ok: false,
+      code: r.response.data.code,
+      data: r.response.data.data,
+      msg: r.response.output.payload.message
+    }).code(Math.floor(r.response.data.code / 1000));
+    return h.continue;
+  }
+  // Handle non api errors with data
+  if (r.response.isBoom && !r.response.data.api) {
+    r.response = h.response({
+      ok: false,
+      code: Math.floor(r.response.output.statusCode * 1000),
+      data: r.response.data,
+      msg: r.response.message
+    }).code(r.response.output.statusCode)
+    return h.continue;
+  }
+
+  return h.continue;
+
 }
 
 export async function handleValidationError(r, h, err){
-  return error(400000, 'Validation error', {
-    errors: err.details.map(e => {
+  return error(400000, 'Validation error', err.details.map(e => {
       return { field: e.context.key, reason: e.type.replace('any.', '') };
     })
-  });
+  );
 }
