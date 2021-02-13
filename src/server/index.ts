@@ -9,7 +9,7 @@ import * as HapiBearer from 'hapi-auth-bearer-token';
 import * as HapiPulse from 'hapi-pulse'
 import routes from './routes';
 import config from './config/config';
-
+import * as Qs from 'qs';
 import { handleValidationError, responseHandler } from './utils';
 import { tokenValidate } from './utils/auth';
 
@@ -23,6 +23,9 @@ const init = async () => {
   const server = await new Hapi.Server({
     port: config.server.port,
     host: config.server.host,
+    query: {
+      parser: (query) => Qs.parse(query)
+    },
     routes: {
       validate: {
         options: {

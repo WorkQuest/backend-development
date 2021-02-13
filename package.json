@@ -37,6 +37,7 @@
     "joi": "^17.4.0",
     "jsonwebtoken": "^8.5.1",
     "pg": "^8.3.0",
+    "qs": "^6.9.6",
     "reflect-metadata": "^0.1.13",
     "sequelize": "^6.5.0",
     "sequelize-typescript": "^2.0.0",
