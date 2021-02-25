@@ -4,9 +4,9 @@ import * as Inert from '@hapi/inert';
 import * as Vision from '@hapi/vision';
 import * as Pino from 'hapi-pino';
 import * as Basic from '@hapi/basic';
-import * as HapiCors from 'hapi-cors'
+import * as HapiCors from 'hapi-cors';
 import * as HapiBearer from 'hapi-auth-bearer-token';
-import * as HapiPulse from 'hapi-pulse'
+import * as HapiPulse from 'hapi-pulse';
 import routes from './routes';
 import config from './config/config';
 import * as Qs from 'qs';
@@ -15,6 +15,7 @@ import { tokenValidate } from './utils/auth';
 
 const HapiSwagger = require('hapi-swagger');
 import SwaggerOptions from './config/swagger';
+import { pinoConfig } from './config/pino';
 const Package = require('../../package.json');
 
 SwaggerOptions.info.version = Package.version;
@@ -24,20 +25,20 @@ const init = async () => {
     port: config.server.port,
     host: config.server.host,
     query: {
-      parser: (query) => Qs.parse(query)
+      parser: (query) => Qs.parse(query),
     },
     routes: {
       validate: {
         options: {
           // Handle all validation errors
-          abortEarly: false
+          abortEarly: false,
         },
-        failAction: handleValidationError
+        failAction: handleValidationError,
       },
       response: {
-        failAction: 'log'
-      }
-    }
+        failAction: 'log',
+      },
+    },
   });
   server.realm.modifiers.route.prefix = '/api';
   // Регистрируем расширения
@@ -46,9 +47,9 @@ const init = async () => {
     Nes,
     Inert,
     Vision,
-    Pino,
     HapiBearer,
-    { plugin: HapiSwagger, options: SwaggerOptions }
+    { plugin: Pino, options: pinoConfig(false) },
+    { plugin: HapiSwagger, options: SwaggerOptions },
   ]);
 
   // Авторизация через соцсети
@@ -78,13 +79,13 @@ const init = async () => {
   // server.auth.strategy('simple', 'basic', { validate: basicAuthHandler });
 
   // JWT Auth
-  server.auth.strategy("jwt-access", "bearer-access-token", {
-    validate: tokenValidate("access")
+  server.auth.strategy('jwt-access', 'bearer-access-token', {
+    validate: tokenValidate('access'),
   });
-  server.auth.strategy("jwt-refresh", "bearer-access-token", {
-    validate: tokenValidate("refresh")
+  server.auth.strategy('jwt-refresh', 'bearer-access-token', {
+    validate: tokenValidate('refresh'),
   });
-  server.auth.default("jwt-access");
+  server.auth.default('jwt-access');
 
   // Загружаем маршруты
   server.route(routes);
@@ -94,14 +95,14 @@ const init = async () => {
     plugin: HapiPulse,
     options: {
       timeout: 15000,
-      signals: ['SIGINT']
-    }
-  })
+      signals: ['SIGINT'],
+    },
+  });
   // Enable CORS (Do it last required!)
   await server.register({
     plugin: HapiCors,
-    options: config.cors
-  })
+    options: config.cors,
+  });
   // Запускаем сервер
   try {
     await server.start();
