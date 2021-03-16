@@ -1,4 +1,4 @@
-# Hapi starter kit
+# Work Quest backend
 
 ## Rest way
 

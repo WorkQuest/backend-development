@@ -1,5 +1,7 @@
-import user from './user';
+import profile from "./profile";
+import auth from "./auth";
 
 export default [
-  ...user
-]
+  ...profile,
+  ...auth
+];

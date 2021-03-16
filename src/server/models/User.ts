@@ -1,16 +1,29 @@
-import { Column, DataType, Model, Scopes, Table } from 'sequelize-typescript';
-import { getUUID } from '../utils';
+import { Column, DataType, Model, Scopes, Table } from "sequelize-typescript";
+import { getUUID } from "../utils";
 import * as bcrypt from "bcrypt";
+
+interface UserSettings {
+  emailConfirm: string | null;
+}
+
+const defaultUserSettings: UserSettings = {
+  emailConfirm: null
+};
+
+export enum UserStatus {
+  Unconfirmed,
+  Confirmed
+}
 
 @Scopes(() => ({
   defaultScope: {
     attributes: {
-      exclude: ['password']
+      exclude: ["password", "avatar", "settings", "createdAt", "updatedAt"]
     }
   },
   withPassword: {
     attributes: {
-      include: ['password']
+      include: ["password", "settings"]
     }
   }
 }))
@@ -30,6 +43,13 @@ export class User extends Model {
       return this.getDataValue("password");
     }
   }) password: string;
+
+  @Column({ type: DataType.STRING, unique: true }) email: string;
+  @Column(DataType.STRING) firstName: string;
+  @Column(DataType.STRING) lastName: string;
+  @Column(DataType.STRING) avatar: string;
+  @Column({ type: DataType.JSONB, defaultValue: defaultUserSettings }) settings: UserSettings;
+  @Column({ type: DataType.INTEGER, defaultValue: UserStatus.Unconfirmed }) status: UserStatus;
 
   async passwordCompare(pwd: string) {
     return bcrypt.compareSync(pwd, this.password);

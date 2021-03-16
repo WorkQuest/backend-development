@@ -1,22 +1,24 @@
-import * as Hapi from '@hapi/hapi';
-import * as Nes from '@hapi/nes';
-import * as Inert from '@hapi/inert';
-import * as Vision from '@hapi/vision';
-import * as Pino from 'hapi-pino';
-import * as Basic from '@hapi/basic';
-import * as HapiCors from 'hapi-cors';
-import * as HapiBearer from 'hapi-auth-bearer-token';
-import * as HapiPulse from 'hapi-pulse';
-import routes from './routes';
-import config from './config/config';
-import * as Qs from 'qs';
-import { handleValidationError, responseHandler } from './utils';
-import { tokenValidate } from './utils/auth';
+import * as Hapi from "@hapi/hapi";
+import * as Nes from "@hapi/nes";
+import * as Inert from "@hapi/inert";
+import * as Vision from "@hapi/vision";
+import * as Pino from "hapi-pino";
+import * as Basic from "@hapi/basic";
+import * as HapiCors from "hapi-cors";
+import * as HapiBearer from "hapi-auth-bearer-token";
+import * as HapiPulse from "hapi-pulse";
+import routes from "./routes";
+import config from "./config/config";
+import * as Qs from "qs";
+import { handleValidationError, responseHandler } from "./utils";
+import { tokenValidate } from "./utils/auth";
+import SwaggerOptions from "./config/swagger";
+import { pinoConfig } from "./config/pino";
+import sequelize from "./models";
+import { run } from "graphile-worker";
 
-const HapiSwagger = require('hapi-swagger');
-import SwaggerOptions from './config/swagger';
-import { pinoConfig } from './config/pino';
-const Package = require('../../package.json');
+const HapiSwagger = require("hapi-swagger");
+const Package = require("../../package.json");
 
 SwaggerOptions.info.version = Package.version;
 
@@ -25,7 +27,7 @@ const init = async () => {
     port: config.server.port,
     host: config.server.host,
     query: {
-      parser: (query) => Qs.parse(query),
+      parser: (query) => Qs.parse(query)
     },
     routes: {
       validate: {
@@ -49,9 +51,15 @@ const init = async () => {
     Vision,
     HapiBearer,
     { plugin: Pino, options: pinoConfig(false) },
-    { plugin: HapiSwagger, options: SwaggerOptions },
+    { plugin: HapiSwagger, options: SwaggerOptions }
   ]);
-
+  server.app.db = sequelize;
+  server.app.scheduler = await run({
+    connectionString: config.dbLink,
+    concurrency: 5,
+    pollInterval: 1000,
+    taskDirectory: `${__dirname}/jobs` // Папка с исполняемыми тасками.
+  });
   // Авторизация через соцсети
   // server.auth.strategy('google', 'bell', {
   //   provider: 'Google',

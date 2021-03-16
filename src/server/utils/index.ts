@@ -1,14 +1,15 @@
-import { v4 as uuidv4 } from 'uuid';
-import { Boom } from '@hapi/boom';
-import * as speakeasy from 'speakeasy';
+import { v4 as uuidv4 } from "uuid";
+import { Boom } from "@hapi/boom";
+import * as speakeasy from "speakeasy";
+import * as crypto from "crypto";
 
 export function getUUID(): string {
   return uuidv4();
 }
 
-export function getRealIp(request): string{
-  return request.headers['cf-connecting-ip'] ?
-    request.headers['cf-connecting-ip'] :
+export function getRealIp(request): string {
+  return request.headers["cf-connecting-ip"] ?
+    request.headers["cf-connecting-ip"] :
     request.info.remoteAddress;
 }
 
@@ -74,9 +75,13 @@ export function responseHandler(r, h) {
 
 }
 
-export async function handleValidationError(r, h, err){
-  return error(400000, 'Validation error', err.details.map(e => {
-      return { field: e.context.key, reason: e.type.replace('any.', '') };
+export function getRandomHexToken(): string {
+  return crypto.randomBytes(20).toString("hex");
+}
+
+export async function handleValidationError(r, h, err) {
+  return error(400000, "Validation error", err.details.map(e => {
+      return { field: e.context.key, reason: e.type.replace("any.", "") };
     })
   );
 }
