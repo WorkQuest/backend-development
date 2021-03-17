@@ -1,10 +1,8 @@
+const pino = require("pino");
+
 export const pinoConfig = (prettify?: boolean) => ({
   prettyPrint: prettify
     ? {
-      redact: {
-        paths: ["payload.password", "payload.*Password"],
-        censor: "***"
-      },
       colorize: true,
       crlf: false,
       jsonPretty: false,
@@ -16,26 +14,27 @@ export const pinoConfig = (prettify?: boolean) => ({
       }
     }
     : false,
+  redact: { paths: ["payload.password", "req.headers.authorization"], censor: "***" },
   serializers: {
-    req: function customReqSerializer(req) {
-      return {
-        method: req.method,
-        url: req.url,
-        payload: req.payload,
-      };
-    },
+    // req: (req) => {
+    //   return {
+    //     headers: req.headers,
+    //     method: req.method
+    //   }
+    // },
     res: function customResSerializer(res) {
       return {
-        code: res.statusCode,
-        payload: res.result,
-        data: res.data,
+        code: res.statusCode
       };
-    },
+    }
   },
   logPayload: true,
   logEvents: ['response', 'request'],
   logQueryParams: true,
   formatters: {
+    req: (req) => ({
+      method: req.method
+    }),
     level() {
       return {};
     },
@@ -44,7 +43,8 @@ export const pinoConfig = (prettify?: boolean) => ({
     },
     tags() {
       return {};
-    },
+    }
   },
-  timestamp: () => `,"time":"${new Date(Date.now()).toLocaleString()}"`,
+  timestamp: pino.stdTimeFunctions.isoTime
+  // timestamp: () => `,"time":"${new Date(Date.now()).toLocaleString()}"`,
 });
