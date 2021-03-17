@@ -1,7 +1,7 @@
 export default {
   "pathPrefixSize": 2,
   "basePath": "/api/",
-  "host": process.env.LOCAL ? "localhost:3000" : "app.wordquest.co",
+  "host": process.env.LOCAL ? "localhost:3000" : "app.workquest.co",
   "grouping": "tags",
   "info": {
     "title": "API Documentation",
