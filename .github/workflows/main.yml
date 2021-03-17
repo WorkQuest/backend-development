@@ -26,7 +26,7 @@ jobs:
         run: npm run build
 
   deploy:
-    environment: ${{ github.ref == 'refs/heads/master' && 'production' || 'develop'}}
+    environment: production
 
     runs-on: ubuntu-18.04
     needs: [build]
