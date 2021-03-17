@@ -26,6 +26,7 @@ jobs:
         run: npm run build
 
   deploy:
+    environment: production
 
     runs-on: ubuntu-18.04
     needs: [build]
@@ -56,13 +57,13 @@ jobs:
             SERVER_HOST=${{ secrets.SERVER_HOST }} \
             SERVER_PORT=${{ secrets.SERVER_PORT }} \
 
-            SMTP_HOST=$ {{ secrets.SMTP_HOST }} \
-            SMTP_PORT=$ {{ secrets.SMTP_PORT }} \
-            SMTP_SECURE=$ {{ secrets.SMTP_SECURE }} \
-            SMTP_USER=$ {{ secrets.SMTP_USER }} \
-            SMTP_PASSWORD=$ {{ secrets.SMTP_PASSWORD }} \
+            SMTP_HOST=${{ secrets.SMTP_HOST }} \
+            SMTP_PORT=${{ secrets.SMTP_PORT }} \
+            SMTP_SECURE=${{ secrets.SMTP_SECURE }} \
+            SMTP_USER=${{ secrets.SMTP_USER }} \
+            SMTP_PASSWORD=${{ secrets.SMTP_PASSWORD }} \
 
-            BASE_URL=$ {{ secrets.BASE_URL }} \
+            BASE_URL=${{ secrets.BASE_URL }} \
 
-            DEBUG=$ {{ secrets.DEBUG }} \
+            DEBUG=${{ secrets.DEBUG }} \
             SRC_DIR=${{ github.workspace }}/" backend-update.yml;
