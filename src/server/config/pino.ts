@@ -1,16 +1,20 @@
 export const pinoConfig = (prettify?: boolean) => ({
   prettyPrint: prettify
     ? {
-        colorize: true,
-        crlf: false,
-        jsonPretty: false,
-        translateTime: 'yyyy-mm-dd HH:MM:ss',
-        ignore: 'pid,hostname,v,tags,data',
-        messageFormat: '{data}',
-        customPrettifiers: {
-          response: { messageFormat: '{req.url} - {req.method} - code:{req.statusCode}' },
-        },
+      redact: {
+        paths: ["payload.password", "payload.*Password"],
+        censor: "***"
+      },
+      colorize: true,
+      crlf: false,
+      jsonPretty: false,
+      translateTime: "yyyy-mm-dd HH:MM:ss",
+      ignore: "pid,hostname,v,tags,data",
+      messageFormat: "{data}",
+      customPrettifiers: {
+        response: { messageFormat: "{req.url} - {req.method} - code:{req.statusCode}" }
       }
+    }
     : false,
   serializers: {
     req: function customReqSerializer(req) {
