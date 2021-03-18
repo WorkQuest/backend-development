@@ -8,7 +8,7 @@ export default [{
   handler: getMe,
   options: {
     id: "v1.profile.getMe",
-    tags: ["api", "auth"],
+    tags: ["api", "profile"],
     description: "Get info about current user",
     response: {
       schema: outputOkSchema(userSchema).label("ProfileGetMeResponse")
