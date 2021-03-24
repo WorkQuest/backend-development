@@ -15,6 +15,11 @@ export enum UserStatus {
   Confirmed
 }
 
+export enum UserRole {
+  Employer = "employer",
+  Worker = "worker"
+}
+
 @Scopes(() => ({
   defaultScope: {
     attributes: {
@@ -48,6 +53,7 @@ export class User extends Model {
   @Column(DataType.STRING) firstName: string;
   @Column(DataType.STRING) lastName: string;
   @Column(DataType.STRING) avatar: string;
+  @Column(DataType.STRING) role: UserRole;
   @Column({ type: DataType.JSONB, defaultValue: defaultUserSettings }) settings: UserSettings;
   @Column({ type: DataType.INTEGER, defaultValue: UserStatus.Unconfirmed }) status: UserStatus;
 

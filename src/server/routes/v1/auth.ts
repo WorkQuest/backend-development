@@ -1,7 +1,8 @@
 import * as Joi from "joi";
 import { confirmEmail, login, register } from "../../api/auth";
-import { emailSchema, firstNameSchema, lastNameSchema, passwordSchema } from "../../schemes/user";
+import { emailSchema, firstNameSchema, lastNameSchema, passwordSchema, userRoleSchema } from "../../schemes/user";
 import { emptyOkSchema, hexTokenSchema, jwtTokens, outputOkSchema } from "../../schemes";
+import { UserRole } from "../../models/User";
 
 export default [{
   method: "POST",
@@ -17,7 +18,8 @@ export default [{
         firstName: firstNameSchema,
         lastName: lastNameSchema,
         email: emailSchema,
-        password: passwordSchema
+        password: passwordSchema,
+        role: userRoleSchema.default(UserRole.Worker)
       }).label("AuthRegisterPayload")
     },
     response: {
