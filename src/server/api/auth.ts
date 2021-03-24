@@ -23,6 +23,7 @@ export async function register(r) {
 		password: r.payload.password,
 		firstName: r.payload.firstName,
 		lastName: r.payload.lastName,
+		role: r.payload.role,
 		settings: {
 			emailConfirm: emailConfirmCode
 		}
