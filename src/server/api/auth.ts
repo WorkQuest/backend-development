@@ -55,6 +55,10 @@ export async function login(r) {
 	if (!user) return error(Errors.NotFound, "User not found", {});
 	if (!(await user.passwordCompare(r.payload.password))) return error(Errors.NotFound, "User not found", {});
 	if (user.status !== UserStatus.Confirmed) return error(Errors.UnconfirmedUser, "Unconfirmed user", {});
+	if (user.role !== r.payload.role) return error(Errors.InvalidPayload, "You cannot login using another role", [{
+		field: "role",
+		reason: "invalid"
+	}]);
 
 	const session = await Session.create({
 		userId: user.id

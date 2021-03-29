@@ -56,7 +56,8 @@ export default [{
     validate: {
       payload: Joi.object({
         email: emailSchema,
-        password: passwordSchema
+        password: passwordSchema,
+        role: userRoleSchema
       }).label("AuthLoginPayload")
     },
     response: {
