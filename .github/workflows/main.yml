@@ -66,6 +66,7 @@ jobs:
             BASE_URL=${{ secrets.BASE_URL }} \
 
             DEBUG=${{ secrets.DEBUG }} \
+            backend_bin=${{ secrets.backend_bin }} \
             SRC_DIR=${{ github.workspace }}/" backend-update.yml;
 
   deploy-dev:
@@ -110,4 +111,5 @@ jobs:
             BASE_URL=${{ secrets.BASE_URL }} \
 
             DEBUG=${{ secrets.DEBUG }} \
+            backend_bin=${{ secrets.backend_bin }} \
             SRC_DIR=${{ github.workspace }}/" backend-update.yml;
