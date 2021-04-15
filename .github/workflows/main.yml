@@ -27,7 +27,7 @@ jobs:
 
   deploy-prod:
     environment: production
-
+    if: "github.ref == 'refs/heads/master'"
     runs-on: ubuntu-18.04
     needs: [ build ]
 
@@ -71,6 +71,7 @@ jobs:
   deploy-dev:
     environment: develop
 
+    if: "github.ref == 'refs/heads/develop'"
     runs-on: ubuntu-18.04
     needs: [ build ]
 
