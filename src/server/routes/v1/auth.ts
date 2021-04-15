@@ -2,7 +2,6 @@ import * as Joi from "joi";
 import { confirmEmail, login, register } from "../../api/auth";
 import { emailSchema, firstNameSchema, lastNameSchema, passwordSchema, userRoleSchema } from "../../schemes/user";
 import { emptyOkSchema, hexTokenSchema, jwtTokens, outputOkSchema } from "../../schemes";
-import { UserRole } from "../../models/User";
 
 export default [{
   method: "POST",
@@ -15,11 +14,10 @@ export default [{
     description: "Register new user",
     validate: {
       payload: Joi.object({
-        firstName: firstNameSchema,
-        lastName: lastNameSchema,
-        email: emailSchema,
-        password: passwordSchema,
-        role: userRoleSchema.default(UserRole.Worker)
+        firstName: firstNameSchema.required(),
+        lastName: lastNameSchema.required(),
+        email: emailSchema.required(),
+        password: passwordSchema.required()
       }).label("AuthRegisterPayload")
     },
     response: {
@@ -37,7 +35,8 @@ export default [{
     description: "Confirm email",
     validate: {
       payload: Joi.object({
-        confirmCode: hexTokenSchema
+        confirmCode: hexTokenSchema.required(),
+        role: userRoleSchema.required()
       }).label("AuthConfirmEmailPayload")
     },
     response: {
@@ -55,9 +54,8 @@ export default [{
     description: "Login user",
     validate: {
       payload: Joi.object({
-        email: emailSchema,
-        password: passwordSchema,
-        role: userRoleSchema
+        email: emailSchema.required(),
+        password: passwordSchema.required()
       }).label("AuthLoginPayload")
     },
     response: {

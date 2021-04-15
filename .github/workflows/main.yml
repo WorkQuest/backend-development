@@ -25,11 +25,54 @@ jobs:
       - name: Run build task
         run: npm run build
 
-  deploy:
+  deploy-prod:
     environment: production
 
     runs-on: ubuntu-18.04
-    needs: [build]
+    needs: [ build ]
+
+    steps:
+      - name: Copy code files to container
+        uses: actions/checkout@v2
+
+      - name: Environment preparation
+        run: |
+          mkdir -p ~/.ssh/
+          touch ~/.ssh/id_rsa
+          chmod -R go= ~/.ssh
+          chmod 600 ~/.ssh/id_rsa
+          echo "${{ secrets.SERVER_SSH_KEY }}" >> ~/.ssh/id_rsa
+          sudo apt-add-repository -y -u ppa:ansible/ansible
+          sudo apt-get install -y rsync
+          sudo apt-get install -y ansible
+
+      - name: Deploy to Server
+        run: |
+          chmod 700 ci-scripts
+          cd ci-scripts
+          ansible-playbook -i "${{ secrets.REMOTE_HOST }}" -e "ansible_user=${{ secrets.REMOTE_USER }} \
+            DB_LINK=${{ secrets.DB_LINK }} \
+            JWT_ACCESS_SECRET=${{ secrets.JWT_ACCESS_SECRET }} \
+            JWT_REFRESH_SECRET=${{ secrets.JWT_REFRESH_SECRET }} \
+            SERVER_HOST=${{ secrets.SERVER_HOST }} \
+            SERVER_PORT=${{ secrets.SERVER_PORT }} \
+
+            SMTP_HOST=${{ secrets.SMTP_HOST }} \
+            SMTP_PORT=${{ secrets.SMTP_PORT }} \
+            SMTP_SECURE=${{ secrets.SMTP_SECURE }} \
+            SMTP_USER=${{ secrets.SMTP_USER }} \
+            SMTP_PASSWORD=${{ secrets.SMTP_PASSWORD }} \
+
+            BASE_URL=${{ secrets.BASE_URL }} \
+
+            DEBUG=${{ secrets.DEBUG }} \
+            SRC_DIR=${{ github.workspace }}/" backend-update.yml;
+
+  deploy-dev:
+    environment: develop
+
+    runs-on: ubuntu-18.04
+    needs: [ build ]
 
     steps:
       - name: Copy code files to container

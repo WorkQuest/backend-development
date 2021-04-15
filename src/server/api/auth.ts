@@ -23,7 +23,6 @@ export async function register(r) {
 		password: r.payload.password,
 		firstName: r.payload.firstName,
 		lastName: r.payload.lastName,
-		role: r.payload.role,
 		settings: {
 			emailConfirm: emailConfirmCode
 		}
@@ -40,7 +39,7 @@ export async function confirmEmail(r) {
 	});
 	if (!user) return output();
 
-	await user.update({ status: UserStatus.Confirmed, "settings.emailConfirm": null });
+	await user.update({ status: UserStatus.Confirmed, "settings.emailConfirm": null, role: r.payload.role });
 	return output();
 }
 
