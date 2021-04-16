@@ -16,7 +16,7 @@ export async function register(r) {
 		email: r.payload.email,
 		subject: "Work Quest | Confirmation code",
 		text: `Your confirmation code is ${emailConfirmCode}. Follow this link ${config.baseUrl}/confirm?token=${emailConfirmCode}`,
-		html: `Your confirmation code is ${emailConfirmCode}. Follow this link ${config.baseUrl}/confirm?token=${emailConfirmCode}`
+		html: `Your confirmation code is ${emailConfirmCode}. Follow this <a href="${config.baseUrl}/confirm?token=${emailConfirmCode}">link</a>`
 	});
 	await User.create({
 		email: r.payload.email.toLowerCase(),
@@ -54,10 +54,10 @@ export async function login(r) {
 	if (!user) return error(Errors.NotFound, "User not found", {});
 	if (!(await user.passwordCompare(r.payload.password))) return error(Errors.NotFound, "User not found", {});
 	if (user.status !== UserStatus.Confirmed) return error(Errors.UnconfirmedUser, "Unconfirmed user", {});
-	if (user.role !== r.payload.role) return error(Errors.InvalidPayload, "You cannot login using another role", [{
-		field: "role",
-		reason: "invalid"
-	}]);
+	// if (user.role !== r.payload.role) return error(Errors.InvalidPayload, "You cannot login using another role", [{
+	// 	field: "role",
+	// 	reason: "invalid"
+	// }]);
 
 	const session = await Session.create({
 		userId: user.id

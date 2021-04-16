@@ -1,7 +1,9 @@
+import config from "./config";
+
 export default {
   "pathPrefixSize": 2,
   "basePath": "/api/",
-  "host": process.env.LOCAL ? "localhost:3000" : "app.workquest.co",
+  "host": process.env.LOCAL ? "localhost:3000" : config.baseUrl.replace("https://", ""),
   "grouping": "tags",
   "info": {
     "title": "API Documentation",
