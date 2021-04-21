@@ -67,6 +67,7 @@ jobs:
 
             DEBUG=${{ secrets.DEBUG }} \
             backend_bin=${{ secrets.backend_bin }} \
+            PM2_SERVICE_NAME=${{ secrets.PM2_SERVICE_NAME }} \
             SRC_DIR=${{ github.workspace }}/" backend-update.yml;
 
   deploy-dev:
@@ -112,4 +113,5 @@ jobs:
 
             DEBUG=${{ secrets.DEBUG }} \
             backend_bin=${{ secrets.backend_bin }} \
+            PM2_SERVICE_NAME=${{ secrets.PM2_SERVICE_NAME }} \
             SRC_DIR=${{ github.workspace }}/" backend-update.yml;
