@@ -65,3 +65,11 @@ export async function login(r) {
 
 	return output(generateJwt({ id: session.id }));
 }
+
+export async function refreshTokens(r) {
+	const newSession = await Session.create({
+		userId: r.auth.credentials.id
+	});
+
+	return output(generateJwt({ id: newSession.id }));
+}

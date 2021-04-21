@@ -1,5 +1,5 @@
 import * as Joi from "joi";
-import { confirmEmail, login, register } from "../../api/auth";
+import { confirmEmail, login, refreshTokens, register } from "../../api/auth";
 import { emailSchema, firstNameSchema, lastNameSchema, passwordSchema, userRoleSchema } from "../../schemes/user";
 import { emptyOkSchema, hexTokenSchema, jwtTokens, outputOkSchema } from "../../schemes";
 
@@ -60,6 +60,18 @@ export default [{
     },
     response: {
       schema: outputOkSchema(jwtTokens).label("AuthLoginResponse")
+    }
+  }
+}, {
+  method: "POST",
+  path: "/v1/auth/refresh-tokens",
+  handler: refreshTokens,
+  options: {
+    id: "v1.auth.refreshTokens",
+    tags: ["api", "auth"],
+    description: "Refresh auth tokens",
+    response: {
+      schema: outputOkSchema(jwtTokens).label("AuthRefreshTokensResponse")
     }
   }
 }];
