@@ -6,18 +6,29 @@ import { addSendEmailJob } from "../jobs/sendEmail";
 import config from "../config/config";
 import { Session } from "../models/Session";
 import { generateJwt } from "../utils/auth";
+import * as path from "path";
+import * as fs from "fs";
+import Handlebars = require("handlebars");
+
+const confirmTemplatePath = path.join(__dirname, "..", "..", "..", "templates", "confirmEmail.html");
+const confirmTemplate = Handlebars.compile(fs.readFileSync(confirmTemplatePath, {
+	encoding: "utf-8"
+}));
 
 export async function register(r) {
 	const emailUsed = await User.findOne({ where: { email: { [Op.iLike]: r.payload.email } } });
 	if (emailUsed) return error(Errors.InvalidPayload, "Email used", [{ field: "email", reason: "used" }]);
 
 	const emailConfirmCode = getRandomHexToken();
+	const emailConfirmLink = `${config.baseUrl}/confirm?token=${emailConfirmCode}`;
+	const emailHtml = confirmTemplate({ confirmLink: emailConfirmLink });
 	await addSendEmailJob({
 		email: r.payload.email,
 		subject: "Work Quest | Confirmation code",
 		text: `Your confirmation code is ${emailConfirmCode}. Follow this link ${config.baseUrl}/confirm?token=${emailConfirmCode}`,
-		html: `Your confirmation code is ${emailConfirmCode}. Follow this <a href="${config.baseUrl}/confirm?token=${emailConfirmCode}">link</a>`
+		html: emailHtml
 	});
+
 	await User.create({
 		email: r.payload.email.toLowerCase(),
 		password: r.payload.password,

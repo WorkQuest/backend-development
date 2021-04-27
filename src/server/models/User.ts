@@ -53,7 +53,7 @@ export class User extends Model {
   @Column(DataType.STRING) firstName: string;
   @Column(DataType.STRING) lastName: string;
   @Column(DataType.STRING) avatar: string;
-  @Column({ type: DataType.STRING, defaultValue: null }) role: UserRole;
+  @Column({ type: DataType.STRING, allowNull: true, defaultValue: null }) role: UserRole;
   @Column({ type: DataType.JSONB, defaultValue: defaultUserSettings }) settings: UserSettings;
   @Column({ type: DataType.INTEGER, defaultValue: UserStatus.Unconfirmed }) status: UserStatus;
 

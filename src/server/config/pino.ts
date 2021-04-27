@@ -16,12 +16,6 @@ export const pinoConfig = (prettify?: boolean) => ({
     : false,
   redact: { paths: ["payload.password", "req.headers.authorization"], censor: "***" },
   serializers: {
-    // req: (req) => {
-    //   return {
-    //     headers: req.headers,
-    //     method: req.method
-    //   }
-    // },
     res: function customResSerializer(res) {
       return {
         code: res.statusCode
@@ -46,5 +40,4 @@ export const pinoConfig = (prettify?: boolean) => ({
     }
   },
   timestamp: pino.stdTimeFunctions.isoTime
-  // timestamp: () => `,"time":"${new Date(Date.now()).toLocaleString()}"`,
 });

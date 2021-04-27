@@ -29,6 +29,7 @@
     "dotenv": "^8.2.0",
     "filepaths": "^0.3.0",
     "graphile-worker": "^0.6.0",
+    "handlebars": "^4.7.7",
     "hapi-auth-bearer-token": "^6.1.6",
     "hapi-cors": "^1.0.3",
     "hapi-pino": "^6.1.0",
