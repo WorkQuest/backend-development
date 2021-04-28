@@ -14,7 +14,7 @@ import { handleValidationError, responseHandler } from "./utils";
 import { tokenValidate } from "./utils/auth";
 import SwaggerOptions from "./config/swagger";
 import { pinoConfig } from "./config/pino";
-import sequelize from "./models";
+import { initDatabase } from "./models";
 import { run } from "graphile-worker";
 
 const HapiSwagger = require("hapi-swagger");
@@ -53,38 +53,13 @@ const init = async () => {
     { plugin: Pino, options: pinoConfig(false) },
     { plugin: HapiSwagger, options: SwaggerOptions }
   ]);
-  server.app.db = sequelize;
+  server.app.db = initDatabase(config.dbLink, false, true);
   server.app.scheduler = await run({
     connectionString: config.dbLink,
     concurrency: 5,
     pollInterval: 1000,
     taskDirectory: `${__dirname}/jobs` // Папка с исполняемыми тасками.
   });
-  // Авторизация через соцсети
-  // server.auth.strategy('google', 'bell', {
-  //   provider: 'Google',
-  //   clientId: process.env.auth_google_id,
-  //   clientSecret: process.env.auth_google_secret,
-  //   password: process.env.auth_google_secret,
-  //   isSecure: false
-  // });
-  // server.auth.strategy('fb', 'bell', {
-  //   provider: 'Facebook',
-  //   clientId: Number(process.env.auth_fb_id),
-  //   clientSecret: process.env.auth_fb_secret,
-  //   password: process.env.auth_fb_cookie_password,
-  //   isSecure: false
-  // });
-  // server.auth.strategy('vk', 'bell', {
-  //   provider: 'VK',
-  //   clientId: Number(process.env.auth_vk_id),
-  //   clientSecret: process.env.auth_vk_secret,
-  //   password: process.env.auth_vk_cookie_password,
-  //   isSecure: false
-  // });
-
-  // Авторизация стандартная (логин+пароль)
-  // server.auth.strategy('simple', 'basic', { validate: basicAuthHandler });
 
   // JWT Auth
   server.auth.strategy('jwt-access', 'bearer-access-token', {
