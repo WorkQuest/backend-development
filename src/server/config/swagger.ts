@@ -6,7 +6,7 @@ export default {
   "host": process.env.LOCAL ? "localhost:3000" : config.baseUrl.replace("https://", ""),
   "grouping": "tags",
   "info": {
-    "title": "API Documentation",
+    "title": "WorkQuest Main Backend - API Documentation",
     "version": "",
     "description": "API Documentation\n\nYou can use https://mdenushev.github.io/nes-cli/ to test ws connections"
   },

@@ -30,3 +30,4 @@ build/
 package-lock.json
 # now pm2 app file is generating on deploy
 app.json
+.idea
