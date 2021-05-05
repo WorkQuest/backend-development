@@ -29,7 +29,7 @@ export default [{
   path: "/v1/auth/confirm-email",
   handler: confirmEmail,
   options: {
-    auth: false,
+    auth: 'jwt-access',
     id: "v1.auth.confirmEmail",
     tags: ["api", "auth"],
     description: "Confirm email",
