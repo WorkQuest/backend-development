@@ -1,7 +1,7 @@
 import * as Joi from "joi";
 import { confirmEmail, login, refreshTokens, register } from "../../api/auth";
 import { emailSchema, firstNameSchema, lastNameSchema, passwordSchema, userRoleSchema } from "../../schemes/user";
-import { emptyOkSchema, hexTokenSchema, jwtTokens, outputOkSchema } from "../../schemes";
+import { emptyOkSchema, hexTokenSchema, jwtTokens, outputOkSchema, tokensWithStatus } from "../../schemes";
 
 export default [{
   method: "POST",
@@ -21,7 +21,7 @@ export default [{
       }).label("AuthRegisterPayload")
     },
     response: {
-      schema: emptyOkSchema
+      schema: outputOkSchema(tokensWithStatus).label("TokensWithStatusResponse")
     }
   }
 }, {
