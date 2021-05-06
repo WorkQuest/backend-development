@@ -63,7 +63,7 @@ const init = async () => {
 
   // JWT Auth
   server.auth.strategy('jwt-access', 'bearer-access-token', {
-    validate: tokenValidate('access'),
+    validate: tokenValidate('access', ["/api/v1/auth/confirm-email"]),
   });
   server.auth.strategy('jwt-refresh', 'bearer-access-token', {
     validate: tokenValidate('refresh'),

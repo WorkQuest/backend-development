@@ -1,7 +1,7 @@
 import * as Joi from "joi";
 import { confirmEmail, login, refreshTokens, register } from "../../api/auth";
 import { emailSchema, firstNameSchema, lastNameSchema, passwordSchema, userRoleSchema } from "../../schemes/user";
-import { emptyOkSchema, hexTokenSchema, jwtTokens, outputOkSchema } from "../../schemes";
+import { emptyOkSchema, hexTokenSchema, jwtTokens, outputOkSchema, tokensWithStatus } from "../../schemes";
 
 export default [{
   method: "POST",
@@ -21,7 +21,7 @@ export default [{
       }).label("AuthRegisterPayload")
     },
     response: {
-      schema: emptyOkSchema
+      schema: outputOkSchema(tokensWithStatus).label("TokensWithStatusResponse")
     }
   }
 }, {
@@ -29,7 +29,7 @@ export default [{
   path: "/v1/auth/confirm-email",
   handler: confirmEmail,
   options: {
-    auth: false,
+    auth: 'jwt-access',
     id: "v1.auth.confirmEmail",
     tags: ["api", "auth"],
     description: "Confirm email",
@@ -59,7 +59,7 @@ export default [{
       }).label("AuthLoginPayload")
     },
     response: {
-      schema: outputOkSchema(jwtTokens).label("AuthLoginResponse")
+      schema: outputOkSchema(tokensWithStatus).label("TokensWithStatusResponse")
     }
   }
 }, {

@@ -1,7 +1,7 @@
 import * as jwt from 'jsonwebtoken';
 import config from '../config/config';
 import { error } from './index';
-import { User } from '../models/User';
+import { User, UserStatus } from '../models/User';
 import { Session } from '../models/Session';
 import { Errors } from './errors';
 
@@ -26,7 +26,7 @@ export const decodeJwt = async (token: string, secret: string) => {
 export type validateFunc = (r, token: string) => Promise<any>;
 
 // Fabric which returns token validate function depending on token type
-export function tokenValidate(tokenType: 'access' | 'refresh'): validateFunc {
+export function tokenValidate(tokenType: 'access' | 'refresh', allowedUnconfirmedRoutes: string[] = []): validateFunc {
   return async function(r, token: string) {
     let data = await decodeJwt(token, config.auth.jwt[tokenType].secret);
 
@@ -34,10 +34,13 @@ export function tokenValidate(tokenType: 'access' | 'refresh'): validateFunc {
       include: [{model: User}]
     });
 
-    if (user) {
-      return { isValid: true, credentials: user, artifacts: { token, type: tokenType } };
-    } else {
+    if(!user) {
       throw error(Errors.SessionNotFound, 'User not found', {});
     }
+    if (user.status !== UserStatus.Confirmed && !allowedUnconfirmedRoutes.includes(r.route.path)) {
+      throw error(Errors.UnconfirmedUser, 'Unconfirmed user', {});
+    }
+
+    return { isValid: true, credentials: user, artifacts: { token, type: tokenType } };
   }
 }
