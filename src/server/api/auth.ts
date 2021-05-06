@@ -72,17 +72,17 @@ export async function login(r) {
 	});
 	if (!user) return error(Errors.NotFound, "User not found", {});
 	if (!(await user.passwordCompare(r.payload.password))) return error(Errors.NotFound, "User not found", {});
-	// if (user.role !== r.payload.role) return error(Errors.InvalidPayload, "You cannot login using another role", [{
-	// 	field: "role",
-	// 	reason: "invalid"
-	// }]);
-
 
 	const session = await Session.create({
 		userId: user.id
 	});
 
-	return output(generateJwt({ id: session.id }));
+	const result = {
+		...generateJwt({ id: session.id }),
+		userStatus: user.status,
+	};
+
+	return output(result);
 }
 
 export async function refreshTokens(r) {

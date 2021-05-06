@@ -59,7 +59,7 @@ export default [{
       }).label("AuthLoginPayload")
     },
     response: {
-      schema: outputOkSchema(jwtTokens).label("AuthLoginResponse")
+      schema: outputOkSchema(tokensWithStatus).label("TokensWithStatusResponse")
     }
   }
 }, {
