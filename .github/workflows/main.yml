@@ -64,6 +64,11 @@ jobs:
             SMTP_PASSWORD=${{ secrets.SMTP_PASSWORD }} \
             SMTP_SENDER=${{ secrets.SMTP_SENDER }} \
 
+            DB_HOST=${{ secrets.DB_HOST }} \
+            DB_USERNAME=${{ secrets.DB_USERNAME }} \
+            DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
+            DB_NAME=${{ secrets.DB_NAME }} \
+
             BASE_URL=${{ secrets.BASE_URL }} \
 
             DEBUG=${{ secrets.DEBUG }} \
@@ -112,6 +117,11 @@ jobs:
             SMTP_SENDER=${{ secrets.SMTP_SENDER }} \
 
             BASE_URL=${{ secrets.BASE_URL }} \
+
+            DB_HOST=${{ secrets.DB_HOST }} \
+            DB_USERNAME=${{ secrets.DB_USERNAME }} \
+            DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
+            DB_NAME=${{ secrets.DB_NAME }} \
 
             DEBUG=${{ secrets.DEBUG }} \
             backend_bin=${{ secrets.backend_bin }} \

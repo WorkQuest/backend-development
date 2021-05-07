@@ -49,6 +49,17 @@
     src: ./app.json.j2
     dest: '{{ backend_bin }}/app.json'
 
+- name: Copy or generate db_config.json file
+  template:
+    src: ./{{ backend_db_config_json }}.j2
+    dest: '{{ backend_bin }}/{{ backend_db_config_json }}'
+
+- name: Migrate database
+  shell: npx sequelize-cli db:migrate
+  args:
+    chdir: '{{ backend_bin }}'
+  ignore_errors: yes
+
 - name: Start/reload backend process
   shell: pm2 reload app.json
   args:
