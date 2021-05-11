@@ -3,9 +3,6 @@ import { User } from "./User";
 import { getUUID } from '../utils';
 import BigNumber from 'bignumber.js';
 
-const LONGITUDE_INDEX = 0;
-const LATITUDE_INDEX = 1;
-
 export enum Priority {
   AllPriority = 0,
   Low,
@@ -24,10 +21,7 @@ export interface Location {
 };
 
 function transformToGeoPostGIS(location: Location) {
-  const coordinates = [];
-
-  coordinates[LONGITUDE_INDEX] = location.longitude;
-  coordinates[LATITUDE_INDEX] = location.latitude;
+  const coordinates = [location.longitude, location.latitude];
 
   return {
     type: "Point",

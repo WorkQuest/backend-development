@@ -24,4 +24,4 @@ export const createQuest = Joi.object({
   description: descriptionSchema.required(),
   price: priceSchema.required(),
   adType: adTypeSchema,
-});
+}).label("CreateQuest");

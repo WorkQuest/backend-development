@@ -1,7 +1,6 @@
 import * as Joi from "joi";
 import { create } from "../../api/quest";
 import { createQuest } from '../../schemes/quest';
-import { userRoleSchema } from '../../schemes/user';
 import { emptyOkSchema, hexTokenSchema, outputOkSchema, tokensWithStatus } from '../../schemes';
 
 export default [{
@@ -11,7 +10,7 @@ export default [{
   options: {
     auth: 'jwt-access',
     id: "v1.quest.create",
-    //tags: [],
+    tags: ["api", "quest", "create"],
     description: "Register new Quest",
     validate: {
       payload: createQuest.label("CreateQuestPayload"),
