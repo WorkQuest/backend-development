@@ -1,6 +1,10 @@
 import { BelongsTo, Column, DataType, ForeignKey, Model, Scopes, Table } from 'sequelize-typescript';
 import { User } from "./User";
 import { getUUID } from '../utils';
+import BigNumber from 'bignumber.js';
+
+const LONGITUDE_INDEX = 0;
+const LATITUDE_INDEX = 1;
 
 export enum Priority {
   AllPriority = 0,
@@ -14,11 +18,30 @@ export enum AdType {
   Paid,
 };
 
-/* TODO
-* Ограничение по размеру строк (title, description)
-* Price - валидация цены (количество знаков после запятой)
-* Address - формат
-*/
+export interface Location {
+  longitude: number;
+  latitude: number;
+};
+
+function transformToGeoPostGIS(location: Location) {
+  const coordinates = [];
+
+  coordinates[LONGITUDE_INDEX] = location.longitude;
+  coordinates[LATITUDE_INDEX] = location.latitude;
+
+  return {
+    type: "Point",
+    coordinates: coordinates,
+  };
+}
+
+@Scopes(() => ({
+  defaultScope: {
+    attributes: {
+      exclude: ["locationPostGIS"]
+    }
+  }
+}))
 
 @Table
 export class Quest extends Model {
@@ -26,13 +49,19 @@ export class Quest extends Model {
   @ForeignKey(() => User) @Column(DataType.STRING) userId: string;
 
   @Column({type: DataType.INTEGER, defaultValue: Priority.AllPriority }) priority: Priority;
-  @Column({type: DataType.STRING, validate: { notEmpty: true } }) category;
+  @Column({type: DataType.STRING, allowNull: false }) category: string;
 
-  @Column({type: DataType.STRING, validate: { notEmpty: true } }) address; /*TODO */
-  @Column({type: DataType.STRING, validate: { notEmpty: true } }) title;
-  @Column({type: DataType.STRING }) description;
+  @Column({type: DataType.JSONB,
+    set(value: Location) {
+      this.setDataValue("locationPostGIS", transformToGeoPostGIS(value));
+      this.setDataValue("location", value);
+    }
+  }) location: Location;
+  @Column({type: DataType.GEOMETRY('POINT', 4326)}) locationPostGIS;
+  @Column({type: DataType.STRING }) title: string;
+  @Column({type: DataType.TEXT }) description: string;
 
-  @Column({type: DataType.DECIMAL, validate: { notEmpty: true } }) price; /*TODO */
+  @Column({type: DataType.DECIMAL}) price: BigNumber;
   @Column({type: DataType.INTEGER, defaultValue: AdType.Free }) adType: AdType;
 
   @BelongsTo(() => User) user: User;
