@@ -1,22 +1,53 @@
 import * as Joi from "joi";
-import { create } from "../../api/quest";
-import { createQuest } from '../../schemes/quest';
-import { emptyOkSchema, hexTokenSchema, outputOkSchema, tokensWithStatus } from '../../schemes';
+import { createQuest, deleteQuest } from '../../api/quest';
+import { emptyOkSchema, outputOkSchema } from '../../schemes';
+import {
+  adTypeSchema,
+  categorySchema,
+  descriptionSchema,
+  locationSchema, priceSchema,
+  prioritySchema, questIdSchema, questSchema,
+  titleSchema
+} from '../../schemes/quest';
 
 export default [{
   method: "POST",
   path: "/v1/quest/create",
-  handler: create,
+  handler: createQuest,
   options: {
-    auth: 'jwt-access',
     id: "v1.quest.create",
-    tags: ["api", "quest", "create"],
-    description: "Register new Quest",
+    tags: ["api", "quest"],
+    description: "Register new quest",
     validate: {
-      payload: createQuest.label("CreateQuestPayload"),
+      payload: Joi.object({
+        category: categorySchema.required(),
+        priority: prioritySchema.required(),
+        location: locationSchema.required(),
+        title: titleSchema.required(),
+        description: descriptionSchema.required(),
+        price: priceSchema.required(),
+        adType: adTypeSchema,
+      }).label("CreateQuestPayload")
     },
     response: {
-      schema: emptyOkSchema,
+      schema: outputOkSchema(questSchema).label("QuestResponse"),
+    },
+  },
+}, {
+  method: "DELETE",
+  path: "/v1/quest/{questId}",
+  handler: deleteQuest,
+  options: {
+    id: "v1.quest.deleteQuest",
+    tags: ["api", "quest"],
+    description: "Delete quest",
+    validate: {
+      params: Joi.object({
+        questId: questIdSchema,
+      }).label("DeleteQuestParams")
+    },
+    response: {
+      schema: emptyOkSchema.label("DeleteQuestResponse"),
     },
   },
 }];
