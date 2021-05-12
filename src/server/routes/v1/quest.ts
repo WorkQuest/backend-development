@@ -1,14 +1,25 @@
 import * as Joi from "joi";
-import { createQuest, deleteQuest } from '../../api/quest';
-import { emptyOkSchema, outputOkSchema } from '../../schemes';
+import { createQuest, deleteQuest, editQuest, getQuests } from '../../api/quest';
+import { emptyOkSchema, outputOkSchema, sortDirectionSchema } from '../../schemes';
 import {
   adTypeSchema,
   categorySchema,
   descriptionSchema,
   locationSchema, priceSchema,
   prioritySchema, questIdSchema, questSchema,
-  titleSchema
+  titleSchema, userIdSchema
 } from '../../schemes/quest';
+
+const questsQueryScheme = Joi.object({
+  offset: Joi.number().min(0).default(0).label('offset'),
+  limit: Joi.number().min(0).default(10).label('limit'),
+  q: Joi.string().default(null).max(255),
+  priority: prioritySchema.default(null),
+  sort: Joi.object({
+    price: sortDirectionSchema,
+    createdAt: sortDirectionSchema,
+  }).default({}).label('QuestsListSortSchema'),
+})
 
 export default [{
   method: "POST",
@@ -50,4 +61,57 @@ export default [{
       schema: emptyOkSchema.label("DeleteQuestResponse"),
     },
   },
+}, {
+  method: "PUT",
+  path: "/v1/quest/{questId}",
+  handler: editQuest,
+  options: {
+    id: "v1.quest.editQuest",
+    tags: ["api", "quest"],
+    description: "Edit quest",
+    validate: {
+      params: Joi.object({
+        questId: questIdSchema,
+      }).label("EditQuestParams"),
+      payload: Joi.object({
+        category: categorySchema,
+        priority: prioritySchema,
+        location: locationSchema,
+        title: titleSchema,
+        description: descriptionSchema,
+        price: priceSchema,
+        adType: adTypeSchema,
+      }).label("EditQuestPayload"),
+    },
+    response: {
+      schema: emptyOkSchema.label("EditQuestResponse")
+    },
+  }
+}, {
+  method: "GET",
+  path: "/v1/quests",
+  handler: getQuests,
+  options: {
+    id: "v1.quests",
+    tags: ["api", "quest"],
+    description: "Get quests",
+    validate: {
+      query: questsQueryScheme
+    },
+    response: {
+      schema: emptyOkSchema.label("QuestsResponse")
+    },
+  }
+}, {
+  method: "GET",
+  path: "/v1/employer/{userId}/quests",
+  handler: getQuests,
+  options: {
+    id: "v1.employer.quests",
+    tags: ["api", "quest"],
+    description: "Get quests for a given user",
+    validate: {
+      query: questsQueryScheme
+    },
+  }
 }];

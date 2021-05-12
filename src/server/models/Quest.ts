@@ -36,7 +36,6 @@ function transformToGeoPostGIS(location: Location) {
     }
   }
 }))
-
 @Table
 export class Quest extends Model {
   @Column({ primaryKey: true, type: DataType.STRING, defaultValue: () => getUUID() }) id: string;

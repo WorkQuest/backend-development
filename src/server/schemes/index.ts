@@ -22,6 +22,7 @@ export const hexTokenSchema = Joi.string().regex(/^[0-9a-fA-F]{40}$/).example("9
 export const totpSchema = Joi.string().regex(/^\d{6}$/).example("123456").label("Totp");
 export const jwtTokenAccess = Joi.string().example("access jwt token");
 export const jwtTokenRefresh = Joi.string().example("refresh jwt token");
+export const sortDirectionSchema = Joi.string().valid('ASC', 'DESC', 'asc', 'desc');
 
 export const emptyOkSchema = Joi.object({
   ok: Joi.boolean().example(true)

@@ -1,7 +1,13 @@
 import { error, output } from '../utils';
 import { Errors } from '../utils/errors';
-import { Priority, Quest } from '../models/Quest';
-import { User, UserRole } from '../models/User';
+import { Quest } from '../models/Quest';
+import { UserRole } from '../models/User';
+import { Op } from "sequelize";
+
+const searchFields = [
+  "title",
+  "description",
+];
 
 export async function createQuest(r) {
   const user = r.auth.credentials;
@@ -20,7 +26,28 @@ export async function createQuest(r) {
     price: r.payload.price,
   });
 
-  return output(quest);
+  return output({
+    id: quest.id,
+    userId: quest.userId,
+    ...r.payload,
+    createdAt: quest.createdAt,
+    updatedAt: quest.updatedAt,
+  });
+}
+
+export async function editQuest(r) {
+  const quest = await Quest.findByPk(r.params.questId);
+
+  if (!quest) {
+    return error(Errors.NotFound, "Quest not found", {});
+  }
+  if (quest.userId !== r.auth.credentials.id) {
+    return error(Errors.UnconfirmedUser, "User is not creator of quest", {});
+  }
+
+  await quest.update(r.payload);
+
+  return output();
 }
 
 export async function deleteQuest(r) {
@@ -36,4 +63,32 @@ export async function deleteQuest(r) {
   await quest.destroy({ force: true });
 
   return output();
+}
+
+export async function getQuests(r) {
+  const order = [];
+  const where = {
+    ...(r.query.priority && { priority: r.query.priority }),
+    ...(r.params.userId && { userId: r.params.userId })
+  };
+
+  if (r.query.q) {
+    where[Op.or] = searchFields.map(field => ({
+      [field]: {
+        [Op.iLike]: `%${r.query.q}%`
+      }
+    }))
+  }
+
+  for (const [key, value] of Object.entries(r.query.sort)){
+    order.push([key, value])
+  }
+
+  const {count, rows} = await Quest.findAndCountAll({
+    limit: r.query.limit,
+    offset: r.query.offset,
+    where, order,
+  })
+
+  return output({count, rows});
 }
