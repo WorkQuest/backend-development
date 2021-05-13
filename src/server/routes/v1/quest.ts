@@ -21,10 +21,10 @@ const questsQueryScheme = Joi.object({
   }).default({}).label('QuestsListSortSchema'),
 }).label('QuestsQueryScheme')
 
-const questsResponseScheme = Joi.object({
+const questsOutputScheme = Joi.object({
   count: Joi.number().integer().example(10).label('CountQuests'),
   quests: Joi.array().items(questSchema).label('QuestsList'),
-}).label("QuestsResponse");
+}).label("QuestsOutput");
 
 export default [{
   method: "POST",
@@ -104,7 +104,7 @@ export default [{
       query: questsQueryScheme
     },
     response: {
-      schema: outputOkSchema(questsResponseScheme)
+      schema: outputOkSchema(questsOutputScheme).label("QuestsResponse")
     },
   }
 }, {
@@ -119,7 +119,7 @@ export default [{
       query: questsQueryScheme
     },
     response: {
-      schema: outputOkSchema(questsResponseScheme)
+      schema: outputOkSchema(questsOutputScheme).label("QuestsResponse")
     },
   }
 }];
