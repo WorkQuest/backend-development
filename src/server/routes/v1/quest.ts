@@ -12,14 +12,14 @@ import {
 
 const questsQueryScheme = Joi.object({
   offset: Joi.number().min(0).default(0).label('offset'),
-  limit: Joi.number().min(0).default(10).label('limit'),
+  limit: Joi.number().min(0).default(100).label('limit'),
   q: Joi.string().default(null).max(255),
   priority: prioritySchema.default(null),
   sort: Joi.object({
     price: sortDirectionSchema,
     createdAt: sortDirectionSchema,
   }).default({}).label('QuestsListSortSchema'),
-})
+}).label('QuestsQueryScheme')
 
 export default [{
   method: "POST",
@@ -84,7 +84,7 @@ export default [{
       }).label("EditQuestPayload"),
     },
     response: {
-      schema: emptyOkSchema.label("EditQuestResponse")
+      schema: outputOkSchema(questSchema).label("QuestResponse"),
     },
   }
 }, {
@@ -99,7 +99,7 @@ export default [{
       query: questsQueryScheme
     },
     response: {
-      schema: emptyOkSchema.label("QuestsResponse")
+      schema: outputOkSchema(Joi.array().items(questSchema)).label("QuestsResponse")
     },
   }
 }, {
@@ -112,6 +112,9 @@ export default [{
     description: "Get quests for a given user",
     validate: {
       query: questsQueryScheme
+    },
+    response: {
+      schema: outputOkSchema(Joi.array().items(questSchema)).label("QuestsResponse")
     },
   }
 }];

@@ -1,7 +1,6 @@
 import { BelongsTo, Column, DataType, ForeignKey, Model, Scopes, Table } from 'sequelize-typescript';
 import { User } from "./User";
 import { getUUID } from '../utils';
-import BigNumber from 'bignumber.js';
 
 export enum Priority {
   AllPriority = 0,
@@ -54,7 +53,7 @@ export class Quest extends Model {
   @Column({type: DataType.STRING }) title: string;
   @Column({type: DataType.TEXT }) description: string;
 
-  @Column({type: DataType.DECIMAL}) price: BigNumber;
+  @Column({type: DataType.DECIMAL}) price: string;
   @Column({type: DataType.INTEGER, defaultValue: AdType.Free }) adType: AdType;
 
   @BelongsTo(() => User) user: User;

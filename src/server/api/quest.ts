@@ -13,7 +13,7 @@ export async function createQuest(r) {
   const user = r.auth.credentials;
 
   if (user.role !== UserRole.Employer) {
-    return error(Errors.InvalidPayload, "User is not Employer", {});
+    return error(Errors.InvalidRole, "User is not Employer", {});
   }
 
   const quest = await Quest.create({
@@ -42,12 +42,12 @@ export async function editQuest(r) {
     return error(Errors.NotFound, "Quest not found", {});
   }
   if (quest.userId !== r.auth.credentials.id) {
-    return error(Errors.UnconfirmedUser, "User is not creator of quest", {});
+    return error(Errors.Forbidden, "User is not creator of quest", {});
   }
 
   await quest.update(r.payload);
 
-  return output();
+  return output(quest);
 }
 
 export async function deleteQuest(r) {
@@ -57,7 +57,7 @@ export async function deleteQuest(r) {
     return error(Errors.NotFound, "Quest not found", {});
   }
   if (quest.userId !== r.auth.credentials.id) {
-    return error(Errors.UnconfirmedUser, "User is not creator of quest", {});
+    return error(Errors.Forbidden, "User is not creator of quest", {});
   }
 
   await quest.destroy({ force: true });
@@ -90,5 +90,5 @@ export async function getQuests(r) {
     where, order,
   })
 
-  return output({count, rows});
+  return output({count, quests: rows});
 }
