@@ -7,12 +7,12 @@ import {
   descriptionSchema,
   locationSchema, priceSchema,
   prioritySchema, questIdSchema, questSchema,
-  titleSchema, userIdSchema
+  titleSchema
 } from '../../schemes/quest';
 
 const questsQueryScheme = Joi.object({
   offset: Joi.number().min(0).default(0).label('offset'),
-  limit: Joi.number().min(0).default(100).label('limit'),
+  limit: Joi.number().min(0).default(10).max(100).label('limit'),
   q: Joi.string().default(null).max(255),
   priority: prioritySchema.default(null),
   sort: Joi.object({
@@ -20,6 +20,11 @@ const questsQueryScheme = Joi.object({
     createdAt: sortDirectionSchema,
   }).default({}).label('QuestsListSortSchema'),
 }).label('QuestsQueryScheme')
+
+const questsResponseScheme = Joi.object({
+  count: Joi.number().integer().example(10).label('CountQuests'),
+  quests: Joi.array().items(questSchema).label('QuestsList'),
+}).label("QuestsResponse");
 
 export default [{
   method: "POST",
@@ -99,7 +104,7 @@ export default [{
       query: questsQueryScheme
     },
     response: {
-      schema: outputOkSchema(Joi.array().items(questSchema)).label("QuestsResponse")
+      schema: outputOkSchema(questsResponseScheme)
     },
   }
 }, {
@@ -114,7 +119,7 @@ export default [{
       query: questsQueryScheme
     },
     response: {
-      schema: outputOkSchema(Joi.array().items(questSchema)).label("QuestsResponse")
+      schema: outputOkSchema(questsResponseScheme)
     },
   }
 }];
