@@ -18,6 +18,7 @@ export async function createQuest(r) {
 
   const quest = await Quest.create({
     userId: user.id,
+    type: r.payload.type,
     category: r.payload.category,
     priority: r.payload.priority,
     location: r.payload.location,

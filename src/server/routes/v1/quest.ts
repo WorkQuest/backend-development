@@ -7,7 +7,7 @@ import {
   descriptionSchema,
   locationSchema, priceSchema,
   prioritySchema, questIdSchema, questSchema,
-  titleSchema
+  titleSchema, typeSchema
 } from '../../schemes/quest';
 
 const questsQueryScheme = Joi.object({
@@ -16,10 +16,11 @@ const questsQueryScheme = Joi.object({
   q: Joi.string().default(null).max(255),
   priority: prioritySchema.default(null),
   sort: Joi.object({
+    type: typeSchema,
     price: sortDirectionSchema,
     createdAt: sortDirectionSchema,
   }).default({}).label('QuestsListSortSchema'),
-}).label('QuestsQueryScheme')
+}).label('QuestsQueryScheme');
 
 const questsOutputScheme = Joi.object({
   count: Joi.number().integer().example(10).label('CountQuests'),
@@ -37,6 +38,7 @@ export default [{
     validate: {
       payload: Joi.object({
         category: categorySchema.required(),
+        type: typeSchema,
         priority: prioritySchema.required(),
         location: locationSchema.required(),
         title: titleSchema.required(),
@@ -79,6 +81,7 @@ export default [{
         questId: questIdSchema,
       }).label("EditQuestParams"),
       payload: Joi.object({
+        type: typeSchema,
         category: categorySchema,
         priority: prioritySchema,
         location: locationSchema,
