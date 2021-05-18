@@ -1,11 +1,11 @@
 import * as Joi from "joi";
 import { createQuest, deleteQuest, editQuest, getQuests } from '../../api/quest';
-import { emptyOkSchema, outputOkSchema, sortDirectionSchema } from '../../schemes';
+import { emptyOkSchema, outputOkSchema, sortDirectionSchema, locationSchema } from '../../schemes';
 import {
   adTypeSchema,
   categorySchema,
   descriptionSchema,
-  locationSchema, priceSchema,
+  priceSchema,
   prioritySchema, questIdSchema, questSchema,
   titleSchema
 } from '../../schemes/quest';
