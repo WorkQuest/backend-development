@@ -10,6 +10,8 @@ export class QuestsResponse extends Model {
   @ForeignKey(() => User) @Column(DataType.STRING) userId: string;
   @ForeignKey(() => Quest) @Column(DataType.STRING) questId: string;
 
+  @ForeignKey(() => User) @Column(DataType.TEXT) message: string;
+
   @BelongsTo(() => User) user: User;
   @BelongsTo(() => Quest) quest: Quest;
 }
