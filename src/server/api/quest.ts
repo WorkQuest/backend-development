@@ -27,14 +27,7 @@ export async function createQuest(r) {
     price: r.payload.price,
   });
 
-  return output({
-    id: quest.id,
-    userId: quest.userId,
-    ...r.payload,
-    status: Status.Created,
-    createdAt: quest.createdAt,
-    updatedAt: quest.updatedAt,
-  });
+  return output({...quest, locationPostGIS: undefined});
 }
 
 export async function editQuest(r) {
