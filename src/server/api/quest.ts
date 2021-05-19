@@ -27,7 +27,7 @@ export async function createQuest(r) {
     price: r.payload.price,
   });
 
-  return output({...quest, locationPostGIS: undefined});
+  return output({...quest.toJSON(), locationPostGIS: undefined});
 }
 
 export async function editQuest(r) {
