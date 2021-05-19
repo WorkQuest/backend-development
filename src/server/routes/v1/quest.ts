@@ -15,8 +15,8 @@ const questsQueryScheme = Joi.object({
   limit: Joi.number().min(0).default(10).max(100).label('limit'),
   q: Joi.string().default(null).max(255),
   priority: prioritySchema.default(null),
+  status: statusSchema.default(null),
   sort: Joi.object({
-    status: statusSchema,
     price: sortDirectionSchema,
     createdAt: sortDirectionSchema,
   }).default({}).label('QuestsListSortSchema'),
@@ -38,7 +38,6 @@ export default [{
     validate: {
       payload: Joi.object({
         category: categorySchema.required(),
-        status: statusSchema,
         priority: prioritySchema.required(),
         location: locationSchema.required(),
         title: titleSchema.required(),
@@ -81,7 +80,6 @@ export default [{
         questId: questIdSchema,
       }).label("EditQuestParams"),
       payload: Joi.object({
-        status: statusSchema,
         category: categorySchema,
         priority: prioritySchema,
         location: locationSchema,

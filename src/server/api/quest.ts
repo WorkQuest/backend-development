@@ -1,6 +1,6 @@
 import { error, output } from '../utils';
 import { Errors } from '../utils/errors';
-import { Quest } from '../models/Quest';
+import { Quest, Status } from '../models/Quest';
 import { UserRole } from '../models/User';
 import { Op } from "sequelize";
 
@@ -18,7 +18,7 @@ export async function createQuest(r) {
 
   const quest = await Quest.create({
     userId: user.id,
-    status: r.payload.status,
+    status: Status.Created,
     category: r.payload.category,
     priority: r.payload.priority,
     location: r.payload.location,
@@ -31,6 +31,7 @@ export async function createQuest(r) {
     id: quest.id,
     userId: quest.userId,
     ...r.payload,
+    status: Status.Created,
     createdAt: quest.createdAt,
     updatedAt: quest.updatedAt,
   });
@@ -70,6 +71,7 @@ export async function getQuests(r) {
   const order = [];
   const where = {
     ...(r.query.priority && { priority: r.query.priority }),
+    ...(r.query.status && { status: r.query.status }),
     ...(r.params.userId && { userId: r.params.userId })
   };
 
