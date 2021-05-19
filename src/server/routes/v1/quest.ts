@@ -59,7 +59,7 @@ export default [{
     description: "Delete quest",
     validate: {
       params: Joi.object({
-        questId: questIdSchema,
+        questId: questIdSchema.required(),
       }).label("DeleteQuestParams")
     },
     response: {
@@ -76,7 +76,7 @@ export default [{
     description: "Edit quest",
     validate: {
       params: Joi.object({
-        questId: questIdSchema,
+        questId: questIdSchema.required(),
       }).label("EditQuestParams"),
       payload: Joi.object({
         category: categorySchema,
