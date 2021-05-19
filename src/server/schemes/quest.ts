@@ -1,11 +1,11 @@
 import * as Joi from "joi";
-import { Priority, AdType, Location, Type } from '../models/Quest';
+import { Priority, AdType, Location, Status } from '../models/Quest';
 import { isoDateSchema } from './index';
 
 export const questIdSchema = Joi.string().uuid().example("fa0e2e4e-c53f-4af7-8906-1649daa0cce3").label("QuestId");
 export const userIdSchema = Joi.string().uuid().example("fa0e2e4e-c53f-4af7-8906-1649daa0cce3").label("UserId");
 export const categorySchema = Joi.string().example('Retail').label('Category');
-export const typeSchema = Joi.number().valid(...Object.keys(Type).map(key => parseInt(key)).filter(key => !isNaN(key))).example(Type.None).default(Type.None).label('Type');
+export const statusSchema = Joi.number().valid(...Object.keys(Status).map(key => parseInt(key)).filter(key => !isNaN(key))).example(Status.Created).default(Status.Created).label('Status');
 export const prioritySchema = Joi.number().valid(...Object.keys(Priority).map(key => parseInt(key)).filter(key => !isNaN(key))).example(Priority.AllPriority).label('Priority');
 export const titleSchema = Joi.string().example('Title...').label('Title');
 export const descriptionSchema = Joi.string().example('Description quest...').label('Description');
@@ -22,7 +22,7 @@ export const locationSchema = Joi.object({
 export const questSchema = Joi.object({
   userId: userIdSchema,
   category: categorySchema,
-  type: typeSchema,
+  status: statusSchema,
   priority: prioritySchema,
   location: locationSchema,
   title: titleSchema,
