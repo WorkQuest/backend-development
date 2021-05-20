@@ -28,8 +28,8 @@ export const longitudeSchema = Joi.number().min(-180).max(180).example(84.948846
 export const latitudeSchema = Joi.number().min(-90).max(90).example(56.48122).label('Latitude');
 
 export const locationSchema = Joi.object({
-  longitude: longitudeSchema,
-  latitude: latitudeSchema,
+  longitude: longitudeSchema.required(),
+  latitude: latitudeSchema.required(),
 }).label('Location');
 
 export const emptyOkSchema = Joi.object({
