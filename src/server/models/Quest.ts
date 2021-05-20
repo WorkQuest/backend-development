@@ -14,6 +14,13 @@ export enum AdType {
   Paid,
 };
 
+export enum Status {
+  Created = 0,
+  Active,
+  Performed,
+  Arbitration,
+}
+
 export interface Location {
   longitude: number;
   latitude: number;
@@ -40,6 +47,7 @@ export class Quest extends Model {
   @Column({ primaryKey: true, type: DataType.STRING, defaultValue: () => getUUID() }) id: string;
   @ForeignKey(() => User) @Column(DataType.STRING) userId: string;
 
+  @Column({type: DataType.INTEGER, defaultValue: Status.Created }) status: Status;
   @Column({type: DataType.INTEGER, defaultValue: Priority.AllPriority }) priority: Priority;
   @Column({type: DataType.STRING, allowNull: false }) category: string;
 
