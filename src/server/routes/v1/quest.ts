@@ -9,6 +9,7 @@ import {
   questPrioritySchema, questIdSchema, questSchema,
   titleSchema, questStatusSchema
 } from '../../schemes/quest';
+import { userIdSchema } from '../../schemes/user';
 
 const questsQueryScheme = Joi.object({
   offset: Joi.number().min(0).default(0).label('offset'),
@@ -117,6 +118,9 @@ export default [{
     tags: ["api", "quest"],
     description: "Get quests for a given user",
     validate: {
+      params: Joi.object({
+        userId: userIdSchema.required(),
+      }).label("GetQuestsParams"),
       query: questsQueryScheme
     },
     response: {
