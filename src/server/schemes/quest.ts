@@ -32,3 +32,4 @@ export const questSchema = Joi.object({
   createdAt: isoDateSchema,
   updatedAt: isoDateSchema,
 }).label("QuestSchema");
+

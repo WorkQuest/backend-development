@@ -12,7 +12,7 @@ export async function questResponse(r) {
     return error(Errors.NotFound, "Quest not found", {});
   }
   if (quest.status !== QuestStatus.Created) {
-    return error(Errors.InvalidStatus, "Status isn't at stage created", {});
+    return error(Errors.InvalidStatus, "Quest isn't at stage created", {});
   }
   if (user.role !== UserRole.Worker) {
     return error(Errors.InvalidRole, "User is not Worker", {});
@@ -55,7 +55,10 @@ export async function questInvite(r) {
     return error(Errors.NotFound, "Quest not found", {});
   }
   if (quest.status !== QuestStatus.Created) {
-    return error(Errors.InvalidStatus, "Status isn't at stage created", {});
+    return error(Errors.InvalidStatus, "Quest isn't at stage created", {});
+  }
+  if (quest.userId !== user.id) {
+    return error(Errors.Forbidden, "User isn't creator quest", {});
   }
 
   const questsResponse = await QuestsResponse.findOne({
