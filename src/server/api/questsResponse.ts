@@ -1,8 +1,8 @@
 import { UserRole } from '../models/User';
 import { error, output } from '../utils';
 import { Errors } from '../utils/errors';
-import { QuestsResponse } from '../models/QuestsResponse';
-import { Quest } from '../models/Quest';
+import { QuestsResponse, QuestsResponseStatus, QuestsResponseType } from '../models/QuestsResponse';
+import { Quest, QuestStatus } from '../models/Quest';
 
 export async function questResponse(r) {
   const user = r.auth.credentials;
@@ -11,14 +11,33 @@ export async function questResponse(r) {
   if (!quest) {
     return error(Errors.NotFound, "Quest not found", {});
   }
+  if (quest.status !== QuestStatus.Created) {
+    return error(Errors.InvalidStatus, "Status isn't at stage \"Created\"", {});
+  }
   if (user.role !== UserRole.Worker) {
     return error(Errors.InvalidRole, "User is not Worker", {});
+  }
+  if (user !== UserRole.Worker) {
+    return error(Errors.InvalidRole, "User is not Worker", {});
+  }
+
+  const questsResponse = await QuestsResponse.findOne({
+    where: {
+      questId: quest.id,
+      userId: user.id
+    }
+  });
+
+  if (questsResponse) {
+    return error(Errors.AlreadyAnswer, "You already answered quest", {});
   }
 
   await QuestsResponse.create({
     userId: user.id,
     questId: quest.id,
     message: r.payload.message,
+    status: QuestsResponseStatus.Open,
+    type: QuestsResponseType.Response,
   });
 
   return output();

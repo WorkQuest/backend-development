@@ -1,6 +1,6 @@
 import { error, output } from '../utils';
 import { Errors } from '../utils/errors';
-import { Quest, Status } from '../models/Quest';
+import { Quest, QuestStatus } from '../models/Quest';
 import { UserRole } from '../models/User';
 import { Op } from "sequelize";
 
@@ -18,7 +18,7 @@ export async function createQuest(r) {
 
   const quest = await Quest.create({
     userId: user.id,
-    status: Status.Created,
+    status: QuestStatus.Created,
     category: r.payload.category,
     priority: r.payload.priority,
     location: r.payload.location,

@@ -2,7 +2,7 @@ import { BelongsTo, Column, DataType, ForeignKey, Model, Scopes, Table } from 's
 import { User } from "./User";
 import { getUUID } from '../utils';
 
-export enum Priority {
+export enum QuestPriority {
   AllPriority = 0,
   Low,
   Normal,
@@ -14,7 +14,7 @@ export enum AdType {
   Paid,
 };
 
-export enum Status {
+export enum QuestStatus {
   Created = 0,
   Active,
   Performed,
@@ -47,8 +47,8 @@ export class Quest extends Model {
   @Column({ primaryKey: true, type: DataType.STRING, defaultValue: () => getUUID() }) id: string;
   @ForeignKey(() => User) @Column(DataType.STRING) userId: string;
 
-  @Column({type: DataType.INTEGER, defaultValue: Status.Created }) status: Status;
-  @Column({type: DataType.INTEGER, defaultValue: Priority.AllPriority }) priority: Priority;
+  @Column({type: DataType.INTEGER, defaultValue: QuestStatus.Created }) status: QuestStatus;
+  @Column({type: DataType.INTEGER, defaultValue: QuestPriority.AllPriority }) priority: QuestPriority;
   @Column({type: DataType.STRING, allowNull: false }) category: string;
 
   @Column({type: DataType.JSONB,

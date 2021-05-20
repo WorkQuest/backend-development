@@ -3,6 +3,8 @@ export enum Errors {
   InvalidPayload = 400000,
   UnconfirmedUser = 400001,
   InvalidRole = 400002,
+  InvalidStatus = 400003,
+  AlreadyAnswer,
   // Authorization errors (401)
   TokenExpired = 401001,
   TokenInvalid = 401002,
