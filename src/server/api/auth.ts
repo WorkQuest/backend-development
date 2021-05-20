@@ -51,7 +51,7 @@ export async function register(r) {
 }
 
 export async function confirmEmail(r) {
-	let user = await User.scope("withPassword").findOne({
+	const user = await User.scope("withPassword").findOne({
 		where: {
 			"settings.emailConfirm": r.payload.confirmCode
 		}
@@ -63,7 +63,7 @@ export async function confirmEmail(r) {
 }
 
 export async function login(r) {
-	let user = await User.scope("withPassword").findOne({
+	const user = await User.scope("withPassword").findOne({
 		where: {
 			email: {
 				[Op.iLike]: r.payload.email
