@@ -1,7 +1,8 @@
 import Joi = require("joi");
 import { locationSchema, outputOkSchema } from '../../schemes';
-import { mapPoints } from '../../api/map';
-import { questIdSchema } from '../../schemes/quest';
+import { listMapPoints, mapPoints } from '../../api/map';
+import { prioritySchema, questIdSchema, questSchema, statusSchema } from '../../schemes/quest';
+import { questsListSortSchema } from './quest';
 
 const mapPointOutputScheme = Joi.object({
   pointsCount: Joi.number(),
@@ -23,10 +24,35 @@ export default [{
       query: Joi.object({
         north: locationSchema.label('NorthLocation').required(),
         south: locationSchema.label('SouthLocation').required(),
-      }),
+        q: Joi.string().default(null).max(255),
+        priority: prioritySchema,
+        status: statusSchema,
+      }).label('MapPointsQueryScheme'),
     },
     response: {
       schema: outputOkSchema(Joi.array().items(mapPointOutputScheme)).label('MapPointsOutputResponse'),
+    }
+  }
+}, {
+  method: "GET",
+  path: "/v1/quests/map/list-points",
+  handler: listMapPoints,
+  options: {
+    id: "v1.map.points.list",
+    tags: ["api", "map"],
+    description: "Get list points in map",
+    validate: {
+      query: Joi.object({
+        north: locationSchema.label('NorthLocation').required(),
+        south: locationSchema.label('SouthLocation').required(),
+        q: Joi.string().default(null).max(255),
+        priority: prioritySchema,
+        status: statusSchema,
+        sort: questsListSortSchema
+      }).label('ListPointsQueryScheme'),
+    },
+    response: {
+      schema: outputOkSchema(Joi.array().items(questSchema)).label('ListMapPointsOutputResponse'),
     }
   }
 }];

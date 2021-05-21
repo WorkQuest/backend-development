@@ -19,7 +19,7 @@ export enum Status {
   Active,
   Performed,
   Arbitration,
-}
+};
 
 export interface Location {
   longitude: number;

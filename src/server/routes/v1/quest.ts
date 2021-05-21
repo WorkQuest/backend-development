@@ -10,16 +10,18 @@ import {
   titleSchema, statusSchema
 } from '../../schemes/quest';
 
+export const questsListSortSchema = Joi.object({
+  price: sortDirectionSchema,
+  createdAt: sortDirectionSchema,
+}).default({}).label('QuestsListSortSchema');
+
 const questsQueryScheme = Joi.object({
   offset: Joi.number().min(0).default(0).label('offset'),
   limit: Joi.number().min(0).default(10).max(100).label('limit'),
   q: Joi.string().default(null).max(255),
   priority: prioritySchema.default(null),
   status: statusSchema.default(null),
-  sort: Joi.object({
-    price: sortDirectionSchema,
-    createdAt: sortDirectionSchema,
-  }).default({}).label('QuestsListSortSchema'),
+  sort: questsListSortSchema,
 }).label('QuestsQueryScheme');
 
 const questsOutputScheme = Joi.object({
