@@ -83,7 +83,7 @@ export async function questInvite(r) {
   return output();
 }
 
-export async function getQuestResponses(r) {
+export async function getResponsesToQuest(r) {
   const user = r.auth.credentials;
   const quest = await Quest.findByPk(r.params.questId);
 

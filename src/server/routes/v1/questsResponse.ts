@@ -1,10 +1,24 @@
 import * as Joi from "joi";
-import { questResponse, questInvite, getQuestResponses } from '../../api/questsResponse';
+import { questResponse, questInvite, getResponsesToQuest } from '../../api/questsResponse';
 import { questIdSchema } from '../../schemes/quest';
-import { emptyOkSchema, outputOkSchema } from '../../schemes';
-import { messageSchema, questsResponseSchema } from '../../schemes/questsResponse';
-import { userIdSchema } from '../../schemes/user';
-import { array } from 'joi';
+import { emptyOkSchema, isoDateSchema, outputOkSchema } from '../../schemes';
+import {
+  messageSchema,
+  questsResponseStatusSchema,
+  questsResponseTypeSchema
+} from '../../schemes/questsResponse';
+import { userIdSchema, userSchema } from '../../schemes/user';
+
+const responseToQuest = Joi.object({
+  workerId: userIdSchema,
+  questId: questIdSchema,
+  status: questsResponseStatusSchema,
+  type: questsResponseTypeSchema,
+  message: messageSchema,
+  createdAt: isoDateSchema,
+  updatedAt: isoDateSchema,
+  worker: userSchema,
+}).label('ResponseToQuestScheme');
 
 export default [{
   method: "POST",
@@ -50,18 +64,18 @@ export default [{
 }, {
   method: "GET",
   path: "/v1/quest/{questId}/responses",
-  handler: getQuestResponses,
+  handler: getResponsesToQuest,
   options: {
     id: "v1.quest.responses",
     tags: ["api", "quest", "response"],
-    description: "Get responses on quest",
+    description: "Qet responses to quest",
     validate: {
       params: Joi.object({
         questId: questIdSchema.required(),
-      }).label("QuestResponseParams")
+      }).label("ResponsesToQuestParams")
     },
     response: {
-      schema: outputOkSchema(array().items(questsResponseSchema)).label("ResponsesQuestResponse"),
+      schema: outputOkSchema(Joi.array().items(responseToQuest)).label("ResponsesToQuestResponse"),
     },
   }
 }];
