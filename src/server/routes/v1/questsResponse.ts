@@ -1,9 +1,15 @@
 import * as Joi from "joi";
-import { questResponse, questInvite, getResponsesToQuest } from '../../api/questsResponse';
+import {
+  questResponse,
+  questInvite,
+  getResponsesToQuest,
+  getResponsesUserToQuest,
+  rejectInvite, acceptInvite
+} from '../../api/questsResponse';
 import { questIdSchema } from '../../schemes/quest';
 import { emptyOkSchema, isoDateSchema, outputOkSchema } from '../../schemes';
 import {
-  messageSchema,
+  messageSchema, questsResponseIdSchema,
   questsResponseStatusSchema,
   questsResponseTypeSchema
 } from '../../schemes/questsResponse';
@@ -68,7 +74,7 @@ export default [{
   options: {
     id: "v1.quest.responses",
     tags: ["api", "quest", "response"],
-    description: "Qet responses to quest",
+    description: "Get responses to quest",
     validate: {
       params: Joi.object({
         questId: questIdSchema.required(),
@@ -77,5 +83,51 @@ export default [{
     response: {
       schema: outputOkSchema(Joi.array().items(responseToQuest)).label("ResponsesToQuestResponse"),
     },
+  }
+}, {
+  method: "GET",
+  path: "/v1/quest/responses/my",
+  handler: getResponsesUserToQuest,
+  options: {
+    id: "v1.quest.responses.my",
+    tags: ["api", "quest", "response"],
+    description: "Get responses to quest for authorized user",
+    response: {
+      schema: outputOkSchema(Joi.object()).label(''),
+    },
+  },
+}, {
+  method: "POST",
+  path: "/v1/quest/response/{responseId}/accept",
+  handler: acceptInvite,
+  options: {
+    id: "v1.quest.response.accept",
+    tags: ["api", "quest", "response"],
+    description: "Accept quest invitation",
+    validate: {
+      params: Joi.object({
+        responseId: questsResponseIdSchema.required()
+      }).label('AcceptInvitationParams'),
+    },
+    response: {
+      schema: emptyOkSchema.label('AcceptInvitationResponse')
+    }
+  }
+}, {
+  method: "POST",
+  path: "/v1/quest/response/{responseId}/reject",
+  handler: rejectInvite,
+  options: {
+    id: "v1.quest.response.reject",
+    tags: ["api", "quest", "response"],
+    description: "Reject quest invitation",
+    validate: {
+      params: Joi.object({
+        responseId: questsResponseIdSchema.required()
+      }).label('RejectInvitationParams'),
+    },
+    response: {
+      schema: emptyOkSchema.label('RejectInvitationResponse')
+    }
   }
 }];

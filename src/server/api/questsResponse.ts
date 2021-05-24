@@ -103,3 +103,65 @@ export async function getResponsesToQuest(r) {
 
   return output(questResponses);
 }
+
+export async function getResponsesUserToQuest(r) {
+  const user = r.auth.credentials;
+
+  if (user.role !== UserRole.Worker) {
+    return error(Errors.InvalidRole, "User is not Worker", {});
+  }
+
+  const questResponses = await QuestsResponse.findAll({
+    where: { workerId: user.id },
+    include: [{
+      model: Quest,
+      include: [{ model: User }]
+    }]
+  });
+
+  return output(questResponses);
+}
+
+export async function acceptInvite(r) {
+  const user = r.auth.credentials;
+  const questsResponse = await QuestsResponse.findOne({ where: { id: r.params.responseId } });
+
+  if (!questsResponse) {
+    return error(Errors.NotFound, "Quests response not found", {});
+  }
+  if (questsResponse.workerId !== user.id) {
+    return error(Errors.Forbidden, "User isn't invitation to quest", {});
+  }
+  if (questsResponse.status !== QuestsResponseStatus.Open) {
+    return error(Errors.Forbidden, "Status of response on quest isn't open", {});
+  }
+  if (questsResponse.type !== QuestsResponseType.Invite) {
+    return error(Errors.Forbidden, "Response on quest isn't invite", {});
+  }
+
+  await questsResponse.update({ status: QuestsResponseStatus.Accept });
+
+  return output();
+}
+
+export async function rejectInvite(r) {
+  const user = r.auth.credentials;
+  const questsResponse = await QuestsResponse.findOne({ where: { id: r.params.responseId } });
+
+  if (!questsResponse) {
+    return error(Errors.NotFound, "Quests response not found", {});
+  }
+  if (questsResponse.workerId !== user.id) {
+    return error(Errors.Forbidden, "User isn't invitation to quest", {});
+  }
+  if (questsResponse.status !== QuestsResponseStatus.Open) {
+    return error(Errors.Forbidden, "Status of response on quest isn't open", {});
+  }
+  if (questsResponse.type !== QuestsResponseType.Invite) {
+    return error(Errors.Forbidden, "Response on quest isn't invite", {});
+  }
+
+  await questsResponse.update({ status: QuestsResponseStatus.Reject });
+
+  return output();
+}

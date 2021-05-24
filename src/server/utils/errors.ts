@@ -10,7 +10,7 @@ export enum Errors {
   TokenInvalid = 401002,
   SessionNotFound = 401003,
   // Forbidden (403)
-  Forbidden = 4030000,
+  Forbidden = 403000,
   // Not found (404)
   NotFound = 404000,
 }
