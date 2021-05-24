@@ -1,5 +1,5 @@
 import * as Joi from "joi";
-import { Priority, AdType, Status } from '../models/Quest';
+import { QuestPriority, AdType, QuestStatus } from '../models/Quest';
 import { isoDateSchema, locationSchema } from './index';
 
 export const questIdSchema = Joi.string().uuid().example("fa0e2e4e-c53f-4af7-8906-1649daa0cce3").label("QuestId");

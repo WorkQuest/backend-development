@@ -1,7 +1,7 @@
 import Joi = require("joi");
 import { locationSchema, outputOkSchema } from '../../schemes';
 import { listMapPoints, mapPoints } from '../../api/map';
-import { prioritySchema, questIdSchema, questSchema, statusSchema } from '../../schemes/quest';
+import { questPrioritySchema, questIdSchema, questSchema, questStatusSchema } from '../../schemes/quest';
 import { questsListSortSchema } from './quest';
 
 const mapPointOutputScheme = Joi.object({
@@ -25,8 +25,8 @@ export default [{
         north: locationSchema.label('NorthLocation').required(),
         south: locationSchema.label('SouthLocation').required(),
         q: Joi.string().default(null).max(255),
-        priority: prioritySchema,
-        status: statusSchema,
+        priority: questPrioritySchema,
+        status: questStatusSchema,
       }).label('MapPointsQueryScheme'),
     },
     response: {
@@ -46,8 +46,8 @@ export default [{
         north: locationSchema.label('NorthLocation').required(),
         south: locationSchema.label('SouthLocation').required(),
         q: Joi.string().default(null).max(255),
-        priority: prioritySchema,
-        status: statusSchema,
+        priority: questPrioritySchema,
+        status: questStatusSchema,
         sort: questsListSortSchema
       }).label('ListPointsQueryScheme'),
     },
