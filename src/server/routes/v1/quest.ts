@@ -1,15 +1,20 @@
 import * as Joi from "joi";
 import { createQuest, deleteQuest, editQuest, getQuests } from '../../api/quest';
-import { emptyOkSchema, outputOkSchema, sortDirectionSchema } from '../../schemes';
+import { emptyOkSchema, outputOkSchema, sortDirectionSchema, locationSchema } from '../../schemes';
 import {
   adTypeSchema,
   categorySchema,
   descriptionSchema,
-  locationSchema, priceSchema,
+  priceSchema,
   questPrioritySchema, questIdSchema, questSchema,
   titleSchema, questStatusSchema
 } from '../../schemes/quest';
 import { userIdSchema } from '../../schemes/user';
+
+export const questsListSortSchema = Joi.object({
+  price: sortDirectionSchema,
+  createdAt: sortDirectionSchema,
+}).default({}).label('QuestsListSortSchema');
 
 const questsQueryScheme = Joi.object({
   offset: Joi.number().min(0).default(0).label('offset'),
@@ -17,10 +22,7 @@ const questsQueryScheme = Joi.object({
   q: Joi.string().default(null).max(255),
   priority: questPrioritySchema.default(null),
   status: questStatusSchema.default(null),
-  sort: Joi.object({
-    price: sortDirectionSchema,
-    createdAt: sortDirectionSchema,
-  }).default({}).label('QuestsListSortSchema'),
+  sort: questsListSortSchema,
 }).label('QuestsQueryScheme');
 
 const questsOutputScheme = Joi.object({

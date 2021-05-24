@@ -1,9 +1,9 @@
 import * as Joi from "joi";
-import { QuestPriority, AdType, Location, QuestStatus } from '../models/Quest';
-import { userIdSchema } from "./user";
-import { isoDateSchema } from './index';
+import { QuestPriority, AdType, QuestStatus } from '../models/Quest';
+import { isoDateSchema, locationSchema } from './index';
 
 export const questIdSchema = Joi.string().uuid().example("fa0e2e4e-c53f-4af7-8906-1649daa0cce3").label("QuestId");
+export const userIdSchema = Joi.string().uuid().example("fa0e2e4e-c53f-4af7-8906-1649daa0cce3").label("UserId");
 export const categorySchema = Joi.string().example('Retail').label('Category');
 export const questStatusSchema = Joi.number().valid(...Object.keys(QuestStatus).map(key => parseInt(key)).filter(key => !isNaN(key))).example(QuestStatus.Created).default(QuestStatus.Created).label('Status');
 export const questPrioritySchema = Joi.number().valid(...Object.keys(QuestPriority).map(key => parseInt(key)).filter(key => !isNaN(key))).example(QuestPriority.AllPriority).label('Priority');
@@ -11,13 +11,6 @@ export const titleSchema = Joi.string().example('Title...').label('Title');
 export const descriptionSchema = Joi.string().example('Description quest...').label('Description');
 export const priceSchema = Joi.string().example("500").label('Price');
 export const adTypeSchema = Joi.number().valid(...Object.keys(AdType).map(key => parseInt(key)).filter(key => !isNaN(key))).example(AdType.Free).default(AdType.Free).label('AdType');
-export const longitudeSchema = Joi.number().min(-180).max(180).example(84.948846).label('Longitude');
-export const latitudeSchema = Joi.number().min(-90).max(90).example(56.48122).label('Latitude');
-
-export const locationSchema = Joi.object({
-  longitude: longitudeSchema,
-  latitude: latitudeSchema,
-}).label('Location');
 
 export const questSchema = Joi.object({
   userId: userIdSchema,
@@ -32,4 +25,3 @@ export const questSchema = Joi.object({
   createdAt: isoDateSchema,
   updatedAt: isoDateSchema,
 }).label("QuestSchema");
-

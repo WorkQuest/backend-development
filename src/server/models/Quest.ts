@@ -19,7 +19,7 @@ export enum QuestStatus {
   Active,
   Performed,
   Arbitration,
-}
+};
 
 export interface Location {
   longitude: number;

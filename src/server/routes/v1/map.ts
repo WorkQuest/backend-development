@@ -1,60 +1,58 @@
 import Joi = require("joi");
-import { addPoint, delPoint, getAllPoints } from "../../api/map";
-import { emptyOkSchema, outputOkSchema } from "../../schemes";
-import {
-  pointGeoSchema,
-  pointIdSchema,
-  pointObjectSchema,
-  pointsArraySchema,
-  pointTextSchema
-} from "../../schemes/point";
+import { locationSchema, outputOkSchema } from '../../schemes';
+import { listMapPoints, mapPoints } from '../../api/map';
+import { questPrioritySchema, questIdSchema, questSchema, questStatusSchema } from '../../schemes/quest';
+import { questsListSortSchema } from './quest';
+
+const mapPointOutputScheme = Joi.object({
+  pointsCount: Joi.number(),
+  questId: questIdSchema,
+  type: Joi.string(),
+  coordinates: Joi.array().items(Joi.number()),
+  clusterRadius: Joi.number().allow(null),
+}).label('MapPointOutputScheme');
 
 export default [{
   method: "GET",
-  path: "/v1/map/points",
-  handler: getAllPoints,
+  path: "/v1/quests/map/points",
+  handler: mapPoints,
   options: {
-    id: "v1.map.getAllPoints",
+    id: "v1.map.points",
     tags: ["api", "map"],
-    description: "Get all map points",
+    description: "Get points in map",
+    validate: {
+      query: Joi.object({
+        north: locationSchema.label('NorthLocation').required(),
+        south: locationSchema.label('SouthLocation').required(),
+        q: Joi.string().default(null).max(255),
+        priority: questPrioritySchema,
+        status: questStatusSchema,
+      }).label('MapPointsQueryScheme'),
+    },
     response: {
-      schema: outputOkSchema(pointsArraySchema).label("MapGetAllPointsResponse")
+      schema: outputOkSchema(Joi.array().items(mapPointOutputScheme)).label('MapPointsOutputResponse'),
     }
   }
 }, {
-  method: "POST",
-  path: "/v1/map/point",
-  handler: addPoint,
+  method: "GET",
+  path: "/v1/quests/map/list-points",
+  handler: listMapPoints,
   options: {
-    id: "v1.map.addPoint",
+    id: "v1.map.points.list",
     tags: ["api", "map"],
-    description: "Add point on map",
+    description: "Get list points in map",
     validate: {
-      payload: Joi.object({
-        text: pointTextSchema,
-        latitude: pointGeoSchema,
-        longitude: pointGeoSchema
-      }).label("MapAddPointPayload")
+      query: Joi.object({
+        north: locationSchema.label('NorthLocation').required(),
+        south: locationSchema.label('SouthLocation').required(),
+        q: Joi.string().default(null).max(255),
+        priority: questPrioritySchema,
+        status: questStatusSchema,
+        sort: questsListSortSchema
+      }).label('ListPointsQueryScheme'),
     },
     response: {
-      schema: outputOkSchema(pointObjectSchema).label("MapAddPointResponse")
-    }
-  }
-}, {
-  method: "DELETE",
-  path: "/v1/map/point/{pointId}",
-  handler: delPoint,
-  options: {
-    id: "v1.map.deletePoint",
-    tags: ["api", "map"],
-    description: "Delete point from map",
-    validate: {
-      params: Joi.object({
-        pointId: pointIdSchema
-      }).label("MapDeletePointParams")
-    },
-    response: {
-      schema: emptyOkSchema.label("MapDeletePointResponse")
+      schema: outputOkSchema(Joi.array().items(questSchema)).label('ListMapPointsOutputResponse'),
     }
   }
 }];

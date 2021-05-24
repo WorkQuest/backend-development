@@ -4,7 +4,7 @@ import { Quest, QuestStatus } from '../models/Quest';
 import { UserRole } from '../models/User';
 import { Op } from "sequelize";
 
-const searchFields = [
+export const searchFields = [
   "title",
   "description",
 ];
@@ -77,14 +77,14 @@ export async function getQuests(r) {
   }
 
   for (const [key, value] of Object.entries(r.query.sort)){
-    order.push([key, value])
+    order.push([key, value]);
   }
 
-  const {count, rows} = await Quest.findAndCountAll({
+  const { count, rows } = await Quest.findAndCountAll({
     limit: r.query.limit,
     offset: r.query.offset,
     where, order,
-  })
+  });
 
   return output({count, quests: rows});
 }
