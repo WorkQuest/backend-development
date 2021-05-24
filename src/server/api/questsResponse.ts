@@ -42,7 +42,7 @@ export async function questResponse(r) {
 
 export async function questInvite(r) {
   const user = r.auth.credentials;
-  const invitedUser = await  User.findOne({ where: { id: r.payload.invitedUserId } });
+  const invitedUser = await User.findOne({ where: { id: r.payload.invitedUserId } });
   const quest = await Quest.findByPk(r.params.questId);
 
   if (user.role !== UserRole.Employer) {
@@ -81,4 +81,20 @@ export async function questInvite(r) {
   });
 
   return output();
+}
+
+export async function getQuestResponses(r) {
+  const user = r.auth.credentials;
+  const quest = await Quest.findByPk(r.params.questId);
+
+  if (!quest) {
+    return error(Errors.NotFound, "Quest not found", {});
+  }
+  if (quest.userId !== user.id) {
+    return error(Errors.Forbidden, "User isn't creator quest", {});
+  }
+
+  const questResponses = await QuestsResponse.findAll({ where: { questId: quest.id } });
+
+  return output(questResponses);
 }

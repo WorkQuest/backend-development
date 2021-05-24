@@ -1,9 +1,10 @@
 import * as Joi from "joi";
-import { questResponse, questInvite } from '../../api/questsResponse'
+import { questResponse, questInvite, getQuestResponses } from '../../api/questsResponse';
 import { questIdSchema } from '../../schemes/quest';
-import { emptyOkSchema } from '../../schemes';
-import { messageSchema } from '../../schemes/questsResponse';
+import { emptyOkSchema, outputOkSchema } from '../../schemes';
+import { messageSchema, questsResponseSchema } from '../../schemes/questsResponse';
 import { userIdSchema } from '../../schemes/user';
+import { array } from 'joi';
 
 export default [{
   method: "POST",
@@ -46,4 +47,21 @@ export default [{
       schema: emptyOkSchema.label("QuestInviteResponse"),
     },
   },
+}, {
+  method: "GET",
+  path: "/v1/quest/{questId}/responses",
+  handler: getQuestResponses,
+  options: {
+    id: "v1.quest.responses",
+    tags: ["api", "quest", "response"],
+    description: "Get responses on quest",
+    validate: {
+      params: Joi.object({
+        questId: questIdSchema.required(),
+      }).label("QuestResponseParams")
+    },
+    response: {
+      schema: outputOkSchema(array().items(questsResponseSchema)).label("ResponsesQuestResponse"),
+    },
+  }
 }];
