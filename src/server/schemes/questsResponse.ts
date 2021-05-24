@@ -10,7 +10,7 @@ export const questsResponseTypeSchema = Joi.number().example(QuestsResponseType.
 
 
 export const questsResponseSchema = Joi.object({
-  userId: userIdSchema,
+  workerId: userIdSchema,
   questId: questIdSchema,
   status: questsResponseStatusSchema,
   type: questsResponseTypeSchema,

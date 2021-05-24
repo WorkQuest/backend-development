@@ -21,7 +21,7 @@ export async function questResponse(r) {
   const questsResponse = await QuestsResponse.findOne({
     where: {
       questId: quest.id,
-      userId: user.id
+      workerId: user.id
     }
   });
 
@@ -30,7 +30,7 @@ export async function questResponse(r) {
   }
 
   await QuestsResponse.create({
-    userId: user.id,
+    workerId: user.id,
     questId: quest.id,
     message: r.payload.message,
     status: QuestsResponseStatus.Open,
@@ -42,13 +42,13 @@ export async function questResponse(r) {
 
 export async function questInvite(r) {
   const user = r.auth.credentials;
-  const invitedUser = await User.findOne({ where: { id: r.payload.invitedUserId } });
+  const invitedWorker = await User.findOne({ where: { id: r.payload.invitedUserId } });
   const quest = await Quest.findByPk(r.params.questId);
 
   if (user.role !== UserRole.Employer) {
     return error(Errors.InvalidRole, "User is not Employer", {});
   }
-  if (invitedUser.role !== UserRole.Worker) {
+  if (invitedWorker.role !== UserRole.Worker) {
     return error(Errors.InvalidRole, "Invited user is not Worker", {});
   }
   if (!quest) {
@@ -64,7 +64,7 @@ export async function questInvite(r) {
   const questsResponse = await QuestsResponse.findOne({
     where: {
       questId: quest.id,
-      userId: invitedUser.id
+      workerId: invitedWorker.id
     }
   });
 
@@ -73,7 +73,7 @@ export async function questInvite(r) {
   }
 
   await QuestsResponse.create({
-    userId: user.id,
+    workerId: invitedWorker.id,
     questId: quest.id,
     message: r.payload.message,
     status: QuestsResponseStatus.Open,
@@ -94,7 +94,12 @@ export async function getQuestResponses(r) {
     return error(Errors.Forbidden, "User isn't creator quest", {});
   }
 
-  const questResponses = await QuestsResponse.findAll({ where: { questId: quest.id } });
+  const questResponses = await QuestsResponse.findAll({
+    where: { questId: quest.id },
+    include: [{
+      model: User
+    }]
+  });
 
   return output(questResponses);
 }
