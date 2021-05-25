@@ -1,4 +1,7 @@
 import * as Joi from "joi";
+import { questFullSchema, questIdSchema } from '../../schemes/quest';
+import { userIdSchema, userSchema } from '../../schemes/user';
+import { emptyOkSchema, isoDateSchema, outputOkSchema } from '../../schemes';
 import {
   questResponse,
   questInvite,
@@ -6,14 +9,11 @@ import {
   getResponsesUserToQuest,
   rejectInvite, acceptInvite
 } from '../../api/questsResponse';
-import { questIdSchema } from '../../schemes/quest';
-import { emptyOkSchema, isoDateSchema, outputOkSchema } from '../../schemes';
 import {
   messageSchema, questsResponseIdSchema,
   questsResponseStatusSchema,
   questsResponseTypeSchema
 } from '../../schemes/questsResponse';
-import { userIdSchema, userSchema } from '../../schemes/user';
 
 const responseToQuest = Joi.object({
   workerId: userIdSchema,
@@ -24,6 +24,17 @@ const responseToQuest = Joi.object({
   createdAt: isoDateSchema,
   updatedAt: isoDateSchema,
   worker: userSchema,
+}).label('ResponseToQuestScheme');
+
+const userResponseToQuestsScheme = Joi.object({
+  workerId: userIdSchema,
+  questId: questIdSchema,
+  status: questsResponseStatusSchema,
+  type: questsResponseTypeSchema,
+  message: messageSchema,
+  createdAt: isoDateSchema,
+  updatedAt: isoDateSchema,
+  quest: questFullSchema,
 }).label('ResponseToQuestScheme');
 
 export default [{
@@ -93,7 +104,7 @@ export default [{
     tags: ["api", "quest", "response"],
     description: "Get responses to quest for authorized user",
     response: {
-      schema: outputOkSchema(Joi.object()).label(''),
+      schema: outputOkSchema(Joi.object(userResponseToQuestsScheme)).label('UserResponsesToQuestsResponse'),
     },
   },
 }, {
