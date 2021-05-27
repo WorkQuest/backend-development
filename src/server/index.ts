@@ -7,6 +7,7 @@ import * as Basic from "@hapi/basic";
 import * as HapiCors from "hapi-cors";
 import * as HapiBearer from "hapi-auth-bearer-token";
 import * as HapiPulse from "hapi-pulse";
+import * as Bell from "@hapi/bell"
 import routes from "./routes";
 import config from "./config/config";
 import * as Qs from "qs";
@@ -21,6 +22,44 @@ const HapiSwagger = require("hapi-swagger");
 const Package = require("../../package.json");
 
 SwaggerOptions.info.version = Package.version;
+
+function initSocialNetwork(server: Hapi.Server) {
+  server.auth.strategy('facebook', 'bell', {
+    provider: 'facebook',
+    clientId: config.socialNetworks.facebook.id || 'null',
+    password: 'cookie_encryption_password_secure',
+    clientSecret: config.socialNetworks.facebook.secretKey || 'null',
+    isSecure: !config.debug
+  });
+  server.auth.strategy('google', 'bell', {
+    provider: 'google',
+    clientId: config.socialNetworks.google.id || 'null',
+    password: 'cookie_encryption_password_secure',
+    clientSecret: config.socialNetworks.google.secretKey || 'null',
+    isSecure: !config.debug
+  });
+  server.auth.strategy('instagram', 'bell', {
+    provider: 'instagram',
+    clientId: config.socialNetworks.instagram.id || 'null',
+    password: 'cookie_encryption_password_secure',
+    clientSecret: config.socialNetworks.instagram.secretKey || 'null',
+    isSecure: !config.debug
+  });
+  server.auth.strategy('twitter', 'bell', {
+    provider: 'twitter',
+    clientId: config.socialNetworks.twitter.id || 'null',
+    password: 'cookie_encryption_password_secure',
+    clientSecret: config.socialNetworks.twitter.secretKey || 'null',
+    isSecure: !config.debug
+  });
+  server.auth.strategy('linkedin', 'bell', {
+    provider: 'linkedin',
+    clientId: config.socialNetworks.linkedin.id || 'null',
+    password: 'cookie_encryption_password_secure',
+    clientSecret: config.socialNetworks.linkedin.secretKey || 'null',
+    isSecure: !config.debug
+  });
+}
 
 const init = async () => {
   const server = await new Hapi.Server({
@@ -50,6 +89,7 @@ const init = async () => {
     Inert,
     Vision,
     HapiBearer,
+    Bell,
     { plugin: Pino, options: pinoConfig(false) },
     { plugin: HapiSwagger, options: SwaggerOptions }
   ]);
@@ -69,6 +109,8 @@ const init = async () => {
     validate: tokenValidate('refresh'),
   });
   server.auth.default('jwt-access');
+
+  initSocialNetwork(server);
 
   // Загружаем маршруты
   server.route(routes);

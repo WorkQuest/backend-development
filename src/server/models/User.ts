@@ -2,13 +2,29 @@ import { Column, DataType, Model, Scopes, Table } from "sequelize-typescript";
 import { getUUID } from "../utils";
 import * as bcrypt from "bcrypt";
 
+export interface SocialInfo {
+  id: string;
+  email: string;
+  last_name: string;
+  first_name: string;
+}
+
+export interface UserSocialSettings {
+  google?: SocialInfo;
+  facebook?: SocialInfo;
+  instagram?: SocialInfo;
+  twitter?: SocialInfo;
+  linkedin?: SocialInfo;
+}
+
 interface UserSettings {
   emailConfirm: string | null;
+  social?: UserSocialSettings;
 }
 
 const defaultUserSettings: UserSettings = {
   emailConfirm: null
-};
+}
 
 export enum UserStatus {
   Unconfirmed,

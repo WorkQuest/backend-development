@@ -1,4 +1,4 @@
-import { User, UserStatus } from "../models/User";
+import { User, UserStatus } from '../models/User';
 import { Op } from "sequelize";
 import { error, getRandomHexToken, output } from "../utils";
 import { Errors } from "../utils/errors";
@@ -42,6 +42,48 @@ export async function register(r) {
 	const session = await Session.create({
 		userId: user.id
 	});
+	const result = {
+		...generateJwt({ id: session.id }),
+		userStatus: user.status,
+	};
+
+	return output(result);
+}
+
+export async function loginThroughSocialNetwork(r) {
+	const profile = r.auth.credentials.profile;
+
+	if (!profile.email) {
+		return error(Errors.InvalidEmail, "Field email is was not returned", {});
+	}
+
+	let user = await User.findOne({ where: { email: { [Op.iLike]: profile.email } } });
+
+	if (!user) {
+		user = await User.create({
+			email: profile.email.toLowerCase(),
+			password: null,
+			firstName: profile.name.first,
+			lastName: profile.name.last,
+			status: UserStatus.Confirmed,
+			settings: {
+				emailConfirm: null,
+				social: {
+					facebook: {
+						id: profile.id,
+						email: profile.email,
+						last_name: profile.name.last,
+						first_name: profile.name.first,
+					}
+				}
+			}
+		});
+	}
+
+	const session = await Session.create({
+		userId: user.id
+	});
+
 	const result = {
 		...generateJwt({ id: session.id }),
 		userStatus: user.status,
