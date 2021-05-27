@@ -1,30 +1,30 @@
-import { BelongsTo, Column, DataType, ForeignKey, Model, Scopes, Table } from 'sequelize-typescript';
+import { BelongsTo, Column, DataType, ForeignKey, Model, Scopes, Table } from "sequelize-typescript";
 import { User } from "./User";
-import { getUUID } from '../utils';
+import { getUUID } from "../utils";
 
 export enum QuestPriority {
   AllPriority = 0,
   Low,
   Normal,
   Urgent,
-};
+}
 
 export enum AdType {
   Free = 0,
   Paid,
-};
+}
 
 export enum QuestStatus {
   Created = 0,
   Active,
   Performed,
   Arbitration,
-};
+}
 
 export interface Location {
   longitude: number;
   latitude: number;
-};
+}
 
 function transformToGeoPostGIS(location: Location) {
   const coordinates = [location.longitude, location.latitude];
@@ -32,6 +32,7 @@ function transformToGeoPostGIS(location: Location) {
   return {
     type: "Point",
     coordinates: coordinates,
+    crs: { type: "name", properties: { name: "EPSG:4326" } }
   };
 }
 
