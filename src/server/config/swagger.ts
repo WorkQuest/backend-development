@@ -5,6 +5,7 @@ export default {
   "basePath": "/api/",
   "host": process.env.LOCAL ? "localhost:3000" : config.baseUrl.replace("https://", ""),
   "grouping": "tags",
+  "schemes": ["https", "http"],
   "info": {
     "title": "WorkQuest Main Backend - API Documentation",
     "version": "",
