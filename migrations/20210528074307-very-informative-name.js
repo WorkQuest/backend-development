@@ -1,17 +1,14 @@
 'use strict';
 
-import { DataType } from 'sequelize-typescript';
-import { StatusKYC } from '../src/server/models/User';
-
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    return queryInterface.addColumn('User', 'statusKYC', {
-      type: DataType.INTEGER,
-      defaultValue: StatusKYC.Unconfirmed
+    return queryInterface.addColumn('Users', 'statusKYC', {
+      type: Sequelize.DataTypes.INTEGER,
+      defaultValue: 0
     })
   },
 
   down: async (queryInterface, Sequelize) => {
-    return queryInterface.removeColumn('User', 'statusKYC')
+    return queryInterface.removeColumn('Users', 'statusKYC')
   }
 };
