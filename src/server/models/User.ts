@@ -20,6 +20,11 @@ export enum UserRole {
   Worker = "worker"
 }
 
+export enum StatusKYC {
+  Unconfirmed = 0,
+  Confirmed,
+}
+
 @Scopes(() => ({
   defaultScope: {
     attributes: {
@@ -56,6 +61,7 @@ export class User extends Model {
   @Column({ type: DataType.STRING, allowNull: true, defaultValue: null }) role: UserRole;
   @Column({ type: DataType.JSONB, defaultValue: defaultUserSettings }) settings: UserSettings;
   @Column({ type: DataType.INTEGER, defaultValue: UserStatus.Unconfirmed }) status: UserStatus;
+  @Column({ type: DataType.INTEGER, defaultValue: StatusKYC.Unconfirmed }) statusKYC: StatusKYC;
 
   async passwordCompare(pwd: string) {
     return bcrypt.compareSync(pwd, this.password);
