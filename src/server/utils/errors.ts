@@ -13,4 +13,6 @@ export enum Errors {
   Forbidden = 4030000,
   // Not found (404)
   NotFound = 404000,
+  // Conflict (409)
+  SumSubError = 409001,
 }
