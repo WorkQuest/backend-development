@@ -1,4 +1,4 @@
-import { User, UserStatus } from '../models/User';
+import { User, UserStatus } from "../models/User";
 import { Op } from "sequelize";
 import { error, getRandomHexToken, output } from "../utils";
 import { Errors } from "../utils/errors";
@@ -8,6 +8,7 @@ import { Session } from "../models/Session";
 import { generateJwt } from "../utils/auth";
 import * as path from "path";
 import * as fs from "fs";
+import * as querystring from "querystring";
 import Handlebars = require("handlebars");
 
 const confirmTemplatePath = path.join(__dirname, "..", "..", "..", "templates", "confirmEmail.html");
@@ -88,23 +89,28 @@ export async function register(r) {
 	return output(result);
 }
 
-export async function loginThroughSocialNetwork(r) {
-	const profile = r.auth.credentials.profile;
+export function getLoginViaSocialNetworkHandler(returnType: "token" | "redirect") {
+	return async function loginThroughSocialNetwork(r, h) {
+		const profile = r.auth.credentials.profile;
 
-	if (!profile.email) {
-		return error(Errors.InvalidEmail, "Field email is was not returned", {});
-	}
+		if (!profile.email) {
+			return error(Errors.InvalidEmail, "Field email was not returned", {});
+		}
 
-	const user = await getUserByNetworkProfile(r.auth.strategy, profile);
-	const session = await Session.create({
-		userId: user.id
-	});
-	const result = {
-		...generateJwt({ id: session.id }),
-		userStatus: user.status,
+		const user = await getUserByNetworkProfile(r.auth.strategy, profile);
+		const session = await Session.create({
+			userId: user.id
+		});
+		const result = {
+			...generateJwt({ id: session.id }),
+			userStatus: user.status
+		};
+		if (returnType === "redirect") {
+			const qs = querystring.stringify(result);
+			return h.redirect(config.baseUrl + "/sign-in" + qs);
+		}
+		return output(result);
 	};
-
-	return output(result);
 }
 
 export async function confirmEmail(r) {
