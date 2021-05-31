@@ -87,7 +87,7 @@ export async function applicantReviewed(r) {
   if (user.statusKYC === StatusKYC.Confirmed) {
     return output(); // Should send OK, otherwise SumSub will continue send us webhooks
   }
-  const newStatusKYC = payload.reviewResult.reviewAnswer === ReviewAnswer.Green ? StatusKYC.Confirmed : StatusKYC.Error;
+  const newStatusKYC = payload.reviewResult.reviewAnswer === ReviewAnswer.Green ? StatusKYC.Confirmed : StatusKYC.Unconfirmed;
   await user.update({ statusKYC: newStatusKYC });
 
   return output();

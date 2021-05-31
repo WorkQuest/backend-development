@@ -21,7 +21,6 @@ export enum UserRole {
 }
 
 export enum StatusKYC {
-  Error = -1,
   Unconfirmed = 0,
   Confirmed,
 }
