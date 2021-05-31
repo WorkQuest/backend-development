@@ -115,21 +115,6 @@ export default [{
   }
 }, {
   method: "GET",
-  path: "/v1/auth/login/instagram",
-  handler: loginThroughSocialNetwork,
-  options: {
-    auth: {
-      strategy: 'instagram'
-    },
-    id: "v1.auth.login.instagram",
-    tags: ["api", "auth"],
-    description: "Login user through Instagram",
-    response: {
-      schema: outputOkSchema(tokensWithStatus).label("TokensWithStatusResponse")
-    }
-  }
-}, {
-  method: "GET",
   path: "/v1/auth/login/twitter",
   handler: loginThroughSocialNetwork,
   options: {

@@ -48,10 +48,6 @@ export default {
       id: process.env.GOOGLE_CLIENT_ID,
       secretKey: process.env.GOOGLE_SECRET_KEY,
     },
-    instagram: {
-      id: process.env.INSTAGRAM_CLIENT_ID,
-      secretKey: process.env.INSTAGRAM_SECRET_KEY,
-    },
     twitter: {
       id: process.env.TWITTER_CLIENT_ID,
       secretKey: process.env.TWITTER_SECRET_KEY,

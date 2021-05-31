@@ -23,40 +23,33 @@ const Package = require("../../package.json");
 
 SwaggerOptions.info.version = Package.version;
 
-function initSocialNetwork(server: Hapi.Server) {
+function initAuthStrategiesOfSocialNetworks(server: Hapi.Server) {
   server.auth.strategy('facebook', 'bell', {
     provider: 'facebook',
-    clientId: config.socialNetworks.facebook.id || 'null',
+    clientId: config.socialNetworks.facebook.id,
     password: 'cookie_encryption_password_secure',
-    clientSecret: config.socialNetworks.facebook.secretKey || 'null',
+    clientSecret: config.socialNetworks.facebook.secretKey,
     isSecure: !config.debug
   });
   server.auth.strategy('google', 'bell', {
     provider: 'google',
-    clientId: config.socialNetworks.google.id || 'null',
+    clientId: config.socialNetworks.google.id,
     password: 'cookie_encryption_password_secure',
-    clientSecret: config.socialNetworks.google.secretKey || 'null',
-    isSecure: !config.debug
-  });
-  server.auth.strategy('instagram', 'bell', {
-    provider: 'instagram',
-    clientId: config.socialNetworks.instagram.id || 'null',
-    password: 'cookie_encryption_password_secure',
-    clientSecret: config.socialNetworks.instagram.secretKey || 'null',
+    clientSecret: config.socialNetworks.google.secretKey,
     isSecure: !config.debug
   });
   server.auth.strategy('twitter', 'bell', {
     provider: 'twitter',
-    clientId: config.socialNetworks.twitter.id || 'null',
+    clientId: config.socialNetworks.twitter.id,
     password: 'cookie_encryption_password_secure',
-    clientSecret: config.socialNetworks.twitter.secretKey || 'null',
+    clientSecret: config.socialNetworks.twitter.secretKey,
     isSecure: !config.debug
   });
   server.auth.strategy('linkedin', 'bell', {
     provider: 'linkedin',
-    clientId: config.socialNetworks.linkedin.id || 'null',
+    clientId: config.socialNetworks.linkedin.id,
     password: 'cookie_encryption_password_secure',
-    clientSecret: config.socialNetworks.linkedin.secretKey || 'null',
+    clientSecret: config.socialNetworks.linkedin.secretKey,
     isSecure: !config.debug
   });
 }
@@ -110,7 +103,7 @@ const init = async () => {
   });
   server.auth.default('jwt-access');
 
-  initSocialNetwork(server);
+  initAuthStrategiesOfSocialNetworks(server);
 
   // Загружаем маршруты
   server.route(routes);

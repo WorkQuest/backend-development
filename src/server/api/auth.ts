@@ -15,6 +15,44 @@ const confirmTemplate = Handlebars.compile(fs.readFileSync(confirmTemplatePath, 
 	encoding: "utf-8"
 }));
 
+async function getUserByNetworkProfile(network: string, profile): Promise<User> {
+	const foundUserBySocialId = await User.findWithSocialId(network, profile.id);
+
+	if (foundUserBySocialId) {
+		return foundUserBySocialId;
+	}
+
+	const foundUserByEmail = await User.findWithEmail(profile.email);
+	const socialInfo = {
+		id: profile.id,
+		email: profile.email,
+		last_name: profile.name.last,
+		first_name: profile.name.first,
+	};
+
+	if (foundUserByEmail) {
+		foundUserByEmail.settings.social[network] = socialInfo;
+
+		await foundUserByEmail.save();
+
+		return foundUserByEmail;
+	}
+
+	return await User.create({
+		email: profile.email.toLowerCase(),
+		password: null,
+		firstName: profile.name.first,
+		lastName: profile.name.last,
+		status: UserStatus.Confirmed,
+		settings: {
+			emailConfirm: null,
+			social: {
+				[network]: socialInfo,
+			}
+		}
+	});
+}
+
 export async function register(r) {
 	const emailUsed = await User.findOne({ where: { email: { [Op.iLike]: r.payload.email } } });
 	if (emailUsed) return error(Errors.InvalidPayload, "Email used", [{ field: "email", reason: "used" }]);
@@ -57,33 +95,10 @@ export async function loginThroughSocialNetwork(r) {
 		return error(Errors.InvalidEmail, "Field email is was not returned", {});
 	}
 
-	let user = await User.findOne({ where: { email: { [Op.iLike]: profile.email } } });
-
-	if (!user) {
-		user = await User.create({
-			email: profile.email.toLowerCase(),
-			password: null,
-			firstName: profile.name.first,
-			lastName: profile.name.last,
-			status: UserStatus.Confirmed,
-			settings: {
-				emailConfirm: null,
-				social: {
-					facebook: {
-						id: profile.id,
-						email: profile.email,
-						last_name: profile.name.last,
-						first_name: profile.name.first,
-					}
-				}
-			}
-		});
-	}
-
+	const user = await getUserByNetworkProfile(r.auth.strategy, profile);
 	const session = await Session.create({
 		userId: user.id
 	});
-
 	const result = {
 		...generateJwt({ id: session.id }),
 		userStatus: user.status,

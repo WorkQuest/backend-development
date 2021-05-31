@@ -12,18 +12,18 @@ export interface SocialInfo {
 export interface UserSocialSettings {
   google?: SocialInfo;
   facebook?: SocialInfo;
-  instagram?: SocialInfo;
   twitter?: SocialInfo;
   linkedin?: SocialInfo;
 }
 
 interface UserSettings {
   emailConfirm: string | null;
-  social?: UserSocialSettings;
+  social: UserSocialSettings;
 }
 
 const defaultUserSettings: UserSettings = {
-  emailConfirm: null
+  emailConfirm: null,
+  social: {},
 }
 
 export enum UserStatus {
@@ -54,13 +54,16 @@ export class User extends Model {
   @Column({
     type: DataType.STRING,
     set(value: string) {
+      if (!value) {
+        this.setDataValue("password", null);
+        return;
+      }
+
       let salt = bcrypt.genSaltSync(10);
       let hash = bcrypt.hashSync(value, salt);
-      // @ts-ignore
       this.setDataValue("password", hash);
     },
     get() {
-      // @ts-ignore
       return this.getDataValue("password");
     }
   }) password: string;
@@ -75,5 +78,17 @@ export class User extends Model {
 
   async passwordCompare(pwd: string) {
     return bcrypt.compareSync(pwd, this.password);
+  }
+
+  static async findWithEmail(email: string): Promise<User> {
+    return await User.findOne({ where: { ['email']: email } });
+  }
+
+  static async findWithSocialId(network: string, id: string): Promise<User> {
+    return await User.findOne({
+      where: {
+        [`settings.social.${network}.id`]: id
+      }
+    });
   }
 }
