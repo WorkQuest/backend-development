@@ -1,10 +1,10 @@
-import axios from 'axios';
-import * as crypto from 'crypto';
-import serverConfig from '../config/config';
-import { error, output } from '../utils';
-import * as FormData from 'form-data';
-import { Errors } from '../utils/errors';
-import { StatusKYC, User } from '../models/User';
+import axios from "axios";
+import * as crypto from "crypto";
+import serverConfig from "../config/config";
+import { error, output } from "../utils";
+import * as FormData from "form-data";
+import { Errors } from "../utils/errors";
+import { StatusKYC, User } from "../models/User";
 
 export enum ReviewAnswer {
   Red = "RED",
@@ -14,7 +14,7 @@ export enum ReviewAnswer {
 const api = axios.create({
   baseURL: serverConfig.sumsub.baseURL,
   headers: {
-    'Accept': 'application/json',
+    "Accept": "application/json",
     'Content-Type': 'application/json',
     'X-App-Token': serverConfig.sumsub.appToken,
   }
@@ -56,8 +56,12 @@ export async function createAccessToken(r) {
   }
 
   try {
-    const result = await api.post(`/resources/accessTokens?userId=${r.auth.credentials.id}` +
-      `&ttlInSecs=${serverConfig.sumsub.accessTokenTTL}`);
+    const result = await api.post(`/resources/accessTokens`, {
+      params: {
+        userId: r.auth.credentials.id,
+        ttlInSecs: serverConfig.sumsub.accessTokenTTL
+      }
+    });
 
     return output(result.data);
   } catch (err) {
@@ -78,13 +82,13 @@ export async function applicantReviewed(r) {
   const user = await User.findOne({ where: { id: payload.externalUserId } });
 
   if (!user) {
-    return error(Errors.NotFound, "User not found", {});
+    return output(); // Should send OK, otherwise SumSub will continue send us webhooks
   }
   if (user.statusKYC === StatusKYC.Confirmed) {
-    return error(Errors.KYCAlreadyVerified, "User already verified", {});
+    return output(); // Should send OK, otherwise SumSub will continue send us webhooks
   }
-
-  await user.update({ statusKYC: StatusKYC.Confirmed });
+  const newStatusKYC = payload.reviewResult.reviewAnswer === ReviewAnswer.Green ? StatusKYC.Confirmed : StatusKYC.Error;
+  await user.update({ statusKYC: newStatusKYC });
 
   return output();
 }
