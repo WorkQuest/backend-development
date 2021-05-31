@@ -5,6 +5,8 @@ export enum Errors {
   InvalidRole = 400002,
   InvalidStatus = 400003,
   AlreadyAnswer = 400004,
+  KYCAlreadyVerified = 400005,
+  KYCRequired = 400006,
   InvalidEmail = 400005,
   // Authorization errors (401)
   TokenExpired = 401001,
@@ -14,4 +16,6 @@ export enum Errors {
   Forbidden = 403000,
   // Not found (404)
   NotFound = 404000,
+  // Conflict (409)
+  SumSubError = 409001,
 }
