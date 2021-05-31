@@ -36,7 +36,6 @@
     "hapi-pino": "^6.1.0",
     "hapi-pulse": "^3.0.0",
     "hapi-swagger": "^14.1.0",
-    "i": "^0.3.6",
     "joi": "^17.4.0",
     "jsonwebtoken": "^8.5.1",
     "nodemailer": "^6.5.0",
