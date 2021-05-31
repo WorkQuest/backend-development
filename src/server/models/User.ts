@@ -2,13 +2,29 @@ import { Column, DataType, Model, Scopes, Table } from "sequelize-typescript";
 import { getUUID } from "../utils";
 import * as bcrypt from "bcrypt";
 
+export interface SocialInfo {
+  id: string;
+  email: string;
+  last_name: string;
+  first_name: string;
+}
+
+export interface UserSocialSettings {
+  google?: SocialInfo;
+  facebook?: SocialInfo;
+  twitter?: SocialInfo;
+  linkedin?: SocialInfo;
+}
+
 interface UserSettings {
   emailConfirm: string | null;
+  social: UserSocialSettings;
 }
 
 const defaultUserSettings: UserSettings = {
-  emailConfirm: null
-};
+  emailConfirm: null,
+  social: {},
+}
 
 export enum UserStatus {
   Unconfirmed,
@@ -38,13 +54,16 @@ export class User extends Model {
   @Column({
     type: DataType.STRING,
     set(value: string) {
+      if (!value) {
+        this.setDataValue("password", null);
+        return;
+      }
+
       let salt = bcrypt.genSaltSync(10);
       let hash = bcrypt.hashSync(value, salt);
-      // @ts-ignore
       this.setDataValue("password", hash);
     },
     get() {
-      // @ts-ignore
       return this.getDataValue("password");
     }
   }) password: string;
@@ -59,5 +78,17 @@ export class User extends Model {
 
   async passwordCompare(pwd: string) {
     return bcrypt.compareSync(pwd, this.password);
+  }
+
+  static async findWithEmail(email: string): Promise<User> {
+    return await User.findOne({ where: { ['email']: email } });
+  }
+
+  static async findWithSocialId(network: string, id: string): Promise<User> {
+    return await User.findOne({
+      where: {
+        [`settings.social.${network}.id`]: id
+      }
+    });
   }
 }

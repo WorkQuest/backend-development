@@ -39,5 +39,28 @@ export default {
       pass: process.env.SMTP_PASSWORD
     }
   },
-  baseUrl: process.env.BASE_URL
+  socialNetworks: {
+    facebook: {
+      id: process.env.FACEBOOK_CLIENT_ID,
+      secretKey: process.env.FACEBOOK_SECRET_KEY,
+      cookiePassword: process.env.FACEBOOK_COOKIE_PASSWORD
+    },
+    google: {
+      id: process.env.GOOGLE_CLIENT_ID,
+      secretKey: process.env.GOOGLE_SECRET_KEY,
+      cookiePassword: process.env.GOOGLE_COOKIE_PASSWORD
+    },
+    twitter: {
+      id: process.env.TWITTER_CLIENT_ID,
+      secretKey: process.env.TWITTER_SECRET_KEY,
+      cookiePassword: process.env.TWITTER_COOKIE_PASSWORD
+    },
+    linkedin: {
+      id: process.env.LINKEDIN_CLIENT_ID,
+      secretKey: process.env.LINKEDIN_SECRET_KEY,
+      cookiePassword: process.env.LINKEDIN_COOKIE_PASSWORD
+    },
+  },
+  baseUrl: process.env.BASE_URL,
+  debug: process.env.DEBUG === "true"
 };
