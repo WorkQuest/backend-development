@@ -32,9 +32,7 @@ async function getUserByNetworkProfile(network: string, profile): Promise<User> 
 	};
 
 	if (foundUserByEmail) {
-		foundUserByEmail.settings.social[network] = socialInfo;
-
-		await foundUserByEmail.save();
+		await foundUserByEmail.update({ [`settings.social.${network}`]: socialInfo });
 
 		return foundUserByEmail;
 	}
