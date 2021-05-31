@@ -1,19 +1,21 @@
 import * as Joi from "joi";
-import { questFullSchema, questIdSchema } from '../../schemes/quest';
-import { userIdSchema, userSchema } from '../../schemes/user';
-import { emptyOkSchema, isoDateSchema, outputOkSchema } from '../../schemes';
+import { questFullSchema, questIdSchema } from "../../schemes/quest";
+import { userIdSchema, userSchema } from "../../schemes/user";
+import { countSchema, emptyOkSchema, isoDateSchema, outputOkSchema } from "../../schemes";
 import {
-  questResponse,
-  questInvite,
+  acceptInvite,
   getResponsesToQuest,
   getResponsesUserToQuest,
-  rejectInvite, acceptInvite
-} from '../../api/questsResponse';
+  questInvite,
+  questResponse,
+  rejectInvite
+} from "../../api/questsResponse";
 import {
-  messageSchema, questsResponseIdSchema,
+  messageSchema,
+  questsResponseIdSchema,
   questsResponseStatusSchema,
   questsResponseTypeSchema
-} from '../../schemes/questsResponse';
+} from "../../schemes/questsResponse";
 
 const responseToQuest = Joi.object({
   workerId: userIdSchema,
@@ -92,7 +94,12 @@ export default [{
       }).label("ResponsesToQuestParams")
     },
     response: {
-      schema: outputOkSchema(Joi.array().items(responseToQuest)).label("ResponsesToQuestResponse"),
+      schema: outputOkSchema(
+        Joi.object({
+          count: countSchema,
+          responses: Joi.array().items(responseToQuest).label("QuestResponsesList")
+        }).label("ResponsesToQuestResult")
+      ).label("ResponsesToQuestResponse")
     },
   }
 }, {
@@ -104,7 +111,12 @@ export default [{
     tags: ["api", "quest", "response"],
     description: "Get responses to quest for authorized user",
     response: {
-      schema: outputOkSchema(Joi.object(userResponseToQuestsScheme)).label('UserResponsesToQuestsResponse'),
+      schema: outputOkSchema(
+        Joi.object({
+          count: countSchema,
+          responses: Joi.array().items(userResponseToQuestsScheme).label("UserQuestResponseList")
+        }).label("UserResponsesToQuestsResult")
+      ).label("UserResponsesToQuestsResponse")
     },
   },
 }, {

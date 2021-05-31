@@ -1,8 +1,8 @@
-import { User, UserRole } from '../models/User';
-import { error, output } from '../utils';
-import { Errors } from '../utils/errors';
-import { QuestsResponse, QuestsResponseStatus, QuestsResponseType } from '../models/QuestsResponse';
-import { Quest, QuestStatus } from '../models/Quest';
+import { User, UserRole } from "../models/User";
+import { error, output } from "../utils";
+import { Errors } from "../utils/errors";
+import { QuestsResponse, QuestsResponseStatus, QuestsResponseType } from "../models/QuestsResponse";
+import { Quest, QuestStatus } from "../models/Quest";
 
 export async function questResponse(r) {
   const user = r.auth.credentials;
@@ -61,14 +61,14 @@ export async function questInvite(r) {
     return error(Errors.Forbidden, "User isn't creator quest", {});
   }
 
-  const questsResponse = await QuestsResponse.findOne({
+  const questResponse = await QuestsResponse.findOne({
     where: {
       questId: quest.id,
       workerId: invitedWorker.id
     }
   });
 
-  if (questsResponse) {
+  if (questResponse) {
     return error(Errors.AlreadyAnswer, "You already answered quest", {});
   }
 
@@ -94,14 +94,14 @@ export async function getResponsesToQuest(r) {
     return error(Errors.Forbidden, "User isn't creator quest", {});
   }
 
-  const questResponses = await QuestsResponse.findAll({
+  const { rows, count } = await QuestsResponse.findAndCountAll({
     where: { questId: quest.id },
     include: [{
       model: User
     }]
   });
 
-  return output(questResponses);
+  return output({ count, responses: rows });
 }
 
 export async function getResponsesUserToQuest(r) {
@@ -111,7 +111,7 @@ export async function getResponsesUserToQuest(r) {
     return error(Errors.InvalidRole, "User is not Worker", {});
   }
 
-  const questResponses = await QuestsResponse.findAll({
+  const { rows, count } = await QuestsResponse.findAndCountAll({
     where: { workerId: user.id },
     include: [{
       model: Quest,
@@ -119,7 +119,7 @@ export async function getResponsesUserToQuest(r) {
     }]
   });
 
-  return output(questResponses);
+  return output({ count, responses: rows });
 }
 
 export async function acceptInvite(r) {
