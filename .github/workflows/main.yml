@@ -123,6 +123,15 @@ jobs:
             DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
             DB_NAME=${{ secrets.DB_NAME }} \
 
+            FACEBOOK_CLIENT_ID=${{ secrets.FACEBOOK_CLIENT_ID }} \
+            FACEBOOK_SECRET_KEY=${{ secrets.FACEBOOK_SECRET_KEY }} \
+            GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }} \
+            GOOGLE_SECRET_KEY=${{ secrets.GOOGLE_SECRET_KEY }} \
+            LINKEDIN_CLIENT_ID=${{ secrets.LINKEDIN_CLIENT_ID }} \
+            LINKEDIN_SECRET_KEY=${{ secrets.LINKEDIN_SECRET_KEY }} \
+            TWITTER_CLIENT_ID=${{ secrets.TWITTER_CLIENT_ID }} \
+            TWITTER_SECRET_KEY=${{ secrets.TWITTER_SECRET_KEY }} \
+
             DEBUG=${{ secrets.DEBUG }} \
             backend_bin=${{ secrets.backend_bin }} \
             PM2_SERVICE_NAME=${{ secrets.PM2_SERVICE_NAME }} \
