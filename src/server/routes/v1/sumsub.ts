@@ -1,5 +1,5 @@
 import * as Joi from "joi";
-import { createAccessToken } from '../../api/sumsub';
+import { createAccessToken, applicantReviewed } from '../../api/sumsub';
 
 export default [{
   method: "GET",
@@ -15,5 +15,19 @@ export default [{
         userId: Joi.string().example('e6685019-e42a-40ed-9327-58e3de849c3c').label('SumSubUserId')
       }).label('CreateAccessTokenResponse')
     }
+  },
+}, {
+  method: "POST",
+  path: "/v1/sumsub/applicantReviewed",
+  handler: applicantReviewed,
+  options: {
+    auth: false,
+    id: "v1.sumsub.applicantReviewed",
+    tags: ["api", "sumsub"],
+    description: "Applicant reviewed on SumSub",
+    payload: {
+      output: 'data',
+      parse: false
+    },
   },
 }];
