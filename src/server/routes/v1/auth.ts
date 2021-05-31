@@ -1,5 +1,11 @@
 import * as Joi from "joi";
-import { confirmEmail, login, refreshTokens, register } from "../../api/auth";
+import {
+  confirmEmail,
+  login,
+  refreshTokens,
+  register,
+  loginThroughSocialNetwork
+} from '../../api/auth';
 import { emailSchema, firstNameSchema, lastNameSchema, passwordSchema, userRoleSchema } from "../../schemes/user";
 import { emptyOkSchema, hexTokenSchema, jwtTokens, outputOkSchema, tokensWithStatus } from "../../schemes";
 
@@ -58,6 +64,66 @@ export default [{
         password: passwordSchema.required()
       }).label("AuthLoginPayload")
     },
+    response: {
+      schema: outputOkSchema(tokensWithStatus).label("TokensWithStatusResponse")
+    }
+  }
+}, {
+  method: "GET",
+  path: "/v1/auth/login/facebook",
+  handler: loginThroughSocialNetwork,
+  options: {
+    auth: {
+      strategy: 'facebook'
+    },
+    id: "v1.auth.login.facebook",
+    tags: ["api", "auth"],
+    description: "Login user through Facebook",
+    response: {
+      schema: outputOkSchema(tokensWithStatus).label("TokensWithStatusResponse")
+    }
+  }
+}, {
+  method: "GET",
+  path: "/v1/auth/login/google",
+  handler: loginThroughSocialNetwork,
+  options: {
+    auth: {
+      strategy: 'google'
+    },
+    id: "v1.auth.login.google",
+    tags: ["api", "auth"],
+    description: "Login user through Google",
+    response: {
+      schema: outputOkSchema(tokensWithStatus).label("TokensWithStatusResponse")
+    }
+  }
+}, {
+  method: "GET",
+  path: "/v1/auth/login/linkedin",
+  handler: loginThroughSocialNetwork,
+  options: {
+    auth: {
+      strategy: 'linkedin'
+    },
+    id: "v1.auth.login.linkedin",
+    tags: ["api", "auth"],
+    description: "Login user through Linkedin",
+    response: {
+      schema: outputOkSchema(tokensWithStatus).label("TokensWithStatusResponse")
+    }
+  }
+}, {
+  method: "GET",
+  path: "/v1/auth/login/twitter",
+  handler: loginThroughSocialNetwork,
+  options: {
+    auth: {
+      strategy: 'twitter'
+    },
+    id: "v1.auth.login.twitter",
+    tags: ["api", "auth"],
+    description: "Login user through Twitter",
     response: {
       schema: outputOkSchema(tokensWithStatus).label("TokensWithStatusResponse")
     }

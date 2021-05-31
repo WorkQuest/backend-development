@@ -7,12 +7,13 @@ export enum Errors {
   AlreadyAnswer = 400004,
   KYCAlreadyVerified = 400005,
   KYCRequired = 400006,
+  InvalidEmail = 400005,
   // Authorization errors (401)
   TokenExpired = 401001,
   TokenInvalid = 401002,
   SessionNotFound = 401003,
   // Forbidden (403)
-  Forbidden = 4030000,
+  Forbidden = 403000,
   // Not found (404)
   NotFound = 404000,
   // Conflict (409)

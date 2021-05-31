@@ -25,7 +25,8 @@ export const jwtTokenRefresh = Joi.string().example("refresh jwt token");
 export const sortDirectionSchema = Joi.string().valid('ASC', 'DESC', 'asc', 'desc');
 export const isoDateSchema = Joi.string().isoDate().example('2021-05-12T05:24:47.322Z');
 export const longitudeSchema = Joi.number().min(-180).max(180).example(84.948846).label('Longitude');
-export const latitudeSchema = Joi.number().min(-90).max(90).example(56.48122).label('Latitude');
+export const latitudeSchema = Joi.number().min(-90).max(90).example(56.48122).label("Latitude");
+export const countSchema = Joi.number().example(10);
 
 export const locationSchema = Joi.object({
   longitude: longitudeSchema.required(),
