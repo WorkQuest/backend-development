@@ -1,11 +1,5 @@
 import * as Joi from "joi";
-import {
-  confirmEmail,
-  login,
-  refreshTokens,
-  register,
-  loginThroughSocialNetwork
-} from '../../api/auth';
+import { confirmEmail, getLoginViaSocialNetworkHandler, login, refreshTokens, register } from "../../api/auth";
 import { emailSchema, firstNameSchema, lastNameSchema, passwordSchema, userRoleSchema } from "../../schemes/user";
 import { emptyOkSchema, hexTokenSchema, jwtTokens, outputOkSchema, tokensWithStatus } from "../../schemes";
 
@@ -71,61 +65,121 @@ export default [{
 }, {
   method: "GET",
   path: "/v1/auth/login/facebook",
-  handler: loginThroughSocialNetwork,
+  handler: getLoginViaSocialNetworkHandler("redirect"),
   options: {
     auth: {
-      strategy: 'facebook'
+      strategy: "facebook"
     },
     id: "v1.auth.login.facebook",
     tags: ["api", "auth"],
     description: "Login user through Facebook",
     response: {
-      schema: outputOkSchema(tokensWithStatus).label("TokensWithStatusResponse")
+      schema: emptyOkSchema
     }
   }
 }, {
   method: "GET",
   path: "/v1/auth/login/google",
-  handler: loginThroughSocialNetwork,
+  handler: getLoginViaSocialNetworkHandler("redirect"),
   options: {
     auth: {
-      strategy: 'google'
+      strategy: "google"
     },
     id: "v1.auth.login.google",
     tags: ["api", "auth"],
     description: "Login user through Google",
     response: {
-      schema: outputOkSchema(tokensWithStatus).label("TokensWithStatusResponse")
+      schema: emptyOkSchema
     }
   }
 }, {
   method: "GET",
   path: "/v1/auth/login/linkedin",
-  handler: loginThroughSocialNetwork,
+  handler: getLoginViaSocialNetworkHandler("redirect"),
   options: {
     auth: {
-      strategy: 'linkedin'
+      strategy: "linkedin"
     },
     id: "v1.auth.login.linkedin",
     tags: ["api", "auth"],
     description: "Login user through Linkedin",
     response: {
-      schema: outputOkSchema(tokensWithStatus).label("TokensWithStatusResponse")
+      schema: emptyOkSchema
     }
   }
 }, {
   method: "GET",
   path: "/v1/auth/login/twitter",
-  handler: loginThroughSocialNetwork,
+  handler: getLoginViaSocialNetworkHandler("redirect"),
   options: {
     auth: {
-      strategy: 'twitter'
+      strategy: "twitter"
     },
     id: "v1.auth.login.twitter",
     tags: ["api", "auth"],
     description: "Login user through Twitter",
     response: {
-      schema: outputOkSchema(tokensWithStatus).label("TokensWithStatusResponse")
+      schema: emptyOkSchema
+    }
+  }
+}, {
+  method: "GET",
+  path: "/v1/auth/login/facebook/token",
+  handler: getLoginViaSocialNetworkHandler("token"),
+  options: {
+    auth: {
+      strategy: "facebook"
+    },
+    id: "v1.auth.login.facebook",
+    tags: ["api", "auth"],
+    description: "Login user through Facebook (returns tokens)",
+    response: {
+      schema: tokensWithStatus
+    }
+  }
+}, {
+  method: "GET",
+  path: "/v1/auth/login/google/token",
+  handler: getLoginViaSocialNetworkHandler("token"),
+  options: {
+    auth: {
+      strategy: "google"
+    },
+    id: "v1.auth.login.google",
+    tags: ["api", "auth"],
+    description: "Login user through Google (returns tokens)",
+    response: {
+      schema: tokensWithStatus
+    }
+  }
+}, {
+  method: "GET",
+  path: "/v1/auth/login/linkedin/token",
+  handler: getLoginViaSocialNetworkHandler("token"),
+  options: {
+    auth: {
+      strategy: "linkedin"
+    },
+    id: "v1.auth.login.linkedin",
+    tags: ["api", "auth"],
+    description: "Login user through Linkedin (returns tokens)",
+    response: {
+      schema: tokensWithStatus
+    }
+  }
+}, {
+  method: "GET",
+  path: "/v1/auth/login/twitter/token",
+  handler: getLoginViaSocialNetworkHandler("token"),
+  options: {
+    auth: {
+      strategy: "twitter"
+    },
+    id: "v1.auth.login.twitter",
+    tags: ["api", "auth"],
+    description: "Login user through Twitter (returns tokens)",
+    response: {
+      schema: tokensWithStatus
     }
   }
 }, {
