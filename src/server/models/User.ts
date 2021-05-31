@@ -87,11 +87,11 @@ export class User extends Model {
   }
 
   static async findWithEmail(email: string): Promise<User> {
-    return await User.findOne({ where: { ['email']: email } });
+    return await User.scope("withPassword").findOne({ where: { ["email"]: email } });
   }
 
   static async findWithSocialId(network: string, id: string): Promise<User> {
-    return await User.findOne({
+    return await User.scope("withPassword").findOne({
       where: {
         [`settings.social.${network}.id`]: id
       }
