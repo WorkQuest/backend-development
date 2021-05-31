@@ -7,7 +7,7 @@ import * as Basic from "@hapi/basic";
 import * as HapiCors from "hapi-cors";
 import * as HapiBearer from "hapi-auth-bearer-token";
 import * as HapiPulse from "hapi-pulse";
-import * as Bell from "@hapi/bell"
+import * as Bell from "@hapi/bell";
 import routes from "./routes";
 import config from "./config/config";
 import * as Qs from "qs";
@@ -25,30 +25,30 @@ SwaggerOptions.info.version = Package.version;
 
 function initAuthStrategiesOfSocialNetworks(server: Hapi.Server) {
   server.auth.strategy('facebook', 'bell', {
-    provider: 'facebook',
+    provider: "facebook",
     clientId: config.socialNetworks.facebook.id,
-    password: 'cookie_encryption_password_secure',
+    password: config.socialNetworks.facebook.cookiePassword,
     clientSecret: config.socialNetworks.facebook.secretKey,
     isSecure: !config.debug
   });
   server.auth.strategy('google', 'bell', {
-    provider: 'google',
+    provider: "google",
     clientId: config.socialNetworks.google.id,
-    password: 'cookie_encryption_password_secure',
+    password: config.socialNetworks.google.cookiePassword,
     clientSecret: config.socialNetworks.google.secretKey,
     isSecure: !config.debug
   });
   server.auth.strategy('twitter', 'bell', {
-    provider: 'twitter',
+    provider: "twitter",
     clientId: config.socialNetworks.twitter.id,
-    password: 'cookie_encryption_password_secure',
+    password: config.socialNetworks.twitter.cookiePassword,
     clientSecret: config.socialNetworks.twitter.secretKey,
     isSecure: !config.debug
   });
   server.auth.strategy('linkedin', 'bell', {
-    provider: 'linkedin',
+    provider: "linkedin",
     clientId: config.socialNetworks.linkedin.id,
-    password: 'cookie_encryption_password_secure',
+    password: config.socialNetworks.linkedin.cookiePassword,
     clientSecret: config.socialNetworks.linkedin.secretKey,
     isSecure: !config.debug
   });
