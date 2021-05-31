@@ -8,11 +8,11 @@ export const messageSchema = Joi.string().example('Hello, I need this job').defa
 export const questsResponseStatusSchema = Joi.number().example(QuestsResponseStatus.Open).valid(...Object.keys(QuestsResponseStatus).map(key => parseInt(key)).filter(key => !isNaN(key))).label('QuestsResponseStatus');
 export const questsResponseTypeSchema = Joi.number().example(QuestsResponseType.Response).valid(...Object.keys(QuestsResponseType).map(key => parseInt(key)).filter(key => !isNaN(key))).label('QuestsResponseType');
 
-
 export const questsResponseSchema = Joi.object({
-  userId: userIdSchema,
+  workerId: userIdSchema,
   questId: questIdSchema,
   status: questsResponseStatusSchema,
   type: questsResponseTypeSchema,
   message: messageSchema,
 }).label('QuestsResponseSchema');
+
