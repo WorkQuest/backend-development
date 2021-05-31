@@ -39,8 +39,6 @@ export default {
       pass: process.env.SMTP_PASSWORD
     }
   },
-
-  baseUrl: process.env.BASE_URL,
   sumsub: {
     appToken: process.env.SUMSUB_APP_TOKEN,
     secretKey: process.env.SUMSUB_SECRET_KEY,
