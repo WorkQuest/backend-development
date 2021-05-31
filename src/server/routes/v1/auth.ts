@@ -130,7 +130,7 @@ export default [{
     auth: {
       strategy: "facebook"
     },
-    id: "v1.auth.login.facebook",
+    id: "v1.auth.login.facebookTokens",
     tags: ["api", "auth"],
     description: "Login user through Facebook (returns tokens)",
     response: {
@@ -145,7 +145,7 @@ export default [{
     auth: {
       strategy: "google"
     },
-    id: "v1.auth.login.google",
+    id: "v1.auth.login.googleTokens",
     tags: ["api", "auth"],
     description: "Login user through Google (returns tokens)",
     response: {
@@ -160,7 +160,7 @@ export default [{
     auth: {
       strategy: "linkedin"
     },
-    id: "v1.auth.login.linkedin",
+    id: "v1.auth.login.linkedinTokens",
     tags: ["api", "auth"],
     description: "Login user through Linkedin (returns tokens)",
     response: {
@@ -175,7 +175,7 @@ export default [{
     auth: {
       strategy: "twitter"
     },
-    id: "v1.auth.login.twitter",
+    id: "v1.auth.login.twitterTokens",
     tags: ["api", "auth"],
     description: "Login user through Twitter (returns tokens)",
     response: {
