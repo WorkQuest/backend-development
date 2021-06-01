@@ -56,7 +56,7 @@ export async function createAccessToken(r) {
   }
 
   try {
-    const result = await api.post(`/resources/accessTokens`, {
+    const result = await api.post(`/resources/accessTokens`, null, {
       params: {
         userId: r.auth.credentials.id,
         ttlInSecs: serverConfig.sumsub.accessTokenTTL
