@@ -136,6 +136,11 @@ jobs:
             TWITTER_SECRET_KEY=${{ secrets.TWITTER_SECRET_KEY }} \
             TWITTER_COOKIE_PASSWORD=${{ secrets.TWITTER_COOKIE_PASSWORD }} \
 
+            SUMSUB_APP_TOKEN=${{ secrets.SUMSUB_APP_TOKEN }} \
+            SUMSUB_SECRET_KEY=${{ secrets.SUMSUB_SECRET_KEY }} \
+            SUMSUB_BASE_URL=${{ secrets.SUMSUB_BASE_URL }} \
+            SUMSUB_ACCESS_TOKEN_TTL=${{ secrets.SUMSUB_ACCESS_TOKEN_TTL }} \
+
             DEBUG=${{ secrets.DEBUG }} \
             backend_bin=${{ secrets.backend_bin }} \
             PM2_SERVICE_NAME=${{ secrets.PM2_SERVICE_NAME }} \
