@@ -4,7 +4,7 @@ import { listMapPoints, mapPoints } from '../../api/map';
 import { questPrioritySchema, questIdSchema, questSchema, questStatusSchema } from '../../schemes/quest';
 import { questsListSortSchema } from './quest';
 
-const mapPointOutputScheme = Joi.object({
+const mapPointOutputSchema = Joi.object({
   pointsCount: Joi.number(),
   questId: questIdSchema,
   type: Joi.string(),
@@ -30,7 +30,7 @@ export default [{
       }).label('MapPointsQueryScheme'),
     },
     response: {
-      schema: outputOkSchema(Joi.array().items(mapPointOutputScheme)).label('MapPointsOutputResponse'),
+      schema: outputOkSchema(Joi.array().items(mapPointOutputSchema)).label('MapPointsOutputResponse'),
     }
   }
 }, {

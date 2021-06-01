@@ -28,7 +28,7 @@ const responseToQuest = Joi.object({
   worker: userSchema,
 }).label('ResponseToQuestScheme');
 
-const userResponseToQuestsScheme = Joi.object({
+const userResponseToQuestsSchema = Joi.object({
   workerId: userIdSchema,
   questId: questIdSchema,
   status: questsResponseStatusSchema,
@@ -114,7 +114,7 @@ export default [{
       schema: outputOkSchema(
         Joi.object({
           count: countSchema,
-          responses: Joi.array().items(userResponseToQuestsScheme).label("UserQuestResponseList")
+          responses: Joi.array().items(userResponseToQuestsSchema).label("UserQuestResponseList")
         }).label("UserResponsesToQuestsResult")
       ).label("UserResponsesToQuestsResponse")
     },

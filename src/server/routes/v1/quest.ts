@@ -16,7 +16,7 @@ export const questsListSortSchema = Joi.object({
   createdAt: sortDirectionSchema,
 }).default({}).label('QuestsListSortSchema');
 
-const questsQueryScheme = Joi.object({
+const questsQuerySchema = Joi.object({
   offset: Joi.number().min(0).default(0).label('offset'),
   limit: Joi.number().min(0).default(10).max(100).label('limit'),
   q: Joi.string().default(null).max(255),
@@ -25,7 +25,7 @@ const questsQueryScheme = Joi.object({
   sort: questsListSortSchema,
 }).label('QuestsQueryScheme');
 
-const questsOutputScheme = Joi.object({
+const questsOutputSchema = Joi.object({
   count: Joi.number().integer().example(10).label('CountQuests'),
   quests: Joi.array().items(questSchema).label('QuestsList'),
 }).label("QuestsOutput");
@@ -105,10 +105,10 @@ export default [{
     tags: ["api", "quest"],
     description: "Get quests",
     validate: {
-      query: questsQueryScheme
+      query: questsQuerySchema
     },
     response: {
-      schema: outputOkSchema(questsOutputScheme).label("QuestsResponse")
+      schema: outputOkSchema(questsOutputSchema).label("QuestsResponse")
     },
   }
 }, {
@@ -123,10 +123,10 @@ export default [{
       params: Joi.object({
         userId: userIdSchema.required(),
       }).label("GetQuestsParams"),
-      query: questsQueryScheme
+      query: questsQuerySchema
     },
     response: {
-      schema: outputOkSchema(questsOutputScheme).label("QuestsResponse")
+      schema: outputOkSchema(questsOutputSchema).label("QuestsResponse")
     },
   }
 }];

@@ -1,10 +1,9 @@
 import * as Joi from "joi";
 import { QuestPriority, AdType, QuestStatus } from '../models/Quest';
 import { isoDateSchema, locationSchema } from './index';
-import { userSchema } from './user';
+import { userIdSchema, userSchema } from './user';
 
 export const questIdSchema = Joi.string().uuid().example("fa0e2e4e-c53f-4af7-8906-1649daa0cce3").label("QuestId");
-export const userIdSchema = Joi.string().uuid().example("fa0e2e4e-c53f-4af7-8906-1649daa0cce3").label("UserId");
 export const categorySchema = Joi.string().example('Retail').label('Category');
 export const questStatusSchema = Joi.number().valid(...Object.keys(QuestStatus).map(key => parseInt(key)).filter(key => !isNaN(key))).example(QuestStatus.Created).default(QuestStatus.Created).label('Status');
 export const questPrioritySchema = Joi.number().valid(...Object.keys(QuestPriority).map(key => parseInt(key)).filter(key => !isNaN(key))).example(QuestPriority.AllPriority).label('Priority');

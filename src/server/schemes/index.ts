@@ -18,6 +18,7 @@ export function outputPaginationSchema(title: string, item: Joi.Schema): Joi.Sch
   });
 }
 
+export const urlSchema = Joi.string().example('http://example.com/v1/getVideo').label('URL');
 export const hexTokenSchema = Joi.string().regex(/^[0-9a-fA-F]{40}$/).example("9997632b8e470e6fc7b48fac0528f06b5581ac29").label("HexToken");
 export const totpSchema = Joi.string().regex(/^\d{6}$/).example("123456").label("Totp");
 export const jwtTokenAccess = Joi.string().example("access jwt token");
