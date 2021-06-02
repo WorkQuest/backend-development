@@ -1,5 +1,6 @@
 import * as aws from 'aws-sdk';
 import config from "../config/config";
+import { Media } from '../models/Media';
 
 export function generateMediaHash(length: number): string {
   let result: string[] = [];
@@ -35,7 +36,7 @@ export function deleteObjectS3(hash: string) {
   })
 }
 
-export async function isMediaExists(media) {
+export async function isMediaExists(media: Media) {
   try {
     await spaces.getObjectAcl(
       { Bucket: config.cdn.bucket, Key: media.hash }

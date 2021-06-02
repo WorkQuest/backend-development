@@ -1,5 +1,5 @@
 import * as Joi from "joi";
-import { uploadFile } from '../../api/storageService';
+import { getUploadLink } from '../../api/storageService';
 import { contentTypeSchema, mediaIdSchema } from '../../schemes/media';
 import { outputOkSchema, urlSchema } from '../../schemes';
 
@@ -9,15 +9,15 @@ const uploadFileResponseSchema = Joi.object({
 });
 
 export default [{
-  method: "POST",
+  method: "PUT",
   path: "/v1/storage/get-upload-link",
-  handler: uploadFile,
+  handler: getUploadLink,
   options: {
     id: "v1.storage.upload",
     tags: ["api", "storage"],
     description: "Upload file in storage",
     validate: {
-      payload: Joi.object({
+      query: Joi.object({
         contentType: contentTypeSchema.required()
       }).label('UploadFilePayload')
     },

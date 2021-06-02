@@ -72,6 +72,7 @@ export default {
     secretAccessKey: process.env.CDN_SECRET_ACCESS_KEY,
     endpoint: process.env.CDN_END_POINT,
     bucket: process.env.CDN_BUCKET,
+    pubUrl: process.env.CDN_PUB_END_POINT,
     expiresIn: parseInt(process.env.CDN_EXPIRES_IN),
   },
   baseUrl: process.env.BASE_URL,

@@ -14,7 +14,7 @@ export class Media extends Model {
   @ForeignKey(() => User) @Column({type: DataType.STRING, allowNull: false}) userId: string;
 
   @Column({type: DataType.STRING, allowNull: false}) contentType: ContentType;
-  @Column({type: DataType.STRING, allowNull: false}) url: string;
+  @Column({type: DataType.TEXT, allowNull: false}) url: string;
   @Column({type: DataType.STRING, allowNull: false}) hash: string;
 
   @BelongsTo(() => User) user: User;
