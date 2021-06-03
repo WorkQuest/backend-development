@@ -9,15 +9,15 @@ const uploadFileResponseSchema = Joi.object({
 });
 
 export default [{
-  method: "PUT",
+  method: "POST",
   path: "/v1/storage/get-upload-link",
   handler: getUploadLink,
   options: {
-    id: "v1.storage.upload",
+    id: "v1.storage.getUploadLink",
     tags: ["api", "storage"],
     description: "Upload file in storage",
     validate: {
-      query: Joi.object({
+      payload: Joi.object({
         contentType: contentTypeSchema.required()
       }).label('UploadFilePayload')
     },

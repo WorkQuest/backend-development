@@ -26,7 +26,7 @@ export default [{
     description: "Set avatar in profile",
     validate: {
       payload: Joi.object({
-        mediaId: mediaIdSchema.required(),
+        mediaId: mediaIdSchema.allow(null).required(),
       }).label('SetAvatarPayload')
     },
     response: {

@@ -1,4 +1,4 @@
-import { BelongsTo, Column, DataType, ForeignKey, Model, Scopes, Table } from 'sequelize-typescript';
+import { BelongsTo, Column, DataType, ForeignKey, HasMany, Model, Scopes, Table } from 'sequelize-typescript';
 import { getUUID } from "../utils";
 import * as bcrypt from "bcrypt";
 import { Media } from './Media';
@@ -73,7 +73,7 @@ export class User extends Model {
       return this.getDataValue("password");
     }
   }) password: string;
-  @ForeignKey(() => Media) @Column({type: DataType.STRING, defaultValue: null}) avatar: string;
+  @ForeignKey(() => Media) @Column({type: DataType.STRING, defaultValue: null}) avatarId: string;
 
   @Column({ type: DataType.STRING, unique: true }) email: string;
   @Column(DataType.STRING) firstName: string;
@@ -83,7 +83,8 @@ export class User extends Model {
   @Column({ type: DataType.INTEGER, defaultValue: UserStatus.Unconfirmed }) status: UserStatus;
   @Column({ type: DataType.INTEGER, defaultValue: StatusKYC.Unconfirmed }) statusKYC: StatusKYC;
 
-  @BelongsTo(() => Media,{constraints: false}) media: Media;
+  @BelongsTo(() => Media,{constraints: false, foreignKey: 'avatarId'}) avatar: Media;
+  @HasMany(() => Media) medias: Media[];
 
   async passwordCompare(pwd: string) {
     return bcrypt.compareSync(pwd, this.password);

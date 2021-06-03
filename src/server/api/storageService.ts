@@ -5,10 +5,10 @@ import config from '../config/config';
 
 export async function getUploadLink(r) {
   const hash = generateMediaHash(60);
-  const uploadUrl = getUploadUrlS3(hash, r.query.contentType);
+  const uploadUrl = getUploadUrlS3(hash, r.payload.contentType);
   const media = await Media.create({
     userId: r.auth.credentials.id,
-    contentType: r.query.contentType,
+    contentType: r.payload.contentType,
     url: config.cdn.pubUrl + '/' + hash,
     hash: hash,
   });

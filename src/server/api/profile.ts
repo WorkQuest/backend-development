@@ -9,8 +9,15 @@ export async function getMe(r) {
 }
 
 export async function setAvatar(r) {
-  const media = await Media.findOne({ where: { id: r.payload.mediaId } })
   const user = r.auth.credentials;
+
+  if (!r.payload.mediaId) {
+    await user.update({ avatarId: null });
+
+    return output();
+  }
+
+  const media = await Media.findOne({ where: { id: r.payload.mediaId } })
 
   if (!media) {
     return error(Errors.NotFound, 'Media is not found', {});
@@ -19,7 +26,7 @@ export async function setAvatar(r) {
     return error(Errors.NotFound, 'Media is not exists', {});
   }
 
-  await user.update({ avatar: media.id });
+  await user.update({ avatarId: media.id });
 
   return output();
 }
