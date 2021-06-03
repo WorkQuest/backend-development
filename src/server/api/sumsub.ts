@@ -5,6 +5,7 @@ import { error, output } from "../utils";
 import * as FormData from "form-data";
 import { Errors } from "../utils/errors";
 import { StatusKYC, User } from "../models/User";
+import * as querystring from "querystring";
 
 export enum ReviewAnswer {
   Red = "RED",
@@ -56,12 +57,11 @@ export async function createAccessToken(r) {
   }
 
   try {
-    const result = await api.post(`/resources/accessTokens`, {
-      params: {
-        userId: r.auth.credentials.id,
-        ttlInSecs: serverConfig.sumsub.accessTokenTTL
-      }
+    const qs = querystring.stringify({
+      userId: r.auth.credentials.id,
+      ttlInSecs: serverConfig.sumsub.accessTokenTTL
     });
+    const result = await api.post(`/resources/accessTokens?` + qs);
 
     return output(result.data);
   } catch (err) {
