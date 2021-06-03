@@ -1,8 +1,7 @@
 import * as Joi from "joi";
 import { getMe, setRole } from "../../api/profile";
-import { outputOkSchema } from "../../schemes";
+import { emptyOkSchema, outputOkSchema } from '../../schemes';
 import { userRoleSchema, userSchema } from '../../schemes/user';
-import { output } from '../../utils';
 
 export default [{
   method: "GET",
@@ -27,10 +26,10 @@ export default [{
     validate: {
       payload: Joi.object({
         role: userRoleSchema.required()
-      })
+      }).label('SetUserRolePayload')
     },
     response: {
-      schema: output()
+      schema: emptyOkSchema
     }
   }
 }];
