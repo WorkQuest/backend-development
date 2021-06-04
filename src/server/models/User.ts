@@ -29,12 +29,13 @@ const defaultUserSettings: UserSettings = {
 
 export enum UserStatus {
   Unconfirmed,
-  Confirmed
+  Confirmed,
+  NeedSetRole,
 }
 
 export enum UserRole {
   Employer = "employer",
-  Worker = "worker"
+  Worker = "worker",
 }
 
 export enum StatusKYC {
@@ -69,8 +70,8 @@ export class User extends Model {
         return;
       }
 
-      let salt = bcrypt.genSaltSync(10);
-      let hash = bcrypt.hashSync(value, salt);
+      const salt = bcrypt.genSaltSync(10);
+      const hash = bcrypt.hashSync(value, salt);
       this.setDataValue("password", hash);
     },
     get() {

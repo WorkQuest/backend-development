@@ -1,7 +1,7 @@
 import * as Joi from "joi";
-import { getMe, setAvatar } from '../../api/profile';
-import { emptyOkSchema, idSchema, outputOkSchema } from '../../schemes';
-import { userSchema } from "../../schemes/user";
+import { getMe, setAvatar, setRole } from '../../api/profile';
+import { emptyOkSchema, outputOkSchema, idSchema } from '../../schemes';
+import { userRoleSchema, userSchema } from "../../schemes/user";
 
 export default [{
   method: "GET",
@@ -27,6 +27,23 @@ export default [{
       payload: Joi.object({
         mediaId: idSchema.allow(null).required().label('MediaId'),
       }).label('SetAvatarPayload')
+    },
+    response: {
+      schema: emptyOkSchema
+    }
+  }
+}, {
+  method: "POST",
+  path: "/v1/profile/set-role",
+  handler: setRole,
+  options: {
+    id: "v1.profile.setRole",
+    tags: ["api", "profile"],
+    description: "Set role user (Only for need set role)",
+    validate: {
+      payload: Joi.object({
+        role: userRoleSchema.required()
+      }).label('SetUserRolePayload')
     },
     response: {
       schema: emptyOkSchema

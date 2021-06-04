@@ -4,7 +4,7 @@ import { outputOkSchema } from "../../schemes";
 
 export default [{
   method: "GET",
-  path: "/v1/sumsub/createAccessToken",
+  path: "/v1/sumsub/create-access-token",
   handler: createAccessToken,
   options: {
     id: "v1.sumsub.createAccessToken",
@@ -19,7 +19,7 @@ export default [{
   },
 }, {
   method: "POST",
-  path: "/v1/sumsub/applicantReviewed",
+  path: "/v1/sumsub/applicant-reviewed",
   handler: applicantReviewed,
   options: {
     auth: false,
