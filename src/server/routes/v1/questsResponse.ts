@@ -47,7 +47,7 @@ export default [{
   handler: questResponse,
   options: {
     id: "v1.quest.response",
-    tags: ["api", "quest response"],
+    tags: ["api", "questResponse"],
     description: "Respond on quest",
     validate: {
       params: Joi.object({
@@ -67,7 +67,7 @@ export default [{
   handler: questInvite,
   options: {
     id: "v1.quest.invite",
-    tags: ["api", "quest response"],
+    tags: ["api", "questResponse"],
     description: "Invite on quest",
     validate: {
       params: Joi.object({
@@ -88,7 +88,7 @@ export default [{
   handler: getResponsesToQuest,
   options: {
     id: "v1.quest.responses",
-    tags: ["api", "quest response"],
+    tags: ["api", "questResponse"],
     description: "Get responses to quest",
     validate: {
       params: Joi.object({
@@ -110,7 +110,7 @@ export default [{
   handler: getResponsesUserToQuest,
   options: {
     id: "v1.quest.responses.my",
-    tags: ["api", "quest response"],
+    tags: ["api", "questResponse"],
     description: "Get responses to quest for authorized user",
     response: {
       schema: outputOkSchema(
@@ -127,7 +127,7 @@ export default [{
   handler: acceptInvite,
   options: {
     id: "v1.quest.response.accept",
-    tags: ["api", "quest response"],
+    tags: ["api", "questResponse"],
     description: "Accept quest invitation",
     validate: {
       params: Joi.object({
@@ -144,7 +144,7 @@ export default [{
   handler: rejectInvite,
   options: {
     id: "v1.quest.response.reject",
-    tags: ["api", "quest response"],
+    tags: ["api", "questResponse"],
     description: "Reject quest invitation",
     validate: {
       params: Joi.object({
