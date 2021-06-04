@@ -1,8 +1,7 @@
 import * as Joi from "joi";
 import { getMe, setAvatar } from '../../api/profile';
-import { emptyOkSchema, outputOkSchema } from '../../schemes';
+import { emptyOkSchema, idSchema, outputOkSchema } from '../../schemes';
 import { userSchema } from "../../schemes/user";
-import { mediaIdSchema } from '../../schemes/media';
 
 export default [{
   method: "GET",
@@ -26,11 +25,11 @@ export default [{
     description: "Set avatar in profile",
     validate: {
       payload: Joi.object({
-        mediaId: mediaIdSchema.allow(null).required(),
+        mediaId: idSchema.allow(null).required().label('MediaId'),
       }).label('SetAvatarPayload')
     },
     response: {
-      schema: emptyOkSchema.label('ProfileSetAvatarResponse')
+      schema: emptyOkSchema
     }
   }
 }];

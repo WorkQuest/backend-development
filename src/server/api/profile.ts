@@ -17,7 +17,7 @@ export async function setAvatar(r) {
     return output();
   }
 
-  const media = await Media.findOne({ where: { id: r.payload.mediaId } })
+  const media = await Media.findByPk(r.payload.mediaId);
 
   if (!media) {
     return error(Errors.NotFound, 'Media is not found', {});

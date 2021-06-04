@@ -1,5 +1,5 @@
 import * as Joi from "joi";
-import { accountStatusSchema } from "./user";
+import { UserStatus } from '../models/User';
 
 export const outputOkSchema = (res: Joi.Schema): Joi.Schema => {
   return Joi.object({
@@ -18,6 +18,7 @@ export function outputPaginationSchema(title: string, item: Joi.Schema): Joi.Sch
   });
 }
 
+export const idSchema = Joi.string().uuid().example("fa0e2e4e-c53f-4af7-8906-1649daa0cce3").label("Id");
 export const urlSchema = Joi.string().example('http://example.com/v1/getVideo').label('URL');
 export const hexTokenSchema = Joi.string().regex(/^[0-9a-fA-F]{40}$/).example("9997632b8e470e6fc7b48fac0528f06b5581ac29").label("HexToken");
 export const totpSchema = Joi.string().regex(/^\d{6}$/).example("123456").label("Totp");
@@ -28,6 +29,10 @@ export const isoDateSchema = Joi.string().isoDate().example('2021-05-12T05:24:47
 export const longitudeSchema = Joi.number().min(-180).max(180).example(84.948846).label('Longitude');
 export const latitudeSchema = Joi.number().min(-90).max(90).example(56.48122).label("Latitude");
 export const countSchema = Joi.number().example(10);
+export const accountStatusSchema = Joi.number().valid(...Object.keys(UserStatus).map(key => parseInt(key)).filter(key => !isNaN(key))).example(UserStatus.Unconfirmed).label("UserStatus");
+export const offsetSchema = Joi.number().min(0).default(0).label('Offset');
+export const limitSchema = Joi.number().min(0).default(10).max(100).label('Limit');
+export const searchSchema = Joi.string().default(null).max(255).label('Search');
 
 export const locationSchema = Joi.object({
   longitude: longitudeSchema.required(),

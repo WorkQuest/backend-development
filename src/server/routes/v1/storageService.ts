@@ -1,12 +1,12 @@
 import * as Joi from "joi";
 import { getUploadLink } from '../../api/storageService';
-import { contentTypeSchema, mediaIdSchema } from '../../schemes/media';
-import { outputOkSchema, urlSchema } from '../../schemes';
+import { contentTypeSchema } from '../../schemes/media';
+import { idSchema, outputOkSchema, urlSchema } from '../../schemes';
 
-const uploadFileResponseSchema = Joi.object({
-  mediaId: mediaIdSchema,
+const uploadLinkSchema = Joi.object({
+  mediaId: idSchema.label('MediaId'),
   url: urlSchema,
-});
+}).label('UploadLink');
 
 export default [{
   method: "POST",
@@ -22,7 +22,7 @@ export default [{
       }).label('UploadFilePayload')
     },
     response: {
-      schema: outputOkSchema(uploadFileResponseSchema).label('UploadFileResponse')
+      schema: outputOkSchema(uploadLinkSchema).label('UploadLinkResponse')
     }
   }
 }];

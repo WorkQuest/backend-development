@@ -45,8 +45,12 @@ export enum StatusKYC {
 @Scopes(() => ({
   defaultScope: {
     attributes: {
-      exclude: ["password", "avatar", "settings", "createdAt", "updatedAt"]
-    }
+      exclude: ["password", "avatarId", "settings", "createdAt", "updatedAt"]
+    },
+    include: [{
+      model: Media.scope('urlOnly'),
+      as: 'avatar'
+    }]
   },
   withPassword: {
     attributes: {

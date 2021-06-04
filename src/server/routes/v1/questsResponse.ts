@@ -1,7 +1,12 @@
 import * as Joi from "joi";
-import { questFullSchema, questIdSchema } from "../../schemes/quest";
-import { userIdSchema, userSchema } from "../../schemes/user";
-import { countSchema, emptyOkSchema, isoDateSchema, outputOkSchema } from "../../schemes";
+import { questFullSchema } from "../../schemes/quest";
+import { userSchema } from '../../schemes/user';
+import { countSchema, emptyOkSchema, idSchema, isoDateSchema, outputOkSchema } from '../../schemes';
+import {
+  messageSchema,
+  questsResponseStatusSchema,
+  questsResponseTypeSchema
+} from "../../schemes/questsResponse";
 import {
   acceptInvite,
   getResponsesToQuest,
@@ -10,15 +15,12 @@ import {
   questResponse,
   rejectInvite
 } from "../../api/questsResponse";
-import {
-  messageSchema,
-  questsResponseIdSchema,
-  questsResponseStatusSchema,
-  questsResponseTypeSchema
-} from "../../schemes/questsResponse";
 
+const userIdSchema = idSchema.label('UserId');
+const questIdSchema = idSchema.label('QuestId');
+const questsResponseIdSchema = idSchema.label('QuestsResponseId');
 const responseToQuest = Joi.object({
-  workerId: userIdSchema,
+  workerId: userIdSchema.label('WorkerId'),
   questId: questIdSchema,
   status: questsResponseStatusSchema,
   type: questsResponseTypeSchema,
@@ -37,7 +39,7 @@ const userResponseToQuestsSchema = Joi.object({
   createdAt: isoDateSchema,
   updatedAt: isoDateSchema,
   quest: questFullSchema,
-}).label('ResponseToQuestScheme');
+}).label('UserResponseToQuestScheme');
 
 export default [{
   method: "POST",
@@ -45,7 +47,7 @@ export default [{
   handler: questResponse,
   options: {
     id: "v1.quest.response",
-    tags: ["api", "quest", "response"],
+    tags: ["api", "quest response"],
     description: "Respond on quest",
     validate: {
       params: Joi.object({
@@ -56,7 +58,7 @@ export default [{
       }).label('QuestResponsePayload'),
     },
     response: {
-      schema: emptyOkSchema.label("ResponseQuestResponse"),
+      schema: emptyOkSchema
     },
   },
 }, {
@@ -65,7 +67,7 @@ export default [{
   handler: questInvite,
   options: {
     id: "v1.quest.invite",
-    tags: ["api", "quest", "invite"],
+    tags: ["api", "quest response"],
     description: "Invite on quest",
     validate: {
       params: Joi.object({
@@ -77,7 +79,7 @@ export default [{
       }).label('QuestInvitePayload'),
     },
     response: {
-      schema: emptyOkSchema.label("QuestInviteResponse"),
+      schema: emptyOkSchema
     },
   },
 }, {
@@ -86,7 +88,7 @@ export default [{
   handler: getResponsesToQuest,
   options: {
     id: "v1.quest.responses",
-    tags: ["api", "quest", "response"],
+    tags: ["api", "quest response"],
     description: "Get responses to quest",
     validate: {
       params: Joi.object({
@@ -108,7 +110,7 @@ export default [{
   handler: getResponsesUserToQuest,
   options: {
     id: "v1.quest.responses.my",
-    tags: ["api", "quest", "response"],
+    tags: ["api", "quest response"],
     description: "Get responses to quest for authorized user",
     response: {
       schema: outputOkSchema(
@@ -125,7 +127,7 @@ export default [{
   handler: acceptInvite,
   options: {
     id: "v1.quest.response.accept",
-    tags: ["api", "quest", "response"],
+    tags: ["api", "quest response"],
     description: "Accept quest invitation",
     validate: {
       params: Joi.object({
@@ -133,7 +135,7 @@ export default [{
       }).label('AcceptInvitationParams'),
     },
     response: {
-      schema: emptyOkSchema.label('AcceptInvitationResponse')
+      schema: emptyOkSchema
     }
   }
 }, {
@@ -142,7 +144,7 @@ export default [{
   handler: rejectInvite,
   options: {
     id: "v1.quest.response.reject",
-    tags: ["api", "quest", "response"],
+    tags: ["api", "quest response"],
     description: "Reject quest invitation",
     validate: {
       params: Joi.object({
@@ -150,7 +152,7 @@ export default [{
       }).label('RejectInvitationParams'),
     },
     response: {
-      schema: emptyOkSchema.label('RejectInvitationResponse')
+      schema: emptyOkSchema
     }
   }
 }];
