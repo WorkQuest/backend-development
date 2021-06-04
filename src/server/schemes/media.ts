@@ -1,11 +1,16 @@
 import * as Joi from "joi";
 import { ContentType } from '../models/Media';
-import { urlSchema } from './index';
-import { userIdSchema } from './user';
+import { idSchema, urlSchema } from './index';
 
-export const mediaIdSchema = Joi.string().uuid().example("fa0e2e4e-c53f-4af7-8906-1649daa0cce3").label("MediaId");
+const mediaIdSchema = idSchema.label("MediaId");
+const userIdSchema = idSchema.label("UserId");
 export const contentTypeSchema = Joi.string().valid(...Object.values(ContentType)).example(ContentType.png).label('ContentType');
 export const mediaHashSchema = Joi.number().min(60).max(60).label('MediaHash') // TODO: add example
+
+export const mediaUrlOnlySchema = Joi.object({
+  id: mediaIdSchema,
+  url: urlSchema,
+}).label('MediaUrlOnlyScheme');
 
 export const mediaSchema = Joi.object({
   id: mediaIdSchema,

@@ -1,4 +1,4 @@
-import { BelongsTo, Column, DataType, ForeignKey, Model, Table } from 'sequelize-typescript';
+import { BelongsTo, Column, DataType, ForeignKey, Model, Table, Scopes } from 'sequelize-typescript';
 import { getUUID } from '../utils';
 import { User } from './User';
 
@@ -8,7 +8,13 @@ export enum ContentType {
   png = "image/png",
 }
 
-@Table
+@Table({
+  scopes: {
+    urlOnly: {
+      attributes: ["id", "url"]
+    }
+  }
+})
 export class Media extends Model {
   @Column({ primaryKey: true, type: DataType.STRING, defaultValue: () => getUUID() }) id: string;
   @ForeignKey(() => User) @Column({type: DataType.STRING, allowNull: false}) userId: string;
