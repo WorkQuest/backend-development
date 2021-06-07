@@ -42,7 +42,7 @@ async function getUserByNetworkProfile(network: string, profile): Promise<User> 
 		password: null,
 		firstName: profile.name.first,
 		lastName: profile.name.last,
-		status: UserStatus.Confirmed,
+		status: UserStatus.NeedSetRole,
 		settings: {
 			emailConfirm: null,
 			social: {
