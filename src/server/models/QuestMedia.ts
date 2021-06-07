@@ -1,4 +1,4 @@
-import { BelongsTo, BelongsToMany, Column, DataType, ForeignKey, Model, Table } from 'sequelize-typescript';
+import { BelongsTo, Column, DataType, ForeignKey, Model, Table } from 'sequelize-typescript';
 import { getUUID } from '../utils';
 import { Media } from './Media';
 import { Quest } from './Quest';
@@ -11,5 +11,5 @@ export class QuestMedia extends Model {
   @ForeignKey(() => Quest) @Column({type: DataType.STRING, allowNull: false}) questId: string;
 
   @BelongsTo(() => Media) media: Media;
-  // @BelongsToMany(() => Quest) quest: Quest;
+  @BelongsTo(() => Quest) quest: Quest;
 }

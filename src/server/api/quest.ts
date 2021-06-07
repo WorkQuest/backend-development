@@ -3,6 +3,9 @@ import { Errors } from '../utils/errors';
 import { Quest, QuestStatus } from '../models/Quest';
 import { UserRole } from '../models/User';
 import { Op } from "sequelize";
+import { QuestMedia } from '../models/QuestMedia';
+import { Media } from '../models/Media';
+import { isMediaExists } from '../utils/storageService';
 
 export const searchFields = [
   "title",
@@ -10,6 +13,7 @@ export const searchFields = [
 ];
 
 export async function createQuest(r) {
+  const transaction = await r.server.app.db.transaction();
   const user = r.auth.credentials;
 
   if (user.role !== UserRole.Employer) {
@@ -25,9 +29,32 @@ export async function createQuest(r) {
     title: r.payload.title,
     description: r.payload.description,
     price: r.payload.price,
-  });
+  }, { transaction });
 
-  return output({...quest.toJSON(), locationPostGIS: undefined});
+  for (const mediaId of r.payload.medias) {
+    const media = await Media.findByPk(mediaId);
+    if (!media) {
+      transaction.rollBack();
+
+      return error(Errors.NotFound, 'Media is not found', { mediaId: media.id });
+    }
+    if (!await isMediaExists(media)) {
+      transaction.rollBack();
+
+      return error(Errors.InvalidPayload, 'Media is not exists', { mediaId: media.id });
+    }
+
+    await QuestMedia.create({
+      mediaId: mediaId,
+      questId: quest.id,
+    }, { transaction });
+  }
+
+  await transaction.commit();
+
+  return output(
+    await Quest.findByPk(quest.id) // TODO: exclude: ['locationPostGIS'] dont exclude
+  );
 }
 
 export async function editQuest(r) {
@@ -39,10 +66,28 @@ export async function editQuest(r) {
   if (quest.userId !== r.auth.credentials.id) {
     return error(Errors.Forbidden, "User is not creator of quest", {});
   }
+  if (r.payload.medias) {
+    const medias = [];
+    for (const mediaId of r.payload.medias) {
+      const media = await Media.findByPk(mediaId);
+      if (!media) {
+        return error(Errors.NotFound, 'Media is not found', { mediaId: media.id });
+      }
+      if (!await isMediaExists(media)) {
+        return error(Errors.InvalidPayload, 'Media is not exists', { mediaId: media.id });
+      }
+
+      medias.push(media);
+    }
+
+    await quest.$set('medias', medias);
+  }
 
   await quest.update(r.payload);
 
-  return output(quest);
+  return output(
+    await Quest.findByPk(quest.id) // TODO: exclude: ['locationPostGIS'] dont exclude
+  );
 }
 
 export async function deleteQuest(r) {

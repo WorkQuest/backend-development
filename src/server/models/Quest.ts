@@ -1,7 +1,8 @@
-import { BelongsTo, Column, DataType, ForeignKey, Model, Scopes, Table } from "sequelize-typescript";
+import { BelongsTo, BelongsToMany, Column, DataType, ForeignKey, Model, Scopes, Table } from 'sequelize-typescript';
 import { User } from "./User";
 import { getUUID } from "../utils";
 import { Media } from './Media';
+import { QuestMedia } from './QuestMedia';
 
 export enum QuestPriority {
   AllPriority = 0,
@@ -41,7 +42,14 @@ function transformToGeoPostGIS(location: Location) {
   defaultScope: {
     attributes: {
       exclude: ["locationPostGIS"]
-    }
+    },
+    include: [{
+      model: Media.scope('urlOnly'),
+      as: 'medias',
+      through: {
+        attributes: []
+      }
+    }]
   }
 }))
 @Table
@@ -67,4 +75,5 @@ export class Quest extends Model {
   @Column({type: DataType.INTEGER, defaultValue: AdType.Free }) adType: AdType;
 
   @BelongsTo(() => User) user: User;
+  @BelongsToMany(() => Media, () => QuestMedia) medias: Media[];
 }
