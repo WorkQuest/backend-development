@@ -34,7 +34,7 @@ export async function createQuest(r) {
   for (const mediaId of r.payload.medias) {
     const media = await Media.findByPk(mediaId);
     if (!media) {
-      transaction.rollBack();
+      await transaction.rollback();
 
       return error(Errors.NotFound, 'Media is not found', { mediaId: media.id });
     }
