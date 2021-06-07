@@ -36,7 +36,7 @@ export async function createQuest(r) {
     if (!media) {
       await transaction.rollback();
 
-      return error(Errors.NotFound, 'Media is not found', { mediaId: media.id });
+      return error(Errors.NotFound, 'Media is not found', { mediaId });
     }
     if (!await isMediaExists(media)) {
       transaction.rollBack();
