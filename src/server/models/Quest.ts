@@ -1,6 +1,7 @@
 import { BelongsTo, Column, DataType, ForeignKey, Model, Scopes, Table } from "sequelize-typescript";
 import { User } from "./User";
 import { getUUID } from "../utils";
+import { Media } from './Media';
 
 export enum QuestPriority {
   AllPriority = 0,
@@ -46,11 +47,11 @@ function transformToGeoPostGIS(location: Location) {
 @Table
 export class Quest extends Model {
   @Column({ primaryKey: true, type: DataType.STRING, defaultValue: () => getUUID() }) id: string;
-  @ForeignKey(() => User) @Column(DataType.STRING) userId: string;
+  @ForeignKey(() => User) @Column({type: DataType.STRING, allowNull: false}) userId: string;
 
   @Column({type: DataType.INTEGER, defaultValue: QuestStatus.Created }) status: QuestStatus;
   @Column({type: DataType.INTEGER, defaultValue: QuestPriority.AllPriority }) priority: QuestPriority;
-  @Column({type: DataType.STRING, allowNull: false }) category: string;
+  @Column({type: DataType.STRING, allowNull: false}) category: string;
 
   @Column({type: DataType.JSONB,
     set(value: Location) {
@@ -59,10 +60,10 @@ export class Quest extends Model {
     }
   }) location: Location;
   @Column({type: DataType.GEOMETRY('POINT', 4326)}) locationPostGIS;
-  @Column({type: DataType.STRING }) title: string;
+  @Column({type: DataType.STRING, allowNull: false }) title: string;
   @Column({type: DataType.TEXT }) description: string;
 
-  @Column({type: DataType.DECIMAL}) price: string;
+  @Column({type: DataType.DECIMAL, allowNull: false}) price: string;
   @Column({type: DataType.INTEGER, defaultValue: AdType.Free }) adType: AdType;
 
   @BelongsTo(() => User) user: User;

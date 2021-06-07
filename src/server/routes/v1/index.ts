@@ -4,6 +4,7 @@ import map from "./map";
 import quest from "./quest";
 import questsResponse from './questsResponse';
 import identityVerification from './sumsub'
+import storageService from './storageService';
 
 export default [
   ...profile,
@@ -12,4 +13,5 @@ export default [
   ...quest,
   ...questsResponse,
   ...identityVerification,
+  ...storageService,
 ];

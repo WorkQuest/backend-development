@@ -1,15 +1,14 @@
 import Joi = require("joi");
-import { locationSchema, outputOkSchema } from '../../schemes';
+import { outputOkSchema, locationSchema, searchSchema, idSchema } from '../../schemes';
 import { listMapPoints, mapPoints } from '../../api/map';
-import { questPrioritySchema, questIdSchema, questSchema, questStatusSchema } from '../../schemes/quest';
-import { questsListSortSchema } from './quest';
+import { questSchema, questPrioritySchema, questsListSortSchema, questStatusSchema } from '../../schemes/quest';
 
-const mapPointOutputScheme = Joi.object({
-  pointsCount: Joi.number(),
-  questId: questIdSchema,
-  type: Joi.string(),
-  coordinates: Joi.array().items(Joi.number()),
-  clusterRadius: Joi.number().allow(null),
+const mapPointOutputSchema = Joi.object({
+  pointsCount: Joi.number().label('PointsCount'),
+  questId: idSchema.label('QuestId'),
+  type: Joi.string().valid('point', 'cluster').label('TypePoint'),
+  coordinates: Joi.array().example([83.1123, 40.221]).items(Joi.number()).label('Coordinates'),
+  clusterRadius: Joi.number().allow(null).label('ClusterRadius'),
 }).label('MapPointOutputScheme');
 
 export default [{
@@ -22,15 +21,15 @@ export default [{
     description: "Get points in map",
     validate: {
       query: Joi.object({
-        north: locationSchema.label('NorthLocation').required(),
-        south: locationSchema.label('SouthLocation').required(),
-        q: Joi.string().default(null).max(255),
+        north: locationSchema.required().label('NorthLocation'),
+        south: locationSchema.required().label('SouthLocation'),
+        q: searchSchema,
         priority: questPrioritySchema,
         status: questStatusSchema,
       }).label('MapPointsQueryScheme'),
     },
     response: {
-      schema: outputOkSchema(Joi.array().items(mapPointOutputScheme)).label('MapPointsOutputResponse'),
+      schema: outputOkSchema(Joi.array().items(mapPointOutputSchema).label('MapPoints')).label('MapPointsOutputResponse'),
     }
   }
 }, {
@@ -45,10 +44,10 @@ export default [{
       query: Joi.object({
         north: locationSchema.label('NorthLocation').required(),
         south: locationSchema.label('SouthLocation').required(),
-        q: Joi.string().default(null).max(255),
+        q: searchSchema,
         priority: questPrioritySchema,
         status: questStatusSchema,
-        sort: questsListSortSchema
+        sort: questsListSortSchema,
       }).label('ListPointsQueryScheme'),
     },
     response: {

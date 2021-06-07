@@ -1,31 +1,17 @@
 import * as Joi from "joi";
 import { createQuest, deleteQuest, editQuest, getQuests } from '../../api/quest';
-import { emptyOkSchema, outputOkSchema, sortDirectionSchema, locationSchema } from '../../schemes';
+import { emptyOkSchema, outputOkSchema, locationSchema, idSchema } from '../../schemes';
 import {
   adTypeSchema,
   categorySchema,
   descriptionSchema,
   priceSchema,
-  questPrioritySchema, questIdSchema, questSchema,
-  titleSchema, questStatusSchema
+  questPrioritySchema, questSchema,
+  titleSchema, questsQuerySchema
 } from '../../schemes/quest';
-import { userIdSchema } from '../../schemes/user';
 
-export const questsListSortSchema = Joi.object({
-  price: sortDirectionSchema,
-  createdAt: sortDirectionSchema,
-}).default({}).label('QuestsListSortSchema');
-
-const questsQueryScheme = Joi.object({
-  offset: Joi.number().min(0).default(0).label('offset'),
-  limit: Joi.number().min(0).default(10).max(100).label('limit'),
-  q: Joi.string().default(null).max(255),
-  priority: questPrioritySchema.default(null),
-  status: questStatusSchema.default(null),
-  sort: questsListSortSchema,
-}).label('QuestsQueryScheme');
-
-const questsOutputScheme = Joi.object({
+const questId = idSchema.label('QuestId');
+const questsOutputSchema = Joi.object({
   count: Joi.number().integer().example(10).label('CountQuests'),
   quests: Joi.array().items(questSchema).label('QuestsList'),
 }).label("QuestsOutput");
@@ -63,11 +49,11 @@ export default [{
     description: "Delete quest",
     validate: {
       params: Joi.object({
-        questId: questIdSchema.required(),
+        questId: questId.required(),
       }).label("DeleteQuestParams")
     },
     response: {
-      schema: emptyOkSchema.label("DeleteQuestResponse"),
+      schema: emptyOkSchema
     },
   },
 }, {
@@ -80,7 +66,7 @@ export default [{
     description: "Edit quest",
     validate: {
       params: Joi.object({
-        questId: questIdSchema.required(),
+        questId: questId.required(),
       }).label("EditQuestParams"),
       payload: Joi.object({
         category: categorySchema,
@@ -105,10 +91,10 @@ export default [{
     tags: ["api", "quest"],
     description: "Get quests",
     validate: {
-      query: questsQueryScheme
+      query: questsQuerySchema
     },
     response: {
-      schema: outputOkSchema(questsOutputScheme).label("QuestsResponse")
+      schema: outputOkSchema(questsOutputSchema).label("QuestsResponse")
     },
   }
 }, {
@@ -121,12 +107,12 @@ export default [{
     description: "Get quests for a given user",
     validate: {
       params: Joi.object({
-        userId: userIdSchema.required(),
+        userId: idSchema.required().label('UserId'),
       }).label("GetQuestsParams"),
-      query: questsQueryScheme
+      query: questsQuerySchema
     },
     response: {
-      schema: outputOkSchema(questsOutputScheme).label("QuestsResponse")
+      schema: outputOkSchema(questsOutputSchema).label("QuestsResponse")
     },
   }
 }];
