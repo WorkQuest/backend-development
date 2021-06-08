@@ -1,6 +1,9 @@
-import { BelongsTo, Column, DataType, ForeignKey, Model, Scopes, Table } from "sequelize-typescript";
+import { BelongsTo, BelongsToMany, Column, DataType, ForeignKey, Model, Scopes, Table } from 'sequelize-typescript';
 import { User } from "./User";
 import { getUUID } from "../utils";
+import { Media } from './Media';
+import { QuestMedia } from './QuestMedia';
+import { transformToGeoPostGIS } from '../utils/quest';
 
 export enum QuestPriority {
   AllPriority = 0,
@@ -26,21 +29,18 @@ export interface Location {
   latitude: number;
 }
 
-function transformToGeoPostGIS(location: Location) {
-  const coordinates = [location.longitude, location.latitude];
-
-  return {
-    type: "Point",
-    coordinates: coordinates,
-    crs: { type: "name", properties: { name: "EPSG:4326" } }
-  };
-}
-
 @Scopes(() => ({
   defaultScope: {
     attributes: {
       exclude: ["locationPostGIS"]
-    }
+    },
+    include: [{
+      model: Media.scope('urlOnly'),
+      as: 'medias',
+      through: {
+        attributes: []
+      }
+    }]
   }
 }))
 @Table
@@ -53,12 +53,7 @@ export class Quest extends Model {
   @Column({type: DataType.INTEGER, defaultValue: QuestPriority.AllPriority }) priority: QuestPriority;
   @Column({type: DataType.STRING, allowNull: false}) category: string;
 
-  @Column({type: DataType.JSONB,
-    set(value: Location) {
-      this.setDataValue("locationPostGIS", transformToGeoPostGIS(value));
-      this.setDataValue("location", value);
-    }
-  }) location: Location;
+  @Column({type: DataType.JSONB}) location: Location;
   @Column({type: DataType.GEOMETRY('POINT', 4326)}) locationPostGIS;
   @Column({type: DataType.STRING, allowNull: false }) title: string;
   @Column({type: DataType.TEXT }) description: string;
@@ -67,4 +62,9 @@ export class Quest extends Model {
   @Column({type: DataType.INTEGER, defaultValue: AdType.Free }) adType: AdType;
 
   @BelongsTo(() => User) user: User;
+  @BelongsToMany(() => Media, () => QuestMedia) medias: Media[];
+
+  updateFieldLocationPostGIS(): void {
+    this.setDataValue('locationPostGIS', transformToGeoPostGIS(this.getDataValue('location')));
+  }
 }
