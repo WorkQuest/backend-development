@@ -2,19 +2,47 @@ import { error, output } from '../utils';
 import { Errors } from '../utils/errors';
 import { Quest, QuestStatus } from '../models/Quest';
 import { UserRole } from '../models/User';
-import { Op } from "sequelize";
+import { Op } from 'sequelize';
 import { QuestMedia } from '../models/QuestMedia';
 import { Media } from '../models/Media';
 import { isMediaExists } from '../utils/storageService';
+import { transformToGeoPostGIS } from '../utils/quest';
 
 export const searchFields = [
   "title",
   "description",
 ];
 
+async function getValidMedia(mediaId: string): Promise<Media> {
+  const media = await Media.findByPk(mediaId);
+  if (!media) {
+    throw error(Errors.NotFound, 'Media is not found', { mediaId })
+  }
+  if (!await isMediaExists(media)) {
+    throw error(Errors.InvalidPayload, 'Media is not exists', { mediaId: media.id });
+  }
+
+  return media;
+}
+
+async function getValidMedias(mediaIds: string[]) {
+  const medias = [];
+  for (const id of mediaIds) {
+    medias.push(await getValidMedia(id));
+  }
+
+  return medias;
+}
+
 export async function createQuest(r) {
-  const transaction = await r.server.app.db.transaction();
   const user = r.auth.credentials;
+  let medias;
+
+  try {
+    medias = await getValidMedias(r.payload.medias);
+  } catch (err) {
+    return err;
+  }
 
   if (user.role !== UserRole.Employer) {
     return error(Errors.InvalidRole, "User is not Employer", {});
@@ -26,35 +54,22 @@ export async function createQuest(r) {
     category: r.payload.category,
     priority: r.payload.priority,
     location: r.payload.location,
+    locationPostGIS: transformToGeoPostGIS(r.payload.location),
     title: r.payload.title,
     description: r.payload.description,
     price: r.payload.price,
-  }, { transaction });
+  });
 
-  for (const mediaId of r.payload.medias) {
-    const media = await Media.findByPk(mediaId);
-    if (!media) {
-      await transaction.rollback();
-
-      return error(Errors.NotFound, 'Media is not found', { mediaId });
-    }
-    if (!await isMediaExists(media)) {
-      transaction.rollBack();
-
-      return error(Errors.InvalidPayload, 'Media is not exists', { mediaId: media.id });
-    }
-
+  for (const media of medias) {
     await QuestMedia.create({
-      mediaId: mediaId,
+      mediaId: media.id,
       questId: quest.id,
-    }, { transaction });
+    });
   }
 
-  await transaction.commit();
-
   return output(
-    await Quest.findByPk(quest.id) // TODO: exclude: ['locationPostGIS'] dont exclude
-  );
+    await Quest.findByPk(quest.id)
+  )
 }
 
 export async function editQuest(r) {
@@ -67,27 +82,23 @@ export async function editQuest(r) {
     return error(Errors.Forbidden, "User is not creator of quest", {});
   }
   if (r.payload.medias) {
-    const medias = [];
-    for (const mediaId of r.payload.medias) {
-      const media = await Media.findByPk(mediaId);
-      if (!media) {
-        return error(Errors.NotFound, 'Media is not found', { mediaId: media.id });
-      }
-      if (!await isMediaExists(media)) {
-        return error(Errors.InvalidPayload, 'Media is not exists', { mediaId: media.id });
-      }
+    let medias;
 
-      medias.push(media);
+    try {
+      medias = await getValidMedias(r.payload.medias);
+    } catch (err) {
+      return err;
     }
 
     await quest.$set('medias', medias);
   }
 
+  quest.updateFieldLocationPostGIS();
   await quest.update(r.payload);
 
   return output(
-    await Quest.findByPk(quest.id) // TODO: exclude: ['locationPostGIS'] dont exclude
-  );
+    await Quest.findByPk(quest.id)
+  )
 }
 
 export async function deleteQuest(r) {
@@ -98,6 +109,9 @@ export async function deleteQuest(r) {
   }
   if (quest.userId !== r.auth.credentials.id) {
     return error(Errors.Forbidden, "User is not creator of quest", {});
+  }
+  if (quest.status !== QuestStatus.Created) {
+    return error(Errors.InvalidStatus, "Quest is not status created", {});
   }
 
   await quest.destroy({ force: true });
