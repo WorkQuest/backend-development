@@ -2,7 +2,7 @@
 
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    return queryInterface.addColumn('Quests', 'workerId', {
+    return queryInterface.addColumn('Quests', 'assignedWorkerId', {
       type: Sequelize.DataTypes.STRING,
       references: {
         model: {
@@ -15,6 +15,6 @@ module.exports = {
   },
 
   down: async (queryInterface, Sequelize) => {
-    return queryInterface.removeColumn('Quests', 'workerId');
+    return queryInterface.removeColumn('Quests', 'assignedWorkerId');
   }
 };
