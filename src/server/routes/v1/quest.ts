@@ -1,5 +1,5 @@
 import * as Joi from "joi";
-import { createQuest, deleteQuest, editQuest, getQuests } from '../../api/quest';
+import { closeQuest, createQuest, deleteQuest, editQuest, getQuests, startQuest } from '../../api/quest';
 import { emptyOkSchema, outputOkSchema, locationSchema, idSchema } from '../../schemes';
 import {
   adTypeSchema,
@@ -117,6 +117,40 @@ export default [{
     },
     response: {
       schema: outputOkSchema(questsOutputSchema).label("QuestsResponse")
+    },
+  }
+}, {
+  method: "POST",
+  path: "/v1/{userId}/start",
+  handler: startQuest,
+  options: {
+    id: "v1.quest.startQuest",
+    tags: ["api", "quest"],
+    description: "Start quest",
+    validate: {
+      payload: Joi.object({
+        assignedWorkerId: idSchema.required().label('AssignedWorkerId')
+      })
+    },
+    response: {
+      schema: emptyOkSchema
+    }
+  }
+}, {
+  method: "POST",
+  path: "/v1/quest/{questId}/close",
+  handler: closeQuest,
+  options: {
+    id: "v1.quest.closeQuest",
+    tags: ["api", "quest"],
+    description: "Close quest",
+    validate: {
+      params: Joi.object({
+        questId: questId.required(),
+      }).label("DeleteQuestParams")
+    },
+    response: {
+      schema: emptyOkSchema
     },
   }
 }];

@@ -22,6 +22,8 @@ export enum QuestStatus {
   Active,
   Performed,
   Arbitration,
+  Closed,
+  WaitApprove
 }
 
 export interface Location {

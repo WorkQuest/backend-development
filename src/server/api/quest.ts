@@ -1,12 +1,13 @@
 import { error, output } from '../utils';
 import { Errors } from '../utils/errors';
 import { Quest, QuestStatus } from '../models/Quest';
-import { UserRole } from '../models/User';
+import { User, UserRole } from '../models/User';
 import { Op } from 'sequelize';
 import { QuestMedia } from '../models/QuestMedia';
 import { Media } from '../models/Media';
 import { isMediaExists } from '../utils/storageService';
 import { transformToGeoPostGIS } from '../utils/quest';
+import { QuestsResponse, QuestsResponseStatus } from '../models/QuestsResponse';
 
 export const searchFields = [
   "title",
@@ -115,6 +116,63 @@ export async function deleteQuest(r) {
   }
 
   await quest.destroy({ force: true });
+
+  return output();
+}
+
+export async function closeQuest(r) {
+  const quest = await Quest.findByPk(r.params.questId);
+
+  if (!quest) {
+    return error(Errors.NotFound, "Quest not found", {});
+  }
+  if (quest.status !== QuestStatus.Created) {
+    return error(Errors.InvalidStatus, "Quest is not status created", {});
+  }
+  if (quest.userId !== r.auth.credentials.id) {
+    return error(Errors.Forbidden, "User is not creator of quest", {});
+  }
+
+  await quest.update({ status: QuestStatus.Closed });
+
+  return output();
+}
+
+export async function startQuest(r) {
+  const quest = await Quest.findByPk(r.params.questId);
+  const assignedWorker = await User.findByPk(r.payload.assignedWorkerId);
+
+  if (!quest) {
+    return error(Errors.NotFound, "Quest not found", {});
+  }
+  if (quest.userId !== r.auth.credentials.id) {
+    return error(Errors.Forbidden, "User is not creator of quest", {});
+  }
+  if (quest.status !== QuestStatus.Created) {
+    return error(Errors.InvalidStatus, "Quest is not status created", {});
+  }
+  if (!assignedWorker) {
+    return error(Errors.NotFound, 'Assigned user is not found', {});
+  }
+  if (assignedWorker.role !== UserRole.Worker) {
+    return error(Errors.InvalidRole, "Assigned user is not Worker", {});
+  }
+
+  const questResponse = await QuestsResponse.findOne({
+    where: {
+      workerId: assignedWorker.id
+    }
+  });
+
+  if (!questResponse) {
+    return error(Errors.NotFound, "Assigned user did not respond on quest", {});
+  }
+  if (questResponse.status !== QuestsResponseStatus.Open) {
+    return error(Errors.InvalidStatus, "Quest response is not status open", {});
+  }
+
+  await questResponse.update({ status: QuestsResponseStatus.Accept });
+  await quest.update({ assignedWorkerId: assignedWorker.id, status: QuestStatus.Active });
 
   return output();
 }
