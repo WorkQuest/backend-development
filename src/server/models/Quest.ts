@@ -1,7 +1,6 @@
 import { BelongsTo, Column, DataType, ForeignKey, Model, Scopes, Table } from "sequelize-typescript";
 import { User } from "./User";
 import { getUUID } from "../utils";
-import { Media } from './Media';
 
 export enum QuestPriority {
   AllPriority = 0,
@@ -48,6 +47,7 @@ function transformToGeoPostGIS(location: Location) {
 export class Quest extends Model {
   @Column({ primaryKey: true, type: DataType.STRING, defaultValue: () => getUUID() }) id: string;
   @ForeignKey(() => User) @Column({type: DataType.STRING, allowNull: false}) userId: string;
+  @ForeignKey(() => User) @Column({type: DataType.STRING, defaultValue: null}) workerId: string;
 
   @Column({type: DataType.INTEGER, defaultValue: QuestStatus.Created }) status: QuestStatus;
   @Column({type: DataType.INTEGER, defaultValue: QuestPriority.AllPriority }) priority: QuestPriority;
