@@ -4,7 +4,7 @@ import { Errors } from "../utils/errors";
 import { QuestsResponse, QuestsResponseStatus, QuestsResponseType } from "../models/QuestsResponse";
 import { Quest, QuestStatus } from "../models/Quest";
 
-export async function questResponse(r) {
+export async function responseOnQuest(r) {
   const user = r.auth.credentials;
   const quest = await Quest.findByPk(r.params.questId);
 
@@ -40,7 +40,7 @@ export async function questResponse(r) {
   return output();
 }
 
-export async function questInvite(r) {
+export async function inviteOnQuest(r) {
   const user = r.auth.credentials;
   const invitedWorker = await User.findOne({ where: { id: r.payload.invitedUserId } });
   const quest = await Quest.findByPk(r.params.questId);
@@ -83,7 +83,7 @@ export async function questInvite(r) {
   return output();
 }
 
-export async function getResponsesToQuest(r) {
+export async function userResponsesToQuest(r) {
   const user = r.auth.credentials;
   const quest = await Quest.findByPk(r.params.questId);
 
@@ -104,7 +104,7 @@ export async function getResponsesToQuest(r) {
   return output({ count, responses: rows });
 }
 
-export async function getResponsesUserToQuest(r) {
+export async function responsesToQuestsForUser(r) {
   const user = r.auth.credentials;
 
   if (user.role !== UserRole.Worker) {
@@ -122,7 +122,7 @@ export async function getResponsesUserToQuest(r) {
   return output({ count, responses: rows });
 }
 
-export async function acceptInvite(r) {
+export async function acceptInviteOnQuest(r) {
   const user = r.auth.credentials;
   const questsResponse = await QuestsResponse.findOne({ where: { id: r.params.responseId } });
 
@@ -139,12 +139,12 @@ export async function acceptInvite(r) {
     return error(Errors.Forbidden, "Response on quest isn't invite", {});
   }
 
-  await questsResponse.update({ status: QuestsResponseStatus.Accept });
+  await questsResponse.update({ status: QuestsResponseStatus.Accepted });
 
   return output();
 }
 
-export async function rejectInvite(r) {
+export async function rejectInviteOnQuest(r) {
   const user = r.auth.credentials;
   const questsResponse = await QuestsResponse.findOne({ where: { id: r.params.responseId } });
 
@@ -161,7 +161,7 @@ export async function rejectInvite(r) {
     return error(Errors.Forbidden, "Response on quest isn't invite", {});
   }
 
-  await questsResponse.update({ status: QuestsResponseStatus.Reject });
+  await questsResponse.update({ status: QuestsResponseStatus.Rejected });
 
   return output();
 }

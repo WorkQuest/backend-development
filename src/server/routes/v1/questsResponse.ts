@@ -8,12 +8,12 @@ import {
   questsResponseTypeSchema
 } from "../../schemes/questsResponse";
 import {
-  acceptInvite,
-  getResponsesToQuest,
-  getResponsesUserToQuest,
-  questInvite,
-  questResponse,
-  rejectInvite
+  acceptInviteOnQuest,
+  userResponsesToQuest,
+  responsesToQuestsForUser,
+  inviteOnQuest,
+  responseOnQuest,
+  rejectInviteOnQuest
 } from "../../api/questsResponse";
 
 const userIdSchema = idSchema.label('UserId');
@@ -44,7 +44,7 @@ const userResponseToQuestsSchema = Joi.object({
 export default [{
   method: "POST",
   path: "/v1/quest/{questId}/response",
-  handler: questResponse,
+  handler: responseOnQuest,
   options: {
     id: "v1.quest.response",
     tags: ["api", "questResponse"],
@@ -64,7 +64,7 @@ export default [{
 }, {
   method: "POST",
   path: "/v1/quest/{questId}/invite",
-  handler: questInvite,
+  handler: inviteOnQuest,
   options: {
     id: "v1.quest.invite",
     tags: ["api", "questResponse"],
@@ -85,7 +85,7 @@ export default [{
 }, {
   method: "GET",
   path: "/v1/quest/{questId}/responses",
-  handler: getResponsesToQuest,
+  handler: userResponsesToQuest,
   options: {
     id: "v1.quest.responses",
     tags: ["api", "questResponse"],
@@ -107,7 +107,7 @@ export default [{
 }, {
   method: "GET",
   path: "/v1/quest/responses/my",
-  handler: getResponsesUserToQuest,
+  handler: responsesToQuestsForUser,
   options: {
     id: "v1.quest.responses.my",
     tags: ["api", "questResponse"],
@@ -124,7 +124,7 @@ export default [{
 }, {
   method: "POST",
   path: "/v1/quest/response/{responseId}/accept",
-  handler: acceptInvite,
+  handler: acceptInviteOnQuest,
   options: {
     id: "v1.quest.response.accept",
     tags: ["api", "questResponse"],
@@ -141,7 +141,7 @@ export default [{
 }, {
   method: "POST",
   path: "/v1/quest/response/{responseId}/reject",
-  handler: rejectInvite,
+  handler: rejectInviteOnQuest,
   options: {
     id: "v1.quest.response.reject",
     tags: ["api", "questResponse"],

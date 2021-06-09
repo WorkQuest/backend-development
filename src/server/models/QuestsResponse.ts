@@ -4,15 +4,16 @@ import { Quest } from './Quest';
 import { getUUID } from '../utils';
 
 export enum QuestsResponseStatus {
+  Rejected = -1,
   Open = 0,
-  Reject,
-  Accept,
-};
+  Accepted,
+  Closed,
+}
 
 export enum QuestsResponseType {
   Response = 0,
   Invite,
-};
+}
 
 @Table
 export class QuestsResponse extends Model {

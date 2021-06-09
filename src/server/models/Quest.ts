@@ -20,10 +20,10 @@ export enum AdType {
 export enum QuestStatus {
   Created = 0,
   Active,
-  Performed,
-  Arbitration,
   Closed,
-  WaitApprove
+  Dispute,
+  WaitWorker,
+  WaitConfirm,
 }
 
 export interface Location {
