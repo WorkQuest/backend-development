@@ -3,7 +3,6 @@ import { Errors } from '../utils/errors';
 import { Quest, QuestStatus } from '../models/Quest';
 import { User, UserRole } from '../models/User';
 import { Op } from 'sequelize';
-import { QuestMedia } from '../models/QuestMedia';
 import { Media } from '../models/Media';
 import { isMediaExists } from '../utils/storageService';
 import { transformToGeoPostGIS } from '../utils/quest';
@@ -14,7 +13,7 @@ export const searchFields = [
   "description",
 ];
 
-async function getValidMedia(mediaId: string): Promise<Media> {
+async function getMedia(mediaId: string): Promise<Media> {
   const media = await Media.findByPk(mediaId);
   if (!media) {
     throw error(Errors.NotFound, 'Media is not found', { mediaId })
@@ -26,10 +25,10 @@ async function getValidMedia(mediaId: string): Promise<Media> {
   return media;
 }
 
-async function getValidMedias(mediaIds: string[]) {
+async function getMedias(mediaIds: string[]) {
   const medias = [];
   for (const id of mediaIds) {
-    medias.push(await getValidMedia(id));
+    medias.push(await getMedia(id));
   }
 
   return medias;
@@ -37,17 +36,9 @@ async function getValidMedias(mediaIds: string[]) {
 
 export async function createQuest(r) {
   const user = r.auth.credentials;
-  let medias;
+  const medias = await getMedias(r.payload.medias);
 
-  try {
-    medias = await getValidMedias(r.payload.medias);
-  } catch (err) {
-    return err;
-  }
-
-  if (user.role !== UserRole.Employer) {
-    return error(Errors.InvalidRole, "User is not Employer", {});
-  }
+  user.mustHaveRole(UserRole.Employer);
 
   const quest = await Quest.create({
     userId: user.id,
@@ -61,12 +52,7 @@ export async function createQuest(r) {
     price: r.payload.price,
   });
 
-  for (const media of medias) {
-    await QuestMedia.create({
-      mediaId: media.id,
-      questId: quest.id,
-    });
-  }
+  await quest.$set('medias', medias);
 
   return output(
     await Quest.findByPk(quest.id)
@@ -79,25 +65,18 @@ export async function editQuest(r) {
   if (!quest) {
     return error(Errors.NotFound, "Quest not found", {});
   }
-  if (quest.userId !== r.auth.credentials.id) {
-    return error(Errors.Forbidden, "User is not creator of quest", {});
-  }
-  if (quest.status !== QuestStatus.Created) {
-    return error(Errors.InvalidStatus, "Quest is not status created", {});
-  }
-  if (r.payload.medias) {
-    let medias;
 
-    try {
-      medias = await getValidMedias(r.payload.medias);
-    } catch (err) {
-      return err;
-    }
+  quest.mustBeQuestCreator(r.auth.credentials.id);
+  quest.mustHaveStatus(QuestStatus.Created);
+
+  if (r.payload.medias) {
+    const medias = await getMedias(r.payload.medias);
 
     await quest.$set('medias', medias);
   }
 
   quest.updateFieldLocationPostGIS();
+
   await quest.update(r.payload);
 
   return output(
@@ -111,11 +90,11 @@ export async function deleteQuest(r) {
   if (!quest) {
     return error(Errors.NotFound, "Quest not found", {});
   }
-  if (quest.userId !== r.auth.credentials.id) {
-    return error(Errors.Forbidden, "User is not creator of quest", {});
-  }
+
+  quest.mustBeQuestCreator(r.auth.credentials.id);
+
   if (quest.status !== QuestStatus.Created && quest.status !== QuestStatus.Closed) {
-    return error(Errors.InvalidStatus, "Quest is not status created", {});
+    return error(Errors.InvalidStatus, "Quest cannot be deleted at current stage", {});
   }
 
   await quest.destroy({ force: true });
@@ -129,12 +108,9 @@ export async function closeQuest(r) {
   if (!quest) {
     return error(Errors.NotFound, "Quest not found", {});
   }
-  if (quest.status !== QuestStatus.Created) {
-    return error(Errors.InvalidStatus, "Quest is not status created", {});
-  }
-  if (quest.userId !== r.auth.credentials.id) {
-    return error(Errors.Forbidden, "User is not creator of quest", {});
-  }
+
+  quest.mustHaveStatus(QuestStatus.Created);
+  quest.mustBeQuestCreator(r.auth.credentials.id);
 
   await quest.update({ status: QuestStatus.Closed });
 
@@ -148,18 +124,13 @@ export async function startQuest(r) {
   if (!quest) {
     return error(Errors.NotFound, "Quest not found", {});
   }
-  if (quest.userId !== r.auth.credentials.id) {
-    return error(Errors.Forbidden, "User is not creator of quest", {});
-  }
-  if (quest.status !== QuestStatus.Created) {
-    return error(Errors.InvalidStatus, "Quest is not status created", {});
-  }
   if (!assignedWorker) {
     return error(Errors.NotFound, 'Assigned user is not found', {});
   }
-  if (assignedWorker.role !== UserRole.Worker) {
-    return error(Errors.InvalidRole, "Assigned user is not Worker", {});
-  }
+
+  quest.mustBeQuestCreator(r.auth.credentials.id);
+  quest.mustHaveStatus(QuestStatus.Created);
+  assignedWorker.mustHaveRole(UserRole.Employer);
 
   const questResponse = await QuestsResponse.findOne({
     where: {
@@ -170,14 +141,11 @@ export async function startQuest(r) {
   if (!questResponse) {
     return error(Errors.NotFound, "Assigned user did not respond on quest", {});
   }
+  // TODO
   if (questResponse.type === QuestsResponseType.Response) {
-    if (questResponse.status !== QuestsResponseStatus.Open) {
-      return error(Errors.InvalidStatus, "Quest response is not status open", {});
-    }
+    questResponse.mustHaveStatus(QuestsResponseStatus.Open);
   } else if (questResponse.type === QuestsResponseType.Invite) {
-    if (questResponse.status !== QuestsResponseStatus.Accepted) {
-      return error(Errors.InvalidStatus, "Worker did not accept the invitation", {});
-    }
+    questResponse.mustHaveStatus(QuestsResponseStatus.Accepted);
   }
 
   await quest.update({ assignedWorkerId: assignedWorker.id, status: QuestStatus.WaitWorker });
@@ -191,12 +159,9 @@ export async function rejectWorkOnQuest(r) {
   if (!quest) {
     return error(Errors.NotFound, "Quest not found", {});
   }
-  if (quest.status !== QuestStatus.WaitWorker) {
-    return error(Errors.InvalidStatus, "Quest is not status wait worker", {});
-  }
-  if (quest.assignedWorkerId !== r.auth.credentials) {
-    return error(Errors.Forbidden, "User is not assigned for quest", {});
-  }
+
+  quest.mustHaveStatus(QuestStatus.WaitWorker);
+  quest.mustBeQuestCreator(r.auth.credentials.id);
 
   await quest.update({ assignedWorkerId: null, status: QuestStatus.Created });
 
@@ -209,12 +174,9 @@ export async function acceptWorkOnQuest(r) {
   if (!quest) {
     return error(Errors.NotFound, "Quest not found", {});
   }
-  if (quest.status !== QuestStatus.WaitWorker) {
-    return error(Errors.InvalidStatus, "Quest is not status wait worker", {});
-  }
-  if (quest.assignedWorkerId !== r.auth.credentials) {
-    return error(Errors.Forbidden, "User is not assigned for quest", {});
-  }
+
+  quest.mustHaveStatus(QuestStatus.WaitWorker);
+  quest.mustBeQuestCreator(r.auth.credentials.id);
 
   await quest.update({ status: QuestStatus.Active });
 
@@ -227,12 +189,9 @@ export async function completeWorkOnQuest(r) {
   if (!quest) {
     return error(Errors.NotFound, "Quest not found", {});
   }
-  if (quest.status !== QuestStatus.Active) {
-    return error(Errors.InvalidStatus, "Quest is not status active", {});
-  }
-  if (quest.assignedWorkerId !== r.auth.credentials) {
-    return error(Errors.Forbidden, "User is not assigned for quest", {});
-  }
+
+  quest.mustHaveStatus(QuestStatus.Active);
+  quest.mustBeQuestCreator(r.auth.credentials.id);
 
   await quest.update({ status: QuestStatus.WaitConfirm });
 
@@ -245,12 +204,9 @@ export async function acceptCompletedWorkOnQuest(r) {
   if (!quest) {
     return error(Errors.NotFound, "Quest not found", {});
   }
-  if (quest.userId !== r.auth.credentials.id) {
-    return error(Errors.Forbidden, "User is not creator of quest", {});
-  }
-  if (quest.status !== QuestStatus.WaitConfirm) {
-    return error(Errors.InvalidStatus, "Quest is not status wait confirm", {});
-  }
+
+  quest.mustBeQuestCreator(r.auth.credentials.id);
+  quest.mustHaveStatus(QuestStatus.WaitConfirm);
 
   await quest.update({ status: QuestStatus.Closed });
 
@@ -263,12 +219,9 @@ export async function rejectCompletedWorkOnQuest(r) {
   if (!quest) {
     return error(Errors.NotFound, "Quest not found", {});
   }
-  if (quest.userId !== r.auth.credentials.id) {
-    return error(Errors.Forbidden, "User is not creator of quest", {});
-  }
-  if (quest.status !== QuestStatus.WaitConfirm) {
-    return error(Errors.InvalidStatus, "Quest is not status wait confirm", {});
-  }
+
+  quest.mustBeQuestCreator(r.auth.credentials.id);
+  quest.mustHaveStatus(QuestStatus.WaitConfirm);
 
   await quest.update({ status: QuestStatus.Dispute });
 
@@ -291,7 +244,7 @@ export async function getQuests(r) {
     }))
   }
 
-  for (const [key, value] of Object.entries(r.query.sort)){
+  for (const [key, value] of Object.entries(r.query.sort)) {
     order.push([key, value]);
   }
 

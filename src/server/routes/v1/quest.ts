@@ -140,7 +140,7 @@ export default [{
     validate: {
       payload: Joi.object({
         assignedWorkerId: idSchema.required().label('AssignedWorkerId')
-      })
+      }).label('StartQuestPayload')
     },
     response: {
       schema: emptyOkSchema

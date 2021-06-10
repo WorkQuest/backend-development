@@ -1,7 +1,9 @@
 import { BelongsTo, Column, DataType, ForeignKey, HasMany, Model, Scopes, Table } from 'sequelize-typescript';
-import { getUUID } from "../utils";
+import { error, getUUID } from '../utils';
 import * as bcrypt from "bcrypt";
 import { Media } from './Media';
+import { Session } from './Session';
+import { Errors } from '../utils/errors';
 
 export interface SocialInfo {
   id: string;
@@ -89,6 +91,7 @@ export class User extends Model {
   @Column({ type: DataType.INTEGER, defaultValue: StatusKYC.Unconfirmed }) statusKYC: StatusKYC;
 
   @BelongsTo(() => Media,{constraints: false, foreignKey: 'avatarId'}) avatar: Media;
+  @HasMany(() => Session, { onDelete: 'CASCADE', hooks: true }) sessions: Session[];
   @HasMany(() => Media) medias: Media[];
 
   async passwordCompare(pwd: string) {
@@ -105,5 +108,14 @@ export class User extends Model {
         [`settings.social.${network}.id`]: id
       }
     });
+  }
+
+  mustHaveRole(role: UserRole) {
+    if (this.role !== role) {
+      throw error(Errors.InvalidRole, "User isn't match role", {
+        current: this.role,
+        mustHave: role
+      });
+    }
   }
 }

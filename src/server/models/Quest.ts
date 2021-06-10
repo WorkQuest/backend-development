@@ -1,9 +1,10 @@
 import { BelongsTo, BelongsToMany, Column, DataType, ForeignKey, Model, Scopes, Table } from 'sequelize-typescript';
 import { User } from "./User";
-import { getUUID } from "../utils";
+import { error, getUUID } from '../utils';
 import { Media } from './Media';
 import { QuestMedia } from './QuestMedia';
 import { transformToGeoPostGIS } from '../utils/quest';
+import { Errors } from '../utils/errors';
 
 export enum QuestPriority {
   AllPriority = 0,
@@ -68,5 +69,23 @@ export class Quest extends Model {
 
   updateFieldLocationPostGIS(): void {
     this.setDataValue('locationPostGIS', transformToGeoPostGIS(this.getDataValue('location')));
+  }
+
+  mustHaveStatus(status: QuestStatus) {
+    if (this.status !== status) {
+      throw error(Errors.InvalidStatus, "Quest isn't match status", {
+        current: this.status,
+        mustHave: status
+      });
+    }
+  }
+
+  mustBeQuestCreator(userId: String) {
+    if (this.userId !== userId) {
+      throw error(Errors.Forbidden, "User in not creator of quest", {
+        current: this.userId,
+        mustHave: userId
+      });
+    }
   }
 }
