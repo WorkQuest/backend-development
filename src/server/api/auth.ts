@@ -56,9 +56,9 @@ export async function register(r) {
 	const emailUsed = await User.findOne({ where: { email: { [Op.iLike]: r.payload.email } } });
 	if (emailUsed) return error(Errors.InvalidPayload, "Email used", [{ field: "email", reason: "used" }]);
 
-	const emailConfirmCode = getRandomHexToken();
+	const emailConfirmCode = getRandomHexToken().substring(0, 6).toUpperCase();
 	const emailConfirmLink = `${config.baseUrl}/confirm?token=${emailConfirmCode}`;
-	const emailHtml = confirmTemplate({ confirmLink: emailConfirmLink });
+	const emailHtml = confirmTemplate({ confirmLink: emailConfirmLink, confirmCode: emailConfirmCode });
 	await addSendEmailJob({
 		email: r.payload.email,
 		subject: "Work Quest | Confirmation code",
@@ -114,7 +114,7 @@ export function getLoginViaSocialNetworkHandler(returnType: "token" | "redirect"
 export async function confirmEmail(r) {
 	const user = await User.scope("withPassword").findOne({
 		where: {
-			"settings.emailConfirm": r.payload.confirmCode
+			"settings.emailConfirm": { [Op.iLike]: r.payload.confirmCode }
 		}
 	});
 	if (!user) return output();
