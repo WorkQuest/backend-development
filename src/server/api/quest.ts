@@ -141,7 +141,6 @@ export async function startQuest(r) {
   if (!questResponse) {
     return error(Errors.NotFound, "Assigned user did not respond on quest", {});
   }
-  // TODO
   if (questResponse.type === QuestsResponseType.Response) {
     questResponse.mustHaveStatus(QuestsResponseStatus.Open);
   } else if (questResponse.type === QuestsResponseType.Invite) {
