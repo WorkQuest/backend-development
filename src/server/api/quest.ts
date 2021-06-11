@@ -37,6 +37,7 @@ async function getMedias(mediaIds: string[]) {
 export async function createQuest(r) {
   const user = r.auth.credentials;
   const medias = await getMedias(r.payload.medias);
+  const transaction = await r.server.app.db.transaction();
 
   user.mustHaveRole(UserRole.Employer);
 
@@ -50,9 +51,11 @@ export async function createQuest(r) {
     title: r.payload.title,
     description: r.payload.description,
     price: r.payload.price,
-  });
+  }, { transaction });
 
-  await quest.$set('medias', medias);
+  await quest.$set('medias', medias, { transaction });
+
+  await transaction.commit();
 
   return output(
     await Quest.findByPk(quest.id)
