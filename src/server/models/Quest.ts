@@ -73,7 +73,7 @@ export class Quest extends Model {
 
   mustHaveStatus(status: QuestStatus) {
     if (this.status !== status) {
-      throw error(Errors.InvalidStatus, "Quest isn't match status", {
+      throw error(Errors.InvalidStatus, "Quest status doesn't match", {
         current: this.status,
         mustHave: status
       });
@@ -82,7 +82,7 @@ export class Quest extends Model {
 
   mustBeQuestCreator(userId: String) {
     if (this.userId !== userId) {
-      throw error(Errors.Forbidden, "User in not creator of quest", {
+      throw error(Errors.Forbidden, "User is not quest creator", {
         current: this.userId,
         mustHave: userId
       });

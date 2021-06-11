@@ -35,13 +35,13 @@ export class QuestsResponse extends Model {
     this.mustHaveType(QuestsResponseType.Invite);
 
     if (this.workerId !== workerId) {
-      throw error(Errors.Forbidden, "User isn't invitation to quest", {});
+      throw error(Errors.Forbidden, "User isn't invited to quest", {});
     }
   }
 
   mustHaveStatus(status: QuestsResponseStatus): void {
     if (this.status !== status) {
-      throw error(Errors.Forbidden, "Response on quest isn't match status", {
+      throw error(Errors.Forbidden, "Quest response status doesn't match", {
         mustHave: status,
         current: this.status,
       });
@@ -50,7 +50,7 @@ export class QuestsResponse extends Model {
 
   mustHaveType(type: QuestsResponseType): void {
     if (this.type !== type) {
-      throw error(Errors.Forbidden, "Quests response isn't match type", {
+      throw error(Errors.Forbidden, "Quest response type doesn't match", {
         mustHave: type,
         current: this.type,
       });
