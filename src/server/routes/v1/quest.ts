@@ -131,7 +131,7 @@ export default [{
   }
 }, {
   method: "POST",
-  path: "/v1/{userId}/start",
+  path: "/v1/quest/{questId}/start",
   handler: startQuest,
   options: {
     id: "v1.quest.startQuest",

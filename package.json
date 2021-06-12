@@ -7,7 +7,7 @@
     "start": "nodemon -e ts  --exec \"npm run compile\"",
     "compile": "tsc && node ./build/main.js",
     "build": "tsc",
-    "test": "lab -a @hapi/code -L"
+    "test": "lab --sourcemaps --transform node_modules/lab-transform-typescript -v --leaks"
   },
   "keywords": [],
   "author": "",
@@ -41,6 +41,7 @@
     "hapi-swagger": "^14.1.0",
     "joi": "^17.4.0",
     "jsonwebtoken": "^8.5.1",
+    "lab-transform-typescript": "^3.0.1",
     "nodemailer": "^6.5.0",
     "npm": "^7.14.0",
     "pg": "^8.3.0",
@@ -53,8 +54,10 @@
     "uuid": "^8.2.0"
   },
   "devDependencies": {
+    "@hapi/code": "^8.0.3",
     "@hapi/eslint-config-hapi": "^12.3.0",
     "@hapi/eslint-plugin-hapi": "^4.3.4",
+    "@hapi/lab": "^24.2.1",
     "@types/hapi": "^18.0.3",
     "@types/node": "^12.12.52",
     "eslint": "^6.5.1",

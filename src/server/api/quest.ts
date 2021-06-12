@@ -64,6 +64,7 @@ export async function createQuest(r) {
 
 export async function editQuest(r) {
   const quest = await Quest.findByPk(r.params.questId);
+  const transaction = await r.server.app.db.transaction();
 
   if (!quest) {
     return error(Errors.NotFound, "Quest not found", {});
@@ -75,12 +76,14 @@ export async function editQuest(r) {
   if (r.payload.medias) {
     const medias = await getMedias(r.payload.medias);
 
-    await quest.$set('medias', medias);
+    await quest.$set('medias', medias, { transaction });
   }
 
   quest.updateFieldLocationPostGIS();
 
-  await quest.update(r.payload);
+  await quest.update(r.payload, { transaction });
+
+  await transaction.commit();
 
   return output(
     await Quest.findByPk(quest.id)
@@ -123,6 +126,7 @@ export async function closeQuest(r) {
 export async function startQuest(r) {
   const quest = await Quest.findByPk(r.params.questId);
   const assignedWorker = await User.findByPk(r.payload.assignedWorkerId);
+  const transaction = await r.server.app.db.transaction();
 
   if (!quest) {
     return error(Errors.NotFound, "Quest not found", {});
@@ -133,7 +137,7 @@ export async function startQuest(r) {
 
   quest.mustBeQuestCreator(r.auth.credentials.id);
   quest.mustHaveStatus(QuestStatus.Created);
-  assignedWorker.mustHaveRole(UserRole.Employer);
+  assignedWorker.mustHaveRole(UserRole.Worker); // TODO: Нужно ли если есть проверка на if (!questResponse)
 
   const questResponse = await QuestsResponse.findOne({
     where: {
@@ -150,7 +154,12 @@ export async function startQuest(r) {
     questResponse.mustHaveStatus(QuestsResponseStatus.Accepted);
   }
 
-  await quest.update({ assignedWorkerId: assignedWorker.id, status: QuestStatus.WaitWorker });
+  await quest.update({ assignedWorkerId: assignedWorker.id, status: QuestStatus.WaitWorker },
+    { transaction });
+
+  // TODO
+
+  await transaction.commit()
 
   return output();
 }
@@ -178,7 +187,7 @@ export async function acceptWorkOnQuest(r) {
   }
 
   quest.mustHaveStatus(QuestStatus.WaitWorker);
-  quest.mustBeQuestCreator(r.auth.credentials.id);
+  // quest.mustBeQuestWorker(r.auth.credentials.id);
 
   await quest.update({ status: QuestStatus.Active });
 
