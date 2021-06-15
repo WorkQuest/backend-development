@@ -22,7 +22,7 @@ export async function responseOnQuest(r) {
     }
   });
 
-  if (questsResponse) {
+  if (questsResponse && questsResponse.status !== QuestsResponseStatus.Closed) {
     return error(Errors.AlreadyAnswer, "You already answered quest", {});
   }
 

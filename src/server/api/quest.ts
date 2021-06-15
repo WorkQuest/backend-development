@@ -137,7 +137,6 @@ export async function startQuest(r) {
 
   quest.mustBeQuestCreator(r.auth.credentials.id);
   quest.mustHaveStatus(QuestStatus.Created);
-  assignedWorker.mustHaveRole(UserRole.Worker); // TODO: Нужно ли если есть проверка на if (!questResponse)
 
   const questResponse = await QuestsResponse.findOne({
     where: {
@@ -157,7 +156,13 @@ export async function startQuest(r) {
   await quest.update({ assignedWorkerId: assignedWorker.id, status: QuestStatus.WaitWorker },
     { transaction });
 
-  // TODO
+  await QuestsResponse.update({ status: QuestsResponseStatus.Closed }, {
+    where: {
+      questId: quest.id,
+      id: {
+        [Op.ne]: questResponse.id
+      }
+  }, transaction });
 
   await transaction.commit()
 
