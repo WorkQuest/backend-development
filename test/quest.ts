@@ -75,6 +75,15 @@ async function putRequestOnEditQuest(accessToken: string, quest: Quest, editedQu
     },
   });
 }
+async function postRequestOnCloseQuest(accessToken: string, quest: Quest) {
+  return await server.inject({
+    method: 'POST',
+    url: '/api/v1/quest/' + quest.id + '/close',
+    headers: {
+      authorization: 'Bearer ' + accessToken
+    },
+  });
+}
 
 async function makeAccessToken(user: User): Promise<string> {
   const session = await Session.create({
@@ -193,6 +202,89 @@ async function Should_InvalidStatus_When_EmployerWantsToEditNonEditableQuestOnSt
   expect(result.ok).to.false();
   expect(result.code).to.equal(Errors.InvalidStatus);
   expect(quest.description).to.not.equal(description);
+
+  await quest.destroy();
+  await employer.destroy();
+}
+
+async function Should_Forbidden_When_EmployerClosedQuestButHeNotQuestCreator() {
+  const employerCreatorOfQuest = await makeEmployer();
+  const employerNotCreatorOfQuest = await makeEmployer();
+  const quest = await makeQuest(employerCreatorOfQuest, QuestStatus.Created);
+  const accessTokenEmployerNotCreatorOfQuest = await makeAccessToken(employerNotCreatorOfQuest);
+  const { result } = await postRequestOnCloseQuest(accessTokenEmployerNotCreatorOfQuest, quest);
+
+  await quest.reload();
+
+  expect(result.ok).to.false();
+  expect(result.code).to.equal(Errors.Forbidden);
+  expect(quest.status).to.equal(QuestStatus.Created);
+
+  await quest.destroy();
+  await employerCreatorOfQuest.destroy();
+  await employerNotCreatorOfQuest.destroy();
+}
+async function Should_Ok_When_EmployerClosedQuest() {
+  const workers = [await makeWorker(), await makeWorker(), await makeWorker()];
+  const employer = await makeEmployer();
+  const employerAccessToken = await makeAccessToken(employer);
+  const quest = await makeQuest(employer, QuestStatus.Created);
+  const questsResponses = [
+    await QuestsResponse.create({
+      workerId: workers[0].id,
+      questId: quest.id,
+      status: QuestsResponseStatus.Open,
+      type: QuestsResponseType.Response,
+      message: 'Hi!'
+    }),
+    await QuestsResponse.create({
+      workerId: workers[1].id,
+      questId: quest.id,
+      status: QuestsResponseStatus.Open,
+      type: QuestsResponseType.Invite,
+      message: 'Hi!'
+    }),
+    await QuestsResponse.create({
+      workerId: workers[2].id,
+      questId: quest.id,
+      status: QuestsResponseStatus.Open,
+      type: QuestsResponseType.Response,
+      message: 'Hi!'
+    })];
+  const { result } = await postRequestOnCloseQuest(employerAccessToken, quest);
+
+  await quest.reload();
+  for (const response of questsResponses) {
+    await response.reload();
+  }
+
+  expect(result.ok).to.true();
+  expect(quest.status).to.equal(QuestStatus.Closed);
+  for (const response of questsResponses) {
+    expect(response.status).to.equal(QuestsResponseStatus.Closed);
+  }
+
+  for (const response of questsResponses) {
+    await response.destroy();
+  }
+  await quest.destroy();
+  for (const worker of workers) {
+    await worker.destroy();
+  }
+  await employer.destroy();
+}
+async function Should_InvalidStatus_When_EmployerClosedQuestAndQuestNotStatusCreated(status: QuestStatus) {
+  expect(status).to.not.equal(QuestStatus.Created);
+
+  const employer = await makeEmployer();
+  const quest = await makeQuest(employer, status);
+  const employerAccessToken = await makeAccessToken(employer);
+  const { result } = await postRequestOnCloseQuest(employerAccessToken, quest);
+
+  expect(result.ok).to.false();
+  expect(result.code).to.equal(Errors.InvalidStatus);
+  expect(quest.assignedWorkerId).to.null();
+  expect(quest.status).to.equal(status);
 
   await quest.destroy();
   await employer.destroy();
@@ -505,6 +597,16 @@ suite('Testing API Quest:', () => {
 
     await Should_Ok_When_EmployerWantsToEditQuestAtStatusCreated();
     await Should_Forbidden_When_OtherUserWantsToEditQuestAtStatusCreated();
+  });
+  it('Close', async () => {
+    await Should_InvalidStatus_When_EmployerClosedQuestAndQuestNotStatusCreated(QuestStatus.Active);
+    await Should_InvalidStatus_When_EmployerClosedQuestAndQuestNotStatusCreated(QuestStatus.Closed);
+    await Should_InvalidStatus_When_EmployerClosedQuestAndQuestNotStatusCreated(QuestStatus.Dispute);
+    await Should_InvalidStatus_When_EmployerClosedQuestAndQuestNotStatusCreated(QuestStatus.WaitWorker);
+    await Should_InvalidStatus_When_EmployerClosedQuestAndQuestNotStatusCreated(QuestStatus.WaitConfirm);
+
+    await Should_Ok_When_EmployerClosedQuest();
+    await Should_Forbidden_When_EmployerClosedQuestButHeNotQuestCreator();
   });
   it('Start', async () => {
     await Should_InvalidStatus_When_EmployerStartedQuestAndQuestNotStatusCreated(QuestStatus.Active);

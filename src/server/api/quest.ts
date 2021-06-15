@@ -110,6 +110,7 @@ export async function deleteQuest(r) {
 
 export async function closeQuest(r) {
   const quest = await Quest.findByPk(r.params.questId);
+  const transaction = await r.server.app.db.transaction();
 
   if (!quest) {
     return error(Errors.NotFound, "Quest not found", {});
@@ -118,7 +119,12 @@ export async function closeQuest(r) {
   quest.mustHaveStatus(QuestStatus.Created);
   quest.mustBeQuestCreator(r.auth.credentials.id);
 
-  await quest.update({ status: QuestStatus.Closed });
+  await quest.update({ status: QuestStatus.Closed }, { transaction });
+
+  await QuestsResponse.update({ status: QuestsResponseStatus.Closed }, {
+    where: { questId: quest.id }, transaction });
+
+  await transaction.commit();
 
   return output();
 }
