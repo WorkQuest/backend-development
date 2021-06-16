@@ -89,6 +89,15 @@ export class Quest extends Model {
     }
   }
 
+  mustBeAppointedOnQuest(workerId: string) {
+    if (this.assignedWorkerId !== workerId) {
+      throw error(Errors.Forbidden, "Worker is not appointed on quest", {
+        current: this.userId,
+        mustHave: workerId
+      });
+    }
+  }
+
   mustBeQuestCreator(userId: String) {
     if (this.userId !== userId) {
       throw error(Errors.Forbidden, "User is not quest creator", {

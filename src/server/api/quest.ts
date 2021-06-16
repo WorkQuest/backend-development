@@ -34,6 +34,24 @@ async function getMedias(mediaIds: string[]) {
   return medias;
 }
 
+async function answerWorkOnQuest(questId: string, worker: User, acceptWork: boolean) {
+  const quest = await Quest.findByPk(questId);
+
+  if (!quest) {
+    return error(Errors.NotFound, "Quest not found", {});
+  }
+
+  worker.mustHaveRole(UserRole.Worker);
+  quest.mustHaveStatus(QuestStatus.WaitWorker);
+  quest.mustBeAppointedOnQuest(worker.id);
+
+  if (acceptWork) {
+    await quest.update({ status: QuestStatus.Active });
+  } else {
+    await quest.update({ status: QuestStatus.Created, assignedWorkerId: null });
+  }
+}
+
 export async function createQuest(r) {
   const user = r.auth.credentials;
   const medias = await getMedias(r.payload.medias);
@@ -180,31 +198,13 @@ export async function startQuest(r) {
 }
 
 export async function rejectWorkOnQuest(r) {
-  const quest = await Quest.findByPk(r.params.questId);
-
-  if (!quest) {
-    return error(Errors.NotFound, "Quest not found", {});
-  }
-
-  quest.mustHaveStatus(QuestStatus.WaitWorker);
-  quest.mustBeQuestCreator(r.auth.credentials.id);
-
-  await quest.update({ assignedWorkerId: null, status: QuestStatus.Created });
+  await answerWorkOnQuest(r.params.questId, r.auth.credentials, false);
 
   return output();
 }
 
 export async function acceptWorkOnQuest(r) {
-  const quest = await Quest.findByPk(r.params.questId);
-
-  if (!quest) {
-    return error(Errors.NotFound, "Quest not found", {});
-  }
-
-  quest.mustHaveStatus(QuestStatus.WaitWorker);
-  // quest.mustBeQuestWorker(r.auth.credentials.id);
-
-  await quest.update({ status: QuestStatus.Active });
+  await answerWorkOnQuest(r.params.questId, r.auth.credentials, true);
 
   return output();
 }
@@ -217,7 +217,7 @@ export async function completeWorkOnQuest(r) {
   }
 
   quest.mustHaveStatus(QuestStatus.Active);
-  quest.mustBeQuestCreator(r.auth.credentials.id);
+  quest.mustBeAppointedOnQuest(r.auth.credentials.id);
 
   await quest.update({ status: QuestStatus.WaitConfirm });
 

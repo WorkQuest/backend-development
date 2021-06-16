@@ -93,6 +93,42 @@ async function postRequestOnDeleteQuest(accessToken: string, quest: Quest) {
     },
   });
 }
+async function postRequestOnRejectWorkOnQuest(accessToken: string, quest: Quest) {
+  return await server.inject({
+    method: 'POST',
+    url: '/api/v1/quest/' + quest.id + '/reject-work',
+    headers: {
+      authorization: 'Bearer ' + accessToken
+    },
+  });
+}
+async function postRequestOnAcceptWorkOnQuest(accessToken: string, quest: Quest) {
+  return await server.inject({
+    method: 'POST',
+    url: '/api/v1/quest/' + quest.id + '/accept-work',
+    headers: {
+      authorization: 'Bearer ' + accessToken
+    },
+  });
+}
+async function postRequestOnCompletedWorkOnQuest(accessToken: string, quest: Quest) {
+  return await server.inject({
+    method: 'POST',
+    url: '/api/v1/quest/' + quest.id + '/complete-work',
+    headers: {
+      authorization: 'Bearer ' + accessToken
+    },
+  });
+}
+async function postRequestOnAcceptCompletedWorkOnQuest(accessToken: string, quest: Quest) {
+  return await server.inject({
+    method: 'POST',
+    url: '/api/v1/quest/' + quest.id + '/accept-completed-work',
+    headers: {
+      authorization: 'Bearer ' + accessToken
+    },
+  });
+}
 
 async function makeAccessToken(user: User): Promise<string> {
   const session = await Session.create({
@@ -103,9 +139,10 @@ async function makeAccessToken(user: User): Promise<string> {
 
   return access;
 }
-async function makeQuest(employer: User, status: QuestStatus) {
+async function makeQuest(employer: User, assignedWorker: User, status: QuestStatus) {
   return await Quest.create({
     userId: employer.id,
+    assignedWorkerId: assignedWorker ? assignedWorker.id : null,
     status: status,
     category: 'It',
     priority: QuestPriority.Normal,
@@ -150,7 +187,7 @@ async function Should_Ok_When_EmployerWantsToCreateQuest() {
 async function Should_Ok_When_EmployerWantsToEditQuestAtStatusCreated() {
   const employer = await makeEmployer();
   const employerAccessToken = await makeAccessToken(employer);
-  const quest = await makeQuest(employer, QuestStatus.Created);
+  const quest = await makeQuest(employer, null, QuestStatus.Created);
   const editedQuestData = {
     category: 'It2',
     title: 'Test2',
@@ -176,7 +213,7 @@ async function Should_Forbidden_When_OtherUserWantsToEditQuestAtStatusCreated() 
   const employer = await makeEmployer();
   const worker = await makeWorker();
   const workerAccessToken = await makeAccessToken(worker);
-  const quest = await makeQuest(employer, QuestStatus.Created);
+  const quest = await makeQuest(employer, null, QuestStatus.Created);
   const editedQuestData = {
     category: 'It2',
     title: 'Test2',
@@ -202,7 +239,7 @@ async function Should_InvalidStatus_When_EmployerEditQuestAndQuestNotStatusOnCre
 
   const employer = await makeEmployer();
   const employerAccessToken = await makeAccessToken(employer);
-  const quest = await makeQuest(employer, status);
+  const quest = await makeQuest(employer, null, status);
   const description = Math.random().toString(36).substring(7);
   const { result } = await postRequestOnEditQuest(employerAccessToken, quest, { description });
 
@@ -219,7 +256,7 @@ async function Should_InvalidStatus_When_EmployerEditQuestAndQuestNotStatusOnCre
 async function Should_Forbidden_When_EmployerClosedQuestButHeNotQuestCreator() {
   const employerCreatorOfQuest = await makeEmployer();
   const employerNotCreatorOfQuest = await makeEmployer();
-  const quest = await makeQuest(employerCreatorOfQuest, QuestStatus.Created);
+  const quest = await makeQuest(employerCreatorOfQuest, null, QuestStatus.Created);
   const accessTokenEmployerNotCreatorOfQuest = await makeAccessToken(employerNotCreatorOfQuest);
   const { result } = await postRequestOnCloseQuest(accessTokenEmployerNotCreatorOfQuest, quest);
 
@@ -237,7 +274,7 @@ async function Should_Ok_When_EmployerClosedQuestOnStatusWaitConfirm() {
   const workers = [await makeWorker(), await makeWorker(), await makeWorker()];
   const employer = await makeEmployer();
   const employerAccessToken = await makeAccessToken(employer);
-  const quest = await makeQuest(employer, QuestStatus.WaitConfirm);
+  const quest = await makeQuest(employer, null, QuestStatus.WaitConfirm);
   const questsResponses = [
     await QuestsResponse.create({
       workerId: workers[0].id,
@@ -286,7 +323,7 @@ async function Should_Ok_When_EmployerClosedQuestOnStatusCreated() {
   const workers = [await makeWorker(), await makeWorker(), await makeWorker()];
   const employer = await makeEmployer();
   const employerAccessToken = await makeAccessToken(employer);
-  const quest = await makeQuest(employer, QuestStatus.Created);
+  const quest = await makeQuest(employer, null, QuestStatus.Created);
   const questsResponses = [
     await QuestsResponse.create({
       workerId: workers[0].id,
@@ -336,7 +373,7 @@ async function Should_InvalidStatus_When_EmployerClosedQuestAndQuestNotStatusOnC
   expect(status).to.not.equal(QuestStatus.WaitConfirm);
 
   const employer = await makeEmployer();
-  const quest = await makeQuest(employer, status);
+  const quest = await makeQuest(employer, null, status);
   const employerAccessToken = await makeAccessToken(employer);
   const { result } = await postRequestOnCloseQuest(employerAccessToken, quest);
 
@@ -356,7 +393,7 @@ async function Should_InvalidStatus_When_EmployerDeleteQuestAndQuestNotStatusCre
   expect(status).to.not.equal(QuestStatus.Closed);
 
   const employer = await makeEmployer();
-  const quest = await makeQuest(employer, status);
+  const quest = await makeQuest(employer, null, status);
   const employerAccessToken = await makeAccessToken(employer);
   const { result } = await postRequestOnDeleteQuest(employerAccessToken, quest);
 
@@ -372,7 +409,7 @@ async function Should_InvalidStatus_When_EmployerDeleteQuestAndQuestNotStatusCre
 async function Should_Forbidden_When_EmployerDeleteQuestButHeNotQuestCreator() {
   const employerCreatorOfQuest = await makeEmployer();
   const employerNotCreatorOfQuest = await makeEmployer();
-  const quest = await makeQuest(employerCreatorOfQuest, QuestStatus.Created);
+  const quest = await makeQuest(employerCreatorOfQuest, null, QuestStatus.Created);
   const accessTokenEmployerNotCreatorOfQuest = await makeAccessToken(employerNotCreatorOfQuest);
   const { result } = await postRequestOnDeleteQuest(accessTokenEmployerNotCreatorOfQuest, quest);
 
@@ -390,7 +427,7 @@ async function Should_Forbidden_When_EmployerDeleteQuestButHeNotQuestCreator() {
 async function Should_Ok_When_EmployerDeleteQuestOnStatusCreated() {
   const workers = [await makeWorker(), await makeWorker(), await makeWorker()];
   const employer = await makeEmployer();
-  const quest = await makeQuest(employer, QuestStatus.Created);
+  const quest = await makeQuest(employer, null, QuestStatus.Created);
   const questId = quest.id;
 
   await QuestsResponse.create({
@@ -426,7 +463,7 @@ async function Should_Ok_When_EmployerDeleteQuestOnStatusCreated() {
 async function Should_Ok_When_EmployerDeleteQuestOnStatusClose() {
   const workers = [await makeWorker(), await makeWorker(), await makeWorker()];
   const employer = await makeEmployer();
-  const quest = await makeQuest(employer, QuestStatus.Closed);
+  const quest = await makeQuest(employer, null, QuestStatus.Closed);
   const questId = quest.id;
 
   await QuestsResponse.create({
@@ -465,7 +502,7 @@ async function Should_Forbidden_When_EmployerStartedQuestButHeNotQuestCreator() 
   const employerNotCreatorOfQuest = await makeEmployer();
   const assignedWorker = await makeWorker();
   const accessTokenEmployerNotCreatorOfQuest = await makeAccessToken(employerNotCreatorOfQuest);
-  const quest = await makeQuest(employerCreatorOfQuest, QuestStatus.Created);
+  const quest = await makeQuest(employerCreatorOfQuest, null, QuestStatus.Created);
   const { result } = await postRequestOnStartQuest(accessTokenEmployerNotCreatorOfQuest, quest, assignedWorker);
 
   await quest.reload();
@@ -486,7 +523,7 @@ async function Should_InvalidStatus_When_EmployerStartedQuestAndQuestNotStatusOn
   const employer = await makeEmployer();
   const assignedWorker = await makeWorker();
   const employerAccessToken = await makeAccessToken(employer);
-  const quest = await makeQuest(employer, status);
+  const quest = await makeQuest(employer, null, status);
   const { result } = await postRequestOnStartQuest(employerAccessToken, quest, assignedWorker);
 
   await quest.reload();
@@ -505,7 +542,7 @@ async function Should_Ok_When_EmployerStartedQuestAndWorkerResponseOnQuest() {
   const appointedWorker = workers[0];
   const employer = await makeEmployer();
   const employerAccessToken = await makeAccessToken(employer);
-  const quest = await makeQuest(employer, QuestStatus.Created);
+  const quest = await makeQuest(employer, null, QuestStatus.Created);
   const questsResponses = [
   await QuestsResponse.create({
     workerId: appointedWorker.id,
@@ -562,7 +599,7 @@ async function Should_NotFound_When_EmployerStartedQuestAndWorkerNotRespondedOnQ
   const worker = await makeWorker();
   const employer = await makeEmployer();
   const employerAccessToken = await makeAccessToken(employer);
-  const quest = await makeQuest(employer, QuestStatus.Created);
+  const quest = await makeQuest(employer, null, QuestStatus.Created);
   const { result } = await postRequestOnStartQuest(employerAccessToken, quest, worker);
 
   await quest.reload();
@@ -581,7 +618,7 @@ async function Should_Forbidden_When_EmployerStartedQuestAndWorkerRejectInvite()
   const appointedWorker = workers[0];
   const employer = await makeEmployer();
   const employerAccessToken = await makeAccessToken(employer);
-  const quest = await makeQuest(employer, QuestStatus.Created);
+  const quest = await makeQuest(employer, null, QuestStatus.Created);
   const questsResponses = [
     await QuestsResponse.create({
       workerId: appointedWorker.id,
@@ -635,7 +672,7 @@ async function Should_Ok_When_EmployerStartedQuestAndWorkerAcceptInvite() {
   const appointedWorker = workers[0];
   const employer = await makeEmployer();
   const employerAccessToken = await makeAccessToken(employer);
-  const quest = await makeQuest(employer, QuestStatus.Created);
+  const quest = await makeQuest(employer, null, QuestStatus.Created);
   const questsResponses = [
     await QuestsResponse.create({
       workerId: appointedWorker.id,
@@ -693,7 +730,7 @@ async function Should_Forbidden_When_EmployerStartedQuestAndWorkerNotResponseOnI
   const appointedWorker = workers[0];
   const employer = await makeEmployer();
   const employerAccessToken = await makeAccessToken(employer);
-  const quest = await makeQuest(employer, QuestStatus.Created);
+  const quest = await makeQuest(employer, null, QuestStatus.Created);
   const questsResponses = [
     await QuestsResponse.create({
       workerId: appointedWorker.id,
@@ -743,6 +780,237 @@ async function Should_Forbidden_When_EmployerStartedQuestAndWorkerNotResponseOnI
   }
 }
 
+async function Should_Forbidden_When_WorkerRejectWorkAndWorkerNotAssignedOnWork() {
+  const employer = await makeEmployer();
+  const assignedWorker = await makeWorker();
+  const notAssignedWorker = await makeWorker();
+  const notAssignedWorkerAccessToken = await makeAccessToken(notAssignedWorker);
+  const quest = await makeQuest(employer, assignedWorker, QuestStatus.WaitWorker);
+  const { result } = await postRequestOnRejectWorkOnQuest(notAssignedWorkerAccessToken, quest);
+
+  await quest.reload();
+
+  expect(result.ok).to.false();
+  expect(result.code).to.equal(Errors.Forbidden);
+  expect(quest.assignedWorkerId).to.equal(assignedWorker.id);
+  expect(quest.status).to.equal(QuestStatus.WaitWorker);
+
+  await quest.destroy();
+  await employer.destroy();
+  await notAssignedWorker.destroy();
+  await assignedWorker.destroy();
+}
+async function Should_Ok_When_WorkerRejectWorkAndQuestStatusWaitWorker() {
+  const employer = await makeEmployer();
+  const assignedWorker = await makeWorker();
+  const assignedWorkerAccessToken = await makeAccessToken(assignedWorker);
+  const quest = await makeQuest(employer, assignedWorker, QuestStatus.WaitWorker);
+  const { result } = await postRequestOnRejectWorkOnQuest(assignedWorkerAccessToken, quest);
+
+  await quest.reload();
+
+  expect(result.ok).to.true();
+  expect(quest.assignedWorkerId).to.null()
+  expect(quest.status).to.equal(QuestStatus.Created);
+
+  await quest.destroy();
+  await employer.destroy();
+  await assignedWorker.destroy();
+}
+async function Should_InvalidStatus_When_WorkerRejectWorkAndQuestNotStatusOnWaitWorker(status: QuestStatus) {
+  expect(status).to.not.equal(QuestStatus.WaitWorker);
+
+  const employer = await makeEmployer();
+  const assignedWorker = await makeWorker();
+  const assignedWorkerAccessToken = await makeAccessToken(assignedWorker);
+  const quest = await makeQuest(employer, assignedWorker, status);
+  const { result } = await postRequestOnRejectWorkOnQuest(assignedWorkerAccessToken, quest);
+
+  await quest.reload();
+
+  expect(result.ok).to.false();
+  expect(result.code).to.equal(Errors.InvalidStatus);
+  expect(quest.assignedWorkerId).to.equal(assignedWorker.id);
+  expect(quest.status).to.equal(status);
+
+  await quest.destroy();
+  await employer.destroy();
+  await assignedWorker.destroy();
+}
+
+async function Should_Forbidden_When_WorkerAcceptWorkAndWorkerNotAssignedOnWork() {
+  const employer = await makeEmployer();
+  const assignedWorker = await makeWorker();
+  const notAssignedWorker = await makeWorker();
+  const notAssignedWorkerAccessToken = await makeAccessToken(notAssignedWorker);
+  const quest = await makeQuest(employer, assignedWorker, QuestStatus.WaitWorker);
+  const { result } = await postRequestOnAcceptWorkOnQuest(notAssignedWorkerAccessToken, quest);
+
+  await quest.reload();
+
+  expect(result.ok).to.false();
+  expect(result.code).to.equal(Errors.Forbidden);
+  expect(quest.assignedWorkerId).to.equal(assignedWorker.id);
+  expect(quest.status).to.equal(QuestStatus.WaitWorker);
+
+  await quest.destroy();
+  await employer.destroy();
+  await notAssignedWorker.destroy();
+  await assignedWorker.destroy();
+}
+async function Should_Ok_When_WorkerAcceptWorkAndQuestStatusWaitWorker() {
+  const employer = await makeEmployer();
+  const assignedWorker = await makeWorker();
+  const assignedWorkerAccessToken = await makeAccessToken(assignedWorker);
+  const quest = await makeQuest(employer, assignedWorker, QuestStatus.WaitWorker);
+  const { result } = await postRequestOnAcceptWorkOnQuest(assignedWorkerAccessToken, quest);
+
+  await quest.reload();
+
+  expect(result.ok).to.true();
+  expect(quest.assignedWorkerId).to.equal(assignedWorker.id);
+  expect(quest.status).to.equal(QuestStatus.Active);
+
+  await quest.destroy();
+  await employer.destroy();
+  await assignedWorker.destroy();
+}
+async function Should_InvalidStatus_When_WorkerAcceptWorkAndQuestNotStatusOnWaitWorker(status: QuestStatus) {
+  expect(status).to.not.equal(QuestStatus.WaitWorker);
+
+  const employer = await makeEmployer();
+  const assignedWorker = await makeWorker();
+  const assignedWorkerAccessToken = await makeAccessToken(assignedWorker);
+  const quest = await makeQuest(employer, assignedWorker, status);
+  const { result } = await postRequestOnAcceptWorkOnQuest(assignedWorkerAccessToken, quest);
+
+  await quest.reload();
+
+  expect(result.ok).to.false();
+  expect(result.code).to.equal(Errors.InvalidStatus);
+  expect(quest.assignedWorkerId).to.equal(assignedWorker.id);
+  expect(quest.status).to.equal(status);
+
+  await quest.destroy();
+  await employer.destroy();
+  await assignedWorker.destroy();
+}
+
+async function Should_Forbidden_When_WorkerCompletedWorkAndWorkerNotAssignedOnWork() {
+  const employer = await makeEmployer();
+  const assignedWorker = await makeWorker();
+  const notAssignedWorker = await makeWorker();
+  const notAssignedWorkerAccessToken = await makeAccessToken(notAssignedWorker);
+  const quest = await makeQuest(employer, assignedWorker, QuestStatus.Active);
+  const { result } = await postRequestOnCompletedWorkOnQuest(notAssignedWorkerAccessToken, quest);
+
+  await quest.reload();
+
+  expect(result.ok).to.false();
+  expect(result.code).to.equal(Errors.Forbidden);
+  expect(quest.assignedWorkerId).to.equal(assignedWorker.id);
+  expect(quest.status).to.equal(QuestStatus.Active);
+
+  await quest.destroy();
+  await employer.destroy();
+  await notAssignedWorker.destroy();
+  await assignedWorker.destroy();
+}
+async function Should_Ok_When_WorkerCompletedWorkAndQuestStatusActive() {
+  const employer = await makeEmployer();
+  const assignedWorker = await makeWorker();
+  const assignedWorkerAccessToken = await makeAccessToken(assignedWorker);
+  const quest = await makeQuest(employer, assignedWorker, QuestStatus.Active);
+  const { result } = await postRequestOnCompletedWorkOnQuest(assignedWorkerAccessToken, quest);
+
+  await quest.reload();
+
+  expect(result.ok).to.true();
+  expect(quest.assignedWorkerId).to.equal(assignedWorker.id);
+  expect(quest.status).to.equal(QuestStatus.WaitConfirm);
+
+  await quest.destroy();
+  await employer.destroy();
+  await assignedWorker.destroy();
+}
+async function Should_InvalidStatus_When_WorkerCompletedWorkAndQuestNotStatusOnActive(status: QuestStatus) {
+  expect(status).to.not.equal(QuestStatus.Active);
+
+  const employer = await makeEmployer();
+  const assignedWorker = await makeWorker();
+  const assignedWorkerAccessToken = await makeAccessToken(assignedWorker);
+  const quest = await makeQuest(employer, assignedWorker, status);
+  const { result } = await postRequestOnCompletedWorkOnQuest(assignedWorkerAccessToken, quest);
+
+  await quest.reload();
+
+  expect(result.ok).to.false();
+  expect(result.code).to.equal(Errors.InvalidStatus);
+  expect(quest.assignedWorkerId).to.equal(assignedWorker.id);
+  expect(quest.status).to.equal(status);
+
+  await quest.destroy();
+  await employer.destroy();
+  await assignedWorker.destroy();
+}
+
+async function Should_Forbidden_When_EmployerAcceptCompletedWorkAndEmployerNotQuestCreator() {
+  const assignedWorker = await makeWorker();
+  const employerCreatorOfQuest = await makeEmployer();
+  const employerNotCreatorOfQuest = await makeEmployer();
+  const accessTokenEmployerNotCreatorOfQuest = await makeAccessToken(employerNotCreatorOfQuest);
+  const quest = await makeQuest(employerCreatorOfQuest, assignedWorker, QuestStatus.WaitConfirm);
+  const { result } = await postRequestOnAcceptCompletedWorkOnQuest(accessTokenEmployerNotCreatorOfQuest, quest);
+
+  await quest.reload();
+
+  expect(result.ok).to.false();
+  expect(result.code).to.equal(Errors.Forbidden);
+  expect(quest.assignedWorkerId).to.equal(assignedWorker.id);
+  expect(quest.status).to.equal(QuestStatus.WaitConfirm);
+
+  await quest.destroy();
+  await assignedWorker.destroy();
+  await employerCreatorOfQuest.destroy();
+  await employerNotCreatorOfQuest.destroy();
+}
+async function Should_Ok_When_EmployerAcceptCompletedWorkAndQuestStatusWaitConfirm() {
+  const employer = await makeEmployer();
+  const assignedWorker = await makeWorker();
+  const employerAccessToken = await makeAccessToken(employer);
+  const quest = await makeQuest(employer, assignedWorker, QuestStatus.WaitConfirm);
+  const { result } = await postRequestOnAcceptCompletedWorkOnQuest(employerAccessToken, quest);
+
+  await quest.reload();
+
+  expect(result.ok).to.true();
+  expect(quest.assignedWorkerId).to.equal(assignedWorker.id);
+  expect(quest.status).to.equal(QuestStatus.Closed);
+
+  await quest.destroy();
+  await employer.destroy();
+  await assignedWorker.destroy();
+}
+async function Should_InvalidStatus_When_EmployerAcceptCompletedWorkAndQuestNotStatusOnWaitConfirm(status: QuestStatus) {
+  expect(status).to.not.equal(QuestStatus.WaitConfirm);
+
+  const employer = await makeEmployer();
+  const assignedWorker = await makeWorker();
+  const employerAccessToken = await makeAccessToken(employer);
+  const quest = await makeQuest(employer, assignedWorker, status);
+  const { result } = await postRequestOnAcceptCompletedWorkOnQuest(employerAccessToken, quest);
+
+  await quest.reload();
+
+  expect(result.ok).to.false();
+  expect(result.code).to.equal(Errors.InvalidStatus);
+  expect(quest.assignedWorkerId).to.equal(assignedWorker.id);
+  expect(quest.status).to.equal(status);
+
+  await quest.destroy();
+  await employer.destroy();
+  await assignedWorker.destroy();
+}
 
 
 suite('Testing API Quest:', () => {
@@ -804,9 +1072,43 @@ suite('Testing API Quest:', () => {
     await Should_Forbidden_When_EmployerStartedQuestAndWorkerNotResponseOnInvite();
   });
   it('Reject Work', async () => {
+    await Should_InvalidStatus_When_WorkerRejectWorkAndQuestNotStatusOnWaitWorker(QuestStatus.Active);
+    await Should_InvalidStatus_When_WorkerRejectWorkAndQuestNotStatusOnWaitWorker(QuestStatus.Closed);
+    await Should_InvalidStatus_When_WorkerRejectWorkAndQuestNotStatusOnWaitWorker(QuestStatus.Dispute);
+    await Should_InvalidStatus_When_WorkerRejectWorkAndQuestNotStatusOnWaitWorker(QuestStatus.Created);
+    await Should_InvalidStatus_When_WorkerRejectWorkAndQuestNotStatusOnWaitWorker(QuestStatus.WaitConfirm);
 
+    await Should_Forbidden_When_WorkerRejectWorkAndWorkerNotAssignedOnWork();
+    await Should_Ok_When_WorkerRejectWorkAndQuestStatusWaitWorker();
   });
   it('Accept Work', async () => {
+    await Should_InvalidStatus_When_WorkerAcceptWorkAndQuestNotStatusOnWaitWorker(QuestStatus.Active);
+    await Should_InvalidStatus_When_WorkerAcceptWorkAndQuestNotStatusOnWaitWorker(QuestStatus.Closed);
+    await Should_InvalidStatus_When_WorkerAcceptWorkAndQuestNotStatusOnWaitWorker(QuestStatus.Dispute);
+    await Should_InvalidStatus_When_WorkerAcceptWorkAndQuestNotStatusOnWaitWorker(QuestStatus.Created);
+    await Should_InvalidStatus_When_WorkerAcceptWorkAndQuestNotStatusOnWaitWorker(QuestStatus.WaitConfirm);
 
+    await Should_Forbidden_When_WorkerAcceptWorkAndWorkerNotAssignedOnWork();
+    await Should_Ok_When_WorkerAcceptWorkAndQuestStatusWaitWorker();
+  });
+  it('Complete Work', async () => {
+    await Should_InvalidStatus_When_WorkerCompletedWorkAndQuestNotStatusOnActive(QuestStatus.WaitWorker);
+    await Should_InvalidStatus_When_WorkerCompletedWorkAndQuestNotStatusOnActive(QuestStatus.Closed);
+    await Should_InvalidStatus_When_WorkerCompletedWorkAndQuestNotStatusOnActive(QuestStatus.Dispute);
+    await Should_InvalidStatus_When_WorkerCompletedWorkAndQuestNotStatusOnActive(QuestStatus.Created);
+    await Should_InvalidStatus_When_WorkerCompletedWorkAndQuestNotStatusOnActive(QuestStatus.WaitConfirm);
+
+    await Should_Forbidden_When_WorkerCompletedWorkAndWorkerNotAssignedOnWork();
+    await Should_Ok_When_WorkerCompletedWorkAndQuestStatusActive();
+  });
+  it('Accept completed work', async () => {
+    await Should_InvalidStatus_When_EmployerAcceptCompletedWorkAndQuestNotStatusOnWaitConfirm(QuestStatus.WaitWorker);
+    await Should_InvalidStatus_When_EmployerAcceptCompletedWorkAndQuestNotStatusOnWaitConfirm(QuestStatus.Closed);
+    await Should_InvalidStatus_When_EmployerAcceptCompletedWorkAndQuestNotStatusOnWaitConfirm(QuestStatus.Dispute);
+    await Should_InvalidStatus_When_EmployerAcceptCompletedWorkAndQuestNotStatusOnWaitConfirm(QuestStatus.Created);
+    await Should_InvalidStatus_When_EmployerAcceptCompletedWorkAndQuestNotStatusOnWaitConfirm(QuestStatus.Active);
+
+    await Should_Forbidden_When_EmployerAcceptCompletedWorkAndEmployerNotQuestCreator();
+    await Should_Ok_When_EmployerAcceptCompletedWorkAndQuestStatusWaitConfirm();
   });
 });
