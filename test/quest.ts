@@ -129,6 +129,15 @@ async function postRequestOnAcceptCompletedWorkOnQuest(accessToken: string, ques
     },
   });
 }
+async function postRequestOnRejectCompletedWorkOnQuest(accessToken: string, quest: Quest) {
+  return await server.inject({
+    method: 'POST',
+    url: '/api/v1/quest/' + quest.id + '/reject-completed-work',
+    headers: {
+      authorization: 'Bearer ' + accessToken
+    },
+  });
+}
 
 async function makeAccessToken(user: User): Promise<string> {
   const session = await Session.create({
@@ -1012,6 +1021,63 @@ async function Should_InvalidStatus_When_EmployerAcceptCompletedWorkAndQuestNotS
   await assignedWorker.destroy();
 }
 
+async function Should_Forbidden_When_EmployerRejectCompletedWorkAndEmployerNotQuestCreator() {
+  const assignedWorker = await makeWorker();
+  const employerCreatorOfQuest = await makeEmployer();
+  const employerNotCreatorOfQuest = await makeEmployer();
+  const accessTokenEmployerNotCreatorOfQuest = await makeAccessToken(employerNotCreatorOfQuest);
+  const quest = await makeQuest(employerCreatorOfQuest, assignedWorker, QuestStatus.WaitConfirm);
+  const { result } = await postRequestOnRejectCompletedWorkOnQuest(accessTokenEmployerNotCreatorOfQuest, quest);
+
+  await quest.reload();
+
+  expect(result.ok).to.false();
+  expect(result.code).to.equal(Errors.Forbidden);
+  expect(quest.assignedWorkerId).to.equal(assignedWorker.id);
+  expect(quest.status).to.equal(QuestStatus.WaitConfirm);
+
+  await quest.destroy();
+  await assignedWorker.destroy();
+  await employerCreatorOfQuest.destroy();
+  await employerNotCreatorOfQuest.destroy();
+}
+async function Should_Ok_When_EmployerRejectCompletedWorkAndQuestStatusWaitConfirm() {
+  const employer = await makeEmployer();
+  const assignedWorker = await makeWorker();
+  const employerAccessToken = await makeAccessToken(employer);
+  const quest = await makeQuest(employer, assignedWorker, QuestStatus.WaitConfirm);
+  const { result } = await postRequestOnRejectCompletedWorkOnQuest(employerAccessToken, quest);
+
+  await quest.reload();
+
+  expect(result.ok).to.true();
+  expect(quest.assignedWorkerId).to.equal(assignedWorker.id);
+  expect(quest.status).to.equal(QuestStatus.Dispute);
+
+  await quest.destroy();
+  await employer.destroy();
+  await assignedWorker.destroy();
+}
+async function Should_InvalidStatus_When_EmployerRejectCompletedWorkAndQuestNotStatusOnWaitConfirm(status: QuestStatus) {
+  expect(status).to.not.equal(QuestStatus.WaitConfirm);
+
+  const employer = await makeEmployer();
+  const assignedWorker = await makeWorker();
+  const employerAccessToken = await makeAccessToken(employer);
+  const quest = await makeQuest(employer, assignedWorker, status);
+  const { result } = await postRequestOnRejectCompletedWorkOnQuest(employerAccessToken, quest);
+
+  await quest.reload();
+
+  expect(result.ok).to.false();
+  expect(result.code).to.equal(Errors.InvalidStatus);
+  expect(quest.assignedWorkerId).to.equal(assignedWorker.id);
+  expect(quest.status).to.equal(status);
+
+  await quest.destroy();
+  await employer.destroy();
+  await assignedWorker.destroy();
+}
 
 suite('Testing API Quest:', () => {
 
@@ -1110,5 +1176,15 @@ suite('Testing API Quest:', () => {
 
     await Should_Forbidden_When_EmployerAcceptCompletedWorkAndEmployerNotQuestCreator();
     await Should_Ok_When_EmployerAcceptCompletedWorkAndQuestStatusWaitConfirm();
+  });
+  it('Reject completed work', async () => {
+    await Should_InvalidStatus_When_EmployerRejectCompletedWorkAndQuestNotStatusOnWaitConfirm(QuestStatus.WaitWorker);
+    await Should_InvalidStatus_When_EmployerRejectCompletedWorkAndQuestNotStatusOnWaitConfirm(QuestStatus.Closed);
+    await Should_InvalidStatus_When_EmployerRejectCompletedWorkAndQuestNotStatusOnWaitConfirm(QuestStatus.Dispute);
+    await Should_InvalidStatus_When_EmployerRejectCompletedWorkAndQuestNotStatusOnWaitConfirm(QuestStatus.Created);
+    await Should_InvalidStatus_When_EmployerRejectCompletedWorkAndQuestNotStatusOnWaitConfirm(QuestStatus.Active);
+
+    await Should_Forbidden_When_EmployerRejectCompletedWorkAndEmployerNotQuestCreator();
+    await Should_Ok_When_EmployerRejectCompletedWorkAndQuestStatusWaitConfirm();
   });
 });
