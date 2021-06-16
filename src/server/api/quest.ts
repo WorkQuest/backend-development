@@ -92,6 +92,7 @@ export async function editQuest(r) {
 
 export async function deleteQuest(r) {
   const quest = await Quest.findByPk(r.params.questId);
+  const transaction = await r.server.app.db.transaction();
 
   if (!quest) {
     return error(Errors.NotFound, "Quest not found", {});
@@ -103,7 +104,10 @@ export async function deleteQuest(r) {
     return error(Errors.InvalidStatus, "Quest cannot be deleted at current stage", {});
   }
 
-  await quest.destroy({ force: true });
+  await QuestsResponse.destroy({ where: { questId: quest.id }, transaction })
+  await quest.destroy({ force: true, transaction });
+
+  await transaction.commit();
 
   return output();
 }

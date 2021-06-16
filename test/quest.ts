@@ -388,19 +388,77 @@ async function Should_Forbidden_When_EmployerDeleteQuestButHeNotQuestCreator() {
   await employerNotCreatorOfQuest.destroy();
 }
 async function Should_Ok_When_EmployerDeleteQuestOnStatusCreated() {
+  const workers = [await makeWorker(), await makeWorker(), await makeWorker()];
   const employer = await makeEmployer();
   const quest = await makeQuest(employer, QuestStatus.Created);
   const questId = quest.id;
+
+  await QuestsResponse.create({
+    workerId: workers[0].id,
+    questId: quest.id,
+    status: QuestsResponseStatus.Open,
+    type: QuestsResponseType.Response,
+    message: 'Hi!'
+  });
+  await QuestsResponse.create({
+    workerId: workers[1].id,
+    questId: quest.id,
+    status: QuestsResponseStatus.Open,
+    type: QuestsResponseType.Invite,
+    message: 'Hi!'
+  });
+  await QuestsResponse.create({
+    workerId: workers[2].id,
+    questId: quest.id,
+    status: QuestsResponseStatus.Open,
+    type: QuestsResponseType.Response,
+    message: 'Hi!'
+  });
+
   const employerAccessToken = await makeAccessToken(employer);
   const { result } = await postRequestOnDeleteQuest(employerAccessToken, quest);
-  // TODO
+  const responses = await QuestsResponse.findAll({ where: { questId } });
+
   expect(result.ok).to.true();
   expect(await Quest.findByPk(questId)).to.null();
+  expect(responses.length).to.equal(0);
 }
 async function Should_Ok_When_EmployerDeleteQuestOnStatusClose() {
-// TODO
-}
+  const workers = [await makeWorker(), await makeWorker(), await makeWorker()];
+  const employer = await makeEmployer();
+  const quest = await makeQuest(employer, QuestStatus.Closed);
+  const questId = quest.id;
 
+  await QuestsResponse.create({
+    workerId: workers[0].id,
+    questId: quest.id,
+    status: QuestsResponseStatus.Open,
+    type: QuestsResponseType.Response,
+    message: 'Hi!'
+  });
+  await QuestsResponse.create({
+    workerId: workers[2].id,
+    questId: quest.id,
+    status: QuestsResponseStatus.Open,
+    type: QuestsResponseType.Response,
+    message: 'Hi!'
+  });
+  await QuestsResponse.create({
+    workerId: workers[1].id,
+    questId: quest.id,
+    status: QuestsResponseStatus.Open,
+    type: QuestsResponseType.Invite,
+    message: 'Hi!'
+  });
+
+  const employerAccessToken = await makeAccessToken(employer);
+  const { result } = await postRequestOnDeleteQuest(employerAccessToken, quest);
+  const responses = await QuestsResponse.findAll({ where: { questId } });
+
+  expect(result.ok).to.true();
+  expect(await Quest.findByPk(questId)).to.null();
+  expect(responses.length).to.equal(0);
+}
 
 async function Should_Forbidden_When_EmployerStartedQuestButHeNotQuestCreator() {
   const employerCreatorOfQuest = await makeEmployer();
@@ -686,6 +744,7 @@ async function Should_Forbidden_When_EmployerStartedQuestAndWorkerNotResponseOnI
 }
 
 
+
 suite('Testing API Quest:', () => {
 
   before(async () => {
@@ -720,7 +779,7 @@ suite('Testing API Quest:', () => {
     await Should_Ok_When_EmployerClosedQuestOnStatusWaitConfirm();
     await Should_Forbidden_When_EmployerClosedQuestButHeNotQuestCreator();
   });
-  it('Delete', async () => { // TODO
+  it('Delete', async () => {
     await Should_InvalidStatus_When_EmployerDeleteQuestAndQuestNotStatusCreatedOrClosed(QuestStatus.Active);
     await Should_InvalidStatus_When_EmployerDeleteQuestAndQuestNotStatusCreatedOrClosed(QuestStatus.Dispute);
     await Should_InvalidStatus_When_EmployerDeleteQuestAndQuestNotStatusCreatedOrClosed(QuestStatus.WaitWorker);
@@ -728,6 +787,7 @@ suite('Testing API Quest:', () => {
 
     await Should_Forbidden_When_EmployerDeleteQuestButHeNotQuestCreator();
     await Should_Ok_When_EmployerDeleteQuestOnStatusCreated();
+    await Should_Ok_When_EmployerDeleteQuestOnStatusClose();
   });
   it('Start', async () => {
     await Should_InvalidStatus_When_EmployerStartedQuestAndQuestNotStatusOnCreated(QuestStatus.Active);
@@ -742,5 +802,11 @@ suite('Testing API Quest:', () => {
     await Should_Forbidden_When_EmployerStartedQuestAndWorkerRejectInvite();
     await Should_Ok_When_EmployerStartedQuestAndWorkerAcceptInvite();
     await Should_Forbidden_When_EmployerStartedQuestAndWorkerNotResponseOnInvite();
+  });
+  it('Reject Work', async () => {
+
+  });
+  it('Accept Work', async () => {
+
   });
 });
