@@ -234,7 +234,7 @@ export async function acceptCompletedWorkOnQuest(r) {
   quest.mustBeQuestCreator(r.auth.credentials.id);
   quest.mustHaveStatus(QuestStatus.WaitConfirm);
 
-  await quest.update({ status: QuestStatus.Closed });
+  await quest.update({ status: QuestStatus.Done });
 
   return output();
 }

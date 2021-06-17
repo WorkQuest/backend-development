@@ -994,7 +994,7 @@ async function Should_Ok_When_EmployerAcceptCompletedWorkAndQuestStatusWaitConfi
 
   expect(result.ok).to.true();
   expect(quest.assignedWorkerId).to.equal(assignedWorker.id);
-  expect(quest.status).to.equal(QuestStatus.Closed);
+  expect(quest.status).to.equal(QuestStatus.Done);
 
   await quest.destroy();
   await employer.destroy();

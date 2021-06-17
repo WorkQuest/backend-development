@@ -25,6 +25,7 @@ export enum QuestStatus {
   Dispute,
   WaitWorker,
   WaitConfirm,
+  Done,
 }
 
 export interface Location {
