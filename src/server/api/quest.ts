@@ -138,7 +138,7 @@ export async function closeQuest(r) {
     return error(Errors.NotFound, "Quest not found", {});
   }
 
-  quest.mustHaveSomeStatuses([QuestStatus.Created, QuestStatus.WaitConfirm]);
+  quest.mustHaveStatus(QuestStatus.Created, QuestStatus.WaitConfirm);
   quest.mustBeQuestCreator(r.auth.credentials.id);
 
   await quest.update({ status: QuestStatus.Closed }, { transaction });

@@ -10,9 +10,8 @@ import { transformToGeoPostGIS } from '../src/server/utils/quest';
 import { QuestsResponse, QuestsResponseStatus, QuestsResponseType } from '../src/server/models/QuestsResponse';
 
 let server = null;
-const { afterEach,
-  it, suite,
-  before
+const { it, suite,
+  before, after
 } = exports.lab = Lab.script();
 
 async function makeUser(role: UserRole): Promise<User> {
@@ -252,13 +251,13 @@ async function Should_InvalidStatus_When_EmployerEditQuestAndQuestNotStatusOnCre
   const description = Math.random().toString(36).substring(7);
   const { result } = await postRequestOnEditQuest(employerAccessToken, quest, { description });
 
-  await quest.reload();
+  const questAfter = await Quest.findByPk(quest.id);
 
   expect(result.ok).to.false();
   expect(result.code).to.equal(Errors.InvalidStatus);
-  expect(quest.description).to.not.equal(description);
+  expect(questAfter.description).to.not.equal(description);
 
-  await quest.destroy();
+  await questAfter.destroy();
   await employer.destroy();
 }
 
@@ -1085,7 +1084,7 @@ suite('Testing API Quest:', () => {
     server = await init();
   });
 
-  afterEach(async () => {
+  after(async () => {
     await server.stop();
   });
 

@@ -72,20 +72,11 @@ export class Quest extends Model {
     this.setDataValue('locationPostGIS', transformToGeoPostGIS(this.getDataValue('location')));
   }
 
-  mustHaveSomeStatuses(statuses: QuestStatus[]) {
+  mustHaveStatus(...statuses: QuestStatus[]) {
     if (!statuses.includes(this.status)) {
       throw error(Errors.InvalidStatus, "Quest status doesn't match", {
         current: this.status,
         mustHave: statuses
-      });
-    }
-  }
-
-  mustHaveStatus(status: QuestStatus) {
-    if (this.status !== status) {
-      throw error(Errors.InvalidStatus, "Quest status doesn't match", {
-        current: this.status,
-        mustHave: status
       });
     }
   }
