@@ -4,6 +4,7 @@ import * as bcrypt from "bcrypt";
 import { Media } from './Media';
 import { Session } from './Session';
 import { Errors } from '../utils/errors';
+import { Review } from './Review';
 
 export interface SocialInfo {
   id: string;
@@ -93,6 +94,7 @@ export class User extends Model {
   @BelongsTo(() => Media,{constraints: false, foreignKey: 'avatarId'}) avatar: Media;
   @HasMany(() => Session, { onDelete: 'CASCADE', hooks: true }) sessions: Session[];
   @HasMany(() => Media) medias: Media[];
+  @HasMany(() => Review, 'fromUserId') reviews: Review[];
 
   async passwordCompare(pwd: string) {
     return bcrypt.compareSync(pwd, this.password);

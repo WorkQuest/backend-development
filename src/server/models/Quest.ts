@@ -1,10 +1,11 @@
-import { BelongsTo, BelongsToMany, Column, DataType, ForeignKey, Model, Scopes, Table } from 'sequelize-typescript';
+import { BelongsTo, HasMany, BelongsToMany, Column, DataType, ForeignKey, Model, Scopes, Table } from 'sequelize-typescript';
 import { User } from "./User";
 import { error, getUUID } from '../utils';
 import { Media } from './Media';
 import { QuestMedia } from './QuestMedia';
 import { transformToGeoPostGIS } from '../utils/quest';
 import { Errors } from '../utils/errors';
+import { Review } from './Review';
 
 export enum QuestPriority {
   AllPriority = 0,
@@ -67,6 +68,7 @@ export class Quest extends Model {
 
   @BelongsTo(() => User) user: User;
   @BelongsToMany(() => Media, () => QuestMedia) medias: Media[];
+  @HasMany(() => Review) reviews: Review[];
 
   updateFieldLocationPostGIS(): void {
     this.setDataValue('locationPostGIS', transformToGeoPostGIS(this.getDataValue('location')));
