@@ -4,19 +4,16 @@ import { Errors } from "../utils/errors";
 import { QuestsResponse, QuestsResponseStatus, QuestsResponseType } from "../models/QuestsResponse";
 import { Quest, QuestStatus } from "../models/Quest";
 
-export async function questResponse(r) {
+export async function responseOnQuest(r) {
   const user = r.auth.credentials;
   const quest = await Quest.findByPk(r.params.questId);
 
   if (!quest) {
     return error(Errors.NotFound, "Quest not found", {});
   }
-  if (quest.status !== QuestStatus.Created) {
-    return error(Errors.InvalidStatus, "Quest isn't at stage created", {});
-  }
-  if (user.role !== UserRole.Worker) {
-    return error(Errors.InvalidRole, "User is not Worker", {});
-  }
+
+  quest.mustHaveStatus(QuestStatus.Created);
+  user.mustHaveRole(UserRole.Worker);
 
   const questsResponse = await QuestsResponse.findOne({
     where: {
@@ -25,7 +22,7 @@ export async function questResponse(r) {
     }
   });
 
-  if (questsResponse) {
+  if (questsResponse && questsResponse.status !== QuestsResponseStatus.Closed) {
     return error(Errors.AlreadyAnswer, "You already answered quest", {});
   }
 
@@ -40,26 +37,20 @@ export async function questResponse(r) {
   return output();
 }
 
-export async function questInvite(r) {
+export async function inviteOnQuest(r) {
   const user = r.auth.credentials;
   const invitedWorker = await User.findOne({ where: { id: r.payload.invitedUserId } });
   const quest = await Quest.findByPk(r.params.questId);
 
-  if (user.role !== UserRole.Employer) {
-    return error(Errors.InvalidRole, "User is not Employer", {});
-  }
-  if (invitedWorker.role !== UserRole.Worker) {
-    return error(Errors.InvalidRole, "Invited user is not Worker", {});
-  }
+  user.mustHaveRole(UserRole.Employer);
+  invitedWorker.mustHaveRole(UserRole.Worker);
+
   if (!quest) {
     return error(Errors.NotFound, "Quest not found", {});
   }
-  if (quest.status !== QuestStatus.Created) {
-    return error(Errors.InvalidStatus, "Quest isn't at stage created", {});
-  }
-  if (quest.userId !== user.id) {
-    return error(Errors.Forbidden, "User isn't creator quest", {});
-  }
+
+  quest.mustHaveStatus(QuestStatus.Created);
+  quest.mustBeQuestCreator(user.id);
 
   const questResponse = await QuestsResponse.findOne({
     where: {
@@ -83,16 +74,15 @@ export async function questInvite(r) {
   return output();
 }
 
-export async function getResponsesToQuest(r) {
+export async function userResponsesToQuest(r) {
   const user = r.auth.credentials;
   const quest = await Quest.findByPk(r.params.questId);
 
   if (!quest) {
     return error(Errors.NotFound, "Quest not found", {});
   }
-  if (quest.userId !== user.id) {
-    return error(Errors.Forbidden, "User isn't creator quest", {});
-  }
+
+  quest.mustBeQuestCreator(user.id);
 
   const { rows, count } = await QuestsResponse.findAndCountAll({
     where: { questId: quest.id },
@@ -104,12 +94,10 @@ export async function getResponsesToQuest(r) {
   return output({ count, responses: rows });
 }
 
-export async function getResponsesUserToQuest(r) {
+export async function responsesToQuestsForUser(r) {
   const user = r.auth.credentials;
 
-  if (user.role !== UserRole.Worker) {
-    return error(Errors.InvalidRole, "User is not Worker", {});
-  }
+  user.mustHaveRole(UserRole.Worker);
 
   const { rows, count } = await QuestsResponse.findAndCountAll({
     where: { workerId: user.id },
@@ -122,46 +110,34 @@ export async function getResponsesUserToQuest(r) {
   return output({ count, responses: rows });
 }
 
-export async function acceptInvite(r) {
+export async function acceptInviteOnQuest(r) {
   const user = r.auth.credentials;
   const questsResponse = await QuestsResponse.findOne({ where: { id: r.params.responseId } });
 
   if (!questsResponse) {
     return error(Errors.NotFound, "Quests response not found", {});
   }
-  if (questsResponse.workerId !== user.id) {
-    return error(Errors.Forbidden, "User isn't invitation to quest", {});
-  }
-  if (questsResponse.status !== QuestsResponseStatus.Open) {
-    return error(Errors.Forbidden, "Status of response on quest isn't open", {});
-  }
-  if (questsResponse.type !== QuestsResponseType.Invite) {
-    return error(Errors.Forbidden, "Response on quest isn't invite", {});
-  }
 
-  await questsResponse.update({ status: QuestsResponseStatus.Accept });
+  questsResponse.mustBeInvitedToQuest(user.id);
+  questsResponse.mustHaveStatus(QuestsResponseStatus.Open);
+
+  await questsResponse.update({ status: QuestsResponseStatus.Accepted });
 
   return output();
 }
 
-export async function rejectInvite(r) {
+export async function rejectInviteOnQuest(r) {
   const user = r.auth.credentials;
   const questsResponse = await QuestsResponse.findOne({ where: { id: r.params.responseId } });
 
   if (!questsResponse) {
     return error(Errors.NotFound, "Quests response not found", {});
   }
-  if (questsResponse.workerId !== user.id) {
-    return error(Errors.Forbidden, "User isn't invitation to quest", {});
-  }
-  if (questsResponse.status !== QuestsResponseStatus.Open) {
-    return error(Errors.Forbidden, "Status of response on quest isn't open", {});
-  }
-  if (questsResponse.type !== QuestsResponseType.Invite) {
-    return error(Errors.Forbidden, "Response on quest isn't invite", {});
-  }
 
-  await questsResponse.update({ status: QuestsResponseStatus.Reject });
+  questsResponse.mustBeInvitedToQuest(user.id);
+  questsResponse.mustHaveStatus(QuestsResponseStatus.Open);
+
+  await questsResponse.update({ status: QuestsResponseStatus.Rejected });
 
   return output();
 }

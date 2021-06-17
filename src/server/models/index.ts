@@ -4,11 +4,13 @@ import { Session } from "./Session";
 import { Quest } from "./Quest";
 import { QuestsResponse } from "./QuestsResponse";
 import { Media } from './Media';
+import { QuestMedia } from './QuestMedia';
 
 export async function initDatabase(dbLink: string, logging = false, sync = false) {
   const sequelize = new Sequelize(dbLink, {
+    logging,
     dialect: "postgres",
-    models: [User, Session, Quest, QuestsResponse, Media]
+    models: [User, Session, Quest, QuestsResponse, Media, QuestMedia]
   });
   if (sync)
     await sequelize.sync();

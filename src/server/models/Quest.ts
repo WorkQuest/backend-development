@@ -1,7 +1,10 @@
-import { BelongsTo, Column, DataType, ForeignKey, Model, Scopes, Table } from "sequelize-typescript";
+import { BelongsTo, BelongsToMany, Column, DataType, ForeignKey, Model, Scopes, Table } from 'sequelize-typescript';
 import { User } from "./User";
-import { getUUID } from "../utils";
+import { error, getUUID } from '../utils';
 import { Media } from './Media';
+import { QuestMedia } from './QuestMedia';
+import { transformToGeoPostGIS } from '../utils/quest';
+import { Errors } from '../utils/errors';
 
 export enum QuestPriority {
   AllPriority = 0,
@@ -18,8 +21,11 @@ export enum AdType {
 export enum QuestStatus {
   Created = 0,
   Active,
-  Performed,
-  Arbitration,
+  Closed,
+  Dispute,
+  WaitWorker,
+  WaitConfirm,
+  Done,
 }
 
 export interface Location {
@@ -27,38 +33,31 @@ export interface Location {
   latitude: number;
 }
 
-function transformToGeoPostGIS(location: Location) {
-  const coordinates = [location.longitude, location.latitude];
-
-  return {
-    type: "Point",
-    coordinates: coordinates,
-    crs: { type: "name", properties: { name: "EPSG:4326" } }
-  };
-}
-
 @Scopes(() => ({
   defaultScope: {
     attributes: {
       exclude: ["locationPostGIS"]
-    }
+    },
+    include: [{
+      model: Media.scope('urlOnly'),
+      as: 'medias',
+      through: {
+        attributes: []
+      }
+    }]
   }
 }))
 @Table
 export class Quest extends Model {
   @Column({ primaryKey: true, type: DataType.STRING, defaultValue: () => getUUID() }) id: string;
   @ForeignKey(() => User) @Column({type: DataType.STRING, allowNull: false}) userId: string;
+  @ForeignKey(() => User) @Column({type: DataType.STRING, defaultValue: null}) assignedWorkerId: string;
 
   @Column({type: DataType.INTEGER, defaultValue: QuestStatus.Created }) status: QuestStatus;
   @Column({type: DataType.INTEGER, defaultValue: QuestPriority.AllPriority }) priority: QuestPriority;
   @Column({type: DataType.STRING, allowNull: false}) category: string;
 
-  @Column({type: DataType.JSONB,
-    set(value: Location) {
-      this.setDataValue("locationPostGIS", transformToGeoPostGIS(value));
-      this.setDataValue("location", value);
-    }
-  }) location: Location;
+  @Column({type: DataType.JSONB}) location: Location;
   @Column({type: DataType.GEOMETRY('POINT', 4326)}) locationPostGIS;
   @Column({type: DataType.STRING, allowNull: false }) title: string;
   @Column({type: DataType.TEXT }) description: string;
@@ -67,4 +66,36 @@ export class Quest extends Model {
   @Column({type: DataType.INTEGER, defaultValue: AdType.Free }) adType: AdType;
 
   @BelongsTo(() => User) user: User;
+  @BelongsToMany(() => Media, () => QuestMedia) medias: Media[];
+
+  updateFieldLocationPostGIS(): void {
+    this.setDataValue('locationPostGIS', transformToGeoPostGIS(this.getDataValue('location')));
+  }
+
+  mustHaveStatus(...statuses: QuestStatus[]) {
+    if (!statuses.includes(this.status)) {
+      throw error(Errors.InvalidStatus, "Quest status doesn't match", {
+        current: this.status,
+        mustHave: statuses
+      });
+    }
+  }
+
+  mustBeAppointedOnQuest(workerId: string) {
+    if (this.assignedWorkerId !== workerId) {
+      throw error(Errors.Forbidden, "Worker is not appointed on quest", {
+        current: this.userId,
+        mustHave: workerId
+      });
+    }
+  }
+
+  mustBeQuestCreator(userId: String) {
+    if (this.userId !== userId) {
+      throw error(Errors.Forbidden, "User is not quest creator", {
+        current: this.userId,
+        mustHave: userId
+      });
+    }
+  }
 }

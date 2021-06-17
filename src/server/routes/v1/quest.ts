@@ -1,5 +1,15 @@
 import * as Joi from "joi";
-import { createQuest, deleteQuest, editQuest, getQuests } from '../../api/quest';
+import {
+  acceptCompletedWorkOnQuest,
+  acceptWorkOnQuest,
+  closeQuest, completeWorkOnQuest,
+  createQuest,
+  deleteQuest,
+  editQuest,
+  getQuests, rejectCompletedWorkOnQuest,
+  rejectWorkOnQuest,
+  startQuest
+} from '../../api/quest';
 import { emptyOkSchema, outputOkSchema, locationSchema, idSchema } from '../../schemes';
 import {
   adTypeSchema,
@@ -11,6 +21,8 @@ import {
 } from '../../schemes/quest';
 
 const questId = idSchema.label('QuestId');
+const mediaIdSchema = idSchema.label('MediaId');
+const mediasSchema = Joi.array().items(mediaIdSchema).unique().label('Medias');
 const questsOutputSchema = Joi.object({
   count: Joi.number().integer().example(10).label('CountQuests'),
   quests: Joi.array().items(questSchema).label('QuestsList'),
@@ -32,6 +44,7 @@ export default [{
         title: titleSchema.required(),
         description: descriptionSchema.required(),
         price: priceSchema.required(),
+        medias: mediasSchema.default([]),
         adType: adTypeSchema,
       }).label("CreateQuestPayload")
     },
@@ -46,7 +59,7 @@ export default [{
   options: {
     id: "v1.quest.deleteQuest",
     tags: ["api", "quest"],
-    description: "Delete quest",
+    description: "Delete quest (only status: Created and Closed)",
     validate: {
       params: Joi.object({
         questId: questId.required(),
@@ -76,6 +89,7 @@ export default [{
         description: descriptionSchema,
         price: priceSchema,
         adType: adTypeSchema,
+        medias: mediasSchema,
       }).label("EditQuestPayload"),
     },
     response: {
@@ -113,6 +127,125 @@ export default [{
     },
     response: {
       schema: outputOkSchema(questsOutputSchema).label("QuestsResponse")
+    },
+  }
+}, {
+  method: "POST",
+  path: "/v1/quest/{questId}/start",
+  handler: startQuest,
+  options: {
+    id: "v1.quest.startQuest",
+    tags: ["api", "quest"],
+    description: "Start quest",
+    validate: {
+      payload: Joi.object({
+        assignedWorkerId: idSchema.required().label('AssignedWorkerId')
+      }).label('StartQuestPayload')
+    },
+    response: {
+      schema: emptyOkSchema
+    }
+  }
+}, {
+  method: "POST",
+  path: "/v1/quest/{questId}/close",
+  handler: closeQuest,
+  options: {
+    id: "v1.quest.closeQuest",
+    tags: ["api", "quest"],
+    description: "Close quest",
+    validate: {
+      params: Joi.object({
+        questId: questId.required(),
+      }).label("DeleteQuestParams")
+    },
+    response: {
+      schema: emptyOkSchema
+    },
+  }
+}, {
+  method: "POST",
+  path: "/v1/quest/{questId}/reject-work",
+  handler: rejectWorkOnQuest,
+  options: {
+    id: "v1.quest.rejectWork",
+    tags: ["api", "quest"],
+    description: "Reject work on quest",
+    validate: {
+      params: Joi.object({
+        questId: questId.required(),
+      }).label("RejectWorkOnQuestParams")
+    },
+    response: {
+      schema: emptyOkSchema
+    },
+  }
+}, {
+  method: "POST",
+  path: "/v1/quest/{questId}/accept-work",
+  handler: acceptWorkOnQuest,
+  options: {
+    id: "v1.quest.acceptWork",
+    tags: ["api", "quest"],
+    description: "Accept work on quest",
+    validate: {
+      params: Joi.object({
+        questId: questId.required(),
+      }).label("AcceptWorkOnQuestParams")
+    },
+    response: {
+      schema: emptyOkSchema
+    },
+  }
+}, {
+  method: "POST",
+  path: "/v1/quest/{questId}/complete-work",
+  handler: completeWorkOnQuest,
+  options: {
+    id: "v1.quest.completeWork",
+    tags: ["api", "quest"],
+    description: "Complete work on quest",
+    validate: {
+      params: Joi.object({
+        questId: questId.required(),
+      }).label("CompleteWorkOnQuestParams")
+    },
+    response: {
+      schema: emptyOkSchema
+    },
+  }
+}, {
+  method: "POST",
+  path: "/v1/quest/{questId}/accept-completed-work",
+  handler: acceptCompletedWorkOnQuest,
+  options: {
+    id: "v1.quest.acceptCompletedWork",
+    tags: ["api", "quest"],
+    description: "Accept completed work on quest",
+    validate: {
+      params: Joi.object({
+        questId: questId.required(),
+      }).label("AcceptCompletedWorkParams")
+    },
+    response: {
+      schema: emptyOkSchema
+    },
+  }
+}, {
+  method: "POST",
+  path: "/v1/quest/{questId}/reject-completed-work",
+  handler: rejectCompletedWorkOnQuest,
+  options: {
+    id: "v1.quest.rejectCompletedWork",
+    tags: ["api", "quest"],
+    description: "Reject completed work on quest",
+    validate: {
+      params: Joi.object({
+        questId: questId.required(),
+      }).label("RejectCompletedWorkParams")
+    },
+    response: {
+      schema: emptyOkSchema
     },
   }
 }];
