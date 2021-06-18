@@ -22,7 +22,7 @@ import {
 
 const questId = idSchema.label('QuestId');
 const mediaIdSchema = idSchema.label('MediaId');
-const mediasSchema = Joi.array().items(mediaIdSchema).unique().label('Medias');
+const mediasSchema = Joi.array().items(mediaIdSchema).label('Medias');
 const questsOutputSchema = Joi.object({
   count: Joi.number().integer().example(10).label('CountQuests'),
   quests: Joi.array().items(questSchema).label('QuestsList'),
@@ -44,7 +44,7 @@ export default [{
         title: titleSchema.required(),
         description: descriptionSchema.required(),
         price: priceSchema.required(),
-        medias: mediasSchema.default([]),
+        medias: mediasSchema.required().unique().label('Medias'),
         adType: adTypeSchema,
       }).label("CreateQuestPayload")
     },
@@ -89,7 +89,7 @@ export default [{
         description: descriptionSchema,
         price: priceSchema,
         adType: adTypeSchema,
-        medias: mediasSchema,
+        medias: mediasSchema.unique().label('Medias'), // TODO: Why Model1???
       }).label("EditQuestPayload"),
     },
     response: {

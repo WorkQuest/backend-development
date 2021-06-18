@@ -1,36 +1,15 @@
 import * as Lab from '@hapi/lab';
 import { expect } from '@hapi/code';
 import { init } from '../src/server';
-import { User, UserRole, UserStatus } from '../src/server/models/User';
-import { Session } from '../src/server/models/Session';
-import { generateJwt } from '../src/server/utils/auth';
 import { Errors } from '../src/server/utils/errors';
 import { Quest, QuestPriority, QuestStatus } from '../src/server/models/Quest';
-import { transformToGeoPostGIS } from '../src/server/utils/quest';
+import { makeWorker, makeEmployer, makeAccessToken, makeQuest } from './index';
 import { QuestsResponse, QuestsResponseStatus, QuestsResponseType } from '../src/server/models/QuestsResponse';
 
 let server = null;
 const { it, suite,
   before, after
 } = exports.lab = Lab.script();
-
-async function makeUser(role: UserRole): Promise<User> {
-  return await User.create({
-    email: Math.random().toString(30).substring(7),
-    password: null, role,
-    firstName: 'TEST', lastName: 'TEST',
-    status: UserStatus.Confirmed,
-    settings: {
-      emailConfirm: null,
-    }
-  });
-}
-async function makeEmployer() {
-  return await makeUser(UserRole.Employer);
-}
-async function makeWorker() {
-  return await makeUser(UserRole.Worker);
-}
 
 async function postRequestOnCreateQuest(accessToken: string) {
   return await server.inject({
@@ -52,23 +31,21 @@ async function postRequestOnCreateQuest(accessToken: string) {
     },
   });
 }
-async function postRequestOnStartQuest(accessToken: string, quest: Quest, assignedWorker: User) {
+async function postRequestOnStartQuest(accessToken: string, quest: Quest, payload: object) {
   return await server.inject({
     method: 'POST',
     url: '/api/v1/quest/' + quest.id + '/start',
-    payload: {
-      assignedWorkerId: assignedWorker.id
-    },
+    payload,
     headers: {
       authorization: 'Bearer ' + accessToken
     },
   });
 }
-async function postRequestOnEditQuest(accessToken: string, quest: Quest, editedQuestData: object) {
+async function postRequestOnEditQuest(accessToken: string, quest: Quest, payload: object) {
   return await server.inject({
     method: 'PUT',
     url: '/api/v1/quest/' + quest.id,
-    payload: editedQuestData,
+    payload,
     headers: {
       authorization: 'Bearer ' + accessToken
     },
@@ -135,33 +112,6 @@ async function postRequestOnRejectCompletedWorkOnQuest(accessToken: string, ques
     headers: {
       authorization: 'Bearer ' + accessToken
     },
-  });
-}
-
-async function makeAccessToken(user: User): Promise<string> {
-  const session = await Session.create({
-    userId: user.id
-  });
-
-  const { access } = generateJwt({ id: session.id });
-
-  return access;
-}
-async function makeQuest(employer: User, assignedWorker: User, status: QuestStatus) {
-  return await Quest.create({
-    userId: employer.id,
-    assignedWorkerId: assignedWorker ? assignedWorker.id : null,
-    status: status,
-    category: 'It',
-    priority: QuestPriority.Normal,
-    location: { longitude: -75.0364, latitude: 33.8951 },
-    locationPostGIS: transformToGeoPostGIS({
-      longitude: -75.0364, latitude: 33.8951
-    }),
-    title: 'Test',
-    description: 'Test',
-    price: '10',
-    medias: []
   });
 }
 
@@ -511,7 +461,7 @@ async function Should_Forbidden_When_EmployerStartedQuestButHeNotQuestCreator() 
   const assignedWorker = await makeWorker();
   const accessTokenEmployerNotCreatorOfQuest = await makeAccessToken(employerNotCreatorOfQuest);
   const quest = await makeQuest(employerCreatorOfQuest, null, QuestStatus.Created);
-  const { result } = await postRequestOnStartQuest(accessTokenEmployerNotCreatorOfQuest, quest, assignedWorker);
+  const { result } = await postRequestOnStartQuest(accessTokenEmployerNotCreatorOfQuest, quest, { assignedWorker: assignedWorker.id });
 
   await quest.reload();
 
@@ -532,7 +482,7 @@ async function Should_InvalidStatus_When_EmployerStartedQuestAndQuestNotStatusOn
   const assignedWorker = await makeWorker();
   const employerAccessToken = await makeAccessToken(employer);
   const quest = await makeQuest(employer, null, status);
-  const { result } = await postRequestOnStartQuest(employerAccessToken, quest, assignedWorker);
+  const { result } = await postRequestOnStartQuest(employerAccessToken, quest, { assignedWorker: assignedWorker.id });
 
   await quest.reload();
 
@@ -574,7 +524,7 @@ async function Should_Ok_When_EmployerStartedQuestAndWorkerResponseOnQuest() {
     message: 'Hi!'
   })];
   const acceptedResponse = questsResponses[0];
-  const { result } = await postRequestOnStartQuest(employerAccessToken, quest, appointedWorker);
+  const { result } = await postRequestOnStartQuest(employerAccessToken, quest, { assignedWorker: appointedWorker.id } );
 
   for (const response of questsResponses) {
     await response.reload();
@@ -608,7 +558,7 @@ async function Should_NotFound_When_EmployerStartedQuestAndWorkerNotRespondedOnQ
   const employer = await makeEmployer();
   const employerAccessToken = await makeAccessToken(employer);
   const quest = await makeQuest(employer, null, QuestStatus.Created);
-  const { result } = await postRequestOnStartQuest(employerAccessToken, quest, worker);
+  const { result } = await postRequestOnStartQuest(employerAccessToken, quest, { assignedWorker: worker.id });
 
   await quest.reload();
 
@@ -650,7 +600,7 @@ async function Should_Forbidden_When_EmployerStartedQuestAndWorkerRejectInvite()
       message: 'Hi!'
     })];
   const acceptedResponse = questsResponses[0];
-  const { result } = await postRequestOnStartQuest(employerAccessToken, quest, appointedWorker);
+  const { result } = await postRequestOnStartQuest(employerAccessToken, quest, { assignedWorker: appointedWorker.id });
 
   for (const response of questsResponses) {
     await response.reload();
@@ -704,7 +654,7 @@ async function Should_Ok_When_EmployerStartedQuestAndWorkerAcceptInvite() {
       message: 'Hi!'
     })];
   const acceptedResponse = questsResponses[0];
-  const { result } = await postRequestOnStartQuest(employerAccessToken, quest, appointedWorker);
+  const { result } = await postRequestOnStartQuest(employerAccessToken, quest, { assignedWorker: appointedWorker.id });
 
   await quest.reload();
 
@@ -762,7 +712,7 @@ async function Should_Forbidden_When_EmployerStartedQuestAndWorkerNotResponseOnI
       message: 'Hi!'
     })];
   const acceptedResponse = questsResponses[0];
-  const { result } = await postRequestOnStartQuest(employerAccessToken, quest, appointedWorker);
+  const { result } = await postRequestOnStartQuest(employerAccessToken, quest, { assignedWorker: appointedWorker.id });
 
   await quest.reload();
 

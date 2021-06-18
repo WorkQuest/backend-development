@@ -45,6 +45,12 @@ export interface Location {
       through: {
         attributes: []
       }
+    }, {
+      model: User,
+      as: 'user'
+    }, {
+      model: User,
+      as: 'assignedWorker'
     }]
   }
 }))
@@ -66,7 +72,8 @@ export class Quest extends Model {
   @Column({type: DataType.DECIMAL, allowNull: false}) price: string;
   @Column({type: DataType.INTEGER, defaultValue: AdType.Free }) adType: AdType;
 
-  @BelongsTo(() => User) user: User;
+  @BelongsTo(() => User, 'userId') user: User;
+  @BelongsTo(() => User, 'assignedWorkerId') assignedWorker: User;
   @BelongsToMany(() => Media, () => QuestMedia) medias: Media[];
   @HasMany(() => Review) reviews: Review[];
 

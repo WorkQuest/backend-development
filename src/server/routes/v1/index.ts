@@ -5,6 +5,7 @@ import quest from "./quest";
 import questsResponse from './questsResponse';
 import identityVerification from './sumsub'
 import storageService from './storageService';
+import review from './review';
 
 export default [
   ...profile,
@@ -14,4 +15,5 @@ export default [
   ...questsResponse,
   ...identityVerification,
   ...storageService,
+  ...review,
 ];

@@ -10,11 +10,13 @@ import {
 } from './index';
 import { QuestPriority, AdType, QuestStatus } from '../models/Quest';
 import { userSchema } from './user';
+import { reviewSchema } from './review';
 
 const userIdSchema = idSchema.label('UserId');
 const questIdSchema = idSchema.label('QuestId');
 const mediaIdSchema = idSchema.label('MediaId');
 const mediasSchema = Joi.array().items(mediaIdSchema).label('Medias');
+const reviewsSchema = Joi.array().items(reviewSchema).label('Reviews');
 export const categorySchema = Joi.string().example('Retail').label('Category');
 export const questStatusSchema = Joi.number().valid(...Object.keys(QuestStatus).map(key => parseInt(key)).filter(key => !isNaN(key))).example(QuestStatus.Created).label('Status');
 export const questPrioritySchema = Joi.number().valid(...Object.keys(QuestPriority).map(key => parseInt(key)).filter(key => !isNaN(key))).example(QuestPriority.AllPriority).label('Priority');
@@ -35,6 +37,7 @@ export const questSchema = Joi.object({
   price: priceSchema,
   adType: adTypeSchema,
   medias: mediasSchema,
+  reviews: reviewsSchema,
   createdAt: isoDateSchema,
   updatedAt: isoDateSchema,
 }).label("QuestSchema");
@@ -52,6 +55,7 @@ export const questFullSchema = Joi.object({
   adType: adTypeSchema,
   user: userSchema,
   medias: mediasSchema,
+  reviews: reviewsSchema,
   createdAt: isoDateSchema,
   updatedAt: isoDateSchema,
 }).label("QuestFullSchema");
