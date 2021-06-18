@@ -1,5 +1,5 @@
 import * as Joi from "joi";
-import { sendReview, getReviewsFromUser, getReviewsOfUser } from '../../api/review';
+import { sendReview, getReviewsOfUser } from '../../api/review';
 import { idSchema, outputOkSchema } from '../../schemes';
 import { markSchema, messageSchema, reviewSchema } from '../../schemes/review';
 
@@ -24,18 +24,6 @@ export default [{
     },
     response: {
       schema: outputOkSchema(reviewSchema).label('ResponseReview')
-    }
-  }
-}, {
-  method: "GET",
-  path: "/v1/reviews/my",
-  handler: getReviewsFromUser,
-  options: {
-    id: "v1.reviews.me",
-    tags: ["api", "review"],
-    description: "Get all reviews to user",
-    response: {
-      schema: outputOkSchema(reviewsSchema).label('ResponseReviews')
     }
   }
 }, {

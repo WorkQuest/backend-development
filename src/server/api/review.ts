@@ -33,14 +33,6 @@ export async function sendReview(r) {
   return output(review);
 }
 
-export async function getReviewsFromUser(r) {
-  const reviews = await Review.findAll({
-    where: { fromUserId: r.auth.credentials.id }
-  });
-
-  return output(reviews);
-}
-
 export async function getReviewsOfUser(r) {
   const reviews = await Review.findAll({
     where: { toUserId: r.params.userId }
