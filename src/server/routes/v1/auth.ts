@@ -187,6 +187,7 @@ export default [{
   path: "/v1/auth/refresh-tokens",
   handler: refreshTokens,
   options: {
+    auth: "jwt-refresh",
     id: "v1.auth.refreshTokens",
     tags: ["api", "auth"],
     description: "Refresh auth tokens",
