@@ -4,6 +4,7 @@ import * as bcrypt from "bcrypt";
 import { Media } from './Media';
 import { Session } from './Session';
 import { Errors } from '../utils/errors';
+import { Review } from './Review';
 
 export interface SocialInfo {
   id: string;
@@ -53,6 +54,12 @@ export enum StatusKYC {
     include: [{
       model: Media.scope('urlOnly'),
       as: 'avatar'
+    }, {
+      model: Review,
+      as: 'reviewsFromUser'
+    }, {
+      model: Review,
+      as: 'reviewsToUser'
     }]
   },
   withPassword: {
@@ -91,6 +98,8 @@ export class User extends Model {
   @Column({ type: DataType.INTEGER, defaultValue: StatusKYC.Unconfirmed }) statusKYC: StatusKYC;
 
   @BelongsTo(() => Media,{constraints: false, foreignKey: 'avatarId'}) avatar: Media;
+  @HasMany(() => Review, 'fromUserId') reviewsFromUser: Review[];
+  @HasMany(() => Review, 'toUserId') reviewsToUser: Review[];
   @HasMany(() => Session, { onDelete: 'CASCADE', hooks: true }) sessions: Session[];
   @HasMany(() => Media) medias: Media[];
 
