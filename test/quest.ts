@@ -25,6 +25,7 @@ async function postRequestOnCreateQuest(accessToken: string) {
       title: 'Test',
       description: 'Test',
       price: '1000',
+      medias: [],
     },
     headers: {
       authorization: 'Bearer ' + accessToken
@@ -461,7 +462,7 @@ async function Should_Forbidden_When_EmployerStartedQuestButHeNotQuestCreator() 
   const assignedWorker = await makeWorker();
   const accessTokenEmployerNotCreatorOfQuest = await makeAccessToken(employerNotCreatorOfQuest);
   const quest = await makeQuest(employerCreatorOfQuest, null, QuestStatus.Created);
-  const { result } = await postRequestOnStartQuest(accessTokenEmployerNotCreatorOfQuest, quest, { assignedWorker: assignedWorker.id });
+  const { result } = await postRequestOnStartQuest(accessTokenEmployerNotCreatorOfQuest, quest, { assignedWorkerId: assignedWorker.id });
 
   await quest.reload();
 
@@ -482,7 +483,7 @@ async function Should_InvalidStatus_When_EmployerStartedQuestAndQuestNotStatusOn
   const assignedWorker = await makeWorker();
   const employerAccessToken = await makeAccessToken(employer);
   const quest = await makeQuest(employer, null, status);
-  const { result } = await postRequestOnStartQuest(employerAccessToken, quest, { assignedWorker: assignedWorker.id });
+  const { result } = await postRequestOnStartQuest(employerAccessToken, quest, { assignedWorkerId: assignedWorker.id });
 
   await quest.reload();
 
@@ -524,7 +525,7 @@ async function Should_Ok_When_EmployerStartedQuestAndWorkerResponseOnQuest() {
     message: 'Hi!'
   })];
   const acceptedResponse = questsResponses[0];
-  const { result } = await postRequestOnStartQuest(employerAccessToken, quest, { assignedWorker: appointedWorker.id } );
+  const { result } = await postRequestOnStartQuest(employerAccessToken, quest, { assignedWorkerId: appointedWorker.id } );
 
   for (const response of questsResponses) {
     await response.reload();
@@ -558,7 +559,7 @@ async function Should_NotFound_When_EmployerStartedQuestAndWorkerNotRespondedOnQ
   const employer = await makeEmployer();
   const employerAccessToken = await makeAccessToken(employer);
   const quest = await makeQuest(employer, null, QuestStatus.Created);
-  const { result } = await postRequestOnStartQuest(employerAccessToken, quest, { assignedWorker: worker.id });
+  const { result } = await postRequestOnStartQuest(employerAccessToken, quest, { assignedWorkerId: worker.id });
 
   await quest.reload();
 
@@ -600,7 +601,7 @@ async function Should_Forbidden_When_EmployerStartedQuestAndWorkerRejectInvite()
       message: 'Hi!'
     })];
   const acceptedResponse = questsResponses[0];
-  const { result } = await postRequestOnStartQuest(employerAccessToken, quest, { assignedWorker: appointedWorker.id });
+  const { result } = await postRequestOnStartQuest(employerAccessToken, quest, { assignedWorkerId: appointedWorker.id });
 
   for (const response of questsResponses) {
     await response.reload();
@@ -654,7 +655,7 @@ async function Should_Ok_When_EmployerStartedQuestAndWorkerAcceptInvite() {
       message: 'Hi!'
     })];
   const acceptedResponse = questsResponses[0];
-  const { result } = await postRequestOnStartQuest(employerAccessToken, quest, { assignedWorker: appointedWorker.id });
+  const { result } = await postRequestOnStartQuest(employerAccessToken, quest, { assignedWorkerId: appointedWorker.id });
 
   await quest.reload();
 
@@ -712,7 +713,7 @@ async function Should_Forbidden_When_EmployerStartedQuestAndWorkerNotResponseOnI
       message: 'Hi!'
     })];
   const acceptedResponse = questsResponses[0];
-  const { result } = await postRequestOnStartQuest(employerAccessToken, quest, { assignedWorker: appointedWorker.id });
+  const { result } = await postRequestOnStartQuest(employerAccessToken, quest, { assignedWorkerId: appointedWorker.id });
 
   await quest.reload();
 
