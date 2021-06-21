@@ -12,4 +12,7 @@ export class Review extends Model {
 
   @Column({type: DataType.TEXT, defaultValue: null }) message: string;
   @Column({type: DataType.INTEGER, allowNull: false }) mark: number;
+
+  // Used for calculations
+  avgMark: number;
 }

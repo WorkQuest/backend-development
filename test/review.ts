@@ -4,6 +4,8 @@ import { makeAccessToken, makeEmployer, makeQuest, makeWorker } from './index';
 import { QuestStatus } from '../src/server/models/Quest';
 import { Review } from '../src/server/models/Review';
 import { expect } from '@hapi/code';
+import { RatingStatistic } from '../src/server/models/RatingStatistic';
+import * as updateReviewStatistics from '../src/server/jobs/updateReviewStatistics'
 
 let server = null;
 const { it, suite,
@@ -33,12 +35,19 @@ async function Should_Ok_When_WorkerSentReviewToEmployer() {
   }
   const { result } = await postRequestOnSendReview(workerAccessToken, reviewData);
 
+  expect(result.ok).to.true();
+
+  // TODO: нужно что-то с Job addUpdateReviewStatisticsJob
+  await updateReviewStatistics.default({ ratingStatisticId: employer.ratingStatistic.id });
+  const ratingStatisticOfEmployer = await RatingStatistic.findByPk(employer.ratingStatistic.id);
   const reviews = await Review.findAll({
     where: { toUserId: employer.id },
     raw: true
   });
 
   expect(reviews.length).to.equal(1);
+  expect(ratingStatisticOfEmployer.reviewCount).to.equal(1);
+  expect(ratingStatisticOfEmployer.averageMark).to.equal(3);
 
   const review = reviews[0];
 
@@ -48,6 +57,8 @@ async function Should_Ok_When_WorkerSentReviewToEmployer() {
   });
 
   await Review.destroy({ where: { id: review.id } });
+  await employer.ratingStatistic.destroy();
+  await worker.ratingStatistic.destroy();
   await quest.destroy();
   await employer.destroy();
   await worker.destroy();
@@ -64,12 +75,19 @@ async function Should_Ok_When_EmployerSentReviewToWorker() {
   }
   const { result } = await postRequestOnSendReview(employerAccessToken, reviewData);
 
+  expect(result.ok).to.true();
+
+  // TODO: нужно что-то с Job addUpdateReviewStatisticsJob
+  await updateReviewStatistics.default({ ratingStatisticId: worker.ratingStatistic.id });
+  const ratingStatisticOfWorker = await RatingStatistic.findByPk(worker.ratingStatistic.id);
   const reviews = await Review.findAll({
     where: { toUserId: worker.id },
     raw: true
   });
 
   expect(reviews.length).to.equal(1);
+  expect(ratingStatisticOfWorker.reviewCount).to.equal(1);
+  expect(ratingStatisticOfWorker.averageMark).to.equal(3);
 
   const review = reviews[0];
 
@@ -79,9 +97,58 @@ async function Should_Ok_When_EmployerSentReviewToWorker() {
   });
 
   await Review.destroy({ where: { id: review.id } });
+  await employer.ratingStatistic.destroy();
+  await worker.ratingStatistic.destroy();
+  await ratingStatisticOfWorker.destroy();
   await quest.destroy();
   await employer.destroy();
   await worker.destroy();
+}
+
+async function Should_Ok_When_AnyEmployersSentReviewToWorker() {
+  const worker = await makeWorker();
+  const firstEmployer = await makeEmployer();
+  const secondEmployer = await makeEmployer();
+  const questOfFirstEmployer  = await makeQuest(firstEmployer, worker, QuestStatus.Done);
+  const questOfSecondEmployer = await makeQuest(secondEmployer, worker, QuestStatus.Done);
+  const firstEmployerAccessToken = await makeAccessToken(firstEmployer);
+  const secondEmployerAccessToken = await makeAccessToken(secondEmployer);
+  const reviewOfFirstEmployerData = {
+    questId: questOfFirstEmployer.id,
+    message: 'Norm',
+    mark: 4,
+  };
+  const reviewOfSecondEmployerData = {
+    questId: questOfSecondEmployer.id,
+    message: 'Norm2',
+    mark: 3,
+  };
+  const firstEmployerResponse = await postRequestOnSendReview(firstEmployerAccessToken, reviewOfFirstEmployerData);
+  const secondEmployerResponse = await postRequestOnSendReview(secondEmployerAccessToken, reviewOfSecondEmployerData);
+
+  expect(firstEmployerResponse.result.ok).to.true();
+  expect(secondEmployerResponse.result.ok).to.true();
+
+  // TODO: нужно что-то с Job addUpdateReviewStatisticsJob
+  await updateReviewStatistics.default({ ratingStatisticId: worker.ratingStatistic.id });
+  const ratingStatisticOfWorker = await RatingStatistic.findByPk(worker.ratingStatistic.id);
+  const reviews = await Review.findAll({
+    where: { toUserId: worker.id },
+    raw: true
+  });
+
+  expect(reviews.length).to.equal(2);
+  expect(ratingStatisticOfWorker.reviewCount).to.equal(2);
+  expect(ratingStatisticOfWorker.averageMark).to.equal(3.5);
+
+  await questOfFirstEmployer.destroy();
+  await questOfSecondEmployer.destroy();
+  await worker.ratingStatistic.destroy();
+  await firstEmployer.ratingStatistic.destroy();
+  await secondEmployer.ratingStatistic.destroy();
+  await worker.destroy();
+  await firstEmployer.destroy();
+  await secondEmployer.destroy();
 }
 
 suite('Testing API Review:', () => {
@@ -96,5 +163,8 @@ suite('Testing API Review:', () => {
   it('Send', async () => {
     await Should_Ok_When_WorkerSentReviewToEmployer();
     await Should_Ok_When_EmployerSentReviewToWorker();
+  });
+  it('Rating statistic ', async () => {
+    await Should_Ok_When_AnyEmployersSentReviewToWorker();
   });
 });

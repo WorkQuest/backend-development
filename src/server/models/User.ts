@@ -1,10 +1,11 @@
-import { BelongsTo, Column, DataType, ForeignKey, HasMany, Model, Scopes, Table } from 'sequelize-typescript';
+import { BelongsTo, Column, DataType, ForeignKey, HasMany, HasOne, Model, Scopes, Table } from 'sequelize-typescript';
 import { error, getUUID } from '../utils';
 import * as bcrypt from "bcrypt";
 import { Media } from './Media';
 import { Session } from './Session';
 import { Errors } from '../utils/errors';
 import { Review } from './Review';
+import { RatingStatistic } from './RatingStatistic';
 
 export interface SocialInfo {
   id: string;
@@ -54,6 +55,9 @@ export enum StatusKYC {
     include: [{
       model: Media.scope('urlOnly'),
       as: 'avatar'
+    }, {
+      model: RatingStatistic,
+      as: 'ratingStatistic'
     }]
   },
   withPassword: {
@@ -62,7 +66,7 @@ export enum StatusKYC {
     }
   }
 }))
-@Table
+@Table({ paranoid: true })
 export class User extends Model {
   @Column({ primaryKey: true, type: DataType.STRING, defaultValue: () => getUUID() }) id: string;
   @Column({
@@ -91,9 +95,10 @@ export class User extends Model {
   @Column({ type: DataType.INTEGER, defaultValue: UserStatus.Unconfirmed }) status: UserStatus;
   @Column({ type: DataType.INTEGER, defaultValue: StatusKYC.Unconfirmed }) statusKYC: StatusKYC;
 
-  @BelongsTo(() => Media,{constraints: false, foreignKey: 'avatarId'}) avatar: Media;
+  @BelongsTo(() => Media,{ constraints: false, foreignKey: 'avatarId' }) avatar: Media;
   @HasMany(() => Review, 'toUserId') reviews: Review[];
-  @HasMany(() => Session, { onDelete: 'CASCADE', hooks: true }) sessions: Session[];
+  @HasOne(() => RatingStatistic) ratingStatistic: RatingStatistic;
+  @HasMany(() => Session) sessions: Session[];
   @HasMany(() => Media) medias: Media[];
 
   async passwordCompare(pwd: string) {

@@ -3,6 +3,7 @@ import { Quest, QuestStatus } from '../models/Quest';
 import { Review } from '../models/Review';
 import { error, output } from '../utils';
 import { Errors } from '../utils/errors';
+import { addUpdateReviewStatisticsJob } from '../jobs/updateReviewStatistics';
 
 export async function sendReview(r) {
   const fromUser = r.auth.credentials;
@@ -14,9 +15,6 @@ export async function sendReview(r) {
 
   quest.mustHaveStatus(QuestStatus.Done);
 
-  if (!quest.assignedWorker) {
-    return error(Errors.NotFound, "On quest not assigned worker", {});
-  }
   if (fromUser.id !== quest.userId && fromUser.id !== quest.assignedWorkerId) {
     return error(Errors.Forbidden, "User does not belong to quest", {});
   }
@@ -28,6 +26,10 @@ export async function sendReview(r) {
     questId: quest.id,
     message: r.payload.message,
     mark: r.payload.mark,
+  });
+
+  await addUpdateReviewStatisticsJob({
+    ratingStatisticId: toUser.ratingStatistic.id
   });
 
   return output(review);
