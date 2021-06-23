@@ -36,13 +36,17 @@ export async function editProfile(r) {
   if (validateAdditionalInfo.error) {
     return await handleValidationError(r, null, validateAdditionalInfo.error);
   }
-  if (r.payload.mediaId) {
-    const media = await Media.findByPk(r.payload.mediaId);
+  if (r.payload.avatarId) {
+    const media = await Media.findByPk(r.payload.avatarId);
     if (!media) {
-      return error(Errors.NotFound, 'Media is not found', {});
+      return error(Errors.NotFound, 'Media is not found', {
+        avatarId: r.payload.avatarId
+      });
     }
     if (!await isMediaExists(media)) {
-      return error(Errors.NotFound, 'Media is not exists', {});
+      return error(Errors.NotFound, 'Media is not exists', {
+        avatarId: r.payload.avatarId
+      });
     }
   }
 

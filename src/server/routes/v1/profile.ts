@@ -45,7 +45,7 @@ export default [{
     id: "v1.profile.edit",
     validate: {
       payload: Joi.object({
-        mediaId: idSchema.allow(null).required().label('MediaId'),
+        avatarId: idSchema.allow(null).required().label('MediaId'),
         firstName: firstNameSchema.required(),
         lastName: lastNameSchema.required(),
         additionalInfo: Joi.alternatives(
