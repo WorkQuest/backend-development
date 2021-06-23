@@ -7,9 +7,9 @@ export default [{
   method: "POST",
   path: "/v1/restore-password/send-code",
   handler: sendCodeForRestorePassword,
-  auth: false,
   options: {
     id: "v1.restorePassword.sendCode",
+    auth: false,
     validate: {
       payload: Joi.object({
         email: emailSchema.required()
@@ -23,9 +23,9 @@ export default [{
   method: "POST",
   path: "/v1/restore-password/set-password/{token}",
   handler: setNewPassword,
-  auth: false,
   options: {
     id: "v1.restorePassword.setPassword",
+    auth: false,
     validate: {
       payload: Joi.object({
         newPassword: passwordSchema.required(),
