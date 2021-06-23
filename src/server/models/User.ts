@@ -47,6 +47,30 @@ export enum StatusKYC {
   Confirmed,
 }
 
+interface SocialMediaNicknames {
+  instagram: string | null;
+  twitter: string | null;
+  linkedin: string | null;
+  facebook: string | null;
+}
+
+interface AdditionalInfo {
+  firstMobileNumber: string | null;
+  secondMobileNumber: string | null;
+  address: string | null;
+  socialNetwork: SocialMediaNicknames;
+}
+
+export interface AdditionalInfoWorker extends AdditionalInfo {
+  description: string;
+}
+
+export interface AdditionalInfoEmployer extends AdditionalInfo {
+  company: string | null;
+  CEO: string | null;
+  website: string | null;
+}
+
 @Scopes(() => ({
   defaultScope: {
     attributes: {
@@ -69,6 +93,8 @@ export enum StatusKYC {
 @Table({ paranoid: true })
 export class User extends Model {
   @Column({ primaryKey: true, type: DataType.STRING, defaultValue: () => getUUID() }) id: string;
+  @ForeignKey(() => Media) @Column({type: DataType.STRING, defaultValue: null}) avatarId: string;
+
   @Column({
     type: DataType.STRING,
     set(value: string) {
@@ -85,11 +111,12 @@ export class User extends Model {
       return this.getDataValue("password");
     }
   }) password: string;
-  @ForeignKey(() => Media) @Column({type: DataType.STRING, defaultValue: null}) avatarId: string;
 
-  @Column({ type: DataType.STRING, unique: true }) email: string;
   @Column(DataType.STRING) firstName: string;
   @Column(DataType.STRING) lastName: string;
+  @Column({ type: DataType.JSONB, defaultValue: {} }) additionalInfo: JSON;
+
+  @Column({ type: DataType.STRING, unique: true }) email: string;
   @Column({ type: DataType.STRING, defaultValue: null }) role: UserRole;
   @Column({ type: DataType.JSONB, defaultValue: defaultUserSettings }) settings: UserSettings;
   @Column({ type: DataType.INTEGER, defaultValue: UserStatus.Unconfirmed }) status: UserStatus;
