@@ -42,7 +42,7 @@ export default [{
   path: "/v1/profile/edit",
   handler: editProfile,
   options: {
-    id: "v1.profile.worker.edit",
+    id: "v1.profile.edit",
     validate: {
       payload: Joi.object({
         mediaId: idSchema.allow(null).required().label('MediaId'),
