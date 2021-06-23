@@ -1,9 +1,9 @@
 import * as Joi from "joi";
-import { editProfile, getMe, setRole } from '../../api/profile';
+import { changePassword, editProfile, getMe, setRole } from '../../api/profile';
 import { emptyOkSchema, outputOkSchema, idSchema } from '../../schemes';
 import {
   additionalInfoEmployerSchema,
-  additionalInfoWorkerSchema, firstNameSchema, lastNameSchema,
+  additionalInfoWorkerSchema, firstNameSchema, lastNameSchema, passwordSchema,
   userRoleSchema,
   userSchema
 } from '../../schemes/user';
@@ -56,6 +56,22 @@ export default [{
     },
     response: {
       schema: outputOkSchema(userSchema).label("EditProfileResponse")
+    }
+  }
+}, {
+  method: "PUT",
+  path: "/v1/profile/change-password",
+  handler: changePassword,
+  options: {
+    id: "v1.profile.changePassword",
+    validate: {
+      payload: Joi.object({
+        oldPassword: passwordSchema.required(),
+        newPassword: passwordSchema.required(),
+      }).label('ChangePasswordPayload')
+    },
+    response: {
+      schema: emptyOkSchema
     }
   }
 }];

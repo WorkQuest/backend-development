@@ -22,11 +22,13 @@ export interface UserSocialSettings {
 }
 
 interface UserSettings {
+  restorePassword: string | null;
   emailConfirm: string | null;
   social: UserSocialSettings;
 }
 
 const defaultUserSettings: UserSettings = {
+  restorePassword: null,
   emailConfirm: null,
   social: {},
 }
