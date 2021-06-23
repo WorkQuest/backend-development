@@ -10,6 +10,7 @@ import * as path from "path";
 import * as fs from "fs";
 import * as querystring from "querystring";
 import Handlebars = require("handlebars");
+import { RatingStatistic } from '../models/RatingStatistic';
 
 const confirmTemplatePath = path.join(__dirname, "..", "..", "..", "templates", "confirmEmail.html");
 const confirmTemplate = Handlebars.compile(fs.readFileSync(confirmTemplatePath, {
@@ -37,7 +38,7 @@ async function getUserByNetworkProfile(network: string, profile): Promise<User> 
 		return foundUserByEmail;
 	}
 
-	return await User.create({
+	const user = await User.create({
 		email: profile.email.toLowerCase(),
 		password: null,
 		firstName: profile.name.first,
@@ -50,6 +51,9 @@ async function getUserByNetworkProfile(network: string, profile): Promise<User> 
 			}
 		}
 	});
+	await RatingStatistic.create({ userId: user.id });
+
+	return user;
 }
 
 export async function register(r) {
@@ -76,9 +80,7 @@ export async function register(r) {
 		}
 	});
 
-	const session = await Session.create({
-		userId: user.id
-	});
+	const session = await Session.create({ userId: user.id });
 	const result = {
 		...generateJwt({ id: session.id }),
 		userStatus: user.status,

@@ -1,36 +1,15 @@
 import * as Lab from '@hapi/lab';
 import { expect } from '@hapi/code';
 import { init } from '../src/server';
-import { User, UserRole, UserStatus } from '../src/server/models/User';
-import { Session } from '../src/server/models/Session';
-import { generateJwt } from '../src/server/utils/auth';
 import { Errors } from '../src/server/utils/errors';
 import { Quest, QuestPriority, QuestStatus } from '../src/server/models/Quest';
-import { transformToGeoPostGIS } from '../src/server/utils/quest';
+import { makeWorker, makeEmployer, makeAccessToken, makeQuest } from './index';
 import { QuestsResponse, QuestsResponseStatus, QuestsResponseType } from '../src/server/models/QuestsResponse';
 
 let server = null;
 const { it, suite,
   before, after
 } = exports.lab = Lab.script();
-
-async function makeUser(role: UserRole): Promise<User> {
-  return await User.create({
-    email: Math.random().toString(30).substring(7),
-    password: null, role,
-    firstName: 'TEST', lastName: 'TEST',
-    status: UserStatus.Confirmed,
-    settings: {
-      emailConfirm: null,
-    }
-  });
-}
-async function makeEmployer() {
-  return await makeUser(UserRole.Employer);
-}
-async function makeWorker() {
-  return await makeUser(UserRole.Worker);
-}
 
 async function postRequestOnCreateQuest(accessToken: string) {
   return await server.inject({
@@ -46,29 +25,28 @@ async function postRequestOnCreateQuest(accessToken: string) {
       title: 'Test',
       description: 'Test',
       price: '1000',
+      medias: [],
     },
     headers: {
       authorization: 'Bearer ' + accessToken
     },
   });
 }
-async function postRequestOnStartQuest(accessToken: string, quest: Quest, assignedWorker: User) {
+async function postRequestOnStartQuest(accessToken: string, quest: Quest, payload: object) {
   return await server.inject({
     method: 'POST',
     url: '/api/v1/quest/' + quest.id + '/start',
-    payload: {
-      assignedWorkerId: assignedWorker.id
-    },
+    payload,
     headers: {
       authorization: 'Bearer ' + accessToken
     },
   });
 }
-async function postRequestOnEditQuest(accessToken: string, quest: Quest, editedQuestData: object) {
+async function postRequestOnEditQuest(accessToken: string, quest: Quest, payload: object) {
   return await server.inject({
     method: 'PUT',
     url: '/api/v1/quest/' + quest.id,
-    payload: editedQuestData,
+    payload,
     headers: {
       authorization: 'Bearer ' + accessToken
     },
@@ -138,33 +116,6 @@ async function postRequestOnRejectCompletedWorkOnQuest(accessToken: string, ques
   });
 }
 
-async function makeAccessToken(user: User): Promise<string> {
-  const session = await Session.create({
-    userId: user.id
-  });
-
-  const { access } = generateJwt({ id: session.id });
-
-  return access;
-}
-async function makeQuest(employer: User, assignedWorker: User, status: QuestStatus) {
-  return await Quest.create({
-    userId: employer.id,
-    assignedWorkerId: assignedWorker ? assignedWorker.id : null,
-    status: status,
-    category: 'It',
-    priority: QuestPriority.Normal,
-    location: { longitude: -75.0364, latitude: 33.8951 },
-    locationPostGIS: transformToGeoPostGIS({
-      longitude: -75.0364, latitude: 33.8951
-    }),
-    title: 'Test',
-    description: 'Test',
-    price: '10',
-    medias: []
-  });
-}
-
 async function Should_InvalidRole_When_WorkerWantsToCreateQuest() {
   const worker = await makeWorker();
   const workerAccessToken = await makeAccessToken(worker);
@@ -173,6 +124,7 @@ async function Should_InvalidRole_When_WorkerWantsToCreateQuest() {
   expect(result.ok).to.false();
   expect(result.code).to.equal(Errors.InvalidRole);
 
+  await worker.ratingStatistic.destroy();
   await worker.destroy();
 }
 async function Should_Ok_When_EmployerWantsToCreateQuest() {
@@ -189,6 +141,7 @@ async function Should_Ok_When_EmployerWantsToCreateQuest() {
   expect(quest.userId).to.equal(employer.id);
 
   await quest.destroy();
+  await employer.ratingStatistic.destroy();
   await employer.destroy();
 }
 
@@ -215,6 +168,7 @@ async function Should_Ok_When_EmployerWantsToEditQuestAtStatusCreated() {
   });
 
   await quest.destroy();
+  await employer.ratingStatistic.destroy();
   await employer.destroy();
 }
 async function Should_Forbidden_When_OtherUserWantsToEditQuestAtStatusCreated() {
@@ -239,6 +193,8 @@ async function Should_Forbidden_When_OtherUserWantsToEditQuestAtStatusCreated() 
   });
 
   await quest.destroy();
+  await worker.ratingStatistic.destroy();
+  await employer.ratingStatistic.destroy();
   await worker.destroy();
   await employer.destroy();
 }
@@ -258,6 +214,7 @@ async function Should_InvalidStatus_When_EmployerEditQuestAndQuestNotStatusOnCre
   expect(questAfter.description).to.not.equal(description);
 
   await questAfter.destroy();
+  await employer.ratingStatistic.destroy();
   await employer.destroy();
 }
 
@@ -275,6 +232,8 @@ async function Should_Forbidden_When_EmployerClosedQuestButHeNotQuestCreator() {
   expect(quest.status).to.equal(QuestStatus.Created);
 
   await quest.destroy();
+  await employerCreatorOfQuest.ratingStatistic.destroy();
+  await employerNotCreatorOfQuest.ratingStatistic.destroy();
   await employerCreatorOfQuest.destroy();
   await employerNotCreatorOfQuest.destroy();
 }
@@ -323,8 +282,10 @@ async function Should_Ok_When_EmployerClosedQuestOnStatusWaitConfirm() {
   }
   await quest.destroy();
   for (const worker of workers) {
+    await worker.ratingStatistic.destroy();
     await worker.destroy();
   }
+  await employer.ratingStatistic.destroy();
   await employer.destroy();
 }
 async function Should_Ok_When_EmployerClosedQuestOnStatusCreated() {
@@ -372,8 +333,10 @@ async function Should_Ok_When_EmployerClosedQuestOnStatusCreated() {
   }
   await quest.destroy();
   for (const worker of workers) {
+    await worker.ratingStatistic.destroy();
     await worker.destroy();
   }
+  await employer.ratingStatistic.destroy();
   await employer.destroy();
 }
 async function Should_InvalidStatus_When_EmployerClosedQuestAndQuestNotStatusOnCreatedOrWaitConfirm(status: QuestStatus) {
@@ -392,6 +355,7 @@ async function Should_InvalidStatus_When_EmployerClosedQuestAndQuestNotStatusOnC
   expect(quest.assignedWorkerId).to.null();
   expect(quest.status).to.equal(status);
 
+  await employer.ratingStatistic.destroy();
   await quest.destroy();
   await employer.destroy();
 }
@@ -412,6 +376,7 @@ async function Should_InvalidStatus_When_EmployerDeleteQuestAndQuestNotStatusCre
   expect(quest.status).to.equal(status);
 
   await quest.destroy();
+  await employer.ratingStatistic.destroy();
   await employer.destroy();
 }
 async function Should_Forbidden_When_EmployerDeleteQuestButHeNotQuestCreator() {
@@ -429,6 +394,8 @@ async function Should_Forbidden_When_EmployerDeleteQuestButHeNotQuestCreator() {
   expect(quest.status).to.equal(QuestStatus.Created);
 
   await quest.destroy();
+  await employerCreatorOfQuest.ratingStatistic.destroy();
+  await employerNotCreatorOfQuest.ratingStatistic.destroy();
   await employerCreatorOfQuest.destroy();
   await employerNotCreatorOfQuest.destroy();
 }
@@ -467,6 +434,13 @@ async function Should_Ok_When_EmployerDeleteQuestOnStatusCreated() {
   expect(result.ok).to.true();
   expect(await Quest.findByPk(questId)).to.null();
   expect(responses.length).to.equal(0);
+
+  for (const worker of workers) {
+    await worker.ratingStatistic.destroy();
+    await worker.destroy();
+  }
+  await employer.ratingStatistic.destroy();
+  await employer.destroy();
 }
 async function Should_Ok_When_EmployerDeleteQuestOnStatusClose() {
   const workers = [await makeWorker(), await makeWorker(), await makeWorker()];
@@ -503,6 +477,13 @@ async function Should_Ok_When_EmployerDeleteQuestOnStatusClose() {
   expect(result.ok).to.true();
   expect(await Quest.findByPk(questId)).to.null();
   expect(responses.length).to.equal(0);
+
+  for (const worker of workers) {
+    await worker.ratingStatistic.destroy();
+    await worker.destroy();
+  }
+  await employer.ratingStatistic.destroy();
+  await employer.destroy();
 }
 
 async function Should_Forbidden_When_EmployerStartedQuestButHeNotQuestCreator() {
@@ -511,7 +492,7 @@ async function Should_Forbidden_When_EmployerStartedQuestButHeNotQuestCreator() 
   const assignedWorker = await makeWorker();
   const accessTokenEmployerNotCreatorOfQuest = await makeAccessToken(employerNotCreatorOfQuest);
   const quest = await makeQuest(employerCreatorOfQuest, null, QuestStatus.Created);
-  const { result } = await postRequestOnStartQuest(accessTokenEmployerNotCreatorOfQuest, quest, assignedWorker);
+  const { result } = await postRequestOnStartQuest(accessTokenEmployerNotCreatorOfQuest, quest, { assignedWorkerId: assignedWorker.id });
 
   await quest.reload();
 
@@ -521,6 +502,9 @@ async function Should_Forbidden_When_EmployerStartedQuestButHeNotQuestCreator() 
   expect(quest.status).to.equal(QuestStatus.Created);
 
   await quest.destroy();
+  await employerCreatorOfQuest.ratingStatistic.destroy();
+  await employerNotCreatorOfQuest.ratingStatistic.destroy();
+  await assignedWorker.ratingStatistic.destroy();
   await employerCreatorOfQuest.destroy();
   await employerNotCreatorOfQuest.destroy();
   await assignedWorker.destroy();
@@ -532,7 +516,7 @@ async function Should_InvalidStatus_When_EmployerStartedQuestAndQuestNotStatusOn
   const assignedWorker = await makeWorker();
   const employerAccessToken = await makeAccessToken(employer);
   const quest = await makeQuest(employer, null, status);
-  const { result } = await postRequestOnStartQuest(employerAccessToken, quest, assignedWorker);
+  const { result } = await postRequestOnStartQuest(employerAccessToken, quest, { assignedWorkerId: assignedWorker.id });
 
   await quest.reload();
 
@@ -542,6 +526,8 @@ async function Should_InvalidStatus_When_EmployerStartedQuestAndQuestNotStatusOn
   expect(quest.status).to.equal(status);
 
   await quest.destroy();
+  await employer.ratingStatistic.destroy();
+  await assignedWorker.ratingStatistic.destroy();
   await employer.destroy();
   await assignedWorker.destroy();
 }
@@ -574,7 +560,7 @@ async function Should_Ok_When_EmployerStartedQuestAndWorkerResponseOnQuest() {
     message: 'Hi!'
   })];
   const acceptedResponse = questsResponses[0];
-  const { result } = await postRequestOnStartQuest(employerAccessToken, quest, appointedWorker);
+  const { result } = await postRequestOnStartQuest(employerAccessToken, quest, { assignedWorkerId: appointedWorker.id } );
 
   for (const response of questsResponses) {
     await response.reload();
@@ -597,9 +583,11 @@ async function Should_Ok_When_EmployerStartedQuestAndWorkerResponseOnQuest() {
   }
 
   await quest.destroy();
+  await employer.ratingStatistic.destroy();
   await employer.destroy();
 
   for (const worker of workers) {
+    await worker.ratingStatistic.destroy();
     await worker.destroy();
   }
 }
@@ -608,7 +596,7 @@ async function Should_NotFound_When_EmployerStartedQuestAndWorkerNotRespondedOnQ
   const employer = await makeEmployer();
   const employerAccessToken = await makeAccessToken(employer);
   const quest = await makeQuest(employer, null, QuestStatus.Created);
-  const { result } = await postRequestOnStartQuest(employerAccessToken, quest, worker);
+  const { result } = await postRequestOnStartQuest(employerAccessToken, quest, { assignedWorkerId: worker.id });
 
   await quest.reload();
 
@@ -618,6 +606,8 @@ async function Should_NotFound_When_EmployerStartedQuestAndWorkerNotRespondedOnQ
   expect(quest.status).to.equal(QuestStatus.Created);
 
   await quest.destroy();
+  await worker.ratingStatistic.destroy();
+  await employer.ratingStatistic.destroy();
   await worker.destroy();
   await employer.destroy();
 }
@@ -650,7 +640,7 @@ async function Should_Forbidden_When_EmployerStartedQuestAndWorkerRejectInvite()
       message: 'Hi!'
     })];
   const acceptedResponse = questsResponses[0];
-  const { result } = await postRequestOnStartQuest(employerAccessToken, quest, appointedWorker);
+  const { result } = await postRequestOnStartQuest(employerAccessToken, quest, { assignedWorkerId: appointedWorker.id });
 
   for (const response of questsResponses) {
     await response.reload();
@@ -669,9 +659,11 @@ async function Should_Forbidden_When_EmployerStartedQuestAndWorkerRejectInvite()
   }
 
   await quest.destroy();
+  await employer.ratingStatistic.destroy();
   await employer.destroy();
 
   for (const worker of workers) {
+    await worker.ratingStatistic.destroy();
     await worker.destroy();
   }
 }
@@ -704,7 +696,7 @@ async function Should_Ok_When_EmployerStartedQuestAndWorkerAcceptInvite() {
       message: 'Hi!'
     })];
   const acceptedResponse = questsResponses[0];
-  const { result } = await postRequestOnStartQuest(employerAccessToken, quest, appointedWorker);
+  const { result } = await postRequestOnStartQuest(employerAccessToken, quest, { assignedWorkerId: appointedWorker.id });
 
   await quest.reload();
 
@@ -727,9 +719,11 @@ async function Should_Ok_When_EmployerStartedQuestAndWorkerAcceptInvite() {
   }
 
   await quest.destroy();
+  await employer.ratingStatistic.destroy();
   await employer.destroy();
 
   for (const worker of workers) {
+    await worker.ratingStatistic.destroy();
     await worker.destroy();
   }
 }
@@ -762,7 +756,7 @@ async function Should_Forbidden_When_EmployerStartedQuestAndWorkerNotResponseOnI
       message: 'Hi!'
     })];
   const acceptedResponse = questsResponses[0];
-  const { result } = await postRequestOnStartQuest(employerAccessToken, quest, appointedWorker);
+  const { result } = await postRequestOnStartQuest(employerAccessToken, quest, { assignedWorkerId: appointedWorker.id });
 
   await quest.reload();
 
@@ -781,9 +775,11 @@ async function Should_Forbidden_When_EmployerStartedQuestAndWorkerNotResponseOnI
   }
 
   await quest.destroy();
+  await employer.ratingStatistic.destroy();
   await employer.destroy();
 
   for (const worker of workers) {
+    await worker.ratingStatistic.destroy();
     await worker.destroy();
   }
 }
@@ -804,6 +800,10 @@ async function Should_Forbidden_When_WorkerRejectWorkAndWorkerNotAssignedOnWork(
   expect(quest.status).to.equal(QuestStatus.WaitWorker);
 
   await quest.destroy();
+  await employer.ratingStatistic.destroy();
+  await notAssignedWorker.ratingStatistic.destroy();
+  await assignedWorker.ratingStatistic.destroy();
+
   await employer.destroy();
   await notAssignedWorker.destroy();
   await assignedWorker.destroy();
@@ -822,6 +822,8 @@ async function Should_Ok_When_WorkerRejectWorkAndQuestStatusWaitWorker() {
   expect(quest.status).to.equal(QuestStatus.Created);
 
   await quest.destroy();
+  await assignedWorker.ratingStatistic.destroy();
+  await employer.ratingStatistic.destroy();
   await employer.destroy();
   await assignedWorker.destroy();
 }
@@ -842,6 +844,8 @@ async function Should_InvalidStatus_When_WorkerRejectWorkAndQuestNotStatusOnWait
   expect(quest.status).to.equal(status);
 
   await quest.destroy();
+  await assignedWorker.ratingStatistic.destroy();
+  await employer.ratingStatistic.destroy();
   await employer.destroy();
   await assignedWorker.destroy();
 }
@@ -862,6 +866,9 @@ async function Should_Forbidden_When_WorkerAcceptWorkAndWorkerNotAssignedOnWork(
   expect(quest.status).to.equal(QuestStatus.WaitWorker);
 
   await quest.destroy();
+  await assignedWorker.ratingStatistic.destroy();
+  await notAssignedWorker.ratingStatistic.destroy();
+  await employer.ratingStatistic.destroy();
   await employer.destroy();
   await notAssignedWorker.destroy();
   await assignedWorker.destroy();
@@ -880,6 +887,8 @@ async function Should_Ok_When_WorkerAcceptWorkAndQuestStatusWaitWorker() {
   expect(quest.status).to.equal(QuestStatus.Active);
 
   await quest.destroy();
+  await assignedWorker.ratingStatistic.destroy();
+  await employer.ratingStatistic.destroy();
   await employer.destroy();
   await assignedWorker.destroy();
 }
@@ -900,6 +909,8 @@ async function Should_InvalidStatus_When_WorkerAcceptWorkAndQuestNotStatusOnWait
   expect(quest.status).to.equal(status);
 
   await quest.destroy();
+  await assignedWorker.ratingStatistic.destroy();
+  await employer.ratingStatistic.destroy();
   await employer.destroy();
   await assignedWorker.destroy();
 }
@@ -920,6 +931,9 @@ async function Should_Forbidden_When_WorkerCompletedWorkAndWorkerNotAssignedOnWo
   expect(quest.status).to.equal(QuestStatus.Active);
 
   await quest.destroy();
+  await notAssignedWorker.ratingStatistic.destroy();
+  await employer.ratingStatistic.destroy();
+  await assignedWorker.ratingStatistic.destroy();
   await employer.destroy();
   await notAssignedWorker.destroy();
   await assignedWorker.destroy();
@@ -938,6 +952,8 @@ async function Should_Ok_When_WorkerCompletedWorkAndQuestStatusActive() {
   expect(quest.status).to.equal(QuestStatus.WaitConfirm);
 
   await quest.destroy();
+  await assignedWorker.ratingStatistic.destroy();
+  await employer.ratingStatistic.destroy();
   await employer.destroy();
   await assignedWorker.destroy();
 }
@@ -958,6 +974,8 @@ async function Should_InvalidStatus_When_WorkerCompletedWorkAndQuestNotStatusOnA
   expect(quest.status).to.equal(status);
 
   await quest.destroy();
+  await assignedWorker.ratingStatistic.destroy();
+  await employer.ratingStatistic.destroy();
   await employer.destroy();
   await assignedWorker.destroy();
 }
@@ -978,6 +996,9 @@ async function Should_Forbidden_When_EmployerAcceptCompletedWorkAndEmployerNotQu
   expect(quest.status).to.equal(QuestStatus.WaitConfirm);
 
   await quest.destroy();
+  await assignedWorker.ratingStatistic.destroy();
+  await employerCreatorOfQuest.ratingStatistic.destroy();
+  await employerNotCreatorOfQuest.ratingStatistic.destroy();
   await assignedWorker.destroy();
   await employerCreatorOfQuest.destroy();
   await employerNotCreatorOfQuest.destroy();
@@ -996,6 +1017,8 @@ async function Should_Ok_When_EmployerAcceptCompletedWorkAndQuestStatusWaitConfi
   expect(quest.status).to.equal(QuestStatus.Done);
 
   await quest.destroy();
+  await employer.ratingStatistic.destroy();
+  await assignedWorker.ratingStatistic.destroy();
   await employer.destroy();
   await assignedWorker.destroy();
 }
@@ -1016,6 +1039,8 @@ async function Should_InvalidStatus_When_EmployerAcceptCompletedWorkAndQuestNotS
   expect(quest.status).to.equal(status);
 
   await quest.destroy();
+  await employer.ratingStatistic.destroy();
+  await assignedWorker.ratingStatistic.destroy();
   await employer.destroy();
   await assignedWorker.destroy();
 }
@@ -1036,6 +1061,9 @@ async function Should_Forbidden_When_EmployerRejectCompletedWorkAndEmployerNotQu
   expect(quest.status).to.equal(QuestStatus.WaitConfirm);
 
   await quest.destroy();
+  await assignedWorker.ratingStatistic.destroy();
+  await employerCreatorOfQuest.ratingStatistic.destroy();
+  await employerNotCreatorOfQuest.ratingStatistic.destroy();
   await assignedWorker.destroy();
   await employerCreatorOfQuest.destroy();
   await employerNotCreatorOfQuest.destroy();
@@ -1054,6 +1082,8 @@ async function Should_Ok_When_EmployerRejectCompletedWorkAndQuestStatusWaitConfi
   expect(quest.status).to.equal(QuestStatus.Dispute);
 
   await quest.destroy();
+  await employer.ratingStatistic.destroy();
+  await assignedWorker.ratingStatistic.destroy();
   await employer.destroy();
   await assignedWorker.destroy();
 }
@@ -1074,6 +1104,8 @@ async function Should_InvalidStatus_When_EmployerRejectCompletedWorkAndQuestNotS
   expect(quest.status).to.equal(status);
 
   await quest.destroy();
+  await employer.ratingStatistic.destroy();
+  await assignedWorker.ratingStatistic.destroy();
   await employer.destroy();
   await assignedWorker.destroy();
 }
