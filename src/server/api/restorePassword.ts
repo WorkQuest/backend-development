@@ -25,7 +25,7 @@ export async function sendCodeForRestorePassword(r) {
 export async function setNewPassword(r) {
   const user = await User.scope("withPassword").findOne({
     where: {
-      "settings.restorePassword": r.payload.restorePasswordCode
+      "settings.restorePassword": r.params.token
     }
   });
   if (!user) return output();

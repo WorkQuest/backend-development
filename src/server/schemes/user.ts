@@ -26,6 +26,7 @@ export const additionalInfoWorkerSchema = Joi.object({
   address: Joi.string().allow(null).label('Address'),
   description: Joi.string().label('Description'),
   socialNetwork: socialMediaNicknamesSchema.label('SocialNetwork'),
+  skills: Joi.array().items(Joi.string()).label('Skills'),
 });
 
 export const additionalInfoEmployerSchema = Joi.object({

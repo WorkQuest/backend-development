@@ -28,9 +28,11 @@ export default [{
     auth: false,
     validate: {
       payload: Joi.object({
-        newPassword: passwordSchema.required(),
-        restorePasswordCode: hexTokenSchema.required(),
-      }).label('RestorePasswordPayload')
+        newPassword: passwordSchema.required()
+      }).label('RestorePasswordPayload'),
+      params: Joi.object({
+        token: hexTokenSchema.required()
+      }).label('RestorePasswordPayloadParams')
     },
     response: {
       schema: emptyOkSchema

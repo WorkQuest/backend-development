@@ -64,7 +64,8 @@ interface AdditionalInfo {
 }
 
 export interface AdditionalInfoWorker extends AdditionalInfo {
-  description: string;
+  description: string | null;
+  skills: string[];
 }
 
 export interface AdditionalInfoEmployer extends AdditionalInfo {
@@ -116,7 +117,7 @@ export class User extends Model {
 
   @Column(DataType.STRING) firstName: string;
   @Column(DataType.STRING) lastName: string;
-  @Column({ type: DataType.JSONB, defaultValue: {} }) additionalInfo: JSON;
+  @Column({ type: DataType.JSONB, defaultValue: {} }) additionalInfo: object;
 
   @Column({ type: DataType.STRING, unique: true }) email: string;
   @Column({ type: DataType.STRING, defaultValue: null }) role: UserRole;
@@ -130,7 +131,7 @@ export class User extends Model {
   @HasMany(() => Session) sessions: Session[];
   @HasMany(() => Media) medias: Media[];
 
-  async passwordCompare(pwd: string) {
+  async passwordCompare(pwd: string): Promise<boolean> {
     return bcrypt.compareSync(pwd, this.password);
   }
 
