@@ -60,7 +60,11 @@ export async function editProfile(r) {
 }
 
 export async function changePassword(r) {
-  const user = r.auth.credentials;
+  const user = await User.scope("withPassword").findOne({
+    where: {
+      id: r.auth.credentials.id
+    }
+  });
 
   if (!(await user.passwordCompare(r.payload.oldPassword))) {
     return error(Errors.Forbidden, 'Old password does not match with current', {});
