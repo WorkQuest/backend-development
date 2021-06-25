@@ -6,6 +6,7 @@ import { QuestMedia } from './QuestMedia';
 import { transformToGeoPostGIS } from '../utils/quest';
 import { Errors } from '../utils/errors';
 import { Review } from './Review';
+import { QuestsResponse } from "./QuestsResponse";
 
 export enum QuestPriority {
   AllPriority = 0,
@@ -51,6 +52,9 @@ export interface Location {
     }, {
       model: User,
       as: 'assignedWorker'
+    }, {
+      model: QuestsResponse,
+      as: 'responses'
     }]
   }
 }))
@@ -75,6 +79,7 @@ export class Quest extends Model {
   @BelongsTo(() => User, 'userId') user: User;
   @BelongsTo(() => User, 'assignedWorkerId') assignedWorker: User;
   @BelongsToMany(() => Media, () => QuestMedia) medias: Media[];
+  @HasMany(() => QuestsResponse, 'questId') responses: QuestsResponse[];
   @HasMany(() => Review) reviews: Review[];
 
   updateFieldLocationPostGIS(): void {

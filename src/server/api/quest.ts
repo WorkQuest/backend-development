@@ -256,10 +256,11 @@ export async function rejectCompletedWorkOnQuest(r) {
 
 export async function getQuests(r) {
   const order = [];
+  const include = [];
   const where = {
     ...(r.query.priority && { priority: r.query.priority }),
     ...(r.query.status && { status: r.query.status }),
-    ...(r.params.userId && { userId: r.params.userId })
+    ...(r.params.userId && { userId: r.params.userId }),
   };
 
   if (r.query.q) {
@@ -269,6 +270,17 @@ export async function getQuests(r) {
       }
     }))
   }
+  if (r.query.invited) {
+    include.push({
+      model: QuestsResponse,
+        where: {
+        [Op.and]: [
+          { workerId: r.auth.credentials.id },
+          { type: QuestsResponseType.Invite },
+        ]
+      }
+    });
+  }
 
   for (const [key, value] of Object.entries(r.query.sort)) {
     order.push([key, value]);
@@ -277,7 +289,7 @@ export async function getQuests(r) {
   const { count, rows } = await Quest.findAndCountAll({
     limit: r.query.limit,
     offset: r.query.offset,
-    where, order,
+    where, order, include,
   });
 
   return output({count, quests: rows});
