@@ -1,12 +1,15 @@
 import * as Joi from "joi";
-import { changePassword, editProfile, getMe, setRole } from '../../api/profile';
-import { emptyOkSchema, outputOkSchema, idSchema } from '../../schemes';
+import { changePassword, editProfile, getMe, setRole } from "../../api/profile";
+import { emptyOkSchema, idSchema, outputOkSchema } from "../../schemes";
 import {
   additionalInfoEmployerSchema,
-  additionalInfoWorkerSchema, firstNameSchema, lastNameSchema, passwordSchema,
+  additionalInfoWorkerSchema,
+  firstNameSchema,
+  lastNameSchema,
+  passwordSchema,
   userRoleSchema,
   userSchema
-} from '../../schemes/user';
+} from "../../schemes/user";
 
 export default [{
   method: "GET",
@@ -43,16 +46,17 @@ export default [{
   handler: editProfile,
   options: {
     id: "v1.profile.edit",
+    tags: ["api", "profile"],
     validate: {
       payload: Joi.object({
-        avatarId: idSchema.allow(null).required().label('MediaId'),
+        avatarId: idSchema.allow(null).required().label("MediaId"),
         firstName: firstNameSchema.required(),
         lastName: lastNameSchema.required(),
         additionalInfo: Joi.alternatives(
-          additionalInfoEmployerSchema.options({presence: 'required'}),
-          additionalInfoWorkerSchema.options({presence: 'required'})
-        ).required(),
-      }).label('EditProfilePayload')
+          additionalInfoEmployerSchema.options({ presence: "required" }),
+          additionalInfoWorkerSchema.options({ presence: "required" })
+        ).required()
+      }).label("EditProfilePayload")
     },
     response: {
       schema: outputOkSchema(userSchema).label("EditProfileResponse")
@@ -64,11 +68,12 @@ export default [{
   handler: changePassword,
   options: {
     id: "v1.profile.changePassword",
+    tags: ["api", "profile"],
     validate: {
       payload: Joi.object({
         oldPassword: passwordSchema.required(),
-        newPassword: passwordSchema.required(),
-      }).label('ChangePasswordPayload')
+        newPassword: passwordSchema.required()
+      }).label("ChangePasswordPayload")
     },
     response: {
       schema: emptyOkSchema

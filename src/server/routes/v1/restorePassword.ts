@@ -10,10 +10,11 @@ export default [{
   options: {
     id: "v1.restorePassword.sendCode",
     auth: false,
+    tags: ["api", "profile"],
     validate: {
       payload: Joi.object({
         email: emailSchema.required()
-      }).label('RestorePasswordPayload')
+      }).label("RestorePasswordPayload")
     },
     response: {
       schema: emptyOkSchema
@@ -26,6 +27,7 @@ export default [{
   options: {
     id: "v1.restorePassword.setPassword",
     auth: false,
+    tags: ["api", "profile"],
     validate: {
       payload: Joi.object({
         newPassword: passwordSchema.required(),
