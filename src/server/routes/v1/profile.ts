@@ -1,7 +1,12 @@
 import * as Joi from "joi";
-import { getMe, setAvatar, setRole } from '../../api/profile';
+import { changePassword, editProfile, getMe, setRole } from '../../api/profile';
 import { emptyOkSchema, outputOkSchema, idSchema } from '../../schemes';
-import { userRoleSchema, userSchema } from "../../schemes/user";
+import {
+  additionalInfoEmployerSchema,
+  additionalInfoWorkerSchema, firstNameSchema, lastNameSchema, passwordSchema,
+  userRoleSchema,
+  userSchema
+} from '../../schemes/user';
 
 export default [{
   method: "GET",
@@ -13,23 +18,6 @@ export default [{
     description: "Get info about current user",
     response: {
       schema: outputOkSchema(userSchema).label("ProfileGetMeResponse")
-    }
-  }
-}, {
-  method: "PUT",
-  path: "/v1/profile/set-avatar",
-  handler: setAvatar,
-  options: {
-    id: "v1.profile.setAvatar",
-    tags: ["api", "profile"],
-    description: "Set avatar in profile",
-    validate: {
-      payload: Joi.object({
-        mediaId: idSchema.allow(null).required().label('MediaId'),
-      }).label('SetAvatarPayload')
-    },
-    response: {
-      schema: emptyOkSchema
     }
   }
 }, {
@@ -49,4 +37,42 @@ export default [{
       schema: emptyOkSchema
     }
   }
+}, {
+  method: "PUT",
+  path: "/v1/profile/edit",
+  handler: editProfile,
+  options: {
+    id: "v1.profile.edit",
+    validate: {
+      payload: Joi.object({
+        avatarId: idSchema.allow(null).required().label('MediaId'),
+        firstName: firstNameSchema.required(),
+        lastName: lastNameSchema.required(),
+        additionalInfo: Joi.alternatives(
+          additionalInfoEmployerSchema.options({presence: 'required'}),
+          additionalInfoWorkerSchema.options({presence: 'required'})
+        ).required(),
+      }).label('EditProfilePayload')
+    },
+    response: {
+      schema: outputOkSchema(userSchema).label("EditProfileResponse")
+    }
+  }
+}, {
+  method: "PUT",
+  path: "/v1/profile/change-password",
+  handler: changePassword,
+  options: {
+    id: "v1.profile.changePassword",
+    validate: {
+      payload: Joi.object({
+        oldPassword: passwordSchema.required(),
+        newPassword: passwordSchema.required(),
+      }).label('ChangePasswordPayload')
+    },
+    response: {
+      schema: emptyOkSchema
+    }
+  }
 }];
+

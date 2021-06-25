@@ -14,12 +14,13 @@ export async function makeAccessToken(user: User): Promise<string> {
 
   return access;
 }
-export async function makeUser(role: UserRole): Promise<User> {
+export async function makeUser(role: UserRole, additionalInfo: object): Promise<User> {
   const user = await User.create({
     email: Math.random().toString(30).substring(7),
-    password: null, role,
+    password: '123456789', role,
     firstName: 'TEST', lastName: 'TEST',
     status: UserStatus.Confirmed,
+    additionalInfo,
     settings: {
       emailConfirm: null,
     }
@@ -29,10 +30,37 @@ export async function makeUser(role: UserRole): Promise<User> {
   return await User.findByPk(user.id);
 }
 export async function makeEmployer() {
-  return await makeUser(UserRole.Employer);
+  return await makeUser(UserRole.Employer, {
+    company: 'test',
+    CEO: 'test',
+    website: 'test',
+    firstMobileNumber: '+834534',
+    secondMobileNumber: '+834534',
+    address: 'ghwwf',
+    description: 'ghwwf',
+    skills: [],
+    socialNetwork: {
+      instagram: '@test',
+      twitter: '@test',
+      linkedin: '@test',
+      facebook: '@test',
+    },
+  });
 }
 export async function makeWorker() {
-  return await makeUser(UserRole.Worker);
+  return await makeUser(UserRole.Worker, {
+    firstMobileNumber: '+834534',
+    secondMobileNumber: '+834534',
+    address: 'ghwwf',
+    description: 'ghwwf',
+    skills: [],
+    socialNetwork: {
+      instagram: '@test',
+      twitter: '@test',
+      linkedin: '@test',
+      facebook: '@test',
+    },
+  });
 }
 export async function makeQuest(employer: User, assignedWorker: User, status: QuestStatus) {
   return await Quest.create({
