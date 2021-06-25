@@ -1,7 +1,7 @@
-import { User } from '../models/User';
-import { getRandomHexToken, output } from '../utils';
-import { addSendEmailJob } from '../jobs/sendEmail';
-import config from '../config/config';
+import { User } from "../models/User";
+import { getRandomHexToken, output } from "../utils";
+import { addSendEmailJob } from "../jobs/sendEmail";
+import config from "../config/config";
 
 export async function sendCodeForRestorePassword(r) {
   const user = await User.findWithEmail(r.payload.email);
@@ -25,7 +25,7 @@ export async function sendCodeForRestorePassword(r) {
 export async function setNewPassword(r) {
   const user = await User.scope("withPassword").findOne({
     where: {
-      "settings.restorePassword": r.params.token
+      "settings.restorePassword": r.payload.token
     }
   });
   if (!user) return output();
