@@ -34,7 +34,7 @@ export default [{
     validate: {
       payload: Joi.object({
         role: userRoleSchema.required()
-      }).label('SetUserRolePayload')
+      }).label("SetUserRolePayload")
     },
     response: {
       schema: emptyOkSchema
@@ -47,6 +47,7 @@ export default [{
   options: {
     id: "v1.profile.edit",
     tags: ["api", "profile"],
+    description: "Edit profile information",
     validate: {
       payload: Joi.object({
         avatarId: idSchema.allow(null).required().label("MediaId"),
@@ -69,6 +70,7 @@ export default [{
   options: {
     id: "v1.profile.changePassword",
     tags: ["api", "profile"],
+    description: "Change user password",
     validate: {
       payload: Joi.object({
         oldPassword: passwordSchema.required(),
