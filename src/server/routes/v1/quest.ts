@@ -121,7 +121,7 @@ export default [{
     description: "Get quests for a given user",
     validate: {
       params: Joi.object({
-        userId: idSchema.required().label('UserId'),
+        fromUser: idSchema.required().label('UserId'),
       }).label("GetQuestsParams"),
       query: questsQuerySchema
     },

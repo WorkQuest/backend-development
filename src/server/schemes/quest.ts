@@ -40,7 +40,6 @@ export const questSchema = Joi.object({
   adType: adTypeSchema,
   medias: mediasSchema,
   reviews: reviewsSchema,
-  responses,
   createdAt: isoDateSchema,
   updatedAt: isoDateSchema,
 }).label("QuestSchema");
@@ -77,5 +76,6 @@ export const questsQuerySchema = Joi.object({
   status: questStatusSchema.default(null),
   sort: questsListSortSchema,
   invited: Joi.boolean().default(false),
+  performing: Joi.boolean().default(false),
 }).label('QuestsQueryScheme');
 

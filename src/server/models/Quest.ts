@@ -54,7 +54,8 @@ export interface Location {
       as: 'assignedWorker'
     }, {
       model: QuestsResponse,
-      as: 'responses'
+      as: 'responses',
+      attributes: []
     }]
   }
 }))

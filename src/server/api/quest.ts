@@ -258,9 +258,10 @@ export async function getQuests(r) {
   const order = [];
   const include = [];
   const where = {
+    ...(r.query.performing && { assignedWorkerId: r.auth.credentials.id } ),
     ...(r.query.priority && { priority: r.query.priority }),
     ...(r.query.status && { status: r.query.status }),
-    ...(r.params.userId && { userId: r.params.userId }),
+    ...(r.params.fromUser && { userId: r.params.fromUser }),
   };
 
   if (r.query.q) {
@@ -273,6 +274,7 @@ export async function getQuests(r) {
   if (r.query.invited) {
     include.push({
       model: QuestsResponse,
+      attributes: [],
         where: {
         [Op.and]: [
           { workerId: r.auth.credentials.id },
