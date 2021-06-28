@@ -6,6 +6,7 @@ import questsResponse from './questsResponse';
 import identityVerification from './sumsub'
 import storageService from './storageService';
 import review from './review';
+import restorePassword from './restorePassword';
 
 export default [
   ...profile,
@@ -16,4 +17,5 @@ export default [
   ...identityVerification,
   ...storageService,
   ...review,
+  ...restorePassword,
 ];

@@ -1,34 +1,20 @@
-import { error, output } from '../utils';
-import { User, UserRole, UserStatus } from "../models/User";
+import * as Joi from "joi";
+import { error, handleValidationError, output } from '../utils';
+import { User, UserRole, UserStatus } from '../models/User';
 import { isMediaExists } from '../utils/storageService';
 import { Media } from '../models/Media';
 import { Errors } from '../utils/errors';
+import { additionalInfoEmployerSchema, additionalInfoWorkerSchema } from '../schemes/user';
+
+function getAdditionalInfoSchema(role: UserRole): Joi.Schema {
+  if (role === UserRole.Employer)
+    return additionalInfoEmployerSchema;
+  else
+    return additionalInfoWorkerSchema;
+}
 
 export async function getMe(r) {
   return output(await User.findByPk(r.auth.credentials.id));
-}
-
-export async function setAvatar(r) {
-  const user = r.auth.credentials;
-
-  if (!r.payload.mediaId) {
-    await user.update({ avatarId: null });
-
-    return output();
-  }
-
-  const media = await Media.findByPk(r.payload.mediaId);
-
-  if (!media) {
-    return error(Errors.NotFound, 'Media is not found', {});
-  }
-  if (!await isMediaExists(media)) {
-    return error(Errors.NotFound, 'Media is not exists', {});
-  }
-
-  await user.update({ avatarId: media.id });
-
-  return output();
 }
 
 export async function setRole(r) {
@@ -38,6 +24,55 @@ export async function setRole(r) {
   }
 
   await user.update({ status: UserStatus.Confirmed, role: r.payload.role });
+
+  return output();
+}
+
+export async function editProfile(r) {
+  const user = r.auth.credentials;
+  const additionalInfoSchema = getAdditionalInfoSchema(user.role);
+  const validateAdditionalInfo = additionalInfoSchema.validate(r.payload.additionalInfo);
+
+  if (validateAdditionalInfo.error) {
+    return await handleValidationError(r, null, validateAdditionalInfo.error);
+  }
+  if (r.payload.avatarId) {
+    const media = await Media.findByPk(r.payload.avatarId);
+    if (!media) {
+      return error(Errors.NotFound, 'Media is not found', {
+        avatarId: r.payload.avatarId
+      });
+    }
+    if (!await isMediaExists(media)) {
+      return error(Errors.NotFound, 'Media is not exists', {
+        avatarId: r.payload.avatarId
+      });
+    }
+  }
+
+  await user.update({
+    ...r.payload
+  });
+
+  return output(
+    await User.findByPk(user.id)
+  );
+}
+
+export async function changePassword(r) {
+  const user = await User.scope("withPassword").findOne({
+    where: {
+      id: r.auth.credentials.id
+    }
+  });
+
+  if (!(await user.passwordCompare(r.payload.oldPassword))) {
+    return error(Errors.Forbidden, 'Old password does not match with current', {});
+  }
+
+  await user.update({
+    password: r.payload.newPassword
+  });
 
   return output();
 }

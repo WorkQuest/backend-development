@@ -22,11 +22,13 @@ export interface UserSocialSettings {
 }
 
 interface UserSettings {
+  restorePassword: string | null;
   emailConfirm: string | null;
   social: UserSocialSettings;
 }
 
 const defaultUserSettings: UserSettings = {
+  restorePassword: null,
   emailConfirm: null,
   social: {},
 }
@@ -45,6 +47,31 @@ export enum UserRole {
 export enum StatusKYC {
   Unconfirmed = 0,
   Confirmed,
+}
+
+interface SocialMediaNicknames {
+  instagram: string | null;
+  twitter: string | null;
+  linkedin: string | null;
+  facebook: string | null;
+}
+
+interface AdditionalInfo {
+  firstMobileNumber: string | null;
+  secondMobileNumber: string | null;
+  address: string | null;
+  socialNetwork: SocialMediaNicknames;
+}
+
+export interface AdditionalInfoWorker extends AdditionalInfo {
+  description: string | null;
+  skills: string[];
+}
+
+export interface AdditionalInfoEmployer extends AdditionalInfo {
+  company: string | null;
+  CEO: string | null;
+  website: string | null;
 }
 
 @Scopes(() => ({
@@ -69,6 +96,8 @@ export enum StatusKYC {
 @Table({ paranoid: true })
 export class User extends Model {
   @Column({ primaryKey: true, type: DataType.STRING, defaultValue: () => getUUID() }) id: string;
+  @ForeignKey(() => Media) @Column({type: DataType.STRING, defaultValue: null}) avatarId: string;
+
   @Column({
     type: DataType.STRING,
     set(value: string) {
@@ -85,11 +114,12 @@ export class User extends Model {
       return this.getDataValue("password");
     }
   }) password: string;
-  @ForeignKey(() => Media) @Column({type: DataType.STRING, defaultValue: null}) avatarId: string;
 
-  @Column({ type: DataType.STRING, unique: true }) email: string;
   @Column(DataType.STRING) firstName: string;
   @Column(DataType.STRING) lastName: string;
+  @Column({ type: DataType.JSONB, defaultValue: {} }) additionalInfo: object;
+
+  @Column({ type: DataType.STRING, unique: true }) email: string;
   @Column({ type: DataType.STRING, defaultValue: null }) role: UserRole;
   @Column({ type: DataType.JSONB, defaultValue: defaultUserSettings }) settings: UserSettings;
   @Column({ type: DataType.INTEGER, defaultValue: UserStatus.Unconfirmed }) status: UserStatus;
@@ -101,7 +131,7 @@ export class User extends Model {
   @HasMany(() => Session) sessions: Session[];
   @HasMany(() => Media) medias: Media[];
 
-  async passwordCompare(pwd: string) {
+  async passwordCompare(pwd: string): Promise<boolean> {
     return bcrypt.compareSync(pwd, this.password);
   }
 
