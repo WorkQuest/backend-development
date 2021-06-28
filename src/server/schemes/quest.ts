@@ -77,5 +77,6 @@ export const questsQuerySchema = Joi.object({
   sort: questsListSortSchema,
   invited: Joi.boolean().default(false),
   performing: Joi.boolean().default(false),
+  starred: Joi.boolean().default(false),
 }).label('QuestsQueryScheme');
 

@@ -1,4 +1,14 @@
-import { BelongsTo, Column, DataType, ForeignKey, HasMany, HasOne, Model, Scopes, Table } from 'sequelize-typescript';
+import {
+  BelongsTo,
+  Column,
+  DataType,
+  ForeignKey,
+  HasMany,
+  HasOne,
+  Model,
+  Scopes,
+  Table
+} from 'sequelize-typescript';
 import { error, getUUID } from '../utils';
 import * as bcrypt from "bcrypt";
 import { Media } from './Media';
@@ -6,6 +16,7 @@ import { Session } from './Session';
 import { Errors } from '../utils/errors';
 import { Review } from './Review';
 import { RatingStatistic } from './RatingStatistic';
+import { StarredQuests } from './StarredQuests';
 
 export interface SocialInfo {
   id: string;
@@ -126,10 +137,13 @@ export class User extends Model {
   @Column({ type: DataType.INTEGER, defaultValue: StatusKYC.Unconfirmed }) statusKYC: StatusKYC;
 
   @BelongsTo(() => Media,{ constraints: false, foreignKey: 'avatarId' }) avatar: Media;
-  @HasMany(() => Review, 'toUserId') reviews: Review[];
+
   @HasOne(() => RatingStatistic) ratingStatistic: RatingStatistic;
+
+  @HasMany(() => StarredQuests) starredQuests: StarredQuests[];
+  @HasMany(() => Review, 'toUserId') reviews: Review[];
   @HasMany(() => Session) sessions: Session[];
-  @HasMany(() => Media) medias: Media[];
+  @HasMany(() => Media, { constraints: false }) medias: Media[];
 
   async passwordCompare(pwd: string): Promise<boolean> {
     return bcrypt.compareSync(pwd, this.password);

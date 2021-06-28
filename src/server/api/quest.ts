@@ -7,6 +7,7 @@ import { Media } from '../models/Media';
 import { isMediaExists } from '../utils/storageService';
 import { transformToGeoPostGIS } from '../utils/quest';
 import { QuestsResponse, QuestsResponseStatus, QuestsResponseType } from '../models/QuestsResponse';
+import { StarredQuests } from '../models/StarredQuests';
 
 export const searchFields = [
   "title",
@@ -281,6 +282,13 @@ export async function getQuests(r) {
           { type: QuestsResponseType.Invite },
         ]
       }
+    });
+  }
+  if (r.query.starred) {
+    include.push({
+      model: StarredQuests,
+      where: { userId: r.auth.credentials.id },
+      attributes: [],
     });
   }
 

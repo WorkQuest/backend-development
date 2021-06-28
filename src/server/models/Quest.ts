@@ -7,6 +7,7 @@ import { transformToGeoPostGIS } from '../utils/quest';
 import { Errors } from '../utils/errors';
 import { Review } from './Review';
 import { QuestsResponse } from "./QuestsResponse";
+import { StarredQuests } from './StarredQuests';
 
 export enum QuestPriority {
   AllPriority = 0,
@@ -77,9 +78,12 @@ export class Quest extends Model {
   @Column({type: DataType.DECIMAL, allowNull: false}) price: string;
   @Column({type: DataType.INTEGER, defaultValue: AdType.Free }) adType: AdType;
 
+  @BelongsToMany(() => Media, () => QuestMedia) medias: Media[];
+
   @BelongsTo(() => User, 'userId') user: User;
   @BelongsTo(() => User, 'assignedWorkerId') assignedWorker: User;
-  @BelongsToMany(() => Media, () => QuestMedia) medias: Media[];
+
+  @HasMany(() => StarredQuests) starredQuests: StarredQuests[];
   @HasMany(() => QuestsResponse, 'questId') responses: QuestsResponse[];
   @HasMany(() => Review) reviews: Review[];
 
