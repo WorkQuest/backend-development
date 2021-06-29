@@ -304,3 +304,53 @@ export async function getQuests(r) {
 
   return output({count, quests: rows});
 }
+
+export async function getMyStarredQuests(r) {
+  return output(
+    await StarredQuests.findAll({
+      where: { userId: r.auth.credentials.id },
+      attributes: [],
+      include: {
+        model: Quest
+      }
+    })
+  )
+}
+
+export async function setStar(r) {
+  const quest = await Quest.findByPk(r.params.questId);
+
+  if (!quest) {
+    return error(Errors.NotFound, "Quest not found", {});
+  }
+
+  const starred = await StarredQuests.findOne({
+    where: {
+      userId: r.auth.credentials.id,
+      questId: r.params.questId,
+    }
+  });
+
+
+  if (starred) {
+    return error(Errors.Forbidden, 'Quest has already been added to favorites', {});
+  }
+
+  await StarredQuests.create({
+    userId: r.auth.credentials.id,
+    questId: r.params.questId,
+  });
+
+  return output();
+}
+
+export async function takeAwayStar(r) {
+  await StarredQuests.destroy({
+    where: {
+      userId: r.auth.credentials.id,
+      questId: r.params.questId,
+    }
+  });
+
+  return output();
+}

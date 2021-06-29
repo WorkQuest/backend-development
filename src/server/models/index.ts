@@ -7,12 +7,21 @@ import { Media } from "./Media";
 import { QuestMedia } from "./QuestMedia";
 import { Review } from "./Review";
 import { RatingStatistic } from "./RatingStatistic";
+import { StarredQuests } from './StarredQuests';
 
 export async function initDatabase(dbLink: string, logging = false, sync = false) {
   const sequelize = new Sequelize(dbLink, {
     logging,
     dialect: "postgres",
-    models: [User, Session, Quest, QuestsResponse, Media, QuestMedia, Review, RatingStatistic]
+    models: [ StarredQuests,
+      User,
+      Session,
+      Quest,
+      QuestsResponse,
+      Media,
+      QuestMedia,
+      Review,
+      RatingStatistic, ]
   });
   if (sync)
     await sequelize.sync();
