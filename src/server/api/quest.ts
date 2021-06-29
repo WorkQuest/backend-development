@@ -344,7 +344,7 @@ export async function setStar(r) {
   return output();
 }
 
-export async function takeAwayStar(r) {
+export async function removeStar(r) {
   await StarredQuests.destroy({
     where: {
       userId: r.auth.credentials.id,

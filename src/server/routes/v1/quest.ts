@@ -8,7 +8,7 @@ import {
   editQuest, getMyStarredQuests,
   getQuests, rejectCompletedWorkOnQuest,
   rejectWorkOnQuest, setStar,
-  startQuest, takeAwayStar
+  startQuest, removeStar
 } from '../../api/quest';
 import { emptyOkSchema, outputOkSchema, locationSchema, idSchema } from '../../schemes';
 import {
@@ -280,7 +280,7 @@ export default [{
 }, {
   method: "DELETE",
   path: '/v1/quest/{questId}/star',
-  handler: takeAwayStar,
+  handler: removeStar,
   options: {
     id: 'v1.quest.star.takeAwayStar',
     tags: ["api", "quest"],
