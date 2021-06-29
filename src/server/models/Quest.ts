@@ -53,10 +53,6 @@ export interface Location {
     }, {
       model: User,
       as: 'assignedWorker'
-    }, {
-      model: QuestsResponse,
-      as: 'responses',
-      attributes: []
     }]
   }
 }))
