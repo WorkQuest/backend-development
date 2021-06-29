@@ -7,6 +7,7 @@ import { Media } from '../models/Media';
 import { isMediaExists } from '../utils/storageService';
 import { transformToGeoPostGIS } from '../utils/quest';
 import { QuestsResponse, QuestsResponseStatus, QuestsResponseType } from '../models/QuestsResponse';
+import { StarredQuests } from '../models/StarredQuests';
 
 export const searchFields = [
   "title",
@@ -256,10 +257,12 @@ export async function rejectCompletedWorkOnQuest(r) {
 
 export async function getQuests(r) {
   const order = [];
+  const include = [];
   const where = {
+    ...(r.query.performing && { assignedWorkerId: r.auth.credentials.id } ),
     ...(r.query.priority && { priority: r.query.priority }),
     ...(r.query.status && { status: r.query.status }),
-    ...(r.params.userId && { userId: r.params.userId })
+    ...(r.params.fromUser && { userId: r.params.fromUser }),
   };
 
   if (r.query.q) {
@@ -269,6 +272,25 @@ export async function getQuests(r) {
       }
     }))
   }
+  if (r.query.invited) {
+    include.push({
+      model: QuestsResponse,
+      attributes: [],
+        where: {
+        [Op.and]: [
+          { workerId: r.auth.credentials.id },
+          { type: QuestsResponseType.Invite },
+        ]
+      }
+    });
+  }
+  if (r.query.starred) {
+    include.push({
+      model: StarredQuests,
+      where: { userId: r.auth.credentials.id },
+      attributes: [],
+    });
+  }
 
   for (const [key, value] of Object.entries(r.query.sort)) {
     order.push([key, value]);
@@ -277,8 +299,58 @@ export async function getQuests(r) {
   const { count, rows } = await Quest.findAndCountAll({
     limit: r.query.limit,
     offset: r.query.offset,
-    where, order,
+    where, order, include,
   });
 
   return output({count, quests: rows});
+}
+
+export async function getMyStarredQuests(r) {
+  return output(
+    await StarredQuests.findAll({
+      where: { userId: r.auth.credentials.id },
+      attributes: [],
+      include: {
+        model: Quest
+      }
+    })
+  )
+}
+
+export async function setStar(r) {
+  const quest = await Quest.findByPk(r.params.questId);
+
+  if (!quest) {
+    return error(Errors.NotFound, "Quest not found", {});
+  }
+
+  const starred = await StarredQuests.findOne({
+    where: {
+      userId: r.auth.credentials.id,
+      questId: r.params.questId,
+    }
+  });
+
+
+  if (starred) {
+    return error(Errors.Forbidden, 'Quest has already been added to favorites', {});
+  }
+
+  await StarredQuests.create({
+    userId: r.auth.credentials.id,
+    questId: r.params.questId,
+  });
+
+  return output();
+}
+
+export async function removeStar(r) {
+  await StarredQuests.destroy({
+    where: {
+      userId: r.auth.credentials.id,
+      questId: r.params.questId,
+    }
+  });
+
+  return output();
 }

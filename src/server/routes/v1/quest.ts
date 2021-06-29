@@ -5,10 +5,10 @@ import {
   closeQuest, completeWorkOnQuest,
   createQuest,
   deleteQuest,
-  editQuest,
+  editQuest, getMyStarredQuests,
   getQuests, rejectCompletedWorkOnQuest,
-  rejectWorkOnQuest,
-  startQuest
+  rejectWorkOnQuest, setStar,
+  startQuest, removeStar
 } from '../../api/quest';
 import { emptyOkSchema, outputOkSchema, locationSchema, idSchema } from '../../schemes';
 import {
@@ -121,7 +121,7 @@ export default [{
     description: "Get quests for a given user",
     validate: {
       params: Joi.object({
-        userId: idSchema.required().label('UserId'),
+        fromUser: idSchema.required().label('UserId'),
       }).label("GetQuestsParams"),
       query: questsQuerySchema
     },
@@ -243,6 +243,52 @@ export default [{
       params: Joi.object({
         questId: questId.required(),
       }).label("RejectCompletedWorkParams")
+    },
+    response: {
+      schema: emptyOkSchema
+    },
+  }
+}, {
+  method: "GET",
+  path: '/v1/quests/starred',
+  handler: getMyStarredQuests,
+  options: {
+    id: 'v1.quest.starred',
+    tags: ["api", "quest"],
+    description: 'Get starred quests',
+    response: {
+      schema: outputOkSchema(questsOutputSchema).label("StarredResponse")
+    },
+  },
+}, {
+  method: "POST",
+  path: '/v1/quest/{questId}/star',
+  handler: setStar,
+  options: {
+    id: 'v1.quest.star.setStar',
+    tags: ["api", "quest"],
+    description: 'Set star on quest',
+    validate: {
+      params: Joi.object({
+        questId: questId.required(),
+      }).label("StarParams")
+    },
+    response: {
+      schema: emptyOkSchema
+    },
+  }
+}, {
+  method: "DELETE",
+  path: '/v1/quest/{questId}/star',
+  handler: removeStar,
+  options: {
+    id: 'v1.quest.star.takeAwayStar',
+    tags: ["api", "quest"],
+    description: 'Take away star on quest',
+    validate: {
+      params: Joi.object({
+        questId: questId.required(),
+      }).label("StarParams")
     },
     response: {
       schema: emptyOkSchema

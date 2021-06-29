@@ -11,6 +11,7 @@ import {
 import { QuestPriority, AdType, QuestStatus } from '../models/Quest';
 import { userSchema } from './user';
 import { reviewSchema } from './review';
+import { questsResponseSchema } from "./questsResponse";
 
 const userIdSchema = idSchema.label('UserId');
 const questIdSchema = idSchema.label('QuestId');
@@ -24,6 +25,7 @@ export const titleSchema = Joi.string().example('Title...').label('Title');
 export const descriptionSchema = Joi.string().example('Description quest...').label('Description');
 export const priceSchema = Joi.string().example("500").label('Price');
 export const adTypeSchema = Joi.number().valid(...Object.keys(AdType).map(key => parseInt(key)).filter(key => !isNaN(key))).example(AdType.Free).label('AdType');
+export const responses = Joi.array().items(questsResponseSchema).label('responses');
 
 export const questSchema = Joi.object({
   id: questIdSchema,
@@ -56,6 +58,7 @@ export const questFullSchema = Joi.object({
   user: userSchema,
   medias: mediasSchema,
   reviews: reviewsSchema,
+  responses,
   createdAt: isoDateSchema,
   updatedAt: isoDateSchema,
 }).label("QuestFullSchema");
@@ -72,5 +75,8 @@ export const questsQuerySchema = Joi.object({
   priority: questPrioritySchema.default(null),
   status: questStatusSchema.default(null),
   sort: questsListSortSchema,
+  invited: Joi.boolean().default(false),
+  performing: Joi.boolean().default(false),
+  starred: Joi.boolean().default(false),
 }).label('QuestsQueryScheme');
 
