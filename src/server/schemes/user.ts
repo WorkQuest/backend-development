@@ -18,19 +18,19 @@ export const socialMediaNicknamesSchema = Joi.object({
   twitter: Joi.string().allow(null).label('Twitter'),
   linkedin: Joi.string().allow(null).label('Linkedin'),
   facebook: Joi.string().allow(null).label('Facebook'),
-});
+}).label('SocialMediaNicknames');
 
 export const knowledgeSchema = Joi.object({
   from: Joi.string().label('From'),
   to: Joi.string().label('To'),
   place: Joi.string().label('Place'),
-}).label('');
+}).label('Knowledge');
 
 export const workExperienceSchema = Joi.object({
   from: Joi.string().label('From'),
   to: Joi.string().label('To'),
   place: Joi.string().label('Place'),
-}).label('');
+}).label('WorkExperience');
 
 export const additionalInfoWorkerSchema = Joi.object({
   firstMobileNumber: Joi.string().allow(null).label('FirstMobileNumber'),
