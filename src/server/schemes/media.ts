@@ -18,3 +18,5 @@ export const mediaSchema = Joi.object({
   url: urlSchema,
   hash: mediaHashSchema,
 }).label('MediaScheme');
+
+export const mediaIdsSchema = Joi.array().items(mediaIdSchema).label('MediaIds')

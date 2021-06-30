@@ -15,7 +15,7 @@ export default [{
     validate: {
       payload: Joi.object({
         email: emailSchema.required()
-      }).label("RestorePasswordPayload")
+      }).label("SendCodeOnRestorePasswordPayload")
     },
     response: {
       schema: emptyOkSchema
@@ -34,7 +34,7 @@ export default [{
       payload: Joi.object({
         newPassword: passwordSchema.required(),
         token: hexTokenSchema.required()
-      }).label("RestorePasswordPayload")
+      }).label("SetPasswordPayload")
     },
     response: {
       schema: emptyOkSchema

@@ -3,8 +3,7 @@ import { Errors } from '../utils/errors';
 import { Quest, QuestStatus } from '../models/Quest';
 import { User, UserRole } from '../models/User';
 import { Op } from 'sequelize';
-import { Media } from '../models/Media';
-import { isMediaExists } from '../utils/storageService';
+import { getMedias } from "../utils/medias"
 import { transformToGeoPostGIS } from '../utils/quest';
 import { QuestsResponse, QuestsResponseStatus, QuestsResponseType } from '../models/QuestsResponse';
 import { StarredQuests } from '../models/StarredQuests';
@@ -13,27 +12,6 @@ export const searchFields = [
   "title",
   "description",
 ];
-
-async function getMedia(mediaId: string): Promise<Media> {
-  const media = await Media.findByPk(mediaId);
-  if (!media) {
-    throw error(Errors.NotFound, 'Media is not found', { mediaId })
-  }
-  if (!await isMediaExists(media)) {
-    throw error(Errors.InvalidPayload, 'Media is not exists', { mediaId: media.id });
-  }
-
-  return media;
-}
-
-async function getMedias(mediaIds: string[]) {
-  const medias = [];
-  for (const id of mediaIds) {
-    medias.push(await getMedia(id));
-  }
-
-  return medias;
-}
 
 async function answerWorkOnQuest(questId: string, worker: User, acceptWork: boolean) {
   const quest = await Quest.findByPk(questId);
