@@ -12,7 +12,7 @@ import { QuestPriority, AdType, QuestStatus } from '../models/Quest';
 import { userSchema } from './user';
 import { reviewSchema } from './review';
 import { questsResponseSchema } from "./questsResponse";
-import { mediaIdsSchema } from './media';
+import { mediasUrlOnlySchema } from './media';
 
 const userIdSchema = idSchema.label('UserId');
 const questIdSchema = idSchema.label('QuestId');
@@ -37,7 +37,7 @@ export const questSchema = Joi.object({
   description: descriptionSchema,
   price: priceSchema,
   adType: adTypeSchema,
-  medias: mediaIdsSchema,
+  medias: mediasUrlOnlySchema,
   reviews: reviewsSchema,
   createdAt: isoDateSchema,
   updatedAt: isoDateSchema,
@@ -55,7 +55,7 @@ export const questFullSchema = Joi.object({
   price: priceSchema,
   adType: adTypeSchema,
   user: userSchema,
-  medias: mediaIdsSchema,
+  medias: mediasUrlOnlySchema,
   reviews: reviewsSchema,
   responses,
   createdAt: isoDateSchema,
