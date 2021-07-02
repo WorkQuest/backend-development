@@ -1,10 +1,10 @@
 import * as Joi from "joi";
-import { error, handleValidationError, output } from '../utils';
-import { User, UserRole, UserStatus } from '../models/User';
-import { isMediaExists } from '../utils/storageService';
-import { Media } from '../models/Media';
-import { Errors } from '../utils/errors';
-import { additionalInfoEmployerSchema, additionalInfoWorkerSchema } from '../schemes/user';
+import { error, handleValidationError, output } from "../utils";
+import { getDefaultAdditionalInfo, User, UserRole, UserStatus } from "../models/User";
+import { isMediaExists } from "../utils/storageService";
+import { Media } from "../models/Media";
+import { Errors } from "../utils/errors";
+import { additionalInfoEmployerSchema, additionalInfoWorkerSchema } from "../schemes/user";
 
 function getAdditionalInfoSchema(role: UserRole): Joi.Schema {
   if (role === UserRole.Employer)
@@ -19,42 +19,15 @@ export async function getMe(r) {
 
 export async function setRole(r) {
   const user = await User.findByPk(r.auth.credentials.id);
-  let additionalInfo: object = {
-    firstMobileNumber: null,
-    secondMobileNumber: null,
-    address: null,
-    socialNetwork: {
-      instagram:  null,
-      twitter:  null,
-      linkedin:  null,
-      facebook:  null,
-    }
-  };
 
   if (user.status !== UserStatus.NeedSetRole || Object.values(UserRole).includes(user.role)) {
     return error(Errors.InvalidPayload, "User don't need to set role", {});
-  }
-  if (r.payload.role === UserRole.Worker) {
-    additionalInfo = {
-      ...additionalInfo,
-      description: null,
-      skills: [],
-      educations: [],
-      workExperiences: [],
-    };
-  } else if (r.payload.role === UserRole.Employer) {
-    additionalInfo = {
-      ...additionalInfo,
-      company: null,
-      CEO: null,
-      website: null,
-    }
   }
 
   await user.update({
     status: UserStatus.Confirmed,
     role: r.payload.role,
-    additionalInfo,
+    additionalInfo: getDefaultAdditionalInfo(r.payload.role)
   });
 
   return output();

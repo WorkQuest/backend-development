@@ -1,4 +1,4 @@
-import { User, UserStatus } from "../models/User";
+import { getDefaultAdditionalInfo, User, UserStatus } from "../models/User";
 import { Op } from "sequelize";
 import { error, getRandomHexToken, output } from "../utils";
 import { Errors } from "../utils/errors";
@@ -9,8 +9,8 @@ import { generateJwt } from "../utils/auth";
 import * as path from "path";
 import * as fs from "fs";
 import * as querystring from "querystring";
+import { RatingStatistic } from "../models/RatingStatistic";
 import Handlebars = require("handlebars");
-import { RatingStatistic } from '../models/RatingStatistic';
 
 const confirmTemplatePath = path.join(__dirname, "..", "..", "..", "templates", "confirmEmail.html");
 const confirmTemplate = Handlebars.compile(fs.readFileSync(confirmTemplatePath, {
@@ -121,7 +121,12 @@ export async function confirmEmail(r) {
 	});
 	if (!user) return output();
 
-	await user.update({ status: UserStatus.Confirmed, "settings.emailConfirm": null, role: r.payload.role });
+	await user.update({
+		status: UserStatus.Confirmed,
+		"settings.emailConfirm": null,
+		role: r.payload.role,
+		additionalInfo: getDefaultAdditionalInfo(r.payload.role)
+	});
 	return output();
 }
 

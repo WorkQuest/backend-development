@@ -1,22 +1,12 @@
-import {
-  BelongsTo,
-  Column,
-  DataType,
-  ForeignKey,
-  HasMany,
-  HasOne,
-  Model,
-  Scopes,
-  Table
-} from 'sequelize-typescript';
-import { error, getUUID } from '../utils';
+import { BelongsTo, Column, DataType, ForeignKey, HasMany, HasOne, Model, Scopes, Table } from "sequelize-typescript";
+import { error, getUUID } from "../utils";
 import * as bcrypt from "bcrypt";
-import { Media } from './Media';
-import { Session } from './Session';
-import { Errors } from '../utils/errors';
-import { Review } from './Review';
-import { RatingStatistic } from './RatingStatistic';
-import { StarredQuests } from './StarredQuests';
+import { Media } from "./Media";
+import { Session } from "./Session";
+import { Errors } from "../utils/errors";
+import { Review } from "./Review";
+import { RatingStatistic } from "./RatingStatistic";
+import { StarredQuests } from "./StarredQuests";
 
 export interface SocialInfo {
   id: string;
@@ -183,4 +173,37 @@ export class User extends Model {
       });
     }
   }
+}
+
+export function getDefaultAdditionalInfo(role: UserRole) {
+  let additionalInfo: object = {
+    firstMobileNumber: null,
+    secondMobileNumber: null,
+    address: null,
+    socialNetwork: {
+      instagram: null,
+      twitter: null,
+      linkedin: null,
+      facebook: null
+    }
+  };
+
+  if (role === UserRole.Worker) {
+    additionalInfo = {
+      ...additionalInfo,
+      description: null,
+      skills: [],
+      educations: [],
+      workExperiences: []
+    };
+  } else if (role === UserRole.Employer) {
+    additionalInfo = {
+      ...additionalInfo,
+      company: null,
+      CEO: null,
+      website: null
+    };
+  }
+
+  return additionalInfo;
 }
