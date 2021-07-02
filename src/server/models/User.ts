@@ -74,9 +74,23 @@ interface AdditionalInfo {
   socialNetwork: SocialMediaNicknames;
 }
 
+interface Knowledge {
+  from: string;
+  to: string;
+  place: string;
+}
+
+interface WorkExperience {
+  from: string;
+  to: string;
+  place: string;
+}
+
 export interface AdditionalInfoWorker extends AdditionalInfo {
   description: string | null;
   skills: string[];
+  educations: Knowledge[] | null;
+  workExperiences: WorkExperience[] | null;
 }
 
 export interface AdditionalInfoEmployer extends AdditionalInfo {

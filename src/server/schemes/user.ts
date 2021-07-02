@@ -18,16 +18,31 @@ export const socialMediaNicknamesSchema = Joi.object({
   twitter: Joi.string().allow(null).label('Twitter'),
   linkedin: Joi.string().allow(null).label('Linkedin'),
   facebook: Joi.string().allow(null).label('Facebook'),
-}).label('SocialMediaNicknames')
+}).label('SocialMediaNicknames');
+
+export const knowledgeSchema = Joi.object({
+  from: Joi.string().label('From'),
+  to: Joi.string().label('To'),
+  place: Joi.string().label('Place'),
+}).label('Knowledge');
+
+export const workExperienceSchema = Joi.object({
+  from: Joi.string().label('From'),
+  to: Joi.string().label('To'),
+  place: Joi.string().label('Place'),
+}).label('WorkExperience');
 
 export const additionalInfoWorkerSchema = Joi.object({
-  firstMobileNumber: Joi.string().allow(null).label("FirstMobileNumber"),
-  secondMobileNumber: Joi.string().allow(null).label("SecondMobileNumber"),
-  address: Joi.string().allow(null).label("Address"),
+  firstMobileNumber: Joi.string().allow(null).label('FirstMobileNumber'),
+  secondMobileNumber: Joi.string().allow(null).label('SecondMobileNumber'),
+  address: Joi.string().allow(null).label('Address'),
+  socialNetwork: socialMediaNicknamesSchema.label('SocialNetwork'),
+  skills: Joi.array().items(Joi.string()).default([]).label('Skills'),
+  educations: Joi.array().items(knowledgeSchema).default([]).label('Educations'),
+  workExperiences: Joi.array().items(workExperienceSchema).default([]).label('WorkExperiences')
   description: Joi.string().allow(null).label("Description"),
-  socialNetwork: socialMediaNicknamesSchema.label("SocialNetwork"),
-  skills: Joi.array().items(Joi.string()).label("Skills")
 }).label('AdditionalInfoWorker');
+
 
 export const additionalInfoEmployerSchema = Joi.object({
   firstMobileNumber: Joi.string().allow(null).label('FirstMobileNumber'),
