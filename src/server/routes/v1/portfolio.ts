@@ -1,11 +1,11 @@
 import * as Joi from "joi";
-import { emptyOkSchema, idSchema } from '../../schemes';
-import { descriptionSchema, portfolioSchema, titleSchema } from '../../schemes/portfolio';
-import { addCase, deleteCase, editCase, getCases } from '../../api/portfolio';
-import { mediasUrlOnlySchema } from '../../schemes/media';
+import { emptyOkSchema, idSchema } from "../../schemes";
+import { descriptionSchema, portfolioSchema, titleSchema } from "../../schemes/portfolio";
+import { addCase, deleteCase, editCase, getCases } from "../../api/portfolio";
+import { mediaIdsSchema } from "../../schemes/media";
 
 const userIdSchema = idSchema.label("UserId");
-const portfolioIdSchema = idSchema.label('PortfolioId');
+const portfolioIdSchema = idSchema.label("PortfolioId");
 
 export default [{
   method: "POST",
@@ -18,8 +18,8 @@ export default [{
     validate: {
       payload: Joi.object({
         title: titleSchema.required(),
-        description: descriptionSchema.default(''),
-        medias: mediasUrlOnlySchema.required().unique().label('Medias'),
+        description: descriptionSchema.default(""),
+        medias: mediaIdsSchema.required().unique().label("Medias")
       }).label('AddCasePayload')
     },
     response: {
@@ -58,7 +58,7 @@ export default [{
       payload: Joi.object({
         title: titleSchema,
         description: descriptionSchema,
-        medias: mediasUrlOnlySchema.unique().label('Medias'),
+        medias: mediaIdsSchema.unique().label("Medias")
       }).label('EditCasePayload')
     },
     response: {
