@@ -12,11 +12,10 @@ import { QuestPriority, AdType, QuestStatus } from '../models/Quest';
 import { userSchema } from './user';
 import { reviewSchema } from './review';
 import { questsResponseSchema } from "./questsResponse";
+import { mediasUrlOnlySchema } from './media';
 
 const userIdSchema = idSchema.label('UserId');
 const questIdSchema = idSchema.label('QuestId');
-const mediaIdSchema = idSchema.label('MediaId');
-const mediasSchema = Joi.array().items(mediaIdSchema).label('Medias');
 const reviewsSchema = Joi.array().items(reviewSchema).label('Reviews');
 export const categorySchema = Joi.string().example('Retail').label('Category');
 export const questStatusSchema = Joi.number().valid(...Object.keys(QuestStatus).map(key => parseInt(key)).filter(key => !isNaN(key))).example(QuestStatus.Created).label('Status');
@@ -38,7 +37,7 @@ export const questSchema = Joi.object({
   description: descriptionSchema,
   price: priceSchema,
   adType: adTypeSchema,
-  medias: mediasSchema,
+  medias: mediasUrlOnlySchema,
   reviews: reviewsSchema,
   createdAt: isoDateSchema,
   updatedAt: isoDateSchema,
@@ -56,7 +55,7 @@ export const questFullSchema = Joi.object({
   price: priceSchema,
   adType: adTypeSchema,
   user: userSchema,
-  medias: mediasSchema,
+  medias: mediasUrlOnlySchema,
   reviews: reviewsSchema,
   responses,
   createdAt: isoDateSchema,

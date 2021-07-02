@@ -7,6 +7,7 @@ import identityVerification from './sumsub'
 import storageService from './storageService';
 import review from './review';
 import restorePassword from './restorePassword';
+import portfolio from './portfolio';
 
 export default [
   ...profile,
@@ -18,4 +19,5 @@ export default [
   ...storageService,
   ...review,
   ...restorePassword,
+  ...portfolio
 ];

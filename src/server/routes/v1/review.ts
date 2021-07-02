@@ -20,7 +20,7 @@ export default [{
         questId: questIdSchema.required(),
         message: messageSchema.required(),
         mark: markSchema.required(),
-      })
+      }).label('ReviewSendPayload')
     },
     response: {
       schema: outputOkSchema(reviewSchema).label('ResponseReview')

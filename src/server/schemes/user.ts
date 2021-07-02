@@ -18,7 +18,7 @@ export const socialMediaNicknamesSchema = Joi.object({
   twitter: Joi.string().allow(null).label('Twitter'),
   linkedin: Joi.string().allow(null).label('Linkedin'),
   facebook: Joi.string().allow(null).label('Facebook'),
-});
+}).label('SocialMediaNicknames')
 
 export const additionalInfoWorkerSchema = Joi.object({
   firstMobileNumber: Joi.string().allow(null).label("FirstMobileNumber"),
@@ -27,7 +27,7 @@ export const additionalInfoWorkerSchema = Joi.object({
   description: Joi.string().allow(null).label("Description"),
   socialNetwork: socialMediaNicknamesSchema.label("SocialNetwork"),
   skills: Joi.array().items(Joi.string()).label("Skills")
-});
+}).label('AdditionalInfoWorker');
 
 export const additionalInfoEmployerSchema = Joi.object({
   firstMobileNumber: Joi.string().allow(null).label('FirstMobileNumber'),
@@ -37,7 +37,7 @@ export const additionalInfoEmployerSchema = Joi.object({
   company: Joi.string().allow(null).label('Company'),
   CEO: Joi.string().allow(null).label('CEO'),
   website: Joi.string().allow(null).label('Website'),
-});
+}).label('AdditionalInfoEmployer');
 
 export const userSchema = Joi.object({
   id: idSchema.label("UserId"),
