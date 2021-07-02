@@ -41,7 +41,8 @@ export const additionalInfoWorkerSchema = Joi.object({
   educations: Joi.array().items(knowledgeSchema).default([]).label('Educations'),
   workExperiences: Joi.array().items(workExperienceSchema).default([]).label('WorkExperiences')
   description: Joi.string().allow(null).label("Description"),
-});
+}).label('AdditionalInfoWorker');
+
 
 export const additionalInfoEmployerSchema = Joi.object({
   firstMobileNumber: Joi.string().allow(null).label('FirstMobileNumber'),
@@ -51,7 +52,7 @@ export const additionalInfoEmployerSchema = Joi.object({
   company: Joi.string().allow(null).label('Company'),
   CEO: Joi.string().allow(null).label('CEO'),
   website: Joi.string().allow(null).label('Website'),
-});
+}).label('AdditionalInfoEmployer');
 
 export const userSchema = Joi.object({
   id: idSchema.label("UserId"),

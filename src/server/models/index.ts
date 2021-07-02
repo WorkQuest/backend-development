@@ -8,6 +8,8 @@ import { QuestMedia } from "./QuestMedia";
 import { Review } from "./Review";
 import { RatingStatistic } from "./RatingStatistic";
 import { StarredQuests } from './StarredQuests';
+import { PortfolioMedia } from './PortfolioMedia';
+import { Portfolio } from './Portfolio';
 
 export async function initDatabase(dbLink: string, logging = false, sync = false) {
   const sequelize = new Sequelize(dbLink, {
@@ -21,7 +23,9 @@ export async function initDatabase(dbLink: string, logging = false, sync = false
       Media,
       QuestMedia,
       Review,
-      RatingStatistic, ]
+      RatingStatistic,
+      Portfolio,
+      PortfolioMedia, ]
   });
   if (sync)
     await sequelize.sync();
