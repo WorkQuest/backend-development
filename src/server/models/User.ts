@@ -102,7 +102,7 @@ export interface AdditionalInfoEmployer extends AdditionalInfo {
 @Scopes(() => ({
   defaultScope: {
     attributes: {
-      exclude: ["password", "avatarId", "settings", "createdAt", "updatedAt"]
+      exclude: ["password", "settings", "createdAt", "updatedAt"]
     },
     include: [{
       model: Media.scope('urlOnly'),

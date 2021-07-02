@@ -39,7 +39,7 @@ export const additionalInfoWorkerSchema = Joi.object({
   socialNetwork: socialMediaNicknamesSchema.label('SocialNetwork'),
   skills: Joi.array().items(Joi.string()).default([]).label('Skills'),
   educations: Joi.array().items(knowledgeSchema).default([]).label('Educations'),
-  workExperiences: Joi.array().items(workExperienceSchema).default([]).label('WorkExperiences')
+  workExperiences: Joi.array().items(workExperienceSchema).default([]).label('WorkExperiences'),
   description: Joi.string().allow(null).label("Description"),
 }).label('AdditionalInfoWorker');
 
