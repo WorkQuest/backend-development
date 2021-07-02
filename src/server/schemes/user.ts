@@ -1,11 +1,11 @@
 import * as Joi from "joi";
-import { idSchema, isoDateSchema } from './index';
-import { mediaUrlOnlySchema } from './media';
+import { idSchema, isoDateSchema } from "./index";
+import { mediaUrlOnlySchema } from "./media";
 import { UserRole } from "../models/User";
-import { reviewSchema } from './review';
-import { ratingStatisticSchema } from './ratingStatistic';
+import { reviewSchema } from "./review";
+import { ratingStatisticSchema } from "./ratingStatistic";
 
-const reviewsSchema = Joi.array().items(reviewSchema).label('Reviews');
+const reviewsSchema = Joi.array().items(reviewSchema).label("Reviews");
 
 export const emailSchema = Joi.string().email().max(1000).example("user@example.com").label("UserEmail");
 export const passwordSchema = Joi.string().min(8).max(1000).example("p@ssw0rd").label("UserPassword");
@@ -36,11 +36,11 @@ export const additionalInfoWorkerSchema = Joi.object({
   firstMobileNumber: Joi.string().allow(null).label('FirstMobileNumber'),
   secondMobileNumber: Joi.string().allow(null).label('SecondMobileNumber'),
   address: Joi.string().allow(null).label('Address'),
-  description: Joi.string().label('Description'),
   socialNetwork: socialMediaNicknamesSchema.label('SocialNetwork'),
-  skills: Joi.array().items(Joi.string()).label('Skills'),
-  educations: Joi.array().items(knowledgeSchema).label('Educations'),
-  workExperiences: Joi.array().items(workExperienceSchema).label('WorkExperiences')
+  skills: Joi.array().items(Joi.string()).default([]).label('Skills'),
+  educations: Joi.array().items(knowledgeSchema).default([]).label('Educations'),
+  workExperiences: Joi.array().items(workExperienceSchema).default([]).label('WorkExperiences')
+  description: Joi.string().allow(null).label("Description"),
 });
 
 export const additionalInfoEmployerSchema = Joi.object({

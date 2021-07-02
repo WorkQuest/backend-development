@@ -136,6 +136,13 @@ jobs:
             TWITTER_SECRET_KEY=${{ secrets.TWITTER_SECRET_KEY }} \
             TWITTER_COOKIE_PASSWORD=${{ secrets.TWITTER_COOKIE_PASSWORD }} \
 
+            CDN_ACCESS_KEY_ID=${{ secrets.CDN_ACCESS_KEY_ID }} \
+            CDN_SECRET_ACCESS_KEY=${{ secrets.CDN_SECRET_ACCESS_KEY }} \
+            CDN_END_POINT=${{ secrets.CDN_END_POINT }} \
+            CDN_BUCKET=${{ secrets.CDN_BUCKET }} \
+            CDN_PUB_END_POINT=${{ secrets.CDN_PUB_END_POINT }} \
+            CDN_EXPIRES_IN=${{ secrets.CDN_EXPIRES_IN }} \
+
             SUMSUB_APP_TOKEN=${{ secrets.SUMSUB_APP_TOKEN }} \
             SUMSUB_SECRET_KEY=${{ secrets.SUMSUB_SECRET_KEY }} \
             SUMSUB_BASE_URL=${{ secrets.SUMSUB_BASE_URL }} \
