@@ -3,17 +3,16 @@ import { getUUID, output } from '../utils';
 import { addSendEmailJob } from '../jobs/sendEmail';
 
 export async function enableTOTP(r) {
-  // const user = await User.scope('withPassword').findByPk(r.auth.credentials.id);
   const user = r.auth.credentials;
 
-  user.mustHaveTOTP(true);
+  user.mustHaveActiveStatusTOTP(false);
 
   const { base32 } = speakeasy.generateSecret({ length: 10, name: 'WorkQuest' });
   const confirmCode = getUUID().substr(0, 6).toUpperCase();
   const confirmLink = ''; // TODO
 
   await user.update( {
-    "settings.security.confirmCodeOnEmailTOTP": confirmCode,
+    "settings.security.TOTP.confirmCode": confirmCode,
     "settings.security.TOTP": {
       secret: base32
     }
@@ -32,12 +31,14 @@ export async function enableTOTP(r) {
 export async function confirmEnablingTOPS(r) {
   const user = r.auth.credentials;
 
-  if (user.security.confirmCodeOnEmailTOTP !== r.payload.confirmCode) {
+  user.mustHaveActiveStatusTOTP(true);
+
+  if (user.security.TOTP.confirmCode !== r.payload.confirmCode) {
     return output();
   }
 
   await user.update({
-    "settings.security.confirmCodeOnEmailTOTP": null,
+    "settings.security.TOTP.confirmCode": null,
     "settings.security.TOTP.active": true,
   });
 
@@ -45,6 +46,11 @@ export async function confirmEnablingTOPS(r) {
 }
 
 export async function disableTOTP(r) {
+  const user = r.auth.credentials;
+
+  user.mustHaveActiveStatusTOTP(true);
+  user.validateTOTP(r.payload.totp);
+
   await r.auth.credentials.update({
     "settings.security.TOTP.active": false,
     "settings.security.TOTP.secret": null,
