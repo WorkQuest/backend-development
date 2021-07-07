@@ -22,16 +22,34 @@ export interface UserSocialSettings {
   linkedin?: SocialInfo;
 }
 
+export interface TOTP {
+  active: boolean;
+  secret: string | null;
+}
+
+export interface Security {
+  confirmCodeOnEmailTOTP: string | null;
+  TOTP: TOTP;
+}
+
 interface UserSettings {
   restorePassword: string | null;
   emailConfirm: string | null;
   social: UserSocialSettings;
+  security: Security;
 }
 
 const defaultUserSettings: UserSettings = {
   restorePassword: null,
   emailConfirm: null,
   social: {},
+  security: {
+    confirmCodeOnEmailTOTP: null,
+    TOTP: {
+      active: false,
+      secret: null,
+    }
+  }
 }
 
 export enum UserStatus {
@@ -171,6 +189,12 @@ export class User extends Model {
         current: this.role,
         mustHave: role
       });
+    }
+  }
+
+  mustHaveTOTP(active: boolean) {
+    if (!this.settings.security.TOTP.active !== active) {
+      throw error(Errors.TotpAlreadyActive, "TOTP already active", {});
     }
   }
 }

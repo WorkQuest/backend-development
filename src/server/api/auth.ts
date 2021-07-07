@@ -119,6 +119,7 @@ export async function confirmEmail(r) {
 			"settings.emailConfirm": { [Op.iLike]: r.payload.confirmCode }
 		}
 	});
+
 	if (!user) return output();
 
 	await user.update({
@@ -127,6 +128,7 @@ export async function confirmEmail(r) {
 		role: r.payload.role,
 		additionalInfo: getDefaultAdditionalInfo(r.payload.role)
 	});
+
 	return output();
 }
 
@@ -138,6 +140,7 @@ export async function login(r) {
 			}
 		}
 	});
+
 	if (!user) return error(Errors.NotFound, "User not found", {});
 	if (!(await user.passwordCompare(r.payload.password))) return error(Errors.NotFound, "User not found", {});
 
