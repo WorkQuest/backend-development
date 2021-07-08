@@ -1,6 +1,7 @@
 import * as speakeasy from "speakeasy";
-import { getUUID, output } from '../utils';
+import { error, getUUID, output } from '../utils';
 import { addSendEmailJob } from '../jobs/sendEmail';
+import { Errors } from '../utils/errors';
 
 export async function enableTOTP(r) {
   const user = r.auth.credentials;
@@ -9,7 +10,6 @@ export async function enableTOTP(r) {
 
   const { base32 } = speakeasy.generateSecret({ length: 10, name: 'WorkQuest' });
   const confirmCode = getUUID().substr(0, 6).toUpperCase();
-  const confirmLink = ''; // TODO
 
   await user.update( {
     "settings.security.TOTP.confirmCode": confirmCode,
@@ -20,21 +20,21 @@ export async function enableTOTP(r) {
 
   await addSendEmailJob({
     email: user.email,
-    text: `Код подтверждения Google Authenticator: ${confirmCode}`,
-    subject: 'Подтверждение Google Authenticator',
+    text: `Confirmation code Google Authenticator: ${confirmCode}`,
+    subject: 'Confirmation Google Authenticator',
     html: ''
   });
 
   return output(base32);
 }
 
-export async function confirmEnablingTOPS(r) {
+export async function confirmEnablingTOTP(r) {
   const user = r.auth.credentials;
 
-  user.mustHaveActiveStatusTOTP(true);
+  user.mustHaveActiveStatusTOTP(false);
 
   if (user.security.TOTP.confirmCode !== r.payload.confirmCode) {
-    return output();
+    return error(Errors.Forbidden, "Confirmation code is not correct", {});
   }
 
   await user.update({

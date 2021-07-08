@@ -1,4 +1,4 @@
-import { disableTOTP, enableTOTP, confirmEnablingTOPS } from '../../api/totp';
+import { disableTOTP, enableTOTP, confirmEnablingTOTP } from '../../api/totp';
 import { emptyOkSchema, outputOkSchema, totpSchema } from '../../schemes';
 
 export default [{
@@ -10,7 +10,7 @@ export default [{
     tags: ["api", "TOTP"],
     description: "Enable 2FA",
     response: {
-      schema: outputOkSchema(totpSchema).label("EnableTotpPayload")
+      schema: outputOkSchema(totpSchema).label("EnableTotpResponse")
     }
   }
 }, {
@@ -27,10 +27,10 @@ export default [{
   }
 }, {
   method: "POST",
-  path: "/v1/totp/confirm-enabling",
-  handler: confirmEnablingTOPS,
+  path: "/v1/totp/confirm",
+  handler: confirmEnablingTOTP,
   options: {
-    id: "v1.totp.confirmEnabling",
+    id: "v1.totp.confirm",
     tags: ["api", "TOTP"],
     description: "confirm enabling 2FA",
     response: {

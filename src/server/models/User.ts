@@ -201,7 +201,7 @@ export class User extends Model {
 
   validateTOTP(TOTP: string) {
     if (!totpValidate(TOTP, this.settings.security.TOTP.secret)) {
-      throw error(Errors.InvalidValidateTOTP, "Invalid validate TOTP", {});
+      throw error(Errors.Forbidden, "Invalid validate TOTP", {});
     }
   }
 }
