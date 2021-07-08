@@ -3,6 +3,13 @@ import { error, getUUID, output } from '../utils';
 import { addSendEmailJob } from '../jobs/sendEmail';
 import { Errors } from '../utils/errors';
 import { User } from '../models/User';
+import * as path from "path";
+import * as fs from "fs";
+
+const confirmTemplatePath = path.join(__dirname, "..", "..", "..", "templates", "confirm2FA.html");
+const confirmTemplate = Handlebars.compile(fs.readFileSync(confirmTemplatePath, {
+  encoding: "utf-8"
+}));
 
 export async function enableTOTP(r) {
   const user = await User.scope('withPassword').findByPk(r.auth.credentials.id);
@@ -11,17 +18,19 @@ export async function enableTOTP(r) {
 
   const { base32 } = speakeasy.generateSecret({ length: 10, name: 'WorkQuest' });
   const confirmCode = getUUID().substr(0, 6).toUpperCase();
+  const emailHtml = confirmTemplate({ confirmCode });
 
   await user.update( {
     "settings.security.TOTP.confirmCode": confirmCode,
     "settings.security.TOTP.secret": base32,
   });
 
+
   await addSendEmailJob({
     email: user.email,
     text: `Confirmation code Google Authenticator: ${confirmCode}`,
     subject: 'Confirmation Google Authenticator',
-    html: ''
+    html: emailHtml
   });
 
   return output(base32);
