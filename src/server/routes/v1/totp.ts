@@ -1,5 +1,6 @@
+import * as Joi from 'joi';
 import { disableTOTP, enableTOTP, confirmEnablingTOTP } from '../../api/totp';
-import { emptyOkSchema, outputOkSchema, totpSchema } from '../../schemes';
+import { emptyOkSchema, hexTokenSchema, outputOkSchema, totpSchema } from '../../schemes';
 
 export default [{
   method: "POST",
@@ -21,6 +22,11 @@ export default [{
     id: "v1.totp.disable",
     tags: ["api", "TOTP"],
     description: "Disable 2FA",
+    validate: {
+      payload: Joi.object({
+        totp: totpSchema.required()
+      }).label("DisableTotpPayload")
+    },
     response: {
       schema: emptyOkSchema
     }
@@ -33,6 +39,11 @@ export default [{
     id: "v1.totp.confirm",
     tags: ["api", "TOTP"],
     description: "confirm enabling 2FA",
+    validate: {
+      payload: Joi.object({
+        confirmCode: hexTokenSchema.required(),
+      }).label("ConfirmTotpPayload"),
+    },
     response: {
       schema: emptyOkSchema
     }

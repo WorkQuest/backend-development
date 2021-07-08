@@ -39,7 +39,7 @@ interface UserSettings {
   security: Security;
 }
 
-const defaultUserSettings: UserSettings = {
+export const defaultUserSettings: UserSettings = {
   restorePassword: null,
   emailConfirm: null,
   social: {},
@@ -193,7 +193,7 @@ export class User extends Model {
   }
 
   mustHaveActiveStatusTOTP(activeStatus: boolean) {
-    if (!this.settings.security.TOTP.active !== activeStatus) {
+    if (this.settings.security.TOTP.active !== activeStatus) {
       throw error(Errors.InvalidActiveStatusTOTP,
         `Active status TOTP is not ${activeStatus ? "enable" : "disable"}`, {});
     }

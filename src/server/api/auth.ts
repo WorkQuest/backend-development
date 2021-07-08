@@ -1,4 +1,4 @@
-import { getDefaultAdditionalInfo, User, UserStatus } from "../models/User";
+import { defaultUserSettings, getDefaultAdditionalInfo, User, UserStatus } from '../models/User';
 import { Op } from "sequelize";
 import { error, getRandomHexToken, output } from "../utils";
 import { Errors } from "../utils/errors";
@@ -76,6 +76,7 @@ export async function register(r) {
 		firstName: r.payload.firstName,
 		lastName: r.payload.lastName,
 		settings: {
+			...defaultUserSettings,
 			emailConfirm: emailConfirmCode
 		}
 	});
