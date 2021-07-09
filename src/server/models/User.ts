@@ -1,5 +1,5 @@
 import { BelongsTo, Column, DataType, ForeignKey, HasMany, HasOne, Model, Scopes, Table } from "sequelize-typescript";
-import { error, getUUID } from "../utils";
+import { error, getUUID, totpValidate } from '../utils';
 import * as bcrypt from "bcrypt";
 import { Media } from "./Media";
 import { Session } from "./Session";
@@ -22,16 +22,34 @@ export interface UserSocialSettings {
   linkedin?: SocialInfo;
 }
 
+export interface TOTP {
+  confirmCode: string | null;
+  active: boolean;
+  secret: string | null;
+}
+
+export interface Security {
+  TOTP: TOTP;
+}
+
 interface UserSettings {
   restorePassword: string | null;
   emailConfirm: string | null;
   social: UserSocialSettings;
+  security: Security;
 }
 
-const defaultUserSettings: UserSettings = {
+export const defaultUserSettings: UserSettings = {
   restorePassword: null,
   emailConfirm: null,
   social: {},
+  security: {
+    TOTP: {
+      confirmCode: null,
+      active: false,
+      secret: null,
+    }
+  }
 }
 
 export enum UserStatus {
@@ -171,6 +189,19 @@ export class User extends Model {
         current: this.role,
         mustHave: role
       });
+    }
+  }
+
+  mustHaveActiveStatusTOTP(activeStatus: boolean) {
+    if (this.settings.security.TOTP.active !== activeStatus) {
+      throw error(Errors.InvalidActiveStatusTOTP,
+        `Active status TOTP is not ${activeStatus ? "enable" : "disable"}`, {});
+    }
+  }
+
+  validateTOTP(TOTP: string) {
+    if (!totpValidate(TOTP, this.settings.security.TOTP.secret)) {
+      throw error(Errors.Forbidden, "Invalid validate TOTP", {});
     }
   }
 }

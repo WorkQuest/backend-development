@@ -1,7 +1,7 @@
 import * as Joi from "joi";
 import { confirmEmail, getLoginViaSocialNetworkHandler, login, refreshTokens, register } from "../../api/auth";
 import { emailSchema, firstNameSchema, lastNameSchema, passwordSchema, userRoleSchema } from "../../schemes/user";
-import { emptyOkSchema, hexTokenSchema, jwtTokens, outputOkSchema, tokensWithStatus } from "../../schemes";
+import { emptyOkSchema, hexTokenSchema, jwtTokens, outputOkSchema, tokensWithStatus, totpSchema } from '../../schemes';
 
 export default [{
   method: "POST",
@@ -55,7 +55,8 @@ export default [{
     validate: {
       payload: Joi.object({
         email: emailSchema.required(),
-        password: passwordSchema.required()
+        password: passwordSchema.required(),
+        totp: totpSchema
       }).label("AuthLoginPayload")
     },
     response: {

@@ -8,6 +8,8 @@ export enum Errors {
   KYCAlreadyVerified = 400005,
   KYCRequired = 400006,
   InvalidEmail = 400005,
+  InvalidActiveStatusTOTP = 400006,
+  InvalidTOTP = 400007,
   // Authorization errors (401)
   TokenExpired = 401001,
   TokenInvalid = 401002,
