@@ -2,6 +2,13 @@ import { User } from "../models/User";
 import { getRandomHexToken, output } from "../utils";
 import { addSendEmailJob } from "../jobs/sendEmail";
 import config from "../config/config";
+import * as path from "path";
+import * as fs from "fs";
+
+const confirmTemplatePath = path.join(__dirname, "..", "..", "..", "templates", "resetPasswordConfirmation.html");
+const confirmTemplate = Handlebars.compile(fs.readFileSync(confirmTemplatePath, {
+  encoding: "utf-8"
+}));
 
 export async function sendCodeForRestorePassword(r) {
   const user = await User.findWithEmail(r.payload.email);
@@ -10,12 +17,14 @@ export async function sendCodeForRestorePassword(r) {
     const emailRestorePasswordCode = getRandomHexToken();
     const emailRestorePasswordLink = `${config.baseUrl}/restore-password/set-password/?token=${emailRestorePasswordCode}`;
 
+    const emailHtml = confirmTemplate({ confirmLink: emailRestorePasswordLink });
     await addSendEmailJob({
       email: r.payload.email,
-      text: 'Change password. Follow this link ' + emailRestorePasswordLink,
-      subject: 'Work Quest',
-      html: `<p>Восстановление пароля: ${emailRestorePasswordLink}</p>`,
+      subject: "Work Quest | Reset password confirmation",
+      text: `Change password. Follow this link ${emailRestorePasswordLink}`,
+      html: emailHtml
     });
+
     await user.update({ settings: { ...user.settings, restorePassword: emailRestorePasswordCode } });
   }
 
