@@ -4,6 +4,7 @@ import { addSendEmailJob } from "../jobs/sendEmail";
 import config from "../config/config";
 import * as path from "path";
 import * as fs from "fs";
+import Handlebars = require("handlebars");
 
 const confirmTemplatePath = path.join(__dirname, "..", "..", "..", "templates", "resetPasswordConfirmation.html");
 const confirmTemplate = Handlebars.compile(fs.readFileSync(confirmTemplatePath, {
