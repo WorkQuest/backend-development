@@ -49,6 +49,7 @@ export const additionalInfoEmployerSchema = Joi.object({
   secondMobileNumber: Joi.string().allow(null).label('SecondMobileNumber'),
   address: Joi.string().allow(null).label('Address'),
   socialNetwork: socialMediaNicknamesSchema.label('SocialNetwork'),
+  description: Joi.string().allow(null).label("Description"),
   company: Joi.string().allow(null).label('Company'),
   CEO: Joi.string().allow(null).label('CEO'),
   website: Joi.string().allow(null).label('Website'),

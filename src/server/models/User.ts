@@ -76,6 +76,7 @@ interface SocialMediaNicknames {
 }
 
 interface AdditionalInfo {
+  description: string | null;
   firstMobileNumber: string | null;
   secondMobileNumber: string | null;
   address: string | null;
@@ -95,7 +96,6 @@ interface WorkExperience {
 }
 
 export interface AdditionalInfoWorker extends AdditionalInfo {
-  description: string | null;
   skills: string[];
   educations: Knowledge[] | null;
   workExperiences: WorkExperience[] | null;
@@ -208,6 +208,7 @@ export class User extends Model {
 
 export function getDefaultAdditionalInfo(role: UserRole) {
   let additionalInfo: object = {
+    description: null,
     firstMobileNumber: null,
     secondMobileNumber: null,
     address: null,
@@ -222,7 +223,6 @@ export function getDefaultAdditionalInfo(role: UserRole) {
   if (role === UserRole.Worker) {
     additionalInfo = {
       ...additionalInfo,
-      description: null,
       skills: [],
       educations: [],
       workExperiences: []
