@@ -10,6 +10,7 @@ export enum Errors {
   InvalidEmail = 400005,
   InvalidActiveStatusTOTP = 400006,
   InvalidTOTP = 400007,
+  UserAlreadyConfirmed = 400008,
   // Authorization errors (401)
   TokenExpired = 401001,
   TokenInvalid = 401002,
