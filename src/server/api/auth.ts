@@ -117,7 +117,7 @@ export function getLoginViaSocialNetworkHandler(returnType: "token" | "redirect"
 export async function confirmEmail(r) {
 	const user = await User.scope("withPassword").findByPk(r.auth.credentials.id);
 
-	if (user.settings.emailConfirm !== r.payload.confirmCode)
+	if (user.settings.emailConfirm.toLowerCase() !== r.payload.confirmCode.toLowerCase())
 		return error(Errors.InvalidPayload, "Invalid confirmation code", [{ field: "confirmCode", reason: "invalid" }]);
 	// If user sets role on confirm
 	if (r.payload.role) {
