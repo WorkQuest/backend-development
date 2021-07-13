@@ -30,7 +30,7 @@ export async function enableTOTP(r) {
   await addSendEmailJob({
     email: user.email,
     text: `Confirmation code Google Authenticator: ${confirmCode}`,
-    subject: 'Confirmation Google Authenticator',
+    subject: "WorkQuest | Google Authenticator confirmation",
     html: emailHtml
   });
 

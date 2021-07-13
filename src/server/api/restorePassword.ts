@@ -16,7 +16,7 @@ export async function sendCodeForRestorePassword(r) {
 
   if (user) {
     const emailRestorePasswordCode = getRandomHexToken();
-    const emailRestorePasswordLink = `${config.baseUrl}/restore-password/set-password/?token=${emailRestorePasswordCode}`;
+    const emailRestorePasswordLink = `${config.baseUrl}/restore?token=${emailRestorePasswordCode}`;
 
     const emailHtml = confirmTemplate({ confirmLink: emailRestorePasswordLink });
     await addSendEmailJob({

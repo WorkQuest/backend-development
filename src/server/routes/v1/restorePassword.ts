@@ -1,6 +1,6 @@
 import * as Joi from "joi";
 import { emailSchema, passwordSchema } from "../../schemes/user";
-import { emptyOkSchema, hexTokenSchema } from "../../schemes";
+import { emptyOkSchema, longHexTokenSchema } from "../../schemes";
 import { sendCodeForRestorePassword, setNewPassword } from "../../api/restorePassword";
 
 export default [{
@@ -33,7 +33,7 @@ export default [{
     validate: {
       payload: Joi.object({
         newPassword: passwordSchema.required(),
-        token: hexTokenSchema.required()
+        token: longHexTokenSchema.required()
       }).label("SetPasswordPayload")
     },
     response: {
