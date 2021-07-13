@@ -1,4 +1,4 @@
-import { defaultUserSettings, getDefaultAdditionalInfo, User, UserStatus } from '../models/User';
+import { defaultUserSettings, getDefaultAdditionalInfo, User, UserStatus } from "../models/User";
 import { Op } from "sequelize";
 import { error, getRandomHexToken, output } from "../utils";
 import { Errors } from "../utils/errors";
@@ -122,15 +122,22 @@ export async function confirmEmail(r) {
 	});
 
 	if (!user) return output();
+	// If user sets role on confirm
+	if (r.payload.role) {
+		await user.update({
+			status: UserStatus.Confirmed,
+			"settings.emailConfirm": null,
+			role: r.payload.role,
+			additionalInfo: getDefaultAdditionalInfo(r.payload.role)
+		});
+	} else {
+		await user.update({
+			status: UserStatus.NeedSetRole,
+			"settings.emailConfirm": null
+		});
+	}
 
-	await user.update({
-		status: UserStatus.Confirmed,
-		"settings.emailConfirm": null,
-		role: r.payload.role,
-		additionalInfo: getDefaultAdditionalInfo(r.payload.role)
-	});
-
-	return output();
+	return output({ status: user.status });
 }
 
 export async function login(r) {

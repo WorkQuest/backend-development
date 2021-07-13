@@ -1,7 +1,15 @@
 import * as Joi from "joi";
 import { confirmEmail, getLoginViaSocialNetworkHandler, login, refreshTokens, register } from "../../api/auth";
 import { emailSchema, firstNameSchema, lastNameSchema, passwordSchema, userRoleSchema } from "../../schemes/user";
-import { emptyOkSchema, hexTokenSchema, jwtTokens, outputOkSchema, tokensWithStatus, totpSchema } from '../../schemes';
+import {
+  accountStatusSchema,
+  emptyOkSchema,
+  hexTokenSchema,
+  jwtTokens,
+  outputOkSchema,
+  tokensWithStatus,
+  totpSchema
+} from "../../schemes";
 
 export default [{
   method: "POST",
@@ -36,11 +44,13 @@ export default [{
     validate: {
       payload: Joi.object({
         confirmCode: hexTokenSchema.required(),
-        role: userRoleSchema.required()
+        role: userRoleSchema
       }).label("AuthConfirmEmailPayload")
     },
     response: {
-      schema: emptyOkSchema
+      schema: outputOkSchema(Joi.object({
+        status: accountStatusSchema
+      }).label("AuthConfirmEmailResult")).label("AuthConfirmEmailResponse")
     }
   }
 }, {

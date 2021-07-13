@@ -20,7 +20,7 @@ export async function getMe(r) {
 export async function setRole(r) {
   const user = await User.findByPk(r.auth.credentials.id);
 
-  if (user.status !== UserStatus.NeedSetRole || Object.values(UserRole).includes(user.role)) {
+  if (user.status !== UserStatus.NeedSetRole) {
     return error(Errors.InvalidPayload, "User don't need to set role", {});
   }
 
