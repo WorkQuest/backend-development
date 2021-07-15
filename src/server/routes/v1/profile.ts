@@ -1,5 +1,12 @@
 import * as Joi from "joi";
-import { changePassword, editProfile, getMe, setRole } from "../../api/profile";
+import {
+  changePassword,
+  confirmPhoneNumber,
+  editProfile,
+  getMe,
+  sendCodeOnPhoneNumber,
+  setRole
+} from '../../api/profile';
 import { emptyOkSchema, idSchema, outputOkSchema } from "../../schemes";
 import {
   additionalInfoEmployerSchema,
@@ -76,6 +83,40 @@ export default [{
         oldPassword: passwordSchema.required(),
         newPassword: passwordSchema.required()
       }).label("ChangePasswordPayload")
+    },
+    response: {
+      schema: emptyOkSchema
+    }
+  }
+}, {
+  method: "POST",
+  path: "/v1/profile/phone/confirm",
+  handler: confirmPhoneNumber,
+  options: {
+    id: "v1.profile.phone.confirm",
+    tags: ["api", "profile"],
+    description: "Confirm phone number",
+    validate: {
+      payload: Joi.object({
+        confirmCode: Joi.number().required().label('ConfirmCode')
+      }).label('PhoneConfirmPayload')
+    },
+    response: {
+      schema: emptyOkSchema
+    }
+  }
+}, {
+  method: "POST",
+  path: "/v1/profile/phone/send-code",
+  handler: sendCodeOnPhoneNumber,
+  options: {
+    id: "v1.profile.phone.sendCode",
+    tags: ["api", "profile"],
+    description: "Send code for confirm phone number",
+    validate: {
+      payload: Joi.object({
+        phoneNumber: Joi.string().required().label('PhoneNumber'),
+      }).label('PhoneSendCodePayload')
     },
     response: {
       schema: emptyOkSchema

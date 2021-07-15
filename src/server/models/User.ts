@@ -35,6 +35,7 @@ export interface Security {
 interface UserSettings {
   restorePassword: string | null;
   emailConfirm: string | null;
+  phoneConfirm: string | null;
   social: UserSocialSettings;
   security: Security;
 }
@@ -42,6 +43,7 @@ interface UserSettings {
 export const defaultUserSettings: UserSettings = {
   restorePassword: null,
   emailConfirm: null,
+  phoneConfirm: null,
   social: {},
   security: {
     TOTP: {
@@ -110,7 +112,7 @@ export interface AdditionalInfoEmployer extends AdditionalInfo {
 @Scopes(() => ({
   defaultScope: {
     attributes: {
-      exclude: ["password", "settings", "createdAt", "updatedAt"]
+      exclude: ["password", "settings", "tempPhone", "createdAt", "updatedAt"]
     },
     include: [{
       model: Media.scope('urlOnly'),
@@ -122,7 +124,7 @@ export interface AdditionalInfoEmployer extends AdditionalInfo {
   },
   withPassword: {
     attributes: {
-      include: ["password", "settings"]
+      include: ["password", "settings", "tempPhone"]
     }
   }
 }))
@@ -157,6 +159,9 @@ export class User extends Model {
   @Column({ type: DataType.JSONB, defaultValue: defaultUserSettings }) settings: UserSettings;
   @Column({ type: DataType.INTEGER, defaultValue: UserStatus.Unconfirmed }) status: UserStatus;
   @Column({ type: DataType.INTEGER, defaultValue: StatusKYC.Unconfirmed }) statusKYC: StatusKYC;
+
+  @Column({type: DataType.STRING, defaultValue: null}) tempPhone: string;
+  @Column({type: DataType.STRING, defaultValue: null}) phone: string;
 
   @BelongsTo(() => Media,{ constraints: false, foreignKey: 'avatarId' }) avatar: Media;
 

@@ -79,6 +79,10 @@ export function getRandomHexToken(): string {
   return crypto.randomBytes(20).toString("hex");
 }
 
+export function getRandomCodeNumber(): number {
+  return crypto.randomInt(100000, 999999);
+}
+
 export async function handleValidationError(r, h, err) {
   return error(400000, "Validation error", err.details.map(e => {
       return { field: e.context.key, reason: e.type.replace("any.", "") };

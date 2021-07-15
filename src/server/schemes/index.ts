@@ -41,7 +41,7 @@ export const locationSchema = Joi.object({
 
 export const emptyOkSchema = Joi.object({
   ok: Joi.boolean().example(true)
-}).label("EmptyOkResponse");
+}).label("EmptyOkResponАsleepse");
 
 export const jwtTokens = Joi.object({
   access: jwtTokenAccess,

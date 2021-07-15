@@ -45,6 +45,11 @@ export default {
     baseURL: process.env.SUMSUB_BASE_URL,
     accessTokenTTL: process.env.SUMSUB_ACCESS_TOKEN_TTL,
   },
+  twilio: {
+    accountSid: process.env.TWILIO_ACCOUNT_SID,
+    authToken: process.env.TWILIO_AUTH_TOKEN,
+    phoneNumberSender: process.env.TWILIO_PHONE_NUMBER_SENDER
+  },
   socialNetworks: {
     facebook: {
       id: process.env.FACEBOOK_CLIENT_ID,
