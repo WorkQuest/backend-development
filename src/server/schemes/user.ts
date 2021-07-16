@@ -33,7 +33,6 @@ export const workExperienceSchema = Joi.object({
 }).label('WorkExperience');
 
 export const additionalInfoWorkerSchema = Joi.object({
-  firstMobileNumber: Joi.string().allow(null).label('FirstMobileNumber'),
   secondMobileNumber: Joi.string().allow(null).label('SecondMobileNumber'),
   address: Joi.string().allow(null).label('Address'),
   socialNetwork: socialMediaNicknamesSchema.label('SocialNetwork'),
@@ -43,9 +42,7 @@ export const additionalInfoWorkerSchema = Joi.object({
   description: Joi.string().allow(null).label("Description"),
 }).label('AdditionalInfoWorker');
 
-
 export const additionalInfoEmployerSchema = Joi.object({
-  firstMobileNumber: Joi.string().allow(null).label('FirstMobileNumber'),
   secondMobileNumber: Joi.string().allow(null).label('SecondMobileNumber'),
   address: Joi.string().allow(null).label('Address'),
   socialNetwork: socialMediaNicknamesSchema.label('SocialNetwork'),
