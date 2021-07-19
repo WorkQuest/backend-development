@@ -12,6 +12,8 @@ export const passwordSchema = Joi.string().min(8).max(1000).example("p@ssw0rd").
 export const firstNameSchema = Joi.string().min(1).max(1000).example("ivan").label("UserFirstName");
 export const lastNameSchema = Joi.string().min(1).max(1000).example("ivanov").label("UserLastName");
 export const userRoleSchema = Joi.string().valid(...Object.values(UserRole)).example(UserRole.Worker).label("UserRole");
+export const phoneSchema = Joi.string().example('+79991234567').label("Phone");
+export const tempPhoneSchema = Joi.string().example('+79991234567').label("TempPhone");
 
 export const socialMediaNicknamesSchema = Joi.object({
   instagram: Joi.string().allow(null).label('Instagram'),
@@ -57,6 +59,8 @@ export const userSchema = Joi.object({
   avatarId: idSchema.label('AvatarId'),
   firstName: firstNameSchema,
   lastName: lastNameSchema,
+  phone: phoneSchema,
+  tempPhone: tempPhoneSchema,
   email: emailSchema,
   additionalInfo: Joi.object()
     .concat(additionalInfoEmployerSchema)

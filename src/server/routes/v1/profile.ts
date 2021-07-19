@@ -98,7 +98,7 @@ export default [{
     description: "Confirm phone number",
     validate: {
       payload: Joi.object({
-        confirmCode: Joi.number().required().label('ConfirmCode')
+        confirmCode: Joi.number().min(100000).max(999999).required().label('ConfirmCode')
       }).label('PhoneConfirmPayload')
     },
     response: {

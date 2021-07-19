@@ -1,5 +1,5 @@
 import * as Joi from "joi";
-import { error, getRandomCodeNumber, getRandomHexToken, handleValidationError, output } from '../utils';
+import { error, getRandomCodeNumber, handleValidationError, output } from '../utils';
 import { getDefaultAdditionalInfo, User, UserRole, UserStatus } from "../models/User";
 import { isMediaExists } from "../utils/storageService";
 import { Media } from "../models/Media";
@@ -15,7 +15,11 @@ function getAdditionalInfoSchema(role: UserRole): Joi.Schema {
 }
 
 export async function getMe(r) {
-  return output(await User.findByPk(r.auth.credentials.id));
+  return output(await User.findByPk(r.auth.credentials.id, {
+    attributes: {
+      include: ['tempPhone']
+    }
+  }));
 }
 
 export async function setRole(r) {
@@ -87,10 +91,10 @@ export async function confirmPhoneNumber(r) {
   const user = await User.scope("withPassword").findByPk(r.auth.credentials.id);
 
   if (!user.tempPhone) {
-    return output();
+    return error(Errors.InvalidPayload, 'User does not have verification phone', {});
   }
   if (user.settings.phoneConfirm !== r.payload.confirmCode) {
-    return output();
+    return error(Errors.Forbidden, 'Confirmation code is not correct', {});
   }
 
   await user.update({
@@ -108,7 +112,7 @@ export async function sendCodeOnPhoneNumber(r) {
 
   await addSendSmsJob({
     toPhoneNumber: r.payload.phoneNumber,
-    message: 'Code for confirm your phone number on WorkQuest: ' + confirmCode,
+    message: 'Code to confirm your phone number on WorkQuest: ' + confirmCode,
   });
 
   await user.update({
