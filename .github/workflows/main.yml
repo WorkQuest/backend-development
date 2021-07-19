@@ -57,6 +57,10 @@ jobs:
             SERVER_HOST=${{ secrets.SERVER_HOST }} \
             SERVER_PORT=${{ secrets.SERVER_PORT }} \
 
+            TWILIO_ACCOUNT_SID=${{ secrets.TWILIO_ACCOUNT_SID }} \
+            TWILIO_AUTH_TOKEN=${{ secrets.TWILIO_AUTH_TOKEN }} \
+            TWILIO_PHONE_NUMBER_SENDER=${{ secrets.TWILIO_PHONE_NUMBER_SENDER }} \
+
             SMTP_HOST=${{ secrets.SMTP_HOST }} \
             SMTP_PORT=${{ secrets.SMTP_PORT }} \
             SMTP_SECURE=${{ secrets.SMTP_SECURE }} \
