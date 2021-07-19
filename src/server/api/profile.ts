@@ -1,10 +1,11 @@
 import * as Joi from "joi";
-import { error, handleValidationError, output } from "../utils";
+import { error, getRandomCodeNumber, handleValidationError, output } from '../utils';
 import { getDefaultAdditionalInfo, User, UserRole, UserStatus } from "../models/User";
 import { isMediaExists } from "../utils/storageService";
 import { Media } from "../models/Media";
 import { Errors } from "../utils/errors";
 import { additionalInfoEmployerSchema, additionalInfoWorkerSchema } from "../schemes/user";
+import { addSendSmsJob } from '../jobs/sendSms';
 
 function getAdditionalInfoSchema(role: UserRole): Joi.Schema {
   if (role === UserRole.Employer)
@@ -14,7 +15,11 @@ function getAdditionalInfoSchema(role: UserRole): Joi.Schema {
 }
 
 export async function getMe(r) {
-  return output(await User.findByPk(r.auth.credentials.id));
+  return output(await User.findByPk(r.auth.credentials.id, {
+    attributes: {
+      include: ['tempPhone']
+    }
+  }));
 }
 
 export async function setRole(r) {
@@ -77,6 +82,42 @@ export async function changePassword(r) {
 
   await user.update({
     password: r.payload.newPassword
+  });
+
+  return output();
+}
+
+export async function confirmPhoneNumber(r) {
+  const user = await User.scope("withPassword").findByPk(r.auth.credentials.id);
+
+  if (!user.tempPhone) {
+    return error(Errors.InvalidPayload, 'User does not have verification phone', {});
+  }
+  if (user.settings.phoneConfirm !== r.payload.confirmCode) {
+    return error(Errors.Forbidden, 'Confirmation code is not correct', {});
+  }
+
+  await user.update({
+    phone: user.tempPhone,
+    tempPhone: null,
+    'settings.phoneConfirm': null,
+  });
+
+  return output();
+}
+
+export async function sendCodeOnPhoneNumber(r) {
+  const user = await User.scope("withPassword").findByPk(r.auth.credentials.id);
+  const confirmCode = getRandomCodeNumber();
+
+  await addSendSmsJob({
+    toPhoneNumber: r.payload.phoneNumber,
+    message: 'Code to confirm your phone number on WorkQuest: ' + confirmCode,
+  });
+
+  await user.update({
+    tempPhone: r.payload.phoneNumber,
+    'settings.phoneConfirm': confirmCode
   });
 
   return output();

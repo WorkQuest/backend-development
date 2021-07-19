@@ -34,7 +34,6 @@ export async function makeEmployer() {
     company: 'test',
     CEO: 'test',
     website: 'test',
-    firstMobileNumber: '+834534',
     secondMobileNumber: '+834534',
     address: 'ghwwf',
     description: 'ghwwf',
@@ -49,7 +48,6 @@ export async function makeEmployer() {
 }
 export async function makeWorker() {
   return await makeUser(UserRole.Worker, {
-    firstMobileNumber: '+834534',
     secondMobileNumber: '+834534',
     address: 'ghwwf',
     description: 'ghwwf',

@@ -40,7 +40,6 @@ async function Should_Ok_When_EmployerEditedProfile() {
     additionalInfo: {
       CEO: "Test123",
       website: "Test123",
-      firstMobileNumber: "+9213453",
       secondMobileNumber: "+9213453",
       address: "dfgfd",
       company: "Telega",
@@ -74,7 +73,6 @@ async function Should_Ok_When_WorkerEditedProfile() {
     firstName: "Kirill",
     lastName: "NeIvanov_",
     additionalInfo: {
-      firstMobileNumber: "+9213453",
       secondMobileNumber: "+9213453",
       address: "dfgfd",
       description: "11dfdsfdsfsdfgsd",
@@ -111,7 +109,6 @@ async function Should_ValidationError_When_WorkerEditedProfileAndUsingDifferentS
     additionalInfo: {
       CEO: "Test123",
       website: "Test123",
-      firstMobileNumber: "+9213453",
       secondMobileNumber: "+9213453",
       address: "dfgfd",
       company: "Telega",
@@ -141,7 +138,6 @@ async function Should_ValidationError_When_EmployerEditedProfileAndUsingDifferen
     firstName: "Kirill",
     lastName: "NeIvanov_",
     additionalInfo: {
-      firstMobileNumber: "+9213453",
       secondMobileNumber: "+9213453",
       address: "dfgfd",
       description: "11dfdsfdsfsdfgsd",
