@@ -64,7 +64,6 @@ export async function creatCommentForum(r) {
 
 
 export async function likesCreate(r) {
-  console.log(r.payload);
   try {
     const createLike : any = await News.findOne({
       where: {
@@ -90,7 +89,6 @@ export async function likesCreate(r) {
 
 
 export async function deleteNews(r) {
-  console.log(r.payload);
   try {
     const deleteNews = await News.destroy({
       where: {
@@ -131,7 +129,6 @@ export async function deleteComment(r) {
       return n != r.payload.id
     })
     await deleteAnswerComment.update({answers: deleteAnswerComment.answers})
-    console.log(r.payload.id)
     if (!deleteAnswerComment) {
       return 'Not found comment'
     }
@@ -143,7 +140,6 @@ export async function deleteComment(r) {
 }
 
 export async function findUserInfo(r) {
-  console.log(r.payload.id)
   try {
     const findUser: any = await User.findAll({
       where: {
