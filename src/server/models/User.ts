@@ -7,6 +7,7 @@ import { Errors } from "../utils/errors";
 import { Review } from "./Review";
 import { RatingStatistic } from "./RatingStatistic";
 import { StarredQuests } from "./StarredQuests";
+import { News } from "./newsForum";
 
 export interface SocialInfo {
   id: string;
@@ -113,13 +114,13 @@ export interface AdditionalInfoEmployer extends AdditionalInfo {
     attributes: {
       exclude: ["password", "settings", "tempPhone", "createdAt", "updatedAt"]
     },
-    include: [{
-      model: Media.scope('urlOnly'),
-      as: 'avatar'
-    }, {
-      model: RatingStatistic,
-      as: 'ratingStatistic'
-    }]
+    // include: [{
+    //   model: Media.scope('urlOnly'),
+    //   as: 'avatar'
+    // }, {
+    //   model: RatingStatistic,
+    //   as: 'ratingStatistic'
+    // }]
   },
   withPassword: {
     attributes: {
@@ -127,7 +128,7 @@ export interface AdditionalInfoEmployer extends AdditionalInfo {
     }
   }
 }))
-@Table({ paranoid: true })
+@Table
 export class User extends Model {
   @Column({ primaryKey: true, type: DataType.STRING, defaultValue: () => getUUID() }) id: string;
   @ForeignKey(() => Media) @Column({type: DataType.STRING, defaultValue: null}) avatarId: string;
@@ -163,6 +164,7 @@ export class User extends Model {
   @Column({type: DataType.STRING, defaultValue: null}) phone: string;
 
   @BelongsTo(() => Media,{ constraints: false, foreignKey: 'avatarId' }) avatar: Media;
+  @BelongsTo(() => News, {foreignKey: 'id', targetKey: 'idAuthor'}) baseNews: News;
 
   @HasOne(() => RatingStatistic) ratingStatistic: RatingStatistic;
 
