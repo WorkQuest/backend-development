@@ -7,8 +7,9 @@ import { User } from "../models/User";
 
 
 export async function creatNewsForum(r) {
-  console.log(r.payload.idAuthor);
+  console.log(r);
   try {
+    // r.auth.credentials.id
     const createNews = await News.findCreateFind({
       where: {
         id: getUUID()
