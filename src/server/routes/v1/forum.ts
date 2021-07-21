@@ -2,11 +2,13 @@ import {
   createComment,
   createNews,
   deleteComment,
-  deleteNews,
+  deleteNews, findNewsAll, findNewsComments,
   findUserInfo, likeDelete,
   likesCreate
 } from "../../api/forum";
 import * as Joi from '@hapi/joi';
+import {limitSchema} from "../../schemes";
+
 
 export default [
   {
@@ -115,6 +117,32 @@ export default [
           id: Joi.string().required(),
         })
       }
+    }
+  },
+
+
+  {
+    method: 'POST',
+    path: '/find/commentNews',
+    handler: findNewsComments,
+    options: {
+      auth: false,
+      validate: {
+        payload: Joi.object({
+          id: Joi.string().required(),
+        })
+      }
+    }
+  },
+
+
+  {
+    method: 'POST',
+    path: '/find/News',
+    handler: findNewsAll,
+    options: {
+      auth: false,
+      query: limitSchema
     }
   },
 

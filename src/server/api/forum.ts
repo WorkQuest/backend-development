@@ -1,6 +1,6 @@
 import { News } from "../models/newsForum";
 import { getUUID } from "../utils";
-import { Op } from "sequelize";
+import { Op, where } from "sequelize";
 import { User } from "../models/User";
 
 
@@ -174,6 +174,46 @@ export async function findUserInfo(r) {
       return "Not find user";
     }
     return findUser;
+  } catch (e) {
+    console.log("Error", e);
+    return false;
+  }
+}
+
+
+export async function findNewsComments(r) {
+  try {
+  const findNews = await News.findOne({
+    where: {
+      id: r.auth.credentials.id
+    },
+  })
+    if(!findNews){
+      return "Not found news"
+    }
+    const findComment = await News.findAll({
+      where:{
+        id:{[Op.in]: findNews.answers}
+      }
+    })
+    if(!findComment){
+      return 'Not found comment'
+    }
+    return  findComment
+  } catch (e) {
+    console.log("Error", e);
+    return false;
+  }
+}
+
+
+export async function findNewsAll(r) {
+  try {
+    const findNewsAll = await News.findAll({})
+    if(!findNewsAll){
+      return 'Not find news'
+    }
+    return findNewsAll
   } catch (e) {
     console.log("Error", e);
     return false;
