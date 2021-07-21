@@ -1,12 +1,10 @@
 import { News } from "../models/newsForum";
 import { getUUID } from "../utils";
-import { string } from "joi";
 import { Op } from "sequelize";
 import { User } from "../models/User";
 
 
-
-export async function creatNewsForum(r) {
+export async function createNews(r) {
   try {
     const createNews = await News.findCreateFind({
       where: {
@@ -14,7 +12,7 @@ export async function creatNewsForum(r) {
       },
       defaults: {
         idAuthor: r.auth.credentials.idAuthor,
-        checkNews: true,
+        isNews: true,
         text: r.auth.credentials.text
       }
     });
@@ -29,7 +27,7 @@ export async function creatNewsForum(r) {
 }
 
 
-export async function creatCommentForum(r) {
+export async function createComment(r) {
   try {
     const [create] = await News.findCreateFind({
       where: {
@@ -38,7 +36,7 @@ export async function creatCommentForum(r) {
       defaults: {
         idAuthor: r.auth.credentials.idAuthor,
         text: r.auth.credentials.text,
-        checkNews: false
+        isNews: false
       }
     });
     if (!create) {
@@ -64,9 +62,9 @@ export async function creatCommentForum(r) {
 
 export async function likesCreate(r) {
   try {
-    const createLike : any = await News.findOne({
+    const createLike: any = await News.findOne({
       where: {
-        id: r.auth.credentials.id
+        id: r.auth.credentials.idNews
       }
     });
     if (!createLike) {
@@ -83,7 +81,33 @@ export async function likesCreate(r) {
     console.log("Error", e);
     return false;
   }
+}
 
+
+export async function likeDelete(r) {
+  try {
+    const deleteLike = await News.findOne({
+      where: {
+        id: r.auth.credentials.id,
+        likes: {
+          [Op.contains]: [
+            r.auth.credentials.idUser
+          ]
+        }
+      }
+    });
+    deleteLike.likes = deleteLike.likes.filter((n) => {
+      return n != r.auth.credentialsidUser;
+    });
+    await deleteLike.update({ likes: deleteLike.likes });
+    if (!deleteLike) {
+      return "Like not found";
+    }
+    return "Ok";
+  } catch (e) {
+    console.log("Error", e);
+    return false;
+  }
 }
 
 
@@ -93,14 +117,14 @@ export async function deleteNews(r) {
       where: {
         id: r.auth.credentials.id
       }
-    })
-    if(!deleteNews){
-      return 'Not find news'
+    });
+    if (!deleteNews) {
+      return "Not find news";
     }
-    return 'Ok news delete'
-  } catch (e){
-    console.log('Error', e)
-    return false
+    return "Ok news delete";
+  } catch (e) {
+    console.log("Error", e);
+    return false;
   }
 }
 
@@ -112,29 +136,29 @@ export async function deleteComment(r) {
         id: r.auth.credentials.id
       }
     });
-    if(!deleteComment){
-      return 'Not found comment'
+    if (!deleteComment) {
+      return "Not found comment";
     }
     const deleteAnswerComment = await News.findOne({
       where: {
         answers: {
           [Op.contains]: [
-            r.payload.id
+            r.auth.credentials.id
           ]
         }
       }
-    })
+    });
     deleteAnswerComment.answers = deleteAnswerComment.answers.filter((n) => {
-      return n != r.payload.id
-    })
-    await deleteAnswerComment.update({answers: deleteAnswerComment.answers})
+      return n != r.auth.credentials.id;
+    });
+    await deleteAnswerComment.update({ answers: deleteAnswerComment.answers });
     if (!deleteAnswerComment) {
-      return 'Not found comment'
+      return "Not found comment";
     }
-    return 'Ok news delete'
+    return "Ok news delete";
   } catch (e) {
-    console.log('Error', e)
-    return false
+    console.log("Error", e);
+    return false;
   }
 }
 
@@ -144,14 +168,16 @@ export async function findUserInfo(r) {
       where: {
         id: r.auth.credentials.id
       },
-      include:[{model: News, as: 'baseNews', attributes: ['id','text']}]
+      include: [{ model: News, as: "baseNews", attributes: ["id", "text"] }]
     });
-    if(!findUser){
-      return 'Not find user'
+    if (!findUser) {
+      return "Not find user";
     }
-    return findUser
-  } catch (e){
-    console.log('Error', e)
-    return false
+    return findUser;
+  } catch (e) {
+    console.log("Error", e);
+    return false;
   }
 }
+
+

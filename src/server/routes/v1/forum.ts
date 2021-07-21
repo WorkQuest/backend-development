@@ -1,9 +1,9 @@
 import {
-  creatCommentForum,
-  creatNewsForum,
+  createComment,
+  createNews,
   deleteComment,
   deleteNews,
-  findUserInfo,
+  findUserInfo, likeDelete,
   likesCreate
 } from "../../api/forum";
 import * as Joi from '@hapi/joi';
@@ -12,7 +12,7 @@ export default [
   {
     method: 'POST',
     path: '/create/news',
-    handler: creatNewsForum,
+    handler: createNews,
     options: {
       auth: false,
       validate: {
@@ -23,10 +23,12 @@ export default [
       }
     }
   },
+
+
   {
     method: 'POST',
     path: '/creat/comment',
-    handler: creatCommentForum,
+    handler: createComment,
     options: {
       auth: false,
       validate: {
@@ -44,6 +46,22 @@ export default [
     method: 'POST',
     path: '/like/create',
     handler: likesCreate,
+    options: {
+      auth: false,
+      validate: {
+        payload: Joi.object({
+          idNews: Joi.string().required(),
+          idUser: Joi.string().required()
+        })
+      }
+    }
+  },
+
+
+  {
+    method: 'POST',
+    path: '/like/delete',
+    handler: likeDelete,
     options: {
       auth: false,
       validate: {
@@ -70,6 +88,7 @@ export default [
     }
   },
 
+
   {
     method: 'POST',
     path: '/delete/comment',
@@ -83,6 +102,7 @@ export default [
       }
     }
   },
+
 
   {
     method: 'POST',

@@ -15,7 +15,7 @@ export class News extends Model {
   idAuthor: string;
 
   @Column ({type: DataType.BOOLEAN})
-  checkNews: boolean;
+  isNews: boolean;
 
   @Column({type:DataType.STRING, defaultValue: ''})
   text: string;
