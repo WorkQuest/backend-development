@@ -14,7 +14,7 @@ export default [
     path: '/create/news',
     handler: createNews,
     options: {
-      auth: false,
+      auth: 'jwt-access',
       validate: {
         payload: Joi.object({
           idAuthor: Joi.string().required(),
@@ -30,7 +30,7 @@ export default [
     path: '/creat/comment',
     handler: createComment,
     options: {
-      auth: false,
+      auth: 'jwt-access',
       validate: {
         payload: Joi.object({
           idNews: Joi.string().required(),
@@ -47,7 +47,7 @@ export default [
     path: '/like/create',
     handler: likesCreate,
     options: {
-      auth: false,
+      auth: 'jwt-access',
       validate: {
         payload: Joi.object({
           idNews: Joi.string().required(),
@@ -63,7 +63,7 @@ export default [
     path: '/like/delete',
     handler: likeDelete,
     options: {
-      auth: false,
+      auth: 'jwt-access',
       validate: {
         payload: Joi.object({
           id: Joi.string().required(),
@@ -79,7 +79,7 @@ export default [
     path: '/delete/news',
     handler: deleteNews,
     options: {
-      auth: false,
+      auth: 'jwt-access',
       validate: {
         payload: Joi.object({
           id: Joi.string().required(),
@@ -94,7 +94,7 @@ export default [
     path: '/delete/comment',
     handler: deleteComment,
     options: {
-      auth: false,
+      auth: 'jwt-access',
       validate: {
         payload: Joi.object({
           id: Joi.string().required(),
@@ -109,7 +109,7 @@ export default [
     path: '/find/user',
     handler: findUserInfo,
     options: {
-      auth: false,
+      auth: 'jwt-access',
       validate: {
         payload: Joi.object({
           id: Joi.string().required(),
