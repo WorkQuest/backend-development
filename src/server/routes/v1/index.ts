@@ -9,7 +9,7 @@ import review from './review';
 import restorePassword from './restorePassword';
 import portfolio from './portfolio';
 import totp from './totp';
-import forum from "./forum";
+import forum from "./forums";
 
 export default [
   ...profile,

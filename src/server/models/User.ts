@@ -7,7 +7,7 @@ import { Errors } from "../utils/errors";
 import { Review } from "./Review";
 import { RatingStatistic } from "./RatingStatistic";
 import { StarredQuests } from "./StarredQuests";
-import { News } from "./newsForum";
+import { News } from "./News";
 
 export interface SocialInfo {
   id: string;
@@ -164,7 +164,7 @@ export class User extends Model {
   @Column({type: DataType.STRING, defaultValue: null}) phone: string;
 
   @BelongsTo(() => Media,{ constraints: false, foreignKey: 'avatarId' }) avatar: Media;
-  @BelongsTo(() => News, {foreignKey: 'id', targetKey: 'idAuthor'}) baseNews: News;
+  // @BelongsTo(() => News, {foreignKey: 'id', targetKey: 'idAuthor'}) baseNews: News; // TODO:: One user has many news!!!!!
 
   @HasOne(() => RatingStatistic) ratingStatistic: RatingStatistic;
 
