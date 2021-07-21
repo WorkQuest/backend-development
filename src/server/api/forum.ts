@@ -147,8 +147,6 @@ export async function findUserInfo(r) {
       },
       include:[{model: News, as: 'baseNews', attributes: ['id','text']}]
     });
-
-    console.log(findUser,'===============')
     if(!findUser){
       return 'Not find user'
     }
