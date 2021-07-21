@@ -5,19 +5,17 @@ import { Op } from "sequelize";
 import { User } from "../models/User";
 
 
-
+// r.auth.credentials.id
 export async function creatNewsForum(r) {
-  console.log(r);
   try {
-    // r.auth.credentials.id
     const createNews = await News.findCreateFind({
       where: {
         id: getUUID()
       },
       defaults: {
-        idAuthor: r.payload.idAuthor,
+        idAuthor: r.auth.credentials.idAuthor,
         checkNews: true,
-        text: r.payload.text
+        text: r.auth.credentials.text
       }
     });
     if (!createNews) {
@@ -38,8 +36,8 @@ export async function creatCommentForum(r) {
         id: getUUID()
       },
       defaults: {
-        idAuthor: r.payload.idAuthor,
-        text: r.payload.text,
+        idAuthor: r.auth.credentials.idAuthor,
+        text: r.auth.credentials.text,
         checkNews: false
       }
     });
@@ -48,7 +46,7 @@ export async function creatCommentForum(r) {
     }
     const findNews: any = await News.findOne({
       where: {
-        id: r.payload.idNews
+        id: r.auth.credentials.idNews
       }
     });
     let arr = [...findNews.answers];
@@ -68,14 +66,14 @@ export async function likesCreate(r) {
   try {
     const createLike : any = await News.findOne({
       where: {
-        id: r.payload.id
+        id: r.auth.credentials.id
       }
     });
     if (!createLike) {
       return "News not found";
     }
     let arr = [...createLike.likes];
-    arr.push(r.payload.idUser);
+    arr.push(r.auth.credentials.idUser);
     await createLike.update({
       likes: arr
     });
@@ -93,7 +91,7 @@ export async function deleteNews(r) {
   try {
     const deleteNews = await News.destroy({
       where: {
-        id: r.payload.id
+        id: r.auth.credentials.id
       }
     })
     if(!deleteNews){
@@ -111,7 +109,7 @@ export async function deleteComment(r) {
   try {
     const deleteComment = await News.destroy({
       where: {
-        id: r.payload.id
+        id: r.auth.credentials.id
       }
     });
     if(!deleteComment){
@@ -144,7 +142,7 @@ export async function findUserInfo(r) {
   try {
     const findUser: any = await User.findAll({
       where: {
-        id: r.payload.id
+        id: r.auth.credentials.id
       },
       include:[{model: News, as: 'baseNews', attributes: ['id','text']}]
     });
