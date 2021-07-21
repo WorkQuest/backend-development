@@ -5,7 +5,7 @@ import { Op } from "sequelize";
 import { User } from "../models/User";
 
 
-// r.auth.credentials.id
+
 export async function creatNewsForum(r) {
   try {
     const createNews = await News.findCreateFind({
