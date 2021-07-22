@@ -1,7 +1,9 @@
 import { News } from "../models/newsForum";
-import { getUUID } from "../utils";
+import { error, getUUID, output } from "../utils";
 import { Op, where } from "sequelize";
 import { User } from "../models/User";
+import { mapFinderOptions } from "sequelize/types/lib/utils";
+import { string } from "joi";
 
 
 export async function createNews(r) {
@@ -11,15 +13,15 @@ export async function createNews(r) {
         id: getUUID()
       },
       defaults: {
-        idAuthor: r.auth.credentials.idAuthor,
+        idAuthor: r.auth.credentials.id,
         isNews: true,
         text: r.auth.credentials.text
       }
     });
     if (!createNews) {
-      return "Error creat news";
+      return error(400000,'News not create',{});
     }
-    return "Ok news creat";
+    return output({status: 'Success'})
   } catch (e) {
     console.log("ERROR", e);
     return false;
@@ -34,13 +36,13 @@ export async function createComment(r) {
         id: getUUID()
       },
       defaults: {
-        idAuthor: r.auth.credentials.idAuthor,
+        idAuthor: r.auth.credentials.id,
         text: r.auth.credentials.text,
         isNews: false
       }
     });
     if (!create) {
-      return "Comment not create";
+      return error(400000,'News not create',{});
     }
     const findNews: any = await News.findOne({
       where: {
@@ -52,15 +54,15 @@ export async function createComment(r) {
     await findNews.update({
       answers: arr
     });
-    return "Ok";
+    return output({status: 'Success'})
   } catch (e) {
-    console.log("Error", e);
+    console.log("ERROR", e);
     return false;
   }
 }
 
 
-export async function likesCreate(r) {
+export async function createLikes(r) {
   try {
     const createLike: any = await News.findOne({
       where: {
@@ -68,23 +70,22 @@ export async function likesCreate(r) {
       }
     });
     if (!createLike) {
-      return "News not found";
+      return error(404000,'Not found news',{});
     }
     let arr = [...createLike.likes];
-    arr.push(r.auth.credentials.idUser);
+    arr.push(r.auth.credentials.id);
     await createLike.update({
       likes: arr
     });
-
-    return "OK";
+    return output({status: 'Success'})
   } catch (e) {
-    console.log("Error", e);
+    console.log("ERROR", e);
     return false;
   }
 }
 
 
-export async function likeDelete(r) {
+export async function deleteLike(r) {
   try {
     const deleteLike = await News.findOne({
       where: {
@@ -101,11 +102,11 @@ export async function likeDelete(r) {
     });
     await deleteLike.update({ likes: deleteLike.likes });
     if (!deleteLike) {
-      return "Like not found";
+      return error(404000,'Not found news',{});
     }
-    return "Ok";
+    return output({status: 'Success'})
   } catch (e) {
-    console.log("Error", e);
+    console.log("ERROR", e);
     return false;
   }
 }
@@ -113,17 +114,25 @@ export async function likeDelete(r) {
 
 export async function deleteNews(r) {
   try {
-    const deleteNews = await News.destroy({
+    const checkOwner = await News.findOne({
       where: {
-        id: r.auth.credentials.id
+        id: r.payload.id
       }
     });
-    if (!deleteNews) {
-      return "Not find news";
+    if (String(checkOwner.idAuthor) === String(r.auth.credentials.id)) {
+      const deleteNews = await News.destroy({
+        where: {
+          id: r.auth.credentials.id
+        }
+      });
+      if (!deleteNews) {
+        return error(404000,'Not found news',{});
+      }
+      return output({status: 'Success'})
     }
-    return "Ok news delete";
+    return error(403000,'You not owner',{});
   } catch (e) {
-    console.log("Error", e);
+    console.log("ERROR", e);
     return false;
   }
 }
@@ -131,38 +140,49 @@ export async function deleteNews(r) {
 
 export async function deleteComment(r) {
   try {
-    const deleteComment = await News.destroy({
+    const checkOwner = await News.findOne({
       where: {
-        id: r.auth.credentials.id
+        id: r.payload.idNews
       }
     });
-    if (!deleteComment) {
-      return "Not found comment";
+    if (!checkOwner) {
+      return error(404000,'Not found news',{});
     }
-    const deleteAnswerComment = await News.findOne({
-      where: {
-        answers: {
-          [Op.contains]: [
-            r.auth.credentials.id
-          ]
+    if (String(checkOwner.idAuthor) === String(r.auth.credentials.id)) {
+      const deleteComment = await News.destroy({
+        where: {
+          id: r.payload.idComment
         }
+      });
+      if (!deleteComment) {
+        return error(404000,'Not found comment',{});
       }
-    });
-    deleteAnswerComment.answers = deleteAnswerComment.answers.filter((n) => {
-      return n != r.auth.credentials.id;
-    });
-    await deleteAnswerComment.update({ answers: deleteAnswerComment.answers });
-    if (!deleteAnswerComment) {
-      return "Not found comment";
+      const deleteAnswerComment = await News.findOne({
+        where: {
+          answers: {
+            [Op.contains]: [
+              r.payload.idComment
+            ]
+          }
+        }
+      });
+      deleteAnswerComment.answers = deleteAnswerComment.answers.filter((n) => {
+        return n != r.payload.idComment;
+      });
+      await deleteAnswerComment.update({ answers: deleteAnswerComment.answers });
+      if (!deleteAnswerComment) {
+        return error(404000,'Not found comment',{});
+      }
+      return output({status: 'Success'})
     }
-    return "Ok news delete";
+    return error(403000,'You not owner',{});
   } catch (e) {
-    console.log("Error", e);
+    console.log("ERROR", e);
     return false;
   }
 }
 
-export async function findUserInfo(r) {
+export async function userInformation(r) {
   try {
     const findUser: any = await User.findAll({
       where: {
@@ -171,11 +191,11 @@ export async function findUserInfo(r) {
       include: [{ model: News, as: "baseNews", attributes: ["id", "text"] }]
     });
     if (!findUser) {
-      return "Not find user";
+      return error(404000,'Not found user',{});
     }
     return findUser;
   } catch (e) {
-    console.log("Error", e);
+    console.log("ERROR", e);
     return false;
   }
 }
@@ -183,25 +203,25 @@ export async function findUserInfo(r) {
 
 export async function findNewsComments(r) {
   try {
-  const findNews = await News.findOne({
-    where: {
-      id: r.auth.credentials.id
-    },
-  })
-    if(!findNews){
-      return "Not found news"
+    const findNews = await News.findOne({
+      where: {
+        id: r.auth.credentials.id
+      }
+    });
+    if (!findNews) {
+      return error(404000,'Not found news',{});
     }
     const findComment = await News.findAll({
-      where:{
-        id:{[Op.in]: findNews.answers}
+      where: {
+        id: { [Op.in]: findNews.answers }
       }
-    })
-    if(!findComment){
-      return 'Not found comment'
+    });
+    if (!findComment) {
+      return error(404000,'Not found comment',{});
     }
-    return  findComment
+    return findComment;
   } catch (e) {
-    console.log("Error", e);
+    console.log("ERROR", e);
     return false;
   }
 }
@@ -209,13 +229,13 @@ export async function findNewsComments(r) {
 
 export async function findNewsAll(r) {
   try {
-    const findNewsAll = await News.findAll({})
-    if(!findNewsAll){
-      return 'Not find news'
+    const findNewsAll = await News.findAll({});
+    if (!findNewsAll) {
+      return error(404000,'Not found news',{});
     }
-    return findNewsAll
+    return findNewsAll;
   } catch (e) {
-    console.log("Error", e);
+    console.log("ERROR", e);
     return false;
   }
 }

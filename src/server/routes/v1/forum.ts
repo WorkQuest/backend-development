@@ -3,11 +3,11 @@ import {
   createNews,
   deleteComment,
   deleteNews, findNewsAll, findNewsComments,
-  findUserInfo, likeDelete,
-  likesCreate
+  userInformation,
+  deleteLike, createLikes
 } from "../../api/forum";
-import * as Joi from '@hapi/joi';
-import {limitSchema} from "../../schemes";
+import * as Joi from "@hapi/joi";
+import { limitSchema } from "../../schemes";
 
 
 export default [
@@ -19,7 +19,6 @@ export default [
       auth: 'jwt-access',
       validate: {
         payload: Joi.object({
-          idAuthor: Joi.string().required(),
           text: Joi.string().required()
         })
       }
@@ -36,7 +35,6 @@ export default [
       validate: {
         payload: Joi.object({
           idNews: Joi.string().required(),
-          idAuthor: Joi.string().required(),
           text: Joi.string().required()
         })
       }
@@ -46,14 +44,13 @@ export default [
 
   {
     method: 'POST',
-    path: '/like/create',
-    handler: likesCreate,
+    path: '/create/like',
+    handler: createLikes,
     options: {
       auth: 'jwt-access',
       validate: {
         payload: Joi.object({
           idNews: Joi.string().required(),
-          idUser: Joi.string().required()
         })
       }
     }
@@ -61,15 +58,14 @@ export default [
 
 
   {
-    method: 'POST',
-    path: '/like/delete',
-    handler: likeDelete,
+    method: "POST",
+    path: "/delete/like",
+    handler: deleteLike,
     options: {
-      auth: 'jwt-access',
+      auth: "jwt-access",
       validate: {
         payload: Joi.object({
-          id: Joi.string().required(),
-          idUser: Joi.string().required()
+          id: Joi.string().required()
         })
       }
     }
@@ -99,7 +95,8 @@ export default [
       auth: 'jwt-access',
       validate: {
         payload: Joi.object({
-          id: Joi.string().required(),
+          idNews: Joi.string().required(),
+          idComment: Joi.string().required(),
         })
       }
     }
@@ -108,15 +105,10 @@ export default [
 
   {
     method: 'POST',
-    path: '/find/user',
-    handler: findUserInfo,
+    path: '/userInformation',
+    handler: userInformation,
     options: {
       auth: 'jwt-access',
-      validate: {
-        payload: Joi.object({
-          id: Joi.string().required(),
-        })
-      }
     }
   },
 
@@ -126,7 +118,7 @@ export default [
     path: '/find/commentNews',
     handler: findNewsComments,
     options: {
-      auth: false,
+      auth: 'jwt-access',
       validate: {
         payload: Joi.object({
           id: Joi.string().required(),
@@ -141,7 +133,7 @@ export default [
     path: '/find/News',
     handler: findNewsAll,
     options: {
-      auth: false,
+      auth: 'jwt-access',
       query: limitSchema
     }
   },
