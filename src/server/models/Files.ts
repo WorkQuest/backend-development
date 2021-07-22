@@ -1,3 +1,4 @@
+
 import {
   BelongsTo,
   Column,
@@ -8,6 +9,7 @@ import {
 } from 'sequelize-typescript';
 import { getUUID } from '../utils';
 import { User } from './User';
+
 
 export enum ContType {
   mp4 = 'video/mp4',
