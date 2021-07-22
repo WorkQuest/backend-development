@@ -226,7 +226,6 @@ export async function findNewsComments(r) {
 
 
 export async function findNewsAll(r) {
-  console.log('da');
   try {
     const findNewsAll = await News.findAll({
       limit: r.query.limit,
@@ -245,67 +244,89 @@ export async function findNewsAll(r) {
 }
 
 
-export const createFile = async (r) => {
+export async function updateNewsAndComment(r) {
   try {
-    const data: any = r.payload.file;
-    const findFile: any = await News.findOne({
+    const findNews = await News.findOne({
       where: {
-        id: data.idNews
+        id: r.payload.idNews
       }
     });
-    if (!findFile) {
-      return error(404000, "News not found", null);
-    }
-    if (findFile) {
-      const compareFile: any = await Files.findAll({
-        where: {
-          idNews: data.idNews
-        }
+    if (findNews.idAuthor === r.auth.credentials.id) {
+      await findNews.update({
+        text: r.payload.text
       });
-      if (compareFile) {
-        for (let i = 0; i < compareFile.length; i++) {
-          if (compareFile[i].url === data.url) {
-            return error(404000, "Early news exists", null);
-          }
-        }
-      }
+      return output({ status: "Success" });
     }
-    const addFile: any = await Files.create({
-      idNews: data.idNews,
-      contentType: data.contentType,
-      url: data.url,
-      hash: data.hash
-    });
-    if (!addFile) {
-      return error(404000, "File not found", null);
-    }
-    return output({ addFile });
-  } catch (err) {
-    if (err.message == "This file type is now allowed") {
-      return error(400000, "This file type is now allowed", null);
-    }
-    throw err;
+    return error(403000, "You not owner", {});
+  } catch (e) {
+    return error(500000, "Internal server error", {});
   }
-};
-
-
-export async function deleteFile(r) {
-  try {
-    const file = await Files.findByPk(r.params.idFile);
-    console.log(r.params.idFile);
-
-    if (!file) {
-      return error(Errors.NotFound, "Quest not found", {});
-    }
-    await Files.destroy({ where: { id: r.params.idFile } });
-  } catch (err) {
-    if (err.message == "This file type is now allowed") {
-      return error(400000, "This file type is now allowed", null);
-    }
-    throw err;
-  }
-  return output();
 }
+
+
+
+//
+// export const createFile = async (r) => {
+//   try {
+//     const data: any = r.payload.file;
+//     const findFile: any = await News.findOne({
+//       where: {
+//         id: data.idNews
+//       }
+//     });
+//     if (!findFile) {
+//       return error(404000, "News not found", null);
+//     }
+//     if (findFile) {
+//       const compareFile: any = await Files.findAll({
+//         where: {
+//           idNews: data.idNews
+//         }
+//       });
+//       if (compareFile) {
+//         for (let i = 0; i < compareFile.length; i++) {
+//           if (compareFile[i].url === data.url) {
+//             return error(404000, "Early news exists", null);
+//           }
+//         }
+//       }
+//     }
+//     const addFile: any = await Files.create({
+//       idNews: data.idNews,
+//       contentType: data.contentType,
+//       url: data.url,
+//       hash: data.hash
+//     });
+//     if (!addFile) {
+//       return error(404000, "File not found", null);
+//     }
+//     return output({ addFile });
+//   } catch (err) {
+//     if (err.message == "This file type is now allowed") {
+//       return error(400000, "This file type is now allowed", null);
+//     }
+//
+//   }
+// };
+//
+//
+// export async function deleteFile(r) {
+//   try {
+//     const file = await Files.findByPk(r.params.idFile);
+//     console.log(r.params.idFile);
+//
+//     if (!file) {
+//       return error(Errors.NotFound, "Quest not found", {});
+//     }
+//     await Files.destroy({ where: { id: r.params.idFile } });
+//   } catch (err) {
+//     if (err.message == "This file type is now allowed") {
+//       return error(400000, "This file type is now allowed", null);
+//     }
+//     throw err;
+//   }
+//   return output();
+// }
 
 
 

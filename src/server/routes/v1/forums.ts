@@ -4,23 +4,22 @@ import {
   deleteComment,
   deleteNews, findNewsAll, findNewsComments,
   userInformation,
-  deleteLike, createLikes
+  deleteLike, createLikes, updateNewsAndComment
 } from "../../api/forums";
 import * as Joi from "@hapi/joi";
 import { emptyOkSchema, limitSchema, offsetLimit, outputOkSchema } from "../../schemes";
-import { createFile, deleteFile } from "../../api/forums";
 import { fileIdSchema, fileSchemaInfo } from "../../schemes/files";
 
-const idFile = fileIdSchema.label('idNews')
+const idFile = fileIdSchema.label("idNews");
 
 
 export default [
   {
-    method: 'POST',
-    path: '/create/news',
+    method: "POST",
+    path: "/create/news",
     handler: createNews,
     options: {
-      auth: 'jwt-access',
+      auth: "jwt-access",
       validate: {
         payload: Joi.object({
           text: Joi.string().required()
@@ -31,11 +30,11 @@ export default [
 
 
   {
-    method: 'POST',
-    path: '/creat/comment',
+    method: "POST",
+    path: "/creat/comment",
     handler: createComment,
     options: {
-      auth: 'jwt-access',
+      auth: "jwt-access",
       validate: {
         payload: Joi.object({
           idNews: Joi.string().required(),
@@ -47,14 +46,14 @@ export default [
 
 
   {
-    method: 'POST',
-    path: '/create/like',
+    method: "POST",
+    path: "/create/like",
     handler: createLikes,
     options: {
-      auth: 'jwt-access',
+      auth: "jwt-access",
       validate: {
         payload: Joi.object({
-          idNews: Joi.string().required(),
+          idNews: Joi.string().required()
         })
       }
     }
@@ -77,14 +76,14 @@ export default [
 
 
   {
-    method: 'POST',
-    path: '/delete/news',
+    method: "POST",
+    path: "/delete/news",
     handler: deleteNews,
     options: {
-      auth: 'jwt-access',
+      auth: "jwt-access",
       validate: {
         payload: Joi.object({
-          id: Joi.string().required(),
+          id: Joi.string().required()
         })
       }
     }
@@ -92,15 +91,15 @@ export default [
 
 
   {
-    method: 'POST',
-    path: '/delete/comment',
+    method: "POST",
+    path: "/delete/comment",
     handler: deleteComment,
     options: {
-      auth: 'jwt-access',
+      auth: "jwt-access",
       validate: {
         payload: Joi.object({
           idNews: Joi.string().required(),
-          idComment: Joi.string().required(),
+          idComment: Joi.string().required()
         })
       }
     }
@@ -108,24 +107,24 @@ export default [
 
 
   {
-    method: 'POST',
-    path: '/userInformation',
+    method: "POST",
+    path: "/userInformation",
     handler: userInformation,
     options: {
-      auth: 'jwt-access',
+      auth: "jwt-access"
     }
   },
 
 
   {
-    method: 'POST',
-    path: '/find/commentNews',
+    method: "POST",
+    path: "/find/commentNews",
     handler: findNewsComments,
     options: {
-      auth: 'jwt-access',
+      auth: "jwt-access",
       validate: {
         payload: Joi.object({
-          id: Joi.string().required(),
+          id: Joi.string().required()
         })
       }
     }
@@ -133,17 +132,28 @@ export default [
 
 
   {
-    method: 'POST',
-    path: '/find/News',
+    method: "POST",
+    path: "/find/News",
     handler: findNewsAll,
     options: {
-      auth: 'jwt-access',
+      auth: "jwt-access",
       validate: {
         query: offsetLimit
       }
-
     }
   },
+
+  {
+    method: "POST",
+    path: "/update/news",
+    handler: updateNewsAndComment,
+    options: {
+      auth: "jwt-access",
+    }
+  },
+
+
+
   //
   //
   // {
