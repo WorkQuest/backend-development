@@ -2,8 +2,7 @@ import {
   createComment,
   createNews,
   deleteComment,
-  deleteNews, findNewsAll, findNewsComments,
-  userInformation,
+  deleteNews, findNewsAll,
   deleteLike, createLikes, updateNewsAndComment
 } from "../../api/forums";
 import * as Joi from "@hapi/joi";
@@ -31,7 +30,7 @@ export default [
 
   {
     method: "POST",
-    path: "/creat/comment",
+    path: "/create/comment",
     handler: createComment,
     options: {
       auth: "jwt-access",
@@ -107,36 +106,11 @@ export default [
 
 
   {
-    method: "POST",
-    path: "/userInformation",
-    handler: userInformation,
-    options: {
-      auth: "jwt-access"
-    }
-  },
-
-
-  {
-    method: "POST",
-    path: "/find/commentNews",
-    handler: findNewsComments,
-    options: {
-      auth: "jwt-access",
-      validate: {
-        payload: Joi.object({
-          id: Joi.string().required()
-        })
-      }
-    }
-  },
-
-
-  {
-    method: "POST",
-    path: "/find/News",
+    method: "GET",
+    path: "/news",
     handler: findNewsAll,
     options: {
-      auth: "jwt-access",
+      auth: false,
       validate: {
         query: offsetLimit
       }
@@ -149,51 +123,17 @@ export default [
     handler: updateNewsAndComment,
     options: {
       auth: "jwt-access",
+      validate: {
+        payload: Joi.object({
+          idNews: Joi.string().required(),
+          text: Joi.string().required()
+        })
+      }
     }
   },
 
 
 
-  //
-  //
-  // {
-  //   method: 'POST',
-  //   path: '/v1/create/file',
-  //   handler: createFile,
-  //   options: {
-  //     id: 'v1.create.file',
-  //     description: `Register new file`,
-  //     tags: ['api', 'file'],
-  //     validate: {
-  //       payload: Joi.object({
-  //         file: fileSchemaInfo.required(),
-  //       })
-  //     },
-  //     response: {
-  //       schema: outputOkSchema(fileSchemaInfo).label('FileResponse')
-  //     }
-  //   }
-  // },
-  //
-  //
-  // {
-  //   method: "DELETE",
-  //   path: "/v1/file/{idFile}",
-  //   handler: deleteFile,
-  //   options: {
-  //     id: "v1.file.deleteFile",
-  //     tags: ["api", "file"],
-  //     description: "Delete file in DB",
-  //     validate: {
-  //       params: Joi.object({
-  //         idFile: idFile.required(),
-  //       }).label("DeleteFile")
-  //     },
-  //     response: {
-  //       schema: emptyOkSchema
-  //     },
-  //   },
-  // }
 
 
 ];
