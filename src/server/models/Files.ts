@@ -34,5 +34,6 @@ export class Files extends Model {
   @Column({ type: DataType.TEXT, allowNull: false }) url: string;
   @Column({ type: DataType.STRING, allowNull: false, defaultValue: null }) hash: string;
 
+
   @BelongsTo(() => User) user: User;
 }
