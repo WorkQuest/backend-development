@@ -324,6 +324,8 @@ export async function updateNewsAndComment(r) {
 //       return error(400000, "This file type is now allowed", null);
 //     }
 //     throw err;
+
+
 //   }
 //   return output();
 // }
