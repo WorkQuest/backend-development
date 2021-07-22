@@ -168,6 +168,7 @@ export const createFile = async (r) => {
         url: data.url
       }
     });
+
     if (compareFile) {
       return error(404000, 'Early news exists', null);
     }
