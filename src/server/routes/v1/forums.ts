@@ -1,6 +1,6 @@
-import * as Joi from "joi";
+import * as Joi from 'joi';
 import { emptyOkSchema, outputOkSchema } from '../../schemes';
-import { fileIdSchema, fileSchemaInfo } from '../../schemes/files';
+import { fileIdSchema, fileSchemaInfo, filesQuerySchema } from '../../schemes/files';
 import {
   creatCommentForum,
   createFile,
@@ -11,8 +11,10 @@ import {
   findUserInfo,
   likesCreate
 } from '../../api/forums';
+import { getQuests } from '../../api/quest';
+import { questsQuerySchema } from '../../schemes/quest';
 
-const idFile = fileIdSchema.label('idNews')
+const idFile = fileIdSchema.label('idNews');
 
 
 export default [
@@ -21,7 +23,7 @@ export default [
     path: '/create/news',
     handler: creatNewsForum,
     options: {
-      auth: false,
+      auth: false
       // validate: {
       //   payload: Joi.object({
       //     id: Joi.string().required(),
@@ -73,12 +75,11 @@ export default [
     handler: createFile,
     options: {
       id: 'v1.create.file',
-      // auth: false,
       description: `Register new file`,
       tags: ['api', 'file'],
       validate: {
         payload: Joi.object({
-          file: fileSchemaInfo.required(),
+          file: fileSchemaInfo.required()
         })
       },
       response: {
@@ -87,22 +88,21 @@ export default [
     }
   },
   {
-    method: "DELETE",
-    path: "/v1/file/{idFile}",
+    method: 'DELETE',
+    path: '/v1/file/{idFile}',
     handler: deleteFile,
     options: {
-      id: "v1.file.deleteFile",
-      tags: ["api", "file"],
-      // auth: false,
-      description: "Delete file in DB",
+      id: 'v1.file.deleteFile',
+      tags: ['api', 'file'],
+      description: 'Delete file in DB',
       validate: {
         params: Joi.object({
-          idFile: idFile.required(),
-        }).label("DeleteFile")
+          idFile: idFile.required()
+        }).label('DeleteFile')
       },
       response: {
         schema: emptyOkSchema
-      },
-    },
+      }
+    }
   }
 ];

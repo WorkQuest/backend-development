@@ -159,39 +159,26 @@ export async function findUserInfo(r) {
 
 export const createFile = async (r) => {
   try {
+    let userId: any = r.auth.credentials.id;
     const data: any = r.payload.file;
-    const findFile: any = await News.findOne({
+
+    const compareFile: any = await Files.findOne({
       where: {
-        id: data.idNews
+        idUser: userId,
+        url: data.url
       }
     });
-    if (!findFile) {
-      return error(404000, 'News not found', null);
-    }
-    if (findFile) {
-      const compareFile: any = await Files.findAll({
-        where: {
-          idNews: data.idNews
-        }
-      });
-      if (compareFile) {
-        for (let i = 0; i < compareFile.length; i++) {
-          if (compareFile[i].url === data.url) {
-            return error(404000, 'Early news exists', null);
-          }
-        }
-      }
+    if (compareFile) {
+      return error(404000, 'Early news exists', null);
     }
     const addFile: any = await Files.create({
-      idNews: data.idNews,
+      idUser: data.idUser,
       contentType: data.contentType,
       url: data.url,
       hash: data.hash
     });
-    if (!addFile) {
-      return error(404000, 'File not found', null);
-    }
-    return output({ addFile });
+    const id: any = addFile.id;
+    return output({ id });
   } catch (err) {
     if (err.message == 'This file type is now allowed') {
       return error(400000, 'This file type is now allowed', null);
@@ -203,19 +190,24 @@ export const createFile = async (r) => {
 
 export async function deleteFile(r) {
   try {
-    const file = await Files.findByPk(r.params.idFile);
-    console.log(r.params.idFile);
+    let userId: any = r.auth.credentials.id;
+    const file = await Files.findOne({
+      where: {
+        id: r.params.idFile,
+        idUser: userId
+      }
+    });
 
     if (!file) {
-      return error(Errors.NotFound, 'Quest not found', {});
+      return error(Errors.NotFound, 'File not found', {});
     }
-    await Files.destroy({ where: { id: r.params.idFile } });
+    await file.destroy();
   } catch (err) {
     if (err.message == 'This file type is now allowed') {
       return error(400000, 'This file type is now allowed', null);
     }
     throw err;
   }
-  return output()
+  return output();
 }
 
