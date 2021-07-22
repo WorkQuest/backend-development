@@ -1,12 +1,14 @@
 import {
-  Column, DataType, ForeignKey, Model, Table,BelongsTo,
-} from "sequelize-typescript";
+  Column, DataType, ForeignKey, Model, Table, BelongsTo, BelongsToMany
+} from 'sequelize-typescript';
 import {getUUID} from "../utils";
 import {User} from "./User"
+import { Files } from './Files';
 
 @Table
 export class News extends Model {
-  @Column({ primaryKey: true, type: DataType.STRING, defaultValue: () => getUUID() })
+  @ForeignKey(() => Files)
+  @Column({ primaryKey: true, type: DataType.STRING, defaultValue: () => getUUID(),unique: true  })
   id: string;
 
   @ForeignKey(() => User)

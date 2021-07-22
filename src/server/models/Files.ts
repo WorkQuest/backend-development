@@ -4,7 +4,7 @@ import {
   DataType,
   Model,
   ForeignKey,
-  Table,
+  Table
 } from 'sequelize-typescript';
 import { getUUID } from '../utils';
 import { News } from './News';
@@ -27,12 +27,11 @@ export enum ContType {
 export class Files extends Model {
   @Column({ primaryKey: true, type: DataType.STRING, defaultValue: () => getUUID(), unique: true }) id: string;
 
-  @ForeignKey(() => News)
-  @Column({ type: DataType.STRING, allowNull:  false, unique: true }) newsId: string;
+  @Column({ type: DataType.STRING, allowNull: false }) idNews: string;
 
   @Column({ type: DataType.STRING, allowNull: false }) contentType: ContType;
   @Column({ type: DataType.TEXT, allowNull: false }) url: string;
-  @Column({ type: DataType.STRING, allowNull: false , defaultValue:null}) hash: string;
+  @Column({ type: DataType.STRING, allowNull: false, defaultValue: null }) hash: string;
 
-  @BelongsTo(() => News, {foreignKey: 'newsId', targetKey: 'id'}) baseNews: News;
+  @BelongsTo(() => News, {foreignKey: 'idNews', targetKey: 'id'}) takeId: News
 }

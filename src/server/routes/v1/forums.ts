@@ -73,7 +73,7 @@ export default [
     handler: createFile,
     options: {
       id: 'v1.create.file',
-      auth: false,
+      // auth: false,
       description: `Register new file`,
       tags: ['api', 'file'],
       validate: {
@@ -93,7 +93,7 @@ export default [
     options: {
       id: "v1.file.deleteFile",
       tags: ["api", "file"],
-      auth: false,
+      // auth: false,
       description: "Delete file in DB",
       validate: {
         params: Joi.object({
