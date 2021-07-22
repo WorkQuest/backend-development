@@ -4,6 +4,7 @@ import {
 import {getUUID} from "../utils";
 import {User} from "./User"
 import { Files } from './Files';
+import { Media } from "./Media";
 
 @Table
 export class News extends Model {
