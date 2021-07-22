@@ -1,9 +1,9 @@
-import { News } from "../models/newsForum";
+import { News } from "../models/News";
 import { error, getUUID, output } from "../utils";
 import { Op, where } from "sequelize";
 import { User } from "../models/User";
-import { mapFinderOptions } from "sequelize/types/lib/utils";
-import { string } from "joi";
+import { Files } from "../models/Files";
+import { Errors } from "../utils/errors";
 
 
 export async function createNews(r) {
@@ -239,5 +239,69 @@ export async function findNewsAll(r) {
     return false;
   }
 }
+
+
+export const createFile = async (r) => {
+  try {
+    const data: any = r.payload.file;
+    const findFile: any = await News.findOne({
+      where: {
+        id: data.idNews
+      }
+    });
+    if (!findFile) {
+      return error(404000, 'News not found', null);
+    }
+    if (findFile) {
+      const compareFile: any = await Files.findAll({
+        where: {
+          idNews: data.idNews
+        }
+      });
+      if (compareFile) {
+        for (let i = 0; i < compareFile.length; i++) {
+          if (compareFile[i].url === data.url) {
+            return error(404000, 'Early news exists', null);
+          }
+        }
+      }
+    }
+    const addFile: any = await Files.create({
+      idNews: data.idNews,
+      contentType: data.contentType,
+      url: data.url,
+      hash: data.hash
+    });
+    if (!addFile) {
+      return error(404000, 'File not found', null);
+    }
+    return output({ addFile });
+  } catch (err) {
+    if (err.message == 'This file type is now allowed') {
+      return error(400000, 'This file type is now allowed', null);
+    }
+    throw err;
+  }
+};
+
+
+export async function deleteFile(r) {
+  try {
+    const file = await Files.findByPk(r.params.idFile);
+    console.log(r.params.idFile);
+
+    if (!file) {
+      return error(Errors.NotFound, 'Quest not found', {});
+    }
+    await Files.destroy({ where: { id: r.params.idFile } });
+  } catch (err) {
+    if (err.message == 'This file type is now allowed') {
+      return error(400000, 'This file type is now allowed', null);
+    }
+    throw err;
+  }
+  return output()
+}
+
 
 

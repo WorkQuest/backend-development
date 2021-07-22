@@ -5,9 +5,13 @@ import {
   deleteNews, findNewsAll, findNewsComments,
   userInformation,
   deleteLike, createLikes
-} from "../../api/forum";
+} from "../../api/forums";
 import * as Joi from "@hapi/joi";
-import { limitSchema } from "../../schemes";
+import { emptyOkSchema, limitSchema, outputOkSchema } from "../../schemes";
+import { createFile, deleteFile } from "../../api/forums";
+import { fileIdSchema, fileSchemaInfo } from "../../schemes/files";
+
+const idFile = fileIdSchema.label('idNews')
 
 
 export default [
@@ -137,6 +141,46 @@ export default [
       query: limitSchema
     }
   },
+
+
+  {
+    method: 'POST',
+    path: '/v1/create/file',
+    handler: createFile,
+    options: {
+      id: 'v1.create.file',
+      description: `Register new file`,
+      tags: ['api', 'file'],
+      validate: {
+        payload: Joi.object({
+          file: fileSchemaInfo.required(),
+        })
+      },
+      response: {
+        schema: outputOkSchema(fileSchemaInfo).label('FileResponse')
+      }
+    }
+  },
+
+
+  {
+    method: "DELETE",
+    path: "/v1/file/{idFile}",
+    handler: deleteFile,
+    options: {
+      id: "v1.file.deleteFile",
+      tags: ["api", "file"],
+      description: "Delete file in DB",
+      validate: {
+        params: Joi.object({
+          idFile: idFile.required(),
+        }).label("DeleteFile")
+      },
+      response: {
+        schema: emptyOkSchema
+      },
+    },
+  }
 
 
 ];
