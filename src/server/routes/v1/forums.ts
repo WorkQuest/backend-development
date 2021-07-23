@@ -151,7 +151,8 @@ export default [
       validate: {
         payload: Joi.object({
           id: Joi.string().required(),
-          text: Joi.string().required()
+          text: Joi.string().required(),
+          file: Joi.array().required()
         })
       }
     }

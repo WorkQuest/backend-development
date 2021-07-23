@@ -1,3 +1,4 @@
+
 import {
   BelongsTo,
   Column,
@@ -7,7 +8,8 @@ import {
   Table
 } from 'sequelize-typescript';
 import { getUUID } from '../utils';
-import { News } from './News';
+import { User } from './User';
+
 
 export enum ContType {
   mp4 = 'video/mp4',
@@ -25,13 +27,15 @@ export enum ContType {
   }
 })
 export class Files extends Model {
-  @Column({ primaryKey: true, type: DataType.STRING, defaultValue: () => getUUID(), unique: true }) id: string;
+  @Column({ primaryKey: true, type: DataType.STRING, defaultValue: () => getUUID()}) id: string;
 
-  @Column({ type: DataType.STRING, allowNull: false }) idNews: string;
+  @ForeignKey(() => User)
+  @Column({ type: DataType.STRING, allowNull: false }) idUser: string;
 
   @Column({ type: DataType.STRING, allowNull: false }) contentType: ContType;
   @Column({ type: DataType.TEXT, allowNull: false }) url: string;
   @Column({ type: DataType.STRING, allowNull: false, defaultValue: null }) hash: string;
 
-  @BelongsTo(() => News, {foreignKey: 'idNews', targetKey: 'id'}) takeId: News
+
+  @BelongsTo(() => User) user: User;
 }

@@ -1,49 +1,15 @@
 import { News } from "../models/News";
-
-import { error, getUUID, output } from "../utils";
+import { getUUID } from "../utils";
+import { string } from "joi";
 import { Op, where } from "sequelize";
-
-
-export async function createNews(r) {
-  try {
-    const news = await News.create({
-        idAuthor: r.auth.credentials.id,
-        checkNews: true,
-        text: r.payload.text,
-        file: r.payload.file
-    });
-    return output({ status: "Success" });
-  } catch (e) {
-    return error(500000, "Internal server error", {});
-  }
-}
-
-
-export async function createComment(r) {
-  try {
-    const news: any = await News.findOne({
-      where: {
-        id: r.payload.id
-      }
-    });
-    if (!news) {
-      return error(404000, "Not found news", {});
-    }
-    const create = await News.create({
-        idAuthor: r.auth.credentials.id,
-        text: r.payload.text,
-        checkNews: false
-    });
-    let arr = [...news.answers];
-    arr.push(create.id);
-    await news.update({
-      answers: arr
-    });
-    return output({ status: "Success" });
-  } catch (e) {
-    return error(500000, "Internal server error", {});
-  }
-}
+import { User } from "../models/User";
+import { error, output } from "../utils";
+import { Files } from "../models/Files";
+import { defaults } from "pg";
+import { Quest, QuestStatus } from "../models/Quest";
+import { Errors } from "../utils/errors";
+import { QuestsResponse } from "../models/QuestsResponse";
+import { fileIdSchema } from "../schemes/files";
 
 
 export async function createLikes(r) {
@@ -153,16 +119,16 @@ export async function deleteComment(r) {
 
 export async function findNewsAll(r) {
   try {
-    const object : any = {
+    const object: any = {
       limit: r.query.limit,
       offset: r.query.offset,
       where: {
         checkNews: true
       }
-    }
+    };
     if (!!!r.query.id) {
-        object.where.id = r.query.id;
-      }
+      object.where.id = r.query.id;
+    }
     const news = await News.findAll(object);
     return output(news);
   } catch (e) {
@@ -170,6 +136,68 @@ export async function findNewsAll(r) {
   }
 }
 
+
+export const createFile = async (r) => {
+  try {
+    const data: any = r.payload.file;
+    const findFile: any = await News.findOne({
+      where: {
+        id: data.idNews
+      }
+    });
+    if (!findFile) {
+      return error(404000, "News not found", null);
+    }
+    if (findFile) {
+      const compareFile: any = await Files.findAll({
+        where: {
+          idNews: data.idNews
+        }
+      });
+      if (compareFile) {
+        for (let i = 0; i < compareFile.length; i++) {
+          if (compareFile[i].url === data.url) {
+            return error(404000, "Early news exists", null);
+          }
+        }
+      }
+    }
+    const addFile: any = await Files.create({
+      idNews: data.idNews,
+      contentType: data.contentType,
+      url: data.url,
+      hash: data.hash
+    });
+    if (!addFile) {
+      return error(404000, "File not found", null);
+    }
+    return output({ addFile });
+  } catch (err) {
+    if (err.message == "This file type is now allowed") {
+      return error(400000, "This file type is now allowed", null);
+    }
+    throw err;
+  }
+};
+
+
+export async function deleteFile(r) {
+  try {
+    const file = await Files.findByPk(r.params.idFile);
+    console.log(r.params.idFile);
+
+    if (!file) {
+      return error(Errors.NotFound, "Quest not found", {});
+    }
+    await Files.destroy({ where: { id: r.params.idFile } });
+  } catch (err) {
+    if (err.message == "This file type is now allowed") {
+      return error(400000, "This file type is now allowed", null);
+    }
+    throw err;
+  }
+  return output();
+}
 
 export async function updateNewsAndComment(r) {
   try {
@@ -179,11 +207,39 @@ export async function updateNewsAndComment(r) {
         idAuthor: r.auth.credentials.id
       }
     });
-    if(!news){
+    if (!news) {
       return error(404000, "Not found news", {});
     }
-    await news.update({
+    let objectUpdate: any = {
       text: r.payload.text
+    };
+    if (news.file != r.payload.file) {
+      for (let i = 0; i < news.file.length; i++) {
+        if (r.payload.file.indexOf(news.file[i]) != -1) {
+          await Files.destroy({
+            where: {
+              id: news.file[i]
+            }
+          });
+        }
+      }
+      objectUpdate.file = r.payload.file;
+    }
+
+    await news.update(objectUpdate);
+    return output({ status: "Success" });
+  } catch (e) {
+    return error(500000, "Internal server error", {});
+  }
+}
+
+export async function createNews(r) {
+  try {
+    const news = await News.create({
+      idAuthor: r.auth.credentials.id,
+      checkNews: true,
+      text: r.payload.text,
+      file: r.payload.file
     });
     return output({ status: "Success" });
   } catch (e) {
@@ -192,4 +248,28 @@ export async function updateNewsAndComment(r) {
 }
 
 
-
+export async function createComment(r) {
+  try {
+    const news: any = await News.findOne({
+      where: {
+        id: r.payload.id
+      }
+    });
+    if (!news) {
+      return error(404000, "Not found news", {});
+    }
+    const create = await News.create({
+      idAuthor: r.auth.credentials.id,
+      text: r.payload.text,
+      checkNews: false
+    });
+    let arr = [...news.answers];
+    arr.push(create.id);
+    await news.update({
+      answers: arr
+    });
+    return output({ status: "Success" });
+  } catch (e) {
+    return error(500000, "Internal server error", {});
+  }
+}
