@@ -185,16 +185,14 @@ export const createFile = async (r) => {
 
 export async function deleteFile(r) {
   try {
-    const file : any = await Files.findOne({
+    const file: any = await Files.destroy({
       where: {
-        id: r.params.idFile,
-        idUser: r.auth.credentials.id
+        id: r.params.idFile
       }
     });
     if (!file) {
       return error(404000, "File not found", null);
     }
-    await file.destroy();
   } catch (err) {
     throw error(500000, "Internal Server Error", null);
   }
