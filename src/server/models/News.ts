@@ -4,9 +4,11 @@ import {
 import {getUUID} from "../utils";
 import {User} from "./User"
 import { Files } from './Files';
+import { Media } from "./Media";
 
 @Table
 export class News extends Model {
+  @ForeignKey(() => Files)
   @Column({ primaryKey: true, type: DataType.STRING, defaultValue: () => getUUID(),unique: true  })
   id: string;
 
@@ -26,6 +28,7 @@ export class News extends Model {
   @Column({ type: DataType.JSONB, defaultValue: [] })
   answers: any;
 
-  @Column({type:DataType.JSONB, defaultValue: []})
+  @Column({ type: DataType.JSONB, defaultValue: [] })
   file: any;
+
 }
