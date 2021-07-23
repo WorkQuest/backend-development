@@ -7,7 +7,6 @@ import { Files } from './Files';
 
 @Table
 export class News extends Model {
-  @ForeignKey(() => Files)
   @Column({ primaryKey: true, type: DataType.STRING, defaultValue: () => getUUID(),unique: true  })
   id: string;
 
@@ -27,4 +26,6 @@ export class News extends Model {
   @Column({ type: DataType.JSONB, defaultValue: [] })
   answers: any;
 
+  @Column({type:DataType.JSONB, defaultValue: []})
+  file: any;
 }

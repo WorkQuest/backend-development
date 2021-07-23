@@ -1,17 +1,27 @@
+
+import * as Joi from 'joi';
+import { emptyOkSchema, outputOkSchema } from '../../schemes';
+import { fileIdSchema, fileSchemaInfo,filesQuerySchema,
+  filesOutputSchema } from '../../schemes/files';
 import {
   createComment,
+  createLikes,
   createNews,
   deleteComment,
-  deleteNews, findNewsAll, findNewsComments,
+  deleteLike,
+  deleteNews, 
+  findNewsAll,
+  findNewsComments,
   userInformation,
-  deleteLike, createLikes
+  getFiles
 } from "../../api/forums";
 import * as Joi from "@hapi/joi";
 import { emptyOkSchema, limitSchema, outputOkSchema } from "../../schemes";
 import { createFile, deleteFile } from "../../api/forums";
 import { fileIdSchema, fileSchemaInfo } from "../../schemes/files";
 
-const idFile = fileIdSchema.label('idNews')
+
+const idFile = fileIdSchema.label('idNews');
 
 
 export default [
@@ -20,6 +30,12 @@ export default [
     path: '/create/news',
     handler: createNews,
     options: {
+      // validate: {
+      //   payload: Joi.object({
+      //     id: Joi.string().required(),
+      //     text: Joi.string().required()
+      //   })
+      // }
       auth: 'jwt-access',
       validate: {
         payload: Joi.object({
@@ -153,7 +169,7 @@ export default [
       tags: ['api', 'file'],
       validate: {
         payload: Joi.object({
-          file: fileSchemaInfo.required(),
+          file: fileSchemaInfo.required()
         })
       },
       response: {
@@ -164,23 +180,21 @@ export default [
 
 
   {
-    method: "DELETE",
-    path: "/v1/file/{idFile}",
-    handler: deleteFile,
+    method: "GET",
+    path: "/v1/allFiles",
+    handler: getFiles,
     options: {
-      id: "v1.file.deleteFile",
-      tags: ["api", "file"],
-      description: "Delete file in DB",
+      id: "v1.files",
+      tags: ["api", "files"],
+      description: "Get all files",
+
       validate: {
-        params: Joi.object({
-          idFile: idFile.required(),
-        }).label("DeleteFile")
+        query: filesQuerySchema
       },
       response: {
-        schema: emptyOkSchema
+        schema: outputOkSchema(filesOutputSchema).label("FilesResponse")
       },
-    },
-  }
 
-
+    }
+  },
 ];
