@@ -152,7 +152,6 @@ export async function deleteComment(r) {
 
 
 export async function findNewsAll(r) {
-  console.log(r.query, '==================================================================');
   try {
     const object : any = {
       limit: r.query.limit,
