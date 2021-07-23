@@ -1,15 +1,15 @@
-import { News } from '../models/News';
-import { getUUID } from '../utils';
-import { string } from 'joi';
-import { Op, where } from 'sequelize';
-import { User } from '../models/User';
-import { error, output } from '../utils';
-import { Files } from '../models/Files';
-import { defaults } from 'pg';
-import { Quest, QuestStatus } from '../models/Quest';
-import { Errors } from '../utils/errors';
-import { QuestsResponse } from '../models/QuestsResponse';
-import { fileIdSchema } from '../schemes/files';
+import { News } from "../models/News";
+import { getUUID } from "../utils";
+import { string } from "joi";
+import { Op, where } from "sequelize";
+import { User } from "../models/User";
+import { error, output } from "../utils";
+import { Files } from "../models/Files";
+import { defaults } from "pg";
+import { Quest, QuestStatus } from "../models/Quest";
+import { Errors } from "../utils/errors";
+import { QuestsResponse } from "../models/QuestsResponse";
+import { fileIdSchema } from "../schemes/files";
 
 
 export async function creatNewsForum(r) {
@@ -25,9 +25,9 @@ export async function creatNewsForum(r) {
       }
     });
     if (!createNews) {
-      return 'Error creat news';
+      return "Error creat news";
     }
-    return 'Ok news creat';
+    return "Ok news creat";
   } catch (e) {
     return false;
   }
@@ -47,7 +47,7 @@ export async function creatCommentForum(r) {
       }
     });
     if (!create) {
-      return 'Comment not create';
+      return "Comment not create";
     }
     const findNews: any = await News.findOne({
       where: {
@@ -59,7 +59,7 @@ export async function creatCommentForum(r) {
     await findNews.update({
       answers: arr
     });
-    return 'Ok';
+    return "Ok";
   } catch (e) {
     return false;
   }
@@ -74,7 +74,7 @@ export async function likesCreate(r) {
       }
     });
     if (!createLike) {
-      return 'News not found';
+      return "News not found";
     }
     let arr = [...createLike.likes];
     arr.push(r.payload.idUser);
@@ -82,7 +82,7 @@ export async function likesCreate(r) {
       likes: arr
     });
 
-    return 'OK';
+    return "OK";
   } catch (e) {
     return false;
   }
@@ -98,9 +98,9 @@ export async function deleteNews(r) {
       }
     });
     if (!deleteNews) {
-      return 'Not find news';
+      return "Not find news";
     }
-    return 'Ok news delete';
+    return "Ok news delete";
   } catch (e) {
     return false;
   }
@@ -115,7 +115,7 @@ export async function deleteComment(r) {
       }
     });
     if (!deleteComment) {
-      return 'Not found comment';
+      return "Not found comment";
     }
     const deleteAnswerComment = await News.findOne({
       where: {
@@ -131,9 +131,9 @@ export async function deleteComment(r) {
     });
     await deleteAnswerComment.update({ answers: deleteAnswerComment.answers });
     if (!deleteAnswerComment) {
-      return 'Not found comment';
+      return "Not found comment";
     }
-    return 'Ok news delete';
+    return "Ok news delete";
   } catch (e) {
     return false;
   }
@@ -145,10 +145,10 @@ export async function findUserInfo(r) {
       where: {
         id: r.payload.id
       },
-      include: [{ model: News, as: 'baseNews', attributes: ['id', 'text'] }]
+      include: [{ model: News, as: "baseNews", attributes: ["id", "text"] }]
     });
     if (!findUser) {
-      return 'Not find user';
+      return "Not find user";
     }
     return findUser;
   } catch (e) {
@@ -159,29 +159,29 @@ export async function findUserInfo(r) {
 
 export const createFile = async (r) => {
   try {
-    let userId: any = r.auth.credentials.id;
+    let idUser: any = r.auth.credentials.id;
     const data: any = r.payload.file;
 
-    const compareFile: any = await Files.findOne({
+    const file: any = await Files.findOne({
       where: {
-        idUser: userId,
+        idUser: idUser,
         url: data.url
       }
     });
-    if (compareFile) {
-      return error(404000, 'Early news exists', null);
+    if (file) {
+      return error(404000, "Not found", null);
     }
-    const addFile: any = await Files.create({
+    const create: any = await Files.create({
       idUser: data.idUser,
       contentType: data.contentType,
       url: data.url,
       hash: data.hash
     });
-    const id: any = addFile.id;
+    const id: any = create.id;
     return output({ id });
   } catch (err) {
-    if (err.message == 'This file type is now allowed') {
-      return error(400000, 'This file type is now allowed', null);
+    if (err.message == "This file type is now allowed") {
+      return error(400000, "Bad Request", null);
     }
     throw err;
   }
@@ -190,24 +190,53 @@ export const createFile = async (r) => {
 
 export async function deleteFile(r) {
   try {
-    let userId: any = r.auth.credentials.id;
+    let idUser: any = r.auth.credentials.id;
     const file = await Files.findOne({
       where: {
         id: r.params.idFile,
-        idUser: userId
+        idUser: idUser
       }
     });
 
     if (!file) {
-      return error(Errors.NotFound, 'File not found', {});
+      return error(404000, "Not found", null);
     }
     await file.destroy();
   } catch (err) {
-    if (err.message == 'This file type is now allowed') {
-      return error(400000, 'This file type is now allowed', null);
+    if (err.message == "This file type is now allowed") {
+      return error(400000, "Bad Request", null);
+    }
+    throw err;
+  }
+  return output();
+
+
+}
+
+export async function getFiles(r) {
+  try {
+    const { offset, limit } = r.query;
+    let userId: any = r.auth.credentials.id;
+    const file = await Files.findAndCountAll({
+      limit: limit,
+      offset: offset,
+      where: {
+        idUser: userId
+      },
+      attributes: ["id","contentType","url","hash","createdAt","updatedAt",]
+    });
+    if (!file) {
+      return error(404000, "Not found", null);
+    }
+    return output(file)
+  } catch (err) {
+    if (err.message == "This file type is now allowed") {
+      return error(400000, "Bad Request", null);
     }
     throw err;
   }
   return output();
 }
+
+
 

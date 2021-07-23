@@ -1,6 +1,7 @@
 import * as Joi from 'joi';
 import { emptyOkSchema, outputOkSchema } from '../../schemes';
-import { fileIdSchema, fileSchemaInfo, filesQuerySchema } from '../../schemes/files';
+import { fileIdSchema, fileSchemaInfo,filesQuerySchema,
+  filesOutputSchema } from '../../schemes/files';
 import {
   creatCommentForum,
   createFile,
@@ -8,10 +9,10 @@ import {
   deleteComment,
   deleteFile,
   deleteNews,
-  findUserInfo,
+  findUserInfo, getFiles,
   likesCreate
-} from '../../api/forums';
-import { getQuests } from '../../api/quest';
+} from "../../api/forums";
+import { deleteQuest, getQuests } from "../../api/quest";
 import { questsQuerySchema } from '../../schemes/quest';
 
 const idFile = fileIdSchema.label('idNews');
@@ -87,6 +88,23 @@ export default [
       }
     }
   },
+  {
+    method: "GET",
+    path: "/v1/allFiles",
+    handler: getFiles,
+    options: {
+      id: "v1.files",
+      tags: ["api", "files"],
+      description: "Get all files",
+      validate: {
+        query: filesQuerySchema
+      },
+      response: {
+        schema: outputOkSchema(filesOutputSchema).label("FilesResponse")
+      },
+    }
+  },
+
   {
     method: 'DELETE',
     path: '/v1/file/{idFile}',

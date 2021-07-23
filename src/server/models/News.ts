@@ -26,4 +26,6 @@ export class News extends Model {
   @Column({ type: DataType.JSONB, defaultValue: [] })
   answers: any;
 
+  @Column({type:DataType.JSONB, defaultValue: []})
+  idFiles: any;
 }
