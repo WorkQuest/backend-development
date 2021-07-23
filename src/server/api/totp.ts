@@ -1,5 +1,5 @@
 import * as speakeasy from "speakeasy";
-import { error, getUUID, output } from "../utils";
+import { error, getUUID, output, totpValidate } from "../utils";
 import { addSendEmailJob } from "../jobs/sendEmail";
 import { Errors } from "../utils/errors";
 import { User } from "../models/User";
@@ -38,17 +38,23 @@ export async function enableTOTP(r) {
 }
 
 export async function confirmEnablingTOTP(r) {
-  const user = await User.scope('withPassword').findByPk(r.auth.credentials.id);
+  const user = await User.scope("withPassword").findByPk(r.auth.credentials.id);
 
   user.mustHaveActiveStatusTOTP(false);
 
   if (user.settings.security.TOTP.confirmCode !== r.payload.confirmCode) {
-    return error(Errors.Forbidden, "Confirmation code is not correct", {});
+    return error(Errors.InvalidPayload, "Confirmation code is not correct", [{
+      field: "confirmCode",
+      reason: "invalid"
+    }]);
+  }
+  if (!totpValidate(r.payload.totp, user.settings.security.TOTP.secret)) {
+    return error(Errors.InvalidPayload, "OTP is invalid", [{ field: "totp", reason: "invalid" }]);
   }
 
   await user.update({
     "settings.security.TOTP.confirmCode": null,
-    "settings.security.TOTP.active": true,
+    "settings.security.TOTP.active": true
   });
 
   return output();

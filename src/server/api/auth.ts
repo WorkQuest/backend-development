@@ -150,8 +150,7 @@ export async function login(r) {
 
 	if (!user) return error(Errors.NotFound, "User not found", {});
 	if (!(await user.passwordCompare(r.payload.password))) return error(Errors.NotFound, "User not found", {});
-	if (r.payload.totp) {
-		user.mustHaveActiveStatusTOTP(true);
+	if (user.isTOTPEnabled()) {
 		user.validateTOTP(r.payload.totp);
 	}
 
