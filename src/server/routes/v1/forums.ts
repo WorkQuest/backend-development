@@ -3,14 +3,11 @@ import {
   createNews,
   deleteComment,
   deleteNews, findNewsAll,
-  deleteLike, createLikes, updateNewsAndComment
+  deleteLike, createLikes, updateNewsAndComment, createFile, getFiles
 } from "../../api/forums";
 import * as Joi from "joi";
-import { emptyOkSchema, limitSchema,outputOkSchema, shemaNews } from "../../schemes";
-import { fileIdSchema, fileSchemaInfo } from "../../schemes/files";
-
-const idFile = fileIdSchema.label("idNews");
-
+import { outputOkSchema, shemaNews } from "../../schemes";
+import { fileIdSchema, fileSchemaInfo, filesQuerySchema, filesOutputSchema } from "../../schemes/files";
 
 export default [
   {
@@ -158,8 +155,8 @@ export default [
     }
   },
   {
-    method: 'POST',
-    path: '/v1/create/file',
+    method: "POST",
+    path: "/v1/create/file",
     handler: createFile,
     options: {
       id: "v1.create.file",

@@ -1,15 +1,7 @@
 import { News } from "../models/News";
-import { getUUID } from "../utils";
-import { string } from "joi";
 import { Op, where } from "sequelize";
-import { User } from "../models/User";
 import { error, output } from "../utils";
 import { Files } from "../models/Files";
-import { defaults } from "pg";
-import { Quest, QuestStatus } from "../models/Quest";
-import { Errors } from "../utils/errors";
-import { QuestsResponse } from "../models/QuestsResponse";
-import { fileIdSchema } from "../schemes/files";
 
 
 export async function createLikes(r) {
@@ -254,7 +246,6 @@ export async function getFiles(r) {
   } catch (err) {
     throw error(500000, "Internal Server Error", null);
   }
-  return output();
 }
 export async function deleteFile(r) {
   await Files.destroy({
