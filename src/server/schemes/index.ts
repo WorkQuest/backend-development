@@ -55,7 +55,7 @@ export const tokensWithStatus = Joi.object({
   refresh: jwtTokenRefresh,
 }).label("TokensWithStatus");
 
-export  const offsetLimit = Joi.object({
+export  const shemaNews = Joi.object({
   limit: Joi.number().default(100),
   offset: Joi.number().default(0),
   id: Joi.string().default('0')
