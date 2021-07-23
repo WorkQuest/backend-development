@@ -1,7 +1,7 @@
 import { News } from "../models/News";
 import { Files } from "../models/Files";
 import { error, getUUID, output } from "../utils";
-import { Op, where } from "sequelize";
+import { Op } from "sequelize";
 
 
 export async function createNews(r) {

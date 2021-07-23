@@ -1,19 +1,18 @@
 import * as Joi from 'joi';
-import { filesQuerySchema,
-  filesOutputSchema } from '../../schemes/files';
+import { filesQuerySchema, filesOutputSchema, fileSchemaInfo } from '../../schemes/files';
 import {
   createComment,
+  createLikes,
   createNews,
-  deleteComment,
-  deleteNews, findNewsAll,
-  deleteLike, createLikes, updateNewsAndComment
   createFile,
+  deleteComment,
+  deleteNews,
+  deleteLike,
+  findNewsAll,
+  updateNewsAndComment,
   getFiles,
 } from "../../api/forums";
-import { emptyOkSchema, limitSchema, offsetLimit, outputOkSchema } from "../../schemes";
-import { fileIdSchema, fileSchemaInfo } from "../../schemes/files";
-
-const idFile = fileIdSchema.label("idNews");
+import { offsetLimit, outputOkSchema } from "../../schemes";
 
 
 export default [
@@ -141,16 +140,16 @@ export default [
     path: '/v1/create/file',
     handler: createFile,
     options: {
-      id: 'v1.create.file',
+      id: "v1.create.file",
       description: `Register new file`,
-      tags: ['api', 'file'],
+      tags: ["api", "file"],
       validate: {
         payload: Joi.object({
           file: fileSchemaInfo.required()
         })
       },
       response: {
-        schema: outputOkSchema(fileSchemaInfo).label('FileResponse')
+        schema: outputOkSchema(fileSchemaInfo).label("FileResponse")
       }
     }
   },
@@ -160,14 +159,14 @@ export default [
     handler: getFiles,
     options: {
       id: "v1.files",
-      tags: ["api", "files"],
+      tags: ["api", "file"],
       description: "Get all files",
       validate: {
         query: filesQuerySchema
       },
       response: {
         schema: outputOkSchema(filesOutputSchema).label("FilesResponse")
-      },
+      }
     }
   }
 ];
