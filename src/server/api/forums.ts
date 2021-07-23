@@ -6,6 +6,7 @@ import { Op, where } from "sequelize";
 
 export async function createNews(r) {
   try {
+    console.log(r.payload.file);
     const news = await News.findCreateFind({
       where: {
         id: getUUID()
@@ -13,7 +14,8 @@ export async function createNews(r) {
       defaults: {
         idAuthor: r.auth.credentials.id,
         checkNews: true,
-        text: r.payload.text
+        text: r.payload.text,
+        file: r.payload.file
       }
     });
     return output({ status: "Success" });
@@ -158,45 +160,6 @@ export async function deleteComment(r) {
     return error(500000, "Internal server error", {});
   }
 }
-
-// export async function userInformation(r) {
-//   try {
-//     const findUser: any = await User.findAll({
-//       where: {
-//         id: r.auth.credentials.id
-//       },
-//       include: [{ model: News, as: "baseNews", attributes: ["id", "text"] }]
-//     });
-//     if (!findUser) {
-//       return error(404000, "Not found user", {});
-//     }
-//     return findUser;
-//   } catch (e) {
-//     return error(500000, "Internal server error", {});
-//   }
-// }
-
-//
-// export async function findNewsComments(r) {
-//   try {
-//     const news = await News.findOne({
-//       where: {
-//         id: r.payload.id,
-//         answers: {
-//           [Op.contains]: [
-//             r.payload.id
-//           ]
-//         }
-//       }
-//     });
-//     if (!news) {
-//       return error(404000, "Not found news", {});
-//     }
-//     return output(news);
-//   } catch (e) {
-//     return error(500000, "Internal server error", {});
-//   }
-// }
 
 
 export async function findNewsAll(r) {

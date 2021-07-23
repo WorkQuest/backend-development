@@ -21,7 +21,8 @@ export default [
       auth: "jwt-access",
       validate: {
         payload: Joi.object({
-          text: Joi.string().required()
+          text: Joi.string().required(),
+          file: Joi.array()
         })
       }
     }
