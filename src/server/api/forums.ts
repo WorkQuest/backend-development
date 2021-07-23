@@ -10,6 +10,7 @@ import { Quest, QuestStatus } from "../models/Quest";
 import { Errors } from "../utils/errors";
 import { QuestsResponse } from "../models/QuestsResponse";
 import { fileIdSchema } from "../schemes/files";
+import forums from "../routes/v1/forums";
 
 
 export async function creatNewsForum(r) {
@@ -159,84 +160,67 @@ export async function findUserInfo(r) {
 
 export const createFile = async (r) => {
   try {
-    let idUser: any = r.auth.credentials.id;
-    const data: any = r.payload.file;
-
     const file: any = await Files.findOne({
       where: {
-        idUser: idUser,
-        url: data.url
+        idUser: r.auth.credentials.id,
+        url: r.payload.file.url
       }
     });
     if (file) {
-      return error(404000, "Not found", null);
+      return error(404000, "File not found", null);
     }
     const create: any = await Files.create({
-      idUser: data.idUser,
-      contentType: data.contentType,
-      url: data.url,
-      hash: data.hash
+      idUser: r.payload.file.idUser,
+      contentType: r.payload.file.contentType,
+      url: r.payload.file.url,
+      hash: r.payload.file.hash
     });
     const id: any = create.id;
     return output({ id });
   } catch (err) {
-    if (err.message == "This file type is now allowed") {
-      return error(400000, "Bad Request", null);
-    }
-    throw err;
+    throw error(500000, "Internal Server Error", null);
   }
 };
 
 
 export async function deleteFile(r) {
   try {
-    let idUser: any = r.auth.credentials.id;
-    const file = await Files.findOne({
+    const file : any = await Files.findOne({
       where: {
         id: r.params.idFile,
-        idUser: idUser
+        idUser: r.auth.credentials.id
       }
     });
-
     if (!file) {
-      return error(404000, "Not found", null);
+      return error(404000, "File not found", null);
     }
     await file.destroy();
   } catch (err) {
-    if (err.message == "This file type is now allowed") {
-      return error(400000, "Bad Request", null);
-    }
-    throw err;
+    throw error(500000, "Internal Server Error", null);
   }
   return output();
-
-
 }
+
 
 export async function getFiles(r) {
   try {
     const { offset, limit } = r.query;
-    let userId: any = r.auth.credentials.id;
     const file = await Files.findAndCountAll({
       limit: limit,
       offset: offset,
       where: {
-        idUser: userId
+        idUser: r.auth.credentials.id
       },
-      attributes: ["id","contentType","url","hash","createdAt","updatedAt",]
+      attributes: ["id", "contentType", "url", "hash", "createdAt", "updatedAt"]
     });
     if (!file) {
       return error(404000, "Not found", null);
     }
-    return output(file)
+    return output(file);
   } catch (err) {
-    if (err.message == "This file type is now allowed") {
-      return error(400000, "Bad Request", null);
-    }
-    throw err;
+    throw error(500000, "Internal Server Error", null);
   }
   return output();
 }
-
 
 
