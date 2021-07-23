@@ -5,7 +5,7 @@ import {
   deleteNews, findNewsAll,
   deleteLike, createLikes, updateNewsAndComment
 } from "../../api/forums";
-import * as Joi from "@hapi/joi";
+import * as Joi from "joi";
 import { emptyOkSchema, limitSchema,outputOkSchema, shemaNews } from "../../schemes";
 import { fileIdSchema, fileSchemaInfo } from "../../schemes/files";
 
@@ -30,7 +30,6 @@ export default [
       }
     }
   },
-
 
   {
     method: "POST",

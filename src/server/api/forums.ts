@@ -181,23 +181,24 @@ export const createFile = async (r) => {
 };
 
 
-export async function deleteFile(r) {
-  try {
-    const file = await Files.findByPk(r.params.idFile);
-    console.log(r.params.idFile);
+// export async function deleteFile(r) {
+//   try {
+//     const file = await Files.findByPk(r.params.idFile);
+//     console.log(r.params.idFile);
+//
+//     if (!file) {
+//       return error(Errors.NotFound, "Quest not found", {});
+//     }
+//     await Files.destroy({ where: { id: r.params.idFile } });
+//   } catch (err) {
+//     if (err.message == "This file type is now allowed") {
+//       return error(400000, "This file type is now allowed", null);
+//     }
+//     throw err;
+//   }
+//   return output();
+// }
 
-    if (!file) {
-      return error(Errors.NotFound, "Quest not found", {});
-    }
-    await Files.destroy({ where: { id: r.params.idFile } });
-  } catch (err) {
-    if (err.message == "This file type is now allowed") {
-      return error(400000, "This file type is now allowed", null);
-    }
-    throw err;
-  }
-  return output();
-}
 
 export async function updateNewsAndComment(r) {
   try {
