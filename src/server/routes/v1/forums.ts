@@ -104,23 +104,4 @@ export default [
       },
     }
   },
-
-  {
-    method: 'DELETE',
-    path: '/v1/file/{idFile}',
-    handler: deleteFile,
-    options: {
-      id: 'v1.file.deleteFile',
-      tags: ['api', 'file'],
-      description: 'Delete file in DB',
-      validate: {
-        params: Joi.object({
-          idFile: idFile.required()
-        }).label('DeleteFile')
-      },
-      response: {
-        schema: emptyOkSchema
-      }
-    }
-  }
 ];
