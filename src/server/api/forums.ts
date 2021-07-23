@@ -6,17 +6,11 @@ import { Op, where } from "sequelize";
 
 export async function createNews(r) {
   try {
-    console.log(r.payload.file);
-    const news = await News.findCreateFind({
-      where: {
-        id: getUUID()
-      },
-      defaults: {
+    const news = await News.create({
         idAuthor: r.auth.credentials.id,
         checkNews: true,
         text: r.payload.text,
         file: r.payload.file
-      }
     });
     return output({ status: "Success" });
   } catch (e) {
@@ -29,21 +23,16 @@ export async function createComment(r) {
   try {
     const news: any = await News.findOne({
       where: {
-        id: r.payload.idNews
+        id: r.payload.id
       }
     });
     if (!news) {
       return error(404000, "Not found news", {});
     }
-    const [create] = await News.findCreateFind({
-      where: {
-        id: getUUID()
-      },
-      defaults: {
+    const create = await News.create({
         idAuthor: r.auth.credentials.id,
         text: r.payload.text,
         checkNews: false
-      }
     });
     let arr = [...news.answers];
     arr.push(create.id);
@@ -61,7 +50,7 @@ export async function createLikes(r) {
   try {
     const news: any = await News.findOne({
       where: {
-        id: r.payload.idNews
+        id: r.payload.id
       }
     });
     if (!news) {
@@ -128,7 +117,7 @@ export async function deleteComment(r) {
   try {
     const news = await News.findOne({
       where: {
-        id: r.payload.idNews,
+        id: r.payload.id,
         answers: {
           [Op.contains]: [
             r.payload.idComment
@@ -163,6 +152,7 @@ export async function deleteComment(r) {
 
 
 export async function findNewsAll(r) {
+  console.log(r.query, '==================================================================');
   try {
     const object : any = {
       limit: r.query.limit,
@@ -171,11 +161,10 @@ export async function findNewsAll(r) {
         checkNews: true
       }
     }
-    if (r.query.id === undefined) {
+    if (!!!r.query.id) {
         object.where.id = r.query.id;
       }
     const news = await News.findAll(object);
-    console.log(news);
     return output(news);
   } catch (e) {
     return error(500000, "Internal server error", {});
@@ -187,10 +176,13 @@ export async function updateNewsAndComment(r) {
   try {
     const news = await News.findOne({
       where: {
-        id: r.payload.idNews,
+        id: r.payload.id,
         idAuthor: r.auth.credentials.id
       }
     });
+    if(!news){
+      return error(404000, "Not found news", {});
+    }
     await news.update({
       text: r.payload.text
     });
