@@ -11,8 +11,6 @@ const offsetSchema = Joi.number().min(0).default(0).label("Offset");
 const limitSchema = Joi.number().min(0).default(10).max(100).label("Limit");
 
 
-
-
 export const fileSchemaInfo = Joi.object({
   idUser: fileIdSchema,
   contentType: contentTypeSchema,
