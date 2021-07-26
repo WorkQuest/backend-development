@@ -3,12 +3,11 @@ import {
 } from 'sequelize-typescript';
 import {getUUID} from "../utils";
 import {User} from "./User"
-import { Files } from './Files';
 import { Media } from "./Media";
 
 @Table
 export class News extends Model {
-  @ForeignKey(() => Files)
+  @ForeignKey(() => Media)
   @Column({ primaryKey: true, type: DataType.STRING, defaultValue: () => getUUID(),unique: true  })
   id: string;
 
