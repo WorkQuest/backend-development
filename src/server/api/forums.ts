@@ -21,8 +21,8 @@ export async function createLikes(r) {
     });
     return output({ status: "Success" });
   } catch (e) {
+    console.log("createLikes", e);
     return error(500000, "Internal server error", {});
-    console.log('createLikes', 0);
   }
 }
 
@@ -48,8 +48,8 @@ export async function deleteLike(r) {
     await news.update({ likes: news.likes });
     return output({ status: "Success" });
   } catch (e) {
+    console.log("deleteLike", e);
     return error(500000, "Internal server error", {});
-    console.log('deleteLike', 0);
   }
 }
 
@@ -68,8 +68,8 @@ export async function deleteNews(r) {
     await news.destroy();
     return output({ status: "Success" });
   } catch (e) {
+    console.log("deleteNews", e);
     return error(500000, "Internal server error", {});
-    console.log('deleteNews', 0);
   }
 }
 
@@ -107,8 +107,8 @@ export async function deleteComment(r) {
     await news.update({ answers: news.answers });
     return output({ status: "Success" });
   } catch (e) {
+    console.log("deleteComment", e);
     return error(500000, "Internal server error", {});
-    console.log('deleteComment', 0);
   }
 }
 
@@ -128,8 +128,8 @@ export async function findNewsAll(r) {
     const news = await News.findAll(object);
     return output(news);
   } catch (e) {
+    console.log("findNewsAll", e);
     return error(500000, "Internal server error", {});
-    console.log('findNewsAll', 0);
   }
 }
 
@@ -165,8 +165,8 @@ export async function updateNewsAndComment(r) {
     await news.update(objectUpdate);
     return output({ status: "Success" });
   } catch (e) {
+    console.log("updateNewsAndComment", e);
     return error(500000, "Internal server error", {});
-    console.log('updateNewsAndComment', 0);
   }
 }
 
@@ -180,8 +180,8 @@ export async function createNews(r) {
     });
     return output({ status: "Success" });
   } catch (e) {
+    console.log("createNews", e);
     return error(500000, "Internal server error", {});
-    console.log('createNews', 0);
   }
 }
 
@@ -208,12 +208,12 @@ export async function createComment(r) {
     });
     return output({ status: "Success" });
   } catch (e) {
+    console.log("createComment", e);
     return error(500000, "Internal server error", {});
-    console.log('createComment', 0);
   }
 }
 
-export const createFile = async (r) => {
+export async function createFile(r) {
   try {
     const media: any = await Media.findOne({
       where: {
@@ -233,8 +233,8 @@ export const createFile = async (r) => {
     const id: any = create.id;
     return output({ id });
   } catch (err) {
-    throw error(500000, "Internal Server Error", null);
-    console.log('createFile', 0);
+    console.log("createFile", err);
+    return error(500000, "Internal Server Error", null);
   }
 };
 
@@ -255,10 +255,11 @@ export async function getFiles(r) {
     }
     return output(media);
   } catch (err) {
-    throw error(500000, "Internal Server Error", null);
-    console.log('getFiles', 0);
+    console.log("getFiles", err);
+    return error(500000, "Internal Server Error", null);
   }
 }
+
 export async function deleteFile(r) {
   await Media.destroy({
     where: {
