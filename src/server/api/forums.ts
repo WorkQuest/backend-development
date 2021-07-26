@@ -1,7 +1,6 @@
 import { News } from "../models/News";
 import { Op, where } from "sequelize";
 import { error, output } from "../utils";
-import { Files } from "../models/Files";
 import { Media } from "../models/Media";
 
 
@@ -152,7 +151,7 @@ export async function updateNewsAndComment(r) {
     if (news.file != r.payload.file) {
       for (let i = 0; i < news.file.length; i++) {
         if (r.payload.file.indexOf(news.file[i]) == -1) {
-          await Files.destroy({
+          await Media.destroy({
             where: {
               id: news.file[i]
             }
