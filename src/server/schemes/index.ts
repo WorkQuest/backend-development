@@ -60,3 +60,5 @@ export  const shemaNews = Joi.object({
   offset: Joi.number().default(0),
   id: Joi.string().default('0')
 });
+
+

@@ -1,6 +1,6 @@
 import * as Joi from "joi";
 import { ContentType } from "../models/Media";
-import { idSchema, urlSchema } from "./index";
+import { idSchema, isoDateSchema, limitSchema, offsetSchema, urlSchema } from "./index";
 
 const mediaIdSchema = idSchema.label("MediaId");
 export const contentTypeSchema = Joi.string().valid(...Object.values(ContentType)).example(ContentType.png).label("ContentType");
@@ -22,3 +22,26 @@ export const mediaSchema = Joi.object({
 }).label('MediaScheme');
 
 export const mediasUrlOnlySchema = Joi.array().items(mediaUrlOnlySchema).label('MediasUrlOnlyScheme')
+
+export const fileSchemaInfo = Joi.object({
+  idUser: idSchema,
+  contentType: contentTypeSchema,
+  url: urlSchema,
+  hash: mediaHashSchema,
+}).label("FileScheme");
+
+
+const filesSchema = Joi.object({
+  id: idSchema,
+  idUser:idSchema,
+  contentType:contentTypeSchema,
+  url: urlSchema,
+  hash: mediaHashSchema,
+  createdAt:isoDateSchema,
+  updateAt: isoDateSchema
+})
+
+export const filesQuerySchema = Joi.object({
+  offset: offsetSchema,
+  limit: limitSchema,
+}).label("FilesQuerySchema");

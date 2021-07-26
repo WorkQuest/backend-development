@@ -7,7 +7,7 @@ import {
 } from "../../api/forums";
 import * as Joi from "joi";
 import { outputOkSchema, shemaNews } from "../../schemes";
-import { fileIdSchema, fileSchemaInfo, filesQuerySchema, filesOutputSchema } from "../../schemes/files";
+import { fileSchemaInfo, filesQuerySchema } from "../../schemes/media";
 
 export default [
   {
@@ -184,10 +184,8 @@ export default [
         query: filesQuerySchema
       },
       response: {
-        schema: outputOkSchema(filesOutputSchema).label("FilesResponse")
+        schema: outputOkSchema(filesQuerySchema).label("FilesResponse")
       }
     }
   }
-
-
 ];
