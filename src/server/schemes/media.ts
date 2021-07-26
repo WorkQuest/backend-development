@@ -24,22 +24,12 @@ export const mediaSchema = Joi.object({
 export const mediasUrlOnlySchema = Joi.array().items(mediaUrlOnlySchema).label('MediasUrlOnlyScheme')
 
 export const fileSchemaInfo = Joi.object({
-  idUser: idSchema,
+  userId: idSchema,
   contentType: contentTypeSchema,
   url: urlSchema,
   hash: mediaHashSchema,
 }).label("FileScheme");
 
-
-const filesSchema = Joi.object({
-  id: idSchema,
-  idUser:idSchema,
-  contentType:contentTypeSchema,
-  url: urlSchema,
-  hash: mediaHashSchema,
-  createdAt:isoDateSchema,
-  updateAt: isoDateSchema
-})
 
 export const filesQuerySchema = Joi.object({
   offset: offsetSchema,

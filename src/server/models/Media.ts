@@ -3,9 +3,11 @@ import { getUUID } from '../utils';
 import { User } from './User';
 
 export enum ContentType {
-  mp4 = "video/mp4",
-  jpeg = "image/jpeg",
-  png = "image/png",
+  mp4 = 'video/mp4',
+  jpeg = 'image/jpeg',
+  png = 'image/png',
+  pdf = 'application/pdf',
+  DOC = 'application/msword'
 }
 
 @Table({
@@ -23,7 +25,7 @@ export class Media extends Model {
 
   @Column({type: DataType.STRING, allowNull: false}) contentType: ContentType;
   @Column({type: DataType.TEXT, allowNull: false}) url: string;
-  @Column({type: DataType.STRING, allowNull: false}) hash: string;
+  @Column({type: DataType.STRING, allowNull: false, defaultValue: null}) hash: string;
 
   @BelongsTo(() => User) user: User;
 }

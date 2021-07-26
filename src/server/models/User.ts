@@ -165,7 +165,6 @@ export class User extends Model {
   @Column({type: DataType.STRING, defaultValue: null}) phone: string;
 
   @BelongsTo(() => Media,{ constraints: false, foreignKey: 'avatarId' }) avatar: Media;
-
   @BelongsTo(() => News, {foreignKey: 'id', targetKey: 'idAuthor'}) baseNews: News;
 
 

@@ -2,6 +2,7 @@ import { News } from "../models/News";
 import { Op, where } from "sequelize";
 import { error, output } from "../utils";
 import { Files } from "../models/Files";
+import { Media } from "../models/Media";
 
 
 export async function createLikes(r) {
@@ -22,6 +23,7 @@ export async function createLikes(r) {
     return output({ status: "Success" });
   } catch (e) {
     return error(500000, "Internal server error", {});
+    console.log('createLikes', 0);
   }
 }
 
@@ -48,6 +50,7 @@ export async function deleteLike(r) {
     return output({ status: "Success" });
   } catch (e) {
     return error(500000, "Internal server error", {});
+    console.log('deleteLike', 0);
   }
 }
 
@@ -67,6 +70,7 @@ export async function deleteNews(r) {
     return output({ status: "Success" });
   } catch (e) {
     return error(500000, "Internal server error", {});
+    console.log('deleteNews', 0);
   }
 }
 
@@ -105,6 +109,7 @@ export async function deleteComment(r) {
     return output({ status: "Success" });
   } catch (e) {
     return error(500000, "Internal server error", {});
+    console.log('deleteComment', 0);
   }
 }
 
@@ -125,6 +130,7 @@ export async function findNewsAll(r) {
     return output(news);
   } catch (e) {
     return error(500000, "Internal server error", {});
+    console.log('findNewsAll', 0);
   }
 }
 
@@ -161,6 +167,7 @@ export async function updateNewsAndComment(r) {
     return output({ status: "Success" });
   } catch (e) {
     return error(500000, "Internal server error", {});
+    console.log('updateNewsAndComment', 0);
   }
 }
 
@@ -175,6 +182,7 @@ export async function createNews(r) {
     return output({ status: "Success" });
   } catch (e) {
     return error(500000, "Internal server error", {});
+    console.log('createNews', 0);
   }
 }
 
@@ -202,22 +210,23 @@ export async function createComment(r) {
     return output({ status: "Success" });
   } catch (e) {
     return error(500000, "Internal server error", {});
+    console.log('createComment', 0);
   }
 }
 
 export const createFile = async (r) => {
   try {
-    const file: any = await Files.findOne({
+    const media: any = await Media.findOne({
       where: {
-        idUser: r.auth.credentials.id,
+        userId: r.auth.credentials.id,
         url: r.payload.file.url
       }
     });
-    if (file) {
+    if (media) {
       return error(404000, "File not found", null);
     }
-    const create: any = await Files.create({
-      idUser: r.payload.file.idUser,
+    const create: any = await Media.create({
+      userId: r.payload.file.userId,
       contentType: r.payload.file.contentType,
       url: r.payload.file.url,
       hash: r.payload.file.hash
@@ -226,6 +235,7 @@ export const createFile = async (r) => {
     return output({ id });
   } catch (err) {
     throw error(500000, "Internal Server Error", null);
+    console.log('createFile', 0);
   }
 };
 
@@ -233,24 +243,25 @@ export const createFile = async (r) => {
 export async function getFiles(r) {
   try {
     const { offset, limit } = r.query;
-    const file = await Files.findAndCountAll({
+    const media = await Media.findAndCountAll({
       limit: limit,
       offset: offset,
       where: {
-        idUser: r.auth.credentials.id
+        userId: r.auth.credentials.id
       },
       attributes: ["id", "contentType", "url", "hash", "createdAt", "updatedAt"]
     });
-    if (!file) {
+    if (!media) {
       return error(404000, "Not found", null);
     }
-    return output(file);
+    return output(media);
   } catch (err) {
     throw error(500000, "Internal Server Error", null);
+    console.log('getFiles', 0);
   }
 }
 export async function deleteFile(r) {
-  await Files.destroy({
+  await Media.destroy({
     where: {
       id: r.params.idFile
     }
