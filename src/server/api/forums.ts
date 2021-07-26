@@ -145,12 +145,13 @@ export async function updateNewsAndComment(r) {
     };
     if (news.file != r.payload.file) {
       for (let i = 0; i < news.file.length; i++) {
-        if (r.payload.file.indexOf(news.file[i]) != -1) {
+        if (r.payload.file.indexOf(news.file[i]) == -1) {
           await Files.destroy({
             where: {
               id: news.file[i]
             }
           });
+          console.log(news.file[i]);
         }
       }
       objectUpdate.file = r.payload.file;
