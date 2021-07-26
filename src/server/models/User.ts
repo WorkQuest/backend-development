@@ -114,13 +114,13 @@ export interface AdditionalInfoEmployer extends AdditionalInfo {
     attributes: {
       exclude: ["password", "settings", "tempPhone", "createdAt", "updatedAt"]
     },
-    // include: [{
-    //   model: Media.scope('urlOnly'),
-    //   as: 'avatar'
-    // }, {
-    //   model: RatingStatistic,
-    //   as: 'ratingStatistic'
-    // }]
+    include: [{
+      model: Media.scope('urlOnly'),
+      as: 'avatar'
+    }, {
+      model: RatingStatistic,
+      as: 'ratingStatistic'
+    }]
   },
   withPassword: {
     attributes: {
