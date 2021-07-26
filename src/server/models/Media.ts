@@ -25,7 +25,7 @@ export class Media extends Model {
 
   @Column({type: DataType.STRING, allowNull: false}) contentType: ContentType;
   @Column({type: DataType.TEXT, allowNull: false}) url: string;
-  @Column({type: DataType.STRING, allowNull: false, defaultValue: null}) hash: string;
+  @Column({type: DataType.STRING, allowNull: false}) hash: string;
 
   @BelongsTo(() => User) user: User;
 }
