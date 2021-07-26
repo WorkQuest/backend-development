@@ -2,7 +2,7 @@ import { Twilio } from "twilio";
 import { addJob } from '../utils/scheduler';
 import config from '../config/config';
 
-// const client = new Twilio(config.twilio.accountSid, config.twilio.authToken);
+const client = new Twilio(config.twilio.accountSid, config.twilio.authToken);
 
 export interface SmsPayload {
   toPhoneNumber: string;
