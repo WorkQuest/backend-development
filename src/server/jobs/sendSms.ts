@@ -14,10 +14,10 @@ export async function addSendSmsJob(payload: SmsPayload) {
 }
 
 export default async function(payload: SmsPayload) {
-  // await client.api.messages
-  //   .create({
-  //     body: payload.message,
-  //     to: payload.toPhoneNumber,
-  //     from: config.twilio.phoneNumberSender,
-  // });
+  await client.api.messages
+    .create({
+      body: payload.message,
+      to: payload.toPhoneNumber,
+      from: config.twilio.phoneNumberSender,
+  });
 }
