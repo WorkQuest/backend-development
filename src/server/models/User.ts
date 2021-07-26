@@ -130,7 +130,7 @@ export interface AdditionalInfoEmployer extends AdditionalInfo {
 }))
 @Table({ paranoid: true })
 export class User extends Model {
-  @Column({ primaryKey: true, type: DataType.STRING, defaultValue: () => getUUID(), unique: true}) id: string;
+  @Column({ primaryKey: true, type: DataType.STRING, defaultValue: () => getUUID()}) id: string;
   @ForeignKey(() => Media) @Column({type: DataType.STRING, defaultValue: null}) avatarId: string;
 
   @Column({
