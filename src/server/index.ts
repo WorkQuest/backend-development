@@ -24,7 +24,7 @@ const Package = require("../../package.json");
 SwaggerOptions.info.version = Package.version;
 
 function initAuthStrategiesOfSocialNetworks(server: Hapi.Server) {
-  server.auth.strategy('facebook', 'bell', {
+  server.auth.strategy("facebook", "bell", {
     provider: "facebook",
     clientId: config.socialNetworks.facebook.id,
     password: config.socialNetworks.facebook.cookiePassword,
@@ -32,7 +32,7 @@ function initAuthStrategiesOfSocialNetworks(server: Hapi.Server) {
     isSecure: !config.debug,
     location: config.baseUrl
   });
-  server.auth.strategy('google', 'bell', {
+  server.auth.strategy("google", "bell", {
     provider: "google",
     clientId: config.socialNetworks.google.id,
     password: config.socialNetworks.google.cookiePassword,
@@ -40,7 +40,7 @@ function initAuthStrategiesOfSocialNetworks(server: Hapi.Server) {
     isSecure: !config.debug,
     location: config.baseUrl
   });
-  server.auth.strategy('twitter', 'bell', {
+  server.auth.strategy("twitter", "bell", {
     provider: "twitter",
     clientId: config.socialNetworks.twitter.id,
     password: config.socialNetworks.twitter.cookiePassword,
@@ -48,7 +48,7 @@ function initAuthStrategiesOfSocialNetworks(server: Hapi.Server) {
     isSecure: !config.debug,
     location: config.baseUrl
   });
-  server.auth.strategy('linkedin', 'bell', {
+  server.auth.strategy("linkedin", "bell", {
     provider: "linkedin",
     clientId: config.socialNetworks.linkedin.id,
     password: config.socialNetworks.linkedin.cookiePassword,
@@ -58,27 +58,29 @@ function initAuthStrategiesOfSocialNetworks(server: Hapi.Server) {
   });
 }
 
+
+export const server = new Hapi.Server({
+  port: config.server.port,
+  host: config.server.host,
+  query: {
+    parser: (query) => Qs.parse(query)
+  },
+  routes: {
+    validate: {
+      options: {
+        // Handle all validation errors
+        abortEarly: false
+      },
+      failAction: handleValidationError
+    },
+    response: {
+      failAction: "log"
+    }
+  }
+});
+
 const init = async () => {
-  const server = await new Hapi.Server({
-    port: config.server.port,
-    host: config.server.host,
-    query: {
-      parser: (query) => Qs.parse(query)
-    },
-    routes: {
-      validate: {
-        options: {
-          // Handle all validation errors
-          abortEarly: false,
-        },
-        failAction: handleValidationError,
-      },
-      response: {
-        failAction: 'log',
-      },
-    },
-  });
-  server.realm.modifiers.route.prefix = '/api';
+  server.realm.modifiers.route.prefix = "/api";
   // Регистрируем расширения
   await server.register([
     Basic,
@@ -99,41 +101,45 @@ const init = async () => {
   });
 
   // JWT Auth
-  server.auth.strategy('jwt-access', 'bearer-access-token', {
-    validate: tokenValidate('access', [
+  server.auth.strategy("jwt-access", "bearer-access-token", {
+    validate: tokenValidate("access", [
       "/api/v1/auth/confirm-email",
       "/api/v1/profile/set-role"
-    ]),
+    ])
   });
-  server.auth.strategy('jwt-refresh', 'bearer-access-token', {
-    validate: tokenValidate('refresh'),
+  server.auth.strategy("jwt-refresh", "bearer-access-token", {
+    validate: tokenValidate("refresh")
   });
-  server.auth.default('jwt-access');
+  // server.auth.default("jwt-access");
+  server.auth.default();
 
   initAuthStrategiesOfSocialNetworks(server);
 
   // Загружаем маршруты
   server.route(routes);
   // Error handler
-  server.ext('onPreResponse', responseHandler);
+  server.ext("onPreResponse", responseHandler);
   await server.register({
     plugin: HapiPulse,
     options: {
       timeout: 15000,
-      signals: ['SIGINT'],
-    },
+      signals: ["SIGINT"]
+    }
   });
   // Enable CORS (Do it last required!)
   await server.register({
     plugin: HapiCors,
-    options: config.cors,
+    options: config.cors
   });
+
   // Запускаем сервер
   try {
+    server.subscription("/chat/create/");
+
     await server.start();
-    server.log('info', `Server running at: ${server.info.uri}`);
+    server.log("info", `Server running at: ${server.info.uri}`);
   } catch (err) {
-    server.log('error', JSON.stringify(err));
+    server.log("error", JSON.stringify(err));
   }
 
   return server;
