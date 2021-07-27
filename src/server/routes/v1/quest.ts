@@ -19,7 +19,7 @@ import {
   questPrioritySchema, questSchema,
   titleSchema, questsQuerySchema
 } from '../../schemes/quest';
-import { mediasUrlOnlySchema } from '../../schemes/media';
+import { mediaIdsSchema } from '../../schemes/media';
 
 const questId = idSchema.label('QuestId');
 const questsOutputSchema = Joi.object({
@@ -43,7 +43,7 @@ export default [{
         title: titleSchema.required(),
         description: descriptionSchema.required(),
         price: priceSchema.required(),
-        medias: mediasUrlOnlySchema.required().unique().label('Medias'),
+        medias: mediaIdsSchema.required().unique().label('MediaIds'),
         adType: adTypeSchema,
       }).label("CreateQuestPayload")
     },
@@ -88,7 +88,7 @@ export default [{
         description: descriptionSchema,
         price: priceSchema,
         adType: adTypeSchema,
-        medias: mediasUrlOnlySchema.unique().label('Medias'), // TODO: Why Model1???
+        medias: mediaIdsSchema.unique().label('MediaIds'),
       }).label("EditQuestPayload"),
     },
     response: {
