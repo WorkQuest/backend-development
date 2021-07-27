@@ -12,7 +12,7 @@ export class News extends Model {
   id: string;
 
   @ForeignKey(() => User)
-  @Column ({type:DataType.STRING, defaultValue: ''})
+  @Column ({type:DataType.STRING, defaultValue: '',unique: true})
   idAuthor: string;
 
   @Column ({type: DataType.BOOLEAN})
