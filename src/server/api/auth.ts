@@ -44,12 +44,11 @@ async function getUserByNetworkProfile(network: string, profile): Promise<User> 
 		firstName: profile.name.first,
 		lastName: profile.name.last,
 		status: UserStatus.NeedSetRole,
-		settings: {
-			emailConfirm: null,
+		settings: Object.assign({}, defaultUserSettings, {
 			social: {
 				[network]: socialInfo,
 			}
-		}
+		})
 	});
 	await RatingStatistic.create({ userId: user.id });
 
