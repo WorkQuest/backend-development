@@ -110,6 +110,8 @@ const init = async () => {
   server.auth.strategy("jwt-refresh", "bearer-access-token", {
     validate: tokenValidate("refresh")
   });
+
+
   // server.auth.default("jwt-access");
   server.auth.default();
 
@@ -134,7 +136,7 @@ const init = async () => {
 
   // Запускаем сервер
   try {
-    server.subscription("/chat/create/");
+    // server.subscription("/api/chat/create/");
 
     await server.start();
     server.log("info", `Server running at: ${server.info.uri}`);

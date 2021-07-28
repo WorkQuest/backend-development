@@ -34,6 +34,7 @@ export const accountStatusSchema = Joi.number().valid(...Object.keys(UserStatus)
 export const offsetSchema = Joi.number().min(0).default(0).label("Offset");
 export const limitSchema = Joi.number().min(0).default(10).max(100).label('Limit');
 export const searchSchema = Joi.string().default(null).max(255).label('Search');
+export const arrayIdSchema = Joi.array().items(idSchema).label('array id users')
 
 export const locationSchema = Joi.object({
   longitude: longitudeSchema.required(),
