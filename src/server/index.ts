@@ -57,27 +57,27 @@ function initAuthStrategiesOfSocialNetworks(server: Hapi.Server) {
     location: config.baseUrl
   });
 }
+export const server = new Hapi.Server({
+  port: config.server.port,
+  host: config.server.host,
+  query: {
+    parser: (query) => Qs.parse(query)
+  },
+  routes: {
+    validate: {
+      options: {
+        // Handle all validation errors
+        abortEarly: false,
+      },
+      failAction: handleValidationError,
+    },
+    response: {
+      failAction: 'log',
+    },
+  },
+});
 
 const init = async () => {
-  const server = await new Hapi.Server({
-    port: config.server.port,
-    host: config.server.host,
-    query: {
-      parser: (query) => Qs.parse(query)
-    },
-    routes: {
-      validate: {
-        options: {
-          // Handle all validation errors
-          abortEarly: false,
-        },
-        failAction: handleValidationError,
-      },
-      response: {
-        failAction: 'log',
-      },
-    },
-  });
   server.realm.modifiers.route.prefix = '/api';
   // Регистрируем расширения
   await server.register([
@@ -108,7 +108,8 @@ const init = async () => {
   server.auth.strategy('jwt-refresh', 'bearer-access-token', {
     validate: tokenValidate('refresh'),
   });
-  server.auth.default('jwt-access');
+  server.auth.default();
+  server.subscription('/api/chat/create');
 
   initAuthStrategiesOfSocialNetworks(server);
 
