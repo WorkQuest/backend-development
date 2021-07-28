@@ -2,22 +2,22 @@ import {
   Column, DataType, ForeignKey, Model, Table, BelongsTo, BelongsToMany
 } from "sequelize-typescript";
 import { getUUID } from "../utils";
+import { Message } from "./Message";
 import { User } from "./User";
 
 @Table
-export class Chat extends Model {
+export class Favorite extends Model {
   @Column({ primaryKey: true, type: DataType.STRING, defaultValue: () => getUUID(), unique: true })
   id: string;
 
+  @ForeignKey(() => Message)
+  @Column({ type: DataType.STRING, defaultValue: "" })
+  messageId: string;
+
   @ForeignKey(() => User)
-  @Column({ type: DataType.STRING, defaultValue: "", unique: true })
+  @Column({ type: DataType.STRING, defaultValue: "" })
   userId: string;
 
-  @Column({ type: DataType.JSONB, defaultValue: [] })
-  membersId: any;
-
-  @Column({ type: DataType.BOOLEAN, defaultValue: false })
-  isPrivate: boolean;
-
+  @BelongsTo(() => Message, { foreignKey: "messageId" }) message: Message;
   @BelongsTo(() => User, { foreignKey: "userId" }) user: User;
 }

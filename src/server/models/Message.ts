@@ -1,24 +1,34 @@
-import { BelongsTo, Column, DataType, ForeignKey, Model, Table } from "sequelize-typescript";
-import { error, getUUID } from '../utils';
-import { User } from './User';
+import {
+  Column, DataType, ForeignKey, Model, Table, BelongsTo, BelongsToMany
+} from "sequelize-typescript";
+import { getUUID } from "../utils";
+import { User } from "./User";
 import { Chat } from "./Chat";
-
+import { Media } from "./Media";
 
 @Table
 export class Message extends Model {
-  @Column({ primaryKey: true, type: DataType.STRING, defaultValue: () => getUUID() }) id: string;
+  @Column({ primaryKey: true, type: DataType.STRING, defaultValue: () => getUUID(), unique: true })
+  id: string;
+
   @ForeignKey(() => User)
-  @Column({type: DataType.STRING, allowNull: false}) userId: string;
-
-  @Column({type: DataType.STRING, allowNull: false }) data: string;
-
-  @Column ({ type:DataType.JSONB, defaultValue: [] }) membersDel: any;
-
-  @Column ({ type:DataType.JSONB, defaultValue: [] }) media: any;
-
+  @Column({ type: DataType.STRING, defaultValue: "", unique: true })
+  userId: string;
 
   @ForeignKey(() => Chat)
-  @Column({type: DataType.STRING, allowNull: false}) chatId: string;
-  @BelongsTo(() => User) user: User;
-  @BelongsTo(() => Chat) chat: Chat;
+  @Column({ type: DataType.STRING, defaultValue: "" })
+  chatId: string;
+
+  @ForeignKey(() => Media)
+  @Column({ type: DataType.JSONB, defaultValue: [] })
+  mediaId: any;
+
+  @Column({ type: DataType.JSONB, defaultValue: [] })
+  usersDel: any;
+
+  @Column({ type: DataType.STRING, defaultValue: "" })
+  data: string;
+
+  @BelongsTo(() => User, { foreignKey: "userId" }) user: User;
+  @BelongsTo(() => Chat, { foreignKey: "chatId" }) chat: Chat;
 }

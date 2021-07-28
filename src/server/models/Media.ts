@@ -1,6 +1,9 @@
-import { BelongsTo, Column, DataType, ForeignKey, Model, Table, Scopes } from 'sequelize-typescript';
+import { BelongsTo, Column, DataType, ForeignKey, Model, Table, Scopes, BelongsToMany } from "sequelize-typescript";
 import { getUUID } from '../utils';
 import { User } from './User';
+import { HasMany } from "sequelize";
+import { Message } from "./Message";
+import { Chat } from "./Chat";
 
 export enum ContentType {
   mp4 = 'video/mp4',
@@ -28,4 +31,5 @@ export class Media extends Model {
   @Column({type: DataType.STRING, allowNull: false, defaultValue: null}) hash: string;
 
   @BelongsTo(() => User) user: User;
+  @BelongsTo(() => Message,'id') mediaId: Message[];
 }

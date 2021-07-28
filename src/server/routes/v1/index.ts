@@ -25,5 +25,5 @@ export default [
   ...portfolio,
   ...totp,
   ...forum,
-  ...chat,
+  ...chat
 ];
