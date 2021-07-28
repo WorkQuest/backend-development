@@ -28,13 +28,13 @@ export type validateFunc = (r, token: string) => Promise<any>;
 // Fabric which returns token validate function depending on token type
 export function tokenValidate(tokenType: 'access' | 'refresh', allowedUnconfirmedRoutes: string[] = []): validateFunc {
   return async function(r, token: string) {
-    let data = await decodeJwt(token, config.auth.jwt[tokenType].secret);
+    const data = await decodeJwt(token, config.auth.jwt[tokenType].secret);
 
-    let { user } = await Session.findByPk(data.id, {
+    const { user } = await Session.findByPk(data.id, {
       include: [{model: User}]
     });
 
-    if(!user) {
+    if (!user) {
       throw error(Errors.SessionNotFound, 'User not found', {});
     }
     if (user.status !== UserStatus.Confirmed && !allowedUnconfirmedRoutes.includes(r.route.path)) {

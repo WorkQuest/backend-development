@@ -44,12 +44,11 @@ async function getUserByNetworkProfile(network: string, profile): Promise<User> 
 		firstName: profile.name.first,
 		lastName: profile.name.last,
 		status: UserStatus.NeedSetRole,
-		settings: {
-			emailConfirm: null,
+		settings: Object.assign({}, defaultUserSettings, {
 			social: {
 				[network]: socialInfo,
 			}
-		}
+		})
 	});
 	await RatingStatistic.create({ userId: user.id });
 
@@ -171,6 +170,10 @@ export async function refreshTokens(r) {
 	const newSession = await Session.create({
 		userId: r.auth.credentials.id
 	});
+	const result = {
+		...generateJwt({ id: newSession.id }),
+		userStatus: r.auth.credentials.status,
+	};
 
-	return output(generateJwt({ id: newSession.id }));
+	return output(result);
 }

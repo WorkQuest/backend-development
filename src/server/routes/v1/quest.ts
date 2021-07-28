@@ -21,7 +21,8 @@ import {
 } from '../../schemes/quest';
 import { mediaIdsSchema } from '../../schemes/media';
 
-const questId = idSchema.label('QuestId');
+const questIdSchema = idSchema.label('QuestId');
+const userIdSchema = idSchema.label('UserId');
 const questsOutputSchema = Joi.object({
   count: Joi.number().integer().example(10).label('CountQuests'),
   quests: Joi.array().items(questSchema).label('QuestsList'),
@@ -61,7 +62,7 @@ export default [{
     description: "Delete quest (only status: Created and Closed)",
     validate: {
       params: Joi.object({
-        questId: questId.required(),
+        questId: questIdSchema.required(),
       }).label("DeleteQuestParams")
     },
     response: {
@@ -78,7 +79,7 @@ export default [{
     description: "Edit quest",
     validate: {
       params: Joi.object({
-        questId: questId.required(),
+        questId: questIdSchema.required(),
       }).label("EditQuestParams"),
       payload: Joi.object({
         category: categorySchema,
@@ -120,8 +121,8 @@ export default [{
     description: "Get quests for a given user",
     validate: {
       params: Joi.object({
-        fromUser: idSchema.required().label('UserId'),
-      }).label("GetQuestsParams"),
+        userId: userIdSchema
+      }).label("EmployerQuestsParams"),
       query: questsQuerySchema
     },
     response: {
@@ -137,8 +138,11 @@ export default [{
     tags: ["api", "quest"],
     description: "Start quest",
     validate: {
+      params: Joi.object({
+        questId: questIdSchema,
+      }).label('StartQuestParams'),
       payload: Joi.object({
-        assignedWorkerId: idSchema.required().label('AssignedWorkerId')
+        assignedWorkerId: userIdSchema,
       }).label('StartQuestPayload')
     },
     response: {
@@ -155,7 +159,7 @@ export default [{
     description: "Close quest",
     validate: {
       params: Joi.object({
-        questId: questId.required(),
+        questId: questIdSchema.required(),
       }).label("DeleteQuestParams")
     },
     response: {
@@ -172,7 +176,7 @@ export default [{
     description: "Reject work on quest",
     validate: {
       params: Joi.object({
-        questId: questId.required(),
+        questId: questIdSchema.required(),
       }).label("RejectWorkOnQuestParams")
     },
     response: {
@@ -189,7 +193,7 @@ export default [{
     description: "Accept work on quest",
     validate: {
       params: Joi.object({
-        questId: questId.required(),
+        questId: questIdSchema.required(),
       }).label("AcceptWorkOnQuestParams")
     },
     response: {
@@ -206,7 +210,7 @@ export default [{
     description: "Complete work on quest",
     validate: {
       params: Joi.object({
-        questId: questId.required(),
+        questId: questIdSchema.required(),
       }).label("CompleteWorkOnQuestParams")
     },
     response: {
@@ -223,7 +227,7 @@ export default [{
     description: "Accept completed work on quest",
     validate: {
       params: Joi.object({
-        questId: questId.required(),
+        questId: questIdSchema.required(),
       }).label("AcceptCompletedWorkParams")
     },
     response: {
@@ -240,7 +244,7 @@ export default [{
     description: "Reject completed work on quest",
     validate: {
       params: Joi.object({
-        questId: questId.required(),
+        questId: questIdSchema.required(),
       }).label("RejectCompletedWorkParams")
     },
     response: {
@@ -269,7 +273,7 @@ export default [{
     description: 'Set star on quest',
     validate: {
       params: Joi.object({
-        questId: questId.required(),
+        questId: questIdSchema.required(),
       }).label("StarParams")
     },
     response: {
@@ -286,7 +290,7 @@ export default [{
     description: 'Take away star on quest',
     validate: {
       params: Joi.object({
-        questId: questId.required(),
+        questId: questIdSchema.required(),
       }).label("StarParams")
     },
     response: {
