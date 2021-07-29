@@ -9,6 +9,7 @@ import { RatingStatistic } from "./RatingStatistic";
 import { StarredQuests } from "./StarredQuests";
 import { News } from "./News";
 import { Chat } from "./Chat";
+import { Favorite } from "./Favorite";
 
 export interface SocialInfo {
   id: string;
@@ -176,6 +177,7 @@ export class User extends Model {
   @HasMany(() => StarredQuests) starredQuests: StarredQuests[];
   @HasMany(() => Review, 'toUserId') reviews: Review[];
   @HasMany(() => Session) sessions: Session[];
+  @HasMany(() => Favorite) favorites: Favorite[];
   @HasMany(() => Media, { constraints: false }) medias: Media[];
 
   async passwordCompare(pwd: string): Promise<boolean> {
