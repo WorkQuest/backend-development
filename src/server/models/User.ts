@@ -131,7 +131,7 @@ export interface AdditionalInfoEmployer extends AdditionalInfo {
 }))
 @Table
 export class User extends Model {
-  @Column({ primaryKey: true, type: DataType.STRING, defaultValue: () => getUUID(), unique: true}) id: string;
+  @Column({ primaryKey: true, type: DataType.STRING, defaultValue: () => getUUID()}) id: string;
 
   @ForeignKey(() => Media)
   @Column({type: DataType.STRING, defaultValue: null})
@@ -168,8 +168,7 @@ export class User extends Model {
   @Column({type: DataType.STRING, defaultValue: null}) phone: string;
 
   @BelongsTo(() => Media,{ constraints: false, foreignKey: 'avatarId' }) avatar: Media;
-
-  @BelongsTo(() => News, {foreignKey: 'id', targetKey: 'idAuthor'}) baseNews: News;
+  // @BelongsTo(() => News, {foreignKey: 'id', targetKey: 'idAuthor'}) baseNews: News;
 
 
   @HasOne(() => RatingStatistic) ratingStatistic: RatingStatistic;

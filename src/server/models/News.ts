@@ -8,10 +8,10 @@ import { Media } from "./Media";
 @Table
 export class News extends Model {
   @ForeignKey(() => Media)
-  @Column({ primaryKey: true, type: DataType.STRING, defaultValue: () => getUUID(),unique: true  })
+  @Column({ primaryKey: true, type: DataType.STRING, defaultValue: () => getUUID() })
   id: string;
 
-  @ForeignKey(() => User)
+  // @ForeignKey(() => User)
   @Column ({type:DataType.STRING, defaultValue: '',unique: true})
   idAuthor: string;
 

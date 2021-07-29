@@ -112,8 +112,8 @@ const init = async () => {
   });
 
 
-  // server.auth.default("jwt-access");
-  server.auth.default();
+  server.auth.default("jwt-access");
+  // server.auth.default();
 
   initAuthStrategiesOfSocialNetworks(server);
 

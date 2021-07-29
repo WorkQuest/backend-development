@@ -1,14 +1,12 @@
 import { createFile, getFiles } from "../../api/forums";
 import { fileSchemaInfo, filesQuerySchema } from "../../schemes/media";
-import { outputOkSchema } from "../../schemes";
-import { chatTest, createChat } from "../../api/chat";
+import { arrayIdSchema, idSchema, jwtTokens, outputOkSchema } from "../../schemes";
+import { chatTest, createChat, getChats } from "../../api/chat";
 import * as Joi from "joi";
-import { chatSchemaCreate } from "../../schemes/chat";
-
 export default [
   {
     method: "POST",
-    path: "v1/chat/create",
+    path: "/v1/chat/create/",
     handler: createChat,
     options: {
       id: "v1.create.chat",
@@ -16,9 +14,23 @@ export default [
       tags: ["api", "chat"],
       validate: {
         payload: Joi.object({
-          file: chatSchemaCreate.required()
+          membersId: arrayIdSchema,
+          isPrivate: Joi.boolean().label('It`s dialog or chat')
         })
       }
+    }
+  },
+  {
+    method: "GET",
+    path: "/v1/chats",
+    handler: getChats,
+    options: {
+      id: "v1.chats",
+      tags: ["api", "chats"],
+      description: "Get all user chats",
+      validate: {
+        query: filesQuerySchema
+      },
     }
   },
 
