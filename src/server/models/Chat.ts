@@ -10,13 +10,13 @@ export class Chat extends Model {
   id: string;
 
   @ForeignKey(() => User)
-  @Column({ type: DataType.STRING, defaultValue: "", unique: true })
+  @Column({ type: DataType.STRING, defaultValue: "" })
   userId: string;
 
   @Column({ type: DataType.JSONB, defaultValue: [] })
   membersId: any;
 
-  @Column({ type: DataType.BOOLEAN, defaultValue: false })
+  @Column({ type: DataType.BOOLEAN, defaultValue: true })
   isPrivate: boolean;
 
   @BelongsTo(() => User, { foreignKey: "userId" }) user: User;
