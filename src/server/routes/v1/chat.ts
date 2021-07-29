@@ -1,7 +1,15 @@
 import { createFile, getFiles } from "../../api/forums";
 import { fileSchemaInfo, filesQuerySchema } from "../../schemes/media";
 import { arrayIdSchema, idSchema, jwtTokens, outputOkSchema } from "../../schemes";
-import { chatTest, createChat, getChats } from "../../api/chat";
+import {
+  addFavorite,
+  createChat,
+  deleteMessage,
+  getChats,
+  getMessages,
+  removeFavorite,
+  sendMessage
+} from "../../api/chat";
 import * as Joi from "joi";
 export default [
   {
@@ -33,13 +41,83 @@ export default [
       },
     }
   },
-
-  // {
-  //   method: "GET",
-  //   path: "/chat/create/",
-  //   handler: chatTest,
-  //   options: {
-  //     auth: false
-  //   }
-  // }
+  {
+    method: "GET",
+    path: "/v1/chat/{chatId}",
+    handler: getMessages,
+    options: {
+      id: "v1.chats.messages",
+      tags: ["api", "chats"],
+      description: "Get all messages for concrete chat",
+    }
+  },
+  {
+    method: "POST",
+    path: "/v1/chat/{chatId}/send",
+    handler: sendMessage,
+    options: {
+      id: "v1.send.message",
+      description: `Create new message in DB`,
+      tags: ["api", "chat", "messages"],
+      validate: {
+        params: Joi.object({
+          chatId: Joi.string().required(),
+        }),
+        payload: Joi.object({
+          data: Joi.string(),
+          file: Joi.array().optional()
+        })
+      }
+    }
+  },
+  {
+    method: "POST",
+    path: "/v1/chat/{chatId}/delete/{messageId}",
+    handler: deleteMessage,
+    options: {
+      id: "v1.delete.message",
+      description: `Delete message for all or for author only`,
+      tags: ["api", "chat", "messages"],
+      validate: {
+        params: Joi.object({
+          chatId: Joi.string().required(),
+          messageId: Joi.string().required()
+        }),
+        payload: Joi.object({
+          onlyAuthor: Joi.boolean(),
+        })
+      }
+    }
+  },
+  {
+    method: "POST",
+    path: "/v1/chat/{chatId}/addfavorite/{messageId}",
+    handler: addFavorite,
+    options: {
+      id: "v1.add.favorite.message",
+      description: `Add favorite message to user`,
+      tags: ["api", "chat", "messages"],
+      validate: {
+        params: Joi.object({
+          chatId: Joi.string().required(),
+          messageId: Joi.string().required()
+        })
+      }
+    }
+  },
+  {
+    method: "POST",
+    path: "/v1/chat/delfavorite/{messageId}",
+    handler: removeFavorite,
+    options: {
+      id: "v1.delete.favorite.message",
+      description: `Delete favorite message`,
+      tags: ["api", "chat", "messages"],
+      validate: {
+        params: Joi.object({
+          messageId: Joi.string().required()
+        }),
+      }
+    }
+  },
 ];
