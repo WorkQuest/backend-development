@@ -7,27 +7,24 @@ import { Errors } from "../utils/errors";
 import { Media } from "../models/Media";
 import { Favorite } from "../models/Favorite";
 
-export async function chatTest(r) {
-  try {
-    const timePoll = new Date();
-    server.publish("/chat/create/", {
-      createdAt: timePoll.toString()
-    });
-    return timePoll;
-  } catch (e) {
-    console.log("deleteNews", e);
-    return error(500000, "Internal server error", {});
+
+function getAlias(isPrivate, receiver, groupsAmount) {
+  if (isPrivate && !receiver) {
+    return "Favorite";
   }
+  if (isPrivate && receiver) {
+    return receiver;
+  }
+  return `Group_${groupsAmount + 1}`;
 }
 
 export async function createChat(r) {
   try {
-    const userId = r.auth.credentials.id;
-    for (let i = 0; i < r.payload.membersId.length; i++) {
-      if (r.payload.membersId[i] !== userId) {
-      }
+    if (r.payload.membersId.indexOf(r.auth.credentials.id) === -1) {
+      return error(404000, "Action not allowed", null);
     }
-    if (r.payload.isPrivate === true){
+
+    if (r.payload.isPrivate === true) {
       const chat: any = await Chat.findOne({
         where: {
           membersId: {
@@ -39,16 +36,40 @@ export async function createChat(r) {
         return error(400000, "Bad request, chat exist", null);
       }
     }
+    const groupsAmount = await Chat.count({
+      where: {
+        isPrivate: false
+      }
+    });
+
+    const receiver = r.payload.membersId.filter(function(id) {
+      return r.auth.credentials.id !== id;
+    });
+
     const create: any = await Chat.create({
       userId: r.auth.credentials.id,
+      alias: getAlias(r.payload.isPrivate, receiver[0], groupsAmount),
       membersId: r.payload.membersId,
       isPrivate: r.payload.isPrivate
     });
     const id: any = create.id;
-    return output (id);
+    return output(id);
   } catch (err) {
+    console.log(err);
     return error(500000, "Internal Server Error", null);
   }
+}
+
+export async function renameChat(r) {
+  const chat = await Chat.findByPk(r.params.chatId);
+  if (!chat) {
+    throw error(Errors.Forbidden, "This chat not exist", {});
+  }
+  if (chat.userId !== r.auth.credentials.id) {
+    return error(404000, "User can't rename this chat", null);
+  }
+  await chat.update({alias: r.payload.newAlias});
+  return output({ message: "Chat renamed" });
 }
 
 export async function getChats(r) {
@@ -57,29 +78,30 @@ export async function getChats(r) {
     const chats = await Chat.findAndCountAll({
       limit: limit,
       offset: offset,
-      // include: { //TODO create find last message
-      //   model:
-      //   as: 'ChatInfo',
-      // },
+      include: {
+        limit: 1,
+        model: Message,
+        as: 'Message',
+        order: [ [ 'createdAt', 'DESC' ]]
+      },
       where: {
         membersId: {
           [Op.contains]: r.auth.credentials.id
-        },
+        }
       },
-      attributes: ["id"]
     });
     if (!chats) {
       return error(404000, "Not found", null);
     }
     return output(chats);
   } catch (err) {
-    console.log("getFiles", err);
+    console.log("getChats", err);
     return error(500000, "Internal Server Error", null);
   }
 }
 
 export async function getMessages(r) {
-  const chat =  await Chat.findByPk(r.params.chatId);
+  const chat = await Chat.findByPk(r.params.chatId);
   if (!chat) {
     error(Errors.NotFound, "Chat not found", {});
   }
@@ -88,21 +110,24 @@ export async function getMessages(r) {
     limit: r.query.limit,
     offset: r.query.offset,
     where: {
-      [Op.and] : [
+      [Op.and]: [
         { chatId: r.params.chatId },
-        { usersDel: {[Op.notIn]: [r.auth.credentials.id]} }
+        { usersDel: { [Op.notIn]: [r.auth.credentials.id] } }
       ]
-    },
-  }
-  const messages = await Message.findAll(object,);
-  return output({ messages: messages, chatInfo: chat, });
+    }
+  };
+  const messages = await Message.findAll(object);
+  server.publish("/api/v1/chat/{r.params.chatId}", {
+    message: messages
+  });
+  return output({ messages: messages, chatInfo: chat });
 }
 
 export async function sendMessage(r) {
   let mediaIds = [];
 
   if (typeof r.payload.file !== "undefined") {
-    for(let file of r.payload.file) {
+    for (let file of r.payload.file) {
       const create: any = await Media.create({
         userId: file.userId,
         contentType: file.contentType,
@@ -124,10 +149,13 @@ export async function sendMessage(r) {
     userId: r.auth.credentials.id,
     chatId: r.params.chatId,
     mediaId: mediaIds,
-    data: r.payload.data,
+    data: r.payload.data
   });
 
   if (message) {
+    server.publish(`/api/v1/chat/${r.params.chatId}`, {
+      message: message
+    });
     return output({ message: message });
   } else {
     return error(500000, "Message is not saved", null);
@@ -157,6 +185,14 @@ export async function deleteMessage(r) {
   }
 
   if (!r.payload.onlyAuthor) {
+    const mediasId = [...message.mediaId];
+    for (const mediaId of mediasId) {
+      await Media.destroy({
+        where: {
+          id: mediaId
+        }
+      });
+    }
     await message.destroy();
     return output({ message: "Success delete for all" });
   }
@@ -176,11 +212,10 @@ export async function addFavorite(r) {
     throw error(Errors.Forbidden, "This message not exist", {});
   }
   message.isFromThisChat(r.params.chatId);
-  message.isAuthor(r.auth.credentials.id);
 
   const favorite = await Favorite.create({
     userId: r.auth.credentials.id,
-    messageId: r.params.messageId,
+    messageId: r.params.messageId
   });
 
   if (!favorite) {
@@ -191,7 +226,7 @@ export async function addFavorite(r) {
 }
 
 export async function removeFavorite(r) {
-  const favorite = await Favorite.findOne({ where: { messageId: r.params.messageId }});
+  const favorite = await Favorite.findOne({ where: { messageId: r.params.messageId } });
 
   if (favorite.userId === r.auth.credentials.id) {
     await favorite.destroy();
@@ -199,4 +234,21 @@ export async function removeFavorite(r) {
   }
 
   return output({ message: "It is not user's favorite message" });
+}
+
+export async function getFavorites(r) {
+  const favorites = await Favorite.findAndCountAll({
+    where: { userId: r.auth.credentials.id },
+    include: {
+      model: Message,
+      as: 'message',
+      attributes: ['data', 'mediaId', 'chatId']
+    },
+    attributes: ['id', 'messageId']
+  });
+  if (favorites) {
+    return output(favorites);
+  }
+
+  return output({ message: "No favorite messages" });
 }

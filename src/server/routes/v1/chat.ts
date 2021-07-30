@@ -1,13 +1,11 @@
-import { createFile, getFiles } from "../../api/forums";
-import { fileSchemaInfo, filesQuerySchema } from "../../schemes/media";
-import { arrayIdSchema, idSchema, jwtTokens, outputOkSchema } from "../../schemes";
+import { arrayIdSchema } from "../../schemes";
 import {
   addFavorite,
   createChat,
   deleteMessage,
-  getChats,
+  getChats, getFavorites,
   getMessages,
-  removeFavorite,
+  removeFavorite, renameChat,
   sendMessage
 } from "../../api/chat";
 import * as Joi from "joi";
@@ -29,6 +27,24 @@ export default [
     }
   },
   {
+    method: "POST",
+    path: "/v1/chat/{chatId}/rename",
+    handler: renameChat,
+    options: {
+      id: "v1.rename.chat",
+      description: `Rename chat by author`,
+      tags: ["api", "chat"],
+      validate: {
+        params: Joi.object({
+          chatId: Joi.string().required(),
+        }),
+        payload: Joi.object({
+          newAlias: Joi.string().required(),
+        })
+      }
+    }
+  },
+  {
     method: "GET",
     path: "/v1/chats",
     handler: getChats,
@@ -36,9 +52,16 @@ export default [
       id: "v1.chats",
       tags: ["api", "chats"],
       description: "Get all user chats",
-      validate: {
-        query: filesQuerySchema
-      },
+    }
+  },
+  {
+    method: "GET",
+    path: "/v1/chat/favorites",
+    handler: getFavorites,
+    options: {
+      id: "v1.chats.favorites.messages",
+      tags: ["api", "chats"],
+      description: "Get all user favorite messages",
     }
   },
   {
@@ -49,6 +72,11 @@ export default [
       id: "v1.chats.messages",
       tags: ["api", "chats"],
       description: "Get all messages for concrete chat",
+      validate: {
+        params: Joi.object({
+          chatId: Joi.string().required(),
+        })
+      }
     }
   },
   {
