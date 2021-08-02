@@ -6,13 +6,13 @@ import {
   deleteLike, createLikes, updateNewsAndComment, createFile, getFiles
 } from "../../api/forums";
 import * as Joi from "joi";
-import { outputOkSchema, shemaNews } from "../../schemes";
+import { idSchema, outputOkSchema, shemaNews } from "../../schemes";
 import { fileSchemaInfo, filesQuerySchema } from "../../schemes/media";
 
 export default [
   {
     method: "POST",
-    path: "/create/news",
+    path: "/v1/news/create",
     handler: createNews,
     options: {
       id: "v1.forum.createNews",
@@ -21,17 +21,15 @@ export default [
       auth: "jwt-access",
       validate: {
         payload: Joi.object({
-          text: Joi.string().required(),
-          file: Joi.array()
-        })
+          text: Joi.string().required().label('Name news'),
+          file: Joi.array().label('File info')
+        }).label('Create news')
       }
     }
   },
-
-
   {
     method: "POST",
-    path: "/create/comment",
+    path: "/v1/comment/create",
     handler: createComment,
     options: {
       id: "v1.forum.createComment",
@@ -40,17 +38,15 @@ export default [
       auth: "jwt-access",
       validate: {
         payload: Joi.object({
-          idNews: Joi.string().required(),
-          text: Joi.string().required()
-        })
+          idNews: idSchema,
+          text: Joi.string().required().label('comment message'),
+        }).label('Create comment')
       }
     }
   },
-
-
   {
     method: "POST",
-    path: "/create/like",
+    path: "/v1/like/create",
     handler: createLikes,
     options: {
       id: "v1.forum.createLike",
@@ -59,16 +55,14 @@ export default [
       auth: "jwt-access",
       validate: {
         payload: Joi.object({
-          id: Joi.string().required()
-        })
+          id: idSchema
+        }).label('Create like')
       }
     }
   },
-
-
   {
     method: "POST",
-    path: "/delete/like",
+    path: "/v1/like/delete",
     handler: deleteLike,
     options: {
       id: "v1.forum.deleteLike",
@@ -77,16 +71,14 @@ export default [
       auth: "jwt-access",
       validate: {
         payload: Joi.object({
-          id: Joi.string().required()
-        })
+          id: idSchema
+        }).label('Delete like')
       }
     }
   },
-
-
   {
     method: "POST",
-    path: "/delete/news",
+    path: "/v1/news/delete",
     handler: deleteNews,
     options: {
       id: "v1.forum.deleteNews",
@@ -95,16 +87,14 @@ export default [
       auth: "jwt-access",
       validate: {
         payload: Joi.object({
-          id: Joi.string().required()
-        })
+          id: idSchema
+        }).label('Delete news')
       }
     }
   },
-
-
   {
     method: "POST",
-    path: "/delete/comment",
+    path: "/v1/comment/delete",
     handler: deleteComment,
     options: {
       id: "v1.forum.comment",
@@ -113,17 +103,15 @@ export default [
       auth: "jwt-access",
       validate: {
         payload: Joi.object({
-          id: Joi.string().required(),
-          idComment: Joi.string().required()
-        })
+          id: idSchema,
+          idComment: idSchema
+        }).label('Delete comment')
       }
     }
   },
-
-
   {
     method: "GET",
-    path: "/news",
+    path: "/v1/news",
     handler: findNewsAll,
     options: {
       id: "v1.forum.findNewsAll",
@@ -135,10 +123,9 @@ export default [
       }
     }
   },
-
   {
     method: "POST",
-    path: "/update/news/",
+    path: "/v1/news/update/",
     handler: updateNewsAndComment,
     options: {
       id: "v1.forum.updateNewsAndComment",
@@ -147,16 +134,16 @@ export default [
       auth: "jwt-access",
       validate: {
         payload: Joi.object({
-          id: Joi.string().required(),
-          text: Joi.string().required(),
-          file: Joi.array().required()
-        })
+          id: idSchema,
+          text: Joi.string().required().label('Update name news'),
+          file: Joi.array().label('Update file info')
+        }).label('Update comment')
       }
     }
   },
   {
     method: "POST",
-    path: "/v1/create/file",
+    path: "/v1/file/create",
     handler: createFile,
     options: {
       id: "v1.create.file",
@@ -168,7 +155,7 @@ export default [
         })
       },
       response: {
-        schema: outputOkSchema(fileSchemaInfo).label("FileResponse")
+        schema: outputOkSchema(fileSchemaInfo).label("File response")
       }
     }
   },
