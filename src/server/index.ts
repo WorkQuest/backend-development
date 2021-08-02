@@ -139,7 +139,6 @@ const init = async () => {
   // Запускаем сервер
   try {
 
-    server.subscription("/api/chat/test");
     server.subscription("/api/v1/chat/create/");
     server.subscription("/api/v1/chats");
     server.subscription("/api/v1/chat/favorites");

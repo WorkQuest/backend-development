@@ -16,7 +16,7 @@ export default [
     handler: createChat,
     options: {
       id: "v1.create.chat",
-      description: `Create new chat in DB`,
+      description: "Create new chat in DB",
       tags: ["api", "chat"],
       validate: {
         payload: Joi.object({
@@ -32,7 +32,7 @@ export default [
     handler: renameChat,
     options: {
       id: "v1.rename.chat",
-      description: `Rename chat by author`,
+      description: "Rename chat by author",
       tags: ["api", "chat"],
       validate: {
         params: Joi.object({
@@ -85,7 +85,7 @@ export default [
     handler: sendMessage,
     options: {
       id: "v1.send.message",
-      description: `Create new message in DB`,
+      description: "Create new message in DB",
       tags: ["api", "chat", "messages"],
       validate: {
         params: Joi.object({
@@ -104,7 +104,7 @@ export default [
     handler: deleteMessage,
     options: {
       id: "v1.delete.message",
-      description: `Delete message for all or for author only`,
+      description: "Delete message for all or for author only",
       tags: ["api", "chat", "messages"],
       validate: {
         params: Joi.object({
@@ -119,11 +119,11 @@ export default [
   },
   {
     method: "POST",
-    path: "/v1/chat/{chatId}/addfavorite/{messageId}",
+    path: "/v1/chat/{chatId}/addFavorite/{messageId}",
     handler: addFavorite,
     options: {
       id: "v1.add.favorite.message",
-      description: `Add favorite message to user`,
+      description: "Add favorite message to user",
       tags: ["api", "chat", "messages"],
       validate: {
         params: Joi.object({
@@ -135,11 +135,11 @@ export default [
   },
   {
     method: "POST",
-    path: "/v1/chat/delfavorite/{messageId}",
+    path: "/v1/chat/delFavorite/{messageId}",
     handler: removeFavorite,
     options: {
       id: "v1.delete.favorite.message",
-      description: `Delete favorite message`,
+      description: "Delete favorite message",
       tags: ["api", "chat", "messages"],
       validate: {
         params: Joi.object({

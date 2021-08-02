@@ -3,7 +3,6 @@ import { server } from "../index";
 import { Chat } from "../models/Chat";
 import { Op } from "sequelize";
 import { Message } from "../models/Message";
-import { Errors } from "../utils/errors";
 import { Media } from "../models/Media";
 import { Favorite } from "../models/Favorite";
 import { User } from "../models/User";
@@ -23,27 +22,28 @@ function getAlias(isPrivate, receiver, groupsAmount) {
 export async function createChat(r) {
   try {
     if (r.payload.membersId.indexOf(r.auth.credentials.id) === -1) {
-      return error(404000, "Action not allowed", null);
+      return error(403000, "Action not allowed", null);
     }
-    for (let i = 0; i < r.payload.membersId.length; i++) {
-      const user: any = await User.findOne({
-        where: {
-          id: r.payload.membersId[i]
-        }
-      });
-      if (!user) {
-        return error(404000, "User is not found", null);
+
+    const users: any = await User.findAll({
+      where: {
+        id: {[Op.in]: r.payload.membersId}
       }
+    });
+    if (!users.length !== r.payload.membersId.length) {
+      return error(404000, "User is not found", null);
     }
+
+
     if (r.payload.isPrivate === true && r.payload.membersId.length !== 2) {
       return error(404000, "The number of users does not match", null);
     }
+    console.log([...r.payload.membersId].reverse())
     if (r.payload.isPrivate) {
+
       const chat: any = await Chat.findOne({
         where: {
-          membersId: {
-            [Op.eq]: r.payload.membersId
-          },
+            [Op.or]: [{membersId: {[Op.eq]: r.payload.membersId }}, {membersId: {[Op.eq]: [...r.payload.membersId].reverse() }}],
           isPrivate: true
         }
       });
@@ -66,6 +66,9 @@ export async function createChat(r) {
       isPrivate: r.payload.isPrivate
     });
     const id: any = create.id;
+    server.publish("/api/v1/chats", {
+      message: "New chat created",
+    });
     return output(id);
   } catch (err) {
     console.log(err);
@@ -78,13 +81,13 @@ export async function renameChat(r) {
   try {
     const chat = await Chat.findByPk(r.params.chatId);
     if (!chat) {
-      throw error(Errors.Forbidden, "This chat not exist", {});
+      return error(404000, "This chat not exist", {});
     }
     if (chat.userId !== r.auth.credentials.id) {
-      return error(404000, "User can't rename this chat", null);
+      return error(403000, "User can't rename this chat", null);
     }
     await chat.update({ alias: r.payload.newAlias });
-    return output({ message: "Chat renamed" });
+    return output({ status: "Success" });
   } catch (err) {
     console.log(err);
     return error(500000, "Internal Server Error", null);
@@ -111,7 +114,7 @@ export async function getChats(r) {
       }
     });
     if (!chats) {
-      return error(404000, "Not found", null);
+      return error(404000, "Chats not found", null);
     }
     return output(chats);
   } catch (err) {
@@ -124,7 +127,7 @@ export async function getMessages(r) {
   try {
     const chat = await Chat.findByPk(r.params.chatId);
     if (!chat) {
-      throw error(Errors.NotFound, "Chat not found", {});
+      return error(404000, "Chat not found", {});
     }
     chat.checkChatMember(r.auth.credentials.id);
     const object: any = {
@@ -156,7 +159,7 @@ export async function sendMessage(r) {
   try {
     const chat = await Chat.findByPk(r.params.chatId);
     if (!chat) {
-      throw error(Errors.Forbidden, "This chat not exist", {});
+      return error(404, "Chat not found", {});
     }
 
     chat.checkChatMember(r.auth.credentials.id);
@@ -186,14 +189,14 @@ export async function deleteMessage(r) {
   try {
     const chat = await Chat.findByPk(r.params.chatId);
     if (!chat) {
-      throw error(Errors.Forbidden, "This chat not exist", {});
+      return error(404000, "Chat not found", {});
     }
     chat.checkChatMember(r.auth.credentials.id);
 
     const message = await Message.findByPk(r.params.messageId);
 
     if (!message) {
-      throw error(Errors.Forbidden, "This message not exist", {});
+      return error(404000, "Message not found", {});
     }
     message.isFromThisChat(r.params.chatId);
 
@@ -201,7 +204,7 @@ export async function deleteMessage(r) {
       await message.update({
         usersDel: [...message.usersDel, r.auth.credentials.id]
       });
-      return error(404000, "Success delete for author", null);
+      return output({status: "Success"});
     }
 
     if (!r.payload.onlyMember) {
@@ -228,14 +231,14 @@ export async function addFavorite(r) {
   try {
     const chat = await Chat.findByPk(r.params.chatId);
     if (!chat) {
-      throw error(Errors.Forbidden, "This chat not exist", {});
+      return error(404000, "Chat not found", {});
     }
     chat.checkChatMember(r.auth.credentials.id);
 
     const message = await Message.findByPk(r.params.messageId);
 
     if (!message) {
-      throw error(Errors.Forbidden, "This message not exist", {});
+      return error(404000, "Message not found", {});
     }
     message.isFromThisChat(r.params.chatId);
 
@@ -257,11 +260,14 @@ export async function addFavorite(r) {
 export async function removeFavorite(r) {
   try {
     const favorite = await Favorite.findOne({ where: { messageId: r.params.messageId } });
+    if (!favorite) {
+      return error(404000, "Message not found", null);
+    }
     if (favorite.userId === r.auth.credentials.id) {
       await favorite.destroy();
       return output({ status: "Success" });
     }
-    return error(404000, "It is not user's favorite message", null);
+    return error(403000, "It is not user's favorite message", null);
   } catch (err) {
     console.log(err);
     return error(500000, "Internal Server Error", null);
