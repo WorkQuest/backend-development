@@ -1,0 +1,3 @@
+[submodule "src/server/models"]
+	path = src/server/models
+	url = git@github.com:WorkQuest/database-models.git
