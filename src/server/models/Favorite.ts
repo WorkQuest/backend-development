@@ -1,5 +1,5 @@
 import {
-  Column, DataType, ForeignKey, Model, Table, BelongsTo, BelongsToMany
+  Column, DataType, ForeignKey, Model, Table, BelongsTo
 } from "sequelize-typescript";
 import { getUUID } from "../utils";
 import { Message } from "./Message";
