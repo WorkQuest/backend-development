@@ -37,7 +37,7 @@ export function tokenValidate(tokenType: 'access' | 'refresh', allowedUnconfirme
     if (!user) {
       throw error(Errors.SessionNotFound, 'User not found', {});
     }
-    if (user.status !== UserStatus.Confirmed && !allowedUnconfirmedRoutes.includes(r.route.path)) {
+    if (user.status === UserStatus.Unconfirmed && !allowedUnconfirmedRoutes.includes(r.route.path)) {
       throw error(Errors.UnconfirmedUser, 'Unconfirmed user', {});
     }
 

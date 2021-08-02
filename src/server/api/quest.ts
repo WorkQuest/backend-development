@@ -240,6 +240,7 @@ export async function getQuests(r) {
     ...(r.query.performing && { assignedWorkerId: r.auth.credentials.id } ),
     ...(r.query.priority && { priority: r.query.priority }),
     ...(r.query.status && { status: r.query.status }),
+    ...(r.query.adType && {adType: r.query.adType}),
     ...(r.params.userId && { userId: r.params.userId }),
   };
 
