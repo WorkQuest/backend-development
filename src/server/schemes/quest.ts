@@ -60,12 +60,12 @@ export const questFullSchema = Joi.object({
   responses: questsResponsesSchema,
   createdAt: isoDateSchema,
   updatedAt: isoDateSchema,
-}).label("QuestFullSchema");
+}).label("QuestFull");
 
 export const questsListSortSchema = Joi.object({
   price: sortDirectionSchema,
   createdAt: sortDirectionSchema,
-}).default({}).label('QuestsListSortSchema');
+}).default({}).label('QuestsListSort');
 
 export const questsQuerySchema = Joi.object({
   offset: offsetSchema,
@@ -73,9 +73,10 @@ export const questsQuerySchema = Joi.object({
   q: searchSchema,
   priority: questPrioritySchema.default(null),
   status: questStatusSchema.default(null),
+  adType: adTypeSchema.default(null),
   sort: questsListSortSchema,
   invited: Joi.boolean().default(false),
   performing: Joi.boolean().default(false),
   starred: Joi.boolean().default(false),
-}).label('QuestsQueryScheme');
+}).label('QuestsQuery');
 
