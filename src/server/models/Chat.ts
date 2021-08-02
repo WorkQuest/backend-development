@@ -1,8 +1,10 @@
 import {
-  Column, DataType, ForeignKey, Model, Table, BelongsTo, BelongsToMany
+  Column, DataType, ForeignKey, Model, Table, BelongsTo, HasMany
 } from "sequelize-typescript";
-import { getUUID } from "../utils";
+import { error, getUUID } from "../utils";
 import { User } from "./User";
+import { Errors } from "../utils/errors";
+import { Message } from "./Message";
 
 @Table
 export class Chat extends Model {
@@ -13,6 +15,9 @@ export class Chat extends Model {
   @Column({ type: DataType.STRING, defaultValue: "" })
   userId: string;
 
+  @Column({ type: DataType.STRING, defaultValue: "" })
+  alias: string;
+
   @Column({ type: DataType.JSONB, defaultValue: [] })
   membersId: any;
 
@@ -20,4 +25,12 @@ export class Chat extends Model {
   isPrivate: boolean;
 
   @BelongsTo(() => User, { foreignKey: "userId" }) user: User;
+
+  @HasMany(() => Message) Message: Message[];
+
+  checkChatMember(userId: String) {
+    if (this.membersId.indexOf(userId) === -1) {
+      throw error(Errors.Forbidden, "User is not a member of this chat", {});
+    }
+  }
 }
