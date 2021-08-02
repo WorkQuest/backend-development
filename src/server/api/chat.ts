@@ -13,7 +13,7 @@ function getAlias(isPrivate, receiver, groupsAmount) {
     return "Favorite";
   }
   if (isPrivate && receiver) {
-    return receiver;
+    return "";
   }
   return `Group_${groupsAmount + 1}`;
 }
@@ -104,7 +104,7 @@ export async function getChats(r) {
 export async function getMessages(r) {
   const chat = await Chat.findByPk(r.params.chatId);
   if (!chat) {
-    error(Errors.NotFound, "Chat not found", {});
+    throw error(Errors.NotFound, "Chat not found", {});
   }
   chat.checkChatMember(r.auth.credentials.id);
   const object: any = {
@@ -113,15 +113,18 @@ export async function getMessages(r) {
     where: {
       [Op.and]: [
         { chatId: r.params.chatId },
-        { usersDel: { [Op.notIn]: [r.auth.credentials.id] } }
       ]
     }
   };
   const messages = await Message.findAll(object);
-  server.publish("/api/v1/chat/{r.params.chatId}", {
-    message: messages
+  const result = messages.filter(function(message) {
+    return message.usersDel.indexOf(r.auth.credentials.id) === -1;
   });
-  return output({ messages: messages, chatInfo: chat });
+
+  server.publish("/api/v1/chat/{r.params.chatId}", {
+    message: result
+  });
+  return output({ messages: result, chatInfo: chat });
 }
 
 export async function sendMessage(r) {
