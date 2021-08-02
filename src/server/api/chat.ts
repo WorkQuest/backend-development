@@ -24,12 +24,13 @@ export async function createChat(r) {
       return error(404000, "Action not allowed", null);
     }
 
-    if (r.payload.isPrivate === true) {
+    if (r.payload.isPrivate) {
       const chat: any = await Chat.findOne({
         where: {
           membersId: {
-            [Op.eq]: r.payload.membersId
-          }
+            [Op.notIn]: r.payload.membersId
+          },
+          isPrivate: true
         }
       });
       if (chat) {
@@ -124,20 +125,6 @@ export async function getMessages(r) {
 }
 
 export async function sendMessage(r) {
-  let mediaIds = [];
-
-  if (typeof r.payload.file !== "undefined") {
-    for (let file of r.payload.file) {
-      const create: any = await Media.create({
-        userId: file.userId,
-        contentType: file.contentType,
-        url: file.url,
-        hash: file.hash
-      });
-      mediaIds.push(create.id);
-    }
-  }
-
   const chat = await Chat.findByPk(r.params.chatId);
   if (!chat) {
     throw error(Errors.Forbidden, "This chat not exist", {});
@@ -148,7 +135,7 @@ export async function sendMessage(r) {
   const message = await Message.create({
     userId: r.auth.credentials.id,
     chatId: r.params.chatId,
-    mediaId: mediaIds,
+    mediaId: r.payload.file,
     data: r.payload.data
   });
 
@@ -175,16 +162,16 @@ export async function deleteMessage(r) {
     throw error(Errors.Forbidden, "This message not exist", {});
   }
   message.isFromThisChat(r.params.chatId);
-  message.isAuthor(r.auth.credentials.id);
 
-  if (r.payload.onlyAuthor) {
+  if (r.payload.onlyMember) {
     await message.update({
       usersDel: [...message.usersDel, r.auth.credentials.id]
     });
     return output({ message: "Success delete for author" });
   }
 
-  if (!r.payload.onlyAuthor) {
+  if (!r.payload.onlyMember) {
+    message.isAuthor(r.auth.credentials.id)
     const mediasId = [...message.mediaId];
     for (const mediaId of mediasId) {
       await Media.destroy({

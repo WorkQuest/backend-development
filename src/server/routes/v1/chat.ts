@@ -112,7 +112,7 @@ export default [
           messageId: Joi.string().required()
         }),
         payload: Joi.object({
-          onlyAuthor: Joi.boolean(),
+          onlyMember: Joi.boolean(),
         })
       }
     }
