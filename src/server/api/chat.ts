@@ -48,7 +48,7 @@ export async function createChat(r) {
         }
       });
       if (chat) {
-        return error(400000, "Bad request, chat exist", null);
+        return error(404000, "Bad request, chat exist", null);
       }
     }
     const groupsAmount = await Chat.count({
