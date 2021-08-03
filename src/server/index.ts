@@ -17,7 +17,6 @@ import SwaggerOptions from "./config/swagger";
 import { pinoConfig } from "./config/pino";
 import { initDatabase } from "./models";
 import { run } from "graphile-worker";
-import { Chat } from "./models/Chat";
 import { Op } from "sequelize";
 
 const HapiSwagger = require("hapi-swagger");
