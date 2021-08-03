@@ -31,5 +31,4 @@ export class Media extends Model {
   @Column({type: DataType.STRING, allowNull: false, defaultValue: null}) hash: string;
 
   @BelongsTo(() => User) user: User;
-  @BelongsTo(() => Message,'id') mediaId: Message[];
 }
