@@ -139,10 +139,16 @@ const init = async () => {
   // Запускаем сервер
   try {
 
-    server.subscription("/api/v1/chat/create/");
     server.subscription("/api/v1/chats");
-    server.subscription("/api/v1/chat/favorites");
     server.subscription("/api/v1/chat/{chatId}", {
+      filter: async function (path, message, options): Promise<boolean> {
+        const chat: Chat = await Chat.findByPk(message.message.dataValues.chatId);
+        if (!chat) {
+          return false;
+        }
+        chat.checkChatMember(options.credentials.id);
+        return true;
+      },
       onSubscribe: async function(socket, path, params) {
         const chat = await Chat.findOne(
           {
@@ -158,7 +164,6 @@ const init = async () => {
         }
       }
     });
-    server.subscription("/api/chat/{chatId}/send");
     await server.start();
     server.log("info", `Server running at: ${server.info.uri}`);
   } catch (err) {

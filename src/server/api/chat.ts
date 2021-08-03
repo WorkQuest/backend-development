@@ -48,7 +48,7 @@ export async function createChat(r) {
         }
       });
       if (chat) {
-        return error(400000, "Bad request, chat exist", null);
+        return error(404000, "Bad request, chat exist", null);
       }
     }
     const groupsAmount = await Chat.count({
@@ -100,6 +100,7 @@ export async function getChats(r) {
     const chats = await Chat.findAndCountAll({
       limit: limit,
       offset: offset,
+      order: [["updatedAt", "DESC"]],
       include: {
         limit: 1,
         model: Message,
@@ -169,6 +170,8 @@ export async function sendMessage(r) {
       mediaId: r.payload.file,
       data: r.payload.data
     });
+    await chat.changed('updatedAt', true);
+    await chat.save();
 
     if (message) {
       server.publish(`/api/v1/chat/${r.params.chatId}`, {
