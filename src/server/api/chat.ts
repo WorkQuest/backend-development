@@ -3,7 +3,6 @@ import { server } from "../index";
 import { Chat } from "../models/Chat";
 import { Op } from "sequelize";
 import { Message } from "../models/Message";
-import { Errors } from "../utils/errors";
 import { Media } from "../models/Media";
 import { Favorite } from "../models/Favorite";
 import { User } from "../models/User";
@@ -34,10 +33,14 @@ export async function createChat(r) {
     if (users.length !== r.payload.membersId.length) {
       return error(404000, "User is not found", null);
     }
+
+
     if (r.payload.isPrivate === true && r.payload.membersId.length !== 2) {
       return error(404000, "The number of users does not match", null);
     }
+
     if (r.payload.isPrivate) {
+
       const chat: any = await Chat.findOne({
         where: {
             [Op.or]: [{membersId: {[Op.eq]: r.payload.membersId }}, {membersId: {[Op.eq]: [...r.payload.membersId].reverse() }}],
@@ -63,6 +66,7 @@ export async function createChat(r) {
       isPrivate: r.payload.isPrivate
     });
     const id: any = create.id;
+
     server.publish("/api/v1/chats", {
       message: "New chat created",
     });
@@ -154,7 +158,7 @@ export async function sendMessage(r) {
   try {
     const chat = await Chat.findByPk(r.params.chatId);
     if (!chat) {
-      return error(404000, "Chat not found", {});
+      return error(404, "Chat not found", {});
     }
 
     chat.checkChatMember(r.auth.credentials.id);
@@ -199,7 +203,7 @@ export async function deleteMessage(r) {
       await message.update({
         usersDel: [...message.usersDel, r.auth.credentials.id]
       });
-      return error(404000, "Success delete for author", null);
+      return output({status: "Success"});
     }
 
     if (!r.payload.onlyMember) {
@@ -226,14 +230,14 @@ export async function addFavorite(r) {
   try {
     const chat = await Chat.findByPk(r.params.chatId);
     if (!chat) {
-      throw error(Errors.Forbidden, "This chat not exist", {});
+      return error(404000, "Chat not found", {});
     }
     chat.checkChatMember(r.auth.credentials.id);
 
     const message = await Message.findByPk(r.params.messageId);
 
     if (!message) {
-      throw error(Errors.Forbidden, "This message not exist", {});
+      return error(404000, "Message not found", {});
     }
     message.isFromThisChat(r.params.chatId);
 
@@ -255,11 +259,14 @@ export async function addFavorite(r) {
 export async function removeFavorite(r) {
   try {
     const favorite = await Favorite.findOne({ where: { messageId: r.params.messageId } });
+    if (!favorite) {
+      return error(404000, "Message not found", null);
+    }
     if (favorite.userId === r.auth.credentials.id) {
       await favorite.destroy();
       return output({ status: "Success" });
     }
-    return error(404000, "It is not user's favorite message", null);
+    return error(403000, "It is not user's favorite message", null);
   } catch (err) {
     console.log(err);
     return error(500000, "Internal Server Error", null);
