@@ -39,7 +39,7 @@ export async function createChat(r) {
     if (r.payload.isPrivate === true && r.payload.membersId.length !== 2) {
       return error(404000, "The number of users does not match", null);
     }
-    console.log([...r.payload.membersId].reverse())
+
     if (r.payload.isPrivate) {
 
       const chat: any = await Chat.findOne({
