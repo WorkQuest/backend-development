@@ -19,7 +19,6 @@ function getAlias(isPrivate, receiver, groupsAmount) {
   return `Group_${groupsAmount + 1}`;
 }
 
-
 export async function createChat(r) {
   try {
     if (r.payload.membersId.indexOf(r.auth.credentials.id) === -1) {
@@ -73,7 +72,6 @@ export async function createChat(r) {
   }
 }
 
-
 export async function renameChat(r) {
   try {
     const chat = await Chat.findByPk(r.params.chatId);
@@ -90,7 +88,6 @@ export async function renameChat(r) {
     return error(500000, "Internal Server Error", null);
   }
 }
-
 
 export async function getChats(r) {
   try {
