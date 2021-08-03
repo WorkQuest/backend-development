@@ -29,7 +29,8 @@ export async function createChat(r) {
         id: {[Op.in]: r.payload.membersId}
       }
     });
-    if (!users.length !== r.payload.membersId.length) {
+
+    if (users.length !== r.payload.membersId.length) {
       return error(404000, "User is not found", null);
     }
 
@@ -37,7 +38,7 @@ export async function createChat(r) {
     if (r.payload.isPrivate === true && r.payload.membersId.length !== 2) {
       return error(404000, "The number of users does not match", null);
     }
-    console.log([...r.payload.membersId].reverse())
+
     if (r.payload.isPrivate) {
 
       const chat: any = await Chat.findOne({
@@ -65,6 +66,7 @@ export async function createChat(r) {
       isPrivate: r.payload.isPrivate
     });
     const id: any = create.id;
+
     server.publish("/api/v1/chats", {
       message: "New chat created",
     });
