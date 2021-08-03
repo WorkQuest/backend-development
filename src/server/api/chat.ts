@@ -183,9 +183,7 @@ export async function deleteMessage(r) {
       return error(404000, "Chat not found", {});
     }
     chat.checkChatMember(r.auth.credentials.id);
-
     const message = await Message.findByPk(r.params.messageId);
-
     if (!message) {
       return error(404000, "Message not found", {});
     }
