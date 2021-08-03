@@ -128,7 +128,7 @@ export interface AdditionalInfoEmployer extends AdditionalInfo {
     }
   }
 }))
-@Table
+@Table({ paranoid: true })
 export class User extends Model {
   @Column({ primaryKey: true, type: DataType.STRING, defaultValue: () => getUUID()}) id: string;
 
@@ -174,7 +174,6 @@ export class User extends Model {
   @HasMany(() => StarredQuests) starredQuests: StarredQuests[];
   @HasMany(() => Review, 'toUserId') reviews: Review[];
   @HasMany(() => Session) sessions: Session[];
-  @HasMany(() => Favorite) favorites: Favorite[];
   @HasMany(() => Media, { constraints: false }) medias: Media[];
 
   async passwordCompare(pwd: string): Promise<boolean> {
