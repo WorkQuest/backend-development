@@ -23,24 +23,18 @@ export async function createChat(r) {
     if (r.payload.membersId.indexOf(r.auth.credentials.id) === -1) {
       return error(403000, "Action not allowed", null);
     }
-
     const users: any = await User.findAll({
       where: {
         id: {[Op.in]: r.payload.membersId}
       }
     });
-
     if (users.length !== r.payload.membersId.length) {
       return error(404000, "User is not found", null);
     }
-
-
     if (r.payload.isPrivate === true && r.payload.membersId.length !== 2) {
       return error(404000, "The number of users does not match", null);
     }
-
     if (r.payload.isPrivate) {
-
       const chat: any = await Chat.findOne({
         where: {
             [Op.or]: [{membersId: {[Op.eq]: r.payload.membersId }}, {membersId: {[Op.eq]: [...r.payload.membersId].reverse() }}],
@@ -66,7 +60,6 @@ export async function createChat(r) {
       isPrivate: r.payload.isPrivate
     });
     const id: any = create.id;
-
     server.publish("/api/v1/chats", {
       message: "New chat created",
     });
@@ -143,7 +136,6 @@ export async function getMessages(r) {
     const result = messages.filter(function(message) {
       return message.usersDel.indexOf(r.auth.credentials.id) === -1;
     });
-
     server.publish("/api/v1/chat/{r.params.chatId}", {
       message: result
     });
@@ -154,16 +146,13 @@ export async function getMessages(r) {
   }
 }
 
-
 export async function sendMessage(r) {
   try {
     const chat = await Chat.findByPk(r.params.chatId);
     if (!chat) {
       return error(404, "Chat not found", {});
     }
-
     chat.checkChatMember(r.auth.credentials.id);
-
     const message = await Message.create({
       userId: r.auth.credentials.id,
       chatId: r.params.chatId,
@@ -201,14 +190,12 @@ export async function deleteMessage(r) {
       return error(404000, "Message not found", {});
     }
     message.isFromThisChat(r.params.chatId);
-
     if (r.payload.onlyMember) {
       await message.update({
         usersDel: [...message.usersDel, r.auth.credentials.id]
       });
       return output({status: "Success"});
     }
-
     if (!r.payload.onlyMember) {
       message.isAuthor(r.auth.credentials.id);
       const mediasId = [...message.mediaId];
@@ -236,19 +223,15 @@ export async function addFavorite(r) {
       return error(404000, "Chat not found", {});
     }
     chat.checkChatMember(r.auth.credentials.id);
-
     const message = await Message.findByPk(r.params.messageId);
-
     if (!message) {
       return error(404000, "Message not found", {});
     }
     message.isFromThisChat(r.params.chatId);
-
     const favorite = await Favorite.create({
       userId: r.auth.credentials.id,
       messageId: r.params.messageId
     });
-
     if (!favorite) {
       return error(404000, "Message not added to favorites", null);
     }
