@@ -138,28 +138,6 @@ const init = async () => {
 
   // Запускаем сервер
   try {
-
-    server.subscription("/api/chat/test");
-    server.subscription("/api/v1/chat/create/");
-    server.subscription("/api/v1/chats");
-    server.subscription("/api/v1/chat/favorites");
-    server.subscription("/api/v1/chat/{chatId}", {
-      onSubscribe: async function(socket, path, params) {
-        const chat = await Chat.findOne(
-          {
-            where:
-              {
-                id: params.chatId,
-                membersId: { [Op.contains]: socket.auth.credentials.id }
-              }
-          });
-        if (!chat) {
-          socket.send("Permission denied");
-          socket.disconnect();
-        }
-      }
-    });
-    server.subscription("/api/chat/{chatId}/send");
     await server.start();
     server.log("info", `Server running at: ${server.info.uri}`);
   } catch (err) {
