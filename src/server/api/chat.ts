@@ -103,6 +103,7 @@ export async function getChats(r) {
     const chats = await Chat.findAndCountAll({
       limit: limit,
       offset: offset,
+      order: [["updatedAt", "DESC"]],
       include: {
         limit: 1,
         model: Message,
@@ -172,6 +173,8 @@ export async function sendMessage(r) {
       mediaId: r.payload.file,
       data: r.payload.data
     });
+    await chat.changed('updatedAt', true);
+    await chat.save();
 
     if (message) {
       server.publish(`/api/v1/chat/${r.params.chatId}`, {
