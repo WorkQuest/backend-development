@@ -67,7 +67,7 @@ export class Quest extends Model {
   @Column({type: DataType.STRING, allowNull: false}) category: string;
 
   @Column({type: DataType.JSONB}) location: Location;
-  // @Column({type: DataType.GEOMETRY('POINT', 4326)}) locationPostGIS;
+  @Column({type: DataType.GEOMETRY('POINT', 4326)}) locationPostGIS;
   @Column({type: DataType.STRING, allowNull: false }) title: string;
   @Column({type: DataType.TEXT }) description: string;
 
