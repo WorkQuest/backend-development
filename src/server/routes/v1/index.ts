@@ -9,7 +9,6 @@ import review from './review';
 import restorePassword from './restorePassword';
 import portfolio from './portfolio';
 import totp from './totp';
-import forum from "./forums";
 import chat from "./chat";
 
 export default [
@@ -24,6 +23,5 @@ export default [
   ...restorePassword,
   ...portfolio,
   ...totp,
-  ...forum,
   ...chat
 ];
