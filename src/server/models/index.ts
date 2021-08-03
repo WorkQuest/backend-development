@@ -27,10 +27,7 @@ export async function initDatabase(dbLink: string, logging = false, sync = false
       RatingStatistic,
       Portfolio,
       PortfolioMedia,
-      News,
-      Chat,
-      Message,
-      Favorite,
+      News
     ]
   });
   if (sync)
