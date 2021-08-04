@@ -30,6 +30,7 @@ import {
   questsQuerySchema,
   mediaIdsSchema,
   questsWithCountSchema,
+  questsSchema,
 } from "@workquest/database-models/lib/schemes";
 
 const questIdSchema = idSchema.label('QuestId');
@@ -267,7 +268,7 @@ export default [{
     tags: ["api", "quest"],
     description: 'Get starred quests',
     response: {
-      schema: outputOkSchema(questsWithCountSchema).label("QuestsWithCountResponse") // TODO ??
+      schema: outputOkSchema(questsSchema).label("QuestsWithCountResponse")
     },
   },
 }, {

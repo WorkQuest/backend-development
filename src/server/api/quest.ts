@@ -316,7 +316,6 @@ export async function setStar(r) {
     }
   });
 
-
   if (starred) {
     return error(Errors.Forbidden, 'Quest has already been added to favorites', {});
   }
