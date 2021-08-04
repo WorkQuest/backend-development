@@ -128,7 +128,7 @@ export interface AdditionalInfoEmployer extends AdditionalInfo {
     }
   }
 }))
-@Table
+@Table({ paranoid: true })
 export class User extends Model {
   @Column({ primaryKey: true, type: DataType.STRING, defaultValue: () => getUUID()}) id: string;
 

@@ -21,8 +21,8 @@ export default [
       validate: {
         payload: Joi.object({
           membersId: arrayIdSchema,
-          isPrivate: Joi.boolean().label('It`s dialog or chat')
-        })
+          isPrivate: Joi.boolean().label('createChat')
+        }).label('createChat')
       }
     }
   },
@@ -37,10 +37,10 @@ export default [
       validate: {
         params: Joi.object({
           chatId: Joi.string().required(),
-        }),
+        }).label('renameChat'),
         payload: Joi.object({
           newAlias: Joi.string().required(),
-        })
+        }).label('renameChat')
       }
     }
   },
@@ -75,7 +75,7 @@ export default [
       validate: {
         params: Joi.object({
           chatId: Joi.string().required(),
-        })
+        }).label('getMessages')
       }
     }
   },
@@ -90,11 +90,11 @@ export default [
       validate: {
         params: Joi.object({
           chatId: Joi.string().required(),
-        }),
+        }).label('sendMessage'),
         payload: Joi.object({
-          data: Joi.string(),
-          file: Joi.array().optional()
-        })
+          data: Joi.string().allow("").required(),
+          file: Joi.array().min(0).required()
+        }).label('sendMessage')
       }
     }
   },
@@ -110,10 +110,10 @@ export default [
         params: Joi.object({
           chatId: Joi.string().required(),
           messageId: Joi.string().required()
-        }),
+        }).label('deleteMessage'),
         payload: Joi.object({
-          onlyMember: Joi.boolean(),
-        })
+          onlyMember: Joi.boolean().required(),
+        }).label('deleteMessage')
       }
     }
   },
@@ -129,13 +129,13 @@ export default [
         params: Joi.object({
           chatId: Joi.string().required(),
           messageId: Joi.string().required()
-        })
+        }).label('addFavorite')
       }
     }
   },
   {
     method: "POST",
-    path: "/v1/chat/delFavorite/{messageId}",
+    path: "/v1/chat/delFavorite/{favoriteMessageId}",
     handler: removeFavorite,
     options: {
       id: "v1.delete.favorite.message",
@@ -143,8 +143,8 @@ export default [
       tags: ["api", "chat", "messages"],
       validate: {
         params: Joi.object({
-          messageId: Joi.string().required()
-        }),
+          favoriteMessageId: Joi.string().required()
+        }).label('removeFavorite'),
       }
     }
   },
