@@ -37,6 +37,16 @@ async function answerWorkOnQuest(questId: string, worker: User, acceptWork: bool
   }
 }
 
+export async function getQuest(r) {
+  const quest = await Quest.findByPk(r.params.questId);
+
+  if (!quest) {
+    return error(Errors.NotFound, "Quest not found", {});
+  }
+
+  return output(quest);
+}
+
 export async function createQuest(r) {
   const user = r.auth.credentials;
   const medias = await getMedias(r.payload.medias);
