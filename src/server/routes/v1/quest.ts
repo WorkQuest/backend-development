@@ -8,8 +8,8 @@ import {
   editQuest, getMyStarredQuests,
   getQuests, rejectCompletedWorkOnQuest,
   rejectWorkOnQuest, setStar,
-  startQuest, removeStar
-} from '../../api/quest';
+  startQuest, removeStar, getQuest
+} from "../../api/quest";
 import { emptyOkSchema, outputOkSchema, locationSchema, idSchema } from '../../schemes';
 import {
   adTypeSchema,
@@ -29,6 +29,23 @@ const questsOutputSchema = Joi.object({
 }).label("QuestsOutput");
 
 export default [{
+  method: "GET",
+  path: "/v1/quest/{questId}",
+  handler: getQuest,
+  options: {
+    id: "v1.getQuest",
+    tags: ["api", "quest"],
+    description: "Get quest",
+    validate: {
+      params: Joi.object({
+        questId: questIdSchema
+      }).label('GetQuestParams')
+    },
+    response: {
+      schema: outputOkSchema(questSchema).label("QuestResponse"),
+    }
+  }
+}, {
   method: "POST",
   path: "/v1/quest/create",
   handler: createQuest,
@@ -101,7 +118,7 @@ export default [{
   path: "/v1/quests",
   handler: getQuests,
   options: {
-    id: "v1.quests",
+    id: "v1.getQuests",
     tags: ["api", "quest"],
     description: "Get quests",
     validate: {
