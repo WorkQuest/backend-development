@@ -1,9 +1,12 @@
 import { error, output } from '../utils';
 import { Errors } from '../utils/errors';
-import { User, UserRole } from '../models/User';
-import { Portfolio } from '../models/Portfolio';
 import { getMedias } from '../utils/medias';
-import { Media } from '../models/Media';
+import {
+  Media,
+  Portfolio,
+  User,
+  UserRole,
+} from "@workquest/database-models/lib/models";
 
 export async function addCase(r) {
   r.auth.credentials.mustHaveRole(UserRole.Worker);

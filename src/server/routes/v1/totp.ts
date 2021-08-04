@@ -1,6 +1,11 @@
 import * as Joi from "joi";
+import {
+  emptyOkSchema,
+  hexTokenSchema,
+  outputOkSchema,
+  totpSchema,
+} from "@workquest/database-models/lib/schemes";
 import { confirmEnablingTOTP, disableTOTP, enableTOTP } from "../../api/totp";
-import { emptyOkSchema, hexTokenSchema, outputOkSchema, totpSchema } from "../../schemes";
 
 export default [{
   method: "POST",
@@ -11,7 +16,7 @@ export default [{
     tags: ["api", "TOTP"],
     description: "Enable 2FA",
     response: {
-      schema: outputOkSchema(totpSchema).label("EnableTotpResponse")
+      schema: outputOkSchema(totpSchema).label("TotpResponse")
     }
   }
 }, {

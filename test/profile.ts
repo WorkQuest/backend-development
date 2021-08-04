@@ -1,12 +1,15 @@
 import * as Lab from '@hapi/lab';
 import { init } from '../src/server';
 import { makeAccessToken, makeEmployer, makeWorker } from './index';
-import { User } from '../src/server/models/User';
+import { User } from "@workquest/database-models/lib/models";
 import { expect } from '@hapi/code';
 
 let server = null;
-const { it, suite,
-  before, after
+const {
+  it,
+  suite,
+  before,
+  after,
 } = exports.lab = Lab.script();
 
 async function postRequestOnSendReview(accessToken: string, payload: object) {
@@ -38,6 +41,7 @@ async function Should_Ok_When_EmployerEditedProfile() {
     firstName: "Kirill",
     lastName: "NeIvanov_",
     additionalInfo: {
+      description: null,
       CEO: "Test123",
       website: "Test123",
       secondMobileNumber: "+9213453",
@@ -73,6 +77,8 @@ async function Should_Ok_When_WorkerEditedProfile() {
     firstName: "Kirill",
     lastName: "NeIvanov_",
     additionalInfo: {
+      educations: [],
+      workExperiences: [],
       secondMobileNumber: "+9213453",
       address: "dfgfd",
       description: "11dfdsfdsfsdfgsd",

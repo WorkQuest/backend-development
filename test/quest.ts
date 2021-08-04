@@ -2,9 +2,20 @@ import * as Lab from '@hapi/lab';
 import { expect } from '@hapi/code';
 import { init } from '../src/server';
 import { Errors } from '../src/server/utils/errors';
-import { Quest, QuestPriority, QuestStatus } from '../src/server/models/Quest';
-import { makeWorker, makeEmployer, makeAccessToken, makeQuest } from './index';
-import { QuestsResponse, QuestsResponseStatus, QuestsResponseType } from '../src/server/models/QuestsResponse';
+import {
+  Quest,
+  QuestPriority,
+  QuestStatus,
+  QuestsResponse,
+  QuestsResponseStatus,
+  QuestsResponseType
+} from "@workquest/database-models/lib/models";
+import {
+  makeWorker,
+  makeEmployer,
+  makeAccessToken,
+  makeQuest
+} from './index';
 
 let server = null;
 const { it, suite,

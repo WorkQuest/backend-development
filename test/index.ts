@@ -1,9 +1,15 @@
-import { User, UserRole, UserStatus } from '../src/server/models/User';
-import { Session } from '../src/server/models/Session';
+import {
+  User,
+  UserRole,
+  UserStatus,
+  Session,
+  Quest,
+  QuestPriority,
+  QuestStatus,
+  RatingStatistic
+} from "@workquest/database-models/lib/models";
 import { generateJwt } from '../src/server/utils/auth';
-import { Quest, QuestPriority, QuestStatus } from '../src/server/models/Quest';
-import { transformToGeoPostGIS } from '../src/server/utils/quest';
-import { RatingStatistic } from '../src/server/models/RatingStatistic';
+import { transformToGeoPostGIS } from '@workquest/database-models/lib/utils/quest';
 
 export async function makeAccessToken(user: User): Promise<string> {
   const session = await Session.create({

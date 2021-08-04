@@ -2,31 +2,38 @@ import * as Joi from "joi";
 import {
   acceptCompletedWorkOnQuest,
   acceptWorkOnQuest,
-  closeQuest, completeWorkOnQuest,
+  closeQuest,
+  completeWorkOnQuest,
   createQuest,
   deleteQuest,
-  editQuest, getMyStarredQuests,
-  getQuests, rejectCompletedWorkOnQuest,
-  rejectWorkOnQuest, setStar,
-  startQuest, removeStar
+  editQuest,
+  getMyStarredQuests,
+  getQuests,
+  rejectCompletedWorkOnQuest,
+  rejectWorkOnQuest,
+  setStar,
+  startQuest,
+  removeStar
 } from '../../api/quest';
-import { emptyOkSchema, outputOkSchema, locationSchema, idSchema } from '../../schemes';
 import {
-  adTypeSchema,
-  categorySchema,
-  descriptionSchema,
-  priceSchema,
-  questPrioritySchema, questSchema,
-  titleSchema, questsQuerySchema
-} from '../../schemes/quest';
-import { mediaIdsSchema } from '../../schemes/media';
+  outputOkSchema,
+  idSchema,
+  emptyOkSchema,
+  locationSchema,
+  questAdTypeSchema,
+  questCategorySchema,
+  questDescriptionSchema,
+  questPriceSchema,
+  questPrioritySchema,
+  questSchema,
+  questTitleSchema,
+  questsQuerySchema,
+  mediaIdsSchema,
+  questsWithCountSchema,
+} from "@workquest/database-models/lib/schemes";
 
 const questIdSchema = idSchema.label('QuestId');
 const userIdSchema = idSchema.label('UserId');
-const questsOutputSchema = Joi.object({
-  count: Joi.number().integer().example(10).label('CountQuests'),
-  quests: Joi.array().items(questSchema).label('QuestsList'),
-}).label("QuestsOutput");
 
 export default [{
   method: "POST",
@@ -38,14 +45,14 @@ export default [{
     description: "Register new quest",
     validate: {
       payload: Joi.object({
-        category: categorySchema.required(),
+        category: questCategorySchema.required(),
         priority: questPrioritySchema.required(),
         location: locationSchema.required(),
-        title: titleSchema.required(),
-        description: descriptionSchema.required(),
-        price: priceSchema.required(),
+        title: questTitleSchema.required(),
+        description: questDescriptionSchema.required(),
+        price: questPriceSchema.required(),
         medias: mediaIdsSchema.required().unique().label('MediaIds'),
-        adType: adTypeSchema,
+        adType: questAdTypeSchema,
       }).label("CreateQuestPayload")
     },
     response: {
@@ -82,13 +89,13 @@ export default [{
         questId: questIdSchema.required(),
       }).label("EditQuestParams"),
       payload: Joi.object({
-        category: categorySchema,
+        category: questCategorySchema,
         priority: questPrioritySchema,
         location: locationSchema,
-        title: titleSchema,
-        description: descriptionSchema,
-        price: priceSchema,
-        adType: adTypeSchema,
+        title: questTitleSchema,
+        description: questDescriptionSchema,
+        price: questPriceSchema,
+        adType: questAdTypeSchema,
         medias: mediaIdsSchema.unique().label('MediaIds'),
       }).label("EditQuestPayload"),
     },
@@ -108,7 +115,7 @@ export default [{
       query: questsQuerySchema
     },
     response: {
-      schema: outputOkSchema(questsOutputSchema).label("QuestsResponse")
+      schema: outputOkSchema(questsWithCountSchema).label("QuestsWithCountResponse")
     },
   }
 }, {
@@ -126,7 +133,7 @@ export default [{
       query: questsQuerySchema
     },
     response: {
-      schema: outputOkSchema(questsOutputSchema).label("QuestsResponse")
+      schema: outputOkSchema(questsWithCountSchema).label("QuestsWithCountResponse")
     },
   }
 }, {
@@ -160,7 +167,7 @@ export default [{
     validate: {
       params: Joi.object({
         questId: questIdSchema.required(),
-      }).label("DeleteQuestParams")
+      }).label("CloseQuestParams")
     },
     response: {
       schema: emptyOkSchema
@@ -260,7 +267,7 @@ export default [{
     tags: ["api", "quest"],
     description: 'Get starred quests',
     response: {
-      schema: outputOkSchema(questsOutputSchema).label("StarredResponse")
+      schema: outputOkSchema(questsWithCountSchema).label("QuestsWithCountResponse") // TODO ??
     },
   },
 }, {

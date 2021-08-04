@@ -1,8 +1,15 @@
 import * as Joi from "joi";
-import { emptyOkSchema, idSchema } from "../../schemes";
-import { descriptionSchema, portfolioSchema, titleSchema } from "../../schemes/portfolio";
 import { addCase, deleteCase, editCase, getCases } from "../../api/portfolio";
-import { mediaIdsSchema } from "../../schemes/media";
+import {
+  outputOkSchema,
+  emptyOkSchema,
+  idSchema,
+  portfolioDescriptionSchema,
+  portfolioSchema,
+  portfolioTitleSchema,
+  portfoliosSchema,
+  mediaIdsSchema,
+} from "@workquest/database-models/lib/schemes";
 
 const userIdSchema = idSchema.label("UserId");
 const portfolioIdSchema = idSchema.label("PortfolioId");
@@ -17,13 +24,13 @@ export default [{
     description: "Add case",
     validate: {
       payload: Joi.object({
-        title: titleSchema.required(),
-        description: descriptionSchema.default(""),
+        title: portfolioTitleSchema.required(),
+        description: portfolioDescriptionSchema.default(""),
         medias: mediaIdsSchema.required().unique().label("Medias")
       }).label('AddCasePayload')
     },
     response: {
-      schema: portfolioSchema
+      schema: outputOkSchema(portfolioSchema).label('PortfolioResponse'),
     }
   }
 }, {
@@ -40,7 +47,7 @@ export default [{
       }).label('GetCasesParams')
     },
     response: {
-      schema: Joi.array().items(portfolioSchema).label('CasesResponse')
+      schema: outputOkSchema(portfoliosSchema).label('PortfoliosResponse'),
     }
   }
 }, {
@@ -56,13 +63,13 @@ export default [{
         portfolioId: portfolioIdSchema
       }).label('EditCaseParams'),
       payload: Joi.object({
-        title: titleSchema,
-        description: descriptionSchema,
+        title: portfolioTitleSchema,
+        description: portfolioDescriptionSchema,
         medias: mediaIdsSchema.unique().label("Medias")
       }).label('EditCasePayload')
     },
     response: {
-      schema: portfolioSchema
+      schema: outputOkSchema(portfolioSchema).label('PortfolioResponse'),
     }
   }
 }, {

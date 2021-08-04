@@ -7,16 +7,18 @@ import {
   sendCodeOnPhoneNumber,
   setRole
 } from '../../api/profile';
-import { emptyOkSchema, idSchema, outputOkSchema } from "../../schemes";
 import {
-  additionalInfoEmployerSchema,
-  additionalInfoWorkerSchema,
-  firstNameSchema,
-  lastNameSchema,
-  passwordSchema,
+  outputOkSchema,
+  emptyOkSchema,
+  idSchema,
+  userAdditionalInfoEmployerSchema,
+  userAdditionalInfoWorkerSchema,
+  userFirstNameSchema,
+  userLastNameSchema,
+  userPasswordSchema,
   userRoleSchema,
-  userSchema
-} from "../../schemes/user";
+  userSchema,
+} from "@workquest/database-models/lib/schemes";
 
 export default [{
   method: "GET",
@@ -27,7 +29,7 @@ export default [{
     tags: ["api", "profile"],
     description: "Get info about current user",
     response: {
-      schema: outputOkSchema(userSchema).label("ProfileGetMeResponse")
+      schema: outputOkSchema(userSchema).label("UserResponse")
     }
   }
 }, {
@@ -58,16 +60,16 @@ export default [{
     validate: {
       payload: Joi.object({
         avatarId: idSchema.allow(null).required().label("MediaId"),
-        firstName: firstNameSchema.required(),
-        lastName: lastNameSchema.required(),
+        firstName: userFirstNameSchema.required(),
+        lastName: userLastNameSchema.required(),
         additionalInfo: Joi.alternatives(
-          additionalInfoEmployerSchema.options({ presence: "required" }),
-          additionalInfoWorkerSchema.options({ presence: "required" })
+          userAdditionalInfoEmployerSchema.options({ presence: "required" }),
+          userAdditionalInfoWorkerSchema.options({ presence: "required" })
         ).required()
       }).label("EditProfilePayload")
     },
     response: {
-      schema: outputOkSchema(userSchema).label("EditProfileResponse")
+      schema: outputOkSchema(userSchema).label("UserResponse")
     }
   }
 }, {
@@ -80,8 +82,8 @@ export default [{
     description: "Change user password",
     validate: {
       payload: Joi.object({
-        oldPassword: passwordSchema.required(),
-        newPassword: passwordSchema.required()
+        oldPassword: userPasswordSchema.required(),
+        newPassword: userPasswordSchema.required()
       }).label("ChangePasswordPayload")
     },
     response: {

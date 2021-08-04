@@ -1,6 +1,10 @@
 import * as Joi from "joi";
-import { emailSchema, passwordSchema } from "../../schemes/user";
-import { emptyOkSchema, longHexTokenSchema } from "../../schemes";
+import {
+  emptyOkSchema,
+  longHexTokenSchema,
+  userEmailSchema,
+  userPasswordSchema,
+} from "@workquest/database-models/lib/schemes";
 import { sendCodeForRestorePassword, setNewPassword } from "../../api/restorePassword";
 
 export default [{
@@ -14,7 +18,7 @@ export default [{
     description: "Send password restore code on email",
     validate: {
       payload: Joi.object({
-        email: emailSchema.required()
+        email: userEmailSchema.required()
       }).label("SendCodeOnRestorePasswordPayload")
     },
     response: {
@@ -32,7 +36,7 @@ export default [{
     description: "Set new password using code from email",
     validate: {
       payload: Joi.object({
-        newPassword: passwordSchema.required(),
+        newPassword: userPasswordSchema.required(),
         token: longHexTokenSchema.required()
       }).label("SetPasswordPayload")
     },

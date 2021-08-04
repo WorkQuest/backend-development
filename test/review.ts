@@ -1,11 +1,13 @@
 import * as Lab from '@hapi/lab';
 import { init } from '../src/server';
 import { makeAccessToken, makeEmployer, makeQuest, makeWorker } from './index';
-import { QuestStatus } from '../src/server/models/Quest';
-import { Review } from '../src/server/models/Review';
 import { expect } from '@hapi/code';
-import { RatingStatistic } from '../src/server/models/RatingStatistic';
 import * as updateReviewStatistics from '../src/server/jobs/updateReviewStatistics'
+import {
+  QuestStatus,
+  Review,
+  RatingStatistic,
+} from "@workquest/database-models/lib/models";
 
 let server = null;
 const { it, suite,

@@ -1,14 +1,18 @@
 import * as Joi from "joi";
 import { confirmEmail, getLoginViaSocialNetworkHandler, login, refreshTokens, register } from "../../api/auth";
-import { emailSchema, firstNameSchema, lastNameSchema, passwordSchema, userRoleSchema } from "../../schemes/user";
 import {
-  accountStatusSchema,
+  outputOkSchema,
+  userEmailSchema,
+  userFirstNameSchema,
+  userLastNameSchema,
+  userPasswordSchema,
+  userRoleSchema,
+  userStatusSchema,
   emptyOkSchema,
   hexTokenSchema,
-  outputOkSchema,
   tokensWithStatus,
-  totpSchema
-} from "../../schemes";
+  totpSchema,
+} from "@workquest/database-models/lib/schemes";
 
 export default [{
   method: "POST",
@@ -21,10 +25,10 @@ export default [{
     description: "Register new user",
     validate: {
       payload: Joi.object({
-        firstName: firstNameSchema.required(),
-        lastName: lastNameSchema.required(),
-        email: emailSchema.required(),
-        password: passwordSchema.required()
+        firstName: userFirstNameSchema.required(),
+        lastName: userLastNameSchema.required(),
+        email: userEmailSchema.required(),
+        password: userPasswordSchema.required()
       }).label("AuthRegisterPayload")
     },
     response: {
@@ -47,9 +51,7 @@ export default [{
       }).label("AuthConfirmEmailPayload")
     },
     response: {
-      schema: outputOkSchema(Joi.object({
-        status: accountStatusSchema
-      }).label("AuthConfirmEmailResult")).label("AuthConfirmEmailResponse")
+      schema: outputOkSchema(userStatusSchema).label("UserStatus")
     }
   }
 }, {
@@ -63,8 +65,8 @@ export default [{
     description: "Login user",
     validate: {
       payload: Joi.object({
-        email: emailSchema.required(),
-        password: passwordSchema.required(),
+        email: userEmailSchema.required(),
+        password: userPasswordSchema.required(),
         totp: totpSchema
       }).label("AuthLoginPayload")
     },
@@ -144,7 +146,7 @@ export default [{
     tags: ["api", "auth"],
     description: "Login user through Facebook (returns tokens)",
     response: {
-      schema: tokensWithStatus
+      schema: outputOkSchema(tokensWithStatus).label('TokensWithStatusResponse')
     }
   }
 }, {
@@ -159,7 +161,7 @@ export default [{
     tags: ["api", "auth"],
     description: "Login user through Google (returns tokens)",
     response: {
-      schema: tokensWithStatus
+      schema: outputOkSchema(tokensWithStatus).label('TokensWithStatusResponse')
     }
   }
 }, {
@@ -174,7 +176,7 @@ export default [{
     tags: ["api", "auth"],
     description: "Login user through Linkedin (returns tokens)",
     response: {
-      schema: tokensWithStatus
+      schema: outputOkSchema(tokensWithStatus).label('TokensWithStatusResponse')
     }
   }
 }, {
@@ -189,7 +191,7 @@ export default [{
     tags: ["api", "auth"],
     description: "Login user through Twitter (returns tokens)",
     response: {
-      schema: tokensWithStatus
+      schema: outputOkSchema(tokensWithStatus).label('TokensWithStatusResponse')
     }
   }
 }, {
@@ -202,7 +204,7 @@ export default [{
     tags: ["api", "auth"],
     description: "Refresh auth tokens",
     response: {
-      schema: outputOkSchema(tokensWithStatus).label("AuthRefreshTokensResponse")
+      schema: outputOkSchema(tokensWithStatus).label("TokensWithStatusResponse")
     }
   }
 }];

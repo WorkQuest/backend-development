@@ -1,4 +1,4 @@
-import { error, output } from "../utils";
+import { output } from "../utils";
 import { searchFields } from './quest';
 
 function makeWhere(query) {

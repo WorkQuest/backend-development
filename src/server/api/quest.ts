@@ -1,12 +1,18 @@
+import { Op } from 'sequelize';
 import { error, output } from '../utils';
 import { Errors } from '../utils/errors';
-import { Quest, QuestStatus } from '../models/Quest';
-import { User, UserRole } from '../models/User';
-import { Op } from 'sequelize';
 import { getMedias } from "../utils/medias"
-import { transformToGeoPostGIS } from '../utils/quest';
-import { QuestsResponse, QuestsResponseStatus, QuestsResponseType } from '../models/QuestsResponse';
-import { StarredQuests } from '../models/StarredQuests';
+import {
+  User,
+  UserRole,
+  Quest,
+  QuestStatus,
+  QuestsResponse,
+  QuestsResponseStatus,
+  QuestsResponseType,
+  StarredQuests,
+} from "@workquest/database-models/lib/models";
+import { transformToGeoPostGIS } from "@workquest/database-models/lib/utils/quest" // TODO to index.ts
 
 export const searchFields = [
   "title",

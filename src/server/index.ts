@@ -8,6 +8,7 @@ import * as HapiCors from "hapi-cors";
 import * as HapiBearer from "hapi-auth-bearer-token";
 import * as HapiPulse from "hapi-pulse";
 import * as Bell from "@hapi/bell";
+import { initDatabase } from "@workquest/database-models/lib/models";
 import routes from "./routes";
 import config from "./config/config";
 import * as Qs from "qs";
@@ -15,7 +16,6 @@ import { handleValidationError, responseHandler } from "./utils";
 import { tokenValidate } from "./utils/auth";
 import SwaggerOptions from "./config/swagger";
 import { pinoConfig } from "./config/pino";
-import { initDatabase } from "./models";
 import { run } from "graphile-worker";
 
 const HapiSwagger = require("hapi-swagger");

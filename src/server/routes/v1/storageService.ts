@@ -1,12 +1,10 @@
 import * as Joi from "joi";
+import {
+  outputOkSchema,
+  mediaContentTypeSchema,
+  mediaUploadLinkSchema,
+} from "@workquest/database-models/lib/schemes";
 import { getUploadLink } from '../../api/storageService';
-import { contentTypeSchema } from '../../schemes/media';
-import { idSchema, outputOkSchema, urlSchema } from '../../schemes';
-
-const uploadLinkSchema = Joi.object({
-  mediaId: idSchema.label('MediaId'),
-  url: urlSchema,
-}).label('UploadLink');
 
 export default [{
   method: "POST",
@@ -18,11 +16,11 @@ export default [{
     description: "Upload file in storage",
     validate: {
       payload: Joi.object({
-        contentType: contentTypeSchema.required()
+        contentType: mediaContentTypeSchema.required()
       }).label('UploadFilePayload')
     },
     response: {
-      schema: outputOkSchema(uploadLinkSchema).label('UploadLinkResponse')
+      schema: outputOkSchema(mediaUploadLinkSchema).label('MediaUploadLinkResponse')
     }
   }
 }];
