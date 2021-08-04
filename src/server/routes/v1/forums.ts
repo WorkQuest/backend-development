@@ -3,11 +3,20 @@ import {
   createNews,
   deleteComment,
   deleteNews, findNewsAll,
-  deleteLike, createLikes, updateNewsAndComment, createFile, getFiles
+  deleteLike, like, changeNewsAndComment, createFile, getFiles
 } from "../../api/forums";
 import * as Joi from "joi";
-import { idSchema, outputOkSchema, shemaNews } from "../../schemes";
+import { shemaNews } from "../../schemes";
 import { fileSchemaInfo, filesQuerySchema } from "../../schemes/media";
+import {
+  createLikeSchemes,
+  deleteLikeSchemes,
+  createNewsSchemes,
+  createCommentSchemes,
+  deleteNewsSchemes,
+  deleteCommentSchemes,
+  changeNewsAndCommentSchemes
+} from "../../schemes/news";
 
 export default [
   {
@@ -18,12 +27,8 @@ export default [
       id: "v1.forum.createNews",
       tags: ["api", "forum"],
       description: "Create new news, the file is not empty, but if sent, the field is filled",
-      auth: "jwt-access",
       validate: {
-        payload: Joi.object({
-          text: Joi.string().required().label('Name news'),
-          file: Joi.array().label('File info')
-        }).label('Create news')
+        payload: createNewsSchemes
       }
     }
   },
@@ -35,28 +40,21 @@ export default [
       id: "v1.forum.createComment",
       tags: ["api", "forum"],
       description: "Create new comment",
-      auth: "jwt-access",
       validate: {
-        payload: Joi.object({
-          idNews: idSchema,
-          text: Joi.string().required().label('comment message'),
-        }).label('Create comment')
+        payload: createCommentSchemes
       }
     }
   },
   {
     method: "POST",
     path: "/v1/like/create",
-    handler: createLikes,
+    handler: like,
     options: {
       id: "v1.forum.createLike",
       tags: ["api", "forum"],
       description: "Create like",
-      auth: "jwt-access",
       validate: {
-        payload: Joi.object({
-          id: idSchema
-        }).label('Create like')
+        payload: createLikeSchemes
       }
     }
   },
@@ -68,11 +66,8 @@ export default [
       id: "v1.forum.deleteLike",
       tags: ["api", "forum"],
       description: "Delete like",
-      auth: "jwt-access",
       validate: {
-        payload: Joi.object({
-          id: idSchema
-        }).label('Delete like')
+        payload: deleteLikeSchemes
       }
     }
   },
@@ -84,11 +79,8 @@ export default [
       id: "v1.forum.deleteNews",
       tags: ["api", "forum"],
       description: "Delete news",
-      auth: "jwt-access",
       validate: {
-        payload: Joi.object({
-          id: idSchema
-        }).label('Delete news')
+        payload: deleteNewsSchemes
       }
     }
   },
@@ -100,12 +92,8 @@ export default [
       id: "v1.forum.comment",
       tags: ["api", "forum"],
       description: "Delete comment",
-      auth: "jwt-access",
       validate: {
-        payload: Joi.object({
-          id: idSchema,
-          idComment: idSchema
-        }).label('Delete comment')
+        payload: deleteCommentSchemes
       }
     }
   },
@@ -126,18 +114,13 @@ export default [
   {
     method: "POST",
     path: "/v1/news/update/",
-    handler: updateNewsAndComment,
+    handler: changeNewsAndComment,
     options: {
       id: "v1.forum.updateNewsAndComment",
       tags: ["api", "forum"],
       description: "Update news and comment",
-      auth: "jwt-access",
       validate: {
-        payload: Joi.object({
-          id: idSchema,
-          text: Joi.string().required().label('Update name news'),
-          file: Joi.array().label('Update file info')
-        }).label('Update comment')
+        payload: changeNewsAndCommentSchemes
       }
     }
   },
@@ -153,9 +136,6 @@ export default [
         payload: Joi.object({
           file: fileSchemaInfo.required()
         })
-      },
-      response: {
-        schema: outputOkSchema(fileSchemaInfo).label("File response")
       }
     }
   },
@@ -169,9 +149,6 @@ export default [
       description: "Get all files",
       validate: {
         query: filesQuerySchema
-      },
-      response: {
-        schema: outputOkSchema(filesQuerySchema).label("FilesResponse")
       }
     }
   }

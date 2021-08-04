@@ -1,9 +1,13 @@
-import { BelongsTo, Column, DataType, ForeignKey, Model, Table, Scopes, BelongsToMany } from "sequelize-typescript";
+import {
+  BelongsTo,
+  Column,
+  DataType,
+  ForeignKey,
+  Model,
+  Table,
+} from "sequelize-typescript";
 import { getUUID } from '../utils';
 import { User } from './User';
-import { HasMany } from "sequelize";
-import { Message } from "./Message";
-import { Chat } from "./Chat";
 
 export enum ContentType {
   mp4 = 'video/mp4',

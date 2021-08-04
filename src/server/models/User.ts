@@ -8,6 +8,7 @@ import { Review } from "./Review";
 import { RatingStatistic } from "./RatingStatistic";
 import { StarredQuests } from "./StarredQuests";
 import { News } from "./News";
+import { LikesNews } from "./LikesNews";
 
 export interface SocialInfo {
   id: string;
@@ -168,13 +169,16 @@ export class User extends Model {
 
   @BelongsTo(() => Media,{ constraints: false, foreignKey: 'avatarId' }) avatar: Media;
 
-
   @HasOne(() => RatingStatistic) ratingStatistic: RatingStatistic;
 
   @HasMany(() => StarredQuests) starredQuests: StarredQuests[];
   @HasMany(() => Review, 'toUserId') reviews: Review[];
   @HasMany(() => Session) sessions: Session[];
   @HasMany(() => Media, { constraints: false }) medias: Media[];
+  @HasMany(() => LikesNews) likes: LikesNews[];
+  @HasMany(() => News) author: News[];
+
+
 
   async passwordCompare(pwd: string): Promise<boolean> {
     return bcrypt.compareSync(pwd, this.password);

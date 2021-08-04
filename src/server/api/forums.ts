@@ -1,61 +1,35 @@
 import { News } from "../models/News";
-import { Op, where } from "sequelize";
+import { Op } from "sequelize";
 import { error, output } from "../utils";
 import { Media } from "../models/Media";
+import { Errors } from "../utils/errors";
+import { LikesNews } from "../models/LikesNews";
 
 
-export async function createLikes(r) {
-  try {
-    const news: any = await News.findOne({
-      where: {
-        id: r.payload.id
-      }
-    });
+export async function like(r) {
+    const news = await News.findByPk(r.payload.idNews);
     if (!news) {
-      return error(404000, "Not found news", {});
+      return error(Errors.NotFound, "News not found", {});
     }
-    let arr = [...news.likes];
-    arr.push(r.auth.credentials.id);
-    await news.update({
-      likes: arr
-    });
-    return output({ status: "Success" });
-  } catch (e) {
-    console.log("createLikes", e);
-    return error(500000, "Internal server error", {});
-  }
+    await LikesNews.create({
+      idUser: r.auth.credentials.id,
+      idNews: r.payload.idNews
+    })
+    return output();
 }
 
 
 export async function deleteLike(r) {
-  try {
-    const news = await News.findOne({
-      where: {
-        id: r.payload.id,
-        likes: {
-          [Op.contains]: [
-            r.auth.credentials.id
-          ]
-        }
-      }
-    });
-    if (!deleteLike) {
-      return error(404000, "Not found news", {});
-    }
-    news.likes = news.likes.filter((n) => {
-      return n != r.auth.credentials.id;
-    });
-    await news.update({ likes: news.likes });
-    return output({ status: "Success" });
-  } catch (e) {
-    console.log("deleteLike", e);
-    return error(500000, "Internal server error", {});
+  const del = await LikesNews.findByPk(r.payload.id);
+  if (!del){
+    return error(Errors.NotFound, "Like not found", {});
   }
+    await del.destroy();
+    return output();
 }
 
 
 export async function deleteNews(r) {
-  try {
     const news = await News.findOne({
       where: {
         id: r.payload.id,
@@ -63,19 +37,14 @@ export async function deleteNews(r) {
       }
     });
     if (!news) {
-      return error(404000, "Not found news", {});
+      return error(Errors.NotFound, "News not found", {});
     }
     await news.destroy();
-    return output({ status: "Success" });
-  } catch (e) {
-    console.log("deleteNews", e);
-    return error(500000, "Internal server error", {});
-  }
+    return output();
 }
 
 
 export async function deleteComment(r) {
-  try {
     const news = await News.findOne({
       where: {
         id: r.payload.id,
@@ -87,7 +56,7 @@ export async function deleteComment(r) {
       }
     });
     if (!news) {
-      return error(404000, "Not found news", {});
+      return error(Errors.NotFound, "News not found", {});
     }
     const comment = await News.findOne({
       where: {
@@ -98,23 +67,18 @@ export async function deleteComment(r) {
       }
     });
     if (!comment) {
-      return error(404000, "Not found comment", {});
+      return error(Errors.NotFound, "Comment not found", {});
     }
     await comment.destroy();
     news.answers = news.answers.filter((n) => {
       return n != r.payload.idComment;
     });
     await news.update({ answers: news.answers });
-    return output({ status: "Success" });
-  } catch (e) {
-    console.log("deleteComment", e);
-    return error(500000, "Internal server error", {});
-  }
+    return output();
 }
 
 
 export async function findNewsAll(r) {
-  try {
     const object: any = {
       limit: r.query.limit,
       offset: r.query.offset,
@@ -127,15 +91,10 @@ export async function findNewsAll(r) {
     }
     const news = await News.findAll(object);
     return output(news);
-  } catch (e) {
-    console.log("findNewsAll", e);
-    return error(500000, "Internal server error", {});
-  }
 }
 
 
-export async function updateNewsAndComment(r) {
-  try {
+export async function changeNewsAndComment(r) {
     const news = await News.findOne({
       where: {
         id: r.payload.id,
@@ -143,7 +102,7 @@ export async function updateNewsAndComment(r) {
       }
     });
     if (!news) {
-      return error(404000, "Not found news", {});
+      return error(Errors.NotFound, "News not found", {});
     }
     let objectUpdate: any = {
       text: r.payload.text
@@ -156,45 +115,33 @@ export async function updateNewsAndComment(r) {
               id: news.file[i]
             }
           });
-          console.log(news.file[i]);
         }
       }
       objectUpdate.file = r.payload.file;
     }
-
     await news.update(objectUpdate);
-    return output({ status: "Success" });
-  } catch (e) {
-    console.log("updateNewsAndComment", e);
-    return error(500000, "Internal server error", {});
-  }
+    return output();
 }
 
 export async function createNews(r) {
-  try {
     const news = await News.create({
       idAuthor: r.auth.credentials.id,
       checkNews: true,
       text: r.payload.text,
       file: r.payload.file
     });
-    return output({ status: "Success" });
-  } catch (e) {
-    console.log("createNews", e);
-    return error(500000, "Internal server error", {});
-  }
+    return output();
 }
 
 
 export async function createComment(r) {
-  try {
     const news: any = await News.findOne({
       where: {
         id: r.payload.id
       }
     });
     if (!news) {
-      return error(404000, "Not found news", {});
+      return error(Errors.NotFound, "News not found", {});
     }
     const create = await News.create({
       idAuthor: r.auth.credentials.id,
@@ -206,15 +153,10 @@ export async function createComment(r) {
     await news.update({
       answers: arr
     });
-    return output({ status: "Success" });
-  } catch (e) {
-    console.log("createComment", e);
-    return error(500000, "Internal server error", {});
-  }
+    return output();
 }
 
 export async function createFile(r) {
-  try {
     const media: any = await Media.findOne({
       where: {
         userId: r.auth.credentials.id,
@@ -222,7 +164,7 @@ export async function createFile(r) {
       }
     });
     if (media) {
-      return error(404000, "File not found", null);
+      return error(Errors.NotFound, "File not found", {});
     }
     const create: any = await Media.create({
       userId: r.payload.file.userId,
@@ -232,15 +174,10 @@ export async function createFile(r) {
     });
     const id: any = create.id;
     return output({ id });
-  } catch (err) {
-    console.log("createFile", err);
-    return error(500000, "Internal Server Error", null);
-  }
-};
+}
 
 
 export async function getFiles(r) {
-  try {
     const { offset, limit } = r.query;
     const media = await Media.findAndCountAll({
       limit: limit,
@@ -251,13 +188,9 @@ export async function getFiles(r) {
       attributes: ["id", "contentType", "url", "hash", "createdAt", "updatedAt"]
     });
     if (!media) {
-      return error(404000, "Not found", null);
+      return error(Errors.NotFound, "Not found", {});
     }
     return output(media);
-  } catch (err) {
-    console.log("getFiles", err);
-    return error(500000, "Internal Server Error", null);
-  }
 }
 
 export async function deleteFile(r) {
