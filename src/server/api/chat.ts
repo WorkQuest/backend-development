@@ -28,12 +28,15 @@ export async function createChat(r) {
         id: {[Op.in]: r.payload.membersId}
       }
     });
+    
     if (users.length !== r.payload.membersId.length) {
       return error(404000, "User is not found", null);
     }
+    
     if (r.payload.isPrivate === true && r.payload.membersId.length !== 2) {
       return error(404000, "The number of users does not match", null);
     }
+    
     if (r.payload.isPrivate) {
       const chat: any = await Chat.findOne({
         where: {
@@ -41,10 +44,12 @@ export async function createChat(r) {
           isPrivate: true
         }
       });
+      
       if (chat) {
         return error(404000, "Bad request, chat exist", null);
       }
     }
+    
     const groupsAmount = await Chat.count({
       where: {
         isPrivate: false
