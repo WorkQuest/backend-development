@@ -141,7 +141,7 @@ const init = async () => {
     server.subscription("/api/v1/chats");
     server.subscription("/api/v1/chat/{chatId}", {
       filter: async function (path, message, options): Promise<boolean> {
-        const chat: Chat = await Chat.findByPk(message.message.dataValues.chatId);
+        const chat: Chat = await Chat.findByPk(options.params.chatId);
         if (!chat) {
           return false;
         }
