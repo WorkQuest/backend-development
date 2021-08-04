@@ -211,6 +211,13 @@ export async function deleteMessage(r) {
       await message.update({
         usersDel: [...message.usersDel, r.auth.credentials.id]
       });
+
+      await chat.changed('updatedAt', true);
+      await chat.save();
+
+      server.publish(`/api/v1/chat/${r.params.chatId}`, {
+        message: "Message deleted",
+      });
       return output({status: "Success"});
     }
 
@@ -225,6 +232,12 @@ export async function deleteMessage(r) {
     }
     await message.destroy();
 
+    await chat.changed('updatedAt', true);
+    await chat.save();
+
+    server.publish(`/api/v1/chat/${r.params.chatId}`, {
+      message: "Message deleted",
+    });
     return output({ status: "Success" });
   } catch (err) {
     console.log("deleteMessage", err);
