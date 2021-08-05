@@ -1,11 +1,16 @@
 import * as Joi from "joi";
+import {
+  outputOkSchema,
+  idSchema,
+  reviewMarkSchema,
+  reviewMessageSchema,
+  reviewSchema,
+  reviewsSchema,
+} from "@workquest/database-models/lib/schemes";
 import { sendReview, getReviewsOfUser } from '../../api/review';
-import { idSchema, outputOkSchema } from '../../schemes';
-import { markSchema, messageSchema, reviewSchema } from '../../schemes/review';
 
 const questIdSchema = idSchema.label('QuestId');
 const userIdSchema = idSchema.label('UserId');
-const reviewsSchema = Joi.array().items(reviewSchema).label('Reviews');
 
 export default [{
   method: "POST",
@@ -18,12 +23,12 @@ export default [{
     validate: {
       payload: Joi.object({
         questId: questIdSchema.required(),
-        message: messageSchema.required(),
-        mark: markSchema.required(),
+        message: reviewMessageSchema.required(),
+        mark: reviewMarkSchema.required(),
       }).label('ReviewSendPayload')
     },
     response: {
-      schema: outputOkSchema(reviewSchema).label('ResponseReview')
+      schema: outputOkSchema(reviewSchema).label('ReviewResponse')
     }
   }
 }, {
@@ -40,7 +45,7 @@ export default [{
       }).label('ParamsReviews')
     },
     response: {
-      schema: outputOkSchema(reviewsSchema).label('ResponseReviews')
+      schema: outputOkSchema(reviewsSchema).label('ReviewsResponse')
     }
   }
 }];

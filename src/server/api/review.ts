@@ -1,9 +1,13 @@
-import { UserRole } from '../models/User';
-import { Quest, QuestStatus } from '../models/Quest';
-import { Review } from '../models/Review';
 import { error, output } from '../utils';
 import { Errors } from '../utils/errors';
 import { addUpdateReviewStatisticsJob } from '../jobs/updateReviewStatistics';
+import {
+  QuestStatus,
+  UserRole,
+  Quest,
+  Review,
+} from "@workquest/database-models/lib/models";
+
 
 export async function sendReview(r) {
   const fromUser = r.auth.credentials;

@@ -1,15 +1,15 @@
 import Joi = require("joi");
-import { outputOkSchema, locationSchema, searchSchema, idSchema } from '../../schemes';
 import { listMapPoints, mapPoints } from '../../api/map';
-import { questSchema, questPrioritySchema, questsListSortSchema, questStatusSchema } from '../../schemes/quest';
-
-const mapPointOutputSchema = Joi.object({
-  pointsCount: Joi.number().label('PointsCount'),
-  questId: idSchema.label('QuestId'),
-  type: Joi.string().valid('point', 'cluster').label('TypePoint'),
-  coordinates: Joi.array().example([83.1123, 40.221]).items(Joi.number()).label('Coordinates'),
-  clusterRadius: Joi.number().allow(null).label('ClusterRadius'),
-}).label('MapPointOutputScheme');
+import {
+  outputOkSchema,
+  mapPointsSchema,
+  locationSchema,
+  searchSchema,
+  questPrioritySchema,
+  questsListSortSchema,
+  questStatusSchema,
+  questsSchema,
+} from "@workquest/database-models/lib/schemes"
 
 export default [{
   method: "GET",
@@ -26,10 +26,10 @@ export default [{
         q: searchSchema,
         priority: questPrioritySchema,
         status: questStatusSchema,
-      }).label('MapPointsQueryScheme'),
+      }).label('MapPointsQuery'),
     },
     response: {
-      schema: outputOkSchema(Joi.array().items(mapPointOutputSchema).label('MapPoints')).label('MapPointsOutputResponse'),
+      schema: outputOkSchema(mapPointsSchema).label('MapPointsResponse'),
     }
   }
 }, {
@@ -48,10 +48,10 @@ export default [{
         priority: questPrioritySchema,
         status: questStatusSchema,
         sort: questsListSortSchema,
-      }).label('ListPointsQueryScheme'),
+      }).label('ListPointsQuery'),
     },
     response: {
-      schema: outputOkSchema(Joi.array().items(questSchema)).label('ListMapPointsOutputResponse'),
+      schema: outputOkSchema(questsSchema).label('QuestsResponse'),
     }
   }
 }];

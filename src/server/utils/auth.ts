@@ -1,9 +1,13 @@
 import * as jwt from 'jsonwebtoken';
 import config from '../config/config';
 import { error } from './index';
-import { User, UserStatus } from '../models/User';
-import { Session } from '../models/Session';
 import { Errors } from './errors';
+import {
+  User,
+  UserStatus,
+  Session,
+} from "@workquest/database-models/lib/models";
+
 
 
 export const generateJwt = (data: object) => {

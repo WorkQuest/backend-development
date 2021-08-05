@@ -1,6 +1,8 @@
 import * as aws from 'aws-sdk';
 import config from "../config/config";
-import { Media } from '../models/Media';
+import {
+  Media
+} from "@workquest/database-models/lib/models";
 
 export function generateMediaHash(length: number): string {
   let result: string[] = [];

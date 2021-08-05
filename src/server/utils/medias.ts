@@ -1,7 +1,9 @@
-import { Media } from '../models/Media';
 import { error } from './index';
 import { Errors } from './errors';
 import { isMediaExists } from './storageService';
+import {
+  Media
+} from "@workquest/database-models/lib/models";
 
 export async function getMedia(mediaId: string): Promise<Media> {
   const media = await Media.findByPk(mediaId);

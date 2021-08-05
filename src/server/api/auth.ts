@@ -1,16 +1,20 @@
-import { defaultUserSettings, getDefaultAdditionalInfo, User, UserStatus } from "../models/User";
-import { Op } from "sequelize";
-import { error, getRandomHexToken, output } from "../utils";
-import { Errors } from "../utils/errors";
-import { addSendEmailJob } from "../jobs/sendEmail";
-import config from "../config/config";
-import { Session } from "../models/Session";
-import { generateJwt } from "../utils/auth";
 import * as path from "path";
 import * as fs from "fs";
 import * as querystring from "querystring";
-import { RatingStatistic } from "../models/RatingStatistic";
 import Handlebars = require("handlebars");
+import { Op } from "sequelize";
+import config from "../config/config";
+import { Errors } from "../utils/errors";
+import { error, getRandomHexToken, output } from "../utils";
+import { addSendEmailJob } from "../jobs/sendEmail";
+import { generateJwt } from "../utils/auth";
+import { Session,
+	defaultUserSettings,
+	getDefaultAdditionalInfo,
+	User,
+	UserStatus,
+	RatingStatistic
+} from "@workquest/database-models/lib/models";
 
 const confirmTemplatePath = path.join(__dirname, "..", "..", "..", "templates", "confirmEmail.html");
 const confirmTemplate = Handlebars.compile(fs.readFileSync(confirmTemplatePath, {

@@ -1,6 +1,10 @@
 import * as Joi from "joi";
+import {
+  outputOkSchema,
+  sumsubAccessToken,
+  sumsubUserId,
+} from "@workquest/database-models/lib/schemes";
 import { applicantReviewed, createAccessToken } from "../../api/sumsub";
-import { outputOkSchema } from "../../schemes";
 
 export default [{
   method: "GET",
@@ -12,8 +16,8 @@ export default [{
     description: "Create access token in SumSub",
     response: {
       schema: outputOkSchema(Joi.object({
-        token: Joi.string().example("_act-681cdf47-c418-4cba-8207-3c3415a3a14c").label("SumSubAccessToken"),
-        userId: Joi.string().example("e6685019-e42a-40ed-9327-58e3de849c3c").label("SumSubUserId")
+        token: sumsubAccessToken,
+        userId: sumsubUserId,
       }).label("CreateAccessTokenResult")).label("CreateAccessTokenResponse")
     }
   },

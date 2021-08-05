@@ -1,11 +1,16 @@
 import * as speakeasy from "speakeasy";
-import { error, getUUID, output, totpValidate } from "../utils";
+import { error, getUUID, output } from "../utils";
 import { addSendEmailJob } from "../jobs/sendEmail";
 import { Errors } from "../utils/errors";
-import { User } from "../models/User";
 import * as path from "path";
 import * as fs from "fs";
 import Handlebars = require("handlebars");
+import {
+  User
+} from "@workquest/database-models/lib/models";
+import {
+  totpValidate
+} from "@workquest/database-models/lib/utils";
 
 const confirmTemplatePath = path.join(__dirname, "..", "..", "..", "templates", "confirm2FA.html");
 const confirmTemplate = Handlebars.compile(fs.readFileSync(confirmTemplatePath, {

@@ -1,17 +1,25 @@
 import * as Joi from "joi";
 import { error, getRandomCodeNumber, handleValidationError, output } from '../utils';
-import { getDefaultAdditionalInfo, User, UserRole, UserStatus } from "../models/User";
 import { isMediaExists } from "../utils/storageService";
-import { Media } from "../models/Media";
 import { Errors } from "../utils/errors";
-import { additionalInfoEmployerSchema, additionalInfoWorkerSchema } from "../schemes/user";
 import { addSendSmsJob } from '../jobs/sendSms';
+import {
+  getDefaultAdditionalInfo,
+  User,
+  UserRole,
+  UserStatus,
+  Media,
+} from "@workquest/database-models/lib/models";
+import {
+  userAdditionalInfoEmployerSchema,
+  userAdditionalInfoWorkerSchema,
+} from "@workquest/database-models/lib/schemes";
 
 function getAdditionalInfoSchema(role: UserRole): Joi.Schema {
   if (role === UserRole.Employer)
-    return additionalInfoEmployerSchema;
+    return userAdditionalInfoEmployerSchema;
   else
-    return additionalInfoWorkerSchema;
+    return userAdditionalInfoWorkerSchema;
 }
 
 export async function getMe(r) {

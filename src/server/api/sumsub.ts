@@ -4,8 +4,10 @@ import serverConfig from "../config/config";
 import { error, output } from "../utils";
 import * as FormData from "form-data";
 import { Errors } from "../utils/errors";
-import { StatusKYC, User } from "../models/User";
 import * as querystring from "querystring";
+import {
+  StatusKYC, User
+} from "@workquest/database-models/lib/models";
 
 export enum ReviewAnswer {
   Red = "RED",

@@ -1,8 +1,14 @@
-import { User, UserRole } from "../models/User";
 import { error, output } from "../utils";
 import { Errors } from "../utils/errors";
-import { QuestsResponse, QuestsResponseStatus, QuestsResponseType } from "../models/QuestsResponse";
-import { Quest, QuestStatus } from "../models/Quest";
+import {
+  User,
+  UserRole,
+  Quest,
+  QuestStatus,
+  QuestsResponse,
+  QuestsResponseStatus,
+  QuestsResponseType,
+} from "@workquest/database-models/lib/models";
 
 export async function responseOnQuest(r) {
   const user = r.auth.credentials;

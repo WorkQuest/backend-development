@@ -1,12 +1,11 @@
 import * as Joi from "joi";
-import { questFullSchema } from "../../schemes/quest";
-import { userSchema } from '../../schemes/user';
-import { countSchema, emptyOkSchema, idSchema, isoDateSchema, outputOkSchema } from '../../schemes';
 import {
-  messageSchema,
-  questsResponseStatusSchema,
-  questsResponseTypeSchema
-} from "../../schemes/questsResponse";
+  outputOkSchema,
+  emptyOkSchema,
+  idSchema,
+  questsResponseMessageSchema,
+  questsResponsesWithCountSchema,
+} from "@workquest/database-models/lib/schemes";
 import {
   acceptInviteOnQuest,
   userResponsesToQuest,
@@ -19,27 +18,6 @@ import {
 const userIdSchema = idSchema.label('UserId');
 const questIdSchema = idSchema.label('QuestId');
 const questsResponseIdSchema = idSchema.label('QuestsResponseId');
-const responseToQuest = Joi.object({
-  workerId: userIdSchema.label('WorkerId'),
-  questId: questIdSchema,
-  status: questsResponseStatusSchema,
-  type: questsResponseTypeSchema,
-  message: messageSchema,
-  createdAt: isoDateSchema,
-  updatedAt: isoDateSchema,
-  worker: userSchema,
-}).label('ResponseToQuestScheme');
-
-const userResponseToQuestsSchema = Joi.object({
-  workerId: userIdSchema,
-  questId: questIdSchema,
-  status: questsResponseStatusSchema,
-  type: questsResponseTypeSchema,
-  message: messageSchema,
-  createdAt: isoDateSchema,
-  updatedAt: isoDateSchema,
-  quest: questFullSchema,
-}).label('UserResponseToQuestScheme');
 
 export default [{
   method: "POST",
@@ -54,7 +32,7 @@ export default [{
         questId: questIdSchema.required(),
       }).label("QuestResponseParams"),
       payload: Joi.object({
-        message: messageSchema,
+        message: questsResponseMessageSchema,
       }).label('QuestResponsePayload'),
     },
     response: {
@@ -75,7 +53,7 @@ export default [{
       }).label("QuestInviteParams"),
       payload: Joi.object({
         invitedUserId: userIdSchema.required(),
-        message: messageSchema,
+        message: questsResponseMessageSchema,
       }).label('QuestInvitePayload'),
     },
     response: {
@@ -96,12 +74,7 @@ export default [{
       }).label("ResponsesToQuestParams")
     },
     response: {
-      schema: outputOkSchema(
-        Joi.object({
-          count: countSchema,
-          responses: Joi.array().items(responseToQuest).label("QuestResponsesList")
-        }).label("ResponsesToQuestResult")
-      ).label("ResponsesToQuestResponse")
+      schema: outputOkSchema(questsResponsesWithCountSchema).label("ResponsesToQuestWithCountResponse")
     },
   }
 }, {
@@ -113,12 +86,7 @@ export default [{
     tags: ["api", "questResponse"],
     description: "Get responses to quest for authorized user",
     response: {
-      schema: outputOkSchema(
-        Joi.object({
-          count: countSchema,
-          responses: Joi.array().items(userResponseToQuestsSchema).label("UserQuestResponseList")
-        }).label("UserResponsesToQuestsResult")
-      ).label("UserResponsesToQuestsResponse")
+      schema: outputOkSchema(questsResponsesWithCountSchema).label("UserResponsesToQuestsWithCountResponse")
     },
   },
 }, {

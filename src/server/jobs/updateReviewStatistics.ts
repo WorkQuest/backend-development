@@ -1,6 +1,8 @@
 import { addJob } from "../utils/scheduler";
-import { RatingStatistic } from '../models/RatingStatistic';
-import { Review } from '../models/Review';
+import {
+  RatingStatistic,
+  Review,
+} from "@workquest/database-models/lib/models";
 import { col, fn } from 'sequelize';
 
 export interface StatisticPayload {
