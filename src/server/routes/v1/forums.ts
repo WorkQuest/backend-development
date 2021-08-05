@@ -7,7 +7,7 @@ import {
 } from "../../api/forums";
 import * as Joi from "joi";
 import { shemaNews } from "../../schemes";
-import { fileSchemaInfo, filesQuerySchema } from "../../schemes/media";
+import {filesQuerySchema } from "../../schemes/media";
 import {
   createLikeSchemes,
   deleteLikeSchemes,
@@ -15,7 +15,8 @@ import {
   createCommentSchemes,
   deleteNewsSchemes,
   deleteCommentSchemes,
-  changeNewsAndCommentSchemes
+  changeNewsAndCommentSchemes,
+  fileSchemaInfo
 } from "../../schemes/news";
 
 export default [
@@ -133,9 +134,7 @@ export default [
       description: `Register new file`,
       tags: ["api", "file"],
       validate: {
-        payload: Joi.object({
-          file: fileSchemaInfo.required()
-        })
+        payload: fileSchemaInfo
       }
     }
   },

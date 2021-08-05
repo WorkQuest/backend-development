@@ -160,17 +160,17 @@ export async function createFile(r) {
     const media: any = await Media.findOne({
       where: {
         userId: r.auth.credentials.id,
-        url: r.payload.file.url
+        url: r.payload.url
       }
     });
     if (media) {
       return error(Errors.NotFound, "File not found", {});
     }
     const create: any = await Media.create({
-      userId: r.payload.file.userId,
-      contentType: r.payload.file.contentType,
-      url: r.payload.file.url,
-      hash: r.payload.file.hash
+      userId: r.payload.userId,
+      contentType: r.payload.contentType,
+      url: r.payload.url,
+      hash: r.payload.hash
     });
     const id: any = create.id;
     return output({ id });

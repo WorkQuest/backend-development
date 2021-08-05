@@ -1,5 +1,6 @@
 import * as Joi from "joi";
-import { idSchema } from "./index";
+import { idSchema, urlSchema } from "./index";
+import { contentTypeSchema, mediaHashSchema } from "./media";
 
 
 export const createLikeSchemes= Joi.object({
@@ -36,6 +37,12 @@ export const changeNewsAndCommentSchemes= Joi.object({
   file: Joi.array().label('Update file info')
 }).label("changeNewsAndCommentSchemes");
 
+export const fileSchemaInfo = Joi.object({
+  userId: idSchema,
+  contentType: contentTypeSchema,
+  url: urlSchema,
+  hash: mediaHashSchema,
+}).label("FileScheme");
 
 
 

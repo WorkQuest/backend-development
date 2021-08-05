@@ -23,13 +23,6 @@ export const mediaSchema = Joi.object({
 
 export const mediasUrlOnlySchema = Joi.array().items(mediaUrlOnlySchema).label('MediasUrlOnlyScheme')
 
-export const fileSchemaInfo = Joi.object({
-  userId: idSchema,
-  contentType: contentTypeSchema,
-  url: urlSchema,
-  hash: mediaHashSchema,
-}).label("FileScheme");
-
 
 export const filesQuerySchema = Joi.object({
   offset: offsetSchema,
