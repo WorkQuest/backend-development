@@ -5,9 +5,7 @@ import {
   deleteNews, findNewsAll,
   deleteLike, like, changeNewsAndComment, createFile, getFiles
 } from "../../api/forums";
-import * as Joi from "joi";
 import { shemaNews } from "../../schemes";
-import {filesQuerySchema } from "../../schemes/media";
 import {
   createLikeSchemes,
   deleteLikeSchemes,
@@ -16,7 +14,7 @@ import {
   deleteNewsSchemes,
   deleteCommentSchemes,
   changeNewsAndCommentSchemes,
-  fileSchemaInfo
+  fileSchemaInfo, filesQuerySchema
 } from "../../schemes/news";
 
 export default [

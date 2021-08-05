@@ -1,5 +1,5 @@
 import * as Joi from "joi";
-import { idSchema, urlSchema } from "./index";
+import { idSchema, limitSchema, offsetSchema, urlSchema } from "./index";
 import { contentTypeSchema, mediaHashSchema } from "./media";
 
 
@@ -44,5 +44,9 @@ export const fileSchemaInfo = Joi.object({
   hash: mediaHashSchema,
 }).label("FileScheme");
 
+export const filesQuerySchema = Joi.object({
+  offset: offsetSchema,
+  limit: limitSchema,
+}).label("FilesQuerySchema");
 
 
