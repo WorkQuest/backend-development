@@ -102,13 +102,11 @@ const init = async () => {
   server.auth.strategy('jwt-access', 'bearer-access-token', {
     validate: tokenValidate('access', [
       "/api/v1/auth/confirm-email",
-      "/api/v1/profile/set-role",
+      "/api/v1/profile/set-role"
     ]),
   });
   server.auth.strategy('jwt-refresh', 'bearer-access-token', {
-    validate: tokenValidate('refresh', [
-      "/v1/auth/refresh-tokens"
-    ]),
+    validate: tokenValidate('refresh'),
   });
   server.auth.default('jwt-access');
 

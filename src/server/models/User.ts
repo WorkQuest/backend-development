@@ -7,6 +7,8 @@ import { Errors } from "../utils/errors";
 import { Review } from "./Review";
 import { RatingStatistic } from "./RatingStatistic";
 import { StarredQuests } from "./StarredQuests";
+import { News } from "./News";
+import { LikesNews } from "./LikesNews";
 
 export interface SocialInfo {
   id: string;
@@ -129,8 +131,11 @@ export interface AdditionalInfoEmployer extends AdditionalInfo {
 }))
 @Table({ paranoid: true })
 export class User extends Model {
-  @Column({ primaryKey: true, type: DataType.STRING, defaultValue: () => getUUID() }) id: string;
-  @ForeignKey(() => Media) @Column({type: DataType.STRING, defaultValue: null}) avatarId: string;
+  @Column({ primaryKey: true, type: DataType.STRING, defaultValue: () => getUUID()}) id: string;
+
+  @ForeignKey(() => Media)
+  @Column({type: DataType.STRING, defaultValue: null})
+  avatarId: string;
 
   @Column({
     type: DataType.STRING,
@@ -170,6 +175,10 @@ export class User extends Model {
   @HasMany(() => Review, 'toUserId') reviews: Review[];
   @HasMany(() => Session) sessions: Session[];
   @HasMany(() => Media, { constraints: false }) medias: Media[];
+  @HasMany(() => LikesNews) likes: LikesNews[];
+  @HasMany(() => News) author: News[];
+
+
 
   async passwordCompare(pwd: string): Promise<boolean> {
     return bcrypt.compareSync(pwd, this.password);
