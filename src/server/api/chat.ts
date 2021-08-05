@@ -10,7 +10,6 @@ import { getAlias } from "../utils/chat";
 
 
 export async function createChat(r) {
-  try {
     if (r.payload.membersId.indexOf(r.auth.credentials.id) === -1) {
       return error(403000, "Action not allowed", {});
     }
@@ -66,14 +65,9 @@ export async function createChat(r) {
     });
 
     return output(create.id);
-  } catch (err) {
-    console.log("createChat", err);
-    return error(500000, "Internal Server Error", {});
-  }
 }
 
 export async function renameChat(r) {
-  try {
     const chat = await Chat.findByPk(r.params.chatId);
 
     if (!chat) {
@@ -86,14 +80,9 @@ export async function renameChat(r) {
 
     await chat.update({ alias: r.payload.newAlias });
     return output({ status: "Success" });
-  } catch (err) {
-    console.log("renameChat", err);
-    return error(500000, "Internal Server Error", {});
-  }
 }
 
 export async function getChats(r) {
-  try {
     const { offset, limit } = r.query;
     const chats = await Chat.findAndCountAll({
       limit: limit,
@@ -115,14 +104,9 @@ export async function getChats(r) {
       return error(404000, "Chats not found", {});
     }
     return output(chats);
-  } catch (err) {
-    console.log("getChats", err);
-    return error(500000, "Internal Server Error", {});
-  }
 }
 
 export async function getMessages(r) {
-  try {
     const chat = await Chat.findByPk(r.params.chatId);
 
     if (!chat) {
@@ -148,14 +132,9 @@ export async function getMessages(r) {
       message: result
     });
     return output({ messages: result, chatInfo: chat });
-  } catch (err) {
-    console.log("getMessages", err);
-    return error(500000, "Internal Server Error", {});
-  }
 }
 
 export async function sendMessage(r) {
-  try {
     const chat = await Chat.findByPk(r.params.chatId);
 
     if (!chat) {
@@ -177,22 +156,13 @@ export async function sendMessage(r) {
     await chat.changed('updatedAt', true);
     await chat.save();
 
-    if (message) {
-      server.publish(`/api/v1/chat/${r.params.chatId}`, {
-        message: message
-      });
-      return output({ message: message });
-    } else {
-      return error(404000, "Message is not saved", {});
-    }
-  } catch (err) {
-    console.log("sendMessage", err);
-    return error(500000, "Internal Server Error", {});
-  }
+    server.publish(`/api/v1/chat/${r.params.chatId}`, {
+      message: message
+    });
+    return output({ message: message });
 }
 
 export async function deleteMessage(r) {
-  try {
     const chat = await Chat.findByPk(r.params.chatId);
 
     if (!chat) {
@@ -239,14 +209,9 @@ export async function deleteMessage(r) {
       message: "Message deleted",
     });
     return output({ status: "Success" });
-  } catch (err) {
-    console.log("deleteMessage", err);
-    return error(500000, "Internal Server Error", {});
-  }
 }
 
 export async function addFavorite(r) {
-  try {
     const chat = await Chat.findByPk(r.params.chatId);
 
     if (!chat) {
@@ -268,14 +233,9 @@ export async function addFavorite(r) {
     });
 
     return output({ status: "Success" });
-  } catch (err) {
-    console.log("addFavorite", err);
-    return error(500000, "Internal Server Error", {});
-  }
 }
 
 export async function removeFavorite(r) {
-  try {
     const favorite = await Favorite.findOne({ where: { messageId: r.params.favoriteMessageId } });
 
     if (!favorite) {
@@ -288,15 +248,10 @@ export async function removeFavorite(r) {
 
     await favorite.destroy();
     return output({ status: "Success" });
-  } catch (err) {
-    console.log("removeFavorite", err);
-    return error(500000, "Internal Server Error", {});
-  }
 }
 
 
 export async function getFavorites(r) {
-  try {
     const favorites = await Favorite.findAndCountAll({
       where: { userId: r.auth.credentials.id },
       include: {
@@ -307,13 +262,5 @@ export async function getFavorites(r) {
       attributes: ["id", "messageId"]
     });
 
-    if (!favorites) {
-      return error(404000, "No favorite messages", {});
-    }
-
     return output(favorites);
-  } catch (err) {
-    console.log("getFavorites", err);
-    return error(500000, "Internal Server Error", {});
-  }
 }
