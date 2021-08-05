@@ -2,7 +2,6 @@ import * as Joi from "joi";
 import { idSchema, limitSchema, offsetSchema, urlSchema } from "./index";
 import { contentTypeSchema, mediaHashSchema } from "./media";
 
-
 export const createLikeSchemes= Joi.object({
   idNews: idSchema,
 }).label("like");
