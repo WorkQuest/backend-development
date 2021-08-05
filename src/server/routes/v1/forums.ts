@@ -5,7 +5,6 @@ import {
   deleteNews, findNewsAll,
   deleteLike, like, changeNewsAndComment, createFile, getFiles
 } from "../../api/forums";
-import { shemaNews } from "../../schemes";
 import {
   createLikeSchemes,
   deleteLikeSchemes,
@@ -14,7 +13,7 @@ import {
   deleteNewsSchemes,
   deleteCommentSchemes,
   changeNewsAndCommentSchemes,
-  fileSchemaInfo, filesQuerySchema
+  fileSchemaInfo, filesQuerySchema, schemesNews
 } from "../../schemes/news";
 
 export default [
@@ -106,7 +105,7 @@ export default [
       description: "Find all news, but if you send the author's id, it will find all his news",
       auth: false,
       validate: {
-        query: shemaNews
+        query: schemesNews
       }
     }
   },
