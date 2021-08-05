@@ -1,5 +1,5 @@
 import { BelongsTo, Column, DataType, ForeignKey, HasMany, HasOne, Model, Scopes, Table } from "sequelize-typescript";
-import { error, getUUID, totpValidate } from '../utils';
+import { error, getUUID, totpValidate } from "../utils";
 import * as bcrypt from "bcrypt";
 import { Media } from "./Media";
 import { Session } from "./Session";
@@ -209,9 +209,13 @@ export class User extends Model {
     }
   }
 
+  isTOTPEnabled(): boolean {
+    return this.settings.security.TOTP.active;
+  }
+
   validateTOTP(TOTP: string) {
     if (!totpValidate(TOTP, this.settings.security.TOTP.secret)) {
-      throw error(Errors.Forbidden, "Invalid validate TOTP", {});
+      throw error(Errors.InvalidTOTP, "Invalid TOTP", {});
     }
   }
 }

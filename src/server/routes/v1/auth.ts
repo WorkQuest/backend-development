@@ -5,7 +5,6 @@ import {
   accountStatusSchema,
   emptyOkSchema,
   hexTokenSchema,
-  jwtTokens,
   outputOkSchema,
   tokensWithStatus,
   totpSchema
@@ -203,7 +202,7 @@ export default [{
     tags: ["api", "auth"],
     description: "Refresh auth tokens",
     response: {
-      schema: outputOkSchema(jwtTokens).label("AuthRefreshTokensResponse")
+      schema: outputOkSchema(tokensWithStatus).label("AuthRefreshTokensResponse")
     }
   }
 }];

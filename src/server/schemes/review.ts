@@ -19,3 +19,5 @@ export const reviewSchema = Joi.object({
   createdAt: isoDateSchema,
   updatedAt: isoDateSchema,
 }).label('ReviewSchema');
+
+export const reviewsSchema = Joi.array().items(reviewSchema).label('Reviews');
