@@ -15,4 +15,6 @@ export const questsResponseSchema = Joi.object({
   message: messageSchema,
 }).label('QuestsResponseSchema');
 
+export const questsResponsesSchema = Joi.array().items(questsResponseSchema).label('QuestsResponsesSchema');
+
 

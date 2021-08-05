@@ -1,6 +1,6 @@
-import * as Joi from 'joi';
-import { disableTOTP, enableTOTP, confirmEnablingTOTP } from '../../api/totp';
-import { emptyOkSchema, hexTokenSchema, outputOkSchema, totpSchema } from '../../schemes';
+import * as Joi from "joi";
+import { confirmEnablingTOTP, disableTOTP, enableTOTP } from "../../api/totp";
+import { emptyOkSchema, hexTokenSchema, outputOkSchema, totpSchema } from "../../schemes";
 
 export default [{
   method: "POST",
@@ -42,6 +42,7 @@ export default [{
     validate: {
       payload: Joi.object({
         confirmCode: hexTokenSchema.required(),
+        totp: totpSchema.required()
       }).label("ConfirmTotpPayload"),
     },
     response: {

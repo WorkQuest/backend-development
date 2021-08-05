@@ -3,6 +3,7 @@ import { Errors } from '../utils/errors';
 import { User, UserRole } from '../models/User';
 import { Portfolio } from '../models/Portfolio';
 import { getMedias } from '../utils/medias';
+import { Media } from '../models/Media';
 
 export async function addCase(r) {
   r.auth.credentials.mustHaveRole(UserRole.Worker);
@@ -40,6 +41,7 @@ export async function getCases(r) {
 
 export async function deleteCase(r) {
   const portfolio = await Portfolio.findByPk(r.params.portfolioId);
+  const transaction = await r.server.app.db.transaction();
 
   if (!portfolio) {
     error(Errors.NotFound, "Portfolio not found", {});
@@ -47,7 +49,12 @@ export async function deleteCase(r) {
 
   portfolio.mustBeCaseCreator(r.auth.credentials.id);
 
-  await portfolio.destroy();
+  for (const media of portfolio.medias) {
+    await Media.destroy({where: {id: media.id}, transaction});
+  }
+
+  await portfolio.destroy({transaction});
+  await transaction.commit();
 
   return output();
 }
