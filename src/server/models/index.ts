@@ -12,6 +12,8 @@ import { PortfolioMedia } from './PortfolioMedia';
 import { Portfolio } from './Portfolio';
 import {News} from './News'
 import { LikesNews } from "./LikesNews";
+import { CommentMedia } from "./CommentMedia";
+import { Comments } from "./Comment";
 
 export async function initDatabase(dbLink: string, logging = false, sync = false) {
   const sequelize = new Sequelize(dbLink, {
@@ -29,7 +31,9 @@ export async function initDatabase(dbLink: string, logging = false, sync = false
       Portfolio,
       PortfolioMedia,
       News,
-      LikesNews
+      LikesNews,
+      CommentMedia,
+      Comments
     ]
   });
   if (sync)

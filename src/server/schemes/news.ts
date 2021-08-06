@@ -11,13 +11,15 @@ export const deleteLikeSchemes= Joi.object({
 }).label("deleteLike");
 
 export const createNewsSchemes= Joi.object({
-  text: Joi.string().required().label('Name news'),
-  file: Joi.array().label('File info')
+  text: Joi.string().required().label('Name news')
 }).label("createNews");
 
 export const createCommentSchemes= Joi.object({
+  idAuthor: idSchema,
   idNews: idSchema,
-  text: Joi.string().required().label('comment message'),
+  idAnswer: Joi.string().default(null).label('Comment to the news and to another comment,' +
+    'if the value is null, then to the news, if ID, then comment'),
+  text: Joi.string().required().label('comment message')
 }).label("createComment");
 
 export const deleteNewsSchemes= Joi.object({
@@ -25,8 +27,7 @@ export const deleteNewsSchemes= Joi.object({
 }).label("deleteNews");
 
 export const deleteCommentSchemes= Joi.object({
-  id: idSchema,
-  idComment: idSchema
+  id: idSchema
 }).label("deleteComment");
 
 export  const schemesNews = Joi.object({
@@ -37,15 +38,16 @@ export  const schemesNews = Joi.object({
 
 export const changeNewsAndCommentSchemes= Joi.object({
   id: idSchema,
-  text: Joi.string().required().label('Update name news'),
-  file: Joi.array().label('Update file info')
+  idMedia:idSchema,
+  text: Joi.string().required().label('Update name news')
 }).label("changeNewsAndComment");
 
 export const fileSchemaInfo = Joi.object({
-  userId: idSchema,
   contentType: contentTypeSchema,
   url: urlSchema,
   hash: mediaHashSchema,
+  idComment: Joi.string().default(null).label('File comment or news'),
+  idNews: urlSchema
 }).label("createFile");
 
 export const filesQuerySchema = Joi.object({

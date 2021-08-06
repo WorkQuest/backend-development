@@ -9,6 +9,7 @@ import { RatingStatistic } from "./RatingStatistic";
 import { StarredQuests } from "./StarredQuests";
 import { News } from "./News";
 import { LikesNews } from "./LikesNews";
+import { Comments } from "./Comment";
 
 export interface SocialInfo {
   id: string;
@@ -176,7 +177,9 @@ export class User extends Model {
   @HasMany(() => Session) sessions: Session[];
   @HasMany(() => Media, { constraints: false }) medias: Media[];
   @HasMany(() => LikesNews) likes: LikesNews[];
-  @HasMany(() => News) author: News[];
+
+  @HasMany(() => News, {onDelete: 'cascade', hooks:true, foreignKey: "idAuthor"}) idAuthor: News[];
+  @HasMany (() => Comments, {onDelete: 'cascade', hooks:true}) author: Comments[];
 
 
 

@@ -3,7 +3,7 @@ import {
   createNews,
   deleteComment,
   deleteNews, findNewsAll,
-  deleteLike, like, changeNewsAndComment, createFile, getFiles
+  deleteLike, like, createFile, getFiles,
 } from "../../api/forums";
 import {
   createLikeSchemes,
@@ -109,19 +109,20 @@ export default [
       }
     }
   },
-  {
-    method: "POST",
-    path: "/v1/news/update/",
-    handler: changeNewsAndComment,
-    options: {
-      id: "v1.forum.updateNewsAndComment",
-      tags: ["api", "forum"],
-      description: "Update news and comment",
-      validate: {
-        payload: changeNewsAndCommentSchemes
-      }
-    }
-  },
+  //TODO: Решить какие данные будут доступны при изменении новости
+  // {
+  //   method: "POST",
+  //   path: "/v1/news/update/",
+  //   handler: changeNews,
+  //   options: {
+  //     id: "v1.forum.updateNewsAndComment",
+  //     tags: ["api", "forum"],
+  //     description: "Update news and comment",
+  //     validate: {
+  //       payload: changeNewsAndCommentSchemes
+  //     }
+  //   }
+  // },
   {
     method: "POST",
     path: "/v1/file/create",
