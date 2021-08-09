@@ -53,6 +53,7 @@ export default [
       }
     }
   },
+
   {
     method: "POST",
     path: "/v1/forum/{idLike}/delete",
