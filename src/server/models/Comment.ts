@@ -35,6 +35,6 @@ export class Comments extends Model {
   @BelongsTo(() => User) author: User;
   @BelongsTo(() => News) news: News;
   @BelongsTo(() => Comments) commentId: Comments;
-  @HasMany (() => Comments,{onDelete: 'cascade', hooks:true}) comment: Comments
-  @HasMany (() => CommentMedia,{onDelete: 'cascade', hooks:true}) file: CommentMedia
+  @HasMany (() => Comments,{onDelete: 'cascade', hooks:true}) comment: Comments[];
+  @HasMany (() => CommentMedia,{onDelete: 'cascade', hooks:true}) file: CommentMedia[];
 }

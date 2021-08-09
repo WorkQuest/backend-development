@@ -22,7 +22,7 @@ export class CommentMedia extends Model {
   idMedia: string;
 
   @ForeignKey(() => Comments)
-  @Column({type: DataType.STRING, allowNull: false, defaultValue: null})
+  @Column ({type:DataType.STRING, defaultValue: null})
   idComment: string;
 
   @ForeignKey(() => News)

@@ -15,7 +15,6 @@ export const createNewsSchemes= Joi.object({
 }).label("createNews");
 
 export const createCommentSchemes= Joi.object({
-  idAuthor: idSchema,
   idNews: idSchema,
   idAnswer: Joi.string().default(null).label('Comment to the news and to another comment,' +
     'if the value is null, then to the news, if ID, then comment'),
@@ -47,7 +46,7 @@ export const fileSchemaInfo = Joi.object({
   url: urlSchema,
   hash: mediaHashSchema,
   idComment: Joi.string().default(null).label('File comment or news'),
-  idNews: urlSchema
+  idNews: idSchema
 }).label("createFile");
 
 export const filesQuerySchema = Joi.object({

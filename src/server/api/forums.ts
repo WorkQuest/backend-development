@@ -36,11 +36,13 @@ export async function deleteNews(r) {
   const news = await News.findOne({
     where: {
       id: r.payload.id,
-      idAuthor: r.auth.credentials.id
     }
   });
   if (!news) {
     return error(Errors.NotFound, "News not found", {});
+  }
+  if (news.idAuthor !== r.auth.credentials.id){
+    return error(Errors.NotFound, "No permission to execute command", {});
   }
   await news.destroy();
   return output();
@@ -80,7 +82,14 @@ export async function findNewsAll(r) {
         limit: 1,
         order: [["createdAt", "DESC"]]
       },
-      { model: CommentMedia, as: "mediaCom" }
+      {
+        model: CommentMedia,
+        as: "mediaCom",
+        where: {
+          [Op.and]: [{ idComment: null }]
+        },
+        required: false,
+      }
     ]
   };
   if (!!!r.query.id) {
@@ -162,14 +171,13 @@ export async function createComment(r) {
 }
 
 export async function createFile(r) {
-  console.log('-----------------------------------------------');
   const media: any = await Media.findOne({
     where: {
       userId: r.auth.credentials.id,
       url: r.payload.url
     }
   });
-  if (media) {
+  if (!media) {
     return error(Errors.NotFound, "File not found", {});
   }
   const create: any = await Media.create({
@@ -182,13 +190,24 @@ export async function createFile(r) {
     return error(Errors.NotFound, "File don`t create", {});
   }
   const id: any = create.id;
-  const file = await CommentMedia.create({
+  if (r.payload.idComment !== "null"){
+    const file = await CommentMedia.create({
+      idMedia: id,
+      idComment: r.payload.idComment,
+      idNews: r.payload.idNews
+    });
+    if (!file){
+      return error(Errors.NotFound, "File with comment don`t create", {});
+    }
+    return output();
+  }
+  const mediaFile = await CommentMedia.create({
     idMedia: id,
-    idComment: r.payload.idComment,
+    idComment: null,
     idNews: r.payload.idNews
   });
-  if (!file){
-    return error(Errors.NotFound, "File with comment don`t create", {});
+  if (!mediaFile){
+    return error(Errors.NotFound, "File don`t create", {});
   }
   return output();
 }
