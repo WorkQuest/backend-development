@@ -7,7 +7,7 @@ import { LikeNews } from "../models/LikeNews";
 import { Comment } from "../models/Comment";
 import { CommentMedia } from "../models/CommentMedia";
 
-export async function putLike(r) {
+export async function likeNews(r) {
   const news = await News.findByPk(r.payload.idNews);
   if (!news) {
     return error(Errors.NotFound, "News not found", {});
@@ -19,7 +19,7 @@ export async function putLike(r) {
   return output();
 }
 
-export async function deleteLike(r) {
+export async function deleteLikeNews(r) {
   const del = await LikeNews.findByPk(r.payload.id);
   if (!del) {
     return error(Errors.NotFound, "Like not found", {});
@@ -72,7 +72,7 @@ export async function createNews(r) {
   return output();
 }
 
-export async function createComment(r) {
+export async function sendComment(r) {
   const news = await News.findOne({
     where: {
       id: r.payload.idNews
