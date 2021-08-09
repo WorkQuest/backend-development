@@ -7,7 +7,6 @@ import { LikesNews } from "../models/LikesNews";
 import { Comments } from "../models/Comment";
 import { CommentMedia } from "../models/CommentMedia";
 
-
 export async function like(r) {
   const news = await News.findByPk(r.payload.idNews);
   if (!news) {
@@ -159,7 +158,6 @@ export async function createFile(r) {
   return output();
 }
 
-
 export async function getFiles(r) {
   const { offset, limit } = r.query;
   const media = await Media.findAndCountAll({
@@ -175,6 +173,3 @@ export async function getFiles(r) {
   }
   return output(media);
 }
-
-
-

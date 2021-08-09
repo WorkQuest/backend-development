@@ -21,14 +21,6 @@ export const createCommentSchemes= Joi.object({
   text: Joi.string().required().label('comment message')
 }).label("createComment");
 
-export const deleteNewsSchemes= Joi.object({
-  id: idSchema
-}).label("deleteNews");
-
-export const deleteCommentSchemes= Joi.object({
-  id: idSchema
-}).label("deleteComment");
-
 export  const schemesNews = Joi.object({
   limit: Joi.number().default(100),
   offset: Joi.number().default(0),
