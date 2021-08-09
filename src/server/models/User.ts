@@ -8,8 +8,8 @@ import { Review } from "./Review";
 import { RatingStatistic } from "./RatingStatistic";
 import { StarredQuests } from "./StarredQuests";
 import { News } from "./News";
-import { LikesNews } from "./LikesNews";
-import { Comments } from "./Comment";
+import { LikeNews } from "./LikeNews";
+import { Comment } from "./Comment";
 
 export interface SocialInfo {
   id: string;
@@ -135,8 +135,7 @@ export class User extends Model {
   @Column({ primaryKey: true, type: DataType.STRING, defaultValue: () => getUUID()}) id: string;
 
   @ForeignKey(() => Media)
-  @Column({type: DataType.STRING, defaultValue: null})
-  avatarId: string;
+  @Column({type: DataType.STRING, defaultValue: null}) avatarId: string;
 
   @Column({
     type: DataType.STRING,
@@ -176,12 +175,10 @@ export class User extends Model {
   @HasMany(() => Review, 'toUserId') reviews: Review[];
   @HasMany(() => Session) sessions: Session[];
   @HasMany(() => Media, { constraints: false }) medias: Media[];
-  @HasMany(() => LikesNews) likes: LikesNews[];
+  @HasMany(() => LikeNews) newsLikes: LikeNews[];
 
   @HasMany(() => News, {onDelete: 'cascade', hooks:true, foreignKey: "idAuthor"}) idAuthor: News[];
-  @HasMany (() => Comments, {onDelete: 'cascade', hooks:true}) author: Comments[];
-
-
+  @HasMany (() => Comment, {onDelete: 'cascade', hooks:true}) author: Comment[];
 
   async passwordCompare(pwd: string): Promise<boolean> {
     return bcrypt.compareSync(pwd, this.password);

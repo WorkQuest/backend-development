@@ -8,8 +8,7 @@ import {
 } from "sequelize-typescript";
 import { getUUID } from '../utils';
 import { Media } from "./Media";
-import { Comments } from "./Comment";
-import { News } from "./News";
+import { Comment } from "./Comment";
 
 
 @Table
@@ -18,18 +17,11 @@ export class CommentMedia extends Model {
   id: string;
 
   @ForeignKey(() => Media)
-  @Column({type: DataType.STRING, allowNull: false})
-  idMedia: string;
+  @Column({type: DataType.STRING, allowNull: false}) mediaId: string;
 
-  @ForeignKey(() => Comments)
-  @Column ({type:DataType.STRING, defaultValue: null})
-  idComment: string;
+  @ForeignKey(() => Comment)
+  @Column ({type:DataType.STRING, allowNull: false}) commentId: string;
 
-  @ForeignKey(() => News)
-  @Column({type: DataType.STRING, allowNull: false, defaultValue: null})
-  idNews: string;
-
-  @BelongsTo(() => Media) idMedias: Media;
-  @BelongsTo(() => Comments) idComments:Comments;
-  @BelongsTo(() => News) newsId: News;
+  @BelongsTo(() => Media) media: Media;
+  @BelongsTo(() => Comment) comment: Comment;
 }

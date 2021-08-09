@@ -3,8 +3,8 @@ import { Op } from "sequelize";
 import { error, output } from "../utils";
 import { Media } from "../models/Media";
 import { Errors } from "../utils/errors";
-import { LikesNews } from "../models/LikesNews";
-import { Comments } from "../models/Comment";
+import { LikeNews } from "../models/LikeNews";
+import { Comment } from "../models/Comment";
 import { CommentMedia } from "../models/CommentMedia";
 
 export async function like(r) {
@@ -12,7 +12,7 @@ export async function like(r) {
   if (!news) {
     return error(Errors.NotFound, "News not found", {});
   }
-  await LikesNews.create({
+  await LikeNews.create({
     idUser: r.auth.credentials.id,
     idNews: r.payload.idNews
   });
@@ -20,7 +20,7 @@ export async function like(r) {
 }
 
 export async function deleteLike(r) {
-  const del = await LikesNews.findByPk(r.payload.id);
+  const del = await LikeNews.findByPk(r.payload.id);
   if (!del) {
     return error(Errors.NotFound, "Like not found", {});
   }
@@ -37,7 +37,7 @@ export async function findNewsAll(r) {
     },
     include: [
       {
-        model: Comments,
+        model: Comment,
         as: "comment",
         where: {
           [Op.and]: [{ idAnswer: null }]
@@ -85,7 +85,7 @@ export async function createComment(r) {
     return error(Errors.NotFound, "News not found", {});
   }
   if (r.payload.idAnswer === "null") {
-    let create = await Comments.create({
+    let create = await Comment.create({
       idAuthor: r.auth.credentials.id,
       idNews: r.payload.idNews,
       idAnswer: null,
@@ -96,7 +96,7 @@ export async function createComment(r) {
     }
     return output();
   }
-  const comment = await Comments.findOne({
+  const comment = await Comment.findOne({
     where: {
       id: r.payload.idAnswer
     }
@@ -104,7 +104,7 @@ export async function createComment(r) {
   if (!comment) {
     return error(Errors.NotFound, "Record not found", {});
   }
-  const create = await Comments.create({
+  const create = await Comment.create({
     idAuthor: r.auth.credentials.id,
     idNews: r.payload.idNews,
     idAnswer: r.payload.idAnswer,

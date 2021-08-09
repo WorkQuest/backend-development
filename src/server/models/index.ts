@@ -11,9 +11,9 @@ import { StarredQuests } from './StarredQuests';
 import { PortfolioMedia } from './PortfolioMedia';
 import { Portfolio } from './Portfolio';
 import {News} from './News'
-import { LikesNews } from "./LikesNews";
+import { LikeNews } from "./LikeNews";
 import { CommentMedia } from "./CommentMedia";
-import { Comments } from "./Comment";
+import { Comment } from "./Comment";
 
 export async function initDatabase(dbLink: string, logging = false, sync = false) {
   const sequelize = new Sequelize(dbLink, {
@@ -31,9 +31,9 @@ export async function initDatabase(dbLink: string, logging = false, sync = false
       Portfolio,
       PortfolioMedia,
       News,
-      LikesNews,
+      LikeNews,
       CommentMedia,
-      Comments
+      Comment
     ]
   });
   if (sync)

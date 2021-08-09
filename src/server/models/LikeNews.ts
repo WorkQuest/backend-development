@@ -6,18 +6,16 @@ import { User } from "./User";
 import { News } from "./News";
 
 @Table
-export class LikesNews extends Model {
+export class LikeNews extends Model {
   @Column({ primaryKey: true, type: DataType.STRING, defaultValue: () => getUUID() })
   id: string;
 
   @ForeignKey(() => News)
-  @Column ({type:DataType.STRING, defaultValue: ''})
-  idNews: string;
+  @Column ({type:DataType.STRING, allowNull: false}) newsId: string;
 
   @ForeignKey(() => User)
-  @Column ({ type:DataType.STRING, defaultValue:'' })
-  idUser: any;
+  @Column ({type:DataType.STRING, allowNull: false}) userId: string;
 
-  @BelongsTo(() => News,) news: News;
-  @BelongsTo(() => User,) members: User[];
+  @BelongsTo(() => News) news: News;
+  @BelongsTo(() => User) user: User;
 }
