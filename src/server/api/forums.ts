@@ -31,39 +31,6 @@ export async function deleteLike(r) {
   return output();
 }
 
-
-export async function deleteNews(r) {
-  const news = await News.findOne({
-    where: {
-      id: r.payload.id,
-    }
-  });
-  if (!news) {
-    return error(Errors.NotFound, "News not found", {});
-  }
-  if (news.idAuthor !== r.auth.credentials.id){
-    return error(Errors.NotFound, "No permission to execute command", {});
-  }
-  await news.destroy();
-  return output();
-}
-
-
-export async function deleteComment(r) {
-  const comment = await Comments.findOne({
-    where: {
-      id: r.payload.id,
-      idAuthor: r.auth.credentials.id
-    }
-  });
-  if (!comment) {
-    return error(Errors.NotFound, "Comment not found", {});
-  }
-  await comment.destroy();
-  return output();
-}
-
-
 export async function findNewsAll(r) {
   const object: any = {
     limit: r.query.limit,
@@ -98,24 +65,6 @@ export async function findNewsAll(r) {
   const news = await News.findAll(object);
   return output(news);
 }
-
-//TODO: Изменение новостей(Уточнить все необходимые поля)
-// export async function changeNews(r) {
-//   const news = await News.findOne({
-//     where: {
-//       id: r.payload.id,
-//       idAuthor: r.auth.credentials.id
-//     }
-//   });
-//   if (!news) {
-//     return error(Errors.NotFound, "News not found", {});
-//   }
-//   let objectUpdate: any = {
-//     text: r.payload.text
-//   };
-//   await news.update(objectUpdate);
-//   return output();
-// }
 
 export async function createNews(r) {
   const news: any = await News.create({

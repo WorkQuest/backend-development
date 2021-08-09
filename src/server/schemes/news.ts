@@ -35,12 +35,6 @@ export  const schemesNews = Joi.object({
   id: Joi.string().default('0')
 }).label("findNewsAll");
 
-export const changeNewsAndCommentSchemes= Joi.object({
-  id: idSchema,
-  idMedia:idSchema,
-  text: Joi.string().required().label('Update name news')
-}).label("changeNewsAndComment");
-
 export const fileSchemaInfo = Joi.object({
   contentType: contentTypeSchema,
   url: urlSchema,

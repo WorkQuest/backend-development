@@ -1,8 +1,6 @@
 import {
   createComment,
-  createNews,
-  deleteComment,
-  deleteNews, findNewsAll,
+  createNews,findNewsAll,
   deleteLike, like, createFile, getFiles,
 } from "../../api/forums";
 import {
@@ -10,9 +8,6 @@ import {
   deleteLikeSchemes,
   createNewsSchemes,
   createCommentSchemes,
-  deleteNewsSchemes,
-  deleteCommentSchemes,
-  changeNewsAndCommentSchemes,
   fileSchemaInfo, filesQuerySchema, schemesNews
 } from "../../schemes/news";
 
@@ -70,32 +65,6 @@ export default [
     }
   },
   {
-    method: "POST",
-    path: "/v1/news/delete",
-    handler: deleteNews,
-    options: {
-      id: "v1.forum.deleteNews",
-      tags: ["api", "forum"],
-      description: "Delete news",
-      validate: {
-        payload: deleteNewsSchemes
-      }
-    }
-  },
-  {
-    method: "POST",
-    path: "/v1/comment/delete",
-    handler: deleteComment,
-    options: {
-      id: "v1.forum.comment",
-      tags: ["api", "forum"],
-      description: "Delete comment",
-      validate: {
-        payload: deleteCommentSchemes
-      }
-    }
-  },
-  {
     method: "GET",
     path: "/v1/news",
     handler: findNewsAll,
@@ -109,20 +78,6 @@ export default [
       }
     }
   },
-  //TODO: Решить какие данные будут доступны при изменении новости
-  // {
-  //   method: "POST",
-  //   path: "/v1/news/update/",
-  //   handler: changeNews,
-  //   options: {
-  //     id: "v1.forum.updateNewsAndComment",
-  //     tags: ["api", "forum"],
-  //     description: "Update news and comment",
-  //     validate: {
-  //       payload: changeNewsAndCommentSchemes
-  //     }
-  //   }
-  // },
   {
     method: "POST",
     path: "/v1/file/create",
