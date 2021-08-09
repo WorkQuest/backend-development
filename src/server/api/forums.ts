@@ -1,12 +1,11 @@
 import { News } from "../models/News";
-import { Op, where } from "sequelize";
+import { Op } from "sequelize";
 import { error, output } from "../utils";
 import { Media } from "../models/Media";
 import { Errors } from "../utils/errors";
 import { LikesNews } from "../models/LikesNews";
 import { Comments } from "../models/Comment";
 import { CommentMedia } from "../models/CommentMedia";
-import { QuestsResponseType } from "../models/QuestsResponse";
 
 
 export async function like(r) {
@@ -20,7 +19,6 @@ export async function like(r) {
   });
   return output();
 }
-
 
 export async function deleteLike(r) {
   const del = await LikesNews.findByPk(r.payload.id);
@@ -176,15 +174,6 @@ export async function getFiles(r) {
     return error(Errors.NotFound, "Not found", {});
   }
   return output(media);
-}
-
-export async function deleteFile(r) {
-  await Media.destroy({
-    where: {
-      id: r.params.idFile
-    }
-  });
-  return output();
 }
 
 
