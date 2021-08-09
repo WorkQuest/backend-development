@@ -7,7 +7,7 @@ import { LikeNews } from "../models/LikeNews";
 import { Comment } from "../models/Comment";
 import { CommentMedia } from "../models/CommentMedia";
 
-export async function like(r) {
+export async function putLike(r) {
   const news = await News.findByPk(r.payload.idNews);
   if (!news) {
     return error(Errors.NotFound, "News not found", {});
@@ -28,7 +28,7 @@ export async function deleteLike(r) {
   return output();
 }
 
-export async function findNewsAll(r) {
+export async function getNews(r) {
   const object: any = {
     limit: r.query.limit,
     offset: r.query.offset,
@@ -56,9 +56,6 @@ export async function findNewsAll(r) {
       }
     ]
   };
-  if (!!!r.query.id) {
-    object.where.id = r.query.id;
-  }
   const news = await News.findAll(object);
   return output(news);
 }
