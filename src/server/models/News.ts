@@ -23,7 +23,14 @@ import { NewsMedia } from "./NewsMedia";
       where: {
         rootCommentId: null
       }
-    }]
+    },
+      {
+        model: Media.scope('urlOnly'),
+        as: 'medias',
+        through: {
+          attributes: []
+        }
+      }]
   }
 }))
 @Table({paranoid: true})
@@ -38,8 +45,7 @@ export class News extends Model {
 
   @BelongsTo(() => User) author: User;
 
-  @HasMany(() => Comment) comments: Comment[];
-  @HasMany(() => Comment) rootComments: Comment[];
+  @HasMany(() => Comment) rootComments: Comment[];4
 
   @BelongsToMany(() => Media, () => NewsMedia) medias: Media[];
 }

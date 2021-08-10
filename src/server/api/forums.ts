@@ -6,6 +6,7 @@ import { Errors } from "../utils/errors";
 import { LikeNews } from "../models/LikeNews";
 import { Comment } from "../models/Comment";
 import { CommentMedia } from "../models/CommentMedia";
+import { getMedias } from "../utils/medias";4
 
 export async function likeNews(r) {
   const news = await News.findByPk(r.payload.idNews);
@@ -32,27 +33,20 @@ export async function getNews(r) {
   const object: any = {
     limit: r.query.limit,
     offset: r.query.offset,
-    where: {
-      checkNews: true
-    },
     include: [
       {
         model: Comment,
-        as: "comment",
+        as: "rootComments",
         where: {
-          [Op.and]: [{ idAnswer: null }]
+          [Op.and]: [{ rootCommentId: null }]
         },
         required: false,
-        limit: 1,
         order: [["createdAt", "DESC"]]
       },
       {
-        model: CommentMedia,
-        as: "mediaCom",
-        where: {
-          [Op.and]: [{ idComment: null }]
-        },
-        required: false,
+        model: Media,
+        as: "medias",
+        required: false
       }
     ]
   };
@@ -60,17 +54,26 @@ export async function getNews(r) {
   return output(news);
 }
 
+
 export async function createNews(r) {
+  const medias = await getMedias(r.payload.medias);
+  const transaction = await r.server.app.db.transaction();
+
   const news: any = await News.create({
-    idAuthor: r.auth.credentials.id,
-    checkNews: true,
+    authorId: r.auth.credentials.id,
     text: r.payload.text
-  });
+  }, { transaction });
+  await news.$set('medias', medias, { transaction });
+
+  await transaction.commit();
   if (!news) {
-    return error(Errors.NotFound, "Don`t create news, bad data", {});
+    return error(Errors.NotFound, "Don`t create news", {});
   }
-  return output();
+  return output(
+    await News.findByPk(news.id)
+  )
 }
+
 
 export async function sendComment(r) {
   const news = await News.findOne({
@@ -129,17 +132,17 @@ export async function createFile(r) {
     url: r.payload.url,
     hash: r.payload.hash
   });
-  if (!create){
+  if (!create) {
     return error(Errors.NotFound, "File don`t create", {});
   }
   const id: any = create.id;
-  if (r.payload.idComment !== "null"){
+  if (r.payload.idComment !== "null") {
     const file = await CommentMedia.create({
       idMedia: id,
       idComment: r.payload.idComment,
       idNews: r.payload.idNews
     });
-    if (!file){
+    if (!file) {
       return error(Errors.NotFound, "File with comment don`t create", {});
     }
     return output();
@@ -149,7 +152,7 @@ export async function createFile(r) {
     idComment: null,
     idNews: r.payload.idNews
   });
-  if (!mediaFile){
+  if (!mediaFile) {
     return error(Errors.NotFound, "File don`t create", {});
   }
   return output();

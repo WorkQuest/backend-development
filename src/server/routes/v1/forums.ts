@@ -9,6 +9,7 @@ import {
 import { idSchema, limitSchema, offsetSchema, outputOkSchema } from "../../schemes";
 import { forumLikeNewsSchemes, getForumNewsSchema, textTitleSchema } from "../../schemes/news";
 import { forumNewsCommentSchema } from "../../schemes/comments";
+import { mediaIdsSchema } from "../../schemes/media";
 
 const newsIdSchema = idSchema.label('NewsId');
 const commentIdSchema = idSchema.label('CommentId');
@@ -42,7 +43,8 @@ export default [{
     description: "Create new news",
     validate: {
       payload: Joi.object({
-        text: textTitleSchema.required()
+        text: textTitleSchema.required(),
+        medias: mediaIdsSchema.required().default([]).unique().label('MediaIds'),
       }).label("CreateNewsPayload")
     },
     response: {

@@ -177,7 +177,7 @@ export class User extends Model {
   @HasMany(() => Media, { constraints: false }) medias: Media[];
   @HasMany(() => LikeNews) newsLikes: LikeNews[];
 
-  @HasMany(() => News, {onDelete: 'cascade', hooks:true, foreignKey: "idAuthor"}) idAuthor: News[];
+  @HasMany(() => News, {onDelete: 'cascade', hooks:true, foreignKey: "authorId"}) authorId: News[];
   @HasMany (() => Comment, {onDelete: 'cascade', hooks:true}) author: Comment[];
 
   async passwordCompare(pwd: string): Promise<boolean> {
