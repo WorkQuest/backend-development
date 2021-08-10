@@ -6,6 +6,15 @@ import disputes from "../routes/v1/disputes";
 
 
 export async function createDispute(r) {
+  const dispute = await Disputes.findOne({
+    where: {
+      questId: r.params.questId
+    }
+  })
+  if(dispute){
+    return error(Errors.AlreadyExists,'Dispute for this quest already exists',{})
+  }
+
   const quest = await Quest.findByPk(r.params.questId);
   //const transaction = await r.server.app.db.transaction();
   if(!quest) {
