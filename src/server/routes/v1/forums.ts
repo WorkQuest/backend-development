@@ -6,10 +6,13 @@ import {
   likeNews,
   deleteLikeNews
 } from "../../api/forums";
-import { idSchema, limitSchema, offsetSchema } from "../../schemes";
+import { idSchema, limitSchema, offsetSchema, outputOkSchema } from "../../schemes";
+import { forumLikeNewsSchemes, getForumNewsSchema, textTitleSchema } from "../../schemes/news";
+import { forumNewsCommentSchema } from "../../schemes/comments";
 
 const newsIdSchema = idSchema.label('NewsId');
 const commentIdSchema = idSchema.label('CommentId');
+const likeIdSchema = idSchema.label('likeId')
 
 export default [{
   method: "GET",
@@ -20,13 +23,13 @@ export default [{
     tags: ["api", "forum"],
     description: "Get news",
     validate: {
-      query: Joi.object({ // TODO
-        limit: limitSchema.default(10),
-        offset: offsetSchema.default(0),
+      query: Joi.object({
+        limit: limitSchema.required(),
+        offset: offsetSchema.required()
       }).label("GetNewsQuery")
     },
     response: {
-      // TODO
+      schema: outputOkSchema(getForumNewsSchema).label("forumNewsSchemaResponse")
     }
   }
 }, {
@@ -39,11 +42,11 @@ export default [{
     description: "Create new news",
     validate: {
       payload: Joi.object({
-        text: Joi.string().required().label("NameNews") // TODO
+        text: textTitleSchema.required()
       }).label("CreateNewsPayload")
     },
     response: {
-      // TODO
+      schema: outputOkSchema(getForumNewsSchema).label("forumNewsSchemaResponse")
     }
   }
 }, {
@@ -58,13 +61,13 @@ export default [{
       params: Joi.object({
         newsId: newsIdSchema.required(),
       }),
-      payload: Joi.object({ // TODO
+      payload: Joi.object({
         rootCommentId: commentIdSchema.default(null),
-        text: Joi.string().required().label("TextMessage")
+        text: textTitleSchema
       }).label("SendCommentPayload")
     },
     response: {
-      // TODO
+      schema: outputOkSchema(forumNewsCommentSchema).label("forumNewsCommentSchemaResponse")
     }
   }
 }, {
@@ -77,13 +80,16 @@ export default [{
     description: "Like news",
     validate: {
       params: Joi.object({
-        newsId: idSchema.required(),
+        newsId: newsIdSchema.required(),
       }).label('LikeNewsParams'),
+    },
+    response: {
+      schema: outputOkSchema(forumLikeNewsSchemes).label("forumLikeNewsSchemesResponse")
     }
   }
 }, {
   method: "DELETE",
-  path: "/v1/forum/news/{newsId}/like",
+  path: "/v1/forum/news/{likeId}/like",
   handler: deleteLikeNews,
   options: {
     id: "v1.forum.news.deleteLike",
@@ -91,11 +97,11 @@ export default [{
     description: "Delete like",
     validate: {
       params: Joi.object({
-        newsId: newsIdSchema.required()
+        likeId: likeIdSchema.required()
       }).label("DeleteLikeParams")
     },
     response: {
-      // TODO
+      schema: outputOkSchema(forumLikeNewsSchemes).label("forumLikeNewsSchemesResponse")
     }
   }
 }];
