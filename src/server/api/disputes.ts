@@ -8,7 +8,6 @@ import disputes from "../routes/v1/disputes";
 export async function createDispute(r) {
   const quest = await Quest.findByPk(r.params.questId);
   //const transaction = await r.server.app.db.transaction();
-
   if(!quest) {
     return error(Errors.NotFound, 'Quest is not found', {})
   }

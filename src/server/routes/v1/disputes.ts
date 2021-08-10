@@ -10,7 +10,6 @@ import {
 } from "@workquest/database-models/lib/schemes";
 import { createDispute } from "../../api/disputes";
 
-
  export default[ {
    method: "POST",
    path: "/v1/dispute/{questId}/create",
