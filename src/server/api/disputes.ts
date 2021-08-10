@@ -11,24 +11,24 @@ export async function createDispute(r) {
       questId: r.params.questId
     }
   })
-  if(dispute){
+  if(dispute) {
     return error(Errors.AlreadyExists,'Dispute for this quest already exists',{})
   }
 
   const quest = await Quest.findByPk(r.params.questId);
   //const transaction = await r.server.app.db.transaction();
   if(!quest) {
-    return error(Errors.NotFound, 'Quest is not found', {})
+    return error(Errors.NotFound, 'Quest is not found', {});
   }
 
-  if(quest.userId !== r.auth.credentials.id && quest.assignedWorkerId !== r.auth.credentials.id){
+  if(quest.userId !== r.auth.credentials.id && quest.assignedWorkerId !== r.auth.credentials.id) {
     return error(Errors.InvalidRole, "Only employer or worker can open dispute", {});
   }
   //TODO может стоит здесь чекать статус
   //Если статус WaitConfirm, то менять статус на диспут в случае захода в эту функцию
   //Если статус Active и делается долго, то можно открыть диспут и поменять тут статус на диспут
   //Когда воркер может открыть диспут?
-  quest.mustHaveStatus(QuestStatus.Dispute)
+  quest.mustHaveStatus(QuestStatus.Dispute);
 
   const newDispute = await Disputes.create({
     userId: quest.userId,
