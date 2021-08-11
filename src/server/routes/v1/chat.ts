@@ -90,7 +90,7 @@ export default [{
     tags: ["api", "chat"],
     validate: {
       payload: Joi.object({
-        memberUserIds: userIdsSchema.required().unique().label('UserIds')
+        memberUserIds: userIdsSchema.required().min(2).unique().label('UserIds')
       }).label('CreateGroupChatPayload')
     },
     response: {
