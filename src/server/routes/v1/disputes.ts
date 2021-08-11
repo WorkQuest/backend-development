@@ -2,13 +2,12 @@ import * as Joi from "joi";
 import {
   outputOkSchema,
   idSchema,
-  userLastNameSchema,
-  userEmailSchema,
-  userPasswordSchema,
-  tokensWithStatus,
-  problemDescriptionSchema
+  problemDescriptionSchema,
+  disputeSchema,
+  disputesQuerySchema,
+  outputPaginationSchema
 } from "@workquest/database-models/lib/schemes";
-import { createDispute } from "../../api/disputes";
+import { createDispute, getDisputeInfo, getDisputesInfo } from "../../api/disputes";
 
  export default[ {
    method: "POST",
@@ -20,33 +19,47 @@ import { createDispute } from "../../api/disputes";
      description: "Create dispute",
      validate: {
        params: Joi.object({
-        questId: idSchema.required(),
+         questId: idSchema.required(),
        }).label("QuestParams"),
        payload: Joi.object({
          problem: problemDescriptionSchema.required(),
        }).label("CreateDisputePayload")
      },
      response: {
-       schema: outputOkSchema(tokensWithStatus).label("TokensWithStatusResponse")
+       schema: outputOkSchema(disputeSchema).label("TokensWithStatusResponse")
      }
    }
- },//{
-//   method: "GET",
-//   path: "/v1/disputes/{questId}",
-//   handler: getDisputes,
-//   options: {
-//     id: "v1.disputes.info",
-//     tags: ["api", "disputes"],
-//     description: "Get info about disputes",
-//     validate: {
-//       params: Joi.object({
-//         questId: idSchema.required(),
-//       }).label("GetQuestParams"),
-//     },
-//     response: {
-//       schema: outputOkSchema(disputeSchema).label('DisputeInfoResponse')
-//     }
-//   }
-// },
-  ]
+ }, {
+   method: "GET",
+   path: "/v1/{disputeId}/getDispute",
+   handler: getDisputeInfo,
+   options: {
+     id: "v1.dispute.information",
+     tags: ["api", "disputes"],
+     description: "Get info about dispute",
+     validate: {
+       params: Joi.object({
+         disputeId: idSchema.required(),
+       }).label("GetDisputeParams"),
+     },
+     response: {
+       schema: outputOkSchema(disputeSchema).label('DisputeInfoResponse')
+     }
+   }
+ }, {
+   method: "GET",
+   path: "/v1/disputes",
+   handler: getDisputesInfo,
+   options: {
+     id: "v1.disputes.information",
+     tags: ["api", "disputes"],
+     description: "Get info about disputes",
+     validate: {
+       query: disputesQuerySchema.label('QuerySchema')
+     },
+     response: {
+       schema: outputPaginationSchema('disputesList', disputeSchema).label('QuestsListResponse')
+     }
+   }
+ },]
 
