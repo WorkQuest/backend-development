@@ -5,25 +5,70 @@ import { Media } from "../models/Media";
 import { Errors } from "../utils/errors";
 import { LikeNews } from "../models/LikeNews";
 import { Comment } from "../models/Comment";
-import { CommentMedia } from "../models/CommentMedia";
-import { getMedias } from "../utils/medias";4
+import { getMedias } from "../utils/medias";
+import { LikeComment } from "../models/LikeComment";
 
 export async function likeNews(r) {
-  const news = await News.findByPk(r.payload.idNews);
+  const news = await News.findByPk(r.params.newsId);
   if (!news) {
     return error(Errors.NotFound, "News not found", {});
   }
-  await LikeNews.create({
-    idUser: r.auth.credentials.id,
-    idNews: r.payload.idNews
+  const user = await LikeNews.findOne({
+    where: { userId: r.auth.credentials.id, newsId: r.params.newsId }
   });
-  return output();
+  if (user) {
+    return error(Errors.NotFound, "The user has already liked it", {});
+  }
+  const like = await LikeNews.create({
+    userId: r.auth.credentials.id,
+    newsId: r.params.newsId
+  });
+  return output(await LikeNews.findByPk(like.id));
 }
 
 export async function deleteLikeNews(r) {
-  const del = await LikeNews.findByPk(r.payload.id);
+  const del = await LikeNews.findByPk(r.params.likeId);
   if (!del) {
     return error(Errors.NotFound, "Like not found", {});
+  }
+  const like = await LikeNews.findOne({
+    where: { userId: r.auth.credentials.id, id: r.params.likeId }
+  });
+  if (!like) {
+    return error(Errors.NotFound, "The user did not like it", {});
+  }
+  await del.destroy();
+  return output();
+}
+
+export async function likeComment(r) {
+  const comment = await Comment.findByPk(r.params.commentId);
+  if (!comment) {
+    return error(Errors.NotFound, "Comment not found", {});
+  }
+  const user = await LikeComment.findOne({
+    where: { userId: r.auth.credentials.id, commentId: r.params.commentId }
+  });
+  if (user) {
+    return error(Errors.NotFound, "The user has already liked it", {});
+  }
+  const like = await LikeComment.create({
+    userId: r.auth.credentials.id,
+    commentId: r.params.commentId
+  });
+  return output(await LikeComment.findByPk(like.id));
+}
+
+export async function deleteLikeComment(r) {
+  const del = await LikeComment.findByPk(r.params.likeCommentId);
+  if (!del) {
+    return error(Errors.NotFound, "Like in comment not found", {});
+  }
+  const like = await LikeComment.findOne({
+    where: { userId: r.auth.credentials.id, id: r.params.likeCommentId }
+  });
+  if (!like) {
+    return error(Errors.NotFound, "The user did not like it", {});
   }
   await del.destroy();
   return output();
@@ -63,7 +108,7 @@ export async function createNews(r) {
     authorId: r.auth.credentials.id,
     text: r.payload.text
   }, { transaction });
-  await news.$set('medias', medias, { transaction });
+  await news.$set("medias", medias, { transaction });
 
   await transaction.commit();
   if (!news) {
@@ -71,105 +116,46 @@ export async function createNews(r) {
   }
   return output(
     await News.findByPk(news.id)
-  )
+  );
 }
-
 
 export async function sendComment(r) {
   const news = await News.findOne({
     where: {
-      id: r.payload.idNews
+      id: r.params.newsId
     }
   });
   if (!news) {
     return error(Errors.NotFound, "News not found", {});
   }
-  if (r.payload.idAnswer === "null") {
+  if (r.payload.rootCommentId === undefined) {
     let create = await Comment.create({
-      idAuthor: r.auth.credentials.id,
-      idNews: r.payload.idNews,
-      idAnswer: null,
+      authorId: r.auth.credentials.id,
+      newsId: r.params.newsId,
+      rootCommentId: null,
       text: r.payload.text
     });
     if (!create) {
       return error(Errors.NotFound, "Can`t create comment", {});
     }
-    return output();
+    return output(create);
   }
   const comment = await Comment.findOne({
     where: {
-      id: r.payload.idAnswer
+      id: r.payload.rootCommentId
     }
   });
   if (!comment) {
     return error(Errors.NotFound, "Record not found", {});
   }
   const create = await Comment.create({
-    idAuthor: r.auth.credentials.id,
-    idNews: r.payload.idNews,
-    idAnswer: r.payload.idAnswer,
+    authorId: r.auth.credentials.id,
+    newsId: r.params.newsId,
+    rootCommentId: r.payload.rootCommentId,
     text: r.payload.text
   });
   if (!create) {
     return error(Errors.NotFound, "Can`t create comment, record not found", {});
   }
-  return output();
-}
-
-export async function createFile(r) {
-  const media: any = await Media.findOne({
-    where: {
-      userId: r.auth.credentials.id,
-      url: r.payload.url
-    }
-  });
-  if (!media) {
-    return error(Errors.NotFound, "File not found", {});
-  }
-  const create: any = await Media.create({
-    userId: r.auth.credentials.id,
-    contentType: r.payload.contentType,
-    url: r.payload.url,
-    hash: r.payload.hash
-  });
-  if (!create) {
-    return error(Errors.NotFound, "File don`t create", {});
-  }
-  const id: any = create.id;
-  if (r.payload.idComment !== "null") {
-    const file = await CommentMedia.create({
-      idMedia: id,
-      idComment: r.payload.idComment,
-      idNews: r.payload.idNews
-    });
-    if (!file) {
-      return error(Errors.NotFound, "File with comment don`t create", {});
-    }
-    return output();
-  }
-  const mediaFile = await CommentMedia.create({
-    idMedia: id,
-    idComment: null,
-    idNews: r.payload.idNews
-  });
-  if (!mediaFile) {
-    return error(Errors.NotFound, "File don`t create", {});
-  }
-  return output();
-}
-
-export async function getFiles(r) {
-  const { offset, limit } = r.query;
-  const media = await Media.findAndCountAll({
-    limit: limit,
-    offset: offset,
-    where: {
-      userId: r.auth.credentials.id
-    },
-    attributes: ["id", "contentType", "url", "hash", "createdAt", "updatedAt"]
-  });
-  if (!media) {
-    return error(Errors.NotFound, "Not found", {});
-  }
-  return output(media);
+  return output(create);
 }

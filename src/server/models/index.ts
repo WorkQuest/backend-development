@@ -15,6 +15,7 @@ import { LikeNews } from "./LikeNews";
 import { CommentMedia } from "./CommentMedia";
 import { Comment } from "./Comment";
 import { NewsMedia } from "./NewsMedia";
+import { LikeComment } from "./LikeComment";
 
 export async function initDatabase(dbLink: string, logging = false, sync = false) {
   const sequelize = new Sequelize(dbLink, {
@@ -35,7 +36,8 @@ export async function initDatabase(dbLink: string, logging = false, sync = false
       LikeNews,
       CommentMedia,
       NewsMedia,
-      Comment
+      Comment,
+      LikeComment
     ]
   });
   if (sync)
