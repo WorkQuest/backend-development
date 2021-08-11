@@ -98,6 +98,12 @@ const init = async () => {
     taskDirectory: `${__dirname}/jobs` // Папка с исполняемыми тасками.
   });
 
+  server.subscription('/notifications', {
+    filter: async function(path, message, options): Promise<boolean> {
+      return message.userId ? (message.userId === options.credentials.id) : true;
+    }
+  });
+
   // JWT Auth
   server.auth.strategy('jwt-access', 'bearer-access-token', {
     validate: tokenValidate('access', [
