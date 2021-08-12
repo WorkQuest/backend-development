@@ -14,6 +14,7 @@ export default async function updateLastSession(payload: ids) {
       id: session.id,
       adminId: session.userId,
       place: session.place,
+      ipAddress: session.ipAddress,
       device: session.device,
       createdAt: session.createdAt,
       updatedAt: session.updatedAt,

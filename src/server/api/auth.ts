@@ -5,7 +5,7 @@ import Handlebars = require("handlebars");
 import { Op } from "sequelize";
 import config from "../config/config";
 import { Errors } from "../utils/errors";
-import { error, getRandomHexToken, output } from "../utils";
+import { error, getRandomHexToken, output, getDevice, getGeo, getRealIp } from "../utils";
 import { addSendEmailJob } from "../jobs/sendEmail";
 import { generateJwt } from "../utils/auth";
 import { Session,
@@ -75,6 +75,7 @@ export async function register(r) {
 		html: emailHtml
 	});
 
+	const transaction = await r.server.app.db.transaction();
 	const user = await User.create({
 		email: r.payload.email.toLowerCase(),
 		password: r.payload.password,
@@ -84,9 +85,25 @@ export async function register(r) {
 			...defaultUserSettings,
 			emailConfirm: emailConfirmCode
 		}
+	}, transaction);
+
+	const session = await Session.create({
+		userId: user.id,
+		device: getDevice(r),
+		place: getGeo(r),
+		ipAddress: getRealIp(r),
+	}, transaction);
+
+	await transaction.commit();
+
+	await updateLoginAtJob({
+		id: user.id
 	});
 
-	const session = await Session.create({ userId: user.id });
+	await updateLastSessionJob({
+		userId: user.id,
+		sessionId: session.id
+	});
 	const result = {
 		...generateJwt({ id: session.id }),
 		userStatus: user.status,
@@ -105,8 +122,21 @@ export function getLoginViaSocialNetworkHandler(returnType: "token" | "redirect"
 
 		const user = await getUserByNetworkProfile(r.auth.strategy, profile);
 		const session = await Session.create({
-			userId: user.id
+			userId: user.id,
+			device: getDevice(r),
+			place: getGeo(r),
+			ipAddress: getRealIp(r),
 		});
+
+		await updateLoginAtJob({
+			id: user.id
+		});
+
+		await updateLastSessionJob({
+			userId: user.id,
+			sessionId: session.id
+		});
+
 		const result = {
 			...generateJwt({ id: session.id }),
 			userStatus: user.status
@@ -164,7 +194,10 @@ export async function login(r) {
 	});
 
 	const session = await Session.create({
-		userId: user.id
+		userId: user.id,
+		device: getDevice(r),
+		place: getGeo(r),
+		ipAddress: getRealIp(r),
 	});
 
 	await updateLastSessionJob({
@@ -182,8 +215,17 @@ export async function login(r) {
 
 export async function refreshTokens(r) {
 	const newSession = await Session.create({
-		userId: r.auth.credentials.id
+		userId: r.auth.credentials.id,
+		device: getDevice(r),
+		place: getGeo(r),
+		ipAddress: getRealIp(r),
 	});
+
+	await updateLastSessionJob({
+		userId: r.auth.credentials.id,
+		sessionId: newSession.id
+	});
+
 	const result = {
 		...generateJwt({ id: newSession.id }),
 		userStatus: r.auth.credentials.status,
