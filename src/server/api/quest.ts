@@ -47,16 +47,16 @@ export async function createQuest(r) {
     locationPostGIS: transformToGeoPostGIS(r.payload.location),
     title: r.payload.title,
     description: r.payload.description,
-    price: r.payload.price,
+    price: r.payload.price
   }, { transaction });
 
-  await quest.$set('medias', medias, { transaction });
+  await quest.$set("medias", medias, { transaction });
 
   await transaction.commit();
 
   return output(
     await Quest.findByPk(quest.id)
-  )
+  );
 }
 
 export async function editQuest(r) {
@@ -73,7 +73,7 @@ export async function editQuest(r) {
   if (r.payload.medias) {
     const medias = await getMedias(r.payload.medias);
 
-    await quest.$set('medias', medias, { transaction });
+    await quest.$set("medias", medias, { transaction });
   }
 
   quest.updateFieldLocationPostGIS();
@@ -84,7 +84,7 @@ export async function editQuest(r) {
 
   return output(
     await Quest.findByPk(quest.id)
-  )
+  );
 }
 
 export async function deleteQuest(r) {
@@ -101,7 +101,7 @@ export async function deleteQuest(r) {
     return error(Errors.InvalidStatus, "Quest cannot be deleted at current stage", {});
   }
 
-  await QuestsResponse.destroy({ where: { questId: quest.id }, transaction })
+  await QuestsResponse.destroy({ where: { questId: quest.id }, transaction });
   await quest.destroy({ force: true, transaction });
 
   await transaction.commit();
@@ -139,7 +139,7 @@ export async function startQuest(r) {
     return error(Errors.NotFound, "Quest not found", {});
   }
   if (!assignedWorker) {
-    return error(Errors.NotFound, 'Assigned user is not found', {});
+    return error(Errors.NotFound, "Assigned user is not found", {});
   }
 
   quest.mustBeQuestCreator(r.auth.credentials.id);
@@ -169,9 +169,10 @@ export async function startQuest(r) {
       id: {
         [Op.ne]: questResponse.id
       }
-  }, transaction });
+    }, transaction
+  });
 
-  await transaction.commit()
+  await transaction.commit();
 
   return output();
 }
@@ -237,11 +238,11 @@ export async function getQuests(r) {
   const order = [];
   const include = [];
   const where = {
-    ...(r.query.performing && { assignedWorkerId: r.auth.credentials.id } ),
+    ...(r.query.performing && { assignedWorkerId: r.auth.credentials.id }),
     ...(r.query.priority && { priority: r.query.priority }),
     ...(r.query.status && { status: r.query.status }),
-    ...(r.query.adType && {adType: r.query.adType}),
-    ...(r.params.userId && { userId: r.params.userId }),
+    ...(r.query.adType && { adType: r.query.adType }),
+    ...(r.params.userId && { userId: r.params.userId })
   };
 
   if (r.query.q) {
@@ -249,16 +250,16 @@ export async function getQuests(r) {
       [field]: {
         [Op.iLike]: `%${r.query.q}%`
       }
-    }))
+    }));
   }
   if (r.query.invited) {
     include.push({
       model: QuestsResponse,
       attributes: [],
-        where: {
+      where: {
         [Op.and]: [
           { workerId: r.auth.credentials.id },
-          { type: QuestsResponseType.Invite },
+          { type: QuestsResponseType.Invite }
         ]
       }
     });
@@ -267,7 +268,7 @@ export async function getQuests(r) {
     include.push({
       model: StarredQuests,
       where: { userId: r.auth.credentials.id },
-      attributes: [],
+      attributes: []
     });
   }
 
@@ -278,10 +279,11 @@ export async function getQuests(r) {
   const { count, rows } = await Quest.findAndCountAll({
     limit: r.query.limit,
     offset: r.query.offset,
-    where, order, include,
+    include: { model: StarredQuests, as: "star", where: { userId: r.auth.credentials.id },required:false },
+    order
   });
 
-  return output({count, quests: rows});
+  return output({ count, quests: rows });
 }
 
 export async function getMyStarredQuests(r) {
@@ -293,7 +295,7 @@ export async function getMyStarredQuests(r) {
         model: Quest
       }
     })
-  )
+  );
 }
 
 export async function setStar(r) {
@@ -306,18 +308,18 @@ export async function setStar(r) {
   const starred = await StarredQuests.findOne({
     where: {
       userId: r.auth.credentials.id,
-      questId: r.params.questId,
+      questId: r.params.questId
     }
   });
 
 
   if (starred) {
-    return error(Errors.Forbidden, 'Quest has already been added to favorites', {});
+    return error(Errors.Forbidden, "Quest has already been added to favorites", {});
   }
 
   await StarredQuests.create({
     userId: r.auth.credentials.id,
-    questId: r.params.questId,
+    questId: r.params.questId
   });
 
   return output();
@@ -327,7 +329,7 @@ export async function removeStar(r) {
   await StarredQuests.destroy({
     where: {
       userId: r.auth.credentials.id,
-      questId: r.params.questId,
+      questId: r.params.questId
     }
   });
 

@@ -1,4 +1,15 @@
-import { BelongsTo, HasMany, BelongsToMany, Column, DataType, ForeignKey, Model, Scopes, Table } from 'sequelize-typescript';
+import {
+  BelongsTo,
+  HasMany,
+  BelongsToMany,
+  Column,
+  DataType,
+  ForeignKey,
+  Model,
+  Scopes,
+  Table,
+  HasOne
+} from "sequelize-typescript";
 import { User } from "./User";
 import { error, getUUID } from '../utils';
 import { Media } from './Media';
@@ -67,7 +78,7 @@ export class Quest extends Model {
   @Column({type: DataType.STRING, allowNull: false}) category: string;
 
   @Column({type: DataType.JSONB}) location: Location;
-  @Column({type: DataType.GEOMETRY('POINT', 4326)}) locationPostGIS;
+  // @Column({type: DataType.GEOMETRY('POINT', 4326)}) locationPostGIS;
   @Column({type: DataType.STRING, allowNull: false }) title: string;
   @Column({type: DataType.TEXT }) description: string;
 
@@ -79,7 +90,7 @@ export class Quest extends Model {
   @BelongsTo(() => User, 'userId') user: User;
   @BelongsTo(() => User, 'assignedWorkerId') assignedWorker: User;
 
-  @HasMany(() => StarredQuests) starredQuests: StarredQuests[];
+  @HasOne(() => StarredQuests) star: StarredQuests;
   @HasMany(() => QuestsResponse, 'questId') responses: QuestsResponse[];
   @HasMany(() => Review) reviews: Review[];
 
