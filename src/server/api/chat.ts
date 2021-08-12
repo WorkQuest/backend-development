@@ -1,10 +1,4 @@
-import {
-  Chat,
-  ChatMember,
-  ChatType, Media,
-  Message,
-  User
-} from "@workquest/database-models/lib/models";
+import { Chat, ChatMember, ChatType, Media, Message, User } from "@workquest/database-models/lib/models";
 import { error, output } from "../utils";
 import { getMedias } from "../utils/medias";
 import { Errors } from "../utils/errors";
@@ -69,7 +63,7 @@ export async function createGroupChat(r) {
   const memberUserIds: string[] = r.payload.memberUserIds;
 
   const groupChat = await Chat.create({
-    creatorUserId: r.auth.credentials.id,
+    ownerUserId: r.auth.credentials.id,
     type: ChatType.group
   }, { transaction });
 
@@ -95,7 +89,7 @@ export async function getChatMessages(r) {
     return error(Errors.NotFound, "Chat not found", {});
   }
 
-  chat.mustHaveMember(r.auth.credentials.id);
+  await chat.mustHaveMember(r.auth.credentials.id);
 
   const { count, rows } = await Message.findAndCountAll({
     where: { chatId: chat.id },
@@ -118,7 +112,7 @@ export async function getUserChat(r) {
     return error(Errors.NotFound, "Chat not found", {});
   }
 
-  chat.mustHaveMember(r.auth.credentials.id);
+  await chat.mustHaveMember(r.auth.credentials.id);
 
   return output(chat);
 }
@@ -153,7 +147,6 @@ export async function sendMessageToUser(r) {
   if (!chat) {
     chat = await Chat.create({
       type: ChatType.private,
-      creatorUserId: null,
     }, { transaction });
 
     await chat.$set('members', [r.auth.credentials.id, r.params.userId],
@@ -194,7 +187,7 @@ export async function sendMessageToChat(r) {
     return error(Errors.NotFound, "Chat not found", {});
   }
 
-  chat.mustHaveMember(r.auth.credentials.id);
+  await chat.mustHaveMember(r.auth.credentials.id);
 
   const message = await Message.create({
     senderUserId: r.auth.credentials.id,
@@ -211,3 +204,102 @@ export async function sendMessageToChat(r) {
   return output();
 }
 
+export async function addUserInGroupChat(r) {
+  await User.userMustExist(r.params.userId);
+
+  const chat = await Chat.findByPk(r.params.chatId);
+
+  if (!chat) {
+    return error(Errors.NotFound, "Chat not found", {});
+  }
+
+  chat.mustHaveType(ChatType.group);
+  chat.mustHaveOwner(r.auth.credentials.id);
+
+  await ChatMember.create({
+    chatId: chat.id,
+    userId: r.params.userId,
+  });
+
+  return output();
+}
+
+export async function removeUserInGroupChat(r) {
+  await User.userMustExist(r.params.userId);
+
+  const chat = await Chat.findByPk(r.params.chatId);
+
+  if (!chat) {
+    return error(Errors.NotFound, "Chat not found", {});
+  }
+
+  chat.mustHaveType(ChatType.group);
+  chat.mustHaveOwner(r.auth.credentials.id);
+  await chat.mustHaveMember(r.params.userId);
+
+  await ChatMember.destroy({
+    where: {
+      chatId: chat.id,
+      userId: r.params.userId,
+    }
+  });
+
+  return output();
+}
+
+export async function leaveFromGroupChat(r) {
+  const transaction = await r.server.app.db.transaction();
+  const chat = await Chat.findByPk(r.params.chatId);
+
+  if (!chat) {
+    return error(Errors.NotFound, "Chat not found", {});
+  }
+
+  chat.mustHaveType(ChatType.group);
+  await chat.mustHaveMember(r.auth.credentials.id);
+
+  if (chat.ownerUserId === r.auth.credentials.id) {
+    // const firsMember = await User.findOne({
+    //   include: [{
+    //     model: ChatMember.unscoped(),
+    //     where: { chatId: chat.id },
+    //     attributes: [],
+    //     order: [
+    //       ['createdAt', 'ABC']
+    //     ],
+    //   }]
+    // });
+    //
+    // await chat.update({ ownerUserId: firsMember.id }, { transaction });
+  }
+
+  await ChatMember.destroy({
+    where: { chatId: chat.id, userId: r.auth.credentials.id },
+    transaction
+  });
+
+  return output();
+}
+
+export async function getChatMembers(r) {
+  const chat = await Chat.findByPk(r.params.chatId);
+
+  if (!chat) {
+    return error(Errors.NotFound, "Chat not found", {});
+  }
+
+  await chat.mustHaveMember(r.auth.credentials.id);
+
+  const { count, rows } = await User.findAndCountAll({
+    include: [{
+      model: ChatMember,
+      attributes: [],
+      as: 'chatMember',
+      where: { chatId: chat.id }
+    }],
+    limit: r.query.limit,
+    offset: r.query.offset,
+  });
+
+  return output({count, members: rows});
+}

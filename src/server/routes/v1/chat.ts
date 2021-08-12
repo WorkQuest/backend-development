@@ -10,7 +10,7 @@ import {
   chatSchema,
   messagesSchema,
   messageTextSchema,
-  mediaIdsSchema,
+  mediaIdsSchema, usersSchema
 } from "@workquest/database-models/lib/schemes";
 import {
   getUserChats,
@@ -19,6 +19,10 @@ import {
   getUserChat,
   sendMessageToUser,
   sendMessageToChat,
+  removeUserInGroupChat,
+  addUserInGroupChat,
+  leaveFromGroupChat,
+  getChatMembers
 } from "../../api/chat";
 
 const userIdSchema = idSchema.label('UserId');
@@ -82,7 +86,7 @@ export default [{
   }
 }, {
   method: "POST",
-  path: "/v1/user/me/chat/create-group",
+  path: "/v1/user/me/chat/group/create",
   handler: createGroupChat,
   options: {
     id: "v1.chat.group.create",
@@ -139,7 +143,80 @@ export default [{
       schema: emptyOkSchema
     }
   }
+}, {
+  method: "POST",
+  path: "/v1/user/me/chat/group/{chatId}/add/{userId}",
+  handler: addUserInGroupChat,
+  options: {
+    id: "v1.chat.group.addUser",
+    description: "Add user in group chat",
+    tags: ["api", "chat"],
+    validate: {
+      params: Joi.object({
+        chatId: chatIdSchema.required(),
+        userId: userIdSchema.required(),
+      }).label('AddUserInGroupChatParams')
+    },
+    response: {
+      schema: emptyOkSchema
+    }
+  }
+}, {
+  method: "DELETE",
+  path: "/v1/user/me/chat/group/{chatId}/remove/{userId}",
+  handler: removeUserInGroupChat,
+  options: {
+    id: "v1.chat.group.removeUser",
+    description: "Remove user from group chat (only for owner)",
+    tags: ["api", "chat"],
+    validate: {
+      params: Joi.object({
+        chatId: chatIdSchema.required(),
+        userId: userIdSchema.required(),
+      }).label('RemoveUserInGroupChatParams')
+    },
+    response: {
+      schema: emptyOkSchema
+    }
+  }
+}, {
+  method: "POST",
+  path: "/v1/user/me/chat/group/{chatId}/leave",
+  handler: leaveFromGroupChat,
+  options: {
+    id: "v1.chat.group.leave",
+    description: "Leave from group chat",
+    tags: ["api", "chat"],
+    validate: {
+      params: Joi.object({
+        chatId: chatIdSchema.required(),
+      }).label('LeaveFromGroupChatParams')
+    },
+    response: {
+      schema: emptyOkSchema
+    }
+  }
+}, {
+  method: "GET",
+  path: "/v1/user/me/chat/group/{chatId}/members",
+  handler: getChatMembers,
+  options: {
+    id: "v1.chat.group.getMembers",
+    description: "Get members in group chat (only for chat members)",
+    validate: {
+      params: Joi.object({
+        chatId: chatIdSchema.required(),
+      }).label('GetChatMembersParams'),
+      query: Joi.object({
+        offset: offsetSchema,
+        limit: limitSchema,
+      }).label('GetChatMembersQuery')
+    },
+    response: {
+      schema: outputOkSchema(usersSchema).label('GetChatMembersResponse')
+    }
+  }
 }];
 
+// TODO имя для чата
 // TODO вложенные сообщения
-// TODO add/delete user in group chat
