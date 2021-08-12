@@ -1,11 +1,11 @@
 import { Quest, QuestStatus } from "@workquest/database-models/lib/models";
 import { error, output } from "../utils";
 import { Errors } from "../utils/errors";
-import { Dispute, DisputeStatus } from "@workquest/database-models/lib/models/Disputes";
+import { QuestDispute, DisputeStatus } from "@workquest/database-models/lib/models/QuestDispute";
 import { Op } from 'sequelize'
 
 export async function createDispute(r) {
-  const dispute = await Dispute.findOne({
+  const dispute = await QuestDispute.findOne({
     where: {
       questId: r.params.questId
     }
@@ -30,19 +30,19 @@ export async function createDispute(r) {
   //Когда воркер может открыть диспут?
   quest.mustHaveStatus(QuestStatus.Dispute);
 
-  const newDispute = await Dispute.create({
+  const newDispute = await QuestDispute.create({
     openDisputeUserId: r.auth.credentials.id,
     opponentUserId: opponentUserId,
     questId: quest.id,
     status: DisputeStatus.pending,
     problem: r.payload.problem,
   });
-  return output(await Dispute.findByPk(newDispute.id));
+  return output(await QuestDispute.findByPk(newDispute.id));
 }
 
 
 export async function getDisputeInfo(r) {
-  const dispute = await Dispute.findByPk(r.params.disputeId)
+  const dispute = await QuestDispute.findByPk(r.params.disputeId)
 
   if(!dispute) {
     return error(Errors.NotFound, 'Dispute is not found', {});
@@ -66,7 +66,7 @@ export async function getDisputeInfo(r) {
 }
 
 export async function getDisputesInfo(r) {
-  const disputes = await Dispute.findAndCountAll({
+  const disputes = await QuestDispute.findAndCountAll({
     where: {
       [Op.or]: [ {openDisputeUserId: r.auth.credentials.id}, {opponentUserId: r.auth.credentials.id}]
     },

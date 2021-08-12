@@ -15,6 +15,8 @@ import { Session,
 	UserStatus,
 	RatingStatistic
 } from "@workquest/database-models/lib/models";
+import { updateLoginAtJob } from "../jobs/updateLoginAt";
+import { updateLastSessionJob} from "../jobs/updateLastSession"
 
 const confirmTemplatePath = path.join(__dirname, "..", "..", "..", "templates", "confirmEmail.html");
 const confirmTemplate = Handlebars.compile(fs.readFileSync(confirmTemplatePath, {
@@ -157,9 +159,17 @@ export async function login(r) {
 		user.validateTOTP(r.payload.totp);
 	}
 
+	await updateLoginAtJob({
+		id: user.id
+	});
 
 	const session = await Session.create({
 		userId: user.id
+	});
+
+	await updateLastSessionJob({
+		userId: user.id,
+		sessionId: session.id
 	});
 
 	const result = {
