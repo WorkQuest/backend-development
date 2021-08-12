@@ -38,7 +38,15 @@ async function answerWorkOnQuest(questId: string, worker: User, acceptWork: bool
 }
 
 export async function getQuest(r) {
-  const quest = await Quest.findByPk(r.params.questId);
+  const quest = await Quest.findOne({
+    where: { id: r.params.questId },
+    include: {
+      model: StarredQuests,
+      as: "star",
+      where: { userId: r.auth.credentials.id },
+      required: false
+    }
+  });
 
   if (!quest) {
     return error(Errors.NotFound, "Quest not found", {});
@@ -282,10 +290,18 @@ export async function getQuests(r) {
   if (r.query.starred) {
     include.push({
       model: StarredQuests,
+      as: 'starredQuests',
       where: { userId: r.auth.credentials.id },
       attributes: [],
     });
   }
+
+  include.push({
+    model: StarredQuests,
+    as: "star",
+    where: { userId: r.auth.credentials.id },
+    required: false
+  });
 
   for (const [key, value] of Object.entries(r.query.sort)) {
     order.push([key, value]);
@@ -294,7 +310,7 @@ export async function getQuests(r) {
   const { count, rows } = await Quest.findAndCountAll({
     limit: r.query.limit,
     offset: r.query.offset,
-    include: { model: StarredQuests, as: "star", where: { userId: r.auth.credentials.id },required:false }, order
+    include, order
   });
 
   return output({count, quests: rows});
