@@ -294,7 +294,7 @@ export async function getQuests(r) {
   const { count, rows } = await Quest.findAndCountAll({
     limit: r.query.limit,
     offset: r.query.offset,
-    where, order, include,
+    include: { model: StarredQuests, as: "star", where: { userId: r.auth.credentials.id },required:false }, order
   });
 
   return output({count, quests: rows});
