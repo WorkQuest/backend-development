@@ -310,7 +310,7 @@ export async function getQuests(r) {
   const { count, rows } = await Quest.findAndCountAll({
     limit: r.query.limit,
     offset: r.query.offset,
-    include, order
+    include, order, where
   });
 
   return output({count, quests: rows});
