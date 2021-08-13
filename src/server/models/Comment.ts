@@ -17,12 +17,19 @@ import { LikeComment } from "./LikeComment";
 @Scopes(() => ({
   defaultScope: {
     attributes: {
-      exclude: ["rootComment"]
+      exclude: ["rootComment","subComments","likeComment"]
+    },
+    include: {
+      model: Media.scope("urlOnly"),
+      as: "medias",
+      through: {
+        attributes: []
+      }
     }
   },
   rootCommentsOnly: {
     attributes: {
-      exclude: ["comments"]
+      exclude: ["rootComment"]
     },
     include: [{
       model: Comment,

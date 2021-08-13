@@ -11,12 +11,19 @@ import { LikeNews } from "./LikeNews";
 @Scopes(() => ({
   defaultScope: {
     attributes: {
-      exclude: ["rootComments"]
+      exclude: ["rootComments","newsId","medias"]
+    },
+    include: {
+      model: Media.scope("urlOnly"),
+      as: "medias",
+      through: {
+        attributes: []
+      }
     }
   },
   rootCommentsOnly: {
     attributes: {
-      exclude: ["comments"]
+      exclude: ["rootComments"]
     },
     include: [{
       model: Comment,
@@ -34,7 +41,7 @@ import { LikeNews } from "./LikeNews";
       },
       {
         model: LikeNews,
-        as: "newsId",
+        as: "newsId"
       }
     ]
   }
