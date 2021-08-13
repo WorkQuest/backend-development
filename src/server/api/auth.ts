@@ -184,7 +184,13 @@ export async function login(r) {
 	});
 
 	if (!user) return error(Errors.NotFound, "User not found", {});
+
+	if (user.status === UserStatus.isBlocked) {
+		return error(Errors.InvalidStatus, 'User is blocked', {});
+	}
+
 	if (!(await user.passwordCompare(r.payload.password))) return error(Errors.NotFound, "User not found", {});
+
 	if (user.isTOTPEnabled()) {
 		user.validateTOTP(r.payload.totp);
 	}
