@@ -8,9 +8,11 @@ import {
   chatsSchema,
   userIdsSchema,
   chatSchema,
+  chatNameSchema,
   messagesSchema,
   messageTextSchema,
-  mediaIdsSchema, usersSchema
+  mediaIdsSchema,
+  usersSchema,
 } from "@workquest/database-models/lib/schemes";
 import {
   getUserChats,
@@ -94,6 +96,7 @@ export default [{
     tags: ["api", "chat"],
     validate: {
       payload: Joi.object({
+        name: chatNameSchema.required(),
         memberUserIds: userIdsSchema.required().min(2).unique().label('UserIds')
       }).label('CreateGroupChatPayload')
     },
@@ -218,5 +221,3 @@ export default [{
   }
 }];
 
-// TODO имя для чата
-// TODO вложенные сообщения

@@ -63,6 +63,7 @@ export async function createGroupChat(r) {
   const memberUserIds: string[] = r.payload.memberUserIds;
 
   const groupChat = await Chat.create({
+    name: r.payload.name,
     ownerUserId: r.auth.credentials.id,
     type: ChatType.group
   }, { transaction });
@@ -259,6 +260,7 @@ export async function leaveFromGroupChat(r) {
   await chat.mustHaveMember(r.auth.credentials.id);
 
   if (chat.ownerUserId === r.auth.credentials.id) {
+    // TODO
     // const firsMember = await User.findOne({
     //   include: [{
     //     model: ChatMember.unscoped(),
