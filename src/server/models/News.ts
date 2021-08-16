@@ -11,39 +11,40 @@ import { LikeNews } from "./LikeNews";
 @Scopes(() => ({
   defaultScope: {
     attributes: {
-      exclude: ["rootComments","newsId","medias"]
+      exclude: ["rootComments"]
     },
-    include: {
+    include: [{
       model: Media.scope("urlOnly"),
       as: "medias",
       through: {
         attributes: []
       }
-    }
+    }, {
+      model: User,
+      as: "userLikes",
+      through: {
+        attributes: []
+      }
+    }]
   },
-  rootCommentsOnly: {
-    attributes: {
-      exclude: ["rootComments"]
-    },
+  withRootComments: {
     include: [{
       model: Comment,
       as: "rootComments",
-      where: {
-        rootCommentId: null
+      where: { rootCommentId: null }
+    }, {
+      model: Media.scope("urlOnly"),
+      as: "medias",
+      through: {
+        attributes: []
       }
-    },
-      {
-        model: Media.scope("urlOnly"),
-        as: "medias",
-        through: {
-          attributes: []
-        }
-      },
-      {
-        model: LikeNews,
-        as: "newsId"
+    }, {
+      model: User,
+      as: "userLikes",
+      through: {
+        attributes: []
       }
-    ]
+    }]
   }
 }))
 @Table({ paranoid: true })
@@ -59,7 +60,8 @@ export class News extends Model {
   @BelongsTo(() => User) author: User;
 
   @HasMany(() => Comment) rootComments: Comment[];
-  @HasMany(() => LikeNews) newsId: LikeNews[];
+  @HasMany(() => LikeNews) likes: LikeNews[];
 
   @BelongsToMany(() => Media, () => NewsMedia) medias: Media[];
+  @BelongsToMany(() => User, () => LikeNews) userLikes: User[];
 }

@@ -1,7 +1,5 @@
 import { News } from "../models/News";
-import { Op } from "sequelize";
 import { error, output } from "../utils";
-import { Media } from "../models/Media";
 import { Errors } from "../utils/errors";
 import { LikeNews } from "../models/LikeNews";
 import { Comment } from "../models/Comment";
@@ -75,30 +73,15 @@ export async function deleteLikeComment(r) {
 }
 
 export async function getNews(r) {
-  const object: any = {
+  const { count, rows } = await News.findAndCountAll({
     limit: r.query.limit,
     offset: r.query.offset,
-    include: [
-      {
-        model: Comment,
-        as: "rootComments",
-        where: {
-          [Op.and]: [{ rootCommentId: null }]
-        },
-        required: false,
-        order: [["createdAt", "DESC"]]
-      },
-      {
-        model: Media,
-        as: "medias",
-        required: false
-      }
-    ]
-  };
-  const news = await News.findAll(object);
-  return output(news);
-}
+  });
 
+  return output({
+    count, news: rows
+  });
+}
 
 export async function createNews(r) {
   const medias = await getMedias(r.payload.medias);

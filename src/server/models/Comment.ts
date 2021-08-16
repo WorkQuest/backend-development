@@ -13,40 +13,41 @@ import { News } from "./News";
 import { CommentMedia } from "./CommentMedia";
 import { Media } from "./Media";
 import { LikeComment } from "./LikeComment";
+import { LikeNews } from "./LikeNews";
 
 @Scopes(() => ({
   defaultScope: {
-    attributes: {
-      exclude: ["rootComment","subComments","likeComment"]
-    },
-    include: {
+    include: [{
       model: Media.scope("urlOnly"),
       as: "medias",
       through: {
         attributes: []
       }
-    }
+    }, {
+      model: User,
+      as: "userLikes",
+      through: {
+        attributes: []
+      }
+    }]
   },
-  rootCommentsOnly: {
-    attributes: {
-      exclude: ["rootComment"]
-    },
+  withSubComments: {
     include: [{
       model: Comment,
-      as: "subComments"
-    },
-      {
-        model: Media.scope("urlOnly"),
-        as: "medias",
-        through: {
-          attributes: []
-        }
-      },
-      {
-        model: LikeComment,
-        as: "likeComment"
+      as: 'subComments'
+    }, {
+      model: Media.scope("urlOnly"),
+      as: "medias",
+      through: {
+        attributes: []
       }
-    ]
+    }, {
+      model: User,
+      as: "userLikes",
+      through: {
+        attributes: []
+      }
+    }]
   }
 }))
 @Table
@@ -72,4 +73,5 @@ export class Comment extends Model {
   @HasMany(() => LikeComment) likeComment: LikeComment[];
 
   @BelongsToMany(() => Media, () => CommentMedia) medias: Media[];
+  @BelongsToMany(() => User, () => LikeNews) userLikes: User[];
 }
