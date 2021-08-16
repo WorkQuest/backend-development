@@ -4,12 +4,18 @@ import {
   createNews,
   getNews,
   likeNews,
-  deleteLikeNews, likeComment, deleteLikeComment
+  deleteLikeNews, likeComment, deleteLikeComment, getNewsComments
 } from "../../api/forums";
 import { idSchema, limitSchema, offsetSchema, outputOkSchema } from "../../schemes";
-import { forumLikeNewsSchemes, getForumNewsSchema, textTitleSchema } from "../../schemes/news";
+import {
+  forumLikeNewsSchemes,
+  forumNewsCommentsSchemes,
+  getForumNewsSchema,
+  textTitleSchema
+} from "../../schemes/news";
 import { commentIdOrNullSchema, forumLikeCommentSchemes, forumNewsCommentSchema } from "../../schemes/comments";
 import { mediaIdsSchema } from "../../schemes/media";
+import { questsQuerySchema } from "../../schemes/quest";
 
 const newsIdSchema = idSchema.label("NewsId");
 const likeIdSchema = idSchema.label("likeId");
@@ -140,4 +146,26 @@ export default [{
       schema: outputOkSchema(forumLikeCommentSchemes).label("forumLikeCommentSchemesResponse")
     }
   }
+}, {
+  method: "GET",
+  path: "/v1/forum/news/{newsId}/comments",
+  handler: getNewsComments,
+  options: {
+    id: "v1.forum.getComments",
+    tags: ["api", "forum"],
+    description: "Get comments on news",
+    validate: {
+      params: Joi.object({
+        newsId: newsIdSchema
+      }).label("EmployerForumParams"),
+      query: Joi.object({
+        limit: limitSchema.required(),
+        offset: offsetSchema.required()
+      }).label("GetNewsCommentsQuery")
+    },
+    response: {
+      schema: outputOkSchema(forumNewsCommentsSchemes).label("forumNewsCommentsSchemesResponse")
+    }
+  }
 }];
+

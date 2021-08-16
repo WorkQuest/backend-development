@@ -142,3 +142,15 @@ export async function sendComment(r) {
   }
   return output(create);
 }
+
+export async function getNewsComments(r) {
+  const { count, rows } = await Comment.findAndCountAll({
+    where: {newsId: r.params.newsId},
+    limit: r.query.limit,
+    offset: r.query.offset,
+  });
+
+  return output({
+    count, rows
+  });
+}

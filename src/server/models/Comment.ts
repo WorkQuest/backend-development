@@ -73,5 +73,5 @@ export class Comment extends Model {
   @HasMany(() => LikeComment) likeComment: LikeComment[];
 
   @BelongsToMany(() => Media, () => CommentMedia) medias: Media[];
-  @BelongsToMany(() => User, () => LikeNews) userLikes: User[];
+  @BelongsToMany(() => User, () => LikeComment) userLikes: User[];
 }
