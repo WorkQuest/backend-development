@@ -151,6 +151,6 @@ export async function getNewsComments(r) {
   });
 
   return output({
-    count, rows
+    count, comments: rows
   });
 }
