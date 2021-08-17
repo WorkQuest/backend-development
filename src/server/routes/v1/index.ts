@@ -10,6 +10,7 @@ import restorePassword from './restorePassword';
 import portfolio from './portfolio';
 import totp from './totp';
 import chat from "./chat";
+import forums from "./forums";
 
 export default [
   ...profile,
@@ -24,4 +25,5 @@ export default [
   ...portfolio,
   ...totp,
   ...chat,
+  ...forums
 ];
