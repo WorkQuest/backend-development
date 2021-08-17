@@ -45,13 +45,13 @@ export function tokenValidate(tokenType: 'access' | 'refresh', allowedUnconfirme
       throw error(Errors.UnconfirmedUser, 'Unconfirmed user', {});
     }
 
-    const session = await Session.findByPk(user.lastSessionId);
-    if(!session.isActive) {
-      throw error(Errors.SessionNotFound, 'Session is not active', {});
-    }
-    await session.update({
-      lastActionTime: Date.now(),
-    });
+    // const session = await Session.findByPk(user.lastSessionId);
+    // if(!session.isActive) {
+    //   throw error(Errors.SessionNotFound, 'Session is not active', {});
+    // }
+    // await session.update({
+    //   lastActionTime: Date.now(),
+    // });
 
     return { isValid: true, credentials: user, artifacts: { token, type: tokenType } };
   }

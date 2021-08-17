@@ -15,7 +15,7 @@ import { Session,
 	UserStatus,
 	RatingStatistic
 } from "@workquest/database-models/lib/models";
-import { updateLastSessionJob } from "../jobs/updateLastSessionJob";
+import { updateLastSessionJob } from "../jobs/updateLastSession";
 
 const confirmTemplatePath = path.join(__dirname, "..", "..", "..", "templates", "confirmEmail.html");
 const confirmTemplate = Handlebars.compile(fs.readFileSync(confirmTemplatePath, {
@@ -94,6 +94,11 @@ export async function register(r) {
 		isActive: true,
 	}, transaction);
 
+	await updateLastSessionJob({
+		userId: user.id,
+		sessionId: session.id,
+	});
+
 	await transaction.commit();
 
 	const result = {
@@ -124,7 +129,7 @@ export function getLoginViaSocialNetworkHandler(returnType: "token" | "redirect"
 		await updateLastSessionJob({
 			userId: user.id,
 			sessionId: session.id,
-		})
+		});
 
 		const result = {
 			...generateJwt({ id: session.id }),
