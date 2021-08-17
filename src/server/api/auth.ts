@@ -60,6 +60,7 @@ export async function register(r) {
 	if (emailUsed) return error(Errors.InvalidPayload, "Email used", [{ field: "email", reason: "used" }]);
 
 	const emailConfirmCode = getRandomHexToken().substring(0, 6).toUpperCase();
+	console.log(emailConfirmCode);
 	const emailConfirmLink = `${config.baseUrl}/confirm?token=${emailConfirmCode}`;
 	const emailHtml = confirmTemplate({ confirmLink: emailConfirmLink, confirmCode: emailConfirmCode });
 	await addSendEmailJob({

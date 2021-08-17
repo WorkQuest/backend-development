@@ -13,7 +13,6 @@ import { News } from "./News";
 import { CommentMedia } from "./CommentMedia";
 import { Media } from "./Media";
 import { LikeComment } from "./LikeComment";
-import { LikeNews } from "./LikeNews";
 
 @Scopes(() => ({
   defaultScope: {
@@ -24,7 +23,7 @@ import { LikeNews } from "./LikeNews";
         attributes: []
       }
     }, {
-      model: User,
+      model: User.scope("short"),
       as: "userLikes",
       through: {
         attributes: []
@@ -42,7 +41,7 @@ import { LikeNews } from "./LikeNews";
         attributes: []
       }
     }, {
-      model: User,
+      model: User.scope("short"),
       as: "userLikes",
       through: {
         attributes: []

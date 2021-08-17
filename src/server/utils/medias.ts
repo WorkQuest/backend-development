@@ -8,9 +8,9 @@ export async function getMedia(mediaId: string): Promise<Media> {
   if (!media) {
     throw error(Errors.NotFound, 'Media is not found', { mediaId })
   }
-  if (!await isMediaExists(media)) {
-    throw error(Errors.InvalidPayload, 'Media is not exists', { mediaId: media.id });
-  }
+  // if (!await isMediaExists(media)) {
+  //   throw error(Errors.InvalidPayload, 'Media is not exists', { mediaId: media.id });
+  // }
 
   return media;
 }
