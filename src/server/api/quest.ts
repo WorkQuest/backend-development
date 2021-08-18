@@ -252,7 +252,7 @@ export async function rejectCompletedWorkOnQuest(r) {
   quest.mustBeQuestCreator(r.auth.credentials.id);
   quest.mustHaveStatus(QuestStatus.WaitConfirm);
 
-  await quest.update({ status: QuestStatus.Dispute });
+  await quest.update({ status: QuestStatus.Reject });
 
   return output();
 }

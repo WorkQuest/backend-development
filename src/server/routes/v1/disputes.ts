@@ -5,7 +5,7 @@ import {
   problemDescriptionSchema,
   disputeSchema,
   disputesQuerySchema,
-  outputPaginationSchema
+  outputPaginationSchema, disputeReasonSchema
 } from "@workquest/database-models/lib/schemes";
 import { createDispute, getDisputeInfo, getDisputesInfo } from "../../api/disputes";
 
@@ -22,6 +22,7 @@ import { createDispute, getDisputeInfo, getDisputesInfo } from "../../api/disput
          questId: idSchema.required(),
        }).label("QuestParams"),
        payload: Joi.object({
+         reason: disputeReasonSchema.required(),
          problem: problemDescriptionSchema.required(),
        }).label("CreateDisputePayload")
      },

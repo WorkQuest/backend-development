@@ -1,40 +1,40 @@
-import { Quest, QuestStatus } from "@workquest/database-models/lib/models";
+import { DisputeReason, Quest, QuestStatus } from "@workquest/database-models/lib/models";
 import { error, output } from "../utils";
 import { Errors } from "../utils/errors";
-import { QuestDispute, DisputeStatus } from "@workquest/database-models/lib/models/QuestDispute";
-import { Op } from 'sequelize'
+import { DisputeStatus, QuestDispute } from "@workquest/database-models/lib/models/QuestDispute";
+import { Op } from "sequelize";
 
 export async function createDispute(r) {
+  const quest = await Quest.findByPk(r.params.questId);
+  if(!quest) {
+    return error(Errors.NotFound, 'Quest is not found', {});
+  }
+
   const dispute = await QuestDispute.findOne({
     where: {
       questId: r.params.questId
     }
   })
+
   if(dispute) {
     return error(Errors.AlreadyExists,'Dispute for this quest already exists',{})
-  }
-
-  const quest = await Quest.findByPk(r.params.questId);
-  //const transaction = await r.server.app.db.transaction();
-  if(!quest) {
-    return error(Errors.NotFound, 'Quest is not found', {});
   }
 
   if(quest.userId !== r.auth.credentials.id && quest.assignedWorkerId !== r.auth.credentials.id) {
     return error(Errors.InvalidRole, "Only employer or worker can open dispute", {});
   }
   const opponentUserId = quest.userId === r.auth.credentials.id ? quest.assignedWorkerId : quest.userId;
-  //TODO может стоит здесь чекать статус
-  //Если статус WaitConfirm, то менять статус на диспут в случае захода в эту функцию
-  //Если статус Active и делается долго, то можно открыть диспут и поменять тут статус на диспут
-  //Когда воркер может открыть диспут?
-  quest.mustHaveStatus(QuestStatus.Dispute);
+
+  if(r.payload.reason === DisputeReason.poorlyDoneJob){
+    quest.mustHaveStatus(QuestStatus.Reject)
+  }
 
   const newDispute = await QuestDispute.create({
     openDisputeUserId: r.auth.credentials.id,
     opponentUserId: opponentUserId,
     questId: quest.id,
     status: DisputeStatus.pending,
+    reason: r.payload.reason,
     problem: r.payload.problem,
   });
   return output(await QuestDispute.findByPk(newDispute.id));
