@@ -30,8 +30,8 @@ import {
   questTitleSchema,
   questsQuerySchema,
   mediaIdsSchema,
-  questsWithCountSchema,
   questsSchema,
+  questsForGetWithCountSchema
 } from "@workquest/database-models/lib/schemes";
 
 const questIdSchema = idSchema.label('QuestId');
@@ -134,7 +134,7 @@ export default [{
       query: questsQuerySchema
     },
     response: {
-      schema: outputOkSchema(questsWithCountSchema).label("QuestsWithCountResponse")
+      schema: outputOkSchema(questsForGetWithCountSchema).label("QuestsWithCountResponse")
     },
   }
 }, {
@@ -152,7 +152,7 @@ export default [{
       query: questsQuerySchema
     },
     response: {
-      schema: outputOkSchema(questsWithCountSchema).label("QuestsWithCountResponse")
+      schema: outputOkSchema(questsForGetWithCountSchema).label("QuestsWithCountResponse")
     },
   }
 }, {
