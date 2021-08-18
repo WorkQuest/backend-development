@@ -19,14 +19,18 @@ export async function createDispute(r) {
   if(dispute) {
     return error(Errors.AlreadyExists,'Dispute for this quest already exists',{})
   }
+  let dayInMilliseconds = 86400000
+  if(quest.createdAt.getMilliseconds() + dayInMilliseconds < Date.now()) {
+    return error(Errors.InvalidDate, 'Can open dispute after 24 hours after creating quest', {});
+  }
 
   if(quest.userId !== r.auth.credentials.id && quest.assignedWorkerId !== r.auth.credentials.id) {
     return error(Errors.InvalidRole, "Only employer or worker can open dispute", {});
   }
   const opponentUserId = quest.userId === r.auth.credentials.id ? quest.assignedWorkerId : quest.userId;
 
-  if(r.payload.reason === DisputeReason.poorlyDoneJob){
-    quest.mustHaveStatus(QuestStatus.Reject)
+  if(r.payload.reason === DisputeReason.poorlyDoneJob) {
+    quest.mustHaveStatus(QuestStatus.Reject);
   }
 
   const newDispute = await QuestDispute.create({
