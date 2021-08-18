@@ -283,6 +283,7 @@ export async function getQuests(r) {
   if (r.query.invited) {
     include.push({
       model: QuestsResponse,
+      as: 'responses',
       attributes: [],
         where: {
         [Op.and]: [
