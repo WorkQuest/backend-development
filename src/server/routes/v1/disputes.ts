@@ -7,7 +7,7 @@ import {
   disputesQuerySchema,
   outputPaginationSchema, disputeReasonSchema
 } from "@workquest/database-models/lib/schemes";
-import { createDispute, getDisputeInfo, getDisputesInfo } from "../../api/disputes";
+import { createDispute, getDisputeInfo, getDisputes, } from "../../api/disputes";
 
  export default[ {
    method: "POST",
@@ -50,7 +50,7 @@ import { createDispute, getDisputeInfo, getDisputesInfo } from "../../api/disput
  }, {
    method: "GET",
    path: "/v1/disputes",
-   handler: getDisputesInfo,
+   handler: getDisputes,
    options: {
      id: "v1.disputes.information",
      tags: ["api", "disputes"],

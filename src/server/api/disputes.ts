@@ -65,7 +65,7 @@ export async function getDisputeInfo(r) {
   return output(dispute);
 }
 
-export async function getDisputesInfo(r) {
+export async function getDisputes(r) {
   const disputes = await QuestDispute.findAndCountAll({
     where: {
       [Op.or]: [ {openDisputeUserId: r.auth.credentials.id}, {opponentUserId: r.auth.credentials.id}]
