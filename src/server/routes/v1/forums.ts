@@ -4,26 +4,28 @@ import {
   createNews,
   getNews,
   likeNews,
-  deleteLikeNews, likeComment, deleteLikeComment, getNewsComments
+  deleteLikeNews,
+  likeComment,
+  deleteLikeComment,
+  getNewsComments
 } from "../../api/forums";
 import {
+  emptyOkSchema,
   idSchema,
   limitSchema,
   offsetSchema,
   outputOkSchema
 } from "@workquest/database-models/lib/schemes";
 import {
-  forumLikeNewsSchemes,
-  forumNewsCommentsSchemes,
   getForumNewsSchema,
   textTitleSchema
 } from "@workquest/database-models/lib/schemes/news";
-import { commentIdOrNullSchema, forumLikeCommentSchemes, forumNewsCommentSchema } from "@workquest/database-models/lib/schemes/comment";
+import { commentIdOrNullSchema, forumNewsCommentSchema } from "@workquest/database-models/lib/schemes/comment";
 import { mediaIdsSchema } from "@workquest/database-models/lib/schemes/media";
+import { comments } from "@workquest/database-models/src/schemes/news";
 
 const newsIdSchema = idSchema.label("NewsId");
-const likeIdSchema = idSchema.label("likeId");
-const commentLikeIdSchema = idSchema.label("commentLikeId");
+const commentIdSchema = idSchema.label("CommentId");
 
 export default [{
   method: "GET",
@@ -48,7 +50,7 @@ export default [{
   path: "/v1/forum/news/create",
   handler: createNews,
   options: {
-    id: "v1.forum.news.create",
+    id: "v1.forum.createNews",
     tags: ["api", "forum"],
     description: "Create new news",
     validate: {
@@ -66,7 +68,7 @@ export default [{
   path: "/v1/forum/news/{newsId}/comment/send",
   handler: sendComment,
   options: {
-    id: "v1.forum.sendComment",
+    id: "v1.forum.news.sendComment",
     tags: ["api", "forum"],
     description: "Send comment",
     validate: {
@@ -87,7 +89,7 @@ export default [{
   path: "/v1/forum/news/{newsId}/like",
   handler: likeNews,
   options: {
-    id: "v1.forum.likeNews",
+    id: "v1.forum.news.likeNews",
     tags: ["api", "forum"],
     description: "Like news",
     validate: {
@@ -96,7 +98,7 @@ export default [{
       }).label("LikeNewsParams")
     },
     response: {
-      schema: outputOkSchema(forumLikeNewsSchemes).label("forumLikeNewsSchemesResponse")
+      schema: emptyOkSchema
     }
   }
 }, {
@@ -109,11 +111,11 @@ export default [{
     description: "Delete like",
     validate: {
       params: Joi.object({
-        likeId: likeIdSchema.required()
+        newsId: newsIdSchema.required()
       }).label("DeleteLikeParams")
     },
     response: {
-      schema: outputOkSchema(forumLikeNewsSchemes).label("forumLikeNewsSchemesResponse")
+      schema: emptyOkSchema
     }
   }
 }, {
@@ -121,16 +123,16 @@ export default [{
   path: "/v1/forum/comment/{commentId}/like",
   handler: likeComment,
   options: {
-    id: "v1.forum.likeComment",
+    id: "v1.forum.news.comment.likeComment",
     tags: ["api", "forum"],
     description: "Like comment",
     validate: {
       params: Joi.object({
-        commentId: commentLikeIdSchema.required()
+        commentId: commentIdSchema.required()
       }).label("LikeCommentParams")
     },
     response: {
-      schema: outputOkSchema(forumLikeCommentSchemes).label("forumLikeCommentSchemesResponse")
+      schema: emptyOkSchema
     }
   }
 }, {
@@ -138,16 +140,16 @@ export default [{
   path: "/v1/forum/comment/{likeCommentId}/like",
   handler: deleteLikeComment,
   options: {
-    id: "v1.forum.comment.deleteLike",
+    id: "v1.forum.news.comment.deleteLike",
     tags: ["api", "forum"],
     description: "Delete like in comment",
     validate: {
       params: Joi.object({
-        likeCommentId: likeIdSchema.required()
+        commentId: commentIdSchema.required()
       }).label("DeleteLikeCommentParams")
     },
     response: {
-      schema: outputOkSchema(forumLikeCommentSchemes).label("forumLikeCommentSchemesResponse")
+      schema: emptyOkSchema
     }
   }
 }, {
@@ -155,7 +157,7 @@ export default [{
   path: "/v1/forum/news/{newsId}/comments",
   handler: getNewsComments,
   options: {
-    id: "v1.forum.getComments",
+    id: "v1.forum.news.getComments",
     tags: ["api", "forum"],
     description: "Get comments on news",
     validate: {
@@ -168,7 +170,7 @@ export default [{
       }).label("GetNewsCommentsQuery")
     },
     response: {
-      schema: outputOkSchema(forumNewsCommentsSchemes).label("forumNewsCommentsSchemesResponse")
+      schema: outputOkSchema(comments).label("ForumNewsCommentsSchemesResponse")
     }
   }
 }];
