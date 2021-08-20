@@ -14,15 +14,15 @@ import {
   idSchema,
   limitSchema,
   offsetSchema,
-  outputOkSchema
+  outputOkSchema,
+  textTitleSchema,
+  commentsSchema,
+  commentSchema,
+  newsAllSchema,
+  mediaIdsSchema,
+  newsSchema,
+  commentIdOrNullSchema
 } from "@workquest/database-models/lib/schemes";
-import {
-  getForumNewsSchema,
-  textTitleSchema
-} from "@workquest/database-models/lib/schemes/news";
-import { commentIdOrNullSchema, forumNewsCommentSchema } from "@workquest/database-models/lib/schemes/comment";
-import { mediaIdsSchema } from "@workquest/database-models/lib/schemes/media";
-import { comments } from "@workquest/database-models/src/schemes/news";
 
 const newsIdSchema = idSchema.label("NewsId");
 const commentIdSchema = idSchema.label("CommentId");
@@ -42,7 +42,7 @@ export default [{
       }).label("GetNewsQuery")
     },
     response: {
-      schema: outputOkSchema(getForumNewsSchema).label("forumNewsSchemaResponse")
+      schema: outputOkSchema(newsAllSchema).label("newsAllSchemaResponse")
     }
   }
 }, {
@@ -60,7 +60,7 @@ export default [{
       }).label("CreateNewsPayload")
     },
     response: {
-      schema: outputOkSchema(getForumNewsSchema).label("forumNewsSchemaResponse")
+      schema: outputOkSchema(newsSchema).label("newsSchemaResponse")
     }
   }
 }, {
@@ -81,7 +81,7 @@ export default [{
       }).label("SendCommentPayload")
     },
     response: {
-      schema: outputOkSchema(forumNewsCommentSchema).label("forumNewsCommentSchemaResponse")
+      schema: outputOkSchema(commentSchema).label("commentSchemaResponse")
     }
   }
 }, {
@@ -170,7 +170,7 @@ export default [{
       }).label("GetNewsCommentsQuery")
     },
     response: {
-      schema: outputOkSchema(comments).label("ForumNewsCommentsSchemesResponse")
+      schema: outputOkSchema(commentsSchema).label("CommentsResponse")
     }
   }
 }];
