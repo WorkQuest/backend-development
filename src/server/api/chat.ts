@@ -157,10 +157,9 @@ export async function sendMessageToUser(r) {
 
   await transaction.commit();
 
-  await r.server.publish('/notifications', {
-    type: 'message.new',
-    data: message,
-    userId: r.params.userId
+  await r.server.publish('/notifications/chat', {
+    notificationOwnerUserId: r.auth.credentials.id,
+    chatId: chat.id, message
   });
 
   return output();
@@ -190,9 +189,9 @@ export async function sendMessageToChat(r) {
 
   await transaction.commit();
 
-  await r.server.publish('/notifications', {
-    type: 'message.new',
-    data: message,
+  await r.server.publish('/notifications/chat', {
+    notificationOwnerUserId: r.auth.credentials.id,
+    chatId: chat.id, message,
   });
 
   return output();
@@ -253,7 +252,7 @@ export async function leaveFromGroupChat(r) {
   await chat.mustHaveMember(r.auth.credentials.id);
 
   if (chat.ownerUserId === r.auth.credentials.id) {
-    // TODO
+    return error(Errors.Forbidden, "User is chat owner", {}); // TODO
     // const firsMember = await User.findOne({
     //   include: [{
     //     model: ChatMember.unscoped(),
