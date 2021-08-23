@@ -4,6 +4,8 @@ import { Errors } from "../utils/errors";
 import { DisputeStatus, QuestDispute } from "@workquest/database-models/lib/models/QuestDispute";
 import { Op } from "sequelize";
 
+
+//TODO test!!!
 export async function createDispute(r) {
   const quest = await Quest.findByPk(r.params.questId);
   if(!quest) {
@@ -19,6 +21,7 @@ export async function createDispute(r) {
   if(dispute) {
     return error(Errors.AlreadyExists,'Dispute for this quest already exists',{})
   }
+
   let dayInMilliseconds = 86400000
   if(quest.createdAt.getMilliseconds() + dayInMilliseconds < Date.now()) {
     return error(Errors.InvalidDate, 'Can open dispute after 24 hours after creating quest', {});
