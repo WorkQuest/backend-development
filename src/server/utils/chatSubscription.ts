@@ -1,4 +1,4 @@
-import { ChatMember } from "@workquest/database-models/src/models";
+import { ChatMember } from "@workquest/database-models/lib/models";
 
 export const chatNotificationsFilter = async function (path, notification, options): Promise<boolean> {
   if (notification.notificationOwnerUserId === options.credentials.id) {
