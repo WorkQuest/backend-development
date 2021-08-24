@@ -1,5 +1,6 @@
 import { output } from "../utils";
 import { searchFields } from './quest';
+import { User, Quest } from "@workquest/database-models/lib/models";
 
 function makeWhere(query) {
   const like = query.q ? ` LIKE '%${query.q}%' ` : '';
@@ -64,16 +65,13 @@ export async function listMapPoints(r) {
   let where = makeWhere(r);
   let order = r.query.sort ? makeOrderBy(r.query.sort) : '';
   let query = `
-  SELECT 
-    id, "userId", status,
-    priority, category, location,
-    title, description, price,
-    "adType", "createdAt", "updatedAt"
+  SELECT *
   FROM public."Quests"
-  ${where}
-  ${order}`;
+  LEFT JOIN public."Users" "user"
+  ON "Quests"."userId" = "user".id
 
-  const [results, metadata] = await r.server.app.db.query(query, {
+ `;
+  const [results, ] = await r.server.app.db.query(query, {
     replacements: {
       northLongitude: r.query.north.longitude,
       northLatitude: r.query.north.latitude,
