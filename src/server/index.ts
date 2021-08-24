@@ -13,6 +13,7 @@ import routes from "./routes";
 import config from "./config/config";
 import * as Qs from "qs";
 import { handleValidationError, responseHandler } from "./utils";
+import { chatNotificationsFilter } from "./utils/chatSubscription";
 import { tokenValidate } from "./utils/auth";
 import SwaggerOptions from "./config/swagger";
 import { pinoConfig } from "./config/pino";
@@ -90,7 +91,7 @@ const init = async () => {
     { plugin: Pino, options: pinoConfig(false) },
     { plugin: HapiSwagger, options: SwaggerOptions }
   ]);
-  server.app.db = await initDatabase(config.dbLink, false, true);
+  server.app.db = await initDatabase(config.dbLink, true, true);
   server.app.scheduler = await run({
     connectionString: config.dbLink,
     concurrency: 5,
@@ -98,10 +99,8 @@ const init = async () => {
     taskDirectory: `${__dirname}/jobs` // Папка с исполняемыми тасками.
   });
 
-  server.subscription('/notifications', {
-    filter: async function(path, message, options): Promise<boolean> {
-      return message.userId ? (message.userId === options.credentials.id) : true;
-    }
+  server.subscription('/notifications/chat', {
+    filter: chatNotificationsFilter
   });
 
   // JWT Auth
