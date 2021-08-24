@@ -72,6 +72,7 @@ export async function createQuest(r) {
     status: QuestStatus.Created,
     category: r.payload.category,
     priority: r.payload.priority,
+    locationName: r.payload.locationName,
     location: r.payload.location,
     locationPostGIS: transformToGeoPostGIS(r.payload.location),
     title: r.payload.title,
