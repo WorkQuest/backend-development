@@ -57,7 +57,7 @@ export async function getQuest(r) {
 
 export async function createQuest(r) {
   const user = r.auth.credentials;
-  //const medias = await getMedias(r.payload.medias);
+  const medias = await getMedias(r.payload.medias);
   const transaction = await r.server.app.db.transaction();
 
   user.mustHaveRole(UserRole.Employer);
@@ -67,6 +67,7 @@ export async function createQuest(r) {
     status: QuestStatus.Created,
     category: r.payload.category,
     priority: r.payload.priority,
+    locationName: r.payload.locationName,
     location: r.payload.location,
     locationPostGIS: transformToGeoPostGIS(r.payload.location),
     title: r.payload.title,
@@ -74,7 +75,7 @@ export async function createQuest(r) {
     price: r.payload.price,
   }, { transaction });
 
-  //await quest.$set('medias', medias, { transaction });
+  await quest.$set('medias', medias, { transaction });
 
   await transaction.commit();
 

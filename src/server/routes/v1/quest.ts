@@ -31,7 +31,7 @@ import {
   questsQuerySchema,
   mediaIdsSchema,
   questsWithCountSchema,
-  questsSchema,
+  questsSchema, questFullSchema, locationNameSchema
 } from "@workquest/database-models/lib/schemes";
 
 const questIdSchema = idSchema.label('QuestId');
@@ -47,11 +47,11 @@ export default [{
     description: "Get quest",
     validate: {
       params: Joi.object({
-        questId: questIdSchema
+        questId: questIdSchema,
       }).label('GetQuestParams')
     },
     response: {
-      schema: outputOkSchema(questSchema).label("QuestResponse"),
+      schema: outputOkSchema(questFullSchema).label("QuestResponse"),
     }
   }
 }, {
@@ -66,6 +66,7 @@ export default [{
       payload: Joi.object({
         category: questCategorySchema.required(),
         priority: questPrioritySchema.required(),
+        locationName: locationNameSchema,
         location: locationSchema.required(),
         title: questTitleSchema.required(),
         description: questDescriptionSchema.required(),
@@ -110,6 +111,7 @@ export default [{
       payload: Joi.object({
         category: questCategorySchema,
         priority: questPrioritySchema,
+        locationName: locationNameSchema,
         location: locationSchema,
         title: questTitleSchema,
         description: questDescriptionSchema,

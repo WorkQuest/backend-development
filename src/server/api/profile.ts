@@ -30,6 +30,15 @@ export async function getMe(r) {
   }));
 }
 
+export async function getUser(r) {
+  const user = await User.findByPk(r.params.userId);
+  if(!user) {
+    return error(Errors.NotFound, 'Account is not found', {});
+  }
+
+  return output(user);
+}
+
 export async function setRole(r) {
   const user = await User.findByPk(r.auth.credentials.id);
 

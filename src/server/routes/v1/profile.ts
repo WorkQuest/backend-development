@@ -3,10 +3,10 @@ import {
   changePassword,
   confirmPhoneNumber,
   editProfile,
-  getMe,
+  getMe, getUser,
   sendCodeOnPhoneNumber,
   setRole
-} from '../../api/profile';
+} from "../../api/profile";
 import {
   outputOkSchema,
   emptyOkSchema,
@@ -28,6 +28,23 @@ export default [{
     id: "v1.profile.getMe",
     tags: ["api", "profile"],
     description: "Get info about current user",
+    response: {
+      schema: outputOkSchema(userSchema).label("UserResponse")
+    }
+  }
+}, {
+  method: "GET",
+  path: "/v1/profile/{userId}",
+  handler: getUser,
+  options: {
+    id: "v1.profile.getUser",
+    tags: ["api", "profile"],
+    description: "Get info about user",
+    validate: {
+      params: Joi.object({
+        userId: idSchema,
+      }).label('GetUserParams')
+    },
     response: {
       schema: outputOkSchema(userSchema).label("UserResponse")
     }
