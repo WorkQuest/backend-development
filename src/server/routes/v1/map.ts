@@ -8,7 +8,8 @@ import {
   questPrioritySchema,
   questsListSortSchema,
   questStatusSchema,
-  questsSchema, questFullSchema
+  questsSchema, questFullSchema,
+  limitSchema, offsetSchema, questsQuerySchema
 } from "@workquest/database-models/lib/schemes";
 
 export default [{
@@ -41,14 +42,7 @@ export default [{
     tags: ["api", "map"],
     description: "Get list points in map",
     validate: {
-      query: Joi.object({
-        north: locationSchema.label('NorthLocation').required(),
-        south: locationSchema.label('SouthLocation').required(),
-        q: searchSchema,
-        priority: questPrioritySchema,
-        status: questStatusSchema,
-        sort: questsListSortSchema,
-      }).label('ListPointsQuery'),
+      query: questsQuerySchema
     },
     response: {
       schema: outputOkSchema(questFullSchema).label('QuestsResponse'),

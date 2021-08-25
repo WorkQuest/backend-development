@@ -90,7 +90,7 @@ const init = async () => {
     { plugin: Pino, options: pinoConfig(false) },
     { plugin: HapiSwagger, options: SwaggerOptions }
   ]);
-  server.app.db = await initDatabase(config.dbLink, false, true);
+  server.app.db = await initDatabase(config.dbLink, true, true);
   server.app.scheduler = await run({
     connectionString: config.dbLink,
     concurrency: 5,
