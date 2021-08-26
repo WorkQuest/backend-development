@@ -30,6 +30,7 @@ export default {
     exposeHeaders: process.env.CORS_EXPOSE_HEADERS ? JSON.parse(process.env.CORS_EXPOSE_HEADERS) : ["content-type", "content-length"]
   },
   smtp: {
+    sender: process.env.SMTP_SENDER,
     host: process.env.SMTP_HOST,
     port: Number(process.env.SMTP_PORT),
     secure: process.env.SMTP_SECURE === "true",
@@ -38,5 +39,47 @@ export default {
       pass: process.env.SMTP_PASSWORD
     }
   },
-  baseUrl: process.env.BASE_URL
+  sumsub: {
+    appToken: process.env.SUMSUB_APP_TOKEN,
+    secretKey: process.env.SUMSUB_SECRET_KEY,
+    baseURL: process.env.SUMSUB_BASE_URL,
+    accessTokenTTL: process.env.SUMSUB_ACCESS_TOKEN_TTL,
+  },
+  twilio: {
+    accountSid: process.env.TWILIO_ACCOUNT_SID,
+    authToken: process.env.TWILIO_AUTH_TOKEN,
+    phoneNumberSender: process.env.TWILIO_PHONE_NUMBER_SENDER
+  },
+  socialNetworks: {
+    facebook: {
+      id: process.env.FACEBOOK_CLIENT_ID,
+      secretKey: process.env.FACEBOOK_SECRET_KEY,
+      cookiePassword: process.env.FACEBOOK_COOKIE_PASSWORD
+    },
+    google: {
+      id: process.env.GOOGLE_CLIENT_ID,
+      secretKey: process.env.GOOGLE_SECRET_KEY,
+      cookiePassword: process.env.GOOGLE_COOKIE_PASSWORD
+    },
+    twitter: {
+      id: process.env.TWITTER_CLIENT_ID,
+      secretKey: process.env.TWITTER_SECRET_KEY,
+      cookiePassword: process.env.TWITTER_COOKIE_PASSWORD
+    },
+    linkedin: {
+      id: process.env.LINKEDIN_CLIENT_ID,
+      secretKey: process.env.LINKEDIN_SECRET_KEY,
+      cookiePassword: process.env.LINKEDIN_COOKIE_PASSWORD
+    },
+  },
+  cdn: {
+    accessKeyId: process.env.CDN_ACCESS_KEY_ID,
+    secretAccessKey: process.env.CDN_SECRET_ACCESS_KEY,
+    endpoint: process.env.CDN_END_POINT,
+    bucket: process.env.CDN_BUCKET,
+    pubUrl: process.env.CDN_PUB_END_POINT,
+    expiresIn: parseInt(process.env.CDN_EXPIRES_IN),
+  },
+  baseUrl: process.env.BASE_URL,
+  debug: process.env.DEBUG === "true"
 };

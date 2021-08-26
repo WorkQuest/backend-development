@@ -1,8 +1,18 @@
 import * as Joi from "joi";
-import { confirmEmail, login, register } from "../../api/auth";
-import { emailSchema, firstNameSchema, lastNameSchema, passwordSchema, userRoleSchema } from "../../schemes/user";
-import { emptyOkSchema, hexTokenSchema, jwtTokens, outputOkSchema } from "../../schemes";
-import { UserRole } from "../../models/User";
+import { confirmEmail, getLoginViaSocialNetworkHandler, login, refreshTokens, register } from "../../api/auth";
+import {
+  outputOkSchema,
+  userEmailSchema,
+  userFirstNameSchema,
+  userLastNameSchema,
+  userPasswordSchema,
+  userRoleSchema,
+  userStatusSchema,
+  emptyOkSchema,
+  hexTokenSchema,
+  tokensWithStatus,
+  totpSchema,
+} from "@workquest/database-models/lib/schemes";
 
 export default [{
   method: "POST",
@@ -15,15 +25,14 @@ export default [{
     description: "Register new user",
     validate: {
       payload: Joi.object({
-        firstName: firstNameSchema,
-        lastName: lastNameSchema,
-        email: emailSchema,
-        password: passwordSchema,
-        role: userRoleSchema.default(UserRole.Worker)
+        firstName: userFirstNameSchema.required(),
+        lastName: userLastNameSchema.required(),
+        email: userEmailSchema.required(),
+        password: userPasswordSchema.required()
       }).label("AuthRegisterPayload")
     },
     response: {
-      schema: emptyOkSchema
+      schema: outputOkSchema(tokensWithStatus).label("TokensWithStatusResponse")
     }
   }
 }, {
@@ -31,17 +40,18 @@ export default [{
   path: "/v1/auth/confirm-email",
   handler: confirmEmail,
   options: {
-    auth: false,
+    auth: 'jwt-access',
     id: "v1.auth.confirmEmail",
     tags: ["api", "auth"],
     description: "Confirm email",
     validate: {
       payload: Joi.object({
-        confirmCode: hexTokenSchema
+        confirmCode: hexTokenSchema.required(),
+        role: userRoleSchema
       }).label("AuthConfirmEmailPayload")
     },
     response: {
-      schema: emptyOkSchema
+      schema: outputOkSchema(userStatusSchema).label("UserStatus")
     }
   }
 }, {
@@ -55,13 +65,146 @@ export default [{
     description: "Login user",
     validate: {
       payload: Joi.object({
-        email: emailSchema,
-        password: passwordSchema,
-        role: userRoleSchema
+        email: userEmailSchema.required(),
+        password: userPasswordSchema.required(),
+        totp: totpSchema
       }).label("AuthLoginPayload")
     },
     response: {
-      schema: outputOkSchema(jwtTokens).label("AuthLoginResponse")
+      schema: outputOkSchema(tokensWithStatus).label("TokensWithStatusResponse")
+    }
+  }
+}, {
+  method: "GET",
+  path: "/v1/auth/login/facebook",
+  handler: getLoginViaSocialNetworkHandler("redirect"),
+  options: {
+    auth: {
+      strategy: "facebook"
+    },
+    id: "v1.auth.login.facebook",
+    tags: ["api", "auth"],
+    description: "Login user through Facebook",
+    response: {
+      schema: emptyOkSchema
+    }
+  }
+}, {
+  method: "GET",
+  path: "/v1/auth/login/google",
+  handler: getLoginViaSocialNetworkHandler("redirect"),
+  options: {
+    auth: {
+      strategy: "google"
+    },
+    id: "v1.auth.login.google",
+    tags: ["api", "auth"],
+    description: "Login user through Google",
+    response: {
+      schema: emptyOkSchema
+    }
+  }
+}, {
+  method: "GET",
+  path: "/v1/auth/login/linkedin",
+  handler: getLoginViaSocialNetworkHandler("redirect"),
+  options: {
+    auth: {
+      strategy: "linkedin"
+    },
+    id: "v1.auth.login.linkedin",
+    tags: ["api", "auth"],
+    description: "Login user through Linkedin",
+    response: {
+      schema: emptyOkSchema
+    }
+  }
+}, {
+  method: "GET",
+  path: "/v1/auth/login/twitter",
+  handler: getLoginViaSocialNetworkHandler("redirect"),
+  options: {
+    auth: {
+      strategy: "twitter"
+    },
+    id: "v1.auth.login.twitter",
+    tags: ["api", "auth"],
+    description: "Login user through Twitter",
+    response: {
+      schema: emptyOkSchema
+    }
+  }
+}, {
+  method: "GET",
+  path: "/v1/auth/login/facebook/token",
+  handler: getLoginViaSocialNetworkHandler("token"),
+  options: {
+    auth: {
+      strategy: "facebook"
+    },
+    id: "v1.auth.login.facebookTokens",
+    tags: ["api", "auth"],
+    description: "Login user through Facebook (returns tokens)",
+    response: {
+      schema: outputOkSchema(tokensWithStatus).label('TokensWithStatusResponse')
+    }
+  }
+}, {
+  method: "GET",
+  path: "/v1/auth/login/google/token",
+  handler: getLoginViaSocialNetworkHandler("token"),
+  options: {
+    auth: {
+      strategy: "google"
+    },
+    id: "v1.auth.login.googleTokens",
+    tags: ["api", "auth"],
+    description: "Login user through Google (returns tokens)",
+    response: {
+      schema: outputOkSchema(tokensWithStatus).label('TokensWithStatusResponse')
+    }
+  }
+}, {
+  method: "GET",
+  path: "/v1/auth/login/linkedin/token",
+  handler: getLoginViaSocialNetworkHandler("token"),
+  options: {
+    auth: {
+      strategy: "linkedin"
+    },
+    id: "v1.auth.login.linkedinTokens",
+    tags: ["api", "auth"],
+    description: "Login user through Linkedin (returns tokens)",
+    response: {
+      schema: outputOkSchema(tokensWithStatus).label('TokensWithStatusResponse')
+    }
+  }
+}, {
+  method: "GET",
+  path: "/v1/auth/login/twitter/token",
+  handler: getLoginViaSocialNetworkHandler("token"),
+  options: {
+    auth: {
+      strategy: "twitter"
+    },
+    id: "v1.auth.login.twitterTokens",
+    tags: ["api", "auth"],
+    description: "Login user through Twitter (returns tokens)",
+    response: {
+      schema: outputOkSchema(tokensWithStatus).label('TokensWithStatusResponse')
+    }
+  }
+}, {
+  method: "POST",
+  path: "/v1/auth/refresh-tokens",
+  handler: refreshTokens,
+  options: {
+    auth: "jwt-refresh",
+    id: "v1.auth.refreshTokens",
+    tags: ["api", "auth"],
+    description: "Refresh auth tokens",
+    response: {
+      schema: outputOkSchema(tokensWithStatus).label("TokensWithStatusResponse")
     }
   }
 }];

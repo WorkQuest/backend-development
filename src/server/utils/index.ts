@@ -1,6 +1,5 @@
 import { v4 as uuidv4 } from "uuid";
 import { Boom } from "@hapi/boom";
-import * as speakeasy from "speakeasy";
 import * as crypto from "crypto";
 
 export function getUUID(): string {
@@ -28,14 +27,6 @@ export function error(code: number, msg: string, data: object): Boom {
       api: true
     },
     statusCode: Math.floor(code / 1000)
-  });
-}
-
-export function totpValidate(totp: string, secret: string): boolean{
-  return speakeasy.totp.verify({
-    secret: secret,
-    encoding: 'base32',
-    token: Number(totp)
   });
 }
 
@@ -77,6 +68,10 @@ export function responseHandler(r, h) {
 
 export function getRandomHexToken(): string {
   return crypto.randomBytes(20).toString("hex");
+}
+
+export function getRandomCodeNumber(): number {
+  return crypto.randomInt(100000, 999999);
 }
 
 export async function handleValidationError(r, h, err) {

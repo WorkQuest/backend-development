@@ -3,7 +3,6 @@
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "outDir": "build",
-    "rootDir": "src",
     "allowJs": false,
     "target": "es6",
     "sourceMap": true,
@@ -13,5 +12,9 @@
     "removeComments": true
   },
   "include": ["./src/**/*.ts"],
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules"],
+  "rootDirs": [
+    "src",
+    "test"
+  ]
 }

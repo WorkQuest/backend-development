@@ -1,9 +1,13 @@
 import * as jwt from 'jsonwebtoken';
 import config from '../config/config';
 import { error } from './index';
-import { User } from '../models/User';
-import { Session } from '../models/Session';
 import { Errors } from './errors';
+import {
+  User,
+  UserStatus,
+  Session,
+} from "@workquest/database-models/lib/models";
+
 
 
 export const generateJwt = (data: object) => {
@@ -26,18 +30,21 @@ export const decodeJwt = async (token: string, secret: string) => {
 export type validateFunc = (r, token: string) => Promise<any>;
 
 // Fabric which returns token validate function depending on token type
-export function tokenValidate(tokenType: 'access' | 'refresh'): validateFunc {
+export function tokenValidate(tokenType: 'access' | 'refresh', allowedUnconfirmedRoutes: string[] = []): validateFunc {
   return async function(r, token: string) {
-    let data = await decodeJwt(token, config.auth.jwt[tokenType].secret);
+    const data = await decodeJwt(token, config.auth.jwt[tokenType].secret);
 
-    let { user } = await Session.findByPk(data.id, {
+    const { user } = await Session.findByPk(data.id, {
       include: [{model: User}]
     });
 
-    if (user) {
-      return { isValid: true, credentials: user, artifacts: { token, type: tokenType } };
-    } else {
+    if (!user) {
       throw error(Errors.SessionNotFound, 'User not found', {});
     }
+    if (user.status === UserStatus.Unconfirmed && !allowedUnconfirmedRoutes.includes(r.route.path)) {
+      throw error(Errors.UnconfirmedUser, 'Unconfirmed user', {});
+    }
+
+    return { isValid: true, credentials: user, artifacts: { token, type: tokenType } };
   }
 }

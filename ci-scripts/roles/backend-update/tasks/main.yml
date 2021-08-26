@@ -30,9 +30,9 @@
   become: yes
 
 - name: Install packages based on package.json
-  npm:
-    path: '{{ backend_bin }}'
-    state: present
+  shell: npm install
+  args:
+    chdir: '{{ backend_bin }}'
 
 - name: Build code
   shell: npm run build
@@ -43,6 +43,22 @@
   template:
     src: ./{{ backend_env }}.j2
     dest: '{{ backend_bin }}/{{ backend_env }}'
+
+- name: Generate pm2 app.json
+  template:
+    src: ./app.json.j2
+    dest: '{{ backend_bin }}/app.json'
+
+- name: Copy or generate db_config.json file
+  template:
+    src: ./{{ backend_db_config_json }}.j2
+    dest: '{{ backend_bin }}/{{ backend_db_config_json }}'
+
+- name: Migrate database
+  shell: npx sequelize-cli db:migrate
+  args:
+    chdir: '{{ backend_bin }}'
+  ignore_errors: yes
 
 - name: Start/reload backend process
   shell: pm2 reload app.json
