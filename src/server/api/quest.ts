@@ -192,27 +192,27 @@ export async function startQuest(r) {
     status: QuestStatus.Active
   });
 
-  // if (!questResponse) {
-  //   return error(Errors.NotFound, "Assigned user did not respond on quest", {});
-  // }
-  // if (questResponse.type === QuestsResponseType.Response) {
-  //   questResponse.mustHaveStatus(QuestsResponseStatus.Open);
-  // } else if (questResponse.type === QuestsResponseType.Invite) {
-  //   questResponse.mustHaveStatus(QuestsResponseStatus.Accepted);
-  // }
-  //
-  // await quest.update({ assignedWorkerId: assignedWorker.id, status: QuestStatus.WaitWorker },
-  //   { transaction });
-  //
-  // await QuestsResponse.update({ status: QuestsResponseStatus.Closed }, {
-  //   where: {
-  //     questId: quest.id,
-  //     id: {
-  //       [Op.ne]: questResponse.id
-  //     }
-  // }, transaction });
-  //
-  // await transaction.commit()
+  if (!questResponse) {
+    return error(Errors.NotFound, "Assigned user did not respond on quest", {});
+  }
+  if (questResponse.type === QuestsResponseType.Response) {
+    questResponse.mustHaveStatus(QuestsResponseStatus.Open);
+  } else if (questResponse.type === QuestsResponseType.Invite) {
+    questResponse.mustHaveStatus(QuestsResponseStatus.Accepted);
+  }
+
+  await quest.update({ assignedWorkerId: assignedWorker.id, status: QuestStatus.WaitWorker },
+    { transaction });
+
+  await QuestsResponse.update({ status: QuestsResponseStatus.Closed }, {
+    where: {
+      questId: quest.id,
+      id: {
+        [Op.ne]: questResponse.id
+      }
+  }, transaction });
+
+  await transaction.commit()
 
   return output();
 }
