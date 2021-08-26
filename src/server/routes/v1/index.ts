@@ -9,11 +9,8 @@ import review from './review';
 import restorePassword from './restorePassword';
 import portfolio from './portfolio';
 import totp from './totp';
-<<<<<<< HEAD
 import disputes from "./disputes";
-=======
 import chat from "./chat";
->>>>>>> 561d68f61349e03aca6cf2ac79190386a4838140
 
 export default [
   ...profile,
@@ -27,9 +24,6 @@ export default [
   ...restorePassword,
   ...portfolio,
   ...totp,
-<<<<<<< HEAD
   ...disputes,
-=======
   ...chat,
->>>>>>> 561d68f61349e03aca6cf2ac79190386a4838140
 ];

@@ -1,7 +1,7 @@
 import { Quest, QuestStatus } from "@workquest/database-models/lib/models";
 import { error } from "../utils";
 import { Errors } from "../utils/errors";
-import { Disputes, DisputeStatus } from "@workquest/database-models/lib/models/Disputes";
+import { QuestDispute, DisputeStatus } from "@workquest/database-models/lib/models/QuestDispute";
 import disputes from "../routes/v1/disputes";
 
 
@@ -22,7 +22,7 @@ export async function createDispute(r) {
   //Когда воркер может открыть диспут?
   quest.mustHaveStatus(QuestStatus.Dispute)
 
-  const newDispute = await Disputes.create({
+  const newDispute = await QuestDispute.create({
     userId: quest.userId,
     assignedWorkerId: quest.assignedWorkerId,
     questId: quest.id,
