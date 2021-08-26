@@ -10,7 +10,7 @@ import {
   QuestsResponse,
   QuestsResponseStatus,
   QuestsResponseType,
-  StarredQuests,
+  StarredQuests, Filter
 } from "@workquest/database-models/lib/models";
 import { transformToGeoPostGIS } from "@workquest/database-models/lib/utils/quest" // TODO to index.ts
 
@@ -64,7 +64,6 @@ export async function createQuest(r) {
   const user = r.auth.credentials;
   const medias = await getMedias(r.payload.medias);
   const transaction = await r.server.app.db.transaction();
-
   user.mustHaveRole(UserRole.Employer);
 
   const quest = await Quest.create({
@@ -80,6 +79,12 @@ export async function createQuest(r) {
   }, { transaction });
 
   await quest.$set('medias', medias, { transaction });
+
+  // const filter : any = await (addFilter(quest.id,r),{transaction})
+  // console.log(JSON.stringify(filter));
+  // // await quest.$set('filter', filter, { transaction });
+
+  await addFilter(quest.id,r)
 
   await transaction.commit();
 
@@ -375,4 +380,32 @@ export async function removeStar(r) {
   });
 
   return output();
+}
+
+export async function addFilter (quest,r){
+  const filter = []
+  const check = r.payload.filter
+  let create
+  if (check.length < 4){
+    for (let i = 0; i < check.length; i++){
+      if (check[i].filterSkills.length < 6){
+        for (let a = 0; a < check[i].filterSkills.length; a++){
+          create = await Filter.create({
+            questId: quest,
+            category: check[i].filterCategory,
+            skills: check[i].filterSkills[a]
+          })
+          if (!create){
+            return error(Errors.NotFound, "Filter don`t create", {});
+          }
+          filter.push(create)
+        }
+      }
+    }
+  }
+  if (!filter){
+    return error(Errors.NotFound, "Filter not found", {});
+  }
+  console.log(filter);
+  return filter;
 }

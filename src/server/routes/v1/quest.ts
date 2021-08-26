@@ -31,7 +31,8 @@ import {
   questsQuerySchema,
   mediaIdsSchema,
   questsSchema,
-  questsForGetWithCountSchema
+  questsForGetWithCountSchema,
+  filterSchema
 } from "@workquest/database-models/lib/schemes";
 
 const questIdSchema = idSchema.label('QuestId');
@@ -72,6 +73,7 @@ export default [{
         price: questPriceSchema.required(),
         medias: mediaIdsSchema.required().unique().label('MediaIds'),
         adType: questAdTypeSchema,
+        filter: filterSchema.required()
       }).label("CreateQuestPayload")
     },
     response: {
