@@ -8,7 +8,7 @@ import {
   User,
   UserRole,
   UserStatus,
-  Media,
+  Media, QuestsStatistic
 } from "@workquest/database-models/lib/models";
 import {
   userAdditionalInfoEmployerSchema,
@@ -31,7 +31,12 @@ export async function getMe(r) {
 }
 
 export async function getUser(r) {
-  const user = await User.findByPk(r.params.userId);
+  const user = await User.findByPk(r.params.userId, {
+    include: {
+      model: QuestsStatistic,
+      as: 'questsStatistic'
+    }
+  });
   if(!user) {
     return error(Errors.NotFound, 'Account is not found', {});
   }
