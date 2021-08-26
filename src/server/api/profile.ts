@@ -14,6 +14,8 @@ import {
   userAdditionalInfoEmployerSchema,
   userAdditionalInfoWorkerSchema,
 } from "@workquest/database-models/lib/schemes";
+import { addFilter } from "./filter";
+import quest from "../routes/v1/quest";
 
 function getAdditionalInfoSchema(role: UserRole): Joi.Schema {
   if (role === UserRole.Employer)
@@ -71,6 +73,8 @@ export async function editProfile(r) {
   await user.update({
     ...r.payload
   });
+
+  await addFilter(null,user.id,r,null)
 
   return output(
     await User.findByPk(user.id)

@@ -18,6 +18,7 @@ import {
   userPasswordSchema,
   userRoleSchema,
   userSchema,
+  filterSchema
 } from "@workquest/database-models/lib/schemes";
 
 export default [{
@@ -62,6 +63,7 @@ export default [{
         avatarId: idSchema.allow(null).required().label("MediaId"),
         firstName: userFirstNameSchema.required(),
         lastName: userLastNameSchema.required(),
+        filter: filterSchema.required(),
         additionalInfo: Joi.alternatives(
           userAdditionalInfoEmployerSchema.options({ presence: "required" }),
           userAdditionalInfoWorkerSchema.options({ presence: "required" })
