@@ -12,7 +12,8 @@ import {
   QuestsResponseType,
   StarredQuests, Filter
 } from "@workquest/database-models/lib/models";
-import { transformToGeoPostGIS } from "@workquest/database-models/lib/utils/quest" // TODO to index.ts
+import { transformToGeoPostGIS } from "@workquest/database-models/lib/utils/quest"
+import { addFilter } from "./filter"; // TODO to index.ts
 
 export const searchFields = [
   "title",
@@ -50,6 +51,11 @@ export async function getQuest(r) {
       as: "response",
       where: { workerId: r.auth.credentials.id },
       required: false
+    },{
+      model: Filter,
+      as: 'filter',
+      where: {questId: r.params.questId},
+      required: false
     }]
   });
 
@@ -80,11 +86,8 @@ export async function createQuest(r) {
 
   await quest.$set('medias', medias, { transaction });
 
-  // const filter : any = await (addFilter(quest.id,r),{transaction})
-  // console.log(JSON.stringify(filter));
-  // // await quest.$set('filter', filter, { transaction });
 
-  await addFilter(quest.id,r)
+  await addFilter(quest.id,null,r,transaction)
 
   await transaction.commit();
 
@@ -276,6 +279,7 @@ export async function getQuests(r) {
     ...(r.query.status && { status: r.query.status }),
     ...(r.query.adType && {adType: r.query.adType}),
     ...(r.params.userId && { userId: r.params.userId }),
+    ...(r.query.filter && {filter: r.params.filter,})
   };
 
   if (r.query.q) {
@@ -382,30 +386,3 @@ export async function removeStar(r) {
   return output();
 }
 
-export async function addFilter (quest,r){
-  const filter = []
-  const check = r.payload.filter
-  let create
-  if (check.length < 4){
-    for (let i = 0; i < check.length; i++){
-      if (check[i].filterSkills.length < 6){
-        for (let a = 0; a < check[i].filterSkills.length; a++){
-          create = await Filter.create({
-            questId: quest,
-            category: check[i].filterCategory,
-            skills: check[i].filterSkills[a]
-          })
-          if (!create){
-            return error(Errors.NotFound, "Filter don`t create", {});
-          }
-          filter.push(create)
-        }
-      }
-    }
-  }
-  if (!filter){
-    return error(Errors.NotFound, "Filter not found", {});
-  }
-  console.log(filter);
-  return filter;
-}

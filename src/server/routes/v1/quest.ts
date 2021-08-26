@@ -117,6 +117,7 @@ export default [{
         description: questDescriptionSchema,
         price: questPriceSchema,
         adType: questAdTypeSchema,
+        filter:filterSchema,
         medias: mediaIdsSchema.unique().label('MediaIds'),
       }).label("EditQuestPayload"),
     },
