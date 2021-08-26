@@ -8,7 +8,7 @@ import {
   questPrioritySchema,
   questsListSortSchema,
   questStatusSchema,
-  questsSchema, questFullSchema
+  questsSchema, questSchema
 } from "@workquest/database-models/lib/schemes";
 
 export default [{
@@ -51,7 +51,7 @@ export default [{
       }).label('ListPointsQuery'),
     },
     response: {
-      schema: outputOkSchema(questFullSchema).label('QuestsResponse'),
+      schema: outputOkSchema(questSchema).label('QuestsResponse'),
     }
   }
 }];
