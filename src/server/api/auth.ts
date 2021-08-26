@@ -8,12 +8,13 @@ import { Errors } from "../utils/errors";
 import { error, getRandomHexToken, output } from "../utils";
 import { addSendEmailJob } from "../jobs/sendEmail";
 import { generateJwt } from "../utils/auth";
-import { Session,
+import {
+	Session,
 	defaultUserSettings,
 	getDefaultAdditionalInfo,
 	User,
 	UserStatus,
-	RatingStatistic
+	RatingStatistic, QuestsStatistic
 } from "@workquest/database-models/lib/models";
 
 const confirmTemplatePath = path.join(__dirname, "..", "..", "..", "templates", "confirmEmail.html");
@@ -138,6 +139,10 @@ export async function confirmEmail(r) {
 			"settings.emailConfirm": null
 		});
 	}
+
+	await QuestsStatistic.create({
+		userId: r.auth.credentials.id,
+	})
 
 	return output({ status: user.status });
 }

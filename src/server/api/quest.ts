@@ -1,18 +1,19 @@
-import { Op } from 'sequelize';
-import { error, output } from '../utils';
-import { Errors } from '../utils/errors';
-import { getMedias } from "../utils/medias"
+import { Op } from "sequelize";
+import { error, output } from "../utils";
+import { Errors } from "../utils/errors";
+import { getMedias } from "../utils/medias";
 import {
-  User,
-  UserRole,
   Quest,
-  QuestStatus,
   QuestsResponse,
   QuestsResponseStatus,
   QuestsResponseType,
+  QuestStatus,
   StarredQuests,
+  User,
+  UserRole
 } from "@workquest/database-models/lib/models";
-import { transformToGeoPostGIS } from "@workquest/database-models/lib/utils/quest" // TODO to index.ts
+import { transformToGeoPostGIS } from "@workquest/database-models/lib/utils/quest";
+import changeQuestsStatistic from "../jobs/changeQuestsStatistic"; // TODO to index.ts
 
 export const searchFields = [
   "title",
@@ -176,27 +177,37 @@ export async function startQuest(r) {
     }
   });
 
-  if (!questResponse) {
-    return error(Errors.NotFound, "Assigned user did not respond on quest", {});
-  }
-  if (questResponse.type === QuestsResponseType.Response) {
-    questResponse.mustHaveStatus(QuestsResponseStatus.Open);
-  } else if (questResponse.type === QuestsResponseType.Invite) {
-    questResponse.mustHaveStatus(QuestsResponseStatus.Accepted);
-  }
+  await changeQuestsStatistic({
+    id: assignedWorker.id,
+    status: QuestStatus.Active
+  });
 
-  await quest.update({ assignedWorkerId: assignedWorker.id, status: QuestStatus.WaitWorker },
-    { transaction });
+  await changeQuestsStatistic({
+    id: r.auth.credentials.id,
+    status: QuestStatus.Active
+  });
 
-  await QuestsResponse.update({ status: QuestsResponseStatus.Closed }, {
-    where: {
-      questId: quest.id,
-      id: {
-        [Op.ne]: questResponse.id
-      }
-  }, transaction });
-
-  await transaction.commit()
+  // if (!questResponse) {
+  //   return error(Errors.NotFound, "Assigned user did not respond on quest", {});
+  // }
+  // if (questResponse.type === QuestsResponseType.Response) {
+  //   questResponse.mustHaveStatus(QuestsResponseStatus.Open);
+  // } else if (questResponse.type === QuestsResponseType.Invite) {
+  //   questResponse.mustHaveStatus(QuestsResponseStatus.Accepted);
+  // }
+  //
+  // await quest.update({ assignedWorkerId: assignedWorker.id, status: QuestStatus.WaitWorker },
+  //   { transaction });
+  //
+  // await QuestsResponse.update({ status: QuestsResponseStatus.Closed }, {
+  //   where: {
+  //     questId: quest.id,
+  //     id: {
+  //       [Op.ne]: questResponse.id
+  //     }
+  // }, transaction });
+  //
+  // await transaction.commit()
 
   return output();
 }
@@ -237,6 +248,16 @@ export async function acceptCompletedWorkOnQuest(r) {
 
   quest.mustBeQuestCreator(r.auth.credentials.id);
   quest.mustHaveStatus(QuestStatus.WaitConfirm);
+
+  await changeQuestsStatistic({
+    id: quest.assignedWorkerId,
+    status: QuestStatus.Done
+  });
+
+  await changeQuestsStatistic({
+    id: r.auth.credentials.id,
+    status: QuestStatus.Done
+  });
 
   await quest.update({ status: QuestStatus.Done });
 
