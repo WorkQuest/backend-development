@@ -8,7 +8,7 @@ import {
   User,
   UserRole,
   UserStatus,
-  Media,
+  Media, Language
 } from "@workquest/database-models/lib/models";
 import {
   userAdditionalInfoEmployerSchema,
@@ -24,6 +24,10 @@ function getAdditionalInfoSchema(role: UserRole): Joi.Schema {
 
 export async function getMe(r) {
   return output(await User.findByPk(r.auth.credentials.id, {
+    include: [{
+      model: Language,
+      as: 'languages',
+    }],
     attributes: {
       include: ['tempPhone']
     }
