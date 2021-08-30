@@ -32,3 +32,6 @@ package-lock.json
 app.json
 .idea
 /db-config.json
+
+# http request for debug
+http-requests
