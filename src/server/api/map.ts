@@ -77,8 +77,6 @@ export async function mapPoints(r) {
     }
   });
 
-  console.log(results);
-
   return output(results);
 }
 
