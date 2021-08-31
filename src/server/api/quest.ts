@@ -13,7 +13,7 @@ import {
   StarredQuests, QuestsStatistic
 } from "@workquest/database-models/lib/models";
 import { transformToGeoPostGIS } from "@workquest/database-models/lib/utils/quest" // TODO to index.ts
-import { changeQuestsStatisticJob } from "../jobs/changeQuestsStatistic";
+import { updateQuestsStatisticJob } from "../jobs/updateQuestsStatistic";
 
 export const searchFields = [
   "title",
@@ -201,7 +201,7 @@ export async function startQuest(r) {
       }
   }, transaction });
 
-  await changeQuestsStatisticJob({
+  await updateQuestsStatisticJob({
     id: r.auth.credentials.id,
     status: QuestStatus.Active
   });
@@ -220,7 +220,7 @@ export async function rejectWorkOnQuest(r) {
 export async function acceptWorkOnQuest(r) {
   await answerWorkOnQuest(r.params.questId, r.auth.credentials, true);
 
-  await changeQuestsStatisticJob({
+  await updateQuestsStatisticJob({
     id: r.auth.credentials.id,
     status: QuestStatus.Active
   });
@@ -254,12 +254,12 @@ export async function acceptCompletedWorkOnQuest(r) {
 
   await quest.update({ status: QuestStatus.Done });
 
-  await changeQuestsStatisticJob({
+  await updateQuestsStatisticJob({
     id: quest.assignedWorkerId,
     status: QuestStatus.Done
   });
 
-  await changeQuestsStatisticJob({
+  await updateQuestsStatisticJob({
     id: r.auth.credentials.id,
     status: QuestStatus.Done
   });
