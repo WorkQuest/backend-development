@@ -48,7 +48,7 @@ export async function mapPoints(r) {
     GROUP BY cid
     Order BY cid) LC;`;
 
-  const [results, metadata] = await r.server.app.db.query(query, {
+  const [results, ] = await r.server.app.db.query(query, {
     replacements: {
       northLongitude: r.query.north.longitude,
       northLatitude: r.query.north.latitude,
@@ -73,7 +73,7 @@ export async function listMapPoints(r) {
   ${where}
   ${order}`;
 
-  const [results, metadata] = await r.server.app.db.query(query, {
+  const [results, ] = await r.server.app.db.query(query, {
     replacements: {
       northLongitude: r.query.north.longitude,
       northLatitude: r.query.north.latitude,

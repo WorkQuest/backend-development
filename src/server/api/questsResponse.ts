@@ -92,9 +92,6 @@ export async function userResponsesToQuest(r) {
 
   const { rows, count } = await QuestsResponse.findAndCountAll({
     where: { questId: quest.id },
-    include: [{
-      model: User
-    }]
   });
 
   return output({ count, responses: rows });
@@ -109,7 +106,7 @@ export async function responsesToQuestsForUser(r) {
     where: { workerId: user.id },
     include: [{
       model: Quest,
-      include: [{ model: User }]
+      as: 'quest'
     }]
   });
 

@@ -40,12 +40,17 @@ async function answerWorkOnQuest(questId: string, worker: User, acceptWork: bool
 export async function getQuest(r) {
   const quest = await Quest.findOne({
     where: { id: r.params.questId },
-    include: {
+    include: [{
       model: StarredQuests,
       as: "star",
       where: { userId: r.auth.credentials.id },
       required: false
-    }
+    }, {
+      model: QuestsResponse,
+      as: "response",
+      where: { workerId: r.auth.credentials.id },
+      required: false
+    }]
   });
 
   if (!quest) {
@@ -278,6 +283,7 @@ export async function getQuests(r) {
   if (r.query.invited) {
     include.push({
       model: QuestsResponse,
+      as: 'responses',
       attributes: [],
         where: {
         [Op.and]: [
@@ -300,6 +306,12 @@ export async function getQuests(r) {
     model: StarredQuests,
     as: "star",
     where: { userId: r.auth.credentials.id },
+    required: false
+  });
+  include.push({
+    model: QuestsResponse,
+    as: "response",
+    where: { workerId: r.auth.credentials.id },
     required: false
   });
 

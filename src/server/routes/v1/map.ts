@@ -47,7 +47,7 @@ export default [{
         q: searchSchema,
         priority: questPrioritySchema,
         status: questStatusSchema,
-        sort: questsListSortSchema,
+        sort: questsListSortSchema.default(null),
       }).label('ListPointsQuery'),
     },
     response: {
