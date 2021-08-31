@@ -13,6 +13,7 @@ import {
   StarredQuests,
 } from "@workquest/database-models/lib/models";
 import { transformToGeoPostGIS } from "@workquest/database-models/lib/utils/quest" // TODO to index.ts
+import { changeQuestsStatisticJob } from "../jobs/changeQuestsStatistic";
 
 export const searchFields = [
   "title",
@@ -200,6 +201,16 @@ export async function startQuest(r) {
       }
   }, transaction });
 
+  await changeQuestsStatisticJob({
+    id: assignedWorker.id,
+    status: QuestStatus.Active
+  });
+
+  await changeQuestsStatisticJob({
+    id: r.auth.credentials.id,
+    status: QuestStatus.Active
+  });
+
   await transaction.commit()
 
   return output();
@@ -243,6 +254,16 @@ export async function acceptCompletedWorkOnQuest(r) {
   quest.mustHaveStatus(QuestStatus.WaitConfirm);
 
   await quest.update({ status: QuestStatus.Done });
+
+  await changeQuestsStatisticJob({
+    id: quest.assignedWorkerId,
+    status: QuestStatus.Done
+  });
+
+  await changeQuestsStatisticJob({
+    id: r.auth.credentials.id,
+    status: QuestStatus.Done
+  });
 
   return output();
 }
