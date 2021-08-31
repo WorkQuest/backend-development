@@ -9,6 +9,8 @@ import {
   QuestsResponseStatus,
   QuestsResponseType,
 } from "@workquest/database-models/lib/models";
+import quest from "../routes/v1/quest";
+import { questsResponseMessageSchema } from "@workquest/database-models/lib/schemes";
 
 export async function responseOnQuest(r) {
   const user = r.auth.credentials;
@@ -138,6 +140,31 @@ export async function rejectInviteOnQuest(r) {
   }
 
   questsResponse.mustBeInvitedToQuest(user.id);
+  questsResponse.mustHaveStatus(QuestsResponseStatus.Open);
+
+  await questsResponse.update({ status: QuestsResponseStatus.Rejected });
+
+  return output();
+}
+
+
+export async function rejectResponseOnQuest(r) {
+  const user = r.auth.credentials;
+  const questsResponse = await QuestsResponse.findOne({ where: { id: r.params.responseId } });
+
+  if (!questsResponse) {
+    return error(Errors.NotFound, "Quests response not found", {});
+  }
+
+  const quest = await Quest.findOne({where: {id:questsResponse.questId}})
+  if (!quest){
+    return error(Errors.NotFound, "Quests response not found", {});
+  }
+  console.log(user.id, quest.userId);
+  if (user.id !== quest.userId){
+    return error(Errors.NotFound, "User is not quest creator", {});
+  }
+
   questsResponse.mustHaveStatus(QuestsResponseStatus.Open);
 
   await questsResponse.update({ status: QuestsResponseStatus.Rejected });

@@ -7,12 +7,8 @@ import {
   questsResponsesWithCountSchema,
 } from "@workquest/database-models/lib/schemes";
 import {
-  acceptInviteOnQuest,
-  userResponsesToQuest,
-  responsesToQuestsForUser,
-  inviteOnQuest,
-  responseOnQuest,
-  rejectInviteOnQuest
+  acceptInviteOnQuest, userResponsesToQuest, responsesToQuestsForUser,
+  inviteOnQuest, responseOnQuest, rejectInviteOnQuest, rejectResponseOnQuest
 } from "../../api/questsResponse";
 
 const userIdSchema = idSchema.label('UserId');
@@ -118,6 +114,23 @@ export default [{
       params: Joi.object({
         responseId: questsResponseIdSchema.required()
       }).label('RejectInvitationParams'),
+    },
+    response: {
+      schema: emptyOkSchema
+    }
+  }
+}, {
+  method: "POST",
+  path: "/v1/quest/employer/{responseId}/reject",
+  handler: rejectResponseOnQuest,
+  options: {
+    id: "v1.quest.employer.reject",
+    tags: ["api", "questResponse"],
+    description: "Reject the answer to the quest",
+    validate: {
+      params: Joi.object({
+        responseId: questsResponseIdSchema.required()
+      }).label('RejectResponseOnQuestParams'),
     },
     response: {
       schema: emptyOkSchema
