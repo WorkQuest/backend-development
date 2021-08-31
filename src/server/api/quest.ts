@@ -33,6 +33,12 @@ async function answerWorkOnQuest(questId: string, worker: User, acceptWork: bool
 
   if (acceptWork) {
     await quest.update({ status: QuestStatus.Active });
+    await updateQuestsStatisticJob({
+      id: worker.id,
+    });
+    await updateQuestsStatisticJob({
+      id: quest.userId,
+    });
   } else {
     await quest.update({ status: QuestStatus.Created, assignedWorkerId: null });
   }
@@ -201,11 +207,6 @@ export async function startQuest(r) {
       }
   }, transaction });
 
-  await updateQuestsStatisticJob({
-    id: r.auth.credentials.id,
-    status: QuestStatus.Active
-  });
-
   await transaction.commit()
 
   return output();
@@ -220,10 +221,6 @@ export async function rejectWorkOnQuest(r) {
 export async function acceptWorkOnQuest(r) {
   await answerWorkOnQuest(r.params.questId, r.auth.credentials, true);
 
-  await updateQuestsStatisticJob({
-    id: r.auth.credentials.id,
-    status: QuestStatus.Active
-  });
   return output();
 }
 
@@ -256,12 +253,10 @@ export async function acceptCompletedWorkOnQuest(r) {
 
   await updateQuestsStatisticJob({
     id: quest.assignedWorkerId,
-    status: QuestStatus.Done
   });
 
   await updateQuestsStatisticJob({
     id: r.auth.credentials.id,
-    status: QuestStatus.Done
   });
 
   return output();

@@ -3,7 +3,6 @@ import { Quest, QuestsStatistic, QuestStatus } from "@workquest/database-models/
 
 export interface id {
   id: string,
-  status: QuestStatus,
 }
 
 export async function updateQuestsStatisticJob(payload: id) {
