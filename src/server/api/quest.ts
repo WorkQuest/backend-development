@@ -107,9 +107,9 @@ export async function editQuest(r) {
     await quest.$set('medias', medias, { transaction });
   }
 
-  quest.updateFieldLocationPostGIS();
-
   await quest.update(r.payload, { transaction });
+
+  quest.updateFieldLocationPostGIS(); // TODO нужно проверить, скорее всего раньше это не обновлялось
 
   await transaction.commit();
 

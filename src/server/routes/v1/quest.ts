@@ -31,7 +31,8 @@ import {
   questsQuerySchema,
   mediaIdsSchema,
   questsSchema,
-  questsForGetWithCountSchema, questLocationPlaceNameSchema
+  questsForGetWithCountSchema,
+  questLocationPlaceNameSchema,
 } from "@workquest/database-models/lib/schemes";
 
 const questIdSchema = idSchema.label('QuestId');
@@ -112,6 +113,7 @@ export default [{
         category: questCategorySchema,
         priority: questPrioritySchema,
         location: locationSchema,
+        locationPlaceName: questLocationPlaceNameSchema,
         title: questTitleSchema,
         description: questDescriptionSchema,
         price: questPriceSchema,
