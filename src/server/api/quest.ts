@@ -203,6 +203,13 @@ export async function startQuest(r) {
 
   await transaction.commit()
 
+  await r.server.publish('/notifications/quest', {
+    notificationOwnerUserId: r.auth.credentials.id,
+    status: QuestsResponseStatus.Closed,
+    message:'Worker is selected to complete the quest',
+    invitedUserId: assignedWorker.id
+  });
+
   return output();
 }
 
