@@ -8,12 +8,13 @@ import { Errors } from "../utils/errors";
 import { error, getRandomHexToken, output } from "../utils";
 import { addSendEmailJob } from "../jobs/sendEmail";
 import { generateJwt } from "../utils/auth";
-import { Session,
+import {
+	Session,
 	defaultUserSettings,
 	getDefaultAdditionalInfo,
 	User,
 	UserStatus,
-	RatingStatistic
+	RatingStatistic, QuestsStatistic
 } from "@workquest/database-models/lib/models";
 
 const confirmTemplatePath = path.join(__dirname, "..", "..", "..", "templates", "confirmEmail.html");
@@ -55,6 +56,7 @@ async function getUserByNetworkProfile(network: string, profile): Promise<User> 
 		})
 	});
 	await RatingStatistic.create({ userId: user.id });
+	await QuestsStatistic.create({userId: user.id});
 
 	return user;
 }
@@ -83,6 +85,7 @@ export async function register(r) {
 			emailConfirm: emailConfirmCode
 		}
 	});
+	await QuestsStatistic.create({userId: user.id});
 
 	const session = await Session.create({ userId: user.id });
 	const result = {

@@ -10,7 +10,7 @@ import {
   QuestsResponse,
   QuestsResponseStatus,
   QuestsResponseType,
-  StarredQuests,
+  StarredQuests, QuestsStatistic
 } from "@workquest/database-models/lib/models";
 import { transformToGeoPostGIS } from "@workquest/database-models/lib/utils/quest" // TODO to index.ts
 import { changeQuestsStatisticJob } from "../jobs/changeQuestsStatistic";
@@ -202,11 +202,6 @@ export async function startQuest(r) {
   }, transaction });
 
   await changeQuestsStatisticJob({
-    id: assignedWorker.id,
-    status: QuestStatus.Active
-  });
-
-  await changeQuestsStatisticJob({
     id: r.auth.credentials.id,
     status: QuestStatus.Active
   });
@@ -225,6 +220,10 @@ export async function rejectWorkOnQuest(r) {
 export async function acceptWorkOnQuest(r) {
   await answerWorkOnQuest(r.params.questId, r.auth.credentials, true);
 
+  await changeQuestsStatisticJob({
+    id: r.auth.credentials.id,
+    status: QuestStatus.Active
+  });
   return output();
 }
 

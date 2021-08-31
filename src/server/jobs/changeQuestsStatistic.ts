@@ -20,11 +20,11 @@ export default async function changeQuestsStatistic(payload: id) {
 
   if(status === QuestStatus.Active){
     await questsStatistic.update({
-      openedQuests: questsStatistic.opened + 1,
+      opened: questsStatistic.opened + 1,
     })
   }else{
     await questsStatistic.update({
-      completedQuests: questsStatistic.completed + 1,
+      completed: questsStatistic.completed + 1,
     })
   }
 }
