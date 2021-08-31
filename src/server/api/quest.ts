@@ -2,6 +2,7 @@ import { Op } from 'sequelize';
 import { error, output } from '../utils';
 import { Errors } from '../utils/errors';
 import { getMedias } from "../utils/medias"
+import { addFilter } from "../utils/filter";
 import {
   User,
   UserRole,
@@ -13,7 +14,6 @@ import {
   StarredQuests, Filter
 } from "@workquest/database-models/lib/models";
 import { transformToGeoPostGIS } from "@workquest/database-models/lib/utils/quest"
-import { addFilter } from "./filter"; // TODO to index.ts
 
 export const searchFields = [
   "title",

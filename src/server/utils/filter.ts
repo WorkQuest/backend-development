@@ -1,5 +1,5 @@
 import { Filter } from "@workquest/database-models/lib/models";
-import { error, output } from "../utils";
+import { error } from "../utils";
 import { Errors } from "../utils/errors";
 
 
@@ -24,14 +24,10 @@ export async function addFilter(quest, user, r, transaction) {
         }
       }
     }
+    await transaction.commit()
   }
   if (filter.length === 0) {
     return error(Errors.NotFound, "Filter not found", {});
   }
-  return output({ filter });
+  return filter;
 }
-
-
-
-
-

@@ -3,6 +3,7 @@ import { error, getRandomCodeNumber, handleValidationError, output } from '../ut
 import { isMediaExists } from "../utils/storageService";
 import { Errors } from "../utils/errors";
 import { addSendSmsJob } from '../jobs/sendSms';
+import { addFilter } from "../utils/filter";
 import {
   getDefaultAdditionalInfo,
   User,
@@ -14,8 +15,6 @@ import {
   userAdditionalInfoEmployerSchema,
   userAdditionalInfoWorkerSchema,
 } from "@workquest/database-models/lib/schemes";
-import { addFilter } from "./filter";
-import quest from "../routes/v1/quest";
 
 function getAdditionalInfoSchema(role: UserRole): Joi.Schema {
   if (role === UserRole.Employer)
