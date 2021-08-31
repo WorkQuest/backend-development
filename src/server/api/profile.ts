@@ -30,6 +30,10 @@ export async function getMe(r) {
   }));
 }
 
+export async function getUser(r) {
+  return output(await User.findByPk(r.params.userId));
+}
+
 export async function setRole(r) {
   const user = await User.findByPk(r.auth.credentials.id);
 
