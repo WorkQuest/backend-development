@@ -32,3 +32,6 @@ package-lock.json
 app.json
 .idea
 /db-config.json
+
+#migrations
+db-config.json
