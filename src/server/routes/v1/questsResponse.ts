@@ -7,8 +7,13 @@ import {
   questsResponsesWithCountSchema,
 } from "@workquest/database-models/lib/schemes";
 import {
-  acceptInviteOnQuest, userResponsesToQuest, responsesToQuestsForUser,
-  inviteOnQuest, responseOnQuest, rejectInviteOnQuest, rejectResponseOnQuest
+  acceptInviteOnQuest,
+  userResponsesToQuest,
+  responsesToQuestsForUser,
+  inviteOnQuest,
+  responseOnQuest,
+  rejectInviteOnQuest,
+  rejectResponseOnQuest,
 } from "../../api/questsResponse";
 
 const userIdSchema = idSchema.label('UserId');
@@ -124,7 +129,7 @@ export default [{
   path: "/v1/quest/employer/{responseId}/reject",
   handler: rejectResponseOnQuest,
   options: {
-    id: "v1.quest.employer.reject",
+    id: "v1.quest.response.rejectResponseOnQuest",
     tags: ["api", "questResponse"],
     description: "Reject the answer to the quest",
     validate: {
