@@ -14,7 +14,8 @@ import {
 } from "@workquest/database-models/lib/models";
 import { locationForValidateSchema } from "@workquest/database-models/lib/schemes";
 import { transformToGeoPostGIS } from "@workquest/database-models/lib/utils/quest"
-import * as sequelize from "sequelize"; // TODO to index.ts
+import * as sequelize from "sequelize";
+import { Location } from "@workquest/database-models/src/models/index"; // TODO to index.ts
 
 export const searchFields = [
   "title",
@@ -116,9 +117,12 @@ export async function editQuest(r) {
     await quest.$set('medias', medias, { transaction });
   }
 
+  if (r.payload.location) {
+    r.payload.locationPostGIS = transformToGeoPostGIS(r.payload.location);
+  }
+
   await quest.update(r.payload, { transaction });
 
-  quest.updateFieldLocationPostGIS(); // TODO нужно проверить, скорее всего раньше это не обновлялось
 
   await transaction.commit();
 
