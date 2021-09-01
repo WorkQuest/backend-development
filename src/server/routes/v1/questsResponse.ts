@@ -12,7 +12,8 @@ import {
   responsesToQuestsForUser,
   inviteOnQuest,
   responseOnQuest,
-  rejectInviteOnQuest
+  rejectInviteOnQuest,
+  rejectResponseOnQuest,
 } from "../../api/questsResponse";
 
 const userIdSchema = idSchema.label('UserId');
@@ -118,6 +119,23 @@ export default [{
       params: Joi.object({
         responseId: questsResponseIdSchema.required()
       }).label('RejectInvitationParams'),
+    },
+    response: {
+      schema: emptyOkSchema
+    }
+  }
+}, {
+  method: "POST",
+  path: "/v1/quest/employer/{responseId}/reject",
+  handler: rejectResponseOnQuest,
+  options: {
+    id: "v1.quest.response.rejectResponseOnQuest",
+    tags: ["api", "questResponse"],
+    description: "Reject the answer to the quest",
+    validate: {
+      params: Joi.object({
+        responseId: questsResponseIdSchema.required()
+      }).label('RejectResponseOnQuestParams'),
     },
     response: {
       schema: emptyOkSchema
