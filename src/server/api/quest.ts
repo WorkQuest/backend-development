@@ -12,7 +12,8 @@ import {
   QuestsResponseType,
   StarredQuests,
 } from "@workquest/database-models/lib/models";
-import { transformToGeoPostGIS } from "@workquest/database-models/lib/utils/quest" // TODO to index.ts
+import { transformToGeoPostGIS } from "@workquest/database-models/lib/utils/quest"
+import * as sequelize from "sequelize"; // TODO to index.ts
 
 export const searchFields = [
   "title",
@@ -271,6 +272,9 @@ export async function rejectCompletedWorkOnQuest(r) {
 }
 
 export async function getQuests(r) {
+  const entersAreaLiteral = sequelize.literal(
+    'st_within("locationPostGIS", st_makeenvelope(:northLng, :northLat, :southLng, :southLat, 4326))'
+  );
   const order = [];
   const include = [];
   const where = {
@@ -279,6 +283,7 @@ export async function getQuests(r) {
     ...(r.query.status && { status: r.query.status }),
     ...(r.query.adType && {adType: r.query.adType}),
     ...(r.params.userId && { userId: r.params.userId }),
+    ...(r.query.north && r.query.south && { [Op.and]: entersAreaLiteral }),
   };
 
   if (r.query.q) {
@@ -330,7 +335,15 @@ export async function getQuests(r) {
   const { count, rows } = await Quest.findAndCountAll({
     limit: r.query.limit,
     offset: r.query.offset,
-    include, order, where
+    include, order, where,
+    replacements: {
+      ...(r.query.north && r.query.south && {
+        northLng: r.query.north.longitude,
+        northLat: r.query.north.latitude,
+        southLng: r.query.south.longitude,
+        southLat: r.query.south.latitude,
+      })
+    }
   });
 
   return output({count, quests: rows});
