@@ -41,7 +41,7 @@ export async function responseOnQuest(r) {
   });
 
   if (!created) {
-    return error(Errors.InvalidStatus, "Quest don`t created", {});
+    return error(Errors.InvalidStatus, "Quest response not created", {});
     }
     await r.server.publish('/notifications/quest', {
       notificationOwnerUserId: user.id,

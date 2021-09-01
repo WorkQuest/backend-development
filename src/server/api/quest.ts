@@ -31,7 +31,6 @@ async function answerWorkOnQuest(questId: string, worker: User, acceptWork: bool
   quest.mustHaveStatus(QuestStatus.WaitWorker);
   quest.mustBeAppointedOnQuest(worker.id);
 
-  console.log(acceptWork,'acceptWork');
   if (acceptWork) {
     await quest.update({ status: QuestStatus.Active });
   } else {
