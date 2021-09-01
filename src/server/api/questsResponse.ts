@@ -42,13 +42,14 @@ export async function responseOnQuest(r) {
 
   if (!created) {
     return error(Errors.InvalidStatus, "Quest response not created", {});
-    }
-    await r.server.publish('/notifications/quest', {
-      notificationOwnerUserId: user.id,
-      status: QuestsResponseStatus.Open,
-      message: r.payload.message,
-      invitedUserId: quest.userId
-    });
+  }
+
+  await r.server.publish('/notifications/quest', {
+    notificationOwnerUserId: user.id,
+    status: QuestsResponseStatus.Open,
+    message: r.payload.message,
+    invitedUserId: quest.userId
+  });
 
   return output();
 }
@@ -146,7 +147,7 @@ export async function acceptInviteOnQuest(r) {
 
   if (await questsResponse.status === QuestsResponseStatus.Accepted) {
     const findQuest = await Quest.findOne({where: {id: questsResponse.questId}})
-    if (!findQuest){
+    if (!findQuest) {
       return error(Errors.NotFound, "Quest not found", {});
     }
     await r.server.publish('/notifications/quest', {
