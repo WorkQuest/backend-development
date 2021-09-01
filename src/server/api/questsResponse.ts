@@ -207,5 +207,11 @@ export async function rejectResponseOnQuest(r) {
 
   await questsResponse.update({ status: QuestsResponseStatus.Rejected });
 
+  await r.server.publish('/notifications/quest', {
+    notificationOwnerUserId: user.id,
+    status: QuestsResponseStatus.Rejected,
+    invitedUserId: questsResponse.workerId
+  });
+
   return output();
 }
