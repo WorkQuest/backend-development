@@ -25,14 +25,14 @@ export async function mapPoints(r) {
   let where = makeWhere(r);
   let query = `
   SELECT
-       count as pointsCount,
-       id as questId,
-       status as questStatus,
-       price as questPrice,
-       firstName as userFirstName,
-       lastName as userLastName,
-       avatarUrl as userAvatarUrl,
-       priority as questPriority,
+       count as "pointsCount",
+       id as "questId",
+       status as "questStatus",
+       price as "questPrice",
+       firstName as "userFirstName",
+       lastName as "userLastName",
+       avatarUrl as "userAvatarUrl",
+       priority as "questPriority",
        case when LC.count = 1 then 'point' else 'cluster' end as type,
        array [st_x(center), st_y(center)] as coordinates,
        cluster_radius as clusterRadius 
