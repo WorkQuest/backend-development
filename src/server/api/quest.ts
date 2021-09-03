@@ -1,5 +1,5 @@
 import { Op } from 'sequelize';
-import { error, output } from '../utils';
+import { error, handleValidationError, output } from "../utils";
 import { Errors } from '../utils/errors';
 import { getMedias } from "../utils/medias"
 import {
@@ -12,7 +12,10 @@ import {
   QuestsResponseType,
   StarredQuests,
 } from "@workquest/database-models/lib/models";
-import { transformToGeoPostGIS } from "@workquest/database-models/lib/utils/quest" // TODO to index.ts
+import { locationForValidateSchema } from "@workquest/database-models/lib/schemes";
+import { transformToGeoPostGIS } from "@workquest/database-models/lib/utils/quest"
+import * as sequelize from "sequelize";
+import { Location } from "@workquest/database-models/src/models/index"; // TODO to index.ts
 
 export const searchFields = [
   "title",
@@ -40,12 +43,17 @@ async function answerWorkOnQuest(questId: string, worker: User, acceptWork: bool
 export async function getQuest(r) {
   const quest = await Quest.findOne({
     where: { id: r.params.questId },
-    include: {
+    include: [{
       model: StarredQuests,
       as: "star",
       where: { userId: r.auth.credentials.id },
       required: false
-    }
+    }, {
+      model: QuestsResponse,
+      as: "response",
+      where: { workerId: r.auth.credentials.id },
+      required: false
+    }]
   });
 
   if (!quest) {
@@ -67,6 +75,7 @@ export async function createQuest(r) {
     status: QuestStatus.Created,
     category: r.payload.category,
     priority: r.payload.priority,
+    locationPlaceName: r.payload.locationPlaceName,
     location: r.payload.location,
     locationPostGIS: transformToGeoPostGIS(r.payload.location),
     title: r.payload.title,
@@ -84,6 +93,14 @@ export async function createQuest(r) {
 }
 
 export async function editQuest(r) {
+  if (r.payload.location || r.payload.locationPlaceName) {
+    const locationValidate = locationForValidateSchema.validate(r.payload);
+
+    if (locationValidate.error) {
+      return handleValidationError(r, null, locationValidate.error);
+    }
+  }
+
   const quest = await Quest.findByPk(r.params.questId);
   const transaction = await r.server.app.db.transaction();
 
@@ -99,8 +116,9 @@ export async function editQuest(r) {
 
     await quest.$set('medias', medias, { transaction });
   }
-
-  quest.updateFieldLocationPostGIS();
+  if (r.payload.location) {
+    r.payload.locationPostGIS = transformToGeoPostGIS(r.payload.location);
+  }
 
   await quest.update(r.payload, { transaction });
 
@@ -258,6 +276,9 @@ export async function rejectCompletedWorkOnQuest(r) {
 }
 
 export async function getQuests(r) {
+  const entersAreaLiteral = sequelize.literal(
+    'st_within("locationPostGIS", st_makeenvelope(:northLng, :northLat, :southLng, :southLat, 4326))'
+  );
   const order = [];
   const include = [];
   const where = {
@@ -266,6 +287,7 @@ export async function getQuests(r) {
     ...(r.query.status && { status: r.query.status }),
     ...(r.query.adType && {adType: r.query.adType}),
     ...(r.params.userId && { userId: r.params.userId }),
+    ...(r.query.north && r.query.south && { [Op.and]: entersAreaLiteral }),
   };
 
   if (r.query.q) {
@@ -278,6 +300,7 @@ export async function getQuests(r) {
   if (r.query.invited) {
     include.push({
       model: QuestsResponse,
+      as: 'responses',
       attributes: [],
         where: {
         [Op.and]: [
@@ -302,6 +325,12 @@ export async function getQuests(r) {
     where: { userId: r.auth.credentials.id },
     required: false
   });
+  include.push({
+    model: QuestsResponse,
+    as: "response",
+    where: { workerId: r.auth.credentials.id },
+    required: false
+  });
 
   for (const [key, value] of Object.entries(r.query.sort)) {
     order.push([key, value]);
@@ -310,7 +339,15 @@ export async function getQuests(r) {
   const { count, rows } = await Quest.findAndCountAll({
     limit: r.query.limit,
     offset: r.query.offset,
-    include, order, where
+    include, order, where,
+    replacements: {
+      ...(r.query.north && r.query.south && {
+        northLng: r.query.north.longitude,
+        northLat: r.query.north.latitude,
+        southLng: r.query.south.longitude,
+        southLat: r.query.south.latitude,
+      })
+    }
   });
 
   return output({count, quests: rows});

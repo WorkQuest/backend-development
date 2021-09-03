@@ -44,7 +44,6 @@ export async function getCases(r) {
 
 export async function deleteCase(r) {
   const portfolio = await Portfolio.findByPk(r.params.portfolioId);
-  const transaction = await r.server.app.db.transaction();
 
   if (!portfolio) {
     error(Errors.NotFound, "Portfolio not found", {});
@@ -52,12 +51,7 @@ export async function deleteCase(r) {
 
   portfolio.mustBeCaseCreator(r.auth.credentials.id);
 
-  for (const media of portfolio.medias) {
-    await Media.destroy({where: {id: media.id}, transaction});
-  }
-
-  await portfolio.destroy({transaction});
-  await transaction.commit();
+  await portfolio.destroy();
 
   return output();
 }
