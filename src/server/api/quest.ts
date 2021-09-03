@@ -1,5 +1,5 @@
 import { Op } from 'sequelize';
-import { error, output } from '../utils';
+import { error, handleValidationError, output } from "../utils";
 import { Errors } from '../utils/errors';
 import { getMedias } from "../utils/medias"
 import {
@@ -12,8 +12,10 @@ import {
   QuestsResponseType,
   StarredQuests,
 } from "@workquest/database-models/lib/models";
+import { locationForValidateSchema } from "@workquest/database-models/lib/schemes";
 import { transformToGeoPostGIS } from "@workquest/database-models/lib/utils/quest"
-import * as sequelize from "sequelize"; // TODO to index.ts
+import * as sequelize from "sequelize";
+import { Location } from "@workquest/database-models/src/models/index"; // TODO to index.ts
 
 export const searchFields = [
   "title",
@@ -73,6 +75,7 @@ export async function createQuest(r) {
     status: QuestStatus.Created,
     category: r.payload.category,
     priority: r.payload.priority,
+    locationPlaceName: r.payload.locationPlaceName,
     location: r.payload.location,
     locationPostGIS: transformToGeoPostGIS(r.payload.location),
     title: r.payload.title,
@@ -90,6 +93,14 @@ export async function createQuest(r) {
 }
 
 export async function editQuest(r) {
+  if (r.payload.location || r.payload.locationPlaceName) {
+    const locationValidate = locationForValidateSchema.validate(r.payload);
+
+    if (locationValidate.error) {
+      return handleValidationError(r, null, locationValidate.error);
+    }
+  }
+
   const quest = await Quest.findByPk(r.params.questId);
   const transaction = await r.server.app.db.transaction();
 
@@ -105,8 +116,9 @@ export async function editQuest(r) {
 
     await quest.$set('medias', medias, { transaction });
   }
-
-  quest.updateFieldLocationPostGIS();
+  if (r.payload.location) {
+    r.payload.locationPostGIS = transformToGeoPostGIS(r.payload.location);
+  }
 
   await quest.update(r.payload, { transaction });
 
