@@ -97,7 +97,7 @@ export async function editQuest(r) {
     const locationValidate = locationForValidateSchema.validate(r.payload);
 
     if (locationValidate.error) {
-      return await handleValidationError(r, null, locationValidate.error);
+      return handleValidationError(r, null, locationValidate.error);
     }
   }
 
@@ -116,13 +116,11 @@ export async function editQuest(r) {
 
     await quest.$set('medias', medias, { transaction });
   }
-
   if (r.payload.location) {
     r.payload.locationPostGIS = transformToGeoPostGIS(r.payload.location);
   }
 
   await quest.update(r.payload, { transaction });
-
 
   await transaction.commit();
 
