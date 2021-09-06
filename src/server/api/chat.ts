@@ -254,6 +254,8 @@ export async function removeUserInGroupChat(r) {
   chat.mustHaveOwner(r.auth.credentials.id);
   await chat.mustHaveMember(r.params.userId);
 
+  const transaction = await r.server.app.db.transaction();
+
   const user = await User.findByPk(r.params.userId);
 
   const chatMember = await ChatMember.findOne({
@@ -271,7 +273,8 @@ export async function removeUserInGroupChat(r) {
     where: {
       chatId: chat.id,
       userId: r.params.userId,
-    }
+    },
+    transaction
   });
 
   const text = r.auth.credentials.firstName + " deleted " + user.firstName;
@@ -282,7 +285,9 @@ export async function removeUserInGroupChat(r) {
     chatId: chat.id,
     type: MessageType.informational,
     text: text,
-  });
+  }, {transaction});
+
+  await transaction.commit();
 
   message = await Message.findByPk(message.id, {
     include: [{
@@ -324,7 +329,15 @@ export async function leaveFromGroupChat(r) {
     // await chat.update({ ownerUserId: firsMember.id }, { transaction });
   }
 
-  const user = await User.findByPk(r.params.userId);
+  const chatMember = await ChatMember.findOne({
+    where: {
+      chatId: chat.id,
+      userId: r.auth.credentials.id,
+    }
+  });
+  if(!chatMember){
+    return error(Errors.NotFound, 'User is not found in this chat', {});
+  }
 
   await ChatMember.destroy({
     where: { chatId: chat.id, userId: r.auth.credentials.id },
@@ -338,7 +351,9 @@ export async function leaveFromGroupChat(r) {
     chatId: chat.id,
     type: MessageType.informational,
     text: text,
-  });
+  }, {transaction});
+
+  await transaction.commit();
 
   message = await Message.findByPk(message.id, {
     include: [{
