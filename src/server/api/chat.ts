@@ -1,4 +1,4 @@
-import { Chat, ChatMember, ChatType, Message, User } from "@workquest/database-models/lib/models";
+import { Chat, ChatMember, ChatType, Message, MessageType, User } from "@workquest/database-models/lib/models";
 import { error, output } from "../utils";
 import { getMedias } from "../utils/medias";
 import { Errors } from "../utils/errors";
@@ -145,6 +145,7 @@ export async function sendMessageToUser(r) {
   const message = await Message.create({
     senderUserId: r.auth.credentials.id,
     chatId: chat.id,
+    type: MessageType.common,
     text: r.payload.text
   }, { transaction });
 
@@ -180,6 +181,7 @@ export async function sendMessageToChat(r) {
   const message = await Message.create({
     senderUserId: r.auth.credentials.id,
     chatId: chat.id,
+    type: MessageType.common,
     text: r.payload.text
   }, { transaction });
 
@@ -208,13 +210,32 @@ export async function addUserInGroupChat(r) {
 
   chat.mustHaveType(ChatType.group);
   chat.mustHaveOwner(r.auth.credentials.id);
+  const transaction = await r.server.app.db.transaction();
 
   await ChatMember.create({
     chatId: chat.id,
     userId: r.params.userId,
-  });
+  }, {transaction});
 
-  return output();
+  const text = r.auth.credentials.id + " added " + r.params.userId;
+  let message = await Message.create({
+    senderUserId: r.auth.credentials.id,
+    chatId: chat.id,
+    type: MessageType.informational,
+    text: text,
+  }, { transaction });
+
+  transaction.commit();
+
+  message = await Message.findByPk(message.id, {
+    include: [{
+      model: User,
+      as: 'sender'
+    }]
+
+  })
+
+  return output(message);
 }
 
 export async function removeUserInGroupChat(r) {

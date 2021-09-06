@@ -10,6 +10,7 @@ import {
   chatSchema,
   chatNameSchema,
   messagesSchema,
+  messageSchema,
   messageTextSchema,
   mediaIdsSchema,
   usersSchema,
@@ -161,7 +162,7 @@ export default [{
       }).label('AddUserInGroupChatParams')
     },
     response: {
-      schema: emptyOkSchema
+      schema: messageSchema.label('AddUserToChatResponse')
     }
   }
 }, {
