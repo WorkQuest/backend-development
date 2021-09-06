@@ -1,32 +1,34 @@
-import { Chat, ChatMember, ChatType, Message, User } from "@workquest/database-models/lib/models";
 import { error, output } from "../utils";
 import { getMedias } from "../utils/medias";
 import { Errors } from "../utils/errors";
+import {
+  Chat,
+  ChatMember,
+  ChatType,
+  Message,
+  User,
+  MessageType,
+  InfoMessage,
+  MessageAction,
+  SenderMessageStatus,
+} from "@workquest/database-models/lib/models";
 
 export async function getUserChats(r) {
+  const userMemberInclude = {
+    model: ChatMember,
+    where: { userId: r.auth.credentials.id },
+    required: true,
+    as: 'chatMembers',
+    attributes: [],
+  };
+
   const count = await Chat.unscoped().count({
-    include: {
-      model: ChatMember,
-      where: { userId: r.auth.credentials.id },
-      required: true,
-      as: 'chatMembers',
-      attributes: [],
-    }
+    include: userMemberInclude
   });
   const chats = await Chat.findAll({
-    attributes: {
-      include: []
-    },
-    include: [{
-      model: ChatMember,
-      where: { userId: r.auth.credentials.id },
-      required: true,
-      as: 'chatMembers',
-      attributes: [],
-    }],
-    order: [
-      ['lastMessageDate', 'DESC'],
-    ],
+    attributes: { include: [] },
+    include: [userMemberInclude],
+    order: [ ['lastMessageDate', 'DESC'] ],
     limit: r.query.limit,
     offset: r.query.offset,
   });
@@ -35,20 +37,40 @@ export async function getUserChats(r) {
 }
 
 export async function createGroupChat(r) {
-  const transaction = await r.server.app.db.transaction();
   const memberUserIds: string[] = r.payload.memberUserIds;
-
-  const groupChat = await Chat.create({
-    name: r.payload.name,
-    ownerUserId: r.auth.credentials.id,
-    type: ChatType.group
-  }, { transaction });
 
   if (!memberUserIds.includes(r.auth.credentials.id)) {
     memberUserIds.push(r.auth.credentials.id);
   }
 
   await User.usersMustExist(memberUserIds);
+
+  const transaction = await r.server.app.db.transaction();
+  const groupChat = await Chat.build({
+    name: r.payload.name,
+    ownerUserId: r.auth.credentials.id,
+    type: ChatType.group,
+  });
+
+  const message = await Message.build({
+    senderUserId: r.auth.credentials.id,
+    chatId: groupChat.id,
+    type: MessageType.info,
+  });
+
+  const infoMessage = await InfoMessage.build({
+    messageId: message.id,
+    messageAction: MessageAction.messageActionGroupChatCreate,
+  });
+
+  groupChat.lastMessageId = message.id;
+  groupChat.lastMessageDate = message.createdAt;
+
+  await Promise.all([
+    groupChat.save({ transaction }),
+    message.save({ transaction }),
+    infoMessage.save({ transaction }),
+  ]);
 
   await groupChat.$set('members', memberUserIds, { transaction });
 
@@ -72,9 +94,7 @@ export async function getChatMessages(r) {
     where: { chatId: chat.id },
     limit: r.query.limit,
     offset: r.query.offset,
-    order: [
-      ['createdAt', 'DESC']
-    ],
+    order: [ ['createdAt', 'DESC'] ],
   });
 
   return output({
@@ -95,27 +115,27 @@ export async function getUserChat(r) {
 }
 
 export async function sendMessageToUser(r) {
-  await User.userMustExist(r.params.userId);
-
   if (r.params.userId === r.auth.credentials.id) {
     return error(Errors.InvalidPayload, "You can't send a message to yourself", {});
   }
 
-  const transaction = await r.server.app.db.transaction();
+  await User.userMustExist(r.params.userId);
+
   const medias = await getMedias(r.payload.medias);
+  const transaction = await r.server.app.db.transaction();
 
   let chat = await Chat.findOne({
     where: { type: ChatType.private },
     include: [{
       model: ChatMember,
-      as: 'chatMembers',
-      where: { userId: r.auth.credentials.id },
+      as: 'firstMemberInPrivateChat',
+      where: { userId: r.params.userId },
       required: true,
       attributes: [],
     }, {
       model: ChatMember,
-      as: 'chatMembers',
-      where: { userId: r.params.userId },
+      as: 'secondMemberInPrivateChat',
+      where: { userId: r.auth.credentials.id },
       required: true,
       attributes: [],
     }]
@@ -133,6 +153,8 @@ export async function sendMessageToUser(r) {
   const message = await Message.create({
     senderUserId: r.auth.credentials.id,
     chatId: chat.id,
+    type: MessageType.message,
+    senderStatus: SenderMessageStatus.unread,
     text: r.payload.text
   }, { transaction });
 
@@ -140,7 +162,7 @@ export async function sendMessageToUser(r) {
 
   await chat.update({
     lastMessageId: message.id,
-    lastMessageDate: message.createdAt
+    lastMessageDate: message.createdAt,
   }, { transaction });
 
   await transaction.commit();
@@ -156,7 +178,6 @@ export async function sendMessageToUser(r) {
 export async function sendMessageToChat(r) {
   const transaction = await r.server.app.db.transaction();
   const medias = await getMedias(r.payload.medias);
-
   const chat = await Chat.findByPk(r.params.chatId);
 
   if (!chat) {
@@ -168,12 +189,17 @@ export async function sendMessageToChat(r) {
   const message = await Message.create({
     senderUserId: r.auth.credentials.id,
     chatId: chat.id,
-    text: r.payload.text
+    type: MessageType.message,
+    text: r.payload.text,
+    senderStatus: SenderMessageStatus.unread,
   }, { transaction });
 
   await message.$set('medias', medias, { transaction });
 
-  await chat.update({lastMessageId: message.id, lastMessageDate: message.createdAt});
+  await chat.update({
+    lastMessageId: message.id,
+    lastMessageDate: message.createdAt,
+  }, { transaction });
 
   await transaction.commit();
 
@@ -188,19 +214,32 @@ export async function sendMessageToChat(r) {
 export async function addUserInGroupChat(r) {
   await User.userMustExist(r.params.userId);
 
-  const chat = await Chat.findByPk(r.params.chatId);
+  const groupChat = await Chat.findByPk(r.params.chatId);
 
-  if (!chat) {
+  if (!groupChat) {
     return error(Errors.NotFound, "Chat not found", {});
   }
 
-  chat.mustHaveType(ChatType.group);
-  chat.mustHaveOwner(r.auth.credentials.id);
+  groupChat.mustHaveType(ChatType.group);
+  groupChat.mustHaveOwner(r.auth.credentials.id);
+
+  const transaction = await r.server.app.db.transaction();
 
   await ChatMember.create({
-    chatId: chat.id,
+    chatId: groupChat.id,
     userId: r.params.userId,
-  });
+  }, { transaction });
+
+  const message = await Message.create({
+    senderUserId: r.auth.credentials.id,
+    chatId: groupChat.id,
+    type: MessageType.info,
+  }, { transaction });
+
+  await InfoMessage.create({
+    messageId: message.id,
+    messageAction: MessageAction.messageActionGroupChatAddUser,
+  }, { transaction });
 
   return output();
 }
@@ -208,38 +247,50 @@ export async function addUserInGroupChat(r) {
 export async function removeUserInGroupChat(r) {
   await User.userMustExist(r.params.userId);
 
-  const chat = await Chat.findByPk(r.params.chatId);
+  const groupChat = await Chat.findByPk(r.params.chatId);
 
-  if (!chat) {
+  if (!groupChat) {
     return error(Errors.NotFound, "Chat not found", {});
   }
 
-  chat.mustHaveType(ChatType.group);
-  chat.mustHaveOwner(r.auth.credentials.id);
-  await chat.mustHaveMember(r.params.userId);
+  groupChat.mustHaveType(ChatType.group);
+  groupChat.mustHaveOwner(r.auth.credentials.id);
+  await groupChat.mustHaveMember(r.params.userId);
+
+  const transaction = await r.server.app.db.transaction();
 
   await ChatMember.destroy({
     where: {
-      chatId: chat.id,
+      chatId: groupChat.id,
       userId: r.params.userId,
-    }
+    }, transaction,
   });
+
+  const message = await Message.create({
+    senderUserId: r.auth.credentials.id,
+    chatId: groupChat.id,
+    type: MessageType.info,
+  }, { transaction });
+
+  await InfoMessage.create({
+    messageId: message.id,
+    messageAction: MessageAction.messageActionGroupChatDeleteUser,
+  }, { transaction });
 
   return output();
 }
 
 export async function leaveFromGroupChat(r) {
-  const transaction = await r.server.app.db.transaction();
-  const chat = await Chat.findByPk(r.params.chatId);
+  const groupChat = await Chat.findByPk(r.params.chatId);
 
-  if (!chat) {
+  if (!groupChat) {
     return error(Errors.NotFound, "Chat not found", {});
   }
 
-  chat.mustHaveType(ChatType.group);
-  await chat.mustHaveMember(r.auth.credentials.id);
+  groupChat.mustHaveType(ChatType.group);
+  await groupChat.mustHaveMember(r.auth.credentials.id);
 
-  if (chat.ownerUserId === r.auth.credentials.id) {
+  if (groupChat.ownerUserId === r.auth.credentials.id) {
     return error(Errors.Forbidden, "User is chat owner", {}); // TODO
     // const firsMember = await User.findOne({
     //   include: [{
@@ -255,10 +306,23 @@ export async function leaveFromGroupChat(r) {
     // await chat.update({ ownerUserId: firsMember.id }, { transaction });
   }
 
+  const transaction = await r.server.app.db.transaction();
+
   await ChatMember.destroy({
-    where: { chatId: chat.id, userId: r.auth.credentials.id },
+    where: { chatId: groupChat.id, userId: r.auth.credentials.id },
     transaction
   });
+
+  const message = await Message.create({
+    senderUserId: r.auth.credentials.id,
+    chatId: groupChat.id,
+    type: MessageType.info,
+  }, { transaction });
+
+  await InfoMessage.create({
+    messageId: message.id,
+    messageAction: MessageAction.messageActionGroupChatLeaveUser,
+  }, { transaction });
 
   return output();
 }
