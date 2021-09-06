@@ -28,8 +28,8 @@ export async function responseOnQuest(r) {
     }
   });
 
-  if (questsResponse && questsResponse.status !== QuestsResponseStatus.Closed) {
-    return error(Errors.AlreadyAnswer, "You already answered quest", {});
+  if (questsResponse) {
+    return error(Errors.AlreadyAnswer, "You already answered quest", { questsResponse });
   }
 
   await QuestsResponse.create({
@@ -66,7 +66,7 @@ export async function inviteOnQuest(r) {
   });
 
   if (questResponse) {
-    return error(Errors.AlreadyAnswer, "You already answered quest", {});
+    return error(Errors.AlreadyAnswer, "You already answered quest", { questResponse });
   }
 
   await QuestsResponse.create({
@@ -92,9 +92,6 @@ export async function userResponsesToQuest(r) {
 
   const { rows, count } = await QuestsResponse.findAndCountAll({
     where: { questId: quest.id },
-    include: [{
-      model: User
-    }]
   });
 
   return output({ count, responses: rows });
@@ -109,7 +106,7 @@ export async function responsesToQuestsForUser(r) {
     where: { workerId: user.id },
     include: [{
       model: Quest,
-      include: [{ model: User }]
+      as: 'quest'
     }]
   });
 
@@ -141,6 +138,29 @@ export async function rejectInviteOnQuest(r) {
   }
 
   questsResponse.mustBeInvitedToQuest(user.id);
+  questsResponse.mustHaveStatus(QuestsResponseStatus.Open);
+
+  await questsResponse.update({ status: QuestsResponseStatus.Rejected });
+
+  return output();
+}
+
+export async function rejectResponseOnQuest(r) {
+  const user = r.auth.credentials;
+  const questsResponse = await QuestsResponse.findOne({ where: { id: r.params.responseId } });
+
+  if (!questsResponse) {
+    return error(Errors.NotFound, "Quests response not found", {});
+  }
+
+  const quest = await Quest.findOne({ where: { id: questsResponse.questId } });
+
+  if (!quest) {
+    return error(Errors.NotFound, "Quest not found", {});
+  }
+
+  quest.mustBeQuestCreator(user.id);
+  questsResponse.mustHaveType(QuestsResponseType.Response);
   questsResponse.mustHaveStatus(QuestsResponseStatus.Open);
 
   await questsResponse.update({ status: QuestsResponseStatus.Rejected });

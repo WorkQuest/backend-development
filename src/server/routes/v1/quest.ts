@@ -30,8 +30,9 @@ import {
   questTitleSchema,
   questsQuerySchema,
   mediaIdsSchema,
-  questsWithCountSchema,
   questsSchema,
+  questsForGetWithCountSchema,
+  questLocationPlaceNameSchema,
 } from "@workquest/database-models/lib/schemes";
 
 const questIdSchema = idSchema.label('QuestId');
@@ -66,6 +67,7 @@ export default [{
       payload: Joi.object({
         category: questCategorySchema.required(),
         priority: questPrioritySchema.required(),
+        locationPlaceName: questLocationPlaceNameSchema.required(),
         location: locationSchema.required(),
         title: questTitleSchema.required(),
         description: questDescriptionSchema.required(),
@@ -111,6 +113,7 @@ export default [{
         category: questCategorySchema,
         priority: questPrioritySchema,
         location: locationSchema,
+        locationPlaceName: questLocationPlaceNameSchema,
         title: questTitleSchema,
         description: questDescriptionSchema,
         price: questPriceSchema,
@@ -134,7 +137,7 @@ export default [{
       query: questsQuerySchema
     },
     response: {
-      schema: outputOkSchema(questsWithCountSchema).label("QuestsWithCountResponse")
+      schema: outputOkSchema(questsForGetWithCountSchema).label("QuestsWithCountResponse")
     },
   }
 }, {
@@ -152,7 +155,7 @@ export default [{
       query: questsQuerySchema
     },
     response: {
-      schema: outputOkSchema(questsWithCountSchema).label("QuestsWithCountResponse")
+      schema: outputOkSchema(questsForGetWithCountSchema).label("QuestsWithCountResponse")
     },
   }
 }, {

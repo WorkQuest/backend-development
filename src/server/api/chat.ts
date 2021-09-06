@@ -2,10 +2,9 @@ import { Chat, ChatMember, ChatType, Message, MessageType, User } from "@workque
 import { error, output } from "../utils";
 import { getMedias } from "../utils/medias";
 import { Errors } from "../utils/errors";
-import { Op } from "sequelize";
 
 export async function getUserChats(r) {
-  const count = await Chat.count({
+  const count = await Chat.unscoped().count({
     include: {
       model: ChatMember,
       where: { userId: r.auth.credentials.id },
@@ -24,17 +23,6 @@ export async function getUserChats(r) {
       required: true,
       as: 'chatMembers',
       attributes: [],
-    }, {
-      model: Message,
-      as: 'lastMessage',
-      include: [{
-        model: User,
-        as: 'sender',
-      }]
-    }, {
-      model: User,
-      as: 'members',
-      where: { id: { [Op.ne]: r.auth.credentials.id } }
     }],
     order: [
       ['lastMessageDate', 'DESC'],
