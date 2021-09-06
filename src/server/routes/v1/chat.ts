@@ -180,7 +180,7 @@ export default [{
       }).label('RemoveUserInGroupChatParams')
     },
     response: {
-      schema: emptyOkSchema
+      schema: messageSchema.label('RemoveUserFromChatResponse')
     }
   }
 }, {

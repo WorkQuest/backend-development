@@ -266,6 +266,19 @@ export async function removeUserInGroupChat(r) {
   chat.mustHaveOwner(r.auth.credentials.id);
   await chat.mustHaveMember(r.params.userId);
 
+  const user = await User.findByPk(r.params.userId)
+
+  const chatMember = await ChatMember.findOne({
+    where: {
+      chatId: chat.id,
+      userId: user.id,
+    }
+  });
+  if(!chatMember){
+    return error(Errors.NotFound, 'User is not found in this chat', {});
+  }
+
+
   await ChatMember.destroy({
     where: {
       chatId: chat.id,
@@ -273,7 +286,27 @@ export async function removeUserInGroupChat(r) {
     }
   });
 
-  return output();
+  const text = r.auth.credentials.firstName + " deleted " + user.firstName;
+
+  let message = await Message.create({
+    senderUserId: r.auth.credentials.id,
+    actionUserId: r.params.userId,
+    chatId: chat.id,
+    type: MessageType.informational,
+    text: text,
+  });
+
+  message = await Message.findByPk(message.id, {
+    include: [{
+      model: User,
+      as: 'sender'
+    }, {
+      model: User,
+      as: 'actionUser'
+    }],
+  })
+
+  return output(message);
 }
 
 export async function leaveFromGroupChat(r) {
