@@ -162,7 +162,7 @@ export default [{
       }).label('AddUserInGroupChatParams')
     },
     response: {
-      schema: messageSchema.label('AddUserToChatResponse')
+      schema: outputOkSchema(messageSchema).label('AddUserToChatResponse')
     }
   }
 }, {
@@ -180,7 +180,7 @@ export default [{
       }).label('RemoveUserInGroupChatParams')
     },
     response: {
-      schema: messageSchema.label('RemoveUserFromChatResponse')
+      schema: outputOkSchema(messageSchema).label('RemoveUserFromChatResponse')
     }
   }
 }, {

@@ -238,7 +238,7 @@ export async function addUserInGroupChat(r) {
     text: text,
   }, { transaction });
 
-  transaction.commit();
+  await transaction.commit();
 
   message = await Message.findByPk(message.id, {
     include: [{
