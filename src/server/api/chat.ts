@@ -212,14 +212,27 @@ export async function addUserInGroupChat(r) {
   chat.mustHaveOwner(r.auth.credentials.id);
   const transaction = await r.server.app.db.transaction();
 
+  const user = await User.findByPk(r.params.userId)
+
+  const chatMember = await ChatMember.findOne({
+    where: {
+      chatId: chat.id,
+      userId: user.id,
+    }
+  });
+  if(chatMember){
+    return error(Errors.AlreadyExists, 'User already is member of the chat', {});
+  }
+
   await ChatMember.create({
     chatId: chat.id,
     userId: r.params.userId,
   }, {transaction});
 
-  const text = r.auth.credentials.id + " added " + r.params.userId;
+  const text = r.auth.credentials.firstName + " added " + user.firstName;
   let message = await Message.create({
     senderUserId: r.auth.credentials.id,
+    actionUserId: r.params.userId,
     chatId: chat.id,
     type: MessageType.informational,
     text: text,
@@ -231,8 +244,10 @@ export async function addUserInGroupChat(r) {
     include: [{
       model: User,
       as: 'sender'
-    }]
-
+    }, {
+      model: User,
+      as: 'actionUser'
+    }],
   })
 
   return output(message);
