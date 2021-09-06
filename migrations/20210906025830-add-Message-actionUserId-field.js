@@ -4,7 +4,6 @@ module.exports = {
   up: async (queryInterface, Sequelize) => {
     return queryInterface.addColumn('Messages', 'actionUserId', {
       type: Sequelize.DataTypes.STRING,
-      allowNull: false,
       references: {
         model: {
           tableName: 'Users',

@@ -197,7 +197,7 @@ export default [{
       }).label('LeaveFromGroupChatParams')
     },
     response: {
-      schema: emptyOkSchema
+      schema: outputOkSchema(messageSchema).label('RemoveUserFromChatResponse')
     }
   }
 }, {

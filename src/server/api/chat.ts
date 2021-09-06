@@ -254,7 +254,7 @@ export async function removeUserInGroupChat(r) {
   chat.mustHaveOwner(r.auth.credentials.id);
   await chat.mustHaveMember(r.params.userId);
 
-  const user = await User.findByPk(r.params.userId)
+  const user = await User.findByPk(r.params.userId);
 
   const chatMember = await ChatMember.findOne({
     where: {
@@ -324,10 +324,33 @@ export async function leaveFromGroupChat(r) {
     // await chat.update({ ownerUserId: firsMember.id }, { transaction });
   }
 
+  const user = await User.findByPk(r.params.userId);
+
   await ChatMember.destroy({
     where: { chatId: chat.id, userId: r.auth.credentials.id },
     transaction
   });
+
+  const text = r.auth.credentials.firstName + " leave chat";
+
+  let message = await Message.create({
+    senderUserId: r.auth.credentials.id,
+    chatId: chat.id,
+    type: MessageType.informational,
+    text: text,
+  });
+
+  message = await Message.findByPk(message.id, {
+    include: [{
+      model: User,
+      as: 'sender'
+    }, {
+      model: User,
+      as: 'actionUser'
+    }],
+  })
+
+  return output(message);
 
   return output();
 }
