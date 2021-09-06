@@ -10,6 +10,7 @@ import {
   chatSchema,
   chatNameSchema,
   messagesSchema,
+  messageSchema,
   messageTextSchema,
   mediaIdsSchema,
   usersSchema,
@@ -29,6 +30,11 @@ import {
 
 const userIdSchema = idSchema.label('UserId');
 const chatIdSchema = idSchema.label('ChatId');
+
+const createChatSchema = Joi.object({
+  data: chatSchema,
+  message: messageSchema,
+}).label('CreateChatSchema')
 
 export default [{
   method: "GET",
@@ -101,7 +107,7 @@ export default [{
       }).label('CreateGroupChatPayload')
     },
     response: {
-      schema: outputOkSchema(chatSchema).label('CreateGroupChatResponse')
+      schema: outputOkSchema(createChatSchema).label('CreateGroupChatResponse')
     }
   }
 }, {
@@ -161,7 +167,7 @@ export default [{
       }).label('AddUserInGroupChatParams')
     },
     response: {
-      schema: emptyOkSchema
+      schema: outputOkSchema(messageSchema).label('AddUserToChatResponse')
     }
   }
 }, {
@@ -179,7 +185,7 @@ export default [{
       }).label('RemoveUserInGroupChatParams')
     },
     response: {
-      schema: emptyOkSchema
+      schema: outputOkSchema(messageSchema).label('RemoveUserFromChatResponse')
     }
   }
 }, {
@@ -196,7 +202,7 @@ export default [{
       }).label('LeaveFromGroupChatParams')
     },
     response: {
-      schema: emptyOkSchema
+      schema: outputOkSchema(messageSchema).label('RemoveUserFromChatResponse')
     }
   }
 }, {
