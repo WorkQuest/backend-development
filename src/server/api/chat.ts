@@ -52,11 +52,31 @@ export async function createGroupChat(r) {
 
   await groupChat.$set('members', memberUserIds, { transaction });
 
+  const text = r.auth.credentials.firstName + " created chat";
+
+  let message = await Message.create({
+    senderUserId: r.auth.credentials.id,
+    chatId: groupChat.id,
+    type: MessageType.informational,
+    text: text,
+  }, {transaction});
+
   await transaction.commit();
 
-  return output(
-    await Chat.findByPk(groupChat.id)
-  );
+  message = await Message.findByPk(message.id, {
+    include: [{
+      model: User,
+      as: 'sender'
+    }, {
+      model: User,
+      as: 'actionUser'
+    }],
+  })
+
+  return output({
+    data: await Chat.findByPk(groupChat.id),
+    message: message,
+  });
 }
 
 export async function getChatMessages(r) {

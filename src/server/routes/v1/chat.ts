@@ -31,6 +31,11 @@ import {
 const userIdSchema = idSchema.label('UserId');
 const chatIdSchema = idSchema.label('ChatId');
 
+const createChatSchema = Joi.object({
+  data: chatSchema,
+  message: messageSchema,
+}).label('CreateChatSchema')
+
 export default [{
   method: "GET",
   path: "/v1/user/me/chats",
@@ -102,7 +107,7 @@ export default [{
       }).label('CreateGroupChatPayload')
     },
     response: {
-      schema: outputOkSchema(chatSchema).label('CreateGroupChatResponse')
+      schema: outputOkSchema(createChatSchema).label('CreateGroupChatResponse')
     }
   }
 }, {
