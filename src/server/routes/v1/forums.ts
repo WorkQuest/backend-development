@@ -1,13 +1,15 @@
 import * as Joi from "joi";
 import {
-  sendComment,
-  createNews,
-  getNews,
-  likeNews,
-  deleteLikeNews,
-  likeComment,
-  deleteLikeComment,
-  getNewsComments, getCountsLikeNews, getCountsLikeComments
+  getForumPosts,
+  createForumPost,
+  sendForumPostComment,
+  putForumPostLike,
+  removeForumPostLike,
+  putForumPostCommentLike,
+  removeForumPostCommentLike,
+  getForumPostComments,
+  getCountForumPostLikes,
+  getCountForumPostCommentLikes,
 } from "../../api/forums";
 import {
   emptyOkSchema,
@@ -16,87 +18,88 @@ import {
   offsetSchema,
   outputOkSchema,
   textTitleSchema,
-  commentsSchema,
-  commentSchema,
-  newsAllSchema,
   mediaIdsSchema,
-  newsSchema,
-  commentIdOrNullSchema,
-  getCountsLikeNewsSchema,
+  forumPostCommentsSchema,
+  forumPostCommentSchema,
+  forumPostsSchema,
+  forumPostSchema,
+  forumPostRootCommentIdSchema,
+  forumPostGetLikesSchema
 } from "@workquest/database-models/lib/schemes";
 
-const newsIdSchema = idSchema.label("NewsId");
-const commentIdSchema = idSchema.label("CommentId");
+const forumPostIdSchema = idSchema.label("ForumPostId");
+const forumPostLikeIdSchema = idSchema.label("ForumPostLikeId");
+const forumPostCommentIdSchema = idSchema.label("ForumPostCommentId");
 
 export default [{
   method: "GET",
-  path: "/v1/forum/news",
-  handler: getNews,
+  path: "/v1/forum/posts",
+  handler: getForumPosts,
   options: {
-    id: "v1.forum.getNews",
-    tags: ["api", "forum"],
-    description: "Get news",
+    id: "v1.forum.getPosts",
+    tags: ["api", "forum", "getForumPosts"],
+    description: "Get forum posts",
     validate: {
       query: Joi.object({
         limit: limitSchema.required(),
         offset: offsetSchema.required()
-      }).label("GetNewsQuery")
+      }).label("GetPostsQuery")
     },
     response: {
-      schema: outputOkSchema(newsAllSchema).label("newsAllSchemaResponse")
+      schema: outputOkSchema(forumPostsSchema).label("GetPostsSchemaResponse")
     }
   }
 }, {
   method: "POST",
-  path: "/v1/forum/news/create",
-  handler: createNews,
+  path: "/v1/forum/post/create",
+  handler: createForumPost,
   options: {
-    id: "v1.forum.createNews",
-    tags: ["api", "forum"],
-    description: "Create new news",
+    id: "v1.forum.createPost",
+    tags: ["api", "forum", "createPost"],
+    description: "Create new forum post",
     validate: {
       payload: Joi.object({
         text: textTitleSchema.required(),
         medias: mediaIdsSchema.default([]).unique().label("MediaIds")
-      }).label("CreateNewsPayload")
+      }).label("CreateForumPostPayload")
     },
     response: {
-      schema: outputOkSchema(newsSchema).label("newsSchemaResponse")
+      schema: outputOkSchema(forumPostSchema).label("CreateForumPostSchemaResponse")
     }
   }
 }, {
   method: "POST",
-  path: "/v1/forum/news/{newsId}/comment/send",
-  handler: sendComment,
+  path: "/v1/forum/post/{forumPostId}/comment/send",
+  handler: sendForumPostComment,
   options: {
-    id: "v1.forum.news.sendComment",
-    tags: ["api", "forum"],
-    description: "Send comment",
+    id: "v1.forum.sendForumPostComment",
+    tags: ["api", "forum", "sendPostComment"],
+    description: "Send comment with forum posts",
     validate: {
       params: Joi.object({
-        newsId: newsIdSchema.required()
+        forumPostId: forumPostIdSchema.required()
       }),
       payload: Joi.object({
-        rootCommentId: commentIdOrNullSchema,
+        rootCommentId: forumPostRootCommentIdSchema,
         text: textTitleSchema.required()
-      }).label("SendCommentPayload")
+      }).label("SendForumPostCommentPayload")
     },
     response: {
-      schema: outputOkSchema(commentSchema).label("commentSchemaResponse")
+      schema: outputOkSchema(forumPostCommentSchema).label("ForumPostCommentSchemaResponse")
     }
   }
 }, {
   method: "POST",
-  path: "/v1/forum/news/{newsId}/like",
-  handler: likeNews,
+  path: "/v1/forum/post/{forumPostId}/like",
+  handler: putForumPostLike,
   options: {
-    id: "v1.forum.news.likeNews",
-    tags: ["api", "forum"],
-    description: "Like news",
+    id: "v1.forum.post.putLike",
+    tags: ["api", "forum", "putPostLike"],
+    description: "Like forum post",
     validate: {
       params: Joi.object({
-        newsId: newsIdSchema.required()
-      }).label("LikeNewsParams")
+        forumPostId: forumPostIdSchema.required()
+      }).label("PutForumPostIdParams")
     },
     response: {
       schema: emptyOkSchema
@@ -104,16 +107,16 @@ export default [{
   }
 }, {
   method: "DELETE",
-  path: "/v1/forum/news/{likeId}/like",
-  handler: deleteLikeNews,
+  path: "/v1/forum/post/{forumPostId}/like",
+  handler: removeForumPostLike,
   options: {
-    id: "v1.forum.news.deleteLike",
-    tags: ["api", "forum"],
-    description: "Delete like",
+    id: "v1.forum.post.removeLike",
+    tags: ["api", "forum", "removePostLike"],
+    description: "Remove like in forum post",
     validate: {
       params: Joi.object({
-        newsId: newsIdSchema.required()
-      }).label("DeleteLikeParams")
+        forumPostId: forumPostLikeIdSchema.required()
+      }).label("ForumPostLikeIdParams")
     },
     response: {
       schema: emptyOkSchema
@@ -121,16 +124,16 @@ export default [{
   }
 }, {
   method: "POST",
-  path: "/v1/forum/comment/{commentId}/like",
-  handler: likeComment,
+  path: "/v1/forum/comment/{forumPostCommentId}/like",
+  handler: putForumPostCommentLike,
   options: {
-    id: "v1.forum.news.comment.likeComment",
-    tags: ["api", "forum"],
-    description: "Like comment",
+    id: "v1.forum.post.comment.putLike",
+    tags: ["api", "forum","putPostCommentLike"],
+    description: "Put like the comment of a post in the forum",
     validate: {
       params: Joi.object({
-        commentId: commentIdSchema.required()
-      }).label("LikeCommentParams")
+        forumPostCommentId: forumPostCommentIdSchema.required()
+      }).label("PutForumPostCommentLikeParams")
     },
     response: {
       schema: emptyOkSchema
@@ -138,16 +141,16 @@ export default [{
   }
 }, {
   method: "DELETE",
-  path: "/v1/forum/comment/{likeCommentId}/like",
-  handler: deleteLikeComment,
+  path: "/v1/forum/comment/{forumPostCommentId}/like",
+  handler: removeForumPostCommentLike,
   options: {
-    id: "v1.forum.news.comment.deleteLike",
-    tags: ["api", "forum"],
+    id: "v1.forum.post.comment.removeLike",
+    tags: ["api", "forum", "removePostCommentLike"],
     description: "Delete like in comment",
     validate: {
       params: Joi.object({
-        commentId: commentIdSchema.required()
-      }).label("DeleteLikeCommentParams")
+        forumPostCommentId: forumPostCommentIdSchema.required()
+      }).label("RemoveForumPostCommentLikeParams")
     },
     response: {
       schema: emptyOkSchema
@@ -155,65 +158,65 @@ export default [{
   }
 }, {
   method: "GET",
-  path: "/v1/forum/news/{newsId}/comments",
-  handler: getNewsComments,
+  path: "/v1/forum/post/{forumPostId}/comments",
+  handler: getForumPostComments,
   options: {
-    id: "v1.forum.news.getComments",
-    tags: ["api", "forum"],
-    description: "Get comments on news",
+    id: "v1.forum.post.getComments",
+    tags: ["api", "forum", "getPostComments"],
+    description: "Get all comments for a forum post",
     validate: {
       params: Joi.object({
-        newsId: newsIdSchema
-      }).label("EmployerForumParams"),
+        forumPostId: forumPostIdSchema
+      }).label("GetForumPostIdParams"),
       query: Joi.object({
         limit: limitSchema.required(),
         offset: offsetSchema.required()
-      }).label("GetNewsCommentsQuery")
+      }).label("GetForumPostCommentsQuery")
     },
     response: {
-      schema: outputOkSchema(commentsSchema).label("CommentsResponse")
+      schema: outputOkSchema(forumPostCommentsSchema).label("ForumPostCommentsSchemaResponse")
     }
   }
 }, {
   method: "GET",
-  path: "/v1/forum/news/{newsId}/likes/count",
-  handler: getCountsLikeNews,
+  path: "/v1/forum/post/{forumPostId}/likes",
+  handler: getCountForumPostLikes,
   options: {
-    id: "v1.forum.news.likeCounts",
-    tags: ["api", "forum"],
-    description: "Get the number of news likes ",
+    id: "v1.forum.post.getCountLikes",
+    tags: ["api", "forum", "getCountForumPostLikes"],
+    description: "Get the number of likes on a forum post",
     validate: {
       params: Joi.object({
-        newsId: newsIdSchema
-      }).label("EmployerForumParams"),
+        forumPostId: forumPostIdSchema
+      }).label("GetCountForumPostIdParams"),
       query: Joi.object({
         limit: limitSchema.required(),
         offset: offsetSchema.required()
-      }).label("GetNewsCommentsQuery")
+      }).label("GetCountForumPostLikesQuery")
     },
     response: {
-      schema: outputOkSchema(getCountsLikeNewsSchema).label("GetCountsLikeNewsResponse")
+      schema: outputOkSchema(forumPostGetLikesSchema).label("GetCountLikeNewsResponse")
     }
   }
 }, {
   method: "GET",
-  path: "/v1/forum/comment/{commentId}/likes/count",
-  handler: getCountsLikeComments,
+  path: "/v1/forum/post/comment/{forumPostCommentId}/likes",
+  handler: getCountForumPostCommentLikes,
   options: {
-    id: "v1.forum.news.commentLikes",
-    tags: ["api", "forum"],
-    description: "Get the number of likes for a comment",
+    id: "v1.forum.post.comment. getCountLikes",
+    tags: ["api", "forum", "getCountForumPostCommentLikes"],
+    description: "Get the number of likes for a comment in a forum post",
     validate: {
       params: Joi.object({
-        commentId: commentIdSchema
-      }).label("EmployerForumParams"),
+        forumPostCommentId: forumPostCommentIdSchema
+      }).label("GetCountForumPostCommentLikesParams"),
       query: Joi.object({
         limit: limitSchema.required(),
         offset: offsetSchema.required()
-      }).label("GetNewsCommentsQuery")
+      }).label("GetCountForumPostCommentLikesQuery")
     },
     response: {
-      schema: outputOkSchema(commentsSchema).label("CommentsResponse")
+      schema: outputOkSchema(forumPostCommentsSchema).label("getCountForumPostCommentLikesResponse")
     }
   }
 }];

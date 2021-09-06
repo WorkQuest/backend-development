@@ -1,118 +1,123 @@
-import { News, LikeNews, Comment, LikeComment } from "@workquest/database-models/lib/models";
+import {
+  ForumPost,
+  ForumPostComment,
+  ForumPostCommentLike,
+  ForumPostLike
+} from "@workquest/database-models/lib/models";
 import { error, output } from "../utils";
 import { Errors } from "../utils/errors";
 import { getMedias } from "../utils/medias";
 
-export async function likeNews(r) {
-  const news = await News.findByPk(r.params.newsId);
-
-  if (!news) {
-    return error(Errors.NotFound, "News not found", {});
-  }
-
-  await LikeNews.findOrCreate({
-    where: { userId: r.auth.credentials.id, newsId: r.params.newsId },
-    defaults: { userId: r.auth.credentials.id, newsId: r.params.newsId },
-  });
-
-  return output();
-}
-
-export async function deleteLikeNews(r) {
-  const news = await News.findByPk(r.params.newsId);
-
-  if (!news) {
-    return error(Errors.NotFound, "News not found", {});
-  }
-
-  await LikeNews.destroy({
-    where: { newsId: r.params.newsId, userId: r.auth.credentials.id }
-  });
-
-  return output();
-}
-
-export async function likeComment(r) {
-  const comment = await Comment.findByPk(r.params.commentId);
-
-  if (!comment) {
-    return error(Errors.NotFound, "Comment not found", {});
-  }
-
-  await LikeComment.findOrCreate({
-    where: { userId: r.auth.credentials.id, commentId: r.params.commentId },
-    defaults: { userId: r.auth.credentials.id, commentId: r.params.commentId },
-  });
-
-  return output();
-}
-
-export async function deleteLikeComment(r) {
-  const comment = await Comment.findByPk(r.params.commentId);
-
-  if (!comment) {
-    return error(Errors.NotFound, "Comment not found", {});
-  }
-
-  await LikeComment.destroy({
-    where: { commentId: r.params.newsId, userId: r.auth.credentials.id }
-  });
-
-  return output();
-}
-
-export async function getNews(r) {
-  const { count, rows } = await News.findAndCountAll({
+export async function getForumPosts(r) {
+  const { count, rows } = await ForumPost.findAndCountAll({
     limit: r.query.limit,
     offset: r.query.offset,
   });
 
   return output({
-    count, news: rows
+    count, forumPost: rows
   });
 }
 
-export async function createNews(r) {
+export async function createForumPost(r) {
   const medias = await getMedias(r.payload.medias);
   const transaction = await r.server.app.db.transaction();
 
-  const news = await News.create({
+  const post = await ForumPost.create({
     authorId: r.auth.credentials.id,
     text: r.payload.text
   }, { transaction });
 
-  await news.$set("medias", medias, { transaction });
+  await post.$set("medias", medias, { transaction });
 
   await transaction.commit();
 
   return output(
-    await News.findByPk(news.id)
+    await ForumPost.findByPk(post.id)
   );
 }
 
-export async function sendComment(r) {
-  const news = await News.findOne({
-    where: { id: r.params.newsId }
+export async function sendForumPostComment(r) {
+  const post = await ForumPost.findOne({
+    where: { id: r.params.forumPostId }
   });
 
-  if (!news) {
-    return error(Errors.NotFound, "News not found", {});
+  if (!post) {
+    return error(Errors.NotFound, "Forum post not found", {});
   }
-  const comment = Comment.create({
+  const comment = ForumPostComment.create({
     authorId: r.auth.credentials.id,
-    newsId: r.params.newsId,
+    forumPostId: r.params.forumPostId,
     rootCommentId: r.payload.rootCommentId,
     text: r.payload.text
   })
   if (!comment) {
-    return error(Errors.NotFound, "Can`t create comment, record not found", {});
+    return error(Errors.NotFound, "Can`t create comment", {});
   }
   return output(comment);
 }
 
-export async function getNewsComments(r) {
-  const { count, rows } = await Comment.findAndCountAll({
-    where: { newsId: r.params.newsId },
+export async function putForumPostLike(r) {
+  const post = await ForumPost.findByPk(r.params.forumPostId);
+
+  if (!post) {
+    return error(Errors.NotFound, "Forum post not found", {});
+  }
+
+  await ForumPostLike.findOrCreate({
+    where: { userId: r.auth.credentials.id, forumPostId: r.params.forumPostId },
+    defaults: { userId: r.auth.credentials.id, forumPostId: r.params.forumPostId },
+  });
+
+  return output();
+}
+
+export async function removeForumPostLike(r) {
+  const post = await ForumPost.findByPk(r.params.forumPostId);
+
+  if (!post) {
+    return error(Errors.NotFound, "Forum post not found", {});
+  }
+
+  await ForumPostLike.destroy({
+    where: { forumPostId: r.params.forumPostId, userId: r.auth.credentials.id }
+  });
+
+  return output();
+}
+
+export async function putForumPostCommentLike(r) {
+  const comment = await ForumPostComment.findByPk(r.params.forumPostCommentId);
+
+  if (!comment) {
+    return error(Errors.NotFound, "Comment not found", {});
+  }
+
+  await ForumPostCommentLike.findOrCreate({
+    where: { userId: r.auth.credentials.id, forumPostCommentId: r.params.forumPostCommentId },
+    defaults: { userId: r.auth.credentials.id, forumPostCommentId: r.params.forumPostCommentId },
+  });
+
+  return output();
+}
+
+export async function removeForumPostCommentLike(r) {
+  const comment = await ForumPostComment.findByPk(r.params.forumPostCommentId);
+
+  if (!comment) {
+    return error(Errors.NotFound, "No comment was found in the forum post", {});
+  }
+
+  await ForumPostCommentLike.destroy({
+    where: { forumPostCommentId: r.params.forumPostCommentId, userId: r.auth.credentials.id }
+  });
+
+  return output();
+}
+
+export async function getForumPostComments(r) {
+  const { count, rows } = await ForumPostComment.findAndCountAll({
+    where: { forumPostId: r.params.forumPostId },
     limit: r.query.limit,
     offset: r.query.offset,
   });
@@ -122,15 +127,15 @@ export async function getNewsComments(r) {
   });
 }
 
-export async function getCountsLikeNews(r) {
-  const { count, rows } = await LikeNews.findAndCountAll({
-    where: {newsId: r.params.newsId},
+export async function getCountForumPostLikes(r) {
+  const { count, rows } = await ForumPostLike.findAndCountAll({
+    where: {forumPostId: r.params.forumPostId},
     limit: r.query.limit,
     offset: r.query.offset
   });
 
   if (!{ count, rows }){
-    return error(Errors.NotFound, "Can`t find likes in this news", {});
+    return error(Errors.NotFound, "Like does not exist on зщые in a forum", {});
   }
 
   return output({
@@ -138,17 +143,16 @@ export async function getCountsLikeNews(r) {
   });
 }
 
-export async function getCountsLikeComments(r) {
-  console.log(r.params);
-  const { count, rows } = await LikeComment.findAndCountAll({
-    where: {commentId: r.params.commentId},
+export async function getCountForumPostCommentLikes(r) {
+  const { count, rows } = await ForumPostCommentLike.findAndCountAll({
+    where: {forumPostCommentId: r.params.forumPostCommentId},
     limit: r.query.limit,
     offset: r.query.offset
   });
   console.log(count,rows);
 
   if (!{ count, rows }){
-    return error(Errors.NotFound, "Can`t find likes in this comment", {});
+    return error(Errors.NotFound, "Like does not exist on comments in a forum post", {});
   }
 
   return output({
