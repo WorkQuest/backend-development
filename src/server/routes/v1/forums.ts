@@ -7,7 +7,7 @@ import {
   deleteLikeNews,
   likeComment,
   deleteLikeComment,
-  getNewsComments
+  getNewsComments, getCountsLikeNews, getCountsLikeComments
 } from "../../api/forums";
 import {
   emptyOkSchema,
@@ -21,7 +21,8 @@ import {
   newsAllSchema,
   mediaIdsSchema,
   newsSchema,
-  commentIdOrNullSchema
+  commentIdOrNullSchema,
+  getCountsLikeNewsSchema,
 } from "@workquest/database-models/lib/schemes";
 
 const newsIdSchema = idSchema.label("NewsId");
@@ -163,6 +164,48 @@ export default [{
     validate: {
       params: Joi.object({
         newsId: newsIdSchema
+      }).label("EmployerForumParams"),
+      query: Joi.object({
+        limit: limitSchema.required(),
+        offset: offsetSchema.required()
+      }).label("GetNewsCommentsQuery")
+    },
+    response: {
+      schema: outputOkSchema(commentsSchema).label("CommentsResponse")
+    }
+  }
+}, {
+  method: "GET",
+  path: "/v1/forum/news/{newsId}/likes/count",
+  handler: getCountsLikeNews,
+  options: {
+    id: "v1.forum.news.likeCounts",
+    tags: ["api", "forum"],
+    description: "Get the number of news likes ",
+    validate: {
+      params: Joi.object({
+        newsId: newsIdSchema
+      }).label("EmployerForumParams"),
+      query: Joi.object({
+        limit: limitSchema.required(),
+        offset: offsetSchema.required()
+      }).label("GetNewsCommentsQuery")
+    },
+    response: {
+      schema: outputOkSchema(getCountsLikeNewsSchema).label("GetCountsLikeNewsResponse")
+    }
+  }
+}, {
+  method: "GET",
+  path: "/v1/forum/comment/{commentId}/likes/count",
+  handler: getCountsLikeComments,
+  options: {
+    id: "v1.forum.news.commentLikes",
+    tags: ["api", "forum"],
+    description: "Get the number of likes for a comment",
+    validate: {
+      params: Joi.object({
+        commentId: commentIdSchema
       }).label("EmployerForumParams"),
       query: Joi.object({
         limit: limitSchema.required(),

@@ -98,37 +98,16 @@ export async function sendComment(r) {
   if (!news) {
     return error(Errors.NotFound, "News not found", {});
   }
-
-  if (r.payload.rootCommentId === undefined) {
-    let create = await Comment.create({
-      authorId: r.auth.credentials.id,
-      newsId: r.params.newsId,
-      rootCommentId: null,
-      text: r.payload.text
-    });
-    if (!create) {
-      return error(Errors.NotFound, "Can`t create comment", {});
-    }
-    return output(create);
-  }
-  const comment = await Comment.findOne({
-    where: {
-      id: r.payload.rootCommentId
-    }
-  });
-  if (!comment) {
-    return error(Errors.NotFound, "Record not found", {});
-  }
-  const create = await Comment.create({
+  const comment = Comment.create({
     authorId: r.auth.credentials.id,
     newsId: r.params.newsId,
     rootCommentId: r.payload.rootCommentId,
     text: r.payload.text
-  });
-  if (!create) {
+  })
+  if (!comment) {
     return error(Errors.NotFound, "Can`t create comment, record not found", {});
   }
-  return output(create);
+  return output(comment);
 }
 
 export async function getNewsComments(r) {
@@ -140,5 +119,39 @@ export async function getNewsComments(r) {
 
   return output({
     count, comments: rows
+  });
+}
+
+export async function getCountsLikeNews(r) {
+  const { count, rows } = await LikeNews.findAndCountAll({
+    where: {newsId: r.params.newsId},
+    limit: r.query.limit,
+    offset: r.query.offset
+  });
+
+  if (!{ count, rows }){
+    return error(Errors.NotFound, "Can`t find likes in this news", {});
+  }
+
+  return output({
+    count, likes: rows
+  });
+}
+
+export async function getCountsLikeComments(r) {
+  console.log(r.params);
+  const { count, rows } = await LikeComment.findAndCountAll({
+    where: {commentId: r.params.commentId},
+    limit: r.query.limit,
+    offset: r.query.offset
+  });
+  console.log(count,rows);
+
+  if (!{ count, rows }){
+    return error(Errors.NotFound, "Can`t find likes in this comment", {});
+  }
+
+  return output({
+    count, likes: rows
   });
 }
