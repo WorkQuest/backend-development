@@ -60,7 +60,7 @@ export async function createGroupChat(r) {
 
   const infoMessage = await InfoMessage.build({
     messageId: message.id,
-    messageAction: MessageAction.messageActionGroupChatCreate,
+    messageAction: MessageAction.groupChatCreate,
   });
 
   groupChat.lastMessageId = message.id;
@@ -176,7 +176,6 @@ export async function sendMessageToUser(r) {
 }
 
 export async function sendMessageToChat(r) {
-  const transaction = await r.server.app.db.transaction();
   const medias = await getMedias(r.payload.medias);
   const chat = await Chat.findByPk(r.params.chatId);
 
@@ -185,6 +184,8 @@ export async function sendMessageToChat(r) {
   }
 
   await chat.mustHaveMember(r.auth.credentials.id);
+
+  const transaction = await r.server.app.db.transaction();
 
   const message = await Message.create({
     senderUserId: r.auth.credentials.id,
@@ -238,7 +239,7 @@ export async function addUserInGroupChat(r) {
 
   await InfoMessage.create({
     messageId: message.id,
-    messageAction: MessageAction.messageActionGroupChatAddUser,
+    messageAction: MessageAction.groupChatAddUser,
   }, { transaction });
 
   return output();
@@ -274,7 +275,7 @@ export async function removeUserInGroupChat(r) {
 
   await InfoMessage.create({
     messageId: message.id,
-    messageAction: MessageAction.messageActionGroupChatDeleteUser,
+    messageAction: MessageAction.groupChatDeleteUser,
   }, { transaction });
 
   return output();
@@ -292,18 +293,6 @@ export async function leaveFromGroupChat(r) {
 
   if (groupChat.ownerUserId === r.auth.credentials.id) {
     return error(Errors.Forbidden, "User is chat owner", {}); // TODO
-    // const firsMember = await User.findOne({
-    //   include: [{
-    //     model: ChatMember.unscoped(),
-    //     where: { chatId: chat.id },
-    //     attributes: [],
-    //     order: [
-    //       ['createdAt', 'ABC']
-    //     ],
-    //   }]
-    // });
-    //
-    // await chat.update({ ownerUserId: firsMember.id }, { transaction });
   }
 
   const transaction = await r.server.app.db.transaction();
@@ -321,7 +310,7 @@ export async function leaveFromGroupChat(r) {
 
   await InfoMessage.create({
     messageId: message.id,
-    messageAction: MessageAction.messageActionGroupChatLeaveUser,
+    messageAction: MessageAction.groupChatLeaveUser,
   }, { transaction });
 
   return output();
