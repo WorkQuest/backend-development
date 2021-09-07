@@ -74,6 +74,7 @@ export async function createQuest(r) {
     userId: user.id,
     status: QuestStatus.Created,
     category: r.payload.category,
+    employment: r.payload.employment,
     priority: r.payload.priority,
     locationPlaceName: r.payload.locationPlaceName,
     location: r.payload.location,
