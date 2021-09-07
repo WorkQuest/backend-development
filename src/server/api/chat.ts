@@ -238,6 +238,7 @@ export async function addUserInGroupChat(r) {
   }, { transaction });
 
   await InfoMessage.create({
+    userId: r.params.userId,
     messageId: message.id,
     messageAction: MessageAction.groupChatAddUser,
   }, { transaction });
@@ -274,6 +275,7 @@ export async function removeUserInGroupChat(r) {
   }, { transaction });
 
   await InfoMessage.create({
+    userId: r.params.userId,
     messageId: message.id,
     messageAction: MessageAction.groupChatDeleteUser,
   }, { transaction });
