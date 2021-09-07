@@ -25,7 +25,7 @@
     "@types/dotenv": "^6.1.1",
     "@types/joi": "^14.3.4",
     "@types/validator": "^13.1.0",
-    "@workquest/database-models": "git+https://github.com/WorkQuest/database-models.git#2fee0d4802563d0d2c64a75e661bf9e38ca93b6c",
+    "@workquest/database-models": "git+https://github.com/WorkQuest/database-models.git#44d93a86a07631d707854d3c1cb7cbb5e90eb5e7",
     "aws-sdk": "^2.918.0",
     "axios": "^0.21.1",
     "bcrypt": "^5.0.0",
@@ -72,6 +72,7 @@
     "eslint-plugin-prettier": "^3.1.1",
     "eslint-plugin-promise": "^4.2.1",
     "eslint-plugin-react": "^7.16.0",
-    "eslint-plugin-standard": "^4.0.1"
+    "eslint-plugin-standard": "^4.0.1",
+    "pino": "^6.13.2"
   }
 }

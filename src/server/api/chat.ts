@@ -12,6 +12,7 @@ import {
   MessageAction,
   SenderMessageStatus,
 } from "@workquest/database-models/lib/models";
+import { Op } from "sequelize";
 
 export async function getUserChats(r) {
   const userMemberInclude = {
@@ -76,6 +77,12 @@ export async function createGroupChat(r) {
 
   await transaction.commit();
 
+  await r.server.publish('/notifications/chat', {
+    notificationOwnerUserId: r.auth.credentials.id,
+    data: await Message.findByPk(message.id),
+    recipients: memberUserIds.filter(_ => _ !== r.auth.credentials.id ),
+  });
+
   return output(
     await Chat.findByPk(groupChat.id)
   );
@@ -124,8 +131,8 @@ export async function sendMessageToUser(r) {
   const medias = await getMedias(r.payload.medias);
   const transaction = await r.server.app.db.transaction();
 
-  let chat = await Chat.findOne({
-    where: { type: ChatType.private },
+  const [chat, isChatCreated] = await Chat.findOrCreate({
+    where: { },
     include: [{
       model: ChatMember,
       as: 'firstMemberInPrivateChat',
@@ -138,16 +145,33 @@ export async function sendMessageToUser(r) {
       where: { userId: r.auth.credentials.id },
       required: true,
       attributes: [],
-    }]
+    }],
+    defaults: { type: ChatType.private },
+    transaction,
   });
 
-  if (!chat) {
-    chat = await Chat.create({
-      type: ChatType.private,
+  if (isChatCreated) {
+    await ChatMember.create({
+      unreadCountMessages: 0,
+      chatId: chat.id,
+      userId: r.auth.credentials.id
     }, { transaction });
 
-    await chat.$set('members', [r.auth.credentials.id, r.params.userId],
-      { transaction });
+    await ChatMember.create({
+      unreadCountMessages: 1, /** Because created */
+      chatId: chat.id,
+      userId:  r.params.userId,
+    }, { transaction });
+  } else {
+    await ChatMember.update({ unreadCountMessages: 0 }, {
+      where: { chatId: chat.id, userId: r.auth.credentials.id }
+    });
+
+    await ChatMember.increment(['unreadCountMessages'], {
+      where: {
+        chatId: chat.id, userId: { [Op.ne]: r.auth.credentials.id }
+      }
+  });
   }
 
   const message = await Message.create({
@@ -160,6 +184,12 @@ export async function sendMessageToUser(r) {
 
   await message.$set('medias', medias, { transaction });
 
+  await Message.update({ senderStatus: SenderMessageStatus.read }, {
+    where: {
+      chatId: chat.id, senderUserId: { [Op.ne]: r.auth.credentials.id }
+    }
+  });
+
   await chat.update({
     lastMessageId: message.id,
     lastMessageDate: message.createdAt,
@@ -169,7 +199,8 @@ export async function sendMessageToUser(r) {
 
   await r.server.publish('/notifications/chat', {
     notificationOwnerUserId: r.auth.credentials.id,
-    chatId: chat.id, message
+    data: await Message.findByPk(message.id),
+    recipients: [r.params.userId],
   });
 
   return output();
@@ -197,6 +228,22 @@ export async function sendMessageToChat(r) {
 
   await message.$set('medias', medias, { transaction });
 
+  await Message.update({ senderStatus: SenderMessageStatus.read }, {
+    where: {
+      chatId: chat.id, senderUserId: { [Op.ne]: r.auth.credentials.id }
+    }
+  });
+
+  await ChatMember.update({ unreadCountMessages: 0 }, {
+    where: { chatId: chat.id, userId: r.auth.credentials.id },
+  });
+
+  await ChatMember.increment(['unreadCountMessages'], {
+    where: {
+      chatId: chat.id, userId: { [Op.ne]: r.auth.credentials.id }
+    },
+  });
+
   await chat.update({
     lastMessageId: message.id,
     lastMessageDate: message.createdAt,
@@ -206,7 +253,8 @@ export async function sendMessageToChat(r) {
 
   await r.server.publish('/notifications/chat', {
     notificationOwnerUserId: r.auth.credentials.id,
-    chatId: chat.id, message,
+    data: await Message.findByPk(message.id),
+    recipients: [r.params.userId],
   });
 
   return output();
@@ -242,6 +290,8 @@ export async function addUserInGroupChat(r) {
     messageId: message.id,
     messageAction: MessageAction.groupChatAddUser,
   }, { transaction });
+
+  // TODO add web socket
 
   return output();
 }
@@ -280,6 +330,8 @@ export async function removeUserInGroupChat(r) {
     messageAction: MessageAction.groupChatDeleteUser,
   }, { transaction });
 
+  // TODO add web socket
+
   return output();
 }
 
@@ -315,6 +367,8 @@ export async function leaveFromGroupChat(r) {
     messageAction: MessageAction.groupChatLeaveUser,
   }, { transaction });
 
+  // TODO add web socket
+
   return output();
 }
 
@@ -339,4 +393,19 @@ export async function getChatMembers(r) {
   });
 
   return output({count, members: rows});
+}
+
+export async function setMessagesAsRead(r) {
+  const chat = await Chat.findByPk(r.params.chatId);
+
+  if (!chat) {
+    return error(Errors.NotFound, "Chat not found", {});
+  }
+
+  await chat.mustHaveMember(r.auth.credentials.id);
+
+  // TODO
+  // TODO add web socket
+
+  return output();
 }
