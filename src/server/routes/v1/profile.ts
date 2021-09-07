@@ -17,7 +17,7 @@ import {
   userLastNameSchema,
   userPasswordSchema,
   userRoleSchema,
-  userSchema,
+  userSchema, userPhoneSchema
 } from "@workquest/database-models/lib/schemes";
 
 export default [{
@@ -117,7 +117,7 @@ export default [{
     description: "Send code for confirm phone number",
     validate: {
       payload: Joi.object({
-        phoneNumber: Joi.string().required().label('PhoneNumber'),
+        phone: userPhoneSchema,
       }).label('PhoneSendCodePayload')
     },
     response: {
