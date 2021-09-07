@@ -212,6 +212,7 @@ export default [{
   options: {
     id: "v1.chat.group.getMembers",
     description: "Get members in group chat (only for chat members)",
+    tags: ["api", "chat"],
     validate: {
       params: Joi.object({
         chatId: chatIdSchema.required(),
