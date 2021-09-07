@@ -9,9 +9,6 @@ import {
 } from "@workquest/database-models/lib/schemes";
 import { sendReview, getReviewsOfUser } from '../../api/review';
 
-const questIdSchema = idSchema.label('QuestId');
-const userIdSchema = idSchema.label('UserId');
-
 export default [{
   method: "POST",
   path: "/v1/review/send",
@@ -22,7 +19,7 @@ export default [{
     description: "Send review for user",
     validate: {
       payload: Joi.object({
-        questId: questIdSchema.required(),
+        questId: idSchema.required(),
         message: reviewMessageSchema.required(),
         mark: reviewMarkSchema.required(),
       }).label('ReviewSendPayload')
@@ -41,7 +38,7 @@ export default [{
     description: "Get all reviews about user",
     validate: {
       params: Joi.object({
-        userId: userIdSchema.required()
+        userId: idSchema.required()
       }).label('ParamsReviews')
     },
     response: {

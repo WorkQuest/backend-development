@@ -27,9 +27,6 @@ import {
   getChatMembers
 } from "../../api/chat";
 
-const userIdSchema = idSchema.label('UserId');
-const chatIdSchema = idSchema.label('ChatId');
-
 export default [{
   method: "GET",
   path: "/v1/user/me/chats",
@@ -58,7 +55,7 @@ export default [{
     description: "Get all messages for chat",
     validate: {
       params: Joi.object({
-        chatId: chatIdSchema.required(),
+        chatId: idSchema.required(),
       }).label('GetMessagesParams'),
       query: Joi.object({
         offset: offsetSchema,
@@ -79,7 +76,7 @@ export default [{
     tags: ["api", "chat"],
     validate: {
       params: Joi.object({
-        chatId: chatIdSchema.required()
+        chatId: idSchema.required()
       }).label('GetUserChatParams')
     },
     response: {
@@ -114,7 +111,7 @@ export default [{
     tags: ["api", "chat"],
     validate: {
       params: Joi.object({
-        userId: userIdSchema.required(),
+        userId: idSchema.required(),
       }).label('SendMessageToUserParams'),
       payload: Joi.object({
         text: messageTextSchema.default(''),
@@ -135,7 +132,7 @@ export default [{
     tags: ["api", "chat"],
     validate: {
       params: Joi.object({
-        chatId: chatIdSchema.required(),
+        chatId: idSchema.required(),
       }).label('SendMessageToChatParams'),
       payload: Joi.object({
         text: messageTextSchema.default(''),
@@ -156,8 +153,8 @@ export default [{
     tags: ["api", "chat"],
     validate: {
       params: Joi.object({
-        chatId: chatIdSchema.required(),
-        userId: userIdSchema.required(),
+        chatId: idSchema.required(),
+        userId: idSchema.required(),
       }).label('AddUserInGroupChatParams')
     },
     response: {
@@ -174,8 +171,8 @@ export default [{
     tags: ["api", "chat"],
     validate: {
       params: Joi.object({
-        chatId: chatIdSchema.required(),
-        userId: userIdSchema.required(),
+        chatId: idSchema.required(),
+        userId: idSchema.required(),
       }).label('RemoveUserInGroupChatParams')
     },
     response: {
@@ -192,7 +189,7 @@ export default [{
     tags: ["api", "chat"],
     validate: {
       params: Joi.object({
-        chatId: chatIdSchema.required(),
+        chatId: idSchema.required(),
       }).label('LeaveFromGroupChatParams')
     },
     response: {
@@ -208,7 +205,7 @@ export default [{
     description: "Get members in group chat (only for chat members)",
     validate: {
       params: Joi.object({
-        chatId: chatIdSchema.required(),
+        chatId: idSchema.required(),
       }).label('GetChatMembersParams'),
       query: Joi.object({
         offset: offsetSchema,

@@ -11,9 +11,6 @@ import {
   mediaIdsSchema,
 } from "@workquest/database-models/lib/schemes";
 
-const userIdSchema = idSchema.label("UserId");
-const portfolioIdSchema = idSchema.label("PortfolioId");
-
 export default [{
   method: "POST",
   path: "/v1/portfolio/add-case",
@@ -43,7 +40,7 @@ export default [{
     description: "Get all cases for user",
     validate: {
       params: Joi.object({
-        userId: userIdSchema
+        userId: idSchema
       }).label('GetCasesParams')
     },
     response: {
@@ -60,7 +57,7 @@ export default [{
     description: "Edit case",
     validate: {
       params: Joi.object({
-        portfolioId: portfolioIdSchema
+        portfolioId: idSchema
       }).label('EditCaseParams'),
       payload: Joi.object({
         title: portfolioTitleSchema,
@@ -82,7 +79,7 @@ export default [{
     description: "Delete case",
     validate: {
       params: Joi.object({
-        portfolioId: portfolioIdSchema
+        portfolioId: idSchema
       }).label('DeleteCaseParams')
     },
     response: {
