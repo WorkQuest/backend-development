@@ -60,7 +60,7 @@ export default [{
     description: "Edit profile information",
     validate: {
       payload: Joi.object({
-        avatarId: idSchema.allow(null).required().label("MediaId"),
+        avatarId: idSchema.allow(null).required(),
         firstName: userFirstNameSchema.required(),
         lastName: userLastNameSchema.required(),
         skillFilters: skillFiltersSchema,
