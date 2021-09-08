@@ -19,7 +19,7 @@ import {
   userRoleSchema,
   userSchema,
   skillFiltersSchema,
-  userSchema, userPhoneSchema
+  userPhoneSchema,
 } from "@workquest/database-models/lib/schemes";
 
 export default [{
