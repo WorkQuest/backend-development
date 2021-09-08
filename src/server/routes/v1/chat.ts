@@ -6,13 +6,12 @@ import {
   offsetSchema,
   idSchema,
   chatsSchema,
-  userIdsSchema,
   chatSchema,
   chatNameSchema,
   messagesSchema,
   messageTextSchema,
-  mediaIdsSchema,
   usersSchema,
+  idsSchema,
 } from "@workquest/database-models/lib/schemes";
 import {
   getUserChats,
@@ -94,7 +93,7 @@ export default [{
     validate: {
       payload: Joi.object({
         name: chatNameSchema.required(),
-        memberUserIds: userIdsSchema.required().min(2).unique().label('UserIds')
+        memberUserIds: idsSchema.required().min(2).unique(),
       }).label('CreateGroupChatPayload')
     },
     response: {
@@ -115,7 +114,7 @@ export default [{
       }).label('SendMessageToUserParams'),
       payload: Joi.object({
         text: messageTextSchema.default(''),
-        medias: mediaIdsSchema.required().unique().label("Medias"),
+        medias: idsSchema.required().unique(),
       }).label('SendMessageToUserPayload')
     },
     response: {
@@ -136,7 +135,7 @@ export default [{
       }).label('SendMessageToChatParams'),
       payload: Joi.object({
         text: messageTextSchema.default(''),
-        medias: mediaIdsSchema.required().unique().label("Medias"),
+        medias: idsSchema.required().unique(),
       }).label('SendMessageToChatPayload'),
     },
     response: {

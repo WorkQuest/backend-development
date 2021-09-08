@@ -19,6 +19,7 @@ import {
 import {
   outputOkSchema,
   idSchema,
+  idsSchema,
   emptyOkSchema,
   locationSchema,
   questAdTypeSchema,
@@ -29,7 +30,6 @@ import {
   questSchema,
   questTitleSchema,
   questsQuerySchema,
-  mediaIdsSchema,
   questsSchema,
   questsForGetWithCountSchema,
   questLocationPlaceNameSchema,
@@ -46,7 +46,7 @@ export default [{
     description: "Get quest",
     validate: {
       params: Joi.object({
-        questId: idSchema
+        questId: idSchema.required(),
       }).label('GetQuestParams')
     },
     response: {
@@ -70,7 +70,7 @@ export default [{
         title: questTitleSchema.required(),
         description: questDescriptionSchema.required(),
         price: questPriceSchema.required(),
-        medias: mediaIdsSchema.required().unique(),
+        medias: idsSchema.required().unique(),
         adType: questAdTypeSchema,
         skillFilters: skillFiltersSchema.required(),
       }).label("CreateQuestPayload")
@@ -118,7 +118,7 @@ export default [{
         price: questPriceSchema,
         adType: questAdTypeSchema,
         skillFilters: skillFiltersSchema,
-        medias: mediaIdsSchema.unique(),
+        medias: idsSchema.unique(),
       }).label("EditQuestPayload"),
     },
     response: {
@@ -150,7 +150,7 @@ export default [{
     description: "Get quests for a given user",
     validate: {
       params: Joi.object({
-        userId: idSchema
+        userId: idSchema.required(),
       }).label("EmployerQuestsParams"),
       query: questsQuerySchema
     },
@@ -168,10 +168,10 @@ export default [{
     description: "Start quest",
     validate: {
       params: Joi.object({
-        questId: idSchema,
+        questId: idSchema.required(),
       }).label('StartQuestParams'),
       payload: Joi.object({
-        assignedWorkerId: idSchema,
+        assignedWorkerId: idSchema.required(),
       }).label('StartQuestPayload')
     },
     response: {
