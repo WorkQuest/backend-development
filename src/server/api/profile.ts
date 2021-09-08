@@ -14,6 +14,7 @@ import {
   userAdditionalInfoEmployerSchema,
   userAdditionalInfoWorkerSchema,
 } from "@workquest/database-models/lib/schemes";
+import { transformToGeoPostGIS } from "@workquest/database-models/lib/utils/quest";
 
 function getAdditionalInfoSchema(role: UserRole): Joi.Schema {
   if (role === UserRole.Employer)
@@ -66,6 +67,10 @@ export async function editProfile(r) {
         avatarId: r.payload.avatarId
       });
     }
+  }
+
+  if (r.payload.additionalInfo.location) {
+    r.payload.locationPostGIS = transformToGeoPostGIS(r.payload.additionalInfo.location);
   }
 
   await user.update({
