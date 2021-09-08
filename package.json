@@ -1,6 +1,6 @@
 {
   "name": "work-quest-backend",
-  "version": "1.0.8",
+  "version": "1.0.7",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -25,7 +25,7 @@
     "@types/dotenv": "^6.1.1",
     "@types/joi": "^14.3.4",
     "@types/validator": "^13.1.0",
-    "@workquest/database-models": "git+https://github.com/WorkQuest/database-models.git#9181113b4ad4ba38b1eff50b49d868eebade222a",
+    "@workquest/database-models": "git+https://github.com/WorkQuest/database-models.git#a89b8892188c5afb471a9116060e352b3d46352b",
     "aws-sdk": "^2.918.0",
     "axios": "^0.21.1",
     "bcrypt": "^5.0.0",
@@ -44,6 +44,7 @@
     "jsonwebtoken": "^8.5.1",
     "lab-transform-typescript": "^3.0.1",
     "nodemailer": "^6.5.0",
+    "nodemon": "^2.0.12",
     "npm": "^7.14.0",
     "pg": "^8.3.0",
     "qs": "^6.9.6",
@@ -72,6 +73,7 @@
     "eslint-plugin-prettier": "^3.1.1",
     "eslint-plugin-promise": "^4.2.1",
     "eslint-plugin-react": "^7.16.0",
-    "eslint-plugin-standard": "^4.0.1"
+    "eslint-plugin-standard": "^4.0.1",
+    "pino": "^6.13.2"
   }
 }
