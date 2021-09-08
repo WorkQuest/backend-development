@@ -69,8 +69,8 @@ export async function editProfile(r) {
     }
   }
 
-  if (r.payload.additionalInfo.location) {
-    r.payload.locationPostGIS = transformToGeoPostGIS(r.payload.additionalInfo.location);
+  if (r.payload.location) {
+    r.payload.locationPostGIS = transformToGeoPostGIS(r.payload.location);
   }
 
   await user.update({
