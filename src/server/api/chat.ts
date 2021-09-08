@@ -1,30 +1,24 @@
-import { Chat, ChatMember, ChatType, Media, Message, User } from "@workquest/database-models/lib/models";
+import { Chat, ChatMember, ChatType, Message, User } from "@workquest/database-models/lib/models";
 import { error, output } from "../utils";
 import { getMedias } from "../utils/medias";
 import { Errors } from "../utils/errors";
 import { Op } from "sequelize";
 
 export async function getUserChats(r) {
-  const { count, rows } = await Chat.unscoped().findAndCountAll({
-    attributes: ['id', 'type', 'lastMessageDate'],
-    include: [{
+  const count = await Chat.count({
+    include: {
       model: ChatMember,
-      as: 'otherMember',
-      required: false,
-      attributes: ['userId'],
-      where: {
-        userId: { [Op.ne]: r.auth.credentials.id }
-      },
-      include: [{
-        model: User.unscoped(),
-        as: 'user',
-        attributes: ['id', 'firstName', 'lastName', 'avatarId'],
-        include: [{
-          model: Media.scope('urlOnly'),
-          as: 'avatar'
-        }]
-      }]
-    }, {
+      where: { userId: r.auth.credentials.id },
+      required: true,
+      as: 'chatMembers',
+      attributes: [],
+    }
+  });
+  const chats = await Chat.findAll({
+    attributes: {
+      include: []
+    },
+    include: [{
       model: ChatMember,
       where: { userId: r.auth.credentials.id },
       required: true,
@@ -33,17 +27,14 @@ export async function getUserChats(r) {
     }, {
       model: Message,
       as: 'lastMessage',
-      // required: true,
-      attributes: ['senderUserId', 'text', 'createdAt'],
       include: [{
-        model: User.unscoped(),
+        model: User,
         as: 'sender',
-        attributes: ['id', 'firstName', 'lastName', 'avatarId'],
-        include: [{
-          model: Media.scope('urlOnly'),
-          as: 'avatar'
-        }]
       }]
+    }, {
+      model: User,
+      as: 'members',
+      where: { id: { [Op.ne]: r.auth.credentials.id } }
     }],
     order: [
       ['lastMessageDate', 'DESC'],
@@ -52,10 +43,7 @@ export async function getUserChats(r) {
     offset: r.query.offset,
   });
 
-  return output({
-    count,
-    chats: rows,
-  });
+  return output({ count, chats });
 }
 
 export async function createGroupChat(r) {
@@ -169,10 +157,9 @@ export async function sendMessageToUser(r) {
 
   await transaction.commit();
 
-  await r.server.publish('/notifications', {
-    type: 'message.new',
-    data: message,
-    userId: r.params.userId
+  await r.server.publish('/notifications/chat', {
+    notificationOwnerUserId: r.auth.credentials.id,
+    chatId: chat.id, message
   });
 
   return output();
@@ -201,6 +188,11 @@ export async function sendMessageToChat(r) {
   await chat.update({lastMessageId: message.id, lastMessageDate: message.createdAt});
 
   await transaction.commit();
+
+  await r.server.publish('/notifications/chat', {
+    notificationOwnerUserId: r.auth.credentials.id,
+    chatId: chat.id, message,
+  });
 
   return output();
 }
@@ -260,7 +252,7 @@ export async function leaveFromGroupChat(r) {
   await chat.mustHaveMember(r.auth.credentials.id);
 
   if (chat.ownerUserId === r.auth.credentials.id) {
-    // TODO
+    return error(Errors.Forbidden, "User is chat owner", {}); // TODO
     // const firsMember = await User.findOne({
     //   include: [{
     //     model: ChatMember.unscoped(),
