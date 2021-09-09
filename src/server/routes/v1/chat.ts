@@ -11,7 +11,9 @@ import {
   messagesSchema,
   messageTextSchema,
   usersSchema,
-  idsSchema, starredMessageScheme, outputPaginationSchema
+  idsSchema,
+  starredMessageScheme,
+  outputPaginationSchema
 } from "@workquest/database-models/lib/schemes";
 import {
   getUserChats,
@@ -23,7 +25,7 @@ import {
   removeUserInGroupChat,
   addUserInGroupChat,
   leaveFromGroupChat,
-  getChatMembers, getStarredQuests, markMessageByStar
+  getChatMembers, getStarredMessage, markMessageByStar,
 } from "../../api/chat";
 
 export default [{
@@ -105,7 +107,7 @@ export default [{
 }, {
   method: "GET",
   path: "/v1/starred-message",
-  handler: getStarredQuests,
+  handler: getStarredMessage,
   options: {
     id: "v1.chat.starred.message",
     description: "Get starred messages of the user",

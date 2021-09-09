@@ -298,7 +298,7 @@ export async function getChatMembers(r) {
   return output({count, members: rows});
 }
 
-export async function getStarredQuests(r){
+export async function getStarredMessage(r){
   await User.userMustExist(r.auth.credentials.id);
 
   const messages = await StarredMessage.findAndCountAll({
