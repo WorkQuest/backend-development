@@ -10,11 +10,12 @@ import {
   QuestsResponse,
   QuestsResponseStatus,
   QuestsResponseType,
-  StarredQuests,
+  StarredQuests, QuestsStatistic,
   SkillFilter,
 } from "@workquest/database-models/lib/models";
+import { transformToGeoPostGIS } from "@workquest/database-models/lib/utils/quest" // TODO to index.ts
+import { updateQuestsStatisticJob } from "../jobs/updateQuestsStatistic";
 import { locationForValidateSchema } from "@workquest/database-models/lib/schemes";
-import { transformToGeoPostGIS } from "@workquest/database-models/lib/utils/quest"
 
 export const searchFields = [
   "title",
@@ -34,6 +35,12 @@ async function answerWorkOnQuest(questId: string, worker: User, acceptWork: bool
 
   if (acceptWork) {
     await quest.update({ status: QuestStatus.Active });
+    await updateQuestsStatisticJob({
+      id: worker.id,
+    });
+    await updateQuestsStatisticJob({
+      id: quest.userId,
+    });
   } else {
     await quest.update({ status: QuestStatus.Created, assignedWorkerId: null });
   }
@@ -272,6 +279,14 @@ export async function acceptCompletedWorkOnQuest(r) {
   quest.mustHaveStatus(QuestStatus.WaitConfirm);
 
   await quest.update({ status: QuestStatus.Done });
+
+  await updateQuestsStatisticJob({
+    id: quest.assignedWorkerId,
+  });
+
+  await updateQuestsStatisticJob({
+    id: r.auth.credentials.id,
+  });
 
   return output();
 }
