@@ -316,5 +316,16 @@ export async function getStarredQuests(r){
     offset: r.query.offset,
   });
 
-  return output({messages: messages.rows, count: messages.count})
+  return output({messages: messages.rows, count: messages.count});
+}
+
+export async function markMessageByStar(r){
+  await Message.messageMustExists(r.params.messageId);
+
+  await StarredMessage.create({
+    userId: r.auth.credentials.id,
+    messageId: r.params.messageId
+  });
+
+  return output();
 }

@@ -23,7 +23,7 @@ import {
   removeUserInGroupChat,
   addUserInGroupChat,
   leaveFromGroupChat,
-  getChatMembers, getStarredQuests
+  getChatMembers, getStarredQuests, markMessageByStar
 } from "../../api/chat";
 
 export default [{
@@ -118,6 +118,23 @@ export default [{
     },
     response: {
       schema: outputPaginationSchema('messages: ', starredMessageScheme).label('GetUserStarredMessagesResponse')
+    }
+  }
+}, {
+  method: "POST",
+  path: "/v1/mark/{messageId}",
+  handler: markMessageByStar,
+  options: {
+    id: "v1.chat.group.create",
+    description: "Mark message by star",
+    tags: ["api", "chat"],
+    validate: {
+      params: Joi.object({
+        messageId: idSchema,
+      }).label('StarredMessageParams')
+    },
+    response: {
+      schema: emptyOkSchema
     }
   }
 }, {
