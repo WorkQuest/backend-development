@@ -72,15 +72,13 @@ export async function editProfile(r) {
   const transaction = await r.server.app.db.transaction();
 
   if (r.payload.skillFilters) {
-    const userSkillFilters = r.payload.skillFilters.map(v => {
-      return { ...v, userId: user.id };
-    });
+    const userSkillFilters = SkillFilter.toRawUserSkills(r.payload.skillFilters, user.id);
 
     await SkillFilter.destroy({ where: { userId: user.id }, transaction });
     await SkillFilter.bulkCreate(userSkillFilters, { transaction });
   }
 
-  await user.update(r.payload, { transaction });
+  await user.update({...r.payload, skillFilters: undefined}, { transaction });
 
   await transaction.commit();
 

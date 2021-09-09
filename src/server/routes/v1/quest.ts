@@ -33,7 +33,7 @@ import {
   questsSchema,
   questsForGetWithCountSchema,
   questLocationPlaceNameSchema,
-  skillFiltersSchema,
+  skillFilterSchema,
 } from "@workquest/database-models/lib/schemes";
 
 export default [{
@@ -72,7 +72,7 @@ export default [{
         price: questPriceSchema.required(),
         medias: idsSchema.required().unique(),
         adType: questAdTypeSchema,
-        skillFilters: skillFiltersSchema.required(),
+        skillFilters: skillFilterSchema.required(),
       }).label("CreateQuestPayload")
     },
     response: {
@@ -117,7 +117,7 @@ export default [{
         description: questDescriptionSchema,
         price: questPriceSchema,
         adType: questAdTypeSchema,
-        skillFilters: skillFiltersSchema,
+        skillFilters: skillFilterSchema,
         medias: idsSchema.unique(),
       }).label("EditQuestPayload"),
     },
