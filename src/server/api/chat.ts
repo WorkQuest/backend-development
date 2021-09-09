@@ -303,7 +303,7 @@ export async function getStarredQuests(r){
 
   const messages = await StarredMessage.findAndCountAll({
     where: {
-      userId: r.params.userId,
+      userId: r.auth.credentials,
     },
     include: [{
       model: User,
