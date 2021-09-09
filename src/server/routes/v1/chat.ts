@@ -103,12 +103,12 @@ export default [{
     }
   }
 }, {
-  method: "POST",
-  path: "/v1/{userId}/starred-message",
+  method: "GET",
+  path: "/v1/starred-message",
   handler: getStarredQuests,
   options: {
     id: "v1.chat.starred.message",
-    description: "Get starred message of user",
+    description: "Get starred messages of the user",
     tags: ["api", "chat"],
     validate: {
       query: Joi.object({

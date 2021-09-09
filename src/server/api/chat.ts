@@ -320,9 +320,8 @@ export async function getStarredQuests(r){
 }
 
 export async function markMessageByStar(r){
-  await Message.messageMustExists(r.params.messageId);
-
   await User.userMustExist(r.auth.credentials.id);
+  await Message.messageMustExists(r.params.messageId);
 
   const message = await Message.findByPk(r.params.messageId);
   const chat = await Chat.findByPk(message.chatId);
