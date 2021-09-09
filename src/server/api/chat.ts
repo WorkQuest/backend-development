@@ -1,4 +1,4 @@
-import { Chat, ChatMember, ChatType, Message, User } from "@workquest/database-models/lib/models";
+import { Chat, ChatMember, ChatType, Message, StarredChat, User } from "@workquest/database-models/lib/models";
 import { error, output } from "../utils";
 import { getMedias } from "../utils/medias";
 import { Errors } from "../utils/errors";
@@ -296,4 +296,25 @@ export async function getChatMembers(r) {
   });
 
   return output({count, members: rows});
+}
+
+export async function getStarredChats(r){
+  await User.userMustExist(r.auth.credentials.id);
+
+  const messages = await StarredChat.findAndCountAll({
+    where: {
+      userId: r.auth.credentials.id,
+    },
+    include: [{
+      model: User,
+      as: 'user'
+    }, {
+      model: Chat,
+      as: 'chat'
+    }],
+    limit: r.query.limit,
+    offset: r.query.offset,
+  });
+
+  return output({messages: messages.rows, count: messages.count});
 }
