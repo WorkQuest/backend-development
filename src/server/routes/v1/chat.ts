@@ -111,9 +111,6 @@ export default [{
     description: "Get starred message of user",
     tags: ["api", "chat"],
     validate: {
-      params: Joi.object({
-        userId: idSchema.required(),
-      }).label("UserParams"),
       query: Joi.object({
         offset: offsetSchema,
         limit: limitSchema,

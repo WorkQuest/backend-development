@@ -299,7 +299,7 @@ export async function getChatMembers(r) {
 }
 
 export async function getStarredQuests(r){
-  await User.userMustExist(r.params.userId);
+  await User.userMustExist(r.auth.credentials);
 
   const messages = await StarredMessage.findAndCountAll({
     where: {
@@ -311,7 +311,9 @@ export async function getStarredQuests(r){
     }, {
       model: Message,
       as: 'message'
-    }]
+    }],
+    limit: r.query.limit,
+    offset: r.query.offset,
   });
 
   return output({messages: messages.rows, count: messages.count})
