@@ -299,11 +299,11 @@ export async function getChatMembers(r) {
 }
 
 export async function getStarredQuests(r){
-  await User.userMustExist(r.auth.credentials);
+  await User.userMustExist(r.auth.credentials.id);
 
   const messages = await StarredMessage.findAndCountAll({
     where: {
-      userId: r.auth.credentials,
+      userId: r.auth.credentials.id,
     },
     include: [{
       model: User,
@@ -321,6 +321,12 @@ export async function getStarredQuests(r){
 
 export async function markMessageByStar(r){
   await Message.messageMustExists(r.params.messageId);
+
+  await User.userMustExist(r.auth.credentials.id);
+
+  const message = await Message.findByPk(r.params.messageId);
+  const chat = await Chat.findByPk(message.chatId);
+  await chat.mustHaveMember(r.auth.credentials.id);
 
   await StarredMessage.create({
     userId: r.auth.credentials.id,

@@ -125,7 +125,7 @@ export default [{
   path: "/v1/mark/{messageId}",
   handler: markMessageByStar,
   options: {
-    id: "v1.chat.group.create",
+    id: "v1.chat.mark.message",
     description: "Mark message by star",
     tags: ["api", "chat"],
     validate: {
