@@ -8,7 +8,7 @@ import {
   User,
   UserRole,
   UserStatus,
-  Media,
+  Media, SkillFilter
 } from "@workquest/database-models/lib/models";
 import {
   userAdditionalInfoEmployerSchema,
@@ -56,6 +56,7 @@ export async function editProfile(r) {
   }
   if (r.payload.avatarId) {
     const media = await Media.findByPk(r.payload.avatarId);
+
     if (!media) {
       return error(Errors.NotFound, 'Media is not found', {
         avatarId: r.payload.avatarId
@@ -68,9 +69,20 @@ export async function editProfile(r) {
     }
   }
 
-  await user.update({
-    ...r.payload
-  });
+  const transaction = await r.server.app.db.transaction();
+
+  if (r.payload.skillFilters) {
+    const userSkillFilters = r.payload.skillFilters.map(v => {
+      return { ...v, userId: user.id };
+    });
+
+    await SkillFilter.destroy({ where: { userId: user.id }, transaction });
+    await SkillFilter.bulkCreate(userSkillFilters, { transaction });
+  }
+
+  await user.update(r.payload, { transaction });
+
+  await transaction.commit();
 
   return output(
     await User.findByPk(user.id)

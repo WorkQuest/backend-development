@@ -16,10 +16,6 @@ import {
   rejectResponseOnQuest,
 } from "../../api/questsResponse";
 
-const userIdSchema = idSchema.label('UserId');
-const questIdSchema = idSchema.label('QuestId');
-const questsResponseIdSchema = idSchema.label('QuestsResponseId');
-
 export default [{
   method: "POST",
   path: "/v1/quest/{questId}/response",
@@ -30,7 +26,7 @@ export default [{
     description: "Respond on quest",
     validate: {
       params: Joi.object({
-        questId: questIdSchema.required(),
+        questId: idSchema.required(),
       }).label("QuestResponseParams"),
       payload: Joi.object({
         message: questsResponseMessageSchema,
@@ -50,10 +46,10 @@ export default [{
     description: "Invite on quest",
     validate: {
       params: Joi.object({
-        questId: questIdSchema.required(),
+        questId: idSchema.required(),
       }).label("QuestInviteParams"),
       payload: Joi.object({
-        invitedUserId: userIdSchema.required(),
+        invitedUserId: idSchema.required(),
         message: questsResponseMessageSchema,
       }).label('QuestInvitePayload'),
     },
@@ -71,7 +67,7 @@ export default [{
     description: "Get responses to quest",
     validate: {
       params: Joi.object({
-        questId: questIdSchema.required(),
+        questId: idSchema.required(),
       }).label("ResponsesToQuestParams")
     },
     response: {
@@ -100,7 +96,7 @@ export default [{
     description: "Accept quest invitation",
     validate: {
       params: Joi.object({
-        responseId: questsResponseIdSchema.required()
+        responseId: idSchema.required()
       }).label('AcceptInvitationParams'),
     },
     response: {
@@ -117,7 +113,7 @@ export default [{
     description: "Reject quest invitation",
     validate: {
       params: Joi.object({
-        responseId: questsResponseIdSchema.required()
+        responseId: idSchema.required()
       }).label('RejectInvitationParams'),
     },
     response: {
@@ -134,7 +130,7 @@ export default [{
     description: "Reject the answer to the quest",
     validate: {
       params: Joi.object({
-        responseId: questsResponseIdSchema.required()
+        responseId: idSchema.required()
       }).label('RejectResponseOnQuestParams'),
     },
     response: {

@@ -6,14 +6,13 @@ import {
   offsetSchema,
   idSchema,
   chatsSchema,
-  userIdsSchema,
   chatSchema,
   chatNameSchema,
   messagesSchema,
   messageSchema,
   messageTextSchema,
-  mediaIdsSchema,
   usersSchema,
+  idsSchema,
 } from "@workquest/database-models/lib/schemes";
 import {
   getUserChats,
@@ -27,9 +26,6 @@ import {
   leaveFromGroupChat,
   getChatMembers
 } from "../../api/chat";
-
-const userIdSchema = idSchema.label('UserId');
-const chatIdSchema = idSchema.label('ChatId');
 
 const createChatSchema = Joi.object({
   data: chatSchema,
@@ -64,7 +60,7 @@ export default [{
     description: "Get all messages for chat",
     validate: {
       params: Joi.object({
-        chatId: chatIdSchema.required(),
+        chatId: idSchema.required(),
       }).label('GetMessagesParams'),
       query: Joi.object({
         offset: offsetSchema,
@@ -85,7 +81,7 @@ export default [{
     tags: ["api", "chat"],
     validate: {
       params: Joi.object({
-        chatId: chatIdSchema.required()
+        chatId: idSchema.required()
       }).label('GetUserChatParams')
     },
     response: {
@@ -103,7 +99,7 @@ export default [{
     validate: {
       payload: Joi.object({
         name: chatNameSchema.required(),
-        memberUserIds: userIdsSchema.required().min(2).unique().label('UserIds')
+        memberUserIds: idsSchema.required().min(2).unique(),
       }).label('CreateGroupChatPayload')
     },
     response: {
@@ -120,11 +116,11 @@ export default [{
     tags: ["api", "chat"],
     validate: {
       params: Joi.object({
-        userId: userIdSchema.required(),
+        userId: idSchema.required(),
       }).label('SendMessageToUserParams'),
       payload: Joi.object({
         text: messageTextSchema.default(''),
-        medias: mediaIdsSchema.required().unique().label("Medias"),
+        medias: idsSchema.required().unique(),
       }).label('SendMessageToUserPayload')
     },
     response: {
@@ -141,11 +137,11 @@ export default [{
     tags: ["api", "chat"],
     validate: {
       params: Joi.object({
-        chatId: chatIdSchema.required(),
+        chatId: idSchema.required(),
       }).label('SendMessageToChatParams'),
       payload: Joi.object({
         text: messageTextSchema.default(''),
-        medias: mediaIdsSchema.required().unique().label("Medias"),
+        medias: idsSchema.required().unique(),
       }).label('SendMessageToChatPayload'),
     },
     response: {
@@ -162,8 +158,8 @@ export default [{
     tags: ["api", "chat"],
     validate: {
       params: Joi.object({
-        chatId: chatIdSchema.required(),
-        userId: userIdSchema.required(),
+        chatId: idSchema.required(),
+        userId: idSchema.required(),
       }).label('AddUserInGroupChatParams')
     },
     response: {
@@ -180,8 +176,8 @@ export default [{
     tags: ["api", "chat"],
     validate: {
       params: Joi.object({
-        chatId: chatIdSchema.required(),
-        userId: userIdSchema.required(),
+        chatId: idSchema.required(),
+        userId: idSchema.required(),
       }).label('RemoveUserInGroupChatParams')
     },
     response: {
@@ -198,7 +194,7 @@ export default [{
     tags: ["api", "chat"],
     validate: {
       params: Joi.object({
-        chatId: chatIdSchema.required(),
+        chatId: idSchema.required(),
       }).label('LeaveFromGroupChatParams')
     },
     response: {
@@ -215,7 +211,7 @@ export default [{
     tags: ["api", "chat"],
     validate: {
       params: Joi.object({
-        chatId: chatIdSchema.required(),
+        chatId: idSchema.required(),
       }).label('GetChatMembersParams'),
       query: Joi.object({
         offset: offsetSchema,
