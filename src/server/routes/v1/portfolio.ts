@@ -8,7 +8,7 @@ import {
   portfolioSchema,
   portfolioTitleSchema,
   portfoliosSchema,
-  mediaIdsSchema,
+  idsSchema,
 } from "@workquest/database-models/lib/schemes";
 
 const userIdSchema = idSchema.label("UserId");
@@ -26,7 +26,7 @@ export default [{
       payload: Joi.object({
         title: portfolioTitleSchema.required(),
         description: portfolioDescriptionSchema.default(""),
-        medias: mediaIdsSchema.required().unique().label("Medias")
+        medias: idsSchema.required().unique().label("Medias")
       }).label('AddCasePayload')
     },
     response: {
@@ -65,7 +65,7 @@ export default [{
       payload: Joi.object({
         title: portfolioTitleSchema,
         description: portfolioDescriptionSchema,
-        medias: mediaIdsSchema.unique().label("Medias")
+        medias: idsSchema.unique().label("Medias")
       }).label('EditCasePayload')
     },
     response: {

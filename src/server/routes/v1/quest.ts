@@ -29,10 +29,9 @@ import {
   questSchema,
   questTitleSchema,
   questsQuerySchema,
-  mediaIdsSchema,
   questsSchema,
   questsForGetWithCountSchema,
-  questLocationPlaceNameSchema, questWorkPlacementSchema
+  questLocationPlaceNameSchema, questWorkPlacementSchema, idsSchema
 } from "@workquest/database-models/lib/schemes";
 
 const questIdSchema = idSchema.label('QuestId');
@@ -73,7 +72,7 @@ export default [{
         title: questTitleSchema.required(),
         description: questDescriptionSchema.required(),
         price: questPriceSchema.required(),
-        medias: mediaIdsSchema.required().unique().label('MediaIds'),
+        medias: idsSchema.required().unique().label('MediaIds'),
         adType: questAdTypeSchema,
       }).label("CreateQuestPayload")
     },
@@ -120,7 +119,7 @@ export default [{
         description: questDescriptionSchema,
         price: questPriceSchema,
         adType: questAdTypeSchema,
-        medias: mediaIdsSchema.unique().label('MediaIds'),
+        medias: idsSchema.unique().label('MediaIds'),
       }).label("EditQuestPayload"),
     },
     response: {
