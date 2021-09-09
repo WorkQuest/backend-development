@@ -32,7 +32,8 @@ import {
   questsQuerySchema,
   questsSchema,
   questsForGetWithCountSchema,
-  questLocationPlaceNameSchema, questEmploymentSchema
+  questLocationPlaceNameSchema,
+  questEmploymentSchema,
   skillFiltersSchema,
 } from "@workquest/database-models/lib/schemes";
 
