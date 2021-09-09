@@ -102,6 +102,7 @@ const init = async () => {
 
   server.subscription('/notifications/chat', {
     filter: chatNotificationsFilter
+  });
   server.app.grScheduler = await grScheduler.run({
     connectionString: config.dbLink,
     schedules: [
