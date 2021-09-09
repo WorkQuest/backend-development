@@ -25,13 +25,14 @@ export async function mapPoints(r) {
   let where = makeWhere(r);
   let query = `
   SELECT
-       count as pointsCount,
-       id as questId,
-       status as questStatus,
-       price as questPrice,
-       firstName as userFirstName,
-       lastName as userLastName,
-       priority as questPriority,
+       count as "pointsCount",
+       id as "questId",
+       status as "questStatus",
+       price as "questPrice",
+       firstName as "userFirstName",
+       lastName as "userLastName",
+       avatarUrl as "userAvatarUrl",
+       priority as "questPriority",
        case when LC.count = 1 then 'point' else 'cluster' end as type,
        array [st_x(center), st_y(center)] as coordinates,
        cluster_radius as clusterRadius 
@@ -42,6 +43,7 @@ export async function mapPoints(r) {
       case when cast(count(priority) AS INT) = 1 then string_agg(cast(priority AS VARCHAR), ',') end as priority,
       case when cast(count(firstName) AS INT) = 1 then string_agg(cast(firstName AS VARCHAR), ',') end as firstName,
       case when cast(count(lastName) AS INT) = 1 then string_agg(cast(lastName AS VARCHAR), ',') end as lastName,
+      case when cast(count(avatarUrl) AS INT) = 1 then string_agg(cast(avatarUrl AS VARCHAR), ',') end as avatarUrl,
       case when cast(count(price) AS INT) = 1 then string_agg(cast(price AS VARCHAR), ',') end as price,
       cast(count(id) AS INTEGER) as count,
       case
@@ -54,13 +56,14 @@ export async function mapPoints(r) {
         status,
         priority,
         price,
-        "userId",
+        "user->avatar"."url" as avatarUrl,
         "firstName" as firstName,
         "lastName" as lastName,
         "locationPostGIS" AS location,
         st_clusterdbscan("locationPostGIS", abs(:northLatitude - :southLatitude) / 20, 1) over () AS cid
     FROM public."Quests"
-    LEFT OUTER JOIN (SELECT "id" as "user.id", "firstName", "lastName" FROM "Users") AS "user" ON "Quests"."userId" = "user"."user.id"  
+    LEFT OUTER JOIN (SELECT "id" as "user.id", "firstName", "lastName", "avatarId" FROM "Users") AS "user" ON "Quests"."userId" = "user"."user.id"  
+    LEFT OUTER JOIN (SELECT "id" as "avatar.id", "url" FROM "Media") AS "user->avatar" ON "user"."avatarId" = "user->avatar"."avatar.id"
     ${where}) LC
     GROUP BY cid
     Order BY cid) LC;`;

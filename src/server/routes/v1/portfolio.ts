@@ -8,11 +8,8 @@ import {
   portfolioSchema,
   portfolioTitleSchema,
   portfoliosSchema,
-  mediaIdsSchema,
+  idsSchema,
 } from "@workquest/database-models/lib/schemes";
-
-const userIdSchema = idSchema.label("UserId");
-const portfolioIdSchema = idSchema.label("PortfolioId");
 
 export default [{
   method: "POST",
@@ -26,7 +23,7 @@ export default [{
       payload: Joi.object({
         title: portfolioTitleSchema.required(),
         description: portfolioDescriptionSchema.default(""),
-        medias: mediaIdsSchema.required().unique().label("Medias")
+        medias: idsSchema.required().unique(),
       }).label('AddCasePayload')
     },
     response: {
@@ -43,7 +40,7 @@ export default [{
     description: "Get all cases for user",
     validate: {
       params: Joi.object({
-        userId: userIdSchema
+        userId: idSchema.required(),
       }).label('GetCasesParams')
     },
     response: {
@@ -60,12 +57,12 @@ export default [{
     description: "Edit case",
     validate: {
       params: Joi.object({
-        portfolioId: portfolioIdSchema
+        portfolioId: idSchema.required(),
       }).label('EditCaseParams'),
       payload: Joi.object({
         title: portfolioTitleSchema,
         description: portfolioDescriptionSchema,
-        medias: mediaIdsSchema.unique().label("Medias")
+        medias: idsSchema.unique(),
       }).label('EditCasePayload')
     },
     response: {
@@ -82,7 +79,7 @@ export default [{
     description: "Delete case",
     validate: {
       params: Joi.object({
-        portfolioId: portfolioIdSchema
+        portfolioId: idSchema.required(),
       }).label('DeleteCaseParams')
     },
     response: {
