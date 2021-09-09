@@ -1,4 +1,4 @@
-import { Op } from 'sequelize';
+import { Op, literal } from 'sequelize';
 import { error, handleValidationError, output } from "../utils";
 import { Errors } from '../utils/errors';
 import { getMedias } from "../utils/medias"
@@ -11,11 +11,10 @@ import {
   QuestsResponseStatus,
   QuestsResponseType,
   StarredQuests,
+  SkillFilter,
 } from "@workquest/database-models/lib/models";
 import { locationForValidateSchema } from "@workquest/database-models/lib/schemes";
 import { transformToGeoPostGIS } from "@workquest/database-models/lib/utils/quest"
-import * as sequelize from "sequelize";
-import { Location } from "@workquest/database-models/src/models/index"; // TODO to index.ts
 
 export const searchFields = [
   "title",
@@ -65,10 +64,11 @@ export async function getQuest(r) {
 
 export async function createQuest(r) {
   const user = r.auth.credentials;
-  const medias = await getMedias(r.payload.medias);
-  const transaction = await r.server.app.db.transaction();
 
   user.mustHaveRole(UserRole.Employer);
+
+  const medias = await getMedias(r.payload.medias);
+  const transaction = await r.server.app.db.transaction();
 
   const quest = await Quest.create({
     userId: user.id,
@@ -82,6 +82,12 @@ export async function createQuest(r) {
     description: r.payload.description,
     price: r.payload.price,
   }, { transaction });
+
+  const questSkillFilters = r.payload.skillFilters.map(v => {
+    return { ...v, questId: quest.id }
+  });
+
+  await SkillFilter.bulkCreate(questSkillFilters, { transaction });
 
   await quest.$set('medias', medias, { transaction });
 
@@ -119,6 +125,16 @@ export async function editQuest(r) {
   if (r.payload.location) {
     r.payload.locationPostGIS = transformToGeoPostGIS(r.payload.location);
   }
+  if (r.payload.skillFilters) {
+    const questSkillFilters = r.payload.skillFilters.map(v => {
+      return { ...v, questId: quest.id }
+    });
+
+    await SkillFilter.destroy({ where: { questId: quest.id }, transaction });
+    await SkillFilter.bulkCreate(questSkillFilters, { transaction });
+  }
+
+  quest.updateFieldLocationPostGIS();
 
   await quest.update(r.payload, { transaction });
 
@@ -276,7 +292,7 @@ export async function rejectCompletedWorkOnQuest(r) {
 }
 
 export async function getQuests(r) {
-  const entersAreaLiteral = sequelize.literal(
+  const entersAreaLiteral = literal(
     'st_within("locationPostGIS", st_makeenvelope(:northLng, :northLat, :southLng, :southLat, 4326))'
   );
   const order = [];
@@ -288,6 +304,7 @@ export async function getQuests(r) {
     ...(r.query.adType && {adType: r.query.adType}),
     ...(r.params.userId && { userId: r.params.userId }),
     ...(r.query.north && r.query.south && { [Op.and]: entersAreaLiteral }),
+    ...(r.query.filter && {filter: r.params.filter,})
   };
 
   if (r.query.q) {
@@ -302,7 +319,7 @@ export async function getQuests(r) {
       model: QuestsResponse,
       as: 'responses',
       attributes: [],
-        where: {
+      where: {
         [Op.and]: [
           { workerId: r.auth.credentials.id },
           { type: QuestsResponseType.Invite },
@@ -316,6 +333,17 @@ export async function getQuests(r) {
       as: 'starredQuests',
       where: { userId: r.auth.credentials.id },
       attributes: [],
+    });
+  }
+  if (r.query.filterByCategories || r.query.filterBySkills) {
+    include.push({
+      model: SkillFilter,
+      as: 'filterBySkillFilter',
+      attributes: [],
+      where: {
+        ...(r.query.filterByCategories && { category: { [Op.in]: r.query.filterByCategories } }),
+        ...(r.query.filterBySkills && { skill: { [Op.in]: r.query.filterBySkills } }),
+      }
     });
   }
 
