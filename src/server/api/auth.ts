@@ -5,7 +5,7 @@ import Handlebars = require("handlebars");
 import { Op } from "sequelize";
 import config from "../config/config";
 import { Errors } from "../utils/errors";
-import { error, getRandomHexToken, output } from "../utils";
+import { error, getRandomHexToken, output, getDevice, getGeo, getRealIp } from "../utils";
 import { addSendEmailJob } from "../jobs/sendEmail";
 import { generateJwt } from "../utils/auth";
 import { Session,
@@ -15,6 +15,7 @@ import { Session,
 	UserStatus,
 	RatingStatistic
 } from "@workquest/database-models/lib/models";
+import { updateLastSessionJob } from "../jobs/updateLastSession";
 
 const confirmTemplatePath = path.join(__dirname, "..", "..", "..", "templates", "confirmEmail.html");
 const confirmTemplate = Handlebars.compile(fs.readFileSync(confirmTemplatePath, {
@@ -73,6 +74,7 @@ export async function register(r) {
 		html: emailHtml
 	});
 
+	const transaction = await r.server.app.db.transaction();
 	const user = await User.create({
 		email: r.payload.email.toLowerCase(),
 		password: r.payload.password,
@@ -82,9 +84,23 @@ export async function register(r) {
 			...defaultUserSettings,
 			emailConfirm: emailConfirmCode
 		}
+	}, transaction);
+
+	const session = await Session.create({
+		userId: user.id,
+		place: getGeo(r),
+		device: getDevice(r),
+		ipAddress: getRealIp(r),
+		isActive: true,
+	}, transaction);
+
+	await updateLastSessionJob({
+		userId: user.id,
+		sessionId: session.id,
 	});
 
-	const session = await Session.create({ userId: user.id });
+	await transaction.commit();
+
 	const result = {
 		...generateJwt({ id: session.id }),
 		userStatus: user.status,
@@ -103,8 +119,18 @@ export function getLoginViaSocialNetworkHandler(returnType: "token" | "redirect"
 
 		const user = await getUserByNetworkProfile(r.auth.strategy, profile);
 		const session = await Session.create({
-			userId: user.id
+			userId: user.id,
+			place: getGeo(r),
+			device: getDevice(r),
+			ipAddress: getRealIp(r),
+			isActive: true,
 		});
+
+		await updateLastSessionJob({
+			userId: user.id,
+			sessionId: session.id,
+		});
+
 		const result = {
 			...generateJwt({ id: session.id }),
 			userStatus: user.status
@@ -152,15 +178,29 @@ export async function login(r) {
 	});
 
 	if (!user) return error(Errors.NotFound, "User not found", {});
+
+	if (user.status === UserStatus.Blocked) {
+		return error(Errors.InvalidStatus, 'User is blocked', {});
+	}
+
 	if (!(await user.passwordCompare(r.payload.password))) return error(Errors.NotFound, "User not found", {});
+
 	if (user.isTOTPEnabled()) {
 		user.validateTOTP(r.payload.totp);
 	}
 
-
 	const session = await Session.create({
-		userId: user.id
+		userId: user.id,
+		place: getGeo(r),
+		device: getDevice(r),
+		ipAddress: getRealIp(r),
+		isActive: true,
 	});
+
+	await updateLastSessionJob({
+		userId: user.id,
+		sessionId: session.id,
+	})
 
 	const result = {
 		...generateJwt({ id: session.id }),
@@ -171,11 +211,21 @@ export async function login(r) {
 }
 
 export async function refreshTokens(r) {
-	const newSession = await Session.create({
-		userId: r.auth.credentials.id
+	const session = await Session.create({
+		userId: r.auth.credentials.id,
+		place: getGeo(r),
+		device: getDevice(r),
+		ipAddress: getRealIp(r),
+		isActive: true,
 	});
+
+	await updateLastSessionJob({
+		userId: r.auth.credentials.id,
+		sessionId: session.id,
+	})
+
 	const result = {
-		...generateJwt({ id: newSession.id }),
+		...generateJwt({ id: session.id }),
 		userStatus: r.auth.credentials.status,
 	};
 

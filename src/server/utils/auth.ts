@@ -1,13 +1,8 @@
-import * as jwt from 'jsonwebtoken';
-import config from '../config/config';
-import { error } from './index';
-import { Errors } from './errors';
-import {
-  User,
-  UserStatus,
-  Session,
-} from "@workquest/database-models/lib/models";
-
+import * as jwt from "jsonwebtoken";
+import config from "../config/config";
+import { error } from "./index";
+import { Errors } from "./errors";
+import { Session, User, UserStatus } from "@workquest/database-models/lib/models";
 
 
 export const generateJwt = (data: object) => {
@@ -41,9 +36,22 @@ export function tokenValidate(tokenType: 'access' | 'refresh', allowedUnconfirme
     if (!user) {
       throw error(Errors.SessionNotFound, 'User not found', {});
     }
+
+    if (user.status === UserStatus.Blocked) {
+      throw error(Errors.InvalidStatus, 'User is blocked', {});
+    }
+
     if (user.status === UserStatus.Unconfirmed && !allowedUnconfirmedRoutes.includes(r.route.path)) {
       throw error(Errors.UnconfirmedUser, 'Unconfirmed user', {});
     }
+
+    const session = await Session.findByPk(user.lastSessionId);
+    if(!session.isActive) {
+      throw error(Errors.SessionNotFound, 'Session is not active', {});
+    }
+    await session.update({
+      lastActionTime: Date.now(),
+    });
 
     return { isValid: true, credentials: user, artifacts: { token, type: tokenType } };
   }

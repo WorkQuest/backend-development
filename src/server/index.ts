@@ -18,7 +18,8 @@ import { tokenValidate } from "./utils/auth";
 import SwaggerOptions from "./config/swagger";
 import { pinoConfig } from "./config/pino";
 import { run } from "graphile-worker";
-
+import * as grScheduler from 'graphile-scheduler';
+import { deactivateSessionsJob } from "./jobs/deactivateSessions";
 const HapiSwagger = require("hapi-swagger");
 const Package = require("../../package.json");
 
@@ -101,6 +102,23 @@ const init = async () => {
 
   server.subscription('/notifications/chat', {
     filter: chatNotificationsFilter
+  });
+  server.app.grScheduler = await grScheduler.run({
+    connectionString: config.dbLink,
+    schedules: [
+      {
+        name: 'deactivateSessions',
+        pattern: '00 00 * * *', //every day in 12:00 am
+        timeZone: 'Europe/Moscow',
+        task: deactivateSessionsJob,
+      },
+    ]
+  });
+
+  server.subscription('/notifications', {
+    filter: async function(path, message, options): Promise<boolean> {
+      return message.userId ? (message.userId === options.credentials.id) : true;
+    }
   });
 
   // JWT Auth
