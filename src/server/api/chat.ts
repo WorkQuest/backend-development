@@ -318,3 +318,19 @@ export async function getStarredChats(r){
 
   return output({messages: messages.rows, count: messages.count});
 }
+
+export async function markChatByStar(r){
+  await User.userMustExist(r.auth.credentials.id);
+  await Chat.chatMust
+
+  const message = await Message.findByPk(r.params.messageId);
+  const chat = await Chat.findByPk(message.chatId);
+  await chat.mustHaveMember(r.auth.credentials.id);
+
+  await StarredMessage.create({
+    userId: r.auth.credentials.id,
+    messageId: r.params.messageId
+  });
+
+  return output();
+}
