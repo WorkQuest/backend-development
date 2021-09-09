@@ -17,7 +17,9 @@ import {
   userLastNameSchema,
   userPasswordSchema,
   userRoleSchema,
-  userSchema, userLocationSchema
+  userSchema,
+  skillFiltersSchema,
+  userLocationSchema
 } from "@workquest/database-models/lib/schemes";
 
 export default [{
@@ -59,9 +61,10 @@ export default [{
     description: "Edit profile information",
     validate: {
       payload: Joi.object({
-        avatarId: idSchema.allow(null).required().label("MediaId"),
+        avatarId: idSchema.allow(null).required(),
         firstName: userFirstNameSchema.required(),
         lastName: userLastNameSchema.required(),
+        skillFilters: skillFiltersSchema,
         additionalInfo: Joi.alternatives(
           userAdditionalInfoEmployerSchema.options({ presence: "required" }),
           userAdditionalInfoWorkerSchema.options({ presence: "required" })
