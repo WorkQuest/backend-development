@@ -1,6 +1,5 @@
 import * as Joi from "joi";
 import {
-  emptyOkSchema,
   outputOkSchema,
   limitSchema,
   offsetSchema,
@@ -26,11 +25,6 @@ import {
   leaveFromGroupChat,
   getChatMembers
 } from "../../api/chat";
-
-const createChatSchema = Joi.object({
-  data: chatSchema,
-  message: messageSchema,
-}).label('CreateChatSchema')
 
 export default [{
   method: "GET",
@@ -103,7 +97,7 @@ export default [{
       }).label('CreateGroupChatPayload')
     },
     response: {
-      schema: outputOkSchema(createChatSchema).label('CreateGroupChatResponse')
+      schema: outputOkSchema(chatSchema).label('CreateGroupChatResponse')
     }
   }
 }, {
@@ -124,7 +118,7 @@ export default [{
       }).label('SendMessageToUserPayload')
     },
     response: {
-      schema: emptyOkSchema
+      schema: outputOkSchema(messageSchema).label('SendMessageToUser')
     }
   }
 }, {
@@ -145,7 +139,7 @@ export default [{
       }).label('SendMessageToChatPayload'),
     },
     response: {
-      schema: emptyOkSchema
+      schema: outputOkSchema(messageSchema).label('SendMessageToChat')
     }
   }
 }, {
@@ -163,7 +157,7 @@ export default [{
       }).label('AddUserInGroupChatParams')
     },
     response: {
-      schema: outputOkSchema(messageSchema).label('AddUserToChatResponse')
+      schema: outputOkSchema(messageSchema).label('AddUserInGroupChatResponse')
     }
   }
 }, {
@@ -181,7 +175,7 @@ export default [{
       }).label('RemoveUserInGroupChatParams')
     },
     response: {
-      schema: outputOkSchema(messageSchema).label('RemoveUserFromChatResponse')
+      schema: outputOkSchema(messageSchema).label('RemoveUserInGroupChatResponse')
     }
   }
 }, {
@@ -198,7 +192,7 @@ export default [{
       }).label('LeaveFromGroupChatParams')
     },
     response: {
-      schema: outputOkSchema(messageSchema).label('RemoveUserFromChatResponse')
+      schema: outputOkSchema(messageSchema).label('LeaveFromGroupChatResponse')
     }
   }
 }, {
