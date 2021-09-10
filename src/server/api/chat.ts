@@ -309,22 +309,22 @@ export async function getChatMembers(r) {
 export async function getStarredMessage(r){
   await User.userMustExist(r.auth.credentials.id);
 
-  // const messages = await StarredMessage.findAndCountAll({
-  //   where: {
-  //     userId: r.auth.credentials.id,
-  //   },
-  //   include: [{
-  //     model: User,
-  //     as: 'user'
-  //   }, {
-  //     model: Message,
-  //     as: 'message'
-  //   }],
-  //   limit: r.query.limit,
-  //   offset: r.query.offset,
-  // });
+  const messages = await StarredMessage.findAndCountAll({
+    where: {
+      userId: r.auth.credentials.id,
+    },
+    include: [{
+      model: User,
+      as: 'user'
+    }, {
+      model: Message,
+      as: 'message'
+    }],
+    limit: r.query.limit,
+    offset: r.query.offset,
+  });
 
-  //return output({messages: messages.rows, count: messages.count});
+  return output({messages: messages.rows, count: messages.count});
 }
 
 export async function markMessageByStar(r){
