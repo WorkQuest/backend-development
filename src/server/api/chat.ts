@@ -78,7 +78,7 @@ export async function getChatMembers(r) {
 
   await chat.mustHaveMember(r.auth.credentials.id);
 
-  const { count, rows } = await User.findAndCountAll({
+  const { count, rows } = await User.scope('short').findAndCountAll({
     include: [{
       model: ChatMember,
       attributes: [],
@@ -304,6 +304,7 @@ export async function addUserInGroupChat(r) {
   }
 
   groupChat.mustHaveType(ChatType.group);
+  await groupChat.mustHaveMember(r.params.chatId);
   groupChat.mustHaveOwner(r.auth.credentials.id);
 
   const transaction = await r.server.app.db.transaction();
