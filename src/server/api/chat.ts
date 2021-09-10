@@ -12,7 +12,7 @@ import {
   MessageAction,
   SenderMessageStatus,
 } from "@workquest/database-models/lib/models";
-import { literal, Op } from "sequelize";
+import { Op } from "sequelize";
 import { ChatNotificationActions } from "../utils/chatSubscription";
 
 export async function getUserChats(r) {
@@ -191,6 +191,8 @@ export async function sendMessageToUser(r) {
       lastMessageDate: message.createdAt
     }, transaction,
   });
+
+  message.chatId = chat.id;
 
   if (isChatCreated) {
     await ChatMember.bulkCreate([{
