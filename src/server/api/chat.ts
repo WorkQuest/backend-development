@@ -14,7 +14,7 @@ export async function getUserChats(r) {
       attributes: [],
     }
   });
-  const chats = await Chat.findAndCountAll({
+  const chats = await Chat.findAll({
     attributes: {
       include: []
     },
@@ -31,10 +31,10 @@ export async function getUserChats(r) {
         model: User,
         as: 'sender',
       }]
-    }, {
+    },{
       model: User,
       as: 'members',
-      where: { id: { [Op.ne]: r.auth.credentials.id } }
+      where: { id: { [Op.ne]: r.auth.credentials.id } },
     }, {
       model: StarredChat,
       as: 'starredChat',
