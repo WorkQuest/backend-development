@@ -119,7 +119,7 @@ export default [{
   }
 }, {
   method: "DELETE",
-  path: "/v1/remove/{chatId}/chat",
+  path: "/v1/remove/{chatId}/star",
   handler: removeStarFromChat,
   options: {
     id: "v1.remove.star.chat",
