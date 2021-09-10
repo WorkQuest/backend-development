@@ -25,7 +25,7 @@ import {
   removeUserInGroupChat,
   addUserInGroupChat,
   leaveFromGroupChat,
-  getChatMembers, getStarredMessage, markMessageByStar,
+  getChatMembers, getStarredMessage, markMessageByStar, removeStarFromMessage
 } from "../../api/chat";
 
 export default [{
@@ -134,6 +134,23 @@ export default [{
       params: Joi.object({
         messageId: idSchema,
       }).label('StarredMessageParams')
+    },
+    response: {
+      schema: emptyOkSchema
+    }
+  }
+}, {
+  method: "DELETE",
+  path: "/v1/remove/{messageId}/star",
+  handler: removeStarFromMessage,
+  options: {
+    id: "v1.remove.star.message",
+    description: "Remove star from message",
+    tags: ["api", "chat"],
+    validate: {
+      params: Joi.object({
+        messageId: idSchema.required(),
+      }).label('RemoveStarParams'),
     },
     response: {
       schema: emptyOkSchema

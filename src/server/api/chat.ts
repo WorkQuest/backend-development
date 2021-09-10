@@ -342,3 +342,19 @@ export async function markMessageByStar(r){
 
   return output();
 }
+
+export async function removeStarFromMessage(r){
+  await User.userMustExist(r.auth.credentials.id);
+  await Message.messageMustExists(r.params.messageId);
+
+  const starredMessage = await StarredMessage.findOne({
+    where: {
+      messageId: r.params.messageId,
+      userId: r.auth.credentials.id
+    }
+  });
+
+  await starredMessage.destroy();
+
+  return output();
+}
