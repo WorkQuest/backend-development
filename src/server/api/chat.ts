@@ -30,7 +30,10 @@ export async function getUserChats(r) {
   });
   const chats = await Chat.findAll({
     attributes: { include: [] },
-    include: [userMemberInclude],
+    include: [userMemberInclude, {
+      model: StarredChat,
+      as: 'starredChat'
+    }],
     order: [ ['lastMessageDate', 'DESC'] ],
     limit: r.query.limit,
     offset: r.query.offset,
