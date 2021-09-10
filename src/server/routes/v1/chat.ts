@@ -11,7 +11,7 @@ import {
   messageSchema,
   messageTextSchema,
   usersSchema,
-  idsSchema, outputPaginationSchema, starredChatScheme
+  idsSchema, outputPaginationSchema, starredChatScheme, emptyOkSchema
 } from "@workquest/database-models/lib/schemes";
 import {
   getUserChats,

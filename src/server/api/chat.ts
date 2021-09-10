@@ -1,4 +1,3 @@
-import { Chat, ChatMember, ChatType, Message, StarredChat, User } from "@workquest/database-models/lib/models";
 import { error, output } from "../utils";
 import { getMedias } from "../utils/medias";
 import { Errors } from "../utils/errors";
@@ -12,6 +11,7 @@ import {
   InfoMessage,
   MessageAction,
   SenderMessageStatus,
+  StarredChat
 } from "@workquest/database-models/lib/models";
 import { literal, Op } from "sequelize";
 import { ChatNotificationActions } from "../utils/chatSubscription";
