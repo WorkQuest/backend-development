@@ -1,6 +1,5 @@
 import * as Joi from "joi";
 import {
-  emptyOkSchema,
   outputOkSchema,
   limitSchema,
   offsetSchema,
@@ -9,6 +8,7 @@ import {
   chatSchema,
   chatNameSchema,
   messagesSchema,
+  messageSchema,
   messageTextSchema,
   usersSchema,
   idsSchema, outputPaginationSchema, starredChatScheme
@@ -84,26 +84,6 @@ export default [{
   }
 }, {
   method: "GET",
-  path: "/v1/user/me/chat/group/{chatId}/members",
-  handler: getChatMembers,
-  options: {
-    id: "v1.chat.group.getMembers",
-    description: "Get members in group chat (only for chat members)",
-    validate: {
-      params: Joi.object({
-        chatId: idSchema.required(),
-      }).label('GetChatMembersParams'),
-      query: Joi.object({
-        offset: offsetSchema,
-        limit: limitSchema,
-      }).label('GetChatMembersQuery')
-    },
-    response: {
-      schema: outputOkSchema(usersSchema).label('GetChatMembersResponse')
-    }
-  }
-}, {
-  method: "GET",
   path: "/v1/starred-chats",
   handler: getStarredChats,
   options: {
@@ -173,7 +153,7 @@ export default [{
       }).label('SendMessageToUserPayload')
     },
     response: {
-      schema: emptyOkSchema
+      schema: outputOkSchema(messageSchema).label('SendMessageToUser')
     }
   }
 }, {
@@ -194,7 +174,7 @@ export default [{
       }).label('SendMessageToChatPayload'),
     },
     response: {
-      schema: emptyOkSchema
+      schema: outputOkSchema(messageSchema).label('SendMessageToChat')
     }
   }
 }, {
@@ -212,7 +192,7 @@ export default [{
       }).label('AddUserInGroupChatParams')
     },
     response: {
-      schema: emptyOkSchema
+      schema: outputOkSchema(messageSchema).label('AddUserInGroupChatResponse')
     }
   }
 }, {
@@ -230,7 +210,7 @@ export default [{
       }).label('RemoveUserInGroupChatParams')
     },
     response: {
-      schema: emptyOkSchema
+      schema: outputOkSchema(messageSchema).label('RemoveUserInGroupChatResponse')
     }
   }
 }, {
@@ -247,8 +227,29 @@ export default [{
       }).label('LeaveFromGroupChatParams')
     },
     response: {
-      schema: emptyOkSchema
+      schema: outputOkSchema(messageSchema).label('LeaveFromGroupChatResponse')
     }
   }
-}, ];
+}, {
+  method: "GET",
+  path: "/v1/user/me/chat/group/{chatId}/members",
+  handler: getChatMembers,
+  options: {
+    id: "v1.chat.group.getMembers",
+    description: "Get members in group chat (only for chat members)",
+    tags: ["api", "chat"],
+    validate: {
+      params: Joi.object({
+        chatId: idSchema.required(),
+      }).label('GetChatMembersParams'),
+      query: Joi.object({
+        offset: offsetSchema,
+        limit: limitSchema,
+      }).label('GetChatMembersQuery')
+    },
+    response: {
+      schema: outputOkSchema(usersSchema).label('GetChatMembersResponse')
+    }
+  }
+}];
 
