@@ -1,6 +1,5 @@
 import * as Joi from "joi";
 import {
-  emptyOkSchema,
   outputOkSchema,
   limitSchema,
   offsetSchema,
@@ -9,6 +8,7 @@ import {
   chatSchema,
   chatNameSchema,
   messagesSchema,
+  messageSchema,
   messageTextSchema,
   usersSchema,
   idsSchema,
@@ -118,7 +118,7 @@ export default [{
       }).label('SendMessageToUserPayload')
     },
     response: {
-      schema: emptyOkSchema
+      schema: outputOkSchema(messageSchema).label('SendMessageToUser')
     }
   }
 }, {
@@ -139,7 +139,7 @@ export default [{
       }).label('SendMessageToChatPayload'),
     },
     response: {
-      schema: emptyOkSchema
+      schema: outputOkSchema(messageSchema).label('SendMessageToChat')
     }
   }
 }, {
@@ -157,7 +157,7 @@ export default [{
       }).label('AddUserInGroupChatParams')
     },
     response: {
-      schema: emptyOkSchema
+      schema: outputOkSchema(messageSchema).label('AddUserInGroupChatResponse')
     }
   }
 }, {
@@ -175,7 +175,7 @@ export default [{
       }).label('RemoveUserInGroupChatParams')
     },
     response: {
-      schema: emptyOkSchema
+      schema: outputOkSchema(messageSchema).label('RemoveUserInGroupChatResponse')
     }
   }
 }, {
@@ -192,7 +192,7 @@ export default [{
       }).label('LeaveFromGroupChatParams')
     },
     response: {
-      schema: emptyOkSchema
+      schema: outputOkSchema(messageSchema).label('LeaveFromGroupChatResponse')
     }
   }
 }, {
@@ -202,6 +202,7 @@ export default [{
   options: {
     id: "v1.chat.group.getMembers",
     description: "Get members in group chat (only for chat members)",
+    tags: ["api", "chat"],
     validate: {
       params: Joi.object({
         chatId: idSchema.required(),
