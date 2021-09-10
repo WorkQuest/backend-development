@@ -14,7 +14,7 @@ export async function getUserChats(r) {
       attributes: [],
     }
   });
-  const chats = await Chat.findAll({
+  const chats = await Chat.findAndCountAll({
     attributes: {
       include: []
     },
@@ -35,6 +35,13 @@ export async function getUserChats(r) {
       model: User,
       as: 'members',
       where: { id: { [Op.ne]: r.auth.credentials.id } }
+    }, {
+      model: StarredChat,
+      as: 'starredChat',
+      where: {
+        userId: r.auth.credentials.id,
+      },
+      required: false
     }],
     order: [
       ['lastMessageDate', 'DESC'],
@@ -321,15 +328,14 @@ export async function getStarredChats(r){
 
 export async function markChatByStar(r){
   await User.userMustExist(r.auth.credentials.id);
-  await Chat.chatMust
+  await Chat.chatMustExists(r.params.chatId);
 
-  const message = await Message.findByPk(r.params.messageId);
-  const chat = await Chat.findByPk(message.chatId);
+  const chat = await Chat.findByPk(r.params.chatId);
   await chat.mustHaveMember(r.auth.credentials.id);
 
-  await StarredMessage.create({
+  await StarredChat.create({
     userId: r.auth.credentials.id,
-    messageId: r.params.messageId
+    chatId: r.params.chatId,
   });
 
   return output();

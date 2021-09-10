@@ -11,7 +11,7 @@ import {
   messagesSchema,
   messageTextSchema,
   usersSchema,
-  idsSchema,
+  idsSchema, outputPaginationSchema, starredChatScheme
 } from "@workquest/database-models/lib/schemes";
 import {
   getUserChats,
@@ -23,7 +23,7 @@ import {
   removeUserInGroupChat,
   addUserInGroupChat,
   leaveFromGroupChat,
-  getChatMembers
+  getChatMembers, getStarredChats, markChatByStar
 } from "../../api/chat";
 
 export default [{
@@ -80,6 +80,61 @@ export default [{
     },
     response: {
       schema: outputOkSchema(chatSchema).label('GetUserChatResponse')
+    }
+  }
+}, {
+  method: "GET",
+  path: "/v1/user/me/chat/group/{chatId}/members",
+  handler: getChatMembers,
+  options: {
+    id: "v1.chat.group.getMembers",
+    description: "Get members in group chat (only for chat members)",
+    validate: {
+      params: Joi.object({
+        chatId: idSchema.required(),
+      }).label('GetChatMembersParams'),
+      query: Joi.object({
+        offset: offsetSchema,
+        limit: limitSchema,
+      }).label('GetChatMembersQuery')
+    },
+    response: {
+      schema: outputOkSchema(usersSchema).label('GetChatMembersResponse')
+    }
+  }
+}, {
+  method: "GET",
+  path: "/v1/starred-chats",
+  handler: getStarredChats,
+  options: {
+    id: "v1.starred.chats",
+    description: "Get starred chats of the user",
+    tags: ["api", "chat"],
+    validate: {
+      query: Joi.object({
+        offset: offsetSchema,
+        limit: limitSchema,
+      }).label('GetStarredChatsQuery')
+    },
+    response: {
+      schema: outputPaginationSchema('chats', starredChatScheme).label('GetStarredChatsResponse')
+    }
+  }
+}, {
+  method: "POST",
+  path: "/v1/mark/{chatId}",
+  handler: markChatByStar,
+  options: {
+    id: "v1.mark.chat",
+    description: "Mark chat by star",
+    tags: ["api", "chat"],
+    validate: {
+      params: Joi.object({
+        chatId: idSchema.required(),
+      }).label('MarkChatParams'),
+    },
+    response: {
+      schema: emptyOkSchema
     }
   }
 }, {
@@ -195,25 +250,5 @@ export default [{
       schema: emptyOkSchema
     }
   }
-}, {
-  method: "GET",
-  path: "/v1/user/me/chat/group/{chatId}/members",
-  handler: getChatMembers,
-  options: {
-    id: "v1.chat.group.getMembers",
-    description: "Get members in group chat (only for chat members)",
-    validate: {
-      params: Joi.object({
-        chatId: idSchema.required(),
-      }).label('GetChatMembersParams'),
-      query: Joi.object({
-        offset: offsetSchema,
-        limit: limitSchema,
-      }).label('GetChatMembersQuery')
-    },
-    response: {
-      schema: outputOkSchema(usersSchema).label('GetChatMembersResponse')
-    }
-  }
-}];
+}, ];
 
