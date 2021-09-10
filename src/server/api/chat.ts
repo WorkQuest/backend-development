@@ -12,8 +12,8 @@ import {
   MessageAction,
   SenderMessageStatus,
 } from "@workquest/database-models/lib/models";
-import { Op } from "sequelize";
 import { ChatNotificationActions } from "../utils/chatSubscription";
+import { Op } from "sequelize";
 
 export async function getUserChats(r) {
   const userMemberInclude = {
