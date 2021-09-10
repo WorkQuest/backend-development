@@ -13,8 +13,8 @@ import {
   SenderMessageStatus,
   StarredChat
 } from "@workquest/database-models/lib/models";
-import { literal, Op } from "sequelize";
 import { ChatNotificationActions } from "../utils/chatSubscription";
+import { Op } from "sequelize";
 
 export async function getUserChats(r) {
   const userMemberInclude = {
@@ -192,6 +192,8 @@ export async function sendMessageToUser(r) {
       lastMessageDate: message.createdAt
     }, transaction,
   });
+
+  message.chatId = chat.id;
 
   if (isChatCreated) {
     await ChatMember.bulkCreate([{
