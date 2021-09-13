@@ -309,23 +309,17 @@ export async function getChatMembers(r) {
 export async function getAllStarredMessage(r) { //получение сообщений из ВСЕХ чатов
   await User.userMustExist(r.auth.credentials.id);
 
-  const {count, rows} = await StarredMessage.findAndCountAll({
-    where: {
-      userId: r.auth.credentials.id,
-    },
+  const {count, rows} = await Message.findAndCountAll({
     include: [{
-      model: User,
-      as: 'user'
+      model: StarredMessage,
+      as: "starredMessage",
+      where: {
+        userId: r.auth.credentials.id
+      }
     }, {
-      model: Message,
-      as: 'message',
-      include: [{
-        model: Chat,
-        as: 'chat',
-      }]
-    }],
-    limit: r.query.limit,
-    offset: r.query.offset,
+      model: Chat.unscoped(),
+      as: "chat",
+    }]
   });
 
   return output({count: count, rows: rows});
