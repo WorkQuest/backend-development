@@ -306,10 +306,10 @@ export async function getChatMembers(r) {
   return output({count, members: rows});
 }
 
-export async function getStarredMessage(r) {
+export async function getAllStarredMessage(r) { //получение сообщений из ВСЕХ чатов
   await User.userMustExist(r.auth.credentials.id);
 
-  const messages = await StarredMessage.findAndCountAll({
+  const {count, rows} = await StarredMessage.findAndCountAll({
     where: {
       userId: r.auth.credentials.id,
     },
@@ -318,13 +318,17 @@ export async function getStarredMessage(r) {
       as: 'user'
     }, {
       model: Message,
-      as: 'message'
+      as: 'message',
+      include: [{
+        model: Chat,
+        as: 'chat',
+      }]
     }],
     limit: r.query.limit,
     offset: r.query.offset,
   });
 
-  return output({messages: messages.rows, count: messages.count});
+  return output({count: count, rows: rows});
 }
 
 export async function markMessageByStar(r) {

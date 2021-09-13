@@ -25,7 +25,7 @@ import {
   removeUserInGroupChat,
   addUserInGroupChat,
   leaveFromGroupChat,
-  getChatMembers, getStarredMessage, markMessageByStar, removeStarFromMessage
+  getChatMembers, getAllStarredMessage, markMessageByStar, removeStarFromMessage
 } from "../../api/chat";
 
 export default [{
@@ -107,7 +107,7 @@ export default [{
 }, {
   method: "GET",
   path: "/v1/starred-message",
-  handler: getStarredMessage,
+  handler: getAllStarredMessage,
   options: {
     id: "v1.chat.starred.message",
     description: "Get starred messages of the user",
