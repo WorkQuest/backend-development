@@ -14,6 +14,7 @@ import {
 } from "@workquest/database-models/lib/models";
 import { ChatNotificationActions } from "../utils/chatSubscription";
 import { Op } from "sequelize";
+import { setMessageAsReadJob } from "../jobs/setMessageAsRead";
 
 export async function getUserChats(r) {
   const userMemberInclude = {
@@ -488,6 +489,13 @@ export async function setMessagesAsRead(r) {
   }
 
   await chat.mustHaveMember(r.auth.credentials.id);
+
+  await setMessageAsReadJob({
+    messageId: r.payload.messageId,
+    chatId: r.params.chatId,
+  });
+
+
 
   // TODO
   // TODO add web socket

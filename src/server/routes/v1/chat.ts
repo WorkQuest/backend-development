@@ -11,7 +11,7 @@ import {
   messageSchema,
   messageTextSchema,
   usersSchema,
-  idsSchema,
+  idsSchema, isoDateSchema
 } from "@workquest/database-models/lib/schemes";
 import {
   getUserChats,
@@ -23,7 +23,7 @@ import {
   removeUserInGroupChat,
   addUserInGroupChat,
   leaveFromGroupChat,
-  getChatMembers
+  getChatMembers, setMessagesAsRead
 } from "../../api/chat";
 
 export default [{
@@ -216,5 +216,25 @@ export default [{
       schema: outputOkSchema(usersSchema).label('GetChatMembersResponse')
     }
   }
-}];
+}, {
+  method: "POST",
+  path: "/v1/read/message/{chatId}",
+  handler: setMessagesAsRead,
+  options: {
+    id: "v1.set.message.read",
+    description: "Set message as read",
+    tags: ["api", "chat"],
+    validate: {
+      params: Joi.object({
+        chatId: idSchema.required(),
+      }).label('ReadMessageParams'),
+      payload: Joi.object({
+        messageId: idSchema.required(),
+      }).label('LeaveFromGroupChatParams')
+    },
+    response: {
+      schema: outputOkSchema(messageSchema).label('LeaveFromGroupChatResponse')
+    }
+  }
+}, ];
 
