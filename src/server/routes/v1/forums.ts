@@ -59,7 +59,7 @@ export default [{
     description: "Create new forum post",
     validate: {
       payload: Joi.object({
-        text: textTitleSchema.required(),
+        title: textTitleSchema.required(),
         medias: mediaIdsSchema.default([]).unique().label("MediaIds")
       }).label("CreateForumPostPayload")
     },
@@ -81,7 +81,7 @@ export default [{
       }),
       payload: Joi.object({
         rootCommentId: forumPostRootCommentIdSchema,
-        text: textTitleSchema.required()
+        title: textTitleSchema.required()
       }).label("SendForumPostCommentPayload")
     },
     response: {
@@ -127,7 +127,7 @@ export default [{
   path: "/v1/forum/comment/{forumPostCommentId}/like",
   handler: putForumPostCommentLike,
   options: {
-    id: "v1.forum.post.comment.putLike",
+    id: "v1.forum.comment.putLike",
     tags: ["api", "forum","putPostCommentLike"],
     description: "Put like the comment of a post in the forum",
     validate: {
@@ -144,7 +144,7 @@ export default [{
   path: "/v1/forum/comment/{forumPostCommentId}/like",
   handler: removeForumPostCommentLike,
   options: {
-    id: "v1.forum.post.comment.removeLike",
+    id: "v1.forum.comment.removeLike",
     tags: ["api", "forum", "removePostCommentLike"],
     description: "Delete like in comment",
     validate: {
@@ -161,7 +161,7 @@ export default [{
   path: "/v1/forum/post/{forumPostId}/comments",
   handler: getForumPostComments,
   options: {
-    id: "v1.forum.post.getComments",
+    id: "v1.forum.getComments",
     tags: ["api", "forum", "getPostComments"],
     description: "Get all comments for a forum post",
     validate: {
@@ -182,8 +182,8 @@ export default [{
   path: "/v1/forum/post/{forumPostId}/likes",
   handler: getCountForumPostLikes,
   options: {
-    id: "v1.forum.post.getCountLikes",
-    tags: ["api", "forum", "getCountForumPostLikes"],
+    id: "v1.forum.getCountLikes",
+    tags: ["api", "forum", "getCountPostLike"],
     description: "Get the number of likes on a forum post",
     validate: {
       params: Joi.object({
@@ -203,8 +203,8 @@ export default [{
   path: "/v1/forum/post/comment/{forumPostCommentId}/likes",
   handler: getCountForumPostCommentLikes,
   options: {
-    id: "v1.forum.post.comment. getCountLikes",
-    tags: ["api", "forum", "getCountForumPostCommentLikes"],
+    id: "v1.forum.getCountLikes",
+    tags: ["api", "forum", "getCountCommentLike"],
     description: "Get the number of likes for a comment in a forum post",
     validate: {
       params: Joi.object({
