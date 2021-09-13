@@ -326,7 +326,6 @@ export async function getAllStarredMessage(r) { //получение сообщ�
 }
 
 export async function markMessageByStar(r) {
-  await User.userMustExist(r.auth.credentials.id);
 
   const message = await Message.findByPk(r.params.messageId);
   if(!message){
