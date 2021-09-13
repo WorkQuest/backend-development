@@ -306,7 +306,7 @@ export async function getChatMembers(r) {
   return output({count, members: rows});
 }
 
-export async function getStarredMessage(r){
+export async function getStarredMessage(r) {
   await User.userMustExist(r.auth.credentials.id);
 
   const messages = await StarredMessage.findAndCountAll({
@@ -327,12 +327,17 @@ export async function getStarredMessage(r){
   return output({messages: messages.rows, count: messages.count});
 }
 
-export async function markMessageByStar(r){
+export async function markMessageByStar(r) {
   await User.userMustExist(r.auth.credentials.id);
-  await Message.messageMustExists(r.params.messageId);
 
   const message = await Message.findByPk(r.params.messageId);
+  if(!message){
+    return error(Errors.NotFound, 'Message is not found', {});
+  }
   const chat = await Chat.findByPk(message.chatId);
+  if(!chat){
+    return error(Errors.NotFound, 'Chat is not found', {});
+  }
   await chat.mustHaveMember(r.auth.credentials.id);
 
   await StarredMessage.create({
@@ -343,9 +348,8 @@ export async function markMessageByStar(r){
   return output();
 }
 
-export async function removeStarFromMessage(r){
+export async function removeStarFromMessage(r) {
   await User.userMustExist(r.auth.credentials.id);
-  await Message.messageMustExists(r.params.messageId);
 
   const starredMessage = await StarredMessage.findOne({
     where: {
