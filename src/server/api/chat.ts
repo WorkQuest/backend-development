@@ -490,15 +490,38 @@ export async function setMessagesAsRead(r) {
 
   await chat.mustHaveMember(r.auth.credentials.id);
 
+  const message = await Message.findByPk(r.payload.messageId);
+  if(!message) {
+    return error(Errors.NotFound, "Message is not found", {});
+  }
+
+  const messages = await Message.findAndCountAll({
+    where: {
+      chatId: r.params.chatId,
+      senderStatus: SenderMessageStatus.unread,
+      createdAt: {
+        [Op.gte]: message.createdAt
+      }
+    }
+  });
+
+  let senders = [];
+  for(let message of messages.rows){
+    if(!senders.includes(message.senderUserId)){
+      senders.push(message.senderUserId)
+    }
+  }
+
+  await r.server.publish('/notifications/chat', {
+    action: ChatNotificationActions.messageReadByRecipient,
+    recipients: senders,
+    data: messages.rows,
+  });
+
   await setMessageAsReadJob({
     messageId: r.payload.messageId,
     chatId: r.params.chatId,
   });
-
-
-
-  // TODO
-  // TODO add web socket
 
   return output();
 }
