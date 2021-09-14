@@ -527,21 +527,17 @@ export async function markChatByStar(r){
 }
 
 export async function removeStarFromChat(r){
-  await User.userMustExist(r.auth.credentials.id);
   await Chat.chatMustExists(r.params.chatId);
 
-  const chat = await Chat.findByPk(r.params.chatId);
   //TODO: что делать до звёздочкой, если исключили из чата?
   //await chat.mustHaveMember(r.auth.credentials.id);
 
-  const starredChat = await StarredChat.findOne({
+  await StarredChat.destroy({
     where: {
       chatId: r.params.chatId,
       userId: r.auth.credentials.id
     }
   });
-
-  await starredChat.destroy();
 
   return output();
 }
