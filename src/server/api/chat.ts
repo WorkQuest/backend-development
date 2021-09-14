@@ -497,31 +497,29 @@ export async function setMessagesAsRead(r) {
   await chat.mustHaveMember(r.auth.credentials.id);
 
   const message = await Message.findByPk(r.payload.messageId);
-  if(!message) {
+
+  if (!message) {
     return error(Errors.NotFound, "Message is not found", {});
   }
 
-  const messages = await Message.findAndCountAll({
-    where: {
-      chatId: r.params.chatId,
-      senderStatus: SenderMessageStatus.unread,
-      createdAt: {
-        [Op.gte]: message.createdAt
+  const members = await ChatMember.unscoped().findAll({
+    include: [{
+      model: Message,
+      attributes: [],
+      where: {
+        senderUserId: { [Op.ne]: r.auth.credentials.id },
+        senderStatus: SenderMessageStatus.unread,
+        createdAt: { [Op.gte]: message.createdAt },
       }
-    }
+    }],
+    where: { chatId: r.params.chatId },
+    group: 'userId',
   });
-
-  let senders = [];
-  for(let message of messages.rows){
-    if(!senders.includes(message.senderUserId)){
-      senders.push(message.senderUserId)
-    }
-  }
 
   await r.server.publish('/notifications/chat', {
     action: ChatNotificationActions.messageReadByRecipient,
-    recipients: senders,
-    data: messages.rows,
+    recipients: members.map(member => member.userId),
+    data: message,
   });
 
   await setMessageAsReadJob({
@@ -530,6 +528,22 @@ export async function setMessagesAsRead(r) {
   });
 
   return output();
+}
+
+export async function getUserStarredMessages(r) {
+  const { count, rows } = await Message.findAndCountAll({
+    include: [{
+      model: StarredMessage,
+      as: "star",
+      where: { userId: r.auth.credentials.id },
+      required: true,
+    }, {
+      model: Chat.unscoped(),
+      as: "chat",
+    }]
+  });
+
+  return output({ count, rows });
 }
 
 export async function markMessageStar(r) {
@@ -549,7 +563,7 @@ export async function markMessageStar(r) {
 
   await StarredMessage.create({
     userId: r.auth.credentials.id,
-    messageId: r.params.messageId
+    messageId: r.params.messageId,
   });
 
   return output();

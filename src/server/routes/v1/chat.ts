@@ -25,8 +25,7 @@ import {
   removeUserInGroupChat,
   addUserInGroupChat,
   leaveFromGroupChat,
-  getChatMembers,
-  setMessagesAsRead
+  setMessagesAsRead,
   getChatMembers,
   getUserStarredMessages,
   markMessageStar,
