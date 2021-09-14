@@ -4,7 +4,8 @@ import {
   limitSchema,
   offsetSchema,
   idSchema,
-  chatsSchema,
+  chatForGetSchema,
+  chatsForGetWithCountSchema,
   chatSchema,
   chatNameSchema,
   messagesWithCountSchema,
@@ -25,7 +26,12 @@ import {
   removeUserInGroupChat,
   addUserInGroupChat,
   leaveFromGroupChat,
-  getChatMembers, getUserStarredMessages, markMessageStar, removeStarFromMessage, removeStarFromChat, markChatByStar
+  getChatMembers,
+  getUserStarredMessages,
+  markMessageStar,
+  removeStarFromMessage,
+  removeStarFromChat,
+  markChatStar,
 } from "../../api/chat";
 
 export default [{
@@ -44,7 +50,7 @@ export default [{
       }).label('GetChatsQuery')
     },
     response: {
-      schema: outputOkSchema(chatsSchema).label('GetChatsResponse'), // TODO with count
+      schema: outputOkSchema(chatsForGetWithCountSchema).label('GetChatsResponse'),
     }
   }
 }, {
@@ -83,7 +89,7 @@ export default [{
       }).label('GetUserChatParams')
     },
     response: {
-      schema: outputOkSchema(chatSchema).label('GetUserChatResponse')
+      schema: outputOkSchema(chatForGetSchema).label('GetUserChatResponse')
     }
   }
 }, {
@@ -275,7 +281,7 @@ export default [{
 }, {
   method: "POST",
   path: "/v1/user/me/chat/{chatId}/star",
-  handler: markChatByStar,
+  handler: markChatStar,
   options: {
     id: "v1.mark.chat",
     description: "Mark chat by star",
@@ -306,5 +312,5 @@ export default [{
       schema: emptyOkSchema
     }
   }
-},];
+}];
 

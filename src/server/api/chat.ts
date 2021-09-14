@@ -565,7 +565,7 @@ export async function removeStarFromMessage(r) {
   return output();
 }
 
-export async function markChatByStar(r) {
+export async function markChatStar(r) {
   const chat = await Chat.findByPk(r.params.chatId);
 
   if(!chat) {
