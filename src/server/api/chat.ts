@@ -11,10 +11,11 @@ import {
   InfoMessage,
   MessageAction,
   SenderMessageStatus,
+  StarredMessage,
 } from "@workquest/database-models/lib/models";
 import { ChatNotificationActions } from "../utils/chatSubscription";
-import { Op } from "sequelize";
 import { setMessageAsReadJob } from "../jobs/setMessageAsRead";
+import { Op } from "sequelize";
 
 export async function getUserChats(r) {
   const userMemberInclude = {
@@ -29,7 +30,6 @@ export async function getUserChats(r) {
     include: userMemberInclude
   });
   const chats = await Chat.findAll({
-    attributes: { include: [] },
     include: [userMemberInclude],
     order: [ ['lastMessageDate', 'DESC'] ],
     limit: r.query.limit,
@@ -50,6 +50,12 @@ export async function getChatMessages(r) {
 
   const { count, rows } = await Message.findAndCountAll({
     where: { chatId: chat.id },
+    include: [{
+      model: StarredMessage,
+      as: "star",
+      where: { userId: r.auth.credentials.id },
+      required: r.query.starred,
+    }],
     limit: r.query.limit,
     offset: r.query.offset,
     order: [ ['createdAt', 'DESC'] ],
@@ -90,7 +96,7 @@ export async function getChatMembers(r) {
     offset: r.query.offset,
   });
 
-  return output({count, members: rows});
+  return output({ count, members: rows });
 }
 
 export async function createGroupChat(r) {
@@ -521,6 +527,41 @@ export async function setMessagesAsRead(r) {
   await setMessageAsReadJob({
     messageId: r.payload.messageId,
     chatId: r.params.chatId,
+  });
+
+  return output();
+}
+
+export async function markMessageStar(r) {
+  const message = await Message.findByPk(r.params.messageId);
+
+  if (!message) {
+    return error(Errors.NotFound, 'Message is not found', {});
+  }
+
+  const chat = await Chat.findByPk(message.chatId);
+
+  if (!chat) {
+    return error(Errors.NotFound, 'Chat is not found', {});
+  }
+
+  await chat.mustHaveMember(r.auth.credentials.id);
+
+  await StarredMessage.create({
+    userId: r.auth.credentials.id,
+    messageId: r.params.messageId
+  });
+
+  return output();
+}
+
+export async function removeStarFromMessage(r) {
+
+  await StarredMessage.destroy({
+    where: {
+      messageId: r.params.messageId,
+      userId: r.auth.credentials.id
+    }
   });
 
   return output();

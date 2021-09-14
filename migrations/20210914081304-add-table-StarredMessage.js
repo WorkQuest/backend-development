@@ -2,10 +2,21 @@
 
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    return queryInterface.createTable('InfoMessages', {
+    return queryInterface.createTable('StarredMessages', {
       id: {
         type: Sequelize.DataTypes.STRING,
         primaryKey: true
+      },
+      userId: {
+        type: Sequelize.DataTypes.STRING,
+        allowNull: false,
+        references: {
+          model: {
+            tableName: 'Users',
+            schema: 'public'
+          },
+          key: 'id'
+        }
       },
       messageId: {
         type: Sequelize.DataTypes.STRING,
@@ -18,21 +29,6 @@ module.exports = {
           key: 'id'
         }
       },
-      userId: {
-        type: Sequelize.DataTypes.STRING,
-        defaultValue: null,
-        references: {
-          model: {
-            tableName: 'Users',
-            schema: 'public'
-          },
-          key: 'id'
-        }
-      },
-      messageAction: {
-        type: Sequelize.DataTypes.STRING,
-        allowNull: false
-      },
       createdAt: {
         type: Sequelize.DataTypes.DATE
       },
@@ -41,8 +37,8 @@ module.exports = {
       }
     })
   },
-
+  
   down: async (queryInterface, Sequelize) => {
-    return queryInterface.dropTable('InfoMessages');
+    return queryInterface.dropTable('StarredMessages');
   }
 };
