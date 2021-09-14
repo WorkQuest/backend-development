@@ -30,6 +30,20 @@ export async function getMe(r) {
   }));
 }
 
+export async function getUser(r) {
+  if (r.auth.credentials.id === r.params.userId) {
+    return error(Errors.Forbidden, 'You can\'t see your profile (use "get me")', {});
+  }
+
+  const user = await User.findByPk(r.params.userId);
+
+  if (!user) {
+    throw error(Errors.NotFound, 'User not found', {});
+  }
+
+  return output(user);
+}
+
 export async function setRole(r) {
   const user = await User.findByPk(r.auth.credentials.id);
 
