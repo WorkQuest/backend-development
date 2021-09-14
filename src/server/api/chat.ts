@@ -307,8 +307,6 @@ export async function getChatMembers(r) {
 }
 
 export async function getAllStarredMessage(r) { //получение сообщений из ВСЕХ чатов
-  await User.userMustExist(r.auth.credentials.id);
-
   const {count, rows} = await Message.findAndCountAll({
     include: [{
       model: StarredMessage,
@@ -326,7 +324,6 @@ export async function getAllStarredMessage(r) { //получение сообщ�
 }
 
 export async function markMessageByStar(r) {
-
   const message = await Message.findByPk(r.params.messageId);
   if(!message){
     return error(Errors.NotFound, 'Message is not found', {});
@@ -346,7 +343,6 @@ export async function markMessageByStar(r) {
 }
 
 export async function removeStarFromMessage(r) {
-  await User.userMustExist(r.auth.credentials.id);
 
   await StarredMessage.destroy({
     where: {
