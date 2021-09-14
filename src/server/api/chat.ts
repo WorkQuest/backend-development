@@ -109,7 +109,7 @@ export async function getChatMembers(r) {
     offset: r.query.offset,
   });
 
-  return output({count, members: rows});
+  return output({ count, members: rows });
 }
 
 export async function createGroupChat(r) {
@@ -523,7 +523,7 @@ export async function setMessagesAsRead(r) {
   return output({count, members: rows});
 }
 
-export async function getAllStarredMessage(r) { //получение сообщений из ВСЕХ чатов
+export async function getUserStarredMessages(r) { //получение сообщений из ВСЕХ чатов
   const {count, rows} = await Message.findAndCountAll({
     include: [{
       model: StarredMessage,
@@ -539,7 +539,7 @@ export async function getAllStarredMessage(r) { //получение сообщ�
   return output({ count, rows: rows});
 }
 
-export async function markMessageByStar(r) {
+export async function markMessageStar(r) {
   const message = await Message.findByPk(r.params.messageId);
 
   if (!message) {

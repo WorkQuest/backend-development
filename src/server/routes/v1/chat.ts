@@ -7,11 +7,13 @@ import {
   chatsSchema,
   chatSchema,
   chatNameSchema,
-  messagesSchema,
+  messagesWithCountSchema,
+  messagesForGetWithCountSchema,
   messageSchema,
   messageTextSchema,
   usersSchema,
-  idsSchema, outputPaginationSchema, emptyOkSchema
+  idsSchema,
+  emptyOkSchema,
 } from "@workquest/database-models/lib/schemes";
 import {
   getUserChats,
@@ -23,7 +25,7 @@ import {
   removeUserInGroupChat,
   addUserInGroupChat,
   leaveFromGroupChat,
-  getChatMembers, getAllStarredMessage, markMessageByStar, removeStarFromMessage
+  getChatMembers, getUserStarredMessages, markMessageStar, removeStarFromMessage
 } from "../../api/chat";
 
 export default [{
@@ -41,7 +43,7 @@ export default [{
       }).label('GetChatsQuery')
     },
     response: {
-      schema: outputOkSchema(chatsSchema).label('GetChatsResponse'),
+      schema: outputOkSchema(chatsSchema).label('GetChatsResponse'), // TODO with count
     }
   }
 }, {
@@ -63,7 +65,7 @@ export default [{
       }).label('GetMessagesQuery')
     },
     response: {
-      schema: outputOkSchema(messagesSchema).label('GetMessagesResponse')
+      schema: outputOkSchema(messagesForGetWithCountSchema).label('GetMessagesResponse')
     }
   }
 }, {
@@ -214,15 +216,15 @@ export default [{
       }).label('GetChatMembersQuery')
     },
     response: {
-      schema: outputOkSchema(usersSchema).label('GetChatMembersResponse')
+      schema: outputOkSchema(usersSchema).label('GetChatMembersResponse') // TODO with count
     }
   }
 }, {
   method: "GET",
   path: "/v1/user/me/chat/messages/star",
-  handler: getAllStarredMessage,
+  handler: getUserStarredMessages,
   options: {
-    id: "v1.chat.starred.message",
+    id: "v1.chat.messages.getStarredMessages",
     description: "Get starred messages of the user",
     tags: ["api", "chat"],
     validate: {
@@ -232,21 +234,21 @@ export default [{
       }).label('GetStarredMessagesQuery')
     },
     response: {
-      schema: outputPaginationSchema('messages: ', messagesSchema).label('GetUserStarredMessagesResponse')
+      schema: outputOkSchema(messagesWithCountSchema).label('GetUserStarredMessagesResponse')
     }
   }
 }, {
   method: "POST",
   path: "/v1/user/me/chat/message/{messageId}/star",
-  handler: markMessageByStar,
+  handler: markMessageStar,
   options: {
-    id: "v1.chat.mark.message",
-    description: "Mark message by star",
+    id: "v1.chat.message.markMessageStar",
+    description: "Mark message star",
     tags: ["api", "chat"],
     validate: {
       params: Joi.object({
         messageId: idSchema,
-      }).label('StarredMessageParams')
+      }).label('MarkMessageStarParams')
     },
     response: {
       schema: emptyOkSchema
@@ -257,17 +259,17 @@ export default [{
   path: "/v1/user/me/chat/message/{messageId}/star",
   handler: removeStarFromMessage,
   options: {
-    id: "v1.remove.star.message",
+    id: "v1.chat.message.removeStar",
     description: "Remove star from message",
     tags: ["api", "chat"],
     validate: {
       params: Joi.object({
         messageId: idSchema.required(),
-      }).label('RemoveStarParams'),
+      }).label('RemoveStarFromMessageParams'),
     },
     response: {
       schema: emptyOkSchema
     }
   }
-},];
+}];
 
