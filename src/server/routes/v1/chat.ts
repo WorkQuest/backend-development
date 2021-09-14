@@ -219,7 +219,7 @@ export default [{
   }
 }, {
   method: "GET",
-  path: " /v1/user/me/chat/messages/star",
+  path: "/v1/user/me/chat/messages/star",
   handler: getAllStarredMessage,
   options: {
     id: "v1.chat.starred.message",
