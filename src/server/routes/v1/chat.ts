@@ -85,7 +85,7 @@ export default [{
   }
 }, {
   method: "POST",
-  path: "/v1/mark/{chatId}",
+  path: "/v1/user/me/chat/{chatId}/star",
   handler: markChatByStar,
   options: {
     id: "v1.mark.chat",
@@ -102,7 +102,7 @@ export default [{
   }
 }, {
   method: "DELETE",
-  path: "/v1/remove/{chatId}/star",
+  path: "/v1/user/me/chat/{chatId}/star",
   handler: removeStarFromChat,
   options: {
     id: "v1.remove.star.chat",
