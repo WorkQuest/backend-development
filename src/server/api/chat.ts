@@ -1,4 +1,3 @@
-import { Chat, ChatMember, ChatType, Message, User } from "@workquest/database-models/lib/models";
 import { error, output } from "../utils";
 import { getMedias } from "../utils/medias";
 import { Errors } from "../utils/errors";
@@ -12,6 +11,7 @@ import {
   InfoMessage,
   MessageAction,
   SenderMessageStatus,
+  StarredMessage,
 } from "@workquest/database-models/lib/models";
 import { ChatNotificationActions } from "../utils/chatSubscription";
 import { Op } from "sequelize";
@@ -52,10 +52,8 @@ export async function getChatMessages(r) {
     where: { chatId: chat.id },
     include: [{
       model: StarredMessage,
-      as: "starredMessage",
-      where: {
-        userId: r.auth.credentials.id
-      },
+      as: "star",
+      where: { userId: r.auth.credentials.id },
       required: false,
     }],
     limit: r.query.limit,
@@ -504,35 +502,37 @@ export async function setMessagesAsRead(r) {
   return output();
 }
 
-export async function getAllStarredMessage(r) { //получение сообщений из ВСЕХ чатов
+export async function getAllStarredMessage(r) {
   await User.userMustExist(r.auth.credentials.id);
 
-  const {count, rows} = await Message.findAndCountAll({
+  const { count, rows } = await Message.findAndCountAll({
     include: [{
       model: StarredMessage,
-      as: "starredMessage",
-      where: {
-        userId: r.auth.credentials.id
-      }
+      as: "star",
+      where: { userId: r.auth.credentials.id },
+      required: true,
     }, {
       model: Chat.unscoped(),
       as: "chat",
     }]
   });
 
-  return output({count: count, rows: rows});
+  return output({ count, rows: rows});
 }
 
 export async function markMessageByStar(r) {
-
   const message = await Message.findByPk(r.params.messageId);
-  if(!message){
+
+  if (!message) {
     return error(Errors.NotFound, 'Message is not found', {});
   }
+
   const chat = await Chat.findByPk(message.chatId);
-  if(!chat){
+
+  if (!chat) {
     return error(Errors.NotFound, 'Chat is not found', {});
   }
+
   await chat.mustHaveMember(r.auth.credentials.id);
 
   await StarredMessage.create({
