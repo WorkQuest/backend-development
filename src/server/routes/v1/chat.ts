@@ -36,7 +36,7 @@ export default [{
     description: "Get all chats",
     validate: {
       query: Joi.object({
-
+        starred: Joi.boolean().default(false),
         offset: offsetSchema,
         limit: limitSchema,
       }).label('GetChatsQuery')

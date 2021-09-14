@@ -28,12 +28,24 @@ export async function getUserChats(r) {
   const count = await Chat.unscoped().count({
     include: userMemberInclude
   });
+
+  let onlyStarredChatsInclude = {
+    model: StarredChat,
+    as: 'starredChat',
+    required: false,
+  }
+
+  if(r.query.starred) {
+    onlyStarredChatsInclude = {
+      model: StarredChat,
+      as: 'starredChat',
+      required: true
+    }
+  }
+
   const chats = await Chat.findAll({
     attributes: { include: [] },
-    include: [userMemberInclude, {
-      model: StarredChat,
-      as: 'starredChat'
-    }],
+    include: [userMemberInclude, onlyStarredChatsInclude],
     order: [ ['lastMessageDate', 'DESC'] ],
     limit: r.query.limit,
     offset: r.query.offset,
