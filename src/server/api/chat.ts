@@ -47,28 +47,14 @@ export async function getChatMessages(r) {
 
   await chat.mustHaveMember(r.auth.credentials.id);
 
-  let starredChatsInclude = {
-    model: StarredMessage,
-    as: "star",
-    where: {
-      userId: r.auth.credentials.id
-    },
-    required: false,
-  }
-  if(r.query.starred) {
-    starredChatsInclude = {
-      model: StarredMessage,
-      as: "star",
-      where: {
-        userId: r.auth.credentials.id
-      },
-      required: true,
-    }
-  }
-
   const { count, rows } = await Message.findAndCountAll({
     where: { chatId: chat.id },
-    include: [starredChatsInclude],
+    include: [{
+      model: StarredMessage,
+      as: "star",
+      where: { userId: r.auth.credentials.id },
+      required: r.query.starred,
+    }],
     limit: r.query.limit,
     offset: r.query.offset,
     order: [ ['createdAt', 'DESC'] ],
