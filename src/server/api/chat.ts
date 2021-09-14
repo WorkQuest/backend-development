@@ -33,7 +33,7 @@ export async function getUserChats(r) {
     model: StarredChat,
     as: 'starredChat',
     required: false,
-  }
+  };
 
   if(r.query.starred) {
     onlyStarredChatsInclude = {
@@ -511,7 +511,7 @@ export async function setMessagesAsRead(r) {
   return output();
 }
 
-export async function markChatByStar(r){
+export async function markChatByStar(r) {
   await User.userMustExist(r.auth.credentials.id);
   await Chat.chatMustExists(r.params.chatId);
 
@@ -526,7 +526,7 @@ export async function markChatByStar(r){
   return output();
 }
 
-export async function removeStarFromChat(r){
+export async function removeStarFromChat(r) {
   await Chat.chatMustExists(r.params.chatId);
 
   //TODO: что делать до звёздочкой, если исключили из чата?
