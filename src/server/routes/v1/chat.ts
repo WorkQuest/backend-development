@@ -11,7 +11,7 @@ import {
   messageSchema,
   messageTextSchema,
   usersSchema,
-  idsSchema,
+  idsSchema, outputPaginationSchema, emptyOkSchema
 } from "@workquest/database-models/lib/schemes";
 import {
   getUserChats,
@@ -23,7 +23,7 @@ import {
   removeUserInGroupChat,
   addUserInGroupChat,
   leaveFromGroupChat,
-  getChatMembers
+  getChatMembers, getAllStarredMessage, markMessageByStar, removeStarFromMessage
 } from "../../api/chat";
 
 export default [{
@@ -217,5 +217,57 @@ export default [{
       schema: outputOkSchema(usersSchema).label('GetChatMembersResponse')
     }
   }
-}];
+}, {
+  method: "GET",
+  path: "/v1/starred-message",
+  handler: getAllStarredMessage,
+  options: {
+    id: "v1.chat.starred.message",
+    description: "Get starred messages of the user",
+    tags: ["api", "chat"],
+    validate: {
+      query: Joi.object({
+        offset: offsetSchema,
+        limit: limitSchema,
+      }).label('GetStarredMessagesQuery')
+    },
+    response: {
+      schema: outputPaginationSchema('messages: ', messagesSchema).label('GetUserStarredMessagesResponse')
+    }
+  }
+}, {
+  method: "POST",
+  path: "/v1/mark/{messageId}",
+  handler: markMessageByStar,
+  options: {
+    id: "v1.chat.mark.message",
+    description: "Mark message by star",
+    tags: ["api", "chat"],
+    validate: {
+      params: Joi.object({
+        messageId: idSchema,
+      }).label('StarredMessageParams')
+    },
+    response: {
+      schema: emptyOkSchema
+    }
+  }
+}, {
+  method: "DELETE",
+  path: "/v1/remove/{messageId}/star",
+  handler: removeStarFromMessage,
+  options: {
+    id: "v1.remove.star.message",
+    description: "Remove star from message",
+    tags: ["api", "chat"],
+    validate: {
+      params: Joi.object({
+        messageId: idSchema.required(),
+      }).label('RemoveStarParams'),
+    },
+    response: {
+      schema: emptyOkSchema
+    }
+  }
+},];
 
