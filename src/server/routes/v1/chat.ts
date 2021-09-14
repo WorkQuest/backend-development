@@ -59,6 +59,7 @@ export default [{
         chatId: idSchema.required(),
       }).label('GetMessagesParams'),
       query: Joi.object({
+        starred: Joi.boolean().default(false),
         offset: offsetSchema,
         limit: limitSchema,
       }).label('GetMessagesQuery')

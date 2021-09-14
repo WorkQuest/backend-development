@@ -80,16 +80,28 @@ export async function getChatMessages(r) {
 
   await chat.mustHaveMember(r.auth.credentials.id);
 
-  const { count, rows } = await Message.findAndCountAll({
-    where: { chatId: chat.id },
-    include: [{
+  let starredChatsInclude = {
+    model: StarredMessage,
+    as: "starredMessage",
+    where: {
+      userId: r.auth.credentials.id
+    },
+    required: false,
+  }
+  if(r.query.starred) {
+    starredChatsInclude = {
       model: StarredMessage,
       as: "starredMessage",
       where: {
         userId: r.auth.credentials.id
       },
-      required: false,
-    }],
+      required: true,
+    }
+  }
+
+  const { count, rows } = await Message.findAndCountAll({
+    where: { chatId: chat.id },
+    include: [starredChatsInclude],
     limit: r.query.limit,
     offset: r.query.offset,
     order: [
