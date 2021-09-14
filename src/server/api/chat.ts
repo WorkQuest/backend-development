@@ -12,6 +12,7 @@ import {
   MessageAction,
   SenderMessageStatus,
   StarredMessage,
+  StarredChat
 } from "@workquest/database-models/lib/models";
 import { ChatNotificationActions } from "../utils/chatSubscription";
 import { Op } from "sequelize";
@@ -29,7 +30,11 @@ export async function getUserChats(r) {
     include: userMemberInclude
   });
   const chats = await Chat.findAll({
-    include: [userMemberInclude],
+    include: [userMemberInclude, {
+      model: StarredChat,
+      as: 'star',
+      required: r.query.starred,
+    }],
     order: [ ['lastMessageDate', 'DESC'] ],
     limit: r.query.limit,
     offset: r.query.offset,
@@ -559,3 +564,37 @@ export async function removeStarFromMessage(r) {
 
   return output();
 }
+
+export async function markChatByStar(r) {
+  const chat = await Chat.findByPk(r.params.chatId);
+
+  if(!chat) {
+    return error(Errors.NotFound, 'Chat is not found', {});
+  }
+
+  await chat.mustHaveMember(r.auth.credentials.id);
+
+  await StarredChat.create({
+    userId: r.auth.credentials.id,
+    chatId: r.params.chatId,
+  });
+
+  return output();
+}
+
+export async function removeStarFromChat(r) {
+  await Chat.chatMustExists(r.params.chatId);
+
+  //TODO: что делать до звёздочкой, если исключили из чата?
+  //await chat.mustHaveMember(r.auth.credentials.id);
+
+  await StarredChat.destroy({
+    where: {
+      chatId: r.params.chatId,
+      userId: r.auth.credentials.id
+    }
+  });
+
+  return output();
+}
+

@@ -25,7 +25,7 @@ import {
   removeUserInGroupChat,
   addUserInGroupChat,
   leaveFromGroupChat,
-  getChatMembers, getUserStarredMessages, markMessageStar, removeStarFromMessage
+  getChatMembers, getUserStarredMessages, markMessageStar, removeStarFromMessage, removeStarFromChat, markChatByStar
 } from "../../api/chat";
 
 export default [{
@@ -38,6 +38,7 @@ export default [{
     description: "Get all chats",
     validate: {
       query: Joi.object({
+        starred: Joi.boolean().default(false),
         offset: offsetSchema,
         limit: limitSchema,
       }).label('GetChatsQuery')
@@ -271,5 +272,39 @@ export default [{
       schema: emptyOkSchema
     }
   }
-}];
+}, {
+  method: "POST",
+  path: "/v1/user/me/chat/{chatId}/star",
+  handler: markChatByStar,
+  options: {
+    id: "v1.mark.chat",
+    description: "Mark chat by star",
+    tags: ["api", "chat"],
+    validate: {
+      params: Joi.object({
+        chatId: idSchema.required(),
+      }).label('MarkChatParams'),
+    },
+    response: {
+      schema: emptyOkSchema
+    }
+  }
+}, {
+  method: "DELETE",
+  path: "/v1/user/me/chat/{chatId}/star",
+  handler: removeStarFromChat,
+  options: {
+    id: "v1.remove.star.chat",
+    description: "Remove star from chat",
+    tags: ["api", "chat"],
+    validate: {
+      params: Joi.object({
+        chatId: idSchema.required(),
+      }).label('RemoveStarParams'),
+    },
+    response: {
+      schema: emptyOkSchema
+    }
+  }
+},];
 
