@@ -512,10 +512,12 @@ export async function setMessagesAsRead(r) {
 }
 
 export async function markChatByStar(r) {
-  await User.userMustExist(r.auth.credentials.id);
-  await Chat.chatMustExists(r.params.chatId);
-
   const chat = await Chat.findByPk(r.params.chatId);
+
+  if(!chat) {
+    return error(Errors.NotFound, 'Chat is not found', {});
+  }
+
   await chat.mustHaveMember(r.auth.credentials.id);
 
   await StarredChat.create({
