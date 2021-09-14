@@ -568,7 +568,7 @@ export async function removeStarFromMessage(r) {
 export async function markChatStar(r) {
   const chat = await Chat.findByPk(r.params.chatId);
 
-  if(!chat) {
+  if (!chat) {
     return error(Errors.NotFound, 'Chat is not found', {});
   }
 
