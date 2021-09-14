@@ -32,6 +32,12 @@ module.exports = {
       messageAction: {
         type: Sequelize.DataTypes.STRING,
         allowNull: false
+      },
+      createdAt: {
+        type: Sequelize.DataTypes.DATE
+      },
+      updatedAt: {
+        type: Sequelize.DataTypes.DATE
       }
     })
   },
