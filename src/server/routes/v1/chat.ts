@@ -219,7 +219,7 @@ export default [{
   }
 }, {
   method: "GET",
-  path: "/v1/starred-message",
+  path: " /v1/user/me/chat/messages/star",
   handler: getAllStarredMessage,
   options: {
     id: "v1.chat.starred.message",
@@ -237,7 +237,7 @@ export default [{
   }
 }, {
   method: "POST",
-  path: "/v1/mark/{messageId}",
+  path: "/v1/user/me/chat/message/{messageId}/star",
   handler: markMessageByStar,
   options: {
     id: "v1.chat.mark.message",
@@ -254,7 +254,7 @@ export default [{
   }
 }, {
   method: "DELETE",
-  path: "/v1/remove/{messageId}/star",
+  path: "/v1/user/me/chat/message/{messageId}/star",
   handler: removeStarFromMessage,
   options: {
     id: "v1.remove.star.message",
