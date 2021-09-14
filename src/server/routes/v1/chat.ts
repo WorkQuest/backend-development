@@ -11,7 +11,7 @@ import {
   messageSchema,
   messageTextSchema,
   usersSchema,
-  idsSchema, outputPaginationSchema, starredChatScheme, emptyOkSchema
+  idsSchema, outputPaginationSchema, emptyOkSchema
 } from "@workquest/database-models/lib/schemes";
 import {
   getUserChats,
@@ -23,7 +23,7 @@ import {
   removeUserInGroupChat,
   addUserInGroupChat,
   leaveFromGroupChat,
-  getChatMembers, getStarredChats, markChatByStar, removeStarFromChat
+  getChatMembers, markChatByStar, removeStarFromChat
 } from "../../api/chat";
 
 export default [{
@@ -36,6 +36,7 @@ export default [{
     description: "Get all chats",
     validate: {
       query: Joi.object({
+
         offset: offsetSchema,
         limit: limitSchema,
       }).label('GetChatsQuery')
@@ -80,24 +81,6 @@ export default [{
     },
     response: {
       schema: outputOkSchema(chatSchema).label('GetUserChatResponse')
-    }
-  }
-}, {
-  method: "GET",
-  path: "/v1/starred-chats",
-  handler: getStarredChats,
-  options: {
-    id: "v1.starred.chats",
-    description: "Get starred chats of the user",
-    tags: ["api", "chat"],
-    validate: {
-      query: Joi.object({
-        offset: offsetSchema,
-        limit: limitSchema,
-      }).label('GetStarredChatsQuery')
-    },
-    response: {
-      schema: outputPaginationSchema('chats', starredChatScheme).label('GetStarredChatsResponse')
     }
   }
 }, {

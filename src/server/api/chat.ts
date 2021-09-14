@@ -499,27 +499,6 @@ export async function setMessagesAsRead(r) {
   return output();
 }
 
-export async function getStarredChats(r){
-  await User.userMustExist(r.auth.credentials.id);
-
-  const messages = await StarredChat.findAndCountAll({
-    where: {
-      userId: r.auth.credentials.id,
-    },
-    include: [{
-      model: User,
-      as: 'user'
-    }, {
-      model: Chat,
-      as: 'chat'
-    }],
-    limit: r.query.limit,
-    offset: r.query.offset,
-  });
-
-  return output({messages: messages.rows, count: messages.count});
-}
-
 export async function markChatByStar(r){
   await User.userMustExist(r.auth.credentials.id);
   await Chat.chatMustExists(r.params.chatId);
