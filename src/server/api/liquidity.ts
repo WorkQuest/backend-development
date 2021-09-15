@@ -25,17 +25,17 @@ const pair = new Pair(
   new TokenAmount(WETH, config.token.WETH.amountMax)
 );
 
-export async function getSwapsWQT(r) {
-  console.log(r.query);
+export async function getSwaps(r) {
   try {
     const result = await axios({
       url: `https://api.thegraph.com/subgraphs/name/uniswap/uniswap-v2`,
       method: "POST",
       data: {
         query: `{ 
-          swaps(first:${r.query.limit}, skip: ${r.query.offset}, orderBy: timestamp, orderDirection: desc, where:
+          swaps(first:${r.query.limit}, skip:${r.query.offset}, orderBy: timestamp, orderDirection: desc, where:
           { pair: "${pair.liquidityToken.address.toLowerCase()}" }) {
             pair {
+            txCount
             token0 {symbol}
             token1 {symbol}
             }
@@ -56,6 +56,66 @@ export async function getSwapsWQT(r) {
     }
 
     return output(result.data.data.swaps);
+  } catch (err) {
+    return error(Errors.LiquidityError, err.response.statusText, err.response.data);
+  }
+}
+
+export async function getMints(r) {
+  try {
+    const result = await axios({
+      url: `https://api.thegraph.com/subgraphs/name/uniswap/uniswap-v2`,
+      method: "POST",
+      data: {
+        query: `{ 
+          mints(first:${r.query.limit}, skip:${r.query.offset}, orderBy: timestamp, orderDirection: desc, where:
+          { pair: "${pair.liquidityToken.address.toLowerCase()}" }) {
+            transaction { id timestamp }
+            to
+            liquidity
+            amount0
+            amount1
+            amountUSD
+          }
+        }`
+      }
+    });
+
+    if (result.data.errors) {
+      return error(Errors.LiquidityError, 'Query error', result.data.errors);
+    }
+
+    return output(result.data.data.mints);
+  } catch (err) {
+    return error(Errors.LiquidityError, err.response.statusText, err.response.data);
+  }
+}
+
+export async function getBurns(r) {
+  try {
+    const result = await axios({
+      url: `https://api.thegraph.com/subgraphs/name/uniswap/uniswap-v2`,
+      method: "POST",
+      data: {
+        query: `{ 
+          burns(first:${r.query.limit}, skip:${r.query.offset}, orderBy: timestamp, orderDirection: desc, where:
+          { pair: "${pair.liquidityToken.address.toLowerCase()}" }) {
+            transaction { id timestamp }
+            to
+            liquidity
+            amount0
+            amount1
+            amountUSD
+          }
+        }`
+      }
+    });
+
+    if (result.data.errors) {
+      return error(Errors.LiquidityError, 'Query error', result.data.errors);
+    }
+
+    return output(result.data.data.burns);
   } catch (err) {
     return error(Errors.LiquidityError, err.response.statusText, err.response.data);
   }

@@ -1,4 +1,4 @@
-import { getSwapsWQT, getTokenDayData } from "../../api/liquidity";
+import { getBurns, getMints, getSwaps, getTokenDayData } from "../../api/liquidity";
 import {
   outputOkSchema,
   tokensDayWQTSchema,
@@ -10,11 +10,11 @@ import * as Joi from "joi";
 export default [{
   method: "GET",
   path: "/v1/liquidity/swaps",
-  handler: getSwapsWQT,
+  handler: getSwaps,
   options: {
-    id: "v1.liquidity.getSwapsWQT",
+    id: "v1.liquidity.getSwaps",
     tags: ["api", "swaps"],
-    description: "Get the last 100 swaps on a pair by fetching Swap events",
+    description: "Get swaps on a pair by fetching Swap events",
     validate: {
       query: Joi.object({
         offset: offsetSchema,
@@ -23,6 +23,42 @@ export default [{
     },
     response: {
       schema: outputOkSchema(swapWQTSchema).label("GetSwapsWQTResponse")
+    }
+  }
+},{
+  method: "GET",
+  path: "/v1/liquidity/mints",
+  handler: getMints,
+  options: {
+    id: "v1.liquidity.getMints",
+    tags: ["api", "mints"],
+    description: "Get mints on a pair by fetching Mints events",
+    validate: {
+      query: Joi.object({
+        offset: offsetSchema,
+        limit: limitSchema
+      }).label("GetMintsCounts")
+    },
+    response: {
+      schema: outputOkSchema(swapWQTSchema).label("GetMintsWQTResponse")
+    }
+  }
+},{
+  method: "GET",
+  path: "/v1/liquidity/burns",
+  handler: getBurns,
+  options: {
+    id: "v1.liquidity.getSBurns",
+    tags: ["api", "burns"],
+    description: "Get burns on a pair by fetching Burns events",
+    validate: {
+      query: Joi.object({
+        offset: offsetSchema,
+        limit: limitSchema
+      }).label("GetBurnsCounts")
+    },
+    response: {
+      schema: outputOkSchema(swapWQTSchema).label("GetBurnsWQTResponse")
     }
   }
 }, {
