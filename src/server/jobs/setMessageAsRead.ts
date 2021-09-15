@@ -1,5 +1,5 @@
 import { addJob } from "../utils/scheduler";
-import { Message, SenderMessageStatus } from "@workquest/database-models/lib/models";
+import { ChatMember, Message, SenderMessageStatus } from "@workquest/database-models/lib/models";
 import {Op} from "sequelize"
 
 export interface Data{
@@ -31,5 +31,8 @@ export default async function setMessageAsRead(payload: Data) {
       senderStatus: SenderMessageStatus.read,
     });
   }
+
+  await ChatMember.update({lastReadMessageId: payload.messageId},
+    {where: {userId: payload.userId, chatId: payload.chatId}});
 }
 
