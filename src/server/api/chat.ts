@@ -99,7 +99,7 @@ export async function getChatMembers(r) {
   return output({ count, members: rows });
 }
 
-export async function createGroupChat(r) {
+export async function     createGroupChat(r) {
   const memberUserIds: string[] = r.payload.memberUserIds;
 
   if (!memberUserIds.includes(r.auth.credentials.id)) {
@@ -502,23 +502,22 @@ export async function setMessagesAsRead(r) {
     return error(Errors.NotFound, "Message is not found", {});
   }
 
-  const members = await ChatMember.unscoped().findAll({
-    include: [{
-      model: Message,
-      attributes: [],
-      where: {
-        senderUserId: { [Op.ne]: r.auth.credentials.id },
-        senderStatus: SenderMessageStatus.unread,
-        createdAt: { [Op.gte]: message.createdAt },
-      }
-    }],
-    where: { chatId: r.params.chatId },
-    group: 'userId',
+  const senders = await Message.unscoped().findAndCountAll({
+    attributes: {
+      include: ["senderUserId"],
+      exclude: ["id", "chatId", "senderStatus", "type", "text", "createdAt", "updatedAt"]
+    },
+    where: {
+      senderUserId: { [Op.ne]: r.auth.credentials.id },
+      senderStatus: SenderMessageStatus.unread,
+      createdAt: { [Op.gte]: message.createdAt },
+    },
+    group: ["senderUserId"]
   });
 
   await r.server.publish('/notifications/chat', {
     action: ChatNotificationActions.messageReadByRecipient,
-    recipients: members.map(member => member.userId),
+    recipients: senders.rows.map(sender => sender.senderUserId),
     data: message,
   });
 
