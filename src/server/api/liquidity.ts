@@ -1,26 +1,27 @@
 import { ChainId, Token, TokenAmount, Pair } from "@uniswap/sdk";
 import axios from "axios";
 import { output } from "../utils";
+import config from "../config/config";
 
 
 const WQT = new Token(
   ChainId.MAINNET,
-  "0x06677dc4fe12d3ba3c7ccfd0df8cd45e4d4095bf",
-  18,
-  "WQT",
-  "Work quest Token"
+  config.token.addressWQT,
+  Number(config.token.decimalsWQT),
+  config.token.symbolWQT,
+  config.token.nameWQT,
 );
-const ETH = new Token(
+const WETH = new Token(
   ChainId.MAINNET,
-  "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
-  18,
-  "ETH",
-  "Ether (Wrapped)"
+  config.token.addressWETH,
+  Number(config.token.decimalsWETH),
+  config.token.symbolWETH,
+  config.token.nameWETH
 );
 
 const pair = new Pair(
-  new TokenAmount(WQT, "2000000000000000000"),
-  new TokenAmount(ETH, "1000000000000000000")
+  new TokenAmount(WQT, config.token.amountWQTMax),
+  new TokenAmount(WETH, config.token.amountWETHMax)
 );
 
 export async function getSwapsWQT() {
