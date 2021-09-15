@@ -23,4 +23,5 @@ export enum Errors {
   NotFound = 404000,
   // Conflict (409)
   SumSubError = 409001,
+  LiquidityError = 409002,
 }
