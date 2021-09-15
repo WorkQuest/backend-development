@@ -19,7 +19,7 @@ export default [{
       query: Joi.object({
         offset: offsetSchema,
         limit: limitSchema
-      }).label("GetSwapsCounts")
+      }).label("GetSwapsWQTQuery")
     },
     response: {
       schema: outputOkSchema(swapWQTSchema).label("GetSwapsWQTResponse")
@@ -37,7 +37,7 @@ export default [{
       query: Joi.object({
         offset: offsetSchema,
         limit: limitSchema
-      }).label("GetLiquidityToken")
+      }).label("GetTokenDayDataQuery")
     },
     response: {
       schema: outputOkSchema(tokensDayWQTSchema).label("GetTokenDayDataResponse")
