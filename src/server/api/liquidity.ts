@@ -79,7 +79,6 @@ export async function getTokenDayData(r) {
             dailyVolumeETH
             dailyVolumeToken
             dailyVolumeUSD
-            asdasdasd
         }
       }`
     }
