@@ -167,4 +167,4 @@ jobs:
             WETH_DECIMAL_TOKEN=${{ secrets.WETH_DECIMAL_TOKEN }} \
             WETH_SYMBOL_TOKEN=${{ secrets.WETH_SYMBOL_TOKEN }} \
             WETH_NAME_TOKEN=${{ secrets.WETH_NAME_TOKEN }} \
-            WETH_AMOUNT_MAX=${{ WETH_AMOUNT_MAX }}
+            WETH_AMOUNT_MAX=${{ WETH_AMOUNT_MAX }} \
