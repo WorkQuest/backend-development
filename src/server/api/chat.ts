@@ -18,23 +18,23 @@ import { ChatNotificationActions } from "../utils/chatSubscription";
 import { Op } from "sequelize";
 
 export async function getUserChats(r) {
-  const userMemberInclude = {
+  const include = [{
     model: ChatMember,
     where: { userId: r.auth.credentials.id },
     required: true,
     as: 'chatMembers',
     attributes: [],
-  };
+  }, {
+    model: StarredChat,
+    as: 'star',
+    required: r.query.starred,
+  }];
 
   const count = await Chat.unscoped().count({
-    include: userMemberInclude
+    include: include
   });
   const chats = await Chat.findAll({
-    include: [userMemberInclude, {
-      model: StarredChat,
-      as: 'star',
-      required: r.query.starred,
-    }],
+    include,
     order: [ ['lastMessageDate', 'DESC'] ],
     limit: r.query.limit,
     offset: r.query.offset,
