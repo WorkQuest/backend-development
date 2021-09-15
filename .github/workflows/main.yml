@@ -152,7 +152,7 @@ jobs:
             SUMSUB_BASE_URL=${{ secrets.SUMSUB_BASE_URL }} \
             SUMSUB_ACCESS_TOKEN_TTL=${{ secrets.SUMSUB_ACCESS_TOKEN_TTL }} \
 
-            WQT_ADDRES_TOKEN=${{ secrets.WQT_ADDRESS_TOKEN}} \
+            WQT_ADDRESS_TOKEN=${{ secrets.WQT_ADDRESS_TOKEN}} \
             WQT_DECIMAL_TOKEN=${{ secrets.WQT_DECIMAL_TOKEN}} \
             WQT_SYMBOL_TOKEN=${{ secrets.WQT_SYMBOL_TOKEN }} \
             WQT_NAME_TOKEN=${{ secrets.WQT_NAME_TOKEN }} \
