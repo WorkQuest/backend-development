@@ -5,17 +5,18 @@ import {
   Chat,
   ChatMember,
   ChatType,
-  Message,
-  User,
-  MessageType,
   InfoMessage,
+  Message,
   MessageAction,
+  MessageType,
   SenderMessageStatus,
   StarredMessage,
+  User
 } from "@workquest/database-models/lib/models";
 import { ChatNotificationActions } from "../utils/chatSubscription";
 import { setMessageAsReadJob } from "../jobs/setMessageAsRead";
 import { Op } from "sequelize";
+import { countUnreadMessagesJob } from "../jobs/countUnreadMessages";
 
 export async function getUserChats(r) {
   const userMemberInclude = {
@@ -99,7 +100,7 @@ export async function getChatMembers(r) {
   return output({ count, members: rows });
 }
 
-export async function     createGroupChat(r) {
+export async function createGroupChat(r) {
   const memberUserIds: string[] = r.payload.memberUserIds;
 
   if (!memberUserIds.includes(r.auth.credentials.id)) {
@@ -154,7 +155,7 @@ export async function     createGroupChat(r) {
   await r.server.publish('/notifications/chat', {
     recipients: memberUserIds.filter(userId => userId !== r.auth.credentials.id),
     action: ChatNotificationActions.groupChatCreate,
-    data: result,
+    data: result, lastReadMessageId: message.id
   });
 
   return output(result);
@@ -212,8 +213,8 @@ export async function sendMessageToUser(r) {
       userId:  r.params.userId,
     }], { transaction })
   } else {
-    await ChatMember.update({ unreadCountMessages: 0 }, {
-      where: { chatId: chat.id, userId: r.auth.credentials.id }
+    await ChatMember.update({ unreadCountMessages: 0, lastReadMessageId: message.id }, {
+      where: { chatId: chat.id, userId: r.auth.credentials.id, }
     });
 
     await ChatMember.increment('unreadCountMessages', {
@@ -273,8 +274,8 @@ export async function sendMessageToChat(r) {
     transaction, where: { chatId: chat.id, senderUserId: { [Op.ne]: r.auth.credentials.id } },
   });
 
-  await ChatMember.update({ unreadCountMessages: 0 },{
-    transaction, where: { chatId: chat.id, userId: r.auth.credentials.id },
+  await ChatMember.update({ unreadCountMessages: 0, lastReadMessageId: message.id },{
+    transaction, where: { chatId: chat.id, userId: r.auth.credentials.id, },
   });
 
   await ChatMember.increment('unreadCountMessages', {
@@ -339,7 +340,7 @@ export async function addUserInGroupChat(r) {
     transaction, where: { chatId: groupChat.id, userId: { [Op.ne]: r.auth.credentials.id } }
   });
 
-  await ChatMember.update({ unreadCountMessages: 0 },{
+  await ChatMember.update({ unreadCountMessages: 0, lastReadMessageId: message.id },{
     transaction, where: { chatId: groupChat.id, userId: r.auth.credentials.id },
   });
 
@@ -403,7 +404,7 @@ export async function removeUserInGroupChat(r) {
     transaction, where: { chatId: groupChat.id, userId: { [Op.ne]: r.auth.credentials.id } }
   });
 
-  await ChatMember.update({ unreadCountMessages: 0 },{
+  await ChatMember.update({ unreadCountMessages: 0, lastReadMessageId: message.id },{
     transaction, where: { chatId: groupChat.id, userId: r.auth.credentials.id },
   });
 
@@ -518,7 +519,15 @@ export async function setMessagesAsRead(r) {
     data: message,
   });
 
-  await setMessageAsReadJob({
+  if(message.senderStatus === SenderMessageStatus.unread){
+    await setMessageAsReadJob({
+      messageId: r.payload.messageId,
+      chatId: r.params.chatId,
+      userId: r.auth.credentials.id,
+    });
+  }
+
+  await countUnreadMessagesJob({
     messageId: r.payload.messageId,
     chatId: r.params.chatId,
     userId: r.auth.credentials.id,
