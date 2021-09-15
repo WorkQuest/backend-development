@@ -42,8 +42,5 @@ export default async function setMessageAsRead(payload: Data) {
   await chatMember.update({
     unreadCountMessages: chatMember.unreadCountMessages - messages.count
   })
-
-  console.log(chatMember)
-
 }
 
