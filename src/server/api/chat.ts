@@ -69,7 +69,12 @@ export async function getChatMessages(r) {
 }
 
 export async function getUserChat(r) {
-  const chat = await Chat.findByPk(r.params.chatId);
+  const chat = await Chat.findByPk(r.params.chatId, {
+    include: [{
+      model: StarredChat,
+      as: "star",
+    }]
+  });
 
   if (!chat) {
     return error(Errors.NotFound, "Chat not found", {});
