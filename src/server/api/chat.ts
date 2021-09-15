@@ -142,7 +142,7 @@ export async function createGroupChat(r) {
   const chatMembers = memberUserIds.map(userId => {
     return {
       unreadCountMessages: (userId === r.auth.credentials.id ? 0 : 1),
-      userId, chatId: groupChat.id,
+      userId, chatId: groupChat.id, lastReadMessageId: message.id
     }
   });
 
@@ -206,7 +206,8 @@ export async function sendMessageToUser(r) {
     await ChatMember.bulkCreate([{
       unreadCountMessages: 0,
       chatId: chat.id,
-      userId: r.auth.credentials.id
+      userId: r.auth.credentials.id,
+      lastReadMessageId: message.id,
     }, {
       unreadCountMessages: 1, /** Because created */
       chatId: chat.id,
@@ -314,20 +315,20 @@ export async function addUserInGroupChat(r) {
   }
 
   groupChat.mustHaveType(ChatType.group);
-  await groupChat.mustHaveMember(r.params.chatId);
   groupChat.mustHaveOwner(r.auth.credentials.id);
 
   const transaction = await r.server.app.db.transaction();
-
-  await ChatMember.create({
-    chatId: groupChat.id,
-    userId: r.params.userId,
-  }, { transaction });
 
   const message = await Message.create({
     senderUserId: r.auth.credentials.id,
     chatId: groupChat.id,
     type: MessageType.info,
+  }, { transaction });
+
+  await ChatMember.create({
+    chatId: groupChat.id,
+    userId: r.params.userId,
+    lastReadMessageId: message.id
   }, { transaction });
 
   await InfoMessage.create({
@@ -513,6 +514,12 @@ export async function setMessagesAsRead(r) {
     group: ["senderUserId"]
   });
 
+  await countUnreadMessagesJob({
+    messageId: r.payload.messageId,
+    chatId: r.params.chatId,
+    userId: r.auth.credentials.id,
+  });
+
   await r.server.publish('/notifications/chat', {
     action: ChatNotificationActions.messageReadByRecipient,
     recipients: senders.rows.map(sender => sender.senderUserId),
@@ -526,12 +533,6 @@ export async function setMessagesAsRead(r) {
       userId: r.auth.credentials.id,
     });
   }
-
-  await countUnreadMessagesJob({
-    messageId: r.payload.messageId,
-    chatId: r.params.chatId,
-    userId: r.auth.credentials.id,
-  });
 
   return output();
 }

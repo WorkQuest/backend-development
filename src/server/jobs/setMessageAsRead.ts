@@ -21,13 +21,13 @@ export default async function setMessageAsRead(payload: Data) {
       chatId: payload.chatId,
       senderStatus: SenderMessageStatus.unread,
       createdAt: {
-        [Op.gte]: message.createdAt
+        [Op.lte]: message.createdAt
       }
     }
   });
 
-  for(let message of messages.rows) {
-    await message.update({
+  for(let messageCounter of messages.rows) {
+    await messageCounter.update({
       senderStatus: SenderMessageStatus.read,
     });
   }
