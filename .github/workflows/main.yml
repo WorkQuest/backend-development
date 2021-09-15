@@ -152,11 +152,6 @@ jobs:
             SUMSUB_BASE_URL=${{ secrets.SUMSUB_BASE_URL }} \
             SUMSUB_ACCESS_TOKEN_TTL=${{ secrets.SUMSUB_ACCESS_TOKEN_TTL }} \
 
-            DEBUG=${{ secrets.DEBUG }} \
-            backend_bin=${{ secrets.backend_bin }} \
-            PM2_SERVICE_NAME=${{ secrets.PM2_SERVICE_NAME }} \
-            SRC_DIR=${{ github.workspace }}/" backend-update.yml; \
-
             WQT_ADDRES_TOKEN=${{ secrets.WQT_ADDRESS_TOKEN}} \
             WQT_DECIMAL_TOKEN=${{ secrets.WQT_DECIMAL_TOKEN}} \
             WQT_SYMBOL_TOKEN=${{ secrets.WQT_SYMBOL_TOKEN }} \
@@ -168,3 +163,8 @@ jobs:
             WETH_SYMBOL_TOKEN=${{ secrets.WETH_SYMBOL_TOKEN }} \
             WETH_NAME_TOKEN=${{ secrets.WETH_NAME_TOKEN }} \
             WETH_AMOUNT_MAX=${{ WETH_AMOUNT_MAX }} \
+
+            DEBUG=${{ secrets.DEBUG }} \
+            backend_bin=${{ secrets.backend_bin }} \
+            PM2_SERVICE_NAME=${{ secrets.PM2_SERVICE_NAME }} \
+            SRC_DIR=${{ github.workspace }}/" backend-update.yml;
