@@ -509,8 +509,8 @@ export async function setMessagesAsRead(r) {
   return output({count, members: rows});
 }
 
-export async function getUserStarredMessages(r) { //получение сообщений из ВСЕХ чатов
-  const {count, rows} = await Message.findAndCountAll({
+export async function getUserStarredMessages(r) {
+  const { count, rows } = await Message.findAndCountAll({
     include: [{
       model: StarredMessage,
       as: "star",
@@ -522,7 +522,7 @@ export async function getUserStarredMessages(r) { //получение сооб�
     }]
   });
 
-  return output({ count, rows: rows});
+  return output({ count, messages: rows });
 }
 
 export async function markMessageStar(r) {
@@ -542,20 +542,25 @@ export async function markMessageStar(r) {
 
   await StarredMessage.create({
     userId: r.auth.credentials.id,
-    messageId: r.params.messageId
+    messageId: r.params.messageId,
   });
 
   return output();
 }
 
 export async function removeStarFromMessage(r) {
-
-  await StarredMessage.destroy({
+  const starredMessage = await StarredMessage.findOne({
     where: {
       messageId: r.params.messageId,
       userId: r.auth.credentials.id
     }
   });
+
+  if (!starredMessage) {
+    return error(Errors.Forbidden, 'Message or message with star not fount', {});
+  }
+
+  await starredMessage.destroy();
 
   return output();
 }

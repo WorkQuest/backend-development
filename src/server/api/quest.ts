@@ -421,12 +421,18 @@ export async function setStar(r) {
 }
 
 export async function removeStar(r) {
-  await StarredQuests.destroy({
+  const starredQuest = await StarredQuests.findOne({
     where: {
       userId: r.auth.credentials.id,
       questId: r.params.questId,
     }
   });
+
+  if (!starredQuest) {
+    return error(Errors.Forbidden, 'Quest or quest with star not fount', {});
+  }
+
+  await starredQuest.destroy();
 
   return output();
 }
