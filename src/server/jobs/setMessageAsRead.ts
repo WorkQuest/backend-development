@@ -31,16 +31,5 @@ export default async function setMessageAsRead(payload: Data) {
       senderStatus: SenderMessageStatus.read,
     });
   }
-
-  const chatMember = await ChatMember.findOne({
-    where: {
-      chatId: payload.chatId,
-      userId: payload.userId,
-    }
-  })
-
-  await chatMember.update({
-    unreadCountMessages: chatMember.unreadCountMessages - messages.count
-  })
 }
 
