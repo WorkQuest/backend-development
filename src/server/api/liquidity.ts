@@ -2,6 +2,7 @@ import { ChainId, Token, TokenAmount, Pair } from "@uniswap/sdk";
 import axios from "axios";
 import { error, output } from "../utils";
 import config from "../config/config";
+import { Errors } from "../utils/errors";
 
 const WQT = new Token(
   ChainId.MAINNET,
@@ -49,10 +50,13 @@ export async function getSwapsWQT(r) {
   });
 
   if (result.status !== 200) {
-    // return error(, );
+    return error(Errors.LiquidityError, `Liquidity data  swaps error`, {});
+  }
+  if (result.data.errors) {
+    return error(Errors.LiquidityError, '', result.data.errors)
   }
 
-  return output(result.data.data.swap);
+  return output(result.data.data.swaps);
 }
 
 
@@ -74,14 +78,18 @@ export async function getTokenDayData(r) {
             totalLiquidityETH
             dailyVolumeETH
             dailyVolumeToken
-            dailyVolumeUSD 
+            dailyVolumeUSD
+            asdasdasd
         }
       }`
     }
   });
 
-  if (r.status !== 200) {
-    // return error()
+  if (result.status !== 200) {
+    return error(Errors.LiquidityError, `Liquidity day data error`, {});
+  }
+  if (result.data.errors) {
+    return error(Errors.LiquidityError, '', result.data.errors)
   }
 
   return output(result.data.data.tokenDayDatas);
