@@ -1,34 +1,33 @@
 import { ChainId, Token, TokenAmount, Pair } from "@uniswap/sdk";
 import axios from "axios";
-import { output } from "../utils";
+import { error, output } from "../utils";
 import config from "../config/config";
-
 
 const WQT = new Token(
   ChainId.MAINNET,
-  config.token.WQT.addressWQT,
-  Number(config.token.WQT.decimalsWQT),
-  config.token.WQT.symbolWQT,
-  config.token.WQT.nameWQT,
+  config.token.WQT.address,
+  config.token.WQT.decimals,
+  config.token.WQT.symbol,
+  config.token.WQT.name,
 );
+
 const WETH = new Token(
   ChainId.MAINNET,
-  config.token.WETH.addressWETH,
-  Number(config.token.WETH.decimalsWETH),
-  config.token.WETH.symbolWETH,
-  config.token.WETH.nameWETH
+  config.token.WETH.address,
+  config.token.WETH.decimals,
+  config.token.WETH.symbol,
+  config.token.WETH.name
 );
 
 const pair = new Pair(
-  new TokenAmount(WQT, config.token.WQT.amountWQTMax),
-  new TokenAmount(WETH, config.token.WETH.amountWETHMax)
+  new TokenAmount(WQT, config.token.WQT.amountMax),
+  new TokenAmount(WETH, config.token.WETH.amountMax)
 );
 
-export async function getSwapsWQT() {
-
-  const r = await axios({
+export async function getSwapsWQT(r) {
+  const result = await axios({
     url: `https://api.thegraph.com/subgraphs/name/uniswap/uniswap-v2`,
-    method: "post",
+    method: "POST",
     data: {
       query: `{ 
         swaps(orderBy: timestamp, orderDirection: desc, where:
@@ -48,20 +47,19 @@ export async function getSwapsWQT() {
       }`
     }
   });
-  const swap = r.data.data.swaps;
 
-  if (r.status !== 200) {
-    return r.statusText;
+  if (result.status !== 200) {
+    // return error(, );
   }
-  return output(swap);
+
+  return output(result.data.data.swap);
 }
 
 
-export async function getTokenDayData() {
-
-  const r = await axios({
+export async function getTokenDayData(r) {
+  const result = await axios({
     url: `https://api.thegraph.com/subgraphs/name/uniswap/uniswap-v2`,
-    method: "post",
+    method: "POST",
     data: {
       query: `{ 
         tokenDayDatas(orderBy: date, orderDirection: asc,
@@ -82,10 +80,9 @@ export async function getTokenDayData() {
     }
   });
 
-  const token = r.data.data.tokenDayDatas;
-
   if (r.status !== 200) {
-    return r.statusText;
+    // return error()
   }
-  return output(token);
+
+  return output(result.data.data.tokenDayDatas);
 }
