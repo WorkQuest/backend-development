@@ -1,10 +1,11 @@
 import { addJob } from "../utils/scheduler";
-import { Message, SenderMessageStatus } from "@workquest/database-models/lib/models";
+import { Message, SenderMessageStatus, ChatMember } from "@workquest/database-models/lib/models";
 import {Op} from "sequelize"
 
 export interface Data{
   messageId: string,
   chatId: string,
+  userId: string,
 }
 
 export async function setMessageAsReadJob(payload: Data) {
@@ -30,5 +31,19 @@ export default async function setMessageAsRead(payload: Data) {
       senderStatus: SenderMessageStatus.read,
     });
   }
+
+  const chatMember = await ChatMember.findOne({
+    where: {
+      chatId: payload.chatId,
+      userId: payload.userId,
+    }
+  })
+
+  await chatMember.update({
+    unreadCountMessages: chatMember.unreadCountMessages - messages.count
+  })
+
+  console.log(chatMember)
+
 }
 

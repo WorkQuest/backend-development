@@ -521,6 +521,7 @@ export async function setMessagesAsRead(r) {
   await setMessageAsReadJob({
     messageId: r.payload.messageId,
     chatId: r.params.chatId,
+    userId: r.auth.credentials.id,
   });
 
   return output();
