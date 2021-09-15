@@ -26,13 +26,14 @@ const pair = new Pair(
 );
 
 export async function getSwapsWQT(r) {
+  console.log(r.query);
   try {
     const result = await axios({
       url: `https://api.thegraph.com/subgraphs/name/uniswap/uniswap-v2`,
       method: "POST",
       data: {
         query: `{ 
-          swaps(orderBy: timestamp, orderDirection: desc, where:
+          swaps(first:${r.query.limit}, skip: ${r.query.offset}, orderBy: timestamp, orderDirection: desc, where:
           { pair: "${pair.liquidityToken.address.toLowerCase()}" }) {
             pair {
             token0 {symbol}
@@ -67,7 +68,7 @@ export async function getTokenDayData(r) {
     method: "POST",
     data: {
       query: `{ 
-        tokenDayDatas(orderBy: date, orderDirection: asc,
+        tokenDayDatas(first:${r.query.limit}, skip:${r.query.offset},orderBy: date, orderDirection: asc,
         where: {
           token: "${WQT.address.toLowerCase()}"
           }) {
