@@ -6,22 +6,22 @@ import config from "../config/config";
 
 const WQT = new Token(
   ChainId.MAINNET,
-  config.token.addressWQT,
-  Number(config.token.decimalsWQT),
-  config.token.symbolWQT,
-  config.token.nameWQT,
+  config.token.WQT.addressWQT,
+  Number(config.token.WQT.decimalsWQT),
+  config.token.WQT.symbolWQT,
+  config.token.WQT.nameWQT,
 );
 const WETH = new Token(
   ChainId.MAINNET,
-  config.token.addressWETH,
-  Number(config.token.decimalsWETH),
-  config.token.symbolWETH,
-  config.token.nameWETH
+  config.token.WETH.addressWETH,
+  Number(config.token.WETH.decimalsWETH),
+  config.token.WETH.symbolWETH,
+  config.token.WETH.nameWETH
 );
 
 const pair = new Pair(
-  new TokenAmount(WQT, config.token.amountWQTMax),
-  new TokenAmount(WETH, config.token.amountWETHMax)
+  new TokenAmount(WQT, config.token.WQT.amountWQTMax),
+  new TokenAmount(WETH, config.token.WETH.amountWETHMax)
 );
 
 export async function getSwapsWQT() {
