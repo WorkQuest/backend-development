@@ -503,10 +503,7 @@ export async function setMessagesAsRead(r) {
   }
 
   const senders = await Message.unscoped().findAndCountAll({
-    attributes: {
-      include: ["senderUserId"],
-      exclude: ["id", "chatId", "senderStatus", "type", "text", "createdAt", "updatedAt"]
-    },
+    attributes: ["senderUserId"],
     where: {
       senderUserId: { [Op.ne]: r.auth.credentials.id },
       senderStatus: SenderMessageStatus.unread,
