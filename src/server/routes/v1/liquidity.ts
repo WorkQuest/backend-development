@@ -1,5 +1,5 @@
 import { getSwapsWQT, getTokenDayData } from "../../api/liquidity";
-import { outputOkSchema, tokenDayWQTSchema, swapWQTSchema } from "@workquest/database-models/lib/schemes";
+import { outputOkSchema, tokensDayWQTSchema, swapWQTSchema } from "@workquest/database-models/lib/schemes";
 
 export default [{
   method: "GET",
@@ -22,7 +22,7 @@ export default [{
     tags: ["api", "token"],
     description: "Get daily information for DAI",
     response: {
-      schema: outputOkSchema(tokenDayWQTSchema).label("GetTokenDayDataResponse")
+      schema: outputOkSchema(tokensDayWQTSchema).label("GetTokenDayDataResponse")
     },
   }
 }]
