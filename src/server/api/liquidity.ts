@@ -26,42 +26,43 @@ const pair = new Pair(
 );
 
 export async function getSwapsWQT(r) {
-  const result = await axios({
-    url: `https://api.thegraph.com/subgraphs/name/uniswap/uniswap-v2`,
-    method: "POST",
-    data: {
-      query: `{ 
-        swaps(orderBy: timestamp, orderDirection: desc, where:
-        { pair: "${pair.liquidityToken.address.toLowerCase()}" }) {
-          pair {
-          token0 {symbol}
-          token1 {symbol}
+  try {
+    const result = await axios({
+      url: `https://api.thegraph.com/subgraphs/name/uniswap/uniswap-v2`,
+      method: "POST",
+      data: {
+        query: `{ 
+          swaps(orderBy: timestamp, orderDirection: desc, where:
+          { pair: "${pair.liquidityToken.address.toLowerCase()}" }) {
+            pair {
+            token0 {symbol}
+            token1 {symbol}
+            }
+            amount0In
+            amount0Out
+            amount1In
+            amount1Out
+            amountUSD
+            to
+            timestamp
           }
-          amount0In
-          amount0Out
-          amount1In
-          amount1Out
-          amountUSD
-          to
-          timestamp
-        }
-      }`
+        }`
+      }
+    });
+
+    if (result.data.errors) {
+      return error(Errors.LiquidityError, 'Query error', result.data.errors);
     }
-  });
 
-  if (result.status !== 200) {
-    return error(Errors.LiquidityError, `Liquidity data  swaps error`, {});
+    return output(result.data.data.swaps);
+  } catch (err) {
+    return error(Errors.LiquidityError, err.response.statusText, err.response.data);
   }
-  if (result.data.errors) {
-    return error(Errors.LiquidityError, '', result.data.errors)
-  }
-
-  return output(result.data.data.swaps);
 }
 
-
 export async function getTokenDayData(r) {
-  const result = await axios({
+  try {
+    const result = await axios({
     url: `https://api.thegraph.com/subgraphs/name/uniswap/uniswap-v2`,
     method: "POST",
     data: {
@@ -84,12 +85,12 @@ export async function getTokenDayData(r) {
     }
   });
 
-  if (result.status !== 200) {
-    return error(Errors.LiquidityError, `Liquidity day data error`, {});
-  }
-  if (result.data.errors) {
-    return error(Errors.LiquidityError, '', result.data.errors)
-  }
+    if (result.data.errors) {
+      return error(Errors.LiquidityError, 'Query error', result.data.errors);
+    }
 
-  return output(result.data.data.tokenDayDatas);
+    return output(result.data.data.tokenDayDatas);
+  } catch (err) {
+    return error(Errors.LiquidityError, err.response.statusText, err.response.data);
+  }
 }
