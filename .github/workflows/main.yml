@@ -155,13 +155,14 @@ jobs:
             DEBUG=${{ secrets.DEBUG }} \
             backend_bin=${{ secrets.backend_bin }} \
             PM2_SERVICE_NAME=${{ secrets.PM2_SERVICE_NAME }} \
-            SRC_DIR=${{ github.workspace }}/" backend-update.yml;
+            SRC_DIR=${{ github.workspace }}/" backend-update.yml; \
 
             WQT_ADDRES_TOKEN=${{ secrets.WQT_ADDRESS_TOKEN}} \
             WQT_DECIMAL_TOKEN=${{ secrets.WQT_DECIMAL_TOKEN}} \
             WQT_SYMBOL_TOKEN=${{ secrets.WQT_SYMBOL_TOKEN }} \
             WQT_NAME_TOKEN=${{ secrets.WQT_NAME_TOKEN }} \
             WQT_AMOUNT_MAX=${{ secrets.WQT_AMOUNT_MAX }} \
+
             WETH_ADDRESS_TOKEN=${{ secrets.WETH_ADDRESS_TOKEN }} \
             WETH_DECIMAL_TOKEN=${{ secrets.WETH_DECIMAL_TOKEN }} \
             WETH_SYMBOL_TOKEN=${{ secrets.WETH_SYMBOL_TOKEN }} \
