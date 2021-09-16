@@ -16,7 +16,7 @@ import {
 import { ChatNotificationActions } from "../utils/chatSubscription";
 import { setMessageAsReadJob } from "../jobs/setMessageAsRead";
 import { Op } from "sequelize";
-import { countUnreadMessagesJob } from "../jobs/countUnreadMessages";
+import { MemberUnreadMessagesPayload, updateCountUnreadMessagesJob } from "../jobs/updateCountUnreadMessages";
 
 export async function getUserChats(r) {
   const userMemberInclude = {
@@ -504,7 +504,7 @@ export async function setMessagesAsRead(r) {
     return error(Errors.NotFound, "Message is not found", {});
   }
 
-  const senders = await Message.unscoped().findAll({
+  const otherSenders = await Message.unscoped().findAll({
     attributes: ["senderUserId"],
     where: {
       senderUserId: { [Op.ne]: r.auth.credentials.id },
@@ -514,29 +514,26 @@ export async function setMessagesAsRead(r) {
     group: ["senderUserId"]
   });
 
-  if (senders.length === 0) {
+  await updateCountUnreadMessagesJob({
+    lastUnreadMessage: { id: message.id, createdAt: message.createdAt },
+    chatId: chat.id,
+    readerUserId: r.auth.credentials.id,
+  });
 
+  if (otherSenders.length === 0) {
+    return output();
   }
 
-  await countUnreadMessagesJob({
-    message: { id: r.payload.messageId, createdAt: message.createdAt },
+  await setMessageAsReadJob({
+    lastUnreadMessage: { id: message.id, createdAt: message.createdAt },
     chatId: r.params.chatId,
-    readerUserId: r.auth.credentials.id,
   });
 
   await r.server.publish('/notifications/chat', {
     action: ChatNotificationActions.messageReadByRecipient,
-    recipients: senders.map(sender => sender.senderUserId),
+    recipients: otherSenders.map(sender => sender.senderUserId),
     data: message,
   });
-
-  if (message.senderStatus === SenderMessageStatus.unread) {
-    await setMessageAsReadJob({
-      messageId: r.payload.messageId,
-      chatId: r.params.chatId,
-      userId: r.auth.credentials.id,
-    });
-  }
 
   return output();
 }

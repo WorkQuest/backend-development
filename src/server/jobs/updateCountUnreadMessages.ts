@@ -1,20 +1,18 @@
 import { addJob } from "../utils/scheduler";
-import { Message, Chat, ChatMember } from "@workquest/database-models/lib/models";
-import { error } from "../utils";
-import { Errors } from "../utils/errors";
+import { Message, ChatMember } from "@workquest/database-models/lib/models";
 import { Op } from "sequelize";
 
-export interface Data {
-  message: { id: string, createdAt: Date };
-  readerUserId: string,
-  chatId: string,
+export interface MemberUnreadMessagesPayload {
+  lastUnreadMessage: { id: string, createdAt: Date };
+  readerUserId: string;
+  chatId: string;
 }
 
-export async function countUnreadMessagesJob(payload: Data) {
-  return addJob("countUnreadMessages", payload);
+export async function updateCountUnreadMessagesJob(payload: MemberUnreadMessagesPayload) {
+  return addJob("updateCountUnreadMessages", payload);
 }
 
-export default async function countUnreadMessages(payload: Data) {
+export default async function updateCountUnreadMessages(payload: MemberUnreadMessagesPayload) {
   const chatMember = await ChatMember.unscoped().findOne({
     attributes: ["lastReadMessageId"],
     where: {
@@ -33,13 +31,15 @@ export default async function countUnreadMessages(payload: Data) {
     lastReadMessageId?: string,
   };
 
-  if (chatMember.lastReadMessageId === payload.message.id && chatMember.unreadCountMessages !== 0) {
+  if (chatMember.lastReadMessageId === payload.lastUnreadMessage.id) {
+    if (chatMember.unreadCountMessages === 0) return;
+
     unreadMessageCounter = { unreadCountMessages: 0 };
-  } else if (chatMember.lastReadMessageId !== payload.message.id) {
+  } else {
     const unreadMessageCount = await Message.count({
       where: {
         createdAt: {
-          [Op.between]: [payload.message.createdAt, chatMember.lastReadMessage.createdAt]
+          [Op.between]: [payload.lastUnreadMessage.createdAt, chatMember.lastReadMessage.createdAt]
         }
       }
     });
@@ -48,10 +48,8 @@ export default async function countUnreadMessages(payload: Data) {
 
     unreadMessageCounter = {
       unreadCountMessages: unreadCountMessages < 0 ? 0 : unreadCountMessages,
-      lastReadMessageId: payload.message.id,
+      lastReadMessageId: payload.lastUnreadMessage.id,
     };
-  } else {
-    return;
   }
 
   await chatMember.update(unreadMessageCounter);
