@@ -284,7 +284,8 @@ export async function sendMessageToChat(r) {
 
   await incrementUnreadCountMessageJob({
     chatId: chat.id,
-    userId: { [Op.ne]: r.auth.credentials.id }
+    userId: r.auth.credentials.id,
+    conditional: true
   });
   // await ChatMember.increment('unreadCountMessages', {
   //   transaction, where: { chatId: chat.id, userId: { [Op.ne]: r.auth.credentials.id } }
@@ -322,7 +323,6 @@ export async function addUserInGroupChat(r) {
   }
 
   groupChat.mustHaveType(ChatType.group);
-  await groupChat.mustHaveMember(r.params.chatId);
   groupChat.mustHaveOwner(r.auth.credentials.id);
 
   const transaction = await r.server.app.db.transaction();
@@ -344,9 +344,15 @@ export async function addUserInGroupChat(r) {
     messageAction: MessageAction.groupChatAddUser,
   }, { transaction });
 
-  await ChatMember.increment('unreadCountMessages', {
-    transaction, where: { chatId: groupChat.id, userId: { [Op.ne]: r.auth.credentials.id } }
+  await incrementUnreadCountMessageJob({
+    chatId: groupChat.id,
+    userId: r.auth.credentials.id,
+    conditional: true
   });
+
+  // await ChatMember.increment('unreadCountMessages', {
+  //   transaction, where: { chatId: groupChat.id, userId: { [Op.ne]: r.auth.credentials.id } }
+  // });
 
   await ChatMember.update({ unreadCountMessages: 0 },{
     transaction, where: { chatId: groupChat.id, userId: r.auth.credentials.id },
@@ -408,9 +414,15 @@ export async function removeUserInGroupChat(r) {
     messageAction: MessageAction.groupChatDeleteUser,
   }, { transaction });
 
-  await ChatMember.increment('unreadCountMessages', {
-    transaction, where: { chatId: groupChat.id, userId: { [Op.ne]: r.auth.credentials.id } }
+  await incrementUnreadCountMessageJob({
+    chatId: groupChat.id,
+    userId: r.auth.credentials.id,
+    conditional: true
   });
+
+  // await ChatMember.increment('unreadCountMessages', {
+  //   transaction, where: { chatId: groupChat.id, userId: { [Op.ne]: r.auth.credentials.id } }
+  // });
 
   await ChatMember.update({ unreadCountMessages: 0 },{
     transaction, where: { chatId: groupChat.id, userId: r.auth.credentials.id },
@@ -470,9 +482,15 @@ export async function leaveFromGroupChat(r) {
     messageAction: MessageAction.groupChatLeaveUser,
   }, { transaction });
 
-  await ChatMember.increment('unreadCountMessages', {
-    transaction, where: { chatId: groupChat.id, userId: { [Op.ne]: r.auth.credentials.id } }
+  await incrementUnreadCountMessageJob({
+    chatId: groupChat.id,
+    userId: r.auth.credentials.id,
+    conditional: true
   });
+
+  // await ChatMember.increment('unreadCountMessages', {
+  //   transaction, where: { chatId: groupChat.id, userId: { [Op.ne]: r.auth.credentials.id } }
+  // });
 
   await groupChat.update({
     lastMessageId: message.id,
