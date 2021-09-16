@@ -4,10 +4,10 @@ import { error } from "../utils";
 import { Errors } from "../utils/errors";
 import { Op } from "sequelize";
 
-export interface Data{
-  messageId: string,
+export interface Data {
+  message: { id: string, createdAt: Date };
+  readerUserId: string,
   chatId: string,
-  userId: string,
 }
 
 export async function countUnreadMessagesJob(payload: Data) {
@@ -15,9 +15,10 @@ export async function countUnreadMessagesJob(payload: Data) {
 }
 
 export default async function countUnreadMessages(payload: Data) {
-  const chatMember = await ChatMember.findOne({
+  const chatMember = await ChatMember.unscoped().findOne({
+    attributes: ["lastReadMessageId"],
     where: {
-      userId: payload.userId,
+      userId: payload.readerUserId,
       chatId: payload.chatId,
     },
     include: {
@@ -27,29 +28,32 @@ export default async function countUnreadMessages(payload: Data) {
     }
   });
 
-  if(chatMember.lastReadMessageId !== payload.messageId){
-    const message = await Message.findByPk(payload.messageId);
-    console.log(chatMember.lastReadMessage.createdAt)
-    const messages = await Message.findAndCountAll({
+  let unreadMessageCounter: {
+    unreadCountMessages: number,
+    lastReadMessageId?: string,
+  };
+
+  if (chatMember.lastReadMessageId === payload.message.id && chatMember.unreadCountMessages !== 0) {
+    unreadMessageCounter = { unreadCountMessages: 0 };
+  } else if (chatMember.lastReadMessageId !== payload.message.id) {
+    const unreadMessageCount = await Message.count({
       where: {
         createdAt: {
-          [Op.between]: [message.createdAt, chatMember.lastReadMessage.createdAt]
+          [Op.between]: [payload.message.createdAt, chatMember.lastReadMessage.createdAt]
         }
       }
     });
 
-    let unreadCountMessages = chatMember.unreadCountMessages - messages.count + 1 //+1, потому что уже последнее прочитанное сообщение тоже входит в промежуток
-    if (unreadCountMessages < 0) unreadCountMessages = 0;
+    const unreadCountMessages = chatMember.unreadCountMessages - unreadMessageCount + 1;
 
-    await chatMember.update({
-      unreadCountMessages: unreadCountMessages,
-      lastReadMessageId: payload.messageId
-    });
-  }else{
-    await chatMember.update({
-      unreadCountMessages: 0,
-    });
+    unreadMessageCounter = {
+      unreadCountMessages: unreadCountMessages < 0 ? 0 : unreadCountMessages,
+      lastReadMessageId: payload.message.id,
+    };
+  } else {
+    return;
   }
 
+  await chatMember.update(unreadMessageCounter);
 }
 

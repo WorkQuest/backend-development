@@ -490,7 +490,7 @@ export async function leaveFromGroupChat(r) {
 }
 
 export async function setMessagesAsRead(r) {
-  const chat = await Chat.findByPk(r.params.chatId);
+  const chat = await Chat.unscoped().findByPk(r.params.chatId);
 
   if (!chat) {
     return error(Errors.NotFound, "Chat not found", {});
@@ -498,13 +498,13 @@ export async function setMessagesAsRead(r) {
 
   await chat.mustHaveMember(r.auth.credentials.id);
 
-  const message = await Message.findByPk(r.payload.messageId);
+  const message = await Message.unscoped().findByPk(r.payload.messageId);
 
   if (!message) {
     return error(Errors.NotFound, "Message is not found", {});
   }
 
-  const senders = await Message.unscoped().findAndCountAll({
+  const senders = await Message.unscoped().findAll({
     attributes: ["senderUserId"],
     where: {
       senderUserId: { [Op.ne]: r.auth.credentials.id },
@@ -514,19 +514,23 @@ export async function setMessagesAsRead(r) {
     group: ["senderUserId"]
   });
 
+  if (senders.length === 0) {
+
+  }
+
   await countUnreadMessagesJob({
-    messageId: r.payload.messageId,
+    message: { id: r.payload.messageId, createdAt: message.createdAt },
     chatId: r.params.chatId,
-    userId: r.auth.credentials.id,
+    readerUserId: r.auth.credentials.id,
   });
 
   await r.server.publish('/notifications/chat', {
     action: ChatNotificationActions.messageReadByRecipient,
-    recipients: senders.rows.map(sender => sender.senderUserId),
+    recipients: senders.map(sender => sender.senderUserId),
     data: message,
   });
 
-  if(message.senderStatus === SenderMessageStatus.unread){
+  if (message.senderStatus === SenderMessageStatus.unread) {
     await setMessageAsReadJob({
       messageId: r.payload.messageId,
       chatId: r.params.chatId,
