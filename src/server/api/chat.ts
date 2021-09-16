@@ -15,6 +15,7 @@ import {
 } from "@workquest/database-models/lib/models";
 import { ChatNotificationActions } from "../utils/chatSubscription";
 import { Op } from "sequelize";
+import { incrementUnreadCountMessageJob } from "../jobs/incrementUnreadCountMessage";
 
 export async function getUserChats(r) {
   const userMemberInclude = {
@@ -181,7 +182,7 @@ export async function sendMessageToUser(r) {
     include: [{
       model: ChatMember,
       as: 'firstMemberInPrivateChat',
-      where: { userId: r.params.userId },
+      where: { userId: r.params.userId},
       required: true,
       attributes: [],
     }, {
@@ -199,25 +200,34 @@ export async function sendMessageToUser(r) {
   });
 
   message.chatId = chat.id;
+  await message.$set('medias', medias, { transaction });
+  await message.save({ transaction });
 
   if (isChatCreated) {
     await ChatMember.bulkCreate([{
       unreadCountMessages: 0,
       chatId: chat.id,
-      userId: r.auth.credentials.id
+      userId: r.auth.credentials.id,
+      lastReadMessageId: message.id,
     }, {
       unreadCountMessages: 1, /** Because created */
       chatId: chat.id,
       userId:  r.params.userId,
+      /** No lastReadMessageId cause create but not read*/
     }], { transaction })
   } else {
-    await ChatMember.update({ unreadCountMessages: 0 }, {
-      where: { chatId: chat.id, userId: r.auth.credentials.id }
+    await ChatMember.update({ unreadCountMessages: 0, lastReadMessageId: message.id,}, {
+      transaction, where: { chatId: chat.id, userId: r.auth.credentials.id }
     });
 
-    await ChatMember.increment('unreadCountMessages', {
-      where: { chatId: chat.id, userId: r.params.userId }
+    await incrementUnreadCountMessageJob({
+      chatId: chat.id,
+      userId: r.params.userId
     });
+
+    // await ChatMember.increment('unreadCountMessages', {
+    //   where: { chatId: chat.id, userId: r.params.userId }
+    // });
 
     await chat.update({
       lastMessageId: message.id,
@@ -228,10 +238,6 @@ export async function sendMessageToUser(r) {
       transaction, where: { chatId: chat.id, senderUserId: r.params.userId },
     });
   }
-
-  await message.save({ transaction });
-
-  await message.$set('medias', medias, { transaction });
 
   await transaction.commit();
 
@@ -276,9 +282,13 @@ export async function sendMessageToChat(r) {
     transaction, where: { chatId: chat.id, userId: r.auth.credentials.id },
   });
 
-  await ChatMember.increment('unreadCountMessages', {
-    transaction, where: { chatId: chat.id, userId: { [Op.ne]: r.auth.credentials.id } }
+  await incrementUnreadCountMessageJob({
+    chatId: chat.id,
+    userId: { [Op.ne]: r.auth.credentials.id }
   });
+  // await ChatMember.increment('unreadCountMessages', {
+  //   transaction, where: { chatId: chat.id, userId: { [Op.ne]: r.auth.credentials.id } }
+  // });
 
   await chat.update({
     lastMessageId: message.id,
