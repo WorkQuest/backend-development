@@ -25,7 +25,7 @@ import {
   questAdTypeSchema,
   questCategorySchema,
   questDescriptionSchema,
-  questWorkPlacementSchema,
+  questWorkPlaceSchema,
   questPriceSchema,
   questPrioritySchema,
   questSchema,
@@ -65,7 +65,7 @@ export default [{
     validate: {
       payload: Joi.object({
         category: questCategorySchema.required(),
-        placement: questWorkPlacementSchema.required(),
+        workplace: questWorkPlaceSchema.required(),
         priority: questPrioritySchema.required(),
         locationPlaceName: questLocationPlaceNameSchema.required(),
         location: locationSchema.required(),
@@ -112,7 +112,7 @@ export default [{
       }).label("EditQuestParams"),
       payload: Joi.object({
         category: questCategorySchema,
-        placement: questWorkPlacementSchema.required(),
+        workplace: questWorkPlaceSchema.required(),
         priority: questPrioritySchema,
         location: locationSchema,
         locationPlaceName: questLocationPlaceNameSchema,
