@@ -25,7 +25,7 @@ export default [{
       schema: outputOkSchema(swapWQTSchema).label("GetSwapsWQTResponse")
     }
   }
-},{
+}, {
   method: "GET",
   path: "/v1/liquidity/mints",
   handler: getMints,
@@ -43,7 +43,7 @@ export default [{
       schema: outputOkSchema(swapWQTSchema).label("GetMintsWQTResponse")
     }
   }
-},{
+}, {
   method: "GET",
   path: "/v1/liquidity/burns",
   handler: getBurns,
