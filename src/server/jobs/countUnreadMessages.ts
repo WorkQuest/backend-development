@@ -37,8 +37,12 @@ export default async function countUnreadMessages(payload: Data) {
         }
       }
     });
+
+    let unreadCountMessages = chatMember.unreadCountMessages - messages.count + 1 //+1, потому что уже последнее прочитанное сообщение тоже входит в промежуток
+    if (unreadCountMessages < 0) unreadCountMessages = 0;
+
     await chatMember.update({
-      unreadCountMessages: chatMember.unreadCountMessages - messages.count + 1,
+      unreadCountMessages: unreadCountMessages,
       lastReadMessageId: payload.messageId
     });
   }else{
