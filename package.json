@@ -31,7 +31,7 @@
     "@types/bluebird": "^3.5.32",
     "@types/dotenv": "^6.1.1",
     "@types/joi": "^14.3.4",
-    "@workquest/database-models": "git+https://github.com/WorkQuest/database-models.git#1757d18696d8edc711f4fce7d43db476861aea02",
+    "@workquest/database-models": "git+https://github.com/WorkQuest/database-models.git#ca240ddacc3ea7101af6846d47d3d3866acfc07c",
     "aws-sdk": "^2.918.0",
     "axios": "^0.21.1",
     "bcrypt": "^5.0.0",
