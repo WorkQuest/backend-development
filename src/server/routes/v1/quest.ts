@@ -19,11 +19,13 @@ import {
 import {
   outputOkSchema,
   idSchema,
+  idsSchema,
   emptyOkSchema,
   locationSchema,
   questAdTypeSchema,
   questCategorySchema,
   questDescriptionSchema,
+  questWorkPlacementSchema,
   questPriceSchema,
   questPrioritySchema,
   questSchema,
@@ -31,11 +33,9 @@ import {
   questsQuerySchema,
   questsSchema,
   questsForGetWithCountSchema,
-  questLocationPlaceNameSchema, questWorkPlacementSchema, idsSchema
+  questLocationPlaceNameSchema,
+  skillFilterSchema,
 } from "@workquest/database-models/lib/schemes";
-
-const questIdSchema = idSchema.label('QuestId');
-const userIdSchema = idSchema.label('UserId');
 
 export default [{
   method: "GET",
@@ -47,11 +47,11 @@ export default [{
     description: "Get quest",
     validate: {
       params: Joi.object({
-        questId: questIdSchema
+        questId: idSchema.required(),
       }).label('GetQuestParams')
     },
     response: {
-      schema: outputOkSchema(questSchema).label("QuestResponse"),
+      schema: outputOkSchema(questSchema).label("GetQuestResponse"),
     }
   }
 }, {
@@ -72,12 +72,13 @@ export default [{
         title: questTitleSchema.required(),
         description: questDescriptionSchema.required(),
         price: questPriceSchema.required(),
-        medias: idsSchema.required().unique().label('MediaIds'),
+        medias: idsSchema.required().unique(),
         adType: questAdTypeSchema,
+        skillFilters: skillFilterSchema.required(),
       }).label("CreateQuestPayload")
     },
     response: {
-      schema: outputOkSchema(questSchema).label("QuestResponse"),
+      schema: outputOkSchema(questSchema).label("CreateQuestResponse"),
     },
   },
 }, {
@@ -90,7 +91,7 @@ export default [{
     description: "Delete quest (only status: Created and Closed)",
     validate: {
       params: Joi.object({
-        questId: questIdSchema.required(),
+        questId: idSchema.required(),
       }).label("DeleteQuestParams")
     },
     response: {
@@ -107,7 +108,7 @@ export default [{
     description: "Edit quest",
     validate: {
       params: Joi.object({
-        questId: questIdSchema.required(),
+        questId: idSchema.required(),
       }).label("EditQuestParams"),
       payload: Joi.object({
         category: questCategorySchema,
@@ -119,11 +120,12 @@ export default [{
         description: questDescriptionSchema,
         price: questPriceSchema,
         adType: questAdTypeSchema,
-        medias: idsSchema.unique().label('MediaIds'),
+        skillFilters: skillFilterSchema,
+        medias: idsSchema.unique(),
       }).label("EditQuestPayload"),
     },
     response: {
-      schema: outputOkSchema(questSchema).label("QuestResponse"),
+      schema: outputOkSchema(questSchema).label("EditQuestResponse"),
     },
   }
 }, {
@@ -138,7 +140,7 @@ export default [{
       query: questsQuerySchema
     },
     response: {
-      schema: outputOkSchema(questsForGetWithCountSchema).label("QuestsWithCountResponse")
+      schema: outputOkSchema(questsForGetWithCountSchema).label("GetQuestsResponse")
     },
   }
 }, {
@@ -151,12 +153,12 @@ export default [{
     description: "Get quests for a given user",
     validate: {
       params: Joi.object({
-        userId: userIdSchema
-      }).label("EmployerQuestsParams"),
+        userId: idSchema.required(),
+      }).label("EmployerGetQuestsParams"),
       query: questsQuerySchema
     },
     response: {
-      schema: outputOkSchema(questsForGetWithCountSchema).label("QuestsWithCountResponse")
+      schema: outputOkSchema(questsForGetWithCountSchema).label("EmployerGetQuestsResponse")
     },
   }
 }, {
@@ -169,11 +171,11 @@ export default [{
     description: "Start quest",
     validate: {
       params: Joi.object({
-        questId: questIdSchema,
-      }).label('StartQuestParams'),
+        questId: idSchema.required(),
+      }).label('SetStartQuestParams'),
       payload: Joi.object({
-        assignedWorkerId: userIdSchema,
-      }).label('StartQuestPayload')
+        assignedWorkerId: idSchema.required(),
+      }).label('SetStartQuestPayload')
     },
     response: {
       schema: emptyOkSchema
@@ -189,7 +191,7 @@ export default [{
     description: "Close quest",
     validate: {
       params: Joi.object({
-        questId: questIdSchema.required(),
+        questId: idSchema.required(),
       }).label("CloseQuestParams")
     },
     response: {
@@ -206,7 +208,7 @@ export default [{
     description: "Reject work on quest",
     validate: {
       params: Joi.object({
-        questId: questIdSchema.required(),
+        questId: idSchema.required(),
       }).label("RejectWorkOnQuestParams")
     },
     response: {
@@ -223,7 +225,7 @@ export default [{
     description: "Accept work on quest",
     validate: {
       params: Joi.object({
-        questId: questIdSchema.required(),
+        questId: idSchema.required(),
       }).label("AcceptWorkOnQuestParams")
     },
     response: {
@@ -240,7 +242,7 @@ export default [{
     description: "Complete work on quest",
     validate: {
       params: Joi.object({
-        questId: questIdSchema.required(),
+        questId: idSchema.required(),
       }).label("CompleteWorkOnQuestParams")
     },
     response: {
@@ -257,7 +259,7 @@ export default [{
     description: "Accept completed work on quest",
     validate: {
       params: Joi.object({
-        questId: questIdSchema.required(),
+        questId: idSchema.required(),
       }).label("AcceptCompletedWorkParams")
     },
     response: {
@@ -274,7 +276,7 @@ export default [{
     description: "Reject completed work on quest",
     validate: {
       params: Joi.object({
-        questId: questIdSchema.required(),
+        questId: idSchema.required(),
       }).label("RejectCompletedWorkParams")
     },
     response: {
@@ -282,7 +284,7 @@ export default [{
     },
   }
 }, {
-  method: "GET",
+  method: "GET", // TODO тут count добавить
   path: '/v1/quests/starred',
   handler: getMyStarredQuests,
   options: {
@@ -290,7 +292,7 @@ export default [{
     tags: ["api", "quest"],
     description: 'Get starred quests',
     response: {
-      schema: outputOkSchema(questsSchema).label("QuestsWithCountResponse")
+      schema: outputOkSchema(questsSchema).label("GetMyStarredQuestsResponse")
     },
   },
 }, {
@@ -303,8 +305,8 @@ export default [{
     description: 'Set star on quest',
     validate: {
       params: Joi.object({
-        questId: questIdSchema.required(),
-      }).label("StarParams")
+        questId: idSchema.required(),
+      }).label("SetStarParams")
     },
     response: {
       schema: emptyOkSchema
@@ -320,8 +322,8 @@ export default [{
     description: 'Take away star on quest',
     validate: {
       params: Joi.object({
-        questId: questIdSchema.required(),
-      }).label("StarParams")
+        questId: idSchema.required(),
+      }).label("RemoveStarParams")
     },
     response: {
       schema: emptyOkSchema

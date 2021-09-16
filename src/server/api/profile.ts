@@ -8,7 +8,7 @@ import {
   User,
   UserRole,
   UserStatus,
-  Media,
+  Media, SkillFilter
 } from "@workquest/database-models/lib/models";
 import {
   userAdditionalInfoEmployerSchema,
@@ -28,6 +28,20 @@ export async function getMe(r) {
       include: ['tempPhone']
     }
   }));
+}
+
+export async function getUser(r) {
+  if (r.auth.credentials.id === r.params.userId) {
+    return error(Errors.Forbidden, 'You can\'t see your profile (use "get me")', {});
+  }
+
+  const user = await User.findByPk(r.params.userId);
+
+  if (!user) {
+    throw error(Errors.NotFound, 'User not found', {});
+  }
+
+  return output(user);
 }
 
 export async function setRole(r) {
@@ -56,6 +70,7 @@ export async function editProfile(r) {
   }
   if (r.payload.avatarId) {
     const media = await Media.findByPk(r.payload.avatarId);
+
     if (!media) {
       return error(Errors.NotFound, 'Media is not found', {
         avatarId: r.payload.avatarId
@@ -68,9 +83,18 @@ export async function editProfile(r) {
     }
   }
 
-  await user.update({
-    ...r.payload
-  });
+  const transaction = await r.server.app.db.transaction();
+
+  if (r.payload.skillFilters) {
+    const userSkillFilters = SkillFilter.toRawUserSkills(r.payload.skillFilters, user.id);
+
+    await SkillFilter.destroy({ where: { userId: user.id }, transaction });
+    await SkillFilter.bulkCreate(userSkillFilters, { transaction });
+  }
+
+  await user.update({...r.payload, skillFilters: undefined}, { transaction });
+
+  await transaction.commit();
 
   return output(
     await User.findByPk(user.id)
