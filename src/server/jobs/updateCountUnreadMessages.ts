@@ -40,11 +40,12 @@ export default async function updateCountUnreadMessages(payload: MemberUnreadMes
       where: {
         createdAt: {
           [Op.between]: [payload.lastUnreadMessage.createdAt, chatMember.lastReadMessage.createdAt]
-        }
+        },
+        id: { [Op.ne]: chatMember.lastReadMessageId }
       }
     });
 
-    const unreadCountMessages = chatMember.unreadCountMessages - unreadMessageCount + 1;
+    const unreadCountMessages = chatMember.unreadCountMessages - unreadMessageCount;
 
     unreadMessageCounter = {
       unreadCountMessages: unreadCountMessages < 0 ? 0 : unreadCountMessages,
