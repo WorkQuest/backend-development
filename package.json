@@ -13,6 +13,13 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@types/validator": "^13.1.0",
+    "@uniswap/sdk": "^3.0.3",
+    "@uniswap/v2-core": "^1.0.1",
+    "@ethersproject/address": "^5.4.0",
+    "@ethersproject/contracts": "^5.4.1",
+    "@ethersproject/providers": "^5.4.5",
+    "@ethersproject/solidity": "^5.4.0",
     "@hapi/basic": "^5.1.1",
     "@hapi/bell": "^12.2.0",
     "@hapi/boom": "^9.1.0",
@@ -24,7 +31,6 @@
     "@types/bluebird": "^3.5.32",
     "@types/dotenv": "^6.1.1",
     "@types/joi": "^14.3.4",
-    "@types/validator": "^13.1.0",
     "@workquest/database-models": "git+https://github.com/WorkQuest/database-models.git#a8846c3f1806c0eebdc0e875d98088a5ad69d0dc",
     "aws-sdk": "^2.918.0",
     "axios": "^0.21.1",
@@ -43,11 +49,10 @@
     "joi": "^17.4.0",
     "jsonwebtoken": "^8.5.1",
     "lab-transform-typescript": "^3.0.1",
+    "node-fetch": "^3.0.0",
     "nodemailer": "^6.5.0",
-    "nodemon": "^2.0.12",
     "npm": "^7.14.0",
     "pg": "^8.3.0",
-    "pino": "^6.13.2",
     "qs": "^6.9.6",
     "reflect-metadata": "^0.1.13",
     "sequelize": "6.6.2",
@@ -74,6 +79,7 @@
     "eslint-plugin-prettier": "^3.1.1",
     "eslint-plugin-promise": "^4.2.1",
     "eslint-plugin-react": "^7.16.0",
-    "eslint-plugin-standard": "^4.0.1"
+    "eslint-plugin-standard": "^4.0.1",
+    "pino": "^6.13.2"
   }
 }
