@@ -1,6 +1,7 @@
 import { error, output } from "../utils";
 import { getMedias } from "../utils/medias";
 import { Errors } from "../utils/errors";
+import { Op } from "sequelize";
 import {
   Chat,
   ChatMember,
@@ -15,8 +16,7 @@ import {
 } from "@workquest/database-models/lib/models";
 import { ChatNotificationActions } from "../utils/chatSubscription";
 import { setMessageAsReadJob } from "../jobs/setMessageAsRead";
-import { Op } from "sequelize";
-import { MemberUnreadMessagesPayload, updateCountUnreadMessagesJob } from "../jobs/updateCountUnreadMessages";
+import { updateCountUnreadMessagesJob } from "../jobs/updateCountUnreadMessages";
 
 export async function getUserChats(r) {
   const userMemberInclude = {
