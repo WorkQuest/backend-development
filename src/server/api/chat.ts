@@ -212,45 +212,42 @@ export async function sendMessageToUser(r) {
 
   message.chatId = chat.id;
 
-  await message.$set('medias', medias, { transaction });
   await message.save({ transaction });
+  await message.$set('medias', medias, { transaction });
 
   if (isChatCreated) {
     await ChatMember.bulkCreate([{
-      unreadCountMessages: 0,
+      unreadCountMessages: 0, /** Because created */
       chatId: chat.id,
       userId: r.auth.credentials.id,
-      lastReadMessageId: message.id,
+      lastReadMessageId: message.id, /** Because created */
     }, {
       unreadCountMessages: 1, /** Because created */
       chatId: chat.id,
-      userId:  r.params.userId,
-      /** No lastReadMessageId cause create but not read */
+      userId: r.params.userId,
+      lastReadMessageId: null, /** Because created */
     }], { transaction })
   } else {
     await chat.update({
       lastMessageId: message.id,
       lastMessageDate: message.createdAt,
     }, { transaction });
-
-    await Message.update({ senderStatus: SenderMessageStatus.read }, {
-      transaction, where: { chatId: chat.id, senderUserId: r.params.userId },
-    });
   }
 
   await transaction.commit();
 
-  await zeroingUnreadMessageCountJob({
-    chatId: chat.id,
-    lastReadMessageId: message.id,
-    zeroingCounterUserId: r.auth.credentials.id,
-  });
-
-  if(!isChatCreated){
-    await incrementUnreadCountMessageJob({
+  if (!isChatCreated) {
+    await zeroingUnreadMessageCountJob({
       chatId: chat.id,
-      updateMessageCounterUserId: r.params.userId
+      lastReadMessageId: message.id,
+      zeroingCounterUserId: r.auth.credentials.id,
     });
+
+    await incrementUnreadCountMessageJob({
+      chatId: chat.id, notifierUserId: r.auth.credentials.id,
+    });
+
+    // TODO add mesaages as read status job
   }
 
   const result = await Message.findByPk(message.id);
@@ -286,10 +283,6 @@ export async function sendMessageToChat(r) {
 
   await message.$set('medias', medias, { transaction });
 
-  await Message.update({ senderStatus: SenderMessageStatus.read }, {
-    transaction, where: { chatId: chat.id, senderUserId: { [Op.ne]: r.auth.credentials.id } },
-  });
-
   await chat.update({
     lastMessageId: message.id,
     lastMessageDate: message.createdAt,
@@ -304,9 +297,10 @@ export async function sendMessageToChat(r) {
   });
 
   await incrementUnreadCountMessageJob({
-    chatId: chat.id,
-    notifierUserId: r.auth.credentials.id,
+    chatId: chat.id, notifierUserId: r.auth.credentials.id,
   });
+
+  // TODO add mesaages as read status job
 
   const members = await ChatMember.scope('userIdsOnly').findAll({
     where: { chatId: chat.id, userId: { [Op.ne]: r.auth.credentials.id } }
@@ -372,6 +366,8 @@ export async function addUserInGroupChat(r) {
     chatId: groupChat.id,
     notifierUserId: r.auth.credentials.id,
   });
+
+  // TODO add mesaages as read status job
 
   const members = await ChatMember.scope('userIdsOnly').findAll({
     where: { chatId: groupChat.id, userId: { [Op.ne]: r.auth.credentials.id } }
@@ -439,6 +435,8 @@ export async function removeUserInGroupChat(r) {
     chatId: groupChat.id,
     notifierUserId: r.auth.credentials.id,
   });
+
+  // TODO add mesaages as read status job
 
   const members = await ChatMember.scope('userIdsOnly').findAll({
     where: { chatId: groupChat.id, userId: { [Op.ne]: r.auth.credentials.id } }
