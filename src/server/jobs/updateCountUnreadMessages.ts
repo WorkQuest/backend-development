@@ -19,11 +19,6 @@ export default async function updateCountUnreadMessages(payload: MemberUnreadMes
       userId: payload.readerUserId,
       chatId: payload.chatId,
     },
-    include: {
-      model: Message.unscoped(),
-      as: 'lastReadMessage',
-      attributes: ["createdAt"]
-    }
   });
 
   let unreadMessageCounter: {
@@ -39,7 +34,7 @@ export default async function updateCountUnreadMessages(payload: MemberUnreadMes
     const unreadMessageCount = await Message.count({
       where: {
         createdAt: {
-          [Op.between]: [payload.lastUnreadMessage.createdAt, chatMember.lastReadMessage.createdAt]
+          [Op.between]: [payload.lastUnreadMessage.createdAt, chatMember.lastReadMessageDate]
         },
         id: { [Op.ne]: chatMember.lastReadMessageId }
       }
