@@ -30,9 +30,7 @@ export async function getUserChats(r) {
     required: r.query.starred,
   }];
 
-  const count = await Chat.unscoped().count({
-    include: include
-  });
+  const count = await Chat.unscoped().count({ include });
   const chats = await Chat.findAll({
     include,
     order: [ ['lastMessageDate', 'DESC'] ],
@@ -73,6 +71,7 @@ export async function getUserChat(r) {
     include: [{
       model: StarredChat,
       as: "star",
+      required: false,
     }]
   });
 
