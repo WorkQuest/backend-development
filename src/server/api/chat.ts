@@ -12,26 +12,29 @@ import {
   MessageType,
   SenderMessageStatus,
   StarredMessage,
-  User
+  StarredChat,
+  User,
 } from "@workquest/database-models/lib/models";
 import { ChatNotificationActions } from "../utils/chatSubscription";
 import { setMessageAsReadJob } from "../jobs/setMessageAsRead";
 import { updateCountUnreadMessagesJob } from "../jobs/updateCountUnreadMessages";
 
 export async function getUserChats(r) {
-  const userMemberInclude = {
+  const include = [{
     model: ChatMember,
     where: { userId: r.auth.credentials.id },
     required: true,
     as: 'chatMembers',
     attributes: [],
-  };
+  }, {
+    model: StarredChat,
+    as: 'star',
+    required: r.query.starred,
+  }];
 
-  const count = await Chat.unscoped().count({
-    include: userMemberInclude
-  });
+  const count = await Chat.unscoped().count({ include });
   const chats = await Chat.findAll({
-    include: [userMemberInclude],
+    include,
     order: [ ['lastMessageDate', 'DESC'] ],
     limit: r.query.limit,
     offset: r.query.offset,
@@ -66,7 +69,13 @@ export async function getChatMessages(r) {
 }
 
 export async function getUserChat(r) {
-  const chat = await Chat.findByPk(r.params.chatId);
+  const chat = await Chat.findByPk(r.params.chatId, {
+    include: [{
+      model: StarredChat,
+      as: "star",
+      required: false,
+    }]
+  });
 
   if (!chat) {
     return error(Errors.NotFound, "Chat not found", {});
@@ -593,3 +602,37 @@ export async function removeStarFromMessage(r) {
 
   return output();
 }
+
+export async function markChatStar(r) {
+  const chat = await Chat.findByPk(r.params.chatId);
+
+  if (!chat) {
+    return error(Errors.NotFound, 'Chat is not found', {});
+  }
+
+  await chat.mustHaveMember(r.auth.credentials.id);
+
+  await StarredChat.create({
+    userId: r.auth.credentials.id,
+    chatId: r.params.chatId,
+  });
+
+  return output();
+}
+
+export async function removeStarFromChat(r) {
+  await Chat.chatMustExists(r.params.chatId);
+
+  //TODO: что делать до звёздочкой, если исключили из чата?
+  //await chat.mustHaveMember(r.auth.credentials.id);
+
+  await StarredChat.destroy({
+    where: {
+      chatId: r.params.chatId,
+      userId: r.auth.credentials.id
+    }
+  });
+
+  return output();
+}
+

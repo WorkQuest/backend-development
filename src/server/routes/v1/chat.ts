@@ -4,7 +4,8 @@ import {
   limitSchema,
   offsetSchema,
   idSchema,
-  chatsSchema,
+  chatForGetSchema,
+  chatsForGetWithCountSchema,
   chatSchema,
   chatNameSchema,
   messagesWithCountSchema,
@@ -25,6 +26,8 @@ import {
   removeUserInGroupChat,
   addUserInGroupChat,
   leaveFromGroupChat,
+  removeStarFromChat,
+  markChatStar,
   setMessagesAsRead,
   getChatMembers,
   getUserStarredMessages,
@@ -42,12 +45,13 @@ export default [{
     description: "Get all chats",
     validate: {
       query: Joi.object({
+        starred: Joi.boolean().default(false),
         offset: offsetSchema,
         limit: limitSchema,
       }).label('GetChatsQuery')
     },
     response: {
-      schema: outputOkSchema(chatsSchema).label('GetChatsResponse'), // TODO with count
+      schema: outputOkSchema(chatsForGetWithCountSchema).label('GetChatsResponse'),
     }
   }
 }, {
@@ -86,7 +90,7 @@ export default [{
       }).label('GetUserChatParams')
     },
     response: {
-      schema: outputOkSchema(chatSchema).label('GetUserChatResponse')
+      schema: outputOkSchema(chatForGetSchema).label('GetUserChatResponse')
     }
   }
 }, {
@@ -270,6 +274,40 @@ export default [{
       params: Joi.object({
         messageId: idSchema.required(),
       }).label('RemoveStarFromMessageParams'),
+    },
+    response: {
+      schema: emptyOkSchema
+    }
+  }
+}, {
+  method: "POST",
+  path: "/v1/user/me/chat/{chatId}/star",
+  handler: markChatStar,
+  options: {
+    id: "v1.mark.chat",
+    description: "Mark chat by star",
+    tags: ["api", "chat"],
+    validate: {
+      params: Joi.object({
+        chatId: idSchema.required(),
+      }).label('MarkChatParams'),
+    },
+    response: {
+      schema: emptyOkSchema
+    }
+  }
+}, {
+  method: "DELETE",
+  path: "/v1/user/me/chat/{chatId}/star",
+  handler: removeStarFromChat,
+  options: {
+    id: "v1.remove.star.chat",
+    description: "Remove star from chat",
+    tags: ["api", "chat"],
+    validate: {
+      params: Joi.object({
+        chatId: idSchema.required(),
+      }).label('RemoveStarParams'),
     },
     response: {
       schema: emptyOkSchema
