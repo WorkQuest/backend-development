@@ -83,9 +83,7 @@ export async function createQuest(r) {
     price: r.payload.price,
   }, { transaction });
 
-  const questSkillFilters = r.payload.skillFilters.map(v => {
-    return { ...v, questId: quest.id }
-  });
+  const questSkillFilters = SkillFilter.toRawQuestSkills(r.payload.skillFilters, quest.id);
 
   await SkillFilter.bulkCreate(questSkillFilters, { transaction });
 
@@ -126,9 +124,7 @@ export async function editQuest(r) {
     r.payload.locationPostGIS = transformToGeoPostGIS(r.payload.location);
   }
   if (r.payload.skillFilters) {
-    const questSkillFilters = r.payload.skillFilters.map(v => {
-      return { ...v, questId: quest.id }
-    });
+    const questSkillFilters = SkillFilter.toRawQuestSkills(r.payload.skillFilters, quest.id);
 
     await SkillFilter.destroy({ where: { questId: quest.id }, transaction });
     await SkillFilter.bulkCreate(questSkillFilters, { transaction });
@@ -136,7 +132,7 @@ export async function editQuest(r) {
 
   quest.updateFieldLocationPostGIS();
 
-  await quest.update(r.payload, { transaction });
+  await quest.update({...r.payload, skillFilters: undefined}, { transaction });
 
   await transaction.commit();
 
@@ -159,6 +155,7 @@ export async function deleteQuest(r) {
     return error(Errors.InvalidStatus, "Quest cannot be deleted at current stage", {});
   }
 
+  await SkillFilter.destroy({ where: { questId: quest.id }, transaction });
   await QuestsResponse.destroy({ where: { questId: quest.id }, transaction })
   await quest.destroy({ force: true, transaction });
 
@@ -364,7 +361,7 @@ export async function getQuests(r) {
     order.push([key, value]);
   }
 
-  const { count, rows } = await Quest.findAndCountAll({
+  const queryOption = {
     limit: r.query.limit,
     offset: r.query.offset,
     include, order, where,
@@ -376,9 +373,13 @@ export async function getQuests(r) {
         southLat: r.query.south.latitude,
       })
     }
-  });
+  }
 
-  return output({count, quests: rows});
+  // TODO: исправить
+  const count = await Quest.unscoped().count(queryOption);
+  const quests = await Quest.findAll(queryOption);
+
+  return output({count, quests});
 }
 
 export async function getMyStarredQuests(r) {
@@ -420,12 +421,18 @@ export async function setStar(r) {
 }
 
 export async function removeStar(r) {
-  await StarredQuests.destroy({
+  const starredQuest = await StarredQuests.findOne({
     where: {
       userId: r.auth.credentials.id,
       questId: r.params.questId,
     }
   });
+
+  if (!starredQuest) {
+    return error(Errors.Forbidden, 'Quest or quest with star not fount', {});
+  }
+
+  await starredQuest.destroy();
 
   return output();
 }

@@ -4,9 +4,10 @@ import {
   confirmPhoneNumber,
   editProfile,
   getMe,
+  getUser,
   sendCodeOnPhoneNumber,
   setRole
-} from '../../api/profile';
+} from "../../api/profile";
 import {
   outputOkSchema,
   emptyOkSchema,
@@ -18,8 +19,8 @@ import {
   userPasswordSchema,
   userRoleSchema,
   userSchema,
-  skillFiltersSchema,
-  userLocationSchema
+  skillFilterSchema,
+  userLocationSchema,
 } from "@workquest/database-models/lib/schemes";
 
 export default [{
@@ -64,7 +65,7 @@ export default [{
         avatarId: idSchema.allow(null).required(),
         firstName: userFirstNameSchema.required(),
         lastName: userLastNameSchema.required(),
-        skillFilters: skillFiltersSchema,
+        skillFilters: skillFilterSchema,
         additionalInfo: Joi.alternatives(
           userAdditionalInfoEmployerSchema.options({ presence: "required" }),
           userAdditionalInfoWorkerSchema.options({ presence: "required" })
@@ -126,6 +127,23 @@ export default [{
     },
     response: {
       schema: emptyOkSchema
+    }
+  }
+}, {
+  method: "GET",
+  path: "/v1/profile/{userId}",
+  handler: getUser,
+  options: {
+    id: "v1.profile.getUser",
+    tags: ["api", "profile"],
+    description: "Get profile user",
+    validate: {
+      params: Joi.object({
+        userId: idSchema.required(),
+      }).label("GetUserParams"),
+    },
+    response: {
+      schema: outputOkSchema(userSchema).label("GetUserResponse")
     }
   }
 }];
