@@ -25,7 +25,10 @@ import {
   removeUserInGroupChat,
   addUserInGroupChat,
   leaveFromGroupChat,
-  getChatMembers, getUserStarredMessages, markMessageStar, removeStarFromMessage
+  getChatMembers,
+  getUserStarredMessages,
+  markMessageStar,
+  removeStarFromMessage
 } from "../../api/chat";
 
 export default [{

@@ -213,7 +213,7 @@ export async function sendMessageToUser(r) {
       unreadCountMessages: 1, /** Because created */
       chatId: chat.id,
       userId:  r.params.userId,
-      /** No lastReadMessageId cause create but not read*/
+      /** No lastReadMessageId cause create but not read */
     }], { transaction })
   } else {
     await ChatMember.update({ unreadCountMessages: 0, lastReadMessageId: message.id }, {
@@ -231,11 +231,6 @@ export async function sendMessageToUser(r) {
   }
 
   await transaction.commit();
-
-  await incrementUnreadCountMessageJob({
-    chatId: chat.id,
-    updateMessageCounterUserId: r.params.userId
-  });
 
   const result = await Message.findByPk(message.id);
 
@@ -287,8 +282,7 @@ export async function sendMessageToChat(r) {
 
   await incrementUnreadCountMessageJob({
     chatId: chat.id,
-    updateMessageCounterUserId: r.auth.credentials.id,
-    conditional: true
+    notifierUserId: r.auth.credentials.id,
   });
 
   const members = await ChatMember.scope('userIdsOnly').findAll({
@@ -350,8 +344,7 @@ export async function addUserInGroupChat(r) {
 
   await incrementUnreadCountMessageJob({
     chatId: groupChat.id,
-    updateMessageCounterUserId: r.auth.credentials.id,
-    conditional: true
+    notifierUserId: r.auth.credentials.id,
   });
 
   const members = await ChatMember.scope('userIdsOnly').findAll({
@@ -416,8 +409,7 @@ export async function removeUserInGroupChat(r) {
 
   await incrementUnreadCountMessageJob({
     chatId: groupChat.id,
-    updateMessageCounterUserId: r.auth.credentials.id,
-    conditional: true
+    notifierUserId: r.auth.credentials.id,
   });
 
   const members = await ChatMember.scope('userIdsOnly').findAll({
@@ -476,8 +468,7 @@ export async function leaveFromGroupChat(r) {
 
   await incrementUnreadCountMessageJob({
     chatId: groupChat.id,
-    updateMessageCounterUserId: r.auth.credentials.id,
-    conditional: true
+    notifierUserId: r.auth.credentials.id,
   });
 
   const members = await ChatMember.scope('userIdsOnly').findAll({
