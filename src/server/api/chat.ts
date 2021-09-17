@@ -1,6 +1,7 @@
 import { error, output } from "../utils";
 import { getMedias } from "../utils/medias";
 import { Errors } from "../utils/errors";
+import { Op } from "sequelize";
 import {
   Chat,
   ChatMember,
@@ -14,7 +15,6 @@ import {
   StarredMessage,
 } from "@workquest/database-models/lib/models";
 import { ChatNotificationActions } from "../utils/chatSubscription";
-import { Op } from "sequelize";
 import { incrementUnreadCountMessageJob } from "../jobs/incrementUnreadCountMessage";
 
 export async function getUserChats(r) {
@@ -128,7 +128,6 @@ export async function createGroupChat(r) {
   });
 
   await Promise.all([
-    groupChat.save({ transaction }),
     message.save({ transaction }),
     infoMessage.save({ transaction }),
   ]);
@@ -200,6 +199,7 @@ export async function sendMessageToUser(r) {
   });
 
   message.chatId = chat.id;
+
   await message.$set('medias', medias, { transaction });
   await message.save({ transaction });
 
@@ -216,7 +216,7 @@ export async function sendMessageToUser(r) {
       /** No lastReadMessageId cause create but not read*/
     }], { transaction })
   } else {
-    await ChatMember.update({ unreadCountMessages: 0, lastReadMessageId: message.id,}, {
+    await ChatMember.update({ unreadCountMessages: 0, lastReadMessageId: message.id }, {
       transaction, where: { chatId: chat.id, userId: r.auth.credentials.id }
     });
 
