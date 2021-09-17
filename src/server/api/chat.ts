@@ -237,7 +237,7 @@ export async function sendMessageToUser(r) {
     chatId: chat.id,
     lastReadMessageId: message.id,
     zeroingCounterUserId: r.auth.credentials.id,
-  })
+  });
 
   if(!isChatCreated){
     await incrementUnreadCountMessageJob({
@@ -283,9 +283,9 @@ export async function sendMessageToChat(r) {
     transaction, where: { chatId: chat.id, senderUserId: { [Op.ne]: r.auth.credentials.id } },
   });
 
-  await ChatMember.update({ unreadCountMessages: 0 },{
-    transaction, where: { chatId: chat.id, userId: r.auth.credentials.id },
-  });
+  // await ChatMember.update({ unreadCountMessages: 0 },{
+  //   transaction, where: { chatId: chat.id, userId: r.auth.credentials.id },
+  // });
 
   await chat.update({
     lastMessageId: message.id,
@@ -293,6 +293,12 @@ export async function sendMessageToChat(r) {
   }, { transaction });
 
   await transaction.commit();
+
+  await zeroingUnreadMessageCountJob({
+    chatId: chat.id,
+    lastReadMessageId: message.id,
+    zeroingCounterUserId: r.auth.credentials.id,
+  });
 
   await incrementUnreadCountMessageJob({
     chatId: chat.id,
@@ -346,9 +352,9 @@ export async function addUserInGroupChat(r) {
     messageAction: MessageAction.groupChatAddUser,
   }, { transaction });
 
-  await ChatMember.update({ unreadCountMessages: 0 },{
-    transaction, where: { chatId: groupChat.id, userId: r.auth.credentials.id },
-  });
+  // await ChatMember.update({ unreadCountMessages: 0 },{
+  //   transaction, where: { chatId: groupChat.id, userId: r.auth.credentials.id },
+  // });
 
   await groupChat.update({
     lastMessageId: message.id,
@@ -356,6 +362,12 @@ export async function addUserInGroupChat(r) {
   }, { transaction });
 
   await transaction.commit();
+
+  await zeroingUnreadMessageCountJob({
+    chatId: groupChat.id,
+    lastReadMessageId: message.id,
+    zeroingCounterUserId: r.auth.credentials.id,
+  });
 
   await incrementUnreadCountMessageJob({
     chatId: groupChat.id,
@@ -412,9 +424,9 @@ export async function removeUserInGroupChat(r) {
     messageAction: MessageAction.groupChatDeleteUser,
   }, { transaction });
 
-  await ChatMember.update({ unreadCountMessages: 0 },{
-    transaction, where: { chatId: groupChat.id, userId: r.auth.credentials.id },
-  });
+  // await ChatMember.update({ unreadCountMessages: 0 },{
+  //   transaction, where: { chatId: groupChat.id, userId: r.auth.credentials.id },
+  // });
 
   await groupChat.update({
     lastMessageId: message.id,
@@ -422,6 +434,12 @@ export async function removeUserInGroupChat(r) {
   }, { transaction });
 
   await transaction.commit();
+
+  await zeroingUnreadMessageCountJob({
+    chatId: groupChat.id,
+    lastReadMessageId: message.id,
+    zeroingCounterUserId: r.auth.credentials.id,
+  });
 
   await incrementUnreadCountMessageJob({
     chatId: groupChat.id,

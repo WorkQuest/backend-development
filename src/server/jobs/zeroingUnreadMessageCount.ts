@@ -16,4 +16,3 @@ export default async function zeroingUnreadMessageCount(payload: ZeroingUnreadMe
     where: { chatId: payload.chatId, userId: payload.zeroingCounterUserId }
   });
 }
-
