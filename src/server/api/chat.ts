@@ -232,10 +232,13 @@ export async function sendMessageToUser(r) {
 
   await transaction.commit();
 
-  await incrementUnreadCountMessageJob({
-    chatId: chat.id,
-    updateMessageCounterUserId: r.params.userId
-  });
+  if(!isChatCreated){
+    await incrementUnreadCountMessageJob({
+      chatId: chat.id,
+      updateMessageCounterUserId: r.params.userId
+    });
+  }
+
 
   const result = await Message.findByPk(message.id);
 
