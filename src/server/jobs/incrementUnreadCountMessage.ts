@@ -5,7 +5,7 @@ import {Op} from "sequelize"
 
 export interface Data {
   chatId: string,
-  userId: string,
+  updateMessageCounterUserId: string,
   conditional?: boolean,
 }
 
@@ -15,7 +15,7 @@ export async function incrementUnreadCountMessageJob(payload: Data) {
 
 export default async function incrementUnreadCountMessage(payload: Data) {
   await ChatMember.increment('unreadCountMessages', {
-    where: { chatId: payload.chatId, userId: payload.conditional ? {[Op.ne]: payload.userId} : payload.userId }
+    where: { chatId: payload.chatId, userId: payload.conditional ? {[Op.ne]: payload.updateMessageCounterUserId} : payload.updateMessageCounterUserId }
   });
 }
 
