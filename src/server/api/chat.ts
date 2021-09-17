@@ -247,7 +247,10 @@ export async function sendMessageToUser(r) {
       chatId: chat.id, notifierUserId: r.auth.credentials.id,
     });
 
-    // TODO add mesaages as read status job
+    await setMessageAsReadJob({
+      lastUnreadMessage: { id: message.id, createdAt: message.createdAt },
+      chatId: r.params.chatId,
+    });
   }
 
   const result = await Message.findByPk(message.id);
@@ -300,7 +303,10 @@ export async function sendMessageToChat(r) {
     chatId: chat.id, notifierUserId: r.auth.credentials.id,
   });
 
-  // TODO add mesaages as read status job
+  await setMessageAsReadJob({
+    lastUnreadMessage: { id: message.id, createdAt: message.createdAt },
+    chatId: r.params.chatId,
+  });
 
   const members = await ChatMember.scope('userIdsOnly').findAll({
     where: { chatId: chat.id, userId: { [Op.ne]: r.auth.credentials.id } }
@@ -367,7 +373,10 @@ export async function addUserInGroupChat(r) {
     notifierUserId: r.auth.credentials.id,
   });
 
-  // TODO add mesaages as read status job
+  await setMessageAsReadJob({
+    lastUnreadMessage: { id: message.id, createdAt: message.createdAt },
+    chatId: r.params.chatId,
+  });
 
   const members = await ChatMember.scope('userIdsOnly').findAll({
     where: { chatId: groupChat.id, userId: { [Op.ne]: r.auth.credentials.id } }
@@ -436,7 +445,10 @@ export async function removeUserInGroupChat(r) {
     notifierUserId: r.auth.credentials.id,
   });
 
-  // TODO add mesaages as read status job
+  await setMessageAsReadJob({
+    lastUnreadMessage: { id: message.id, createdAt: message.createdAt },
+    chatId: r.params.chatId,
+  });
 
   const members = await ChatMember.scope('userIdsOnly').findAll({
     where: { chatId: groupChat.id, userId: { [Op.ne]: r.auth.credentials.id } }
