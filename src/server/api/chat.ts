@@ -1,20 +1,22 @@
 import { error, output } from "../utils";
 import { getMedias } from "../utils/medias";
 import { Errors } from "../utils/errors";
+import { Op } from "sequelize";
 import {
   Chat,
   ChatMember,
   ChatType,
-  Message,
-  User,
-  MessageType,
   InfoMessage,
+  Message,
   MessageAction,
+  MessageType,
   SenderMessageStatus,
   StarredMessage,
+  User
 } from "@workquest/database-models/lib/models";
 import { ChatNotificationActions } from "../utils/chatSubscription";
-import { Op } from "sequelize";
+import { setMessageAsReadJob } from "../jobs/setMessageAsRead";
+import { updateCountUnreadMessagesJob } from "../jobs/updateCountUnreadMessages";
 
 export async function getUserChats(r) {
   const userMemberInclude = {
@@ -140,7 +142,7 @@ export async function createGroupChat(r) {
   const chatMembers = memberUserIds.map(userId => {
     return {
       unreadCountMessages: (userId === r.auth.credentials.id ? 0 : 1),
-      userId, chatId: groupChat.id,
+      userId, chatId: groupChat.id, lastReadMessageId: message.id
     }
   });
 
@@ -153,7 +155,7 @@ export async function createGroupChat(r) {
   await r.server.publish('/notifications/chat', {
     recipients: memberUserIds.filter(userId => userId !== r.auth.credentials.id),
     action: ChatNotificationActions.groupChatCreate,
-    data: result,
+    data: result, lastReadMessageId: message.id
   });
 
   return output(result);
@@ -204,15 +206,16 @@ export async function sendMessageToUser(r) {
     await ChatMember.bulkCreate([{
       unreadCountMessages: 0,
       chatId: chat.id,
-      userId: r.auth.credentials.id
+      userId: r.auth.credentials.id,
+      lastReadMessageId: message.id,
     }, {
       unreadCountMessages: 1, /** Because created */
       chatId: chat.id,
       userId:  r.params.userId,
     }], { transaction })
   } else {
-    await ChatMember.update({ unreadCountMessages: 0 }, {
-      where: { chatId: chat.id, userId: r.auth.credentials.id }
+    await ChatMember.update({ unreadCountMessages: 0, lastReadMessageId: message.id }, {
+      where: { chatId: chat.id, userId: r.auth.credentials.id, }
     });
 
     await ChatMember.increment('unreadCountMessages', {
@@ -272,8 +275,8 @@ export async function sendMessageToChat(r) {
     transaction, where: { chatId: chat.id, senderUserId: { [Op.ne]: r.auth.credentials.id } },
   });
 
-  await ChatMember.update({ unreadCountMessages: 0 },{
-    transaction, where: { chatId: chat.id, userId: r.auth.credentials.id },
+  await ChatMember.update({ unreadCountMessages: 0, lastReadMessageId: message.id },{
+    transaction, where: { chatId: chat.id, userId: r.auth.credentials.id, },
   });
 
   await ChatMember.increment('unreadCountMessages', {
@@ -312,20 +315,20 @@ export async function addUserInGroupChat(r) {
   }
 
   groupChat.mustHaveType(ChatType.group);
-  await groupChat.mustHaveMember(r.params.chatId);
   groupChat.mustHaveOwner(r.auth.credentials.id);
 
   const transaction = await r.server.app.db.transaction();
-
-  await ChatMember.create({
-    chatId: groupChat.id,
-    userId: r.params.userId,
-  }, { transaction });
 
   const message = await Message.create({
     senderUserId: r.auth.credentials.id,
     chatId: groupChat.id,
     type: MessageType.info,
+  }, { transaction });
+
+  await ChatMember.create({
+    chatId: groupChat.id,
+    userId: r.params.userId,
+    lastReadMessageId: message.id
   }, { transaction });
 
   await InfoMessage.create({
@@ -338,7 +341,7 @@ export async function addUserInGroupChat(r) {
     transaction, where: { chatId: groupChat.id, userId: { [Op.ne]: r.auth.credentials.id } }
   });
 
-  await ChatMember.update({ unreadCountMessages: 0 },{
+  await ChatMember.update({ unreadCountMessages: 0, lastReadMessageId: message.id },{
     transaction, where: { chatId: groupChat.id, userId: r.auth.credentials.id },
   });
 
@@ -402,7 +405,7 @@ export async function removeUserInGroupChat(r) {
     transaction, where: { chatId: groupChat.id, userId: { [Op.ne]: r.auth.credentials.id } }
   });
 
-  await ChatMember.update({ unreadCountMessages: 0 },{
+  await ChatMember.update({ unreadCountMessages: 0, lastReadMessageId: message.id },{
     transaction, where: { chatId: groupChat.id, userId: r.auth.credentials.id },
   });
 
@@ -487,7 +490,7 @@ export async function leaveFromGroupChat(r) {
 }
 
 export async function setMessagesAsRead(r) {
-  const chat = await Chat.findByPk(r.params.chatId);
+  const chat = await Chat.unscoped().findByPk(r.params.chatId);
 
   if (!chat) {
     return error(Errors.NotFound, "Chat not found", {});
@@ -495,18 +498,44 @@ export async function setMessagesAsRead(r) {
 
   await chat.mustHaveMember(r.auth.credentials.id);
 
-  const { count, rows } = await User.findAndCountAll({
-    include: [{
-      model: ChatMember,
-      attributes: [],
-      as: 'chatMember',
-      where: { chatId: chat.id }
-    }],
-    limit: r.query.limit,
-    offset: r.query.offset,
+  const message = await Message.unscoped().findByPk(r.payload.messageId);
+
+  if (!message) {
+    return error(Errors.NotFound, "Message is not found", {});
+  }
+
+  const otherSenders = await Message.unscoped().findAll({
+    attributes: ["senderUserId"],
+    where: {
+      senderUserId: { [Op.ne]: r.auth.credentials.id },
+      senderStatus: SenderMessageStatus.unread,
+      createdAt: { [Op.gte]: message.createdAt },
+    },
+    group: ["senderUserId"]
   });
 
-  return output({count, members: rows});
+  await updateCountUnreadMessagesJob({
+    lastUnreadMessage: { id: message.id, createdAt: message.createdAt },
+    chatId: chat.id,
+    readerUserId: r.auth.credentials.id,
+  });
+
+  if (otherSenders.length === 0) {
+    return output();
+  }
+
+  await setMessageAsReadJob({
+    lastUnreadMessage: { id: message.id, createdAt: message.createdAt },
+    chatId: r.params.chatId,
+  });
+
+  await r.server.publish('/notifications/chat', {
+    action: ChatNotificationActions.messageReadByRecipient,
+    recipients: otherSenders.map(sender => sender.senderUserId),
+    data: message,
+  });
+
+  return output();
 }
 
 export async function getUserStarredMessages(r) {
@@ -522,7 +551,7 @@ export async function getUserStarredMessages(r) {
     }]
   });
 
-  return output({ count, messages: rows });
+  return output({ count, rows });
 }
 
 export async function markMessageStar(r) {

@@ -25,7 +25,11 @@ import {
   removeUserInGroupChat,
   addUserInGroupChat,
   leaveFromGroupChat,
-  getChatMembers, getUserStarredMessages, markMessageStar, removeStarFromMessage
+  setMessagesAsRead,
+  getChatMembers,
+  getUserStarredMessages,
+  markMessageStar,
+  removeStarFromMessage,
 } from "../../api/chat";
 
 export default [{
@@ -269,6 +273,26 @@ export default [{
     },
     response: {
       schema: emptyOkSchema
+    }
+  }
+}, {
+  method: "POST",
+  path: "/v1/read/message/{chatId}",
+  handler: setMessagesAsRead,
+  options: {
+    id: "v1.set.message.read",
+    description: "Set message as read",
+    tags: ["api", "chat"],
+    validate: {
+      params: Joi.object({
+        chatId: idSchema.required(),
+      }).label('ReadMessageParams'),
+      payload: Joi.object({
+        messageId: idSchema.required(),
+      }).label('LeaveFromGroupChatParams')
+    },
+    response: {
+      schema: outputOkSchema(messageSchema).label('LeaveFromGroupChatResponse')
     }
   }
 }];
