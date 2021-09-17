@@ -4,6 +4,7 @@ import { ChatMember, } from "@workquest/database-models/lib/models";
 export interface ZeroingUnreadMessagePayload {
   chatId: string,
   lastReadMessageId: string,
+  lastReadMessageDate: Date,
   zeroingCounterUserId: string,
 }
 
@@ -12,7 +13,7 @@ export async function zeroingUnreadMessageCountJob(payload: ZeroingUnreadMessage
 }
 
 export default async function zeroingUnreadMessageCount(payload: ZeroingUnreadMessagePayload) {
-  await ChatMember.update({ unreadCountMessages: 0, lastReadMessageId: payload.lastReadMessageId }, {
+  await ChatMember.update({ unreadCountMessages: 0, lastReadMessageId: payload.lastReadMessageId, lastReadMessageDate: payload.lastReadMessageDate }, {
     where: { chatId: payload.chatId, userId: payload.zeroingCounterUserId }
   });
 }

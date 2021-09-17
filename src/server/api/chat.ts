@@ -236,6 +236,7 @@ export async function sendMessageToUser(r) {
   await zeroingUnreadMessageCountJob({
     chatId: chat.id,
     lastReadMessageId: message.id,
+    lastReadMessageDate: message.createdAt,
     zeroingCounterUserId: r.auth.credentials.id,
   });
 
@@ -297,6 +298,7 @@ export async function sendMessageToChat(r) {
   await zeroingUnreadMessageCountJob({
     chatId: chat.id,
     lastReadMessageId: message.id,
+    lastReadMessageDate: message.createdAt,
     zeroingCounterUserId: r.auth.credentials.id,
   });
 
@@ -365,6 +367,7 @@ export async function addUserInGroupChat(r) {
   await zeroingUnreadMessageCountJob({
     chatId: groupChat.id,
     lastReadMessageId: message.id,
+    lastReadMessageDate: message.createdAt,
     zeroingCounterUserId: r.auth.credentials.id,
   });
 
@@ -436,6 +439,7 @@ export async function removeUserInGroupChat(r) {
   await zeroingUnreadMessageCountJob({
     chatId: groupChat.id,
     lastReadMessageId: message.id,
+    lastReadMessageDate: message.createdAt,
     zeroingCounterUserId: r.auth.credentials.id,
   });
 
