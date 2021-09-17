@@ -16,6 +16,8 @@ import {
   User,
 } from "@workquest/database-models/lib/models";
 import { ChatNotificationActions } from "../utils/chatSubscription";
+import { incrementUnreadCountMessageJob } from "../jobs/incrementUnreadCountMessage";
+import { zeroingUnreadMessageCountJob } from "../jobs/zeroingUnreadMessageCount";
 import { setMessageAsReadJob } from "../jobs/setMessageAsRead";
 import { updateCountUnreadMessagesJob } from "../jobs/updateCountUnreadMessages";
 
@@ -138,7 +140,6 @@ export async function createGroupChat(r) {
   });
 
   await Promise.all([
-    groupChat.save({ transaction }),
     message.save({ transaction }),
     infoMessage.save({ transaction }),
   ]);
@@ -211,6 +212,9 @@ export async function sendMessageToUser(r) {
 
   message.chatId = chat.id;
 
+  await message.$set('medias', medias, { transaction });
+  await message.save({ transaction });
+
   if (isChatCreated) {
     await ChatMember.bulkCreate([{
       unreadCountMessages: 0,
@@ -221,16 +225,9 @@ export async function sendMessageToUser(r) {
       unreadCountMessages: 1, /** Because created */
       chatId: chat.id,
       userId:  r.params.userId,
+      /** No lastReadMessageId cause create but not read */
     }], { transaction })
   } else {
-    await ChatMember.update({ unreadCountMessages: 0, lastReadMessageId: message.id }, {
-      where: { chatId: chat.id, userId: r.auth.credentials.id, }
-    });
-
-    await ChatMember.increment('unreadCountMessages', {
-      where: { chatId: chat.id, userId: r.params.userId }
-    });
-
     await chat.update({
       lastMessageId: message.id,
       lastMessageDate: message.createdAt,
@@ -241,11 +238,20 @@ export async function sendMessageToUser(r) {
     });
   }
 
-  await message.save({ transaction });
-
-  await message.$set('medias', medias, { transaction });
-
   await transaction.commit();
+
+  await zeroingUnreadMessageCountJob({
+    chatId: chat.id,
+    lastReadMessageId: message.id,
+    zeroingCounterUserId: r.auth.credentials.id,
+  });
+
+  if(!isChatCreated){
+    await incrementUnreadCountMessageJob({
+      chatId: chat.id,
+      updateMessageCounterUserId: r.params.userId
+    });
+  }
 
   const result = await Message.findByPk(message.id);
 
@@ -284,20 +290,23 @@ export async function sendMessageToChat(r) {
     transaction, where: { chatId: chat.id, senderUserId: { [Op.ne]: r.auth.credentials.id } },
   });
 
-  await ChatMember.update({ unreadCountMessages: 0, lastReadMessageId: message.id },{
-    transaction, where: { chatId: chat.id, userId: r.auth.credentials.id, },
-  });
-
-  await ChatMember.increment('unreadCountMessages', {
-    transaction, where: { chatId: chat.id, userId: { [Op.ne]: r.auth.credentials.id } }
-  });
-
   await chat.update({
     lastMessageId: message.id,
     lastMessageDate: message.createdAt,
   }, { transaction });
 
   await transaction.commit();
+
+  await zeroingUnreadMessageCountJob({
+    chatId: chat.id,
+    lastReadMessageId: message.id,
+    zeroingCounterUserId: r.auth.credentials.id,
+  });
+
+  await incrementUnreadCountMessageJob({
+    chatId: chat.id,
+    notifierUserId: r.auth.credentials.id,
+  });
 
   const members = await ChatMember.scope('userIdsOnly').findAll({
     where: { chatId: chat.id, userId: { [Op.ne]: r.auth.credentials.id } }
@@ -346,20 +355,23 @@ export async function addUserInGroupChat(r) {
     messageAction: MessageAction.groupChatAddUser,
   }, { transaction });
 
-  await ChatMember.increment('unreadCountMessages', {
-    transaction, where: { chatId: groupChat.id, userId: { [Op.ne]: r.auth.credentials.id } }
-  });
-
-  await ChatMember.update({ unreadCountMessages: 0, lastReadMessageId: message.id },{
-    transaction, where: { chatId: groupChat.id, userId: r.auth.credentials.id },
-  });
-
   await groupChat.update({
     lastMessageId: message.id,
     lastMessageDate: message.createdAt,
   }, { transaction });
 
   await transaction.commit();
+
+  await zeroingUnreadMessageCountJob({
+    chatId: groupChat.id,
+    lastReadMessageId: message.id,
+    zeroingCounterUserId: r.auth.credentials.id,
+  });
+
+  await incrementUnreadCountMessageJob({
+    chatId: groupChat.id,
+    notifierUserId: r.auth.credentials.id,
+  });
 
   const members = await ChatMember.scope('userIdsOnly').findAll({
     where: { chatId: groupChat.id, userId: { [Op.ne]: r.auth.credentials.id } }
@@ -410,20 +422,23 @@ export async function removeUserInGroupChat(r) {
     messageAction: MessageAction.groupChatDeleteUser,
   }, { transaction });
 
-  await ChatMember.increment('unreadCountMessages', {
-    transaction, where: { chatId: groupChat.id, userId: { [Op.ne]: r.auth.credentials.id } }
-  });
-
-  await ChatMember.update({ unreadCountMessages: 0, lastReadMessageId: message.id },{
-    transaction, where: { chatId: groupChat.id, userId: r.auth.credentials.id },
-  });
-
   await groupChat.update({
     lastMessageId: message.id,
     lastMessageDate: message.createdAt,
   }, { transaction });
 
   await transaction.commit();
+
+  await zeroingUnreadMessageCountJob({
+    chatId: groupChat.id,
+    lastReadMessageId: message.id,
+    zeroingCounterUserId: r.auth.credentials.id,
+  });
+
+  await incrementUnreadCountMessageJob({
+    chatId: groupChat.id,
+    notifierUserId: r.auth.credentials.id,
+  });
 
   const members = await ChatMember.scope('userIdsOnly').findAll({
     where: { chatId: groupChat.id, userId: { [Op.ne]: r.auth.credentials.id } }
@@ -472,16 +487,17 @@ export async function leaveFromGroupChat(r) {
     messageAction: MessageAction.groupChatLeaveUser,
   }, { transaction });
 
-  await ChatMember.increment('unreadCountMessages', {
-    transaction, where: { chatId: groupChat.id, userId: { [Op.ne]: r.auth.credentials.id } }
-  });
-
   await groupChat.update({
     lastMessageId: message.id,
     lastMessageDate: message.createdAt,
   }, { transaction });
 
   await transaction.commit();
+
+  await incrementUnreadCountMessageJob({
+    chatId: groupChat.id,
+    notifierUserId: r.auth.credentials.id,
+  });
 
   const members = await ChatMember.scope('userIdsOnly').findAll({
     where: { chatId: groupChat.id, userId: { [Op.ne]: r.auth.credentials.id } }

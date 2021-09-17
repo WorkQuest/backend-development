@@ -29,10 +29,10 @@ import {
   removeStarFromChat,
   markChatStar,
   setMessagesAsRead,
-  getChatMembers,
   getUserStarredMessages,
-  markMessageStar,
   removeStarFromMessage,
+  getChatMembers,
+  markMessageStar,
 } from "../../api/chat";
 
 export default [{
