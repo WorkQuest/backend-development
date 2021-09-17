@@ -13,7 +13,7 @@ export default [{
   handler: getSwaps,
   options: {
     id: "v1.liquidity.getSwaps",
-    tags: ["api", "swaps"],
+    tags: ["api", "liquidity"],
     description: "Get swaps on a pair by fetching Swap events",
     validate: {
       query: Joi.object({
@@ -25,13 +25,13 @@ export default [{
       schema: outputOkSchema(swapWQTSchema).label("GetSwapsWQTResponse")
     }
   }
-},{
+}, {
   method: "GET",
   path: "/v1/liquidity/mints",
   handler: getMints,
   options: {
     id: "v1.liquidity.getMints",
-    tags: ["api", "mints"],
+    tags: ["api", "liquidity"],
     description: "Get mints on a pair by fetching Mints events",
     validate: {
       query: Joi.object({
@@ -43,13 +43,13 @@ export default [{
       schema: outputOkSchema(swapWQTSchema).label("GetMintsWQTResponse")
     }
   }
-},{
+}, {
   method: "GET",
   path: "/v1/liquidity/burns",
   handler: getBurns,
   options: {
     id: "v1.liquidity.getSBurns",
-    tags: ["api", "burns"],
+    tags: ["api", "liquidity"],
     description: "Get burns on a pair by fetching Burns events",
     validate: {
       query: Joi.object({
@@ -67,7 +67,7 @@ export default [{
   handler: getTokenDayData,
   options: {
     id: "v1.liquidity.getTokenDayData",
-    tags: ["api", "token"],
+    tags: ["api", "liquidity"],
     description: "Get daily information for DAI",
     validate: {
       query: Joi.object({
