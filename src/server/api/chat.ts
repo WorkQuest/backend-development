@@ -16,6 +16,7 @@ import {
 } from "@workquest/database-models/lib/models";
 import { ChatNotificationActions } from "../utils/chatSubscription";
 import { incrementUnreadCountMessageJob } from "../jobs/incrementUnreadCountMessage";
+import { zeroingUnreadMessageCountJob } from "../jobs/zeroingUnreadMessageCount";
 
 export async function getUserChats(r) {
   const userMemberInclude = {
@@ -216,9 +217,9 @@ export async function sendMessageToUser(r) {
       /** No lastReadMessageId cause create but not read*/
     }], { transaction })
   } else {
-    await ChatMember.update({ unreadCountMessages: 0, lastReadMessageId: message.id }, {
-      transaction, where: { chatId: chat.id, userId: r.auth.credentials.id }
-    });
+    // await ChatMember.update({ unreadCountMessages: 0, lastReadMessageId: message.id }, {
+    //   transaction, where: { chatId: chat.id, userId: r.auth.credentials.id }
+    // });
 
     await chat.update({
       lastMessageId: message.id,
@@ -232,13 +233,18 @@ export async function sendMessageToUser(r) {
 
   await transaction.commit();
 
+  await zeroingUnreadMessageCountJob({
+    chatId: chat.id,
+    lastReadMessageId: message.id,
+    zeroingCounterUserId: r.auth.credentials.id,
+  })
+
   if(!isChatCreated){
     await incrementUnreadCountMessageJob({
       chatId: chat.id,
       updateMessageCounterUserId: r.params.userId
     });
   }
-
 
   const result = await Message.findByPk(message.id);
 
