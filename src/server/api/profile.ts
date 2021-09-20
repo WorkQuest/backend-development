@@ -25,9 +25,7 @@ function getAdditionalInfoSchema(role: UserRole): Joi.Schema {
 
 export async function getMe(r) {
   return output(await User.findByPk(r.auth.credentials.id, {
-    attributes: {
-      include: ['tempPhone']
-    }
+    attributes: { include: ['tempPhone'] }
   }));
 }
 
