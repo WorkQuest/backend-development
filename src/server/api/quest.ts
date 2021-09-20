@@ -70,13 +70,15 @@ export async function createQuest(r) {
   const medias = await getMedias(r.payload.medias);
   const transaction = await r.server.app.db.transaction();
 
-  const quest = await Quest.create({
+  const questValues = {
     ...r.payload,
     userId: user.id,
     status: QuestStatus.Created,
     skillFilters: undefined,
     locationPostGIS: transformToGeoPostGIS(r.payload.location),
-  }, { transaction });
+  }
+
+  const quest = await Quest.create(questValues, { transaction });
 
   const questSkillFilters = SkillFilter.toRawQuestSkills(r.payload.skillFilters, quest.id);
 
