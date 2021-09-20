@@ -35,6 +35,7 @@ import {
   questsForGetWithCountSchema,
   questLocationPlaceNameSchema,
   skillFilterSchema,
+  questEmploymentSchema,
 } from "@workquest/database-models/lib/schemes";
 
 export default [{
@@ -66,6 +67,7 @@ export default [{
       payload: Joi.object({
         category: questCategorySchema.required(),
         workplace: questWorkPlaceSchema.required(),
+        employment: questEmploymentSchema.required(),
         priority: questPrioritySchema.required(),
         locationPlaceName: questLocationPlaceNameSchema.required(),
         location: locationSchema.required(),
@@ -73,7 +75,7 @@ export default [{
         description: questDescriptionSchema.required(),
         price: questPriceSchema.required(),
         medias: idsSchema.required().unique(),
-        adType: questAdTypeSchema,
+        adType: questAdTypeSchema, // TODO как появится flow добавить required()
         skillFilters: skillFilterSchema.required(),
       }).label("CreateQuestPayload")
     },
@@ -112,7 +114,8 @@ export default [{
       }).label("EditQuestParams"),
       payload: Joi.object({
         category: questCategorySchema,
-        workplace: questWorkPlaceSchema.required(),
+        workplace: questWorkPlaceSchema,
+        employment: questEmploymentSchema,
         priority: questPrioritySchema,
         location: locationSchema,
         locationPlaceName: questLocationPlaceNameSchema,

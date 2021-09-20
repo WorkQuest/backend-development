@@ -70,18 +70,14 @@ export async function createQuest(r) {
   const medias = await getMedias(r.payload.medias);
   const transaction = await r.server.app.db.transaction();
 
-  const quest = await Quest.create({
+  const questValues = {
+    ...r.payload,
     userId: user.id,
     status: QuestStatus.Created,
-    category: r.payload.category,
-    priority: r.payload.priority,
-    locationPlaceName: r.payload.locationPlaceName,
-    location: r.payload.location,
     locationPostGIS: transformToGeoPostGIS(r.payload.location),
-    title: r.payload.title,
-    description: r.payload.description,
-    price: r.payload.price,
-  }, { transaction });
+  }
+
+  const quest = await Quest.create(questValues, { transaction });
 
   const questSkillFilters = SkillFilter.toRawQuestSkills(r.payload.skillFilters, quest.id);
 
@@ -132,7 +128,7 @@ export async function editQuest(r) {
 
   quest.updateFieldLocationPostGIS();
 
-  await quest.update({...r.payload, skillFilters: undefined}, { transaction });
+  await quest.update({...r.payload}, { transaction });
 
   await transaction.commit();
 
@@ -295,13 +291,15 @@ export async function getQuests(r) {
   const order = [];
   const include = [];
   const where = {
-    ...(r.query.performing && { assignedWorkerId: r.auth.credentials.id } ),
+    ...(r.query.performing && { assignedWorkerId: r.auth.credentials.id }),
     ...(r.query.priority && { priority: r.query.priority }),
     ...(r.query.status && { status: r.query.status }),
-    ...(r.query.adType && {adType: r.query.adType}),
+    ...(r.query.adType && { adType: r.query.adType }),
     ...(r.params.userId && { userId: r.params.userId }),
     ...(r.query.north && r.query.south && { [Op.and]: entersAreaLiteral }),
-    ...(r.query.filter && {filter: r.params.filter,})
+    ...(r.query.filter && { filter: r.params.filter }),
+    ...(r.query.workplace && { workplace: r.params.workplace }),
+    ...(r.query.employment && { employment: r.params.employment }),
   };
 
   if (r.query.q) {
@@ -324,14 +322,6 @@ export async function getQuests(r) {
       }
     });
   }
-  if (r.query.starred) {
-    include.push({
-      model: StarredQuests,
-      as: 'starredQuests',
-      where: { userId: r.auth.credentials.id },
-      attributes: [],
-    });
-  }
   if (r.query.filterByCategories || r.query.filterBySkills) {
     include.push({
       model: SkillFilter,
@@ -348,7 +338,7 @@ export async function getQuests(r) {
     model: StarredQuests,
     as: "star",
     where: { userId: r.auth.credentials.id },
-    required: false
+    required: r.query.starred,
   });
   include.push({
     model: QuestsResponse,

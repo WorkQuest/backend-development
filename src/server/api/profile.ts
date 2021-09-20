@@ -8,7 +8,8 @@ import {
   User,
   UserRole,
   UserStatus,
-  Media, SkillFilter
+  Media,
+  SkillFilter,
 } from "@workquest/database-models/lib/models";
 import {
   userAdditionalInfoEmployerSchema,
@@ -25,9 +26,7 @@ function getAdditionalInfoSchema(role: UserRole): Joi.Schema {
 
 export async function getMe(r) {
   return output(await User.findByPk(r.auth.credentials.id, {
-    attributes: {
-      include: ['tempPhone']
-    }
+    attributes: { include: ['tempPhone'] }
   }));
 }
 
@@ -100,7 +99,7 @@ export async function editProfile(r) {
     await SkillFilter.bulkCreate(userSkillFilters, { transaction });
   }
 
-  await user.update({...r.payload, skillFilters: undefined}, { transaction });
+  await user.update({...r.payload}, { transaction });
 
   await transaction.commit();
 

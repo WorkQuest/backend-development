@@ -3,8 +3,7 @@ import {
   changePassword,
   confirmPhoneNumber,
   editProfile,
-  getMe,
-  getUser,
+  getMe, getUser,
   sendCodeOnPhoneNumber,
   setRole
 } from "../../api/profile";
@@ -19,7 +18,9 @@ import {
   userPasswordSchema,
   userRoleSchema,
   userSchema,
-  skillFilterSchema, locationSchema
+  skillFilterSchema,
+  mobilePhoneSchema,
+  locationSchema,
 } from "@workquest/database-models/lib/schemes";
 
 export default [{
@@ -64,12 +65,12 @@ export default [{
         avatarId: idSchema.allow(null).required(),
         firstName: userFirstNameSchema.required(),
         lastName: userLastNameSchema.required(),
+        location: locationSchema.required(),
         skillFilters: skillFilterSchema,
         additionalInfo: Joi.alternatives(
           userAdditionalInfoEmployerSchema.options({ presence: "required" }),
           userAdditionalInfoWorkerSchema.options({ presence: "required" })
         ).required(),
-        location: locationSchema,
       }).label("EditProfilePayload")
     },
     response: {
@@ -121,7 +122,7 @@ export default [{
     description: "Send code for confirm phone number",
     validate: {
       payload: Joi.object({
-        phoneNumber: Joi.string().required().label('PhoneNumber'),
+        phoneNumber: mobilePhoneSchema.required(),
       }).label('PhoneSendCodePayload')
     },
     response: {
