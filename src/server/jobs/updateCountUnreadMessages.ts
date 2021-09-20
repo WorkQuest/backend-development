@@ -13,9 +13,7 @@ export async function updateCountUnreadMessagesJob(payload: MemberUnreadMessages
 }
 
 export default async function updateCountUnreadMessages(payload: MemberUnreadMessagesPayload) {
-  const minDate = new Date(-8640000000000000);
   const chatMember = await ChatMember.unscoped().findOne({
-    attributes: ["lastReadMessageId", "lastReadMessageDate"],
     where: {
       userId: payload.readerUserId,
       chatId: payload.chatId,
@@ -25,6 +23,7 @@ export default async function updateCountUnreadMessages(payload: MemberUnreadMes
   let unreadMessageCounter: {
     unreadCountMessages: number,
     lastReadMessageId?: string,
+    lastReadMessageDate?: Date,
   };
 
   if (chatMember.lastReadMessageId === payload.lastUnreadMessage.id) {
@@ -32,6 +31,7 @@ export default async function updateCountUnreadMessages(payload: MemberUnreadMes
 
     unreadMessageCounter = { unreadCountMessages: 0 };
   } else {
+    const minDate = new Date(0); //1970, January 1, 12:00 am, the most min date in SQL
     const unreadMessageCount = await Message.count({
       where: {
         createdAt: {
@@ -50,6 +50,7 @@ export default async function updateCountUnreadMessages(payload: MemberUnreadMes
     unreadMessageCounter = {
       unreadCountMessages: unreadCountMessages < 0 ? 0 : unreadCountMessages,
       lastReadMessageId: payload.lastUnreadMessage.id,
+      lastReadMessageDate: payload.lastUnreadMessage.createdAt,
     };
   }
 
