@@ -13,8 +13,9 @@ export async function updateCountUnreadMessagesJob(payload: MemberUnreadMessages
 }
 
 export default async function updateCountUnreadMessages(payload: MemberUnreadMessagesPayload) {
+  const minDate = new Date(-8640000000000000);
   const chatMember = await ChatMember.unscoped().findOne({
-    attributes: ["lastReadMessageId"],
+    attributes: ["lastReadMessageId", "lastReadMessageDate"],
     where: {
       userId: payload.readerUserId,
       chatId: payload.chatId,
@@ -34,9 +35,13 @@ export default async function updateCountUnreadMessages(payload: MemberUnreadMes
     const unreadMessageCount = await Message.count({
       where: {
         createdAt: {
-          [Op.between]: [payload.lastUnreadMessage.createdAt, chatMember.lastReadMessageDate]
+          [Op.between]: [
+            chatMember.lastReadMessageDate ? chatMember.lastReadMessageDate : minDate,
+            payload.lastUnreadMessage.createdAt,
+          ]
         },
-        id: { [Op.ne]: chatMember.lastReadMessageId }
+        id: { [Op.ne]: chatMember.lastReadMessageId },
+        senderUserId: { [Op.ne]: chatMember.userId }
       }
     });
 
