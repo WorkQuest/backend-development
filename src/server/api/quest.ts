@@ -74,7 +74,6 @@ export async function createQuest(r) {
     ...r.payload,
     userId: user.id,
     status: QuestStatus.Created,
-    skillFilters: undefined,
     locationPostGIS: transformToGeoPostGIS(r.payload.location),
   }
 
@@ -129,7 +128,7 @@ export async function editQuest(r) {
 
   quest.updateFieldLocationPostGIS();
 
-  await quest.update({...r.payload, skillFilters: undefined}, { transaction });
+  await quest.update({...r.payload}, { transaction });
 
   await transaction.commit();
 

@@ -91,7 +91,7 @@ export async function editProfile(r) {
     await SkillFilter.bulkCreate(userSkillFilters, { transaction });
   }
 
-  await user.update({...r.payload, skillFilters: undefined}, { transaction });
+  await user.update({...r.payload}, { transaction });
 
   await transaction.commit();
 
