@@ -74,6 +74,7 @@ export async function createQuest(r) {
     ...r.payload,
     userId: user.id,
     status: QuestStatus.Created,
+    skillFilters: undefined,
     locationPostGIS: transformToGeoPostGIS(r.payload.location),
   }, { transaction });
 
