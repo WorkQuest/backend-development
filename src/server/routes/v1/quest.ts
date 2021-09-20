@@ -73,7 +73,7 @@ export default [{
         description: questDescriptionSchema.required(),
         price: questPriceSchema.required(),
         medias: idsSchema.required().unique(),
-        adType: questAdTypeSchema,
+        adType: questAdTypeSchema, // TODO как появится flow добавить required()
         skillFilters: skillFilterSchema.required(),
       }).label("CreateQuestPayload")
     },
@@ -112,7 +112,7 @@ export default [{
       }).label("EditQuestParams"),
       payload: Joi.object({
         category: questCategorySchema,
-        workplace: questWorkPlaceSchema.required(),
+        workplace: questWorkPlaceSchema,
         priority: questPrioritySchema,
         location: locationSchema,
         locationPlaceName: questLocationPlaceNameSchema,
