@@ -19,6 +19,7 @@ import {
   userRoleSchema,
   userSchema,
   skillFilterSchema,
+  mobilePhoneSchema,
 } from "@workquest/database-models/lib/schemes";
 
 export default [{
@@ -119,7 +120,7 @@ export default [{
     description: "Send code for confirm phone number",
     validate: {
       payload: Joi.object({
-        phoneNumber: Joi.string().required().label('PhoneNumber'),
+        phoneNumber: mobilePhoneSchema.required(),
       }).label('PhoneSendCodePayload')
     },
     response: {
