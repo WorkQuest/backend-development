@@ -65,8 +65,8 @@ export default [{
         avatarId: idSchema.allow(null).required(),
         firstName: userFirstNameSchema.required(),
         lastName: userLastNameSchema.required(),
-        location: locationSchema.required(),
-        skillFilters: skillFilterSchema,
+        location: locationSchema.allow(null).required(),
+        skillFilters: skillFilterSchema.allow(null).required(),
         additionalInfo: Joi.alternatives(
           userAdditionalInfoEmployerSchema.options({ presence: "required" }),
           userAdditionalInfoWorkerSchema.options({ presence: "required" })
