@@ -12,6 +12,7 @@ export enum Errors {
   InvalidTOTP = 400007,
   UserAlreadyConfirmed = 400008,
   InvalidType = 400009,
+  AlreadyExists = 400010,
   // Authorization errors (401)
   TokenExpired = 401001,
   TokenInvalid = 401002,
@@ -22,4 +23,5 @@ export enum Errors {
   NotFound = 404000,
   // Conflict (409)
   SumSubError = 409001,
+  LiquidityError = 409002,
 }

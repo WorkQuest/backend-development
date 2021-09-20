@@ -51,7 +51,7 @@ export default [{
       }).label('ListPointsQuery'),
     },
     response: {
-      schema: outputOkSchema(questsSchema).label('QuestsResponse'),
+      schema: outputOkSchema(questsSchema).label('ListPointsResponse'),
     }
   }
 }];
