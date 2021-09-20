@@ -71,17 +71,10 @@ export async function createQuest(r) {
   const transaction = await r.server.app.db.transaction();
 
   const quest = await Quest.create({
+    ...r.payload,
     userId: user.id,
     status: QuestStatus.Created,
-    category: r.payload.category,
-    employment: r.payload.employment,
-    priority: r.payload.priority,
-    locationPlaceName: r.payload.locationPlaceName,
-    location: r.payload.location,
     locationPostGIS: transformToGeoPostGIS(r.payload.location),
-    title: r.payload.title,
-    description: r.payload.description,
-    price: r.payload.price,
   }, { transaction });
 
   const questSkillFilters = SkillFilter.toRawQuestSkills(r.payload.skillFilters, quest.id);
