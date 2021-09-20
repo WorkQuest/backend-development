@@ -152,7 +152,7 @@ export async function createGroupChat(r) {
   const chatMembers = memberUserIds.map(userId => {
     return {
       unreadCountMessages: (userId === r.auth.credentials.id ? 0 : 1),
-      userId, chatId: groupChat.id, lastReadMessageId: message.id, lastReadMessageDate: message.createdAt,
+      userId, chatId: groupChat.id, lastReadMessageId: (userId === r.auth.credentials.id ? message.id : null), lastReadMessageDate: (userId === r.auth.credentials.id ? message.createdAt : null),
     }
   });
 
@@ -221,11 +221,13 @@ export async function sendMessageToUser(r) {
       chatId: chat.id,
       userId: r.auth.credentials.id,
       lastReadMessageId: message.id, /** Because created */
+      lastReadMessageDate: message.createdAt,
     }, {
       unreadCountMessages: 1, /** Because created */
       chatId: chat.id,
       userId: r.params.userId,
       lastReadMessageId: null, /** Because created */
+      lastReadMessageDate: null,
     }], { transaction })
   } else {
     await chat.update({
@@ -246,11 +248,6 @@ export async function sendMessageToUser(r) {
 
     await incrementUnreadCountMessageJob({
       chatId: chat.id, notifierUserId: r.auth.credentials.id,
-    });
-
-    await setMessageAsReadJob({
-      lastUnreadMessage: { id: message.id, createdAt: message.createdAt },
-      chatId: r.params.chatId,
     });
   }
 
@@ -305,10 +302,10 @@ export async function sendMessageToChat(r) {
     chatId: chat.id, notifierUserId: r.auth.credentials.id,
   });
 
-  await setMessageAsReadJob({
-    lastUnreadMessage: { id: message.id, createdAt: message.createdAt },
-    chatId: r.params.chatId,
-  });
+  // await setMessageAsReadJob({
+  //   lastUnreadMessage: { id: message.id, createdAt: message.createdAt },
+  //   chatId: r.params.chatId,
+  // });
 
   const members = await ChatMember.scope('userIdsOnly').findAll({
     where: { chatId: chat.id, userId: { [Op.ne]: r.auth.credentials.id } }
@@ -348,7 +345,6 @@ export async function addUserInGroupChat(r) {
   await ChatMember.create({
     chatId: groupChat.id,
     userId: r.params.userId,
-    lastReadMessageId: message.id
   }, { transaction });
 
   await InfoMessage.create({
@@ -374,11 +370,6 @@ export async function addUserInGroupChat(r) {
   await incrementUnreadCountMessageJob({
     chatId: groupChat.id,
     notifierUserId: r.auth.credentials.id,
-  });
-
-  await setMessageAsReadJob({
-    lastUnreadMessage: { id: message.id, createdAt: message.createdAt },
-    chatId: r.params.chatId,
   });
 
   const members = await ChatMember.scope('userIdsOnly').findAll({
