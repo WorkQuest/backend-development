@@ -5,6 +5,7 @@ export interface ZeroingUnreadMessagePayload {
   chatId: string,
   lastReadMessageId: string,
   zeroingCounterUserId: string,
+  lastReadMessageDate: Date,
 }
 
 export async function zeroingUnreadMessageCountJob(payload: ZeroingUnreadMessagePayload) {
@@ -12,7 +13,7 @@ export async function zeroingUnreadMessageCountJob(payload: ZeroingUnreadMessage
 }
 
 export default async function zeroingUnreadMessageCount(payload: ZeroingUnreadMessagePayload) {
-  await ChatMember.update({ unreadCountMessages: 0, lastReadMessageId: payload.lastReadMessageId }, {
+  await ChatMember.update({ unreadCountMessages: 0, lastReadMessageId: payload.lastReadMessageId, lastReadMessageDate: payload.lastReadMessageDate }, {
     where: { chatId: payload.chatId, userId: payload.zeroingCounterUserId }
   });
 }

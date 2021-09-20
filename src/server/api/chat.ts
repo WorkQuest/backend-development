@@ -152,7 +152,7 @@ export async function createGroupChat(r) {
   const chatMembers = memberUserIds.map(userId => {
     return {
       unreadCountMessages: (userId === r.auth.credentials.id ? 0 : 1),
-      userId, chatId: groupChat.id, lastReadMessageId: message.id
+      userId, chatId: groupChat.id, lastReadMessageId: message.id, lastReadMessageDate: message.createdAt,
     }
   });
 
@@ -241,6 +241,7 @@ export async function sendMessageToUser(r) {
       chatId: chat.id,
       lastReadMessageId: message.id,
       zeroingCounterUserId: r.auth.credentials.id,
+      lastReadMessageDate: message.createdAt,
     });
 
     await incrementUnreadCountMessageJob({
@@ -297,6 +298,7 @@ export async function sendMessageToChat(r) {
     chatId: chat.id,
     lastReadMessageId: message.id,
     zeroingCounterUserId: r.auth.credentials.id,
+    lastReadMessageDate: message.createdAt,
   });
 
   await incrementUnreadCountMessageJob({
@@ -366,6 +368,7 @@ export async function addUserInGroupChat(r) {
     chatId: groupChat.id,
     lastReadMessageId: message.id,
     zeroingCounterUserId: r.auth.credentials.id,
+    lastReadMessageDate: message.createdAt,
   });
 
   await incrementUnreadCountMessageJob({
@@ -438,6 +441,7 @@ export async function removeUserInGroupChat(r) {
     chatId: groupChat.id,
     lastReadMessageId: message.id,
     zeroingCounterUserId: r.auth.credentials.id,
+    lastReadMessageDate: message.createdAt,
   });
 
   await incrementUnreadCountMessageJob({
