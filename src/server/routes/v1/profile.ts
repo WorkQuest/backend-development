@@ -19,7 +19,7 @@ import {
   userPasswordSchema,
   userRoleSchema,
   userSchema,
-  skillFilterSchema,
+  skillFilterSchema, locationSchema
 } from "@workquest/database-models/lib/schemes";
 
 export default [{
@@ -69,7 +69,7 @@ export default [{
           userAdditionalInfoEmployerSchema.options({ presence: "required" }),
           userAdditionalInfoWorkerSchema.options({ presence: "required" })
         ).required(),
-        location: userLocationSchema,
+        location: locationSchema,
       }).label("EditProfilePayload")
     },
     response: {
