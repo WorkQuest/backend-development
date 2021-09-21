@@ -170,6 +170,10 @@ export async function login(r) {
 	return output(result);
 }
 
+export async function logout(r) {
+
+}
+
 export async function refreshTokens(r) {
 	const newSession = await Session.create({
 		userId: r.auth.credentials.id
@@ -181,3 +185,4 @@ export async function refreshTokens(r) {
 
 	return output(result);
 }
+

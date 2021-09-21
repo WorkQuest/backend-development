@@ -48,3 +48,15 @@ export function tokenValidate(tokenType: 'access' | 'refresh', allowedUnconfirme
     return { isValid: true, credentials: user, artifacts: { token, type: tokenType } };
   }
 }
+
+export function tokenDestruct(tokenType: 'access'): validateFunc {
+  // return async function(r, token: string) {
+  //   const data = await decodeJwt(token, config.auth.jwt[tokenType].secret);
+  //
+  //   // const session = await Session.findByPk({
+  //   //
+  //   // });
+  //
+  //   return { isValid: true, credentials: user, artifacts: { token, type: tokenType } };
+  // }
+}

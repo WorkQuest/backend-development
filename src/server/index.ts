@@ -14,7 +14,7 @@ import config from "./config/config";
 import * as Qs from "qs";
 import { handleValidationError, responseHandler } from "./utils";
 import { chatNotificationsFilter } from "./utils/chatSubscription";
-import { tokenValidate } from "./utils/auth";
+import { tokenDestruct, tokenValidate } from "./utils/auth";
 import SwaggerOptions from "./config/swagger";
 import { pinoConfig } from "./config/pino";
 import { run } from "graphile-worker";
@@ -114,6 +114,10 @@ const init = async () => {
     validate: tokenValidate('refresh', [
       "/v1/auth/refresh-tokens"
     ]),
+  });
+  /////////////////
+  server.auth.strategy('jwt-destruct', 'bearer-access-token', {
+    validate: tokenDestruct('access'),
   });
   server.auth.default('jwt-access');
 
