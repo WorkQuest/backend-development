@@ -13,8 +13,9 @@ import {
   StarredQuests,
   SkillFilter,
 } from "@workquest/database-models/lib/models";
-import { locationForValidateSchema } from "@workquest/database-models/lib/schemes";
+import { locationForValidateSchema, } from "@workquest/database-models/lib/schemes";
 import { transformToGeoPostGIS } from "@workquest/database-models/lib/utils/quest"
+import * as Joi from "joi";
 
 export const searchFields = [
   "title",
@@ -290,38 +291,38 @@ export async function getQuests(r) {
   );
   const order = [];
   const include = [];
-  const where = {
-    ...(r.query.performing && { assignedWorkerId: r.auth.credentials.id }),
-    ...(r.query.priority && { priority: r.query.priority }),
-    ...(r.query.status && { status: r.query.status }),
-    ...(r.query.adType && { adType: r.query.adType }),
-    ...(r.params.userId && { userId: r.params.userId }),
-    ...(r.query.north && r.query.south && { [Op.and]: entersAreaLiteral }),
-    ...(r.query.filter && { filter: r.params.filter }),
-    ...(r.query.workplace && { workplace: r.params.workplace }),
-    ...(r.query.employment && { employment: r.params.employment }),
-  };
-
-  if (r.query.q) {
-    where[Op.or] = searchFields.map(field => ({
-      [field]: {
-        [Op.iLike]: `%${r.query.q}%`
-      }
-    }))
-  }
-  if (r.query.invited) {
-    include.push({
-      model: QuestsResponse,
-      as: 'responses',
-      attributes: [],
-      where: {
-        [Op.and]: [
-          { workerId: r.auth.credentials.id },
-          { type: QuestsResponseType.Invite },
-        ]
-      }
-    });
-  }
+  // const where = {
+  //   ...(r.query.performing && { assignedWorkerId: r.auth.credentials.id }),
+  //   ...(r.query.priority && { priority: r.query.priority }),
+  //   ...(r.query.status && { status: r.query.status }),
+  //   ...(r.query.adType && { adType: r.query.adType }),
+  //   ...(r.params.userId && { userId: r.params.userId }),
+  //   ...(r.query.north && r.query.south && { [Op.and]: entersAreaLiteral }),
+  //   ...(r.query.filter && { filter: r.params.filter }),
+  //   ...(r.query.workplace && { workplace: r.params.workplace }),
+  //   ...(r.query.employment && { employment: r.params.employment }),
+  // };
+  //
+  // if (r.query.q) {
+  //   where[Op.or] = searchFields.map(field => ({
+  //     [field]: {
+  //       [Op.iLike]: `%${r.query.q}%`
+  //     }
+  //   }))
+  // }
+  // if (r.query.invited) {
+  //   include.push({
+  //     model: QuestsResponse,
+  //     as: 'responses',
+  //     attributes: [],
+  //     where: {
+  //       [Op.and]: [
+  //         { workerId: r.auth.credentials.id },
+  //         { type: QuestsResponseType.Invite },
+  //       ]
+  //     }
+  //   });
+  // }
   if (r.query.filterByCategories || r.query.filterBySkills) {
     include.push({
       model: SkillFilter,
@@ -333,28 +334,28 @@ export async function getQuests(r) {
       }
     });
   }
-
-  include.push({
-    model: StarredQuests,
-    as: "star",
-    where: { userId: r.auth.credentials.id },
-    required: r.query.starred,
-  });
-  include.push({
-    model: QuestsResponse,
-    as: "response",
-    where: { workerId: r.auth.credentials.id },
-    required: false
-  });
-
-  for (const [key, value] of Object.entries(r.query.sort)) {
-    order.push([key, value]);
-  }
-
+  //
+  // include.push({
+  //   model: StarredQuests,
+  //   as: "star",
+  //   where: { userId: r.auth.credentials.id },
+  //   required: r.query.starred,
+  // });
+  // include.push({
+  //   model: QuestsResponse,
+  //   as: "response",
+  //   where: { workerId: r.auth.credentials.id },
+  //   required: false
+  // });
+  //
+  // for (const [key, value] of Object.entries(r.query.sort)) {
+  //   order.push([key, value]);
+  // }
+  //
   const queryOption = {
     limit: r.query.limit,
     offset: r.query.offset,
-    include, order, where,
+   // include, order, where,
     replacements: {
       ...(r.query.north && r.query.south && {
         northLng: r.query.north.longitude,

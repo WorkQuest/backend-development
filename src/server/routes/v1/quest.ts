@@ -36,6 +36,8 @@ import {
   questLocationPlaceNameSchema,
   skillFilterSchema,
   questEmploymentSchema,
+  skillFilterCategorySchema,
+  skillFilterSkillSchema
 } from "@workquest/database-models/lib/schemes";
 
 export default [{
@@ -141,6 +143,24 @@ export default [{
     description: "Get quests",
     validate: {
       query: questsQuerySchema
+    },
+    response: {
+      schema: outputOkSchema(questsForGetWithCountSchema).label("GetQuestsResponse")
+    },
+  }
+}, {
+  method: "POST",
+  path: "/v1/quests",
+  handler: getQuests,
+  options: {
+    id: "v1.getQuests.withFilters",
+    tags: ["api", "quest"],
+    description: "Get quests with filters",
+    validate: {
+      //query: questsQuerySchema,
+      payload: Joi.object({
+        skillFilters: skillFilterSchema.required(),
+      })
     },
     response: {
       schema: outputOkSchema(questsForGetWithCountSchema).label("GetQuestsResponse")
