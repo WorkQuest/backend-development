@@ -157,7 +157,7 @@ export default [{
     tags: ["api", "quest"],
     description: "Get quests with filters",
     validate: {
-      //query: questsQuerySchema,
+      query: questsQuerySchema,
       payload: Joi.object({
         skillFilters: skillFilterSchema.required(),
       })
