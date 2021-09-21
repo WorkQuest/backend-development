@@ -3,7 +3,7 @@ import {
   changePassword,
   confirmPhoneNumber,
   editProfile,
-  getMe, getUser,
+  getMe, getUser, getWorkers,
   sendCodeOnPhoneNumber,
   setRole
 } from "../../api/profile";
@@ -19,7 +19,7 @@ import {
   userRoleSchema,
   userSchema,
   skillFilterSchema,
-  mobilePhoneSchema,
+  mobilePhoneSchema, outputPaginationSchema, limitSchema, offsetSchema
 } from "@workquest/database-models/lib/schemes";
 
 export default [{
@@ -142,6 +142,27 @@ export default [{
     },
     response: {
       schema: outputOkSchema(userSchema).label("GetUserResponse")
+    }
+  }
+}, {
+  method: "GET",
+  path: "/v1/pro1file/workers",
+  handler: getWorkers,
+  options: {
+    id: "v1.profile.workers",
+    tags: ["api", "profile"],
+    description: "Get workers (for employers only)",
+    validate: {
+      query: Joi.object({
+        limit: limitSchema,
+        offset: offsetSchema,
+      }).label("GetWorkersQuery"),
+      params: Joi.object({
+//TODO: filters
+      }).label("GetWorkersParams")
+    },
+    response: {
+      schema: outputPaginationSchema('workers', userSchema).label("GetWorkersResponse")
     }
   }
 }];

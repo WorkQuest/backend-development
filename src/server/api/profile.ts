@@ -43,6 +43,22 @@ export async function getUser(r) {
   return output(user);
 }
 
+export async function getWorkers(r) {
+  if(r.auth.credentials.role !== UserRole.Employer) {
+    return error(Errors.InvalidRole, 'Only employer can get list of workers', {});
+  }
+
+  const users = await User.findAndCountAll({
+    where: {
+      role: UserRole.Worker
+    },
+    limit: r.query.limit,
+    offset: r.query.offset,
+  });
+
+  return output({count: users.count, workers: users.rows})
+}
+
 export async function setRole(r) {
   const user = await User.findByPk(r.auth.credentials.id);
 
