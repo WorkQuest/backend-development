@@ -12,8 +12,10 @@ import {
   QuestsResponseType,
   StarredQuests,
   SkillFilter,
+  SkillsMap,
+  SkillsRaw
 } from "@workquest/database-models/lib/models";
-import { locationForValidateSchema } from "@workquest/database-models/lib/schemes";
+import { locationForValidateSchema, } from "@workquest/database-models/lib/schemes";
 import { transformToGeoPostGIS } from "@workquest/database-models/lib/utils/quest"
 
 export const searchFields = [
@@ -284,6 +286,16 @@ export async function rejectCompletedWorkOnQuest(r) {
   return output();
 }
 
+function toRawSkills(skillsMap: SkillsMap): SkillsRaw[] {
+  const serializedSkills = [];
+
+  for (const [category, skills] of Object.entries(skillsMap)) {
+    skills.forEach(skill => serializedSkills.push({ category, skill }));
+  }
+
+  return serializedSkills;
+}
+
 export async function getQuests(r) {
   const entersAreaLiteral = literal(
     'st_within("Quest"."locationPostGIS", st_makeenvelope(:northLng, :northLat, :southLng, :southLat, 4326))'
@@ -322,14 +334,22 @@ export async function getQuests(r) {
       }
     });
   }
-  if (r.query.filterByCategories || r.query.filterBySkills) {
+  if (r.payload.skillFilters) {
+    let categorySkills = toRawSkills(r.payload.skillFilters);
+    let categories = [];
+    let skills = [];
+    for(let category of categorySkills) {
+      categories.push(category.category);
+      skills.push(category.skill)
+    }
+
     include.push({
       model: SkillFilter,
       as: 'filterBySkillFilter',
       attributes: [],
       where: {
-        ...(r.query.filterByCategories && { category: { [Op.in]: r.query.filterByCategories } }),
-        ...(r.query.filterBySkills && { skill: { [Op.in]: r.query.filterBySkills } }),
+        category: { [Op.in]: categories, },
+        skill: { [Op.in]: skills, }
       }
     });
   }
