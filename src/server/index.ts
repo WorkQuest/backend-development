@@ -14,7 +14,7 @@ import config from "./config/config";
 import * as Qs from "qs";
 import { handleValidationError, responseHandler } from "./utils";
 import { chatNotificationsFilter } from "./utils/chatSubscription";
-import { tokenDestruct, tokenValidate } from "./utils/auth";
+import { tokenValidate } from "./utils/auth";
 import SwaggerOptions from "./config/swagger";
 import { pinoConfig } from "./config/pino";
 import { run } from "graphile-worker";
@@ -108,6 +108,7 @@ const init = async () => {
     validate: tokenValidate('access', [
       "/api/v1/auth/confirm-email",
       "/api/v1/profile/set-role",
+      "/api/v1/auth/logout"
     ]),
   });
   server.auth.strategy('jwt-refresh', 'bearer-access-token', {
@@ -116,9 +117,7 @@ const init = async () => {
     ]),
   });
   /////////////////
-  server.auth.strategy('jwt-destruct', 'bearer-access-token', {
-    validate: tokenDestruct('access'),
-  });
+;
   server.auth.default('jwt-access');
 
   initAuthStrategiesOfSocialNetworks(server);

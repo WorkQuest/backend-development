@@ -159,7 +159,8 @@ export async function login(r) {
 
 
 	const session = await Session.create({
-		userId: user.id
+		userId: user.id,
+		invalidating: false,
 	});
 
 	const result = {
@@ -170,13 +171,10 @@ export async function login(r) {
 	return output(result);
 }
 
-export async function logout(r) {
-
-}
-
 export async function refreshTokens(r) {
 	const newSession = await Session.create({
-		userId: r.auth.credentials.id
+		userId: r.auth.credentials.id,
+		invalidating: false
 	});
 	const result = {
 		...generateJwt({ id: newSession.id }),
@@ -184,5 +182,17 @@ export async function refreshTokens(r) {
 	};
 
 	return output(result);
+}
+
+export async function logout(r) {
+	await Session.update({
+		invalidating: true,
+		logoutAt: Date.now(),
+	}, {
+		where: {
+			id: r.auth.artifacts.sessionId
+		}
+	});
+	return output();
 }
 

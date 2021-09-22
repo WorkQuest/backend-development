@@ -1,6 +1,6 @@
 import * as jwt from 'jsonwebtoken';
 import config from '../config/config';
-import { error } from './index';
+import { error, output } from "./index";
 import { Errors } from './errors';
 import {
   User,
@@ -34,29 +34,21 @@ export function tokenValidate(tokenType: 'access' | 'refresh', allowedUnconfirme
   return async function(r, token: string) {
     const data = await decodeJwt(token, config.auth.jwt[tokenType].secret);
 
-    const { user } = await Session.findByPk(data.id, {
-      include: [{model: User}]
+    const session = await Session.findByPk(data.id, {
+      include: [{model: User, as: 'user'}]
     });
 
-    if (!user) {
+    if(session.invalidating) {
+      throw error(Errors.TokenInvalid,  'Session expired', {});
+    }
+
+    if (!session.user) {
       throw error(Errors.SessionNotFound, 'User not found', {});
     }
-    if (user.status === UserStatus.Unconfirmed && !allowedUnconfirmedRoutes.includes(r.route.path)) {
+    if (session.user.status === UserStatus.Unconfirmed && !allowedUnconfirmedRoutes.includes(r.route.path)) {
       throw error(Errors.UnconfirmedUser, 'Unconfirmed user', {});
     }
 
-    return { isValid: true, credentials: user, artifacts: { token, type: tokenType } };
+    return { isValid: true, credentials: session.user, artifacts: { token, type: tokenType, sessionId: session.id } };
   }
-}
-
-export function tokenDestruct(tokenType: 'access'): validateFunc {
-  // return async function(r, token: string) {
-  //   const data = await decodeJwt(token, config.auth.jwt[tokenType].secret);
-  //
-  //   // const session = await Session.findByPk({
-  //   //
-  //   // });
-  //
-  //   return { isValid: true, credentials: user, artifacts: { token, type: tokenType } };
-  // }
 }
