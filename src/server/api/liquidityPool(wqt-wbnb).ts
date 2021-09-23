@@ -1,4 +1,4 @@
-import { ChainId, Token, TokenAmount, Pair } from "@uniswap/sdk";
+import { ChainId, Token, TokenAmount, Pair } from "@pancakeswap/sdk"
 import axios from "axios";
 import { error, output } from "../utils";
 import config from "../config/config";
@@ -14,10 +14,10 @@ const WQT = new Token(
 
 const WBNB = new Token(
   ChainId.MAINNET,
-  config.token.WETH.address,
-  config.token.WETH.decimals,
-  config.token.WETH.symbol,
-  config.token.WETH.name
+  config.token.WBNB.address,
+  config.token.WBNB.decimals,
+  config.token.WBNB.symbol,
+  config.token.WBNB.name
 );
 
 const pair = new Pair(
@@ -28,7 +28,7 @@ const pair = new Pair(
 const { url, params, query } = {
   url: 'https://bsc.streamingfast.io/subgraphs/name/pancakeswap/exchange-v2',
   params: `orderBy: timestamp, orderDirection: desc, where: { pair: "${pair.liquidityToken.address.toLowerCase()}" }`,
-  query: `transaction { id timestamp } pair { txCount }`
+  query: `transaction { id timestamp }`
 }
 
 
