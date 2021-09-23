@@ -37,7 +37,7 @@ import {
   skillFilterSchema,
   questEmploymentSchema,
   skillFilterCategorySchema,
-  skillFilterSkillSchema
+  skillFilterSkillSchema, locationForValidateSchema
 } from "@workquest/database-models/lib/schemes";
 
 export default [{
@@ -159,7 +159,11 @@ export default [{
     validate: {
       //query: questsQuerySchema,
       payload: Joi.object({
-        skillFilters: skillFilterSchema.required(),
+        skillFilters: skillFilterSchema,
+        location: Joi.object({
+          north: locationSchema,
+          south: locationSchema,
+        })
       })
     },
     response: {

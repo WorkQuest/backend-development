@@ -324,12 +324,8 @@ export async function getQuests(r) {
   }
   if (r.payload.skillFilters) {
     let categorySkills = SkillFilter.toRawSkillsForFilter(r.payload.skillFilters);
-    let categories = [];
-    let skills = [];
-    for(let category of categorySkills) {
-      categories.push(category.category);
-      skills.push(category.skill)
-    }
+    let categories = categorySkills.map(counter => counter.category);
+    let skills = categorySkills.map(counter => counter.skill);
 
     include.push({
       model: SkillFilter,
@@ -341,6 +337,7 @@ export async function getQuests(r) {
       }
     });
   }
+
 
   include.push({
     model: StarredQuests,
@@ -355,8 +352,10 @@ export async function getQuests(r) {
     required: false
   });
 
-  for (const [key, value] of Object.entries(r.query.sort)) {
-    order.push([key, value]);
+  if(r.query.sort){
+    for (const [key, value] of Object.entries(r.query.sort)) {
+      order.push([key, value]);
+    }
   }
 
   const queryOption = {
@@ -364,11 +363,11 @@ export async function getQuests(r) {
     offset: r.query.offset,
     include, order, where,
     replacements: {
-      ...(r.query.north && r.query.south && {
-        northLng: r.query.north.longitude,
-        northLat: r.query.north.latitude,
-        southLng: r.query.south.longitude,
-        southLat: r.query.south.latitude,
+      ...(r.payload.location.north && r.payload.location.south && {
+        northLng: r.payload.location.north.longitude,
+        northLat: r.payload.location.north.latitude,
+        southLng: r.payload.location.south.longitude,
+        southLat: r.payload.location.south.latitude,
       })
     }
   }
