@@ -11,6 +11,7 @@ import portfolio from './portfolio';
 import totp from './totp';
 import chat from "./chat";
 import liquidity from "./liquidity";
+import swaps from "./swaps";
 
 export default [
   ...profile,
@@ -26,4 +27,5 @@ export default [
   ...totp,
   ...chat,
   ...liquidity,
+  ...swaps,
 ];
