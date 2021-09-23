@@ -2,7 +2,7 @@ import { RequestOrig } from "hapi";
 import BigNumber from "bignumber.js";
 import { SwapData } from "@workquest/database-models/lib/models";
 import { metaMaskKey, wsProviders } from "../config/constant";
-import { output, OutputInterface } from "../utils";
+import { output } from "../utils";
 
 const Web3 = require("web3");
 
