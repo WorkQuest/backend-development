@@ -10,7 +10,7 @@ import restorePassword from './restorePassword';
 import portfolio from './portfolio';
 import totp from './totp';
 import chat from "./chat";
-import liquidity from "./liquidityPool";
+import liquidity from "./liquidityPool(wqt-weth)";
 
 export default [
   ...profile,

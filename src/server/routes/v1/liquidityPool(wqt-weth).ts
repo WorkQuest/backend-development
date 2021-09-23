@@ -1,4 +1,4 @@
-import { getBurns, getMints, getSwaps, getTokenDayData } from "../../api/liquidityPool";
+import { getBurns, getMints, getSwaps, getTokenDayData } from "../../api/liquidityPool(wqt-weth)";
 import {
   outputOkSchema,
   tokensDayWQTSchema,
