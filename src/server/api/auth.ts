@@ -5,7 +5,7 @@ import Handlebars = require("handlebars");
 import { Op } from "sequelize";
 import config from "../config/config";
 import { Errors } from "../utils/errors";
-import { error, getRandomHexToken, output } from "../utils";
+import { error, getDevice, getGeo, getRandomHexToken, getRealIp, output } from "../utils";
 import { addSendEmailJob } from "../jobs/sendEmail";
 import { generateJwt } from "../utils/auth";
 import { Session,
@@ -85,7 +85,7 @@ export async function register(r) {
 		}
 	});
 
-	const session = await Session.create({ userId: user.id });
+	const session = await Session.create({ userId: user.id, invalidating: false, place: getGeo(r), ip: getRealIp(r), device: getDevice(r) });
 	const result = {
 		...generateJwt({ id: session.id }),
 		userStatus: user.status,
@@ -104,7 +104,11 @@ export function getLoginViaSocialNetworkHandler(returnType: "token" | "redirect"
 
 		const user = await getUserByNetworkProfile(r.auth.strategy, profile);
 		const session = await Session.create({
-			userId: user.id
+			userId: user.id,
+			invalidating: false,
+			place: getGeo(r),
+			ip: getRealIp(r),
+			device: getDevice(r)
 		});
 		const result = {
 			...generateJwt({ id: session.id }),
@@ -162,6 +166,9 @@ export async function login(r) {
 	const session = await Session.create({
 		userId: user.id,
 		invalidating: false,
+		place: getGeo(r),
+		ip: getRealIp(r),
+		device: getDevice(r)
 	});
 
 	const result = {
@@ -175,7 +182,10 @@ export async function login(r) {
 export async function refreshTokens(r) {
 	const newSession = await Session.create({
 		userId: r.auth.credentials.id,
-		invalidating: false
+		invalidating: false,
+		place: getGeo(r),
+		ip: getRealIp(r),
+		device: getDevice(r)
 	});
 	const result = {
 		...generateJwt({ id: newSession.id }),
