@@ -1,4 +1,4 @@
-import { getBurns, getMints, getSwaps, getTokenDayData } from "../../api/liquidity";
+import { getBurns, getMints, getSwaps, getTokenDayData } from "../../api/liquidityPool";
 import {
   outputOkSchema,
   tokensDayWQTSchema,
@@ -9,11 +9,11 @@ import * as Joi from "joi";
 
 export default [{
   method: "GET",
-  path: "/v1/liquidity/swaps",
+  path: "/v1/pool-liquidity/weth-wqt/swaps",
   handler: getSwaps,
   options: {
     id: "v1.liquidity.getSwaps",
-    tags: ["api", "swaps"],
+    tags: ["api", "pool-lequi"],
     description: "Get swaps on a pair by fetching Swap events",
     validate: {
       query: Joi.object({
@@ -27,7 +27,7 @@ export default [{
   }
 }, {
   method: "GET",
-  path: "/v1/liquidity/mints",
+  path: "/v1/pool-liquidity/weth-wqt/mints",
   handler: getMints,
   options: {
     id: "v1.liquidity.getMints",
@@ -45,7 +45,7 @@ export default [{
   }
 }, {
   method: "GET",
-  path: "/v1/liquidity/burns",
+  path: "/v1/pool-liquidity/weth-wqt/burns",
   handler: getBurns,
   options: {
     id: "v1.liquidity.getSBurns",
@@ -63,7 +63,7 @@ export default [{
   }
 }, {
   method: "GET",
-  path: "/v1/liquidity/tokenDay",
+  path: "/v1/pool-liquidity/weth-wqt/tokenDay",
   handler: getTokenDayData,
   options: {
     id: "v1.liquidity.getTokenDayData",
