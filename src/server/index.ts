@@ -18,6 +18,7 @@ import { tokenValidate } from "./utils/auth";
 import SwaggerOptions from "./config/swagger";
 import { pinoConfig } from "./config/pino";
 import { run } from "graphile-worker";
+import { questNotificationFilter } from "./utils/questSubscription";
 
 const HapiSwagger = require("hapi-swagger");
 const Package = require("../../package.json");
@@ -100,7 +101,12 @@ const init = async () => {
   });
 
   server.subscription('/notifications/chat', {
-    filter: chatNotificationsFilter
+    filter: chatNotificationsFilter,
+  });
+
+  // Notification quest (worker, employer)
+  server.subscription('/notifications/quest', {
+    filter: questNotificationFilter,
   });
 
   // JWT Auth

@@ -5,7 +5,7 @@ import {
   QuestStatus,
   UserRole,
   Quest,
-  Review,
+  Review, QuestsResponseStatus
 } from "@workquest/database-models/lib/models";
 
 
@@ -34,6 +34,12 @@ export async function sendReview(r) {
 
   await addUpdateReviewStatisticsJob({
     ratingStatisticId: toUser.ratingStatistic.id
+  });
+
+  await r.server.publish('/notifications/quest', {
+    notificationOwnerUserId: fromUser.id,
+    message: r.payload.message,
+    invitedUserId: toUser.id
   });
 
   return output(review);

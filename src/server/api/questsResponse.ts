@@ -32,12 +32,23 @@ export async function responseOnQuest(r) {
     return error(Errors.AlreadyAnswer, "You already answered quest", { questsResponse });
   }
 
-  await QuestsResponse.create({
+  const created = await QuestsResponse.create({
     workerId: user.id,
     questId: quest.id,
     message: r.payload.message,
     status: QuestsResponseStatus.Open,
     type: QuestsResponseType.Response,
+  });
+
+  if (!created) {
+    return error(Errors.InvalidStatus, "Quest response not created", {});
+  }
+
+  await r.server.publish('/notifications/quest', {
+    notificationOwnerUserId: user.id,
+    status: QuestsResponseStatus.Open,
+    message: r.payload.message,
+    invitedUserId: quest.userId
   });
 
   return output();
@@ -69,13 +80,21 @@ export async function inviteOnQuest(r) {
     return error(Errors.AlreadyAnswer, "You already answered quest", { questResponse });
   }
 
-  await QuestsResponse.create({
+  const createdResponse = await QuestsResponse.create({
     workerId: invitedWorker.id,
     questId: quest.id,
     message: r.payload.message,
     status: QuestsResponseStatus.Open,
     type: QuestsResponseType.Invite,
   });
+
+  if (createdResponse) {
+    await r.server.publish('/notifications/quest', {
+      notificationOwnerUserId: r.auth.credentials.id,
+      invitedUserId: invitedWorker.id,
+      message: r.payload.message
+    });
+  }
 
   return output();
 }
@@ -126,6 +145,18 @@ export async function acceptInviteOnQuest(r) {
 
   await questsResponse.update({ status: QuestsResponseStatus.Accepted });
 
+  if (await questsResponse.status === QuestsResponseStatus.Accepted) {
+    const findQuest = await Quest.findOne({where: {id: questsResponse.questId}})
+    if (!findQuest) {
+      return error(Errors.NotFound, "Quest not found", {});
+    }
+    await r.server.publish('/notifications/quest', {
+      notificationOwnerUserId: user.id,
+      status: QuestsResponseStatus.Accepted,
+      invitedUserId: findQuest.userId
+    });
+  }
+
   return output();
 }
 
@@ -141,6 +172,18 @@ export async function rejectInviteOnQuest(r) {
   questsResponse.mustHaveStatus(QuestsResponseStatus.Open);
 
   await questsResponse.update({ status: QuestsResponseStatus.Rejected });
+
+  if (await questsResponse.status === QuestsResponseStatus.Rejected) {
+    const findQuest = await Quest.findOne({where: {id: questsResponse.questId}})
+    if (!findQuest){
+      return error(Errors.NotFound, "Quest not found", {});
+    }
+    await r.server.publish('/notifications/quest', {
+      notificationOwnerUserId: user.id,
+      status: QuestsResponseStatus.Rejected,
+      invitedUserId: findQuest.userId
+    });
+  }
 
   return output();
 }
@@ -164,6 +207,12 @@ export async function rejectResponseOnQuest(r) {
   questsResponse.mustHaveStatus(QuestsResponseStatus.Open);
 
   await questsResponse.update({ status: QuestsResponseStatus.Rejected });
+
+  await r.server.publish('/notifications/quest', {
+    notificationOwnerUserId: user.id,
+    status: QuestsResponseStatus.Rejected,
+    invitedUserId: questsResponse.workerId
+  });
 
   return output();
 }
