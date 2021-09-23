@@ -117,8 +117,8 @@ export async function getTokenDayData(r) {
         tokenDayDatas(first:${r.query.limit}, skip:${r.query.offset},orderBy: date, orderDirection: desc,
         where: {
           token: "${WQT.address.toLowerCase()}"
-          }) { id date priceUSD totalLiquidityToken totalLiquidityUSD totalLiquidityETH
-            dailyVolumeETH dailyVolumeToken dailyVolumeUSD
+          }) { id date priceUSD totalLiquidityToken totalLiquidityUSD totalLiquidityBNB
+            dailyVolumeBNB dailyVolumeToken dailyVolumeUSD
         }
       }`
       }
