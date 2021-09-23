@@ -9,7 +9,7 @@ import * as Joi from "joi";
 
 export default [{
   method: "GET",
-  path: "/v1/pool-liquidity/wqt-weth/swaps",
+  path: "/v1/pool-liquidity/weth-wqt/swaps",
   handler: getSwaps,
   options: {
     id: "v1.liquidity.getSwaps",
@@ -27,7 +27,7 @@ export default [{
   }
 }, {
   method: "GET",
-  path: "/v1/pool-liquidity/wqt-weth/mints",
+  path: "/v1/pool-liquidity/weth-wqt/mints",
   handler: getMints,
   options: {
     id: "v1.liquidity.getMints",
@@ -45,7 +45,7 @@ export default [{
   }
 }, {
   method: "GET",
-  path: "/v1/pool-liquidity/wqt-weth/burns",
+  path: "/v1/pool-liquidity/weth-wqt/burns",
   handler: getBurns,
   options: {
     id: "v1.liquidity.getSBurns",
@@ -63,7 +63,7 @@ export default [{
   }
 }, {
   method: "GET",
-  path: "/v1/pool-liquidity/wqt-weth/tokenDay",
+  path: "/v1/pool-liquidity/weth-wqt/tokenDay",
   handler: getTokenDayData,
   options: {
     id: "v1.liquidity.getTokenDayData",
