@@ -12,8 +12,8 @@ export default [{
   path: "/v1/pool-liquidity/wqt-weth/swaps",
   handler: getSwaps,
   options: {
-    id: "v1.liquidity.getSwaps",
-    tags: ["api", "pool-lequi"],
+    id: "v1.liquidity.wqt-weth.getSwaps",
+    tags: ["api", "pool-liquidity"],
     description: "Get swaps on a pair by fetching Swap events",
     validate: {
       query: Joi.object({
@@ -30,8 +30,8 @@ export default [{
   path: "/v1/pool-liquidity/wqt-weth/mints",
   handler: getMints,
   options: {
-    id: "v1.liquidity.getMints",
-    tags: ["api", "mints"],
+    id: "v1.liquidity.wqt-weth.getMints",
+    tags: ["api", "pool-liquidity"],
     description: "Get mints on a pair by fetching Mints events",
     validate: {
       query: Joi.object({
@@ -48,8 +48,8 @@ export default [{
   path: "/v1/pool-liquidity/wqt-weth/burns",
   handler: getBurns,
   options: {
-    id: "v1.liquidity.getSBurns",
-    tags: ["api", "burns"],
+    id: "v1.liquidity.wqt-weth.getSBurns",
+    tags: ["api", "pool-liquidity"],
     description: "Get burns on a pair by fetching Burns events",
     validate: {
       query: Joi.object({
@@ -66,8 +66,8 @@ export default [{
   path: "/v1/pool-liquidity/wqt-weth/tokenDay",
   handler: getTokenDayData,
   options: {
-    id: "v1.liquidity.getTokenDayData",
-    tags: ["api", "token"],
+    id: "v1.liquidity.wqt-weth.getTokenDayData",
+    tags: ["api", "pool-liquidity"],
     description: "Get daily information for DAI",
     validate: {
       query: Joi.object({

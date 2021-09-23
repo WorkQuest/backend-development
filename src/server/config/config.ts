@@ -101,7 +101,7 @@ export default {
       symbol: process.env.WBNB_SYMBOL_TOKEN,
       name: process.env.WBNB_NAME_TOKEN,
       amountMax: process.env.WBNB_AMOUNT_MAX
-    }
+    },
   },
   baseUrl: process.env.BASE_URL,
   debug: process.env.DEBUG === "true",
