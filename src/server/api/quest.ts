@@ -12,8 +12,6 @@ import {
   QuestsResponseType,
   StarredQuests,
   SkillFilter,
-  SkillsMap,
-  SkillsRaw
 } from "@workquest/database-models/lib/models";
 import { locationForValidateSchema, } from "@workquest/database-models/lib/schemes";
 import { transformToGeoPostGIS } from "@workquest/database-models/lib/utils/quest"
@@ -286,19 +284,9 @@ export async function rejectCompletedWorkOnQuest(r) {
   return output();
 }
 
-function toRawSkills(skillsMap: SkillsMap): SkillsRaw[] {
-  const serializedSkills = [];
-
-  for (const [category, skills] of Object.entries(skillsMap)) {
-    skills.forEach(skill => serializedSkills.push({ category, skill }));
-  }
-
-  return serializedSkills;
-}
-
 export async function getQuests(r) {
   const entersAreaLiteral = literal(
-    'st_within("locationPostGIS", st_makeenvelope(:northLng, :northLat, :southLng, :southLat, 4326))'
+    'st_within("Quest"."locationPostGIS", st_makeenvelope(:northLng, :northLat, :southLng, :southLat, 4326))'
   );
   const order = [];
   const include = [];
@@ -335,7 +323,7 @@ export async function getQuests(r) {
     });
   }
   if (r.payload.skillFilters) {
-    let categorySkills = toRawSkills(r.payload.skillFilters);
+    let categorySkills = SkillFilter.toRawSkillsForFilter(r.payload.skillFilters);
     let categories = [];
     let skills = [];
     for(let category of categorySkills) {

@@ -150,14 +150,14 @@ export default [{
   }
 }, {
   method: "POST",
-  path: "/v1/quests",
+  path: "/v1/quests/get",
   handler: getQuests,
   options: {
     id: "v1.getQuests.withFilters",
     tags: ["api", "quest"],
     description: "Get quests with filters",
     validate: {
-      query: questsQuerySchema,
+      //query: questsQuerySchema,
       payload: Joi.object({
         skillFilters: skillFilterSchema.required(),
       })
