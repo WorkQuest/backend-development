@@ -66,6 +66,7 @@ export async function register(r) {
 	const emailConfirmCode = getRandomHexToken().substring(0, 6).toUpperCase();
 	const emailConfirmLink = `${config.baseUrl}/confirm?token=${emailConfirmCode}`;
 	const emailHtml = confirmTemplate({ confirmLink: emailConfirmLink, confirmCode: emailConfirmCode });
+
 	await addSendEmailJob({
 		email: r.payload.email,
 		subject: "Work Quest | Confirmation code",

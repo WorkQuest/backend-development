@@ -286,7 +286,7 @@ export async function rejectCompletedWorkOnQuest(r) {
 
 export async function getQuests(r) {
   const entersAreaLiteral = literal(
-    'st_within("locationPostGIS", st_makeenvelope(:northLng, :northLat, :southLng, :southLat, 4326))'
+    'st_within("Quest"."locationPostGIS", st_makeenvelope(:northLng, :northLat, :southLng, :southLat, 4326))'
   );
   const order = [];
   const include = [];
