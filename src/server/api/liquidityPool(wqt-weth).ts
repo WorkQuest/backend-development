@@ -114,11 +114,11 @@ export async function getTokenDayData(r) {
     method: "POST",
     data: {
       query: `{ 
-        tokenDayDatas(first:${r.query.limit}, skip:${r.query.offset},orderBy: date, orderDirection: desc,
-        where: {
-          token: "${WQT.address.toLowerCase()}"
-          }) { id date priceUSD totalLiquidityToken totalLiquidityUSD totalLiquidityETH
-            dailyVolumeETH dailyVolumeToken dailyVolumeUSD
+        pairDayDatas (first: ${r.query.limit}, skip: ${r.query.offset},
+        orderBy:date, orderDirection: asc,
+        where: {pairAddress: "${pair.liquidityToken.address.toLowerCase()}"})
+        { date reserve0 reserve1 totalSupply reserveUSD dailyVolumeToken0
+          dailyVolumeToken1 dailyVolumeUSD dailyTxns 
         }
       }`
     }
@@ -128,7 +128,7 @@ export async function getTokenDayData(r) {
       return error(Errors.LiquidityError, 'Query error', result.data.errors);
     }
 
-    return output(result.data.data.tokenDayDatas);
+    return output(result.data.data.pairDayDatas);
   } catch (err) {
     return error(Errors.LiquidityError, err.response.statusText, err.response.data);
   }
