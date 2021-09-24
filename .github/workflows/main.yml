@@ -157,6 +157,11 @@ jobs:
             WQT_SYMBOL_TOKEN=${{ secrets.WQT_SYMBOL_TOKEN }} \
             WQT_NAME_TOKEN=${{ secrets.WQT_NAME_TOKEN }} \
             WQT_AMOUNT_MAX=${{ secrets.WQT_AMOUNT_MAX }} \
+            WQT_BRIDGE_CONTRACT_RINKEBY=${{ secrets.WQT_BRIDGE_CONTRACT_RINKEBY }} \
+            WQT_BRIDGE_CONTRACT_BSCTESTNET=${{ secrets.WQT_BRIDGE_CONTRACT_BSCTESTNET }} \
+            WQT_PROVIDER_RINKEBY=${{ secrets.WQT_PROVIDER_RINKEBY }} \
+            WQT_PROVIDER_BSCTESTNET=${{ secrets.WQT_PROVIDER_BSCTESTNET }} \
+            WQT_PRIVATE_KEY=${{ secrets.WQT_PRIVATE_KEY }} \
 
             WETH_ADDRESS_TOKEN=${{ secrets.WETH_ADDRESS_TOKEN }} \
             WETH_DECIMAL_TOKEN=${{ secrets.WETH_DECIMAL_TOKEN }} \
