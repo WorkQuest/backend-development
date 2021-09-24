@@ -81,19 +81,26 @@ export default {
     expiresIn: parseInt(process.env.CDN_EXPIRES_IN),
   },
   token: {
-    WQT:{
+    WQT: {
       address: process.env.WQT_ADDRESS_TOKEN,
       decimals: parseInt(process.env.WQT_DECIMAL_TOKEN),
       symbol: process.env.WQT_SYMBOL_TOKEN,
       name: process.env.WQT_NAME_TOKEN,
       amountMax:process.env.WQT_AMOUNT_MAX,
     },
-    WETH:{
+    WETH: {
       address: process.env.WETH_ADDRESS_TOKEN,
       decimals: parseInt(process.env.WETH_DECIMAL_TOKEN),
       symbol: process.env.WETH_SYMBOL_TOKEN,
       name: process.env.WETH_NAME_TOKEN,
       amountMax: process.env.WETH_AMOUNT_MAX
+    },
+    WBNB: {
+      address: process.env.WBNB_ADDRESS_TOKEN,
+      decimals: parseInt(process.env.WBNB_DECIMAL_TOKEN),
+      symbol: process.env.WBNB_SYMBOL_TOKEN,
+      name: process.env.WBNB_NAME_TOKEN,
+      amountMax: process.env.WBNB_AMOUNT_MAX
     },
   },
   baseUrl: process.env.BASE_URL,
