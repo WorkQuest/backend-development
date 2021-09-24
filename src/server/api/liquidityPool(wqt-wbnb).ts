@@ -29,11 +29,6 @@ const api = axios.create({
   baseURL: 'https://bsc.streamingfast.io/subgraphs/name/pancakeswap/exchange-v2'
 });
 
-const p = `orderBy: timestamp, orderDirection: desc, where: { pair: "${pair.liquidityToken.address.toLowerCase()}" }`
-const q = `transaction { id timestamp }`
-
-
-
 export async function getSwaps(r) {
   try {
     const result = await api.post('', {query: `{
