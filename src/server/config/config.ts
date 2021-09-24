@@ -105,4 +105,11 @@ export default {
   },
   baseUrl: process.env.BASE_URL,
   debug: process.env.DEBUG === "true",
+  contracts: {
+    wqtBridgeRinkeby: process.env.WQT_BRIDGE_CONTRACT_RINKEBY,
+    wqtBridgeBsctestnet: process.env.WQT_BRIDGE_CONTRACT_BSCTESTNET,
+    wqtProviderRinkeby:process.env.WQT_PROVIDER_RINKEBY,
+    wqtProviderBsctestnet: process.env.WQT_PROVIDER_BSCTESTNET,
+    wqtPrivateKey: process.env.WQT_PRIVATE_KEY,
+  }
 };
