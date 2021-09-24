@@ -12,6 +12,9 @@ import totp from './totp';
 import chat from "./chat";
 import liquidity from "./liquidity";
 import swaps from "./swaps";
+import wqtWETH from "./liquidityPool(wqt-weth)";
+import wqtWBNB from "./liquidityPool(wqt-wbnb)";
+
 
 export default [
   ...profile,
@@ -26,6 +29,8 @@ export default [
   ...portfolio,
   ...totp,
   ...chat,
+  ...wqtWETH,
+  ...wqtWBNB,
   ...liquidity,
   ...swaps,
 ];

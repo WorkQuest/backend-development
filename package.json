@@ -13,10 +13,14 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@pancakeswap/sdk": "^2.4.0",
+    "@uniswap/sdk": "^3.0.3",
+    "@uniswap/v2-core": "^1.0.1",
     "@ethersproject/address": "^5.4.0",
     "@ethersproject/contracts": "^5.4.1",
     "@ethersproject/providers": "^5.4.5",
     "@ethersproject/solidity": "^5.4.0",
+    "web3": "^1.5.3",
     "@hapi/basic": "^5.1.1",
     "@hapi/bell": "^12.2.0",
     "@hapi/boom": "^9.1.0",
@@ -29,8 +33,6 @@
     "@types/dotenv": "^6.1.1",
     "@types/joi": "^14.3.4",
     "@types/validator": "^13.1.0",
-    "@uniswap/sdk": "^3.0.3",
-    "@uniswap/v2-core": "^1.0.1",
     "@workquest/database-models": "git+https://github.com/WorkQuest/database-models.git#1d17b9c409403e6296505c4462786d1ad6f7d498",
     "aws-sdk": "^2.918.0",
     "axios": "^0.21.1",
@@ -61,8 +63,7 @@
     "speakeasy": "^2.0.0",
     "twilio": "^3.66.0",
     "typescript": "^4.1.5",
-    "uuid": "^8.2.0",
-    "web3": "^1.5.3"
+    "uuid": "^8.2.0"
   },
   "devDependencies": {
     "@hapi/code": "^8.0.3",

@@ -164,6 +164,12 @@ jobs:
             WETH_NAME_TOKEN=${{ secrets.WETH_NAME_TOKEN }} \
             WETH_AMOUNT_MAX=${{ secrets.WETH_AMOUNT_MAX }} \
 
+            WBNB_ADDRESS_TOKEN=${{ secrets.WBNB_ADDRESS_TOKEN }} \
+            WBNB_DECIMAL_TOKEN=${{ secrets.WBNB_DECIMAL_TOKEN }} \
+            WBNB_SYMBOL_TOKEN=${{ secrets.WBNB_SYMBOL_TOKEN }} \
+            WBNB_NAME_TOKEN=${{ secrets.WBNB_NAME_TOKEN }} \
+            WBNB_AMOUNT_MAX=${{ secrets.WBNB_AMOUNT_MAX }} \
+
             DEBUG=${{ secrets.DEBUG }} \
             backend_bin=${{ secrets.backend_bin }} \
             PM2_SERVICE_NAME=${{ secrets.PM2_SERVICE_NAME }} \
