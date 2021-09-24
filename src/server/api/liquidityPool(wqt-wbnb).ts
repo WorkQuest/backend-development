@@ -1,7 +1,7 @@
-import { ChainId, Token, TokenAmount, Pair } from "@pancakeswap/sdk"
+import { ChainId, Token, TokenAmount, Pair } from "@pancakeswap/sdk";
 import axios from "axios";
-import { error, output } from "../utils";
 import config from "../config/config";
+import { error, output } from "../utils";
 import { Errors } from "../utils/errors";
 
 const WQT = new Token(

@@ -1,11 +1,12 @@
+import * as Joi from "joi";
 import { getBurns, getMints, getSwaps, getTokenDayData } from "../../api/liquidityPool(wqt-wbnb)";
 import {
   outputOkSchema,
   tokensDayWQTSchema,
   swapWQTSchema,
-  offsetSchema, limitSchema
+  offsetSchema,
+  limitSchema
 } from "@workquest/database-models/lib/schemes";
-import * as Joi from "joi";
 
 export default [{
   method: "GET",
