@@ -1,19 +1,19 @@
 import * as Joi from "joi";
-import { error, getRandomCodeNumber, handleValidationError, output } from '../utils';
+import { error, getRandomCodeNumber, handleValidationError, output } from "../utils";
 import { isMediaExists } from "../utils/storageService";
 import { Errors } from "../utils/errors";
-import { addSendSmsJob } from '../jobs/sendSms';
+import { addSendSmsJob } from "../jobs/sendSms";
 import {
   getDefaultAdditionalInfo,
-  User,
-  UserRole,
-  UserStatus,
   Media,
   SkillFilter,
+  User,
+  UserRole,
+  UserStatus
 } from "@workquest/database-models/lib/models";
 import {
   userAdditionalInfoEmployerSchema,
-  userAdditionalInfoWorkerSchema,
+  userAdditionalInfoWorkerSchema
 } from "@workquest/database-models/lib/schemes";
 import { transformToGeoPostGIS } from "@workquest/database-models/lib/utils/quest";
 
@@ -157,4 +157,98 @@ export async function sendCodeOnPhoneNumber(r) {
   });
 
   return output();
+}
+
+export async function editEmployerProfile(r) {
+  if(r.auth.credentials.role !== UserRole.Employer){
+    return error(Errors.InvalidRole, 'Wrong role', {})
+  }
+  const additionalInfoSchema = getAdditionalInfoSchema(UserRole.Employer);
+  const validateAdditionalInfo = additionalInfoSchema.validate(r.payload.additionalInfo);
+
+  if (validateAdditionalInfo.error) {
+    return await handleValidationError(r, null, validateAdditionalInfo.error);
+  }
+  if (r.payload.avatarId) {
+    const media = await Media.findByPk(r.payload.avatarId);
+
+    if (!media) {
+      return error(Errors.NotFound, 'Media is not found', {
+        avatarId: r.payload.avatarId
+      });
+    }
+    if (!await isMediaExists(media)) {
+      return error(Errors.NotFound, 'Media is not exists', {
+        avatarId: r.payload.avatarId
+      });
+    }
+  }
+
+  const transaction = await r.server.app.db.transaction();
+  const userFieldsUpdate = {
+    ...r.payload,
+    locationPostGIS: r.payload.location ? transformToGeoPostGIS(r.payload.location) : null,
+  };
+
+  await User.update(userFieldsUpdate, { where: {id: r.auth.credentials.id }, transaction });
+  await SkillFilter.destroy({ where: { userId: r.auth.credentials.id }, transaction });
+
+  if (r.payload.skillFilters) {
+    const userSkillFilters = SkillFilter.toRawUserSkills(r.payload.skillFilters, r.auth.credentials.id);
+
+    await SkillFilter.bulkCreate(userSkillFilters, { transaction });
+  }
+
+  await transaction.commit();
+
+  return output(
+    await User.findByPk(r.auth.credentials.id)
+  );
+}
+
+export async function editWorkerProfile(r) {
+  if(r.auth.credentials.role !== UserRole.Worker){
+    return error(Errors.InvalidRole, 'Wrong role', {})
+  }
+  const additionalInfoSchema = getAdditionalInfoSchema(UserRole.Worker);
+  const validateAdditionalInfo = additionalInfoSchema.validate(r.payload.additionalInfo);
+
+  if (validateAdditionalInfo.error) {
+    return await handleValidationError(r, null, validateAdditionalInfo.error);
+  }
+  if (r.payload.avatarId) {
+    const media = await Media.findByPk(r.payload.avatarId);
+
+    if (!media) {
+      return error(Errors.NotFound, 'Media is not found', {
+        avatarId: r.payload.avatarId
+      });
+    }
+    if (!await isMediaExists(media)) {
+      return error(Errors.NotFound, 'Media is not exists', {
+        avatarId: r.payload.avatarId
+      });
+    }
+  }
+
+  const transaction = await r.server.app.db.transaction();
+  const userFieldsUpdate = {
+    ...r.payload,
+    locationPostGIS: r.payload.location ? transformToGeoPostGIS(r.payload.location) : null,
+  };
+
+  await User.update(userFieldsUpdate, { where: {id: r.auth.credentials.id }, transaction });
+  await SkillFilter.destroy({ where: { userId: r.auth.credentials.id }, transaction });
+
+  if (r.payload.skillFilters) {
+    const userSkillFilters = SkillFilter.toRawUserSkills(r.payload.skillFilters, r.auth.credentials.id);
+
+    await SkillFilter.bulkCreate(userSkillFilters, { transaction });
+  }
+
+  await transaction.commit();
+
+  return output(
+    await User.findByPk(r.auth.credentials.id)
+  );
 }

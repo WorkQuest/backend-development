@@ -1,8 +1,8 @@
 import * as Joi from "joi";
 import {
   changePassword,
-  confirmPhoneNumber,
-  editProfile,
+  confirmPhoneNumber, editEmployerProfile,
+  editProfile, editWorkerProfile,
   getMe, getUser,
   sendCodeOnPhoneNumber,
   setRole
@@ -144,6 +144,50 @@ export default [{
     },
     response: {
       schema: outputOkSchema(userSchema).label("GetUserResponse")
+    }
+  }
+}, {
+    method: "PUT",
+    path: "/v1/profile/employer/edit",
+    handler: editEmployerProfile,
+    options: {
+      id: "v1.employer.profile.edit",
+      tags: ["api", "profile"],
+      description: "Edit employer profile information",
+      validate: {
+        payload: Joi.object({
+          avatarId: idSchema.allow(null).required(),
+          firstName: userFirstNameSchema.required(),
+          lastName: userLastNameSchema.required(),
+          location: locationSchema.allow(null).required(),
+          skillFilters: skillFilterSchema.allow(null).required(),
+          additionalInfo: userAdditionalInfoEmployerSchema.options({ presence: "required" })
+        }).label("EditEmployerProfilePayload")
+      },
+      response: {
+        schema: outputOkSchema(userSchema).label("UserResponse")
+      }
+    }
+  }, {
+  method: "PUT",
+  path: "/v1/profile/worker/edit",
+  handler: editWorkerProfile,
+  options: {
+    id: "v1.worker.profile.edit",
+    tags: ["api", "profile"],
+    description: "Edit worker profile information",
+    validate: {
+      payload: Joi.object({
+        avatarId: idSchema.allow(null).required(),
+        firstName: userFirstNameSchema.required(),
+        lastName: userLastNameSchema.required(),
+        location: locationSchema.allow(null).required(),
+        skillFilters: skillFilterSchema.allow(null).required(),
+        additionalInfo: userAdditionalInfoWorkerSchema.options({ presence: "required" })
+      }).label("EditWorkerProfilePayload")
+    },
+    response: {
+      schema: outputOkSchema(userSchema).label("UserResponse")
     }
   }
 }];
