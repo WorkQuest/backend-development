@@ -1,15 +1,15 @@
-import { ChainId, Token, TokenAmount, Pair } from "@pancakeswap/sdk";
-import axios from "axios";
-import config from "../config/config";
-import { error, output } from "../utils";
-import { Errors } from "../utils/errors";
+import { ChainId, Token, TokenAmount, Pair } from '@pancakeswap/sdk';
+import axios from 'axios';
+import config from '../config/config';
+import { error, output } from '../utils';
+import { Errors } from '../utils/errors';
 
 const WQT = new Token(
   ChainId.MAINNET,
   config.token.WQT.address,
   config.token.WQT.decimals,
   config.token.WQT.symbol,
-  config.token.WQT.name,
+  config.token.WQT.name
 );
 
 const WBNB = new Token(
@@ -29,7 +29,7 @@ const { url, params, query } = {
   url: 'https://bsc.streamingfast.io/subgraphs/name/pancakeswap/exchange-v2',
   params: `orderBy: timestamp, orderDirection: desc, where: { pair: "${pair.liquidityToken.address.toLowerCase()}" }`,
   query: `transaction { id timestamp }`
-}
+};
 
 
 export async function getSwaps(r) {
@@ -61,7 +61,7 @@ export async function getMints(r) {
   try {
     const result = await axios({
       url: url,
-      method: "POST",
+      method: 'POST',
       data: {
         query: `{ 
           mints(first:${r.query.limit}, skip:${r.query.offset}, ${params}) {
@@ -86,7 +86,7 @@ export async function getBurns(r) {
   try {
     const result = await axios({
       url: url,
-      method: "POST",
+      method: 'POST',
       data: {
         query: `{ 
           burns(first:${r.query.limit}, skip:${r.query.offset}, ${params}) {
@@ -111,14 +111,14 @@ export async function getTokenDayData(r) {
   try {
     const result = await axios({
       url: url,
-      method: "POST",
+      method: 'POST',
       data: {
         query: `{ 
-        tokenDayDatas(first:${r.query.limit}, skip:${r.query.offset},orderBy: date, orderDirection: desc,
-        where: {
-          token: "${WQT.address.toLowerCase()}"
-          }) { id date priceUSD totalLiquidityToken totalLiquidityUSD totalLiquidityBNB
-            dailyVolumeBNB dailyVolumeToken dailyVolumeUSD
+          pairDayDatas (first: ${r.query.limit}, skip: ${r.query.offset},
+          orderBy:date, orderDirection: asc,
+          where: {pairAddress: "${pair.liquidityToken.address.toLowerCase()}"})
+        { date reserve0 reserve1 totalSupply reserveUSD dailyVolumeToken0
+          dailyVolumeToken1 dailyVolumeUSD dailyTxns
         }
       }`
       }
@@ -128,7 +128,7 @@ export async function getTokenDayData(r) {
       return error(Errors.LiquidityError, 'Query error', result.data.errors);
     }
 
-    return output(result.data.data.tokenDayDatas);
+    return output(result.data.data.pairDayDatas);
   } catch (err) {
     return error(Errors.LiquidityError, err.response.statusText, err.response.data);
   }

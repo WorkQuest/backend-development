@@ -67,6 +67,7 @@ export default [{
   path: "/v1/pool-liquidity/wqt-wbnb/tokenDay",
   handler: getTokenDayData,
   options: {
+    auth: false,
     id: "v1.liquidity.wqt-wbnb.getTokenDayData",
     tags: ["api", "pool-liquidity"],
     description: "Get daily information for DAI",
