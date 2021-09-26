@@ -42,7 +42,7 @@ export async function getSwapsTake({ query }: RequestOrig): Promise<object> {
       amount: e.amount.toString(),
       chainTo: e.chainTo,
       chainFrom: e.chainFrom,
-      token: e.token,
+      symbol: e.token,
       createdAt: e.createdAt,
       signData: []
     };

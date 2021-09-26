@@ -23,7 +23,7 @@ export interface swapInitializedReadInterface extends BlockTransactionInterface 
 
 export default async (swapInitializedData: swapInitializedReadInterface) => {
     try {
-        console.log(swapInitializedData);
+        console.log(swapInitializedData, 'swapInitializedData');
         const messageHash = await processMessageHashCreator(swapInitializedData)
         const model: SwapInterface = {
             timestamp: swapInitializedData.timestamp,
@@ -39,7 +39,7 @@ export default async (swapInitializedData: swapInitializedReadInterface) => {
             nonce: +swapInitializedData.nonce,
             messageHash: messageHash
         };
-        console.log(model);
+        console.log(model, 'model');
         try {
             await SwapData.create(model);
         } catch (err) {
