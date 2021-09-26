@@ -122,6 +122,12 @@ export const WQBridge: AbiItem[] = [
         "internalType": "uint256",
         "name": "nonce",
         "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "symbol",
+        "type": "string"
       }
     ],
     "name": "SwapInitialized",
@@ -171,6 +177,12 @@ export const WQBridge: AbiItem[] = [
         "internalType": "uint256",
         "name": "nonce",
         "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "symbol",
+        "type": "string"
       }
     ],
     "name": "SwapRedeemed",
