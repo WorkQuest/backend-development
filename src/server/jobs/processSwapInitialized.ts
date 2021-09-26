@@ -1,7 +1,14 @@
 import { SwapData } from "@workquest/database-models/lib/models";
-import {BlockTransactionInterface,} from "../listeners/interfaces";
 import {UInt} from "../listeners/misc";
 import processMessageHashCreator from "./processMessageHashCreator";
+
+
+export interface BlockTransactionInterface {
+    readonly blockNumber: number,
+    readonly transactionHash: string,
+    readonly signature: string,
+}
+
 
 export interface swapInitializedReadInterface extends BlockTransactionInterface {
     readonly timestamp: string
@@ -11,11 +18,12 @@ export interface swapInitializedReadInterface extends BlockTransactionInterface 
     readonly chainFrom: string
     readonly chainTo: string
     readonly nonce: string
-    readonly token: string
+    readonly symbol: string
 }
 
 export default async (swapInitializedData: swapInitializedReadInterface) => {
     try {
+        console.log(swapInitializedData);
         const messageHash = await processMessageHashCreator(swapInitializedData)
         const model: SwapInterface = {
             timestamp: swapInitializedData.timestamp,
@@ -25,12 +33,13 @@ export default async (swapInitializedData: swapInitializedReadInterface) => {
             amount: +swapInitializedData.amount,
             chainTo: +swapInitializedData.chainTo,
             chainFrom: +swapInitializedData.chainFrom,
-            token: swapInitializedData.token,
+            token: swapInitializedData.symbol,
             transactionHash: swapInitializedData.transactionHash,
             blockNumber: +swapInitializedData.blockNumber,
             nonce: +swapInitializedData.nonce,
             messageHash: messageHash
         };
+        console.log(model);
         try {
             await SwapData.create(model);
         } catch (err) {

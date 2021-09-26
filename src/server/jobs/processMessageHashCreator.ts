@@ -6,7 +6,7 @@ export interface messageHashCreatorInterface {
   readonly recipient: string
   readonly sender: string
   readonly nonce: string
-  readonly token: string
+  readonly symbol: string
   readonly amount: string
   readonly chainFrom: string
   readonly chainTo: string
@@ -21,7 +21,7 @@ export default async (messageHashCreatorData: messageHashCreatorInterface):Promi
     signData.push(messageHashCreatorData.sender)
     signData.push(messageHashCreatorData.chainFrom)
     signData.push(messageHashCreatorData.chainTo)
-    signData.push(messageHashCreatorData.token)
+    signData.push(messageHashCreatorData.symbol)
     const web3 = new Web3(wsProviders.bsc);
     let {messageHash} = await web3.eth.accounts.sign(web3.utils.soliditySha3(...signData), metaMaskKey)
     return messageHash
