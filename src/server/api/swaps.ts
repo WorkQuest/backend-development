@@ -52,7 +52,7 @@ export async function getSwapsTake({ query }: RequestOrig): Promise<object> {
     signArr.push(e.recipient);
     signArr.push(e.chainFrom);
     signArr.push(e.chainTo);
-    // signArr.push(e.token);
+    signArr.push(e.token);
     obj.signData.push(e.nonce.toString());
     obj.signData.push(e.chainFrom.toString());
     obj.signData.push(toFixed(e.amount).toString());
@@ -62,7 +62,7 @@ export async function getSwapsTake({ query }: RequestOrig): Promise<object> {
     obj.signData.push(res.v.toString());
     obj.signData.push(res.r.toString());
     obj.signData.push(res.s.toString());
-    // obj.signData.push(e.token.toString());
+    obj.signData.push(e.token.toString());
     swaps.push(obj);
   }
 
