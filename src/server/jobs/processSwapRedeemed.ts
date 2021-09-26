@@ -1,4 +1,4 @@
-import {BlockTransactionInterface,} from "../listeners/interfaces";
+import {BlockTransactionInterface,} from "./processSwapInitialized";
 import processMessageHashCreator from "./processMessageHashCreator";
 import { SwapData } from "@workquest/database-models/lib/models";
 
@@ -11,7 +11,7 @@ export interface swapRedeemedReadInterface extends BlockTransactionInterface {
     readonly chainFrom: string
     readonly chainTo: string
     readonly nonce: string
-    readonly token: string
+    readonly symbol: string
 }
 
 export default async (swapRedeemedData: swapRedeemedReadInterface) => {
