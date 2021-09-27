@@ -1,6 +1,7 @@
 import { addJob } from "../utils/scheduler";
 import { RatingStatistic, Review, User, UserRole, Quest } from "@workquest/database-models/lib/models";
 import { col, fn } from "sequelize"
+import { array } from "joi";
 export interface StatisticPayload {
   userId: string,
 }
@@ -9,17 +10,27 @@ export async function addUpdateReviewStatisticsJob(payload: StatisticPayload) {
   return addJob("updateReviewStatistics", payload);
 }
 
-// async function setRatingStatus(questCounter: number, userId: string): Promise<{ isStatus: boolean, status?: string }>  {
-//   if(questCounter >= 10) {
-//     const user = await User.findByPk(userId);
-//     for(let f in user.additionalInfo) {
-//       if(!user.additionalInfo[f]) return {isStatus: false}
-//
-//     }
-//   }else {
-//     return {isStatus: false}
-//   }
-// }
+async function setRatingStatus(questCounter: number, userId: string): Promise<{ isStatus: boolean, status?: string }>  {
+  const minQuestsForVerifiedLevel = 10;
+  if(questCounter >= minQuestsForVerifiedLevel) {
+     const user = await User.findByPk(userId);
+    // for(let [key, value] of Object.entries(user.additionalInfo)) {
+    //   if(value){
+    //     if(Object.keys(value).length){
+    //       value.map(a => console.log(a) )
+    //     }
+    //   }
+    // }
+    Object.keys(user.additionalInfo).map(function(key, index) {
+      if(!user.additionalInfo[key]) {
+        console.log(key)
+      }
+    });
+
+  }else {
+    return {isStatus: false}
+  }
+}
 
 export default async function(payload: StatisticPayload) {
   const [ratingStatistic] = await RatingStatistic.findOrCreate({
@@ -54,6 +65,8 @@ export default async function(payload: StatisticPayload) {
       }
     });
   }
+
+  const a = await setRatingStatus(30, payload.userId)
 
   await ratingStatistic.update({
     averageMark: averageMarkResult.getDataValue('avgMark'),
