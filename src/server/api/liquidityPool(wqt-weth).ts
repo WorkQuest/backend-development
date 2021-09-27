@@ -104,7 +104,7 @@ export async function getTokenDayData(r) {
       return error(Errors.LiquidityError, 'Query error', result.data.errors);
     }
 
-    return output(result.data.data.tokenDayDatas);
+    return output(result.data.data.pairDayDatas);
   } catch (err) {
     return error(Errors.LiquidityError, err.response.statusText, err.response.data);
   }
