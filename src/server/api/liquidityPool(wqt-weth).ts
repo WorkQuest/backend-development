@@ -17,34 +17,26 @@ const WETH = new Token(
   config.token.WETH.address,
   config.token.WETH.decimals,
   config.token.WETH.symbol,
-  config.token.WETH.name
+  config.token.WETH.name,
 );
 
 const pair = new Pair(
   new TokenAmount(WQT, config.token.WQT.amountMax),
-  new TokenAmount(WETH, config.token.WETH.amountMax)
+  new TokenAmount(WETH, config.token.WETH.amountMax),
 );
 
-const { url, params, query } = {
-  url: 'https://api.thegraph.com/subgraphs/name/uniswap/uniswap-v2',
-  params: `orderBy: timestamp, orderDirection: desc, where: { pair: "${pair.liquidityToken.address.toLowerCase()}" }`,
-  query: `transaction { id timestamp } pair { txCount }`
-}
-
+const api = axios.create({
+  baseURL: 'https://api.thegraph.com/subgraphs/name/uniswap/uniswap-v2'
+});
 
 export async function getSwaps(r) {
   try {
-    const result = await axios({
-      url: url,
-      method: 'POST',
-      data: {
-        query: `{ 
-          swaps(first:${r.query.limit}, skip:${r.query.offset}, ${params} ) {
-            ${query}
-            amount0In amount0Out amount1In amount1Out amountUSD to
-          }
-        }`
-      }
+    const result = await api.post('', {
+      query: `{
+        swaps(first:${r.query.limit}, skip:${r.query.offset}, orderBy: timestamp, orderDirection: desc, 
+        where: { pair: "${pair.liquidityToken.address.toLowerCase()}" } ) 
+        { transaction { id timestamp } pair { txCount }
+        amount0In amount0Out amount1In amount1Out amountUSD to } }`
     });
 
     if (result.data.errors) {
@@ -59,17 +51,11 @@ export async function getSwaps(r) {
 
 export async function getMints(r) {
   try {
-    const result = await axios({
-      url: url,
-      method: "POST",
-      data: {
-        query: `{ 
-          mints(first:${r.query.limit}, skip:${r.query.offset}, ${params}) {
-            ${query}
-            to liquidity amount0 amount1 amountUSD
-          }
-        }`
-      }
+    const result = await api.post('', {query: `{ 
+      mints(first:${r.query.limit}, skip:${r.query.offset}, orderBy: timestamp, orderDirection: desc, 
+      where: { pair: "${pair.liquidityToken.address.toLowerCase()}" }) 
+      { transaction { id timestamp } pair { txCount}
+      to liquidity amount0 amount1 amountUSD } }`
     });
 
     if (result.data.errors) {
@@ -84,17 +70,12 @@ export async function getMints(r) {
 
 export async function getBurns(r) {
   try {
-    const result = await axios({
-      url: url,
-      method: "POST",
-      data: {
-        query: `{ 
-          burns(first:${r.query.limit}, skip:${r.query.offset}, ${params}) {
-            ${query}
-            to liquidity amount0 amount1 amountUSD
-          }
-        }`
-      }
+    const result = await api.post('', {
+      query: `{ 
+        burns(first:${r.query.limit}, skip:${r.query.offset}, orderBy: timestamp, orderDirection: desc, 
+        where: { pair: "${pair.liquidityToken.address.toLowerCase()}" }) 
+        { transaction { id timestamp } pair { txCount }
+        to liquidity amount0 amount1 amountUSD } }`
     });
 
     if (result.data.errors) {
@@ -109,26 +90,21 @@ export async function getBurns(r) {
 
 export async function getTokenDayData(r) {
   try {
-    const result = await axios({
-    url: url,
-    method: "POST",
-    data: {
+    const result = await api.post('', {
       query: `{ 
         pairDayDatas (first: ${r.query.limit}, skip: ${r.query.offset},
-        orderBy:date, orderDirection: asc,
+        orderBy:date, orderDirection: desc,
         where: {pairAddress: "${pair.liquidityToken.address.toLowerCase()}"})
         { date reserve0 reserve1 totalSupply reserveUSD dailyVolumeToken0
           dailyVolumeToken1 dailyVolumeUSD dailyTxns 
-        }
-      }`
-    }
-  });
+        }}`
+    });
 
     if (result.data.errors) {
       return error(Errors.LiquidityError, 'Query error', result.data.errors);
     }
 
-    return output(result.data.data.pairDayDatas);
+    return output(result.data.data.tokenDayDatas);
   } catch (err) {
     return error(Errors.LiquidityError, err.response.statusText, err.response.data);
   }
