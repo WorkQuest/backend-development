@@ -31,7 +31,8 @@ const api = axios.create({
 
 export async function getSwaps(r) {
   try {
-    const result = await api.post('', {query: `{
+    const result = await api.post('', {
+      query: `{
         swaps(first:${r.query.limit}, skip:${r.query.offset}, orderBy: timestamp, orderDirection: desc, 
         where: { pair: "${pair.liquidityToken.address.toLowerCase()}" }) 
         { transaction { id timestamp } 
@@ -50,7 +51,8 @@ export async function getSwaps(r) {
 
 export async function getMints(r) {
   try {
-    const result = await api.post('', {query: `{ 
+    const result = await api.post('', {
+      query: `{ 
         mints(first:${r.query.limit}, skip:${r.query.offset}, orderBy: timestamp, orderDirection: desc, 
         where: { pair: "${pair.liquidityToken.address.toLowerCase()}" }) {
         transaction { id timestamp } 
@@ -69,7 +71,8 @@ export async function getMints(r) {
 
 export async function getBurns(r) {
   try {
-    const result = await api.post('', {query: `{
+    const result = await api.post('', {
+      query: `{
         burns(first:${r.query.limit}, skip:${r.query.offset}, orderBy: timestamp, orderDirection: desc,
         where: { pair: "${pair.liquidityToken.address.toLowerCase()}" })
         { transaction { id timestamp }
@@ -88,15 +91,14 @@ export async function getBurns(r) {
 
 export async function getTokenDayData(r) {
   try {
-    const result = await api.post('', {query:
-        `{ 
+    const result = await api.post('', {
+      query: `{ 
         pairDayDatas (first: ${r.query.limit}, skip: ${r.query.offset},
         orderBy:date, orderDirection: desc,
         where: {pairAddress: "${pair.liquidityToken.address.toLowerCase()}"})
         { date reserve0 reserve1 totalSupply reserveUSD dailyVolumeToken0
           dailyVolumeToken1 dailyVolumeUSD dailyTxns 
-        }
-          }`
+        }}`
     });
 
     if (result.data.errors) {
