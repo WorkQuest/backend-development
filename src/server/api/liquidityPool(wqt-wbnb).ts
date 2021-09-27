@@ -85,12 +85,15 @@ export async function getBurns(r) {
 
 export async function getTokenDayData(r) {
   try {
-    const result = await api.post('', {query: `pairDayDatas (first: ${r.query.limit}, skip: ${r.query.offset},
+    const result = await api.post('', {query:
+        `{ 
+        pairDayDatas (first: ${r.query.limit}, skip: ${r.query.offset},
         orderBy:date, orderDirection: asc,
         where: {pairAddress: "${pair.liquidityToken.address.toLowerCase()}"})
         { date reserve0 reserve1 totalSupply reserveUSD dailyVolumeToken0
           dailyVolumeToken1 dailyVolumeUSD dailyTxns 
-        }`
+        }
+          }`
     });
 
     if (result.data.errors) {
