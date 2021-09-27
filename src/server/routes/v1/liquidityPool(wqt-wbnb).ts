@@ -13,6 +13,7 @@ export default [{
   path: "/v1/pool-liquidity/wqt-wbnb/swaps",
   handler: getSwaps,
   options: {
+    auth: false,
     id: "v1.liquidity.wqt-wbnb.getSwaps",
     tags: ["api", "pool-liquidity"],
     description: "Get swaps on a pair by fetching Swap events",
@@ -31,6 +32,7 @@ export default [{
   path: "/v1/pool-liquidity/wqt-wbnb/mints",
   handler: getMints,
   options: {
+    auth: false,
     id: "v1.liquidity.wqt-wbnb.getMints",
     tags: ["api", "pool-liquidity"],
     description: "Get mints on a pair by fetching Mints events",
@@ -49,6 +51,7 @@ export default [{
   path: "/v1/pool-liquidity/wqt-wbnb/burns",
   handler: getBurns,
   options: {
+    auth: false,
     id: "v1.liquidity.wqt-wbnb.getSBurns",
     tags: ["api", "pool-liquidity"],
     description: "Get burns on a pair by fetching Burns events",
@@ -67,6 +70,7 @@ export default [{
   path: "/v1/pool-liquidity/wqt-wbnb/tokenDay",
   handler: getTokenDayData,
   options: {
+    auth: false,
     id: "v1.liquidity.wqt-wbnb.getTokenDayData",
     tags: ["api", "pool-liquidity"],
     description: "Get daily information for DAI",

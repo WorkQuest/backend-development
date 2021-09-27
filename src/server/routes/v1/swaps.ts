@@ -9,9 +9,9 @@ export default [
         path: '/v1/swaps/take',
         handler: getSwapsTake,
         options: {
+            auth: false,
             id: 'v1.swaps.take',
             tags: ['api', 'v1', 'swaps'],
-            auth: false,
             validate: {
                 query: Joi.object({
                     ...paginationFields,
