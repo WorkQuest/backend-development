@@ -2,6 +2,8 @@ import { networks } from "../config/constant";
 import { getBlockNumber } from "./core";
 import {Contract, EventData,} from 'web3-eth-contract';
 import BigNumber from 'bignumber.js';
+import { Server } from '@hapi/hapi';
+import { getSwapsTake } from '../api/swaps';
 
 /** Types */
 export type UInt = number | BigNumber;
@@ -30,6 +32,14 @@ export const normalizeEventData = (data: EventData, isEntity = true): object => 
 
   return dataQuery;
 };
+
+export const wsSendSwaps = async (server: Server, recipient: string, isWs) => {
+  if (isWs) {
+    const channel = `/bridge/swaps/${recipient}`.toUpperCase()
+    const {count, swaps} = await getSwapsTake(recipient, 100, 0)
+    server.publish(channel, {count, swaps})
+  }
+}
 
 export const parseEvents = async (payload: ParseEventsInterface): Promise<void> => {
   if (payload.network === networks.bsc || payload.network === networks.eth) {

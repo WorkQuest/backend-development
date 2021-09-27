@@ -14,9 +14,8 @@ export interface QueryPaginationInterface {
     offset: number,
 }
 
-export async function getSwapsTake({ query }: RequestOrig): Promise<object> {
-  const { recipient } = <QuerySwapsTakeInterface>query;
-  const { limit, offset } = <QueryPaginationInterface>query;
+export async function getSwapsTake(recipient: string, limit = 10, offset = 0)
+  : Promise<{ count: number; swaps: Array<any> }> {
   const swaps = [];
   const { count, rows } = await SwapData.findAndCountAll({
     limit,
@@ -65,7 +64,7 @@ export async function getSwapsTake({ query }: RequestOrig): Promise<object> {
     swaps.push(obj);
   }
 
-  return output({ count, swaps });
+  return { count, swaps };
 }
 
 function toFixed(x) {

@@ -21,6 +21,8 @@ import { run } from "graphile-worker";
 import { networks } from "./config/constant";
 import { listenerBridge } from "./listeners";
 import { initWeb3 } from "./listeners/core";
+import { filter } from 'bluebird';
+import { getSwapsTake } from './api/swaps';
 
 const HapiSwagger = require("hapi-swagger");
 const Package = require("../../package.json");
@@ -147,13 +149,13 @@ const init = async () => {
     await server.start();
     server.log('info', `Server running at: ${server.info.uri}`);
 
-    // if (!process.env.LOCAL){
-      // Start contract listeners
-      console.log('\x1b[32m%s\x1b[0m', 'Contract listeners Bridge bsc start!');
-      await listenerBridge(server, networks.bsc)
-      console.log('\x1b[32m%s\x1b[0m', 'Contract listeners Bridge eth start!');
-      await listenerBridge(server, networks.eth)
-    // }
+    server.subscription('/bridge/swaps/{recipient}')
+
+    console.log('\x1b[32m%s\x1b[0m', 'Contract listeners Bridge bsc start!');
+    await listenerBridge(server, networks.bsc)
+    console.log('\x1b[32m%s\x1b[0m', 'Contract listeners Bridge eth start!');
+    await listenerBridge(server, networks.eth)
+
   } catch (err) {
     server.log('error', JSON.stringify(err));
   }
