@@ -26,8 +26,7 @@ export async function getSwapsTake({ query }: RequestOrig): Promise<object> {
     ],
     where:
       {
-        recipient: recipient.toLowerCase(),
-        active: true
+        recipient: recipient.toLowerCase()
       }
   });
   for (const e of rows) {
