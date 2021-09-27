@@ -13,7 +13,7 @@ import {
   StarredQuests,
   SkillFilter,
 } from "@workquest/database-models/lib/models";
-import { locationForValidateSchema, } from "@workquest/database-models/lib/schemes";
+import { locationForValidateSchema } from "@workquest/database-models/lib/schemes";
 import { transformToGeoPostGIS } from "@workquest/database-models/lib/utils/quest"
 
 export const searchFields = [
@@ -323,36 +323,32 @@ export async function getQuests(r) {
     });
   }
   if (r.payload.skillFilters) {
-    let categorySkills = SkillFilter.toRawSkillsForFilter(r.payload.skillFilters);
-    let categories = categorySkills.map(counter => counter.category);
-    let skills = categorySkills.map(counter => counter.skill);
+    const { categories, skills } = SkillFilter.splitByFields(r.payload.skillFilters);
 
     include.push({
       model: SkillFilter,
       as: 'filterBySkillFilter',
       attributes: [],
       where: {
-        category: { [Op.in]: categories, },
-        skill: { [Op.in]: skills, }
+        category: { [Op.in]: categories },
+        skill: { [Op.in]: skills },
       }
     });
   }
-
 
   include.push({
     model: StarredQuests,
     as: "star",
     where: { userId: r.auth.credentials.id },
     required: r.query.starred,
-  });
-  include.push({
+  }, {
     model: QuestsResponse,
     as: "response",
     where: { workerId: r.auth.credentials.id },
     required: false
   });
 
-  if(r.query.sort){
+  if (r.query.sort) {
     for (const [key, value] of Object.entries(r.query.sort)) {
       order.push([key, value]);
     }
@@ -363,7 +359,7 @@ export async function getQuests(r) {
     offset: r.query.offset,
     include, order, where,
     replacements: {
-      ...(r.payload.location.north && r.payload.location.south && {
+      ...(r.payload.location && {
         northLng: r.payload.location.north.longitude,
         northLat: r.payload.location.north.latitude,
         southLng: r.payload.location.south.longitude,
