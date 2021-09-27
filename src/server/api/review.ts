@@ -10,8 +10,8 @@ import {
 
 
 export async function sendReview(r) {
-  const fromUser = r.auth.credentials;
-  const quest = await Quest.findByPk(r.payload.questId);
+   const fromUser = r.auth.credentials;
+   const quest = await Quest.findByPk(r.payload.questId);
 
   if (!quest) {
     return error(Errors.NotFound, "Quest not found", {});
@@ -33,8 +33,9 @@ export async function sendReview(r) {
   });
 
   await addUpdateReviewStatisticsJob({
-    ratingStatisticId: toUser.ratingStatistic.id
+    userId: toUser.id,
   });
+
 
   return output(review);
 }
