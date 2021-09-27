@@ -86,7 +86,7 @@ export default {
       decimals: parseInt(process.env.WQT_DECIMAL_TOKEN),
       symbol: process.env.WQT_SYMBOL_TOKEN,
       name: process.env.WQT_NAME_TOKEN,
-      amountMax:process.env.WQT_AMOUNT_MAX,
+      amountMax: process.env.WQT_AMOUNT_MAX,
     },
     WETH: {
       address: process.env.WETH_ADDRESS_TOKEN,
@@ -106,10 +106,25 @@ export default {
   baseUrl: process.env.BASE_URL,
   debug: process.env.DEBUG === "true",
   contracts: {
-    wqtBridgeRinkeby: process.env.WQT_BRIDGE_CONTRACT_RINKEBY,
-    wqtBridgeBsctestnet: process.env.WQT_BRIDGE_CONTRACT_BSCTESTNET,
-    wqtProviderRinkeby:process.env.WQT_PROVIDER_RINKEBY,
-    wqtProviderBsctestnet: process.env.WQT_PROVIDER_BSCTESTNET,
-    wqtPrivateKey: process.env.WQT_PRIVATE_KEY,
+    testnetRinkeby: {
+      hash: '',
+      provider: '',
+    },
+    testnetBinance: {
+      hash: '',
+      provider: '',
+    },
+    privateKey: process.env.WQT_PRIVATE_KEY,
   }
+
+
+  // contracts: {
+  //   wqtBridgeRinkeby: process.env.WQT_BRIDGE_CONTRACT_RINKEBY,
+  //   wqtBridgeBsctestnet: process.env.WQT_BRIDGE_CONTRACT_BSCTESTNET,
+
+  //   wqtProviderRinkeby:process.env.WQT_PROVIDER_RINKEBY,
+  //   wqtProviderBsctestnet: process.env.WQT_PROVIDER_BSCTESTNET,
+
+  //   wqtPrivateKey: process.env.WQT_PRIVATE_KEY,
+  // }
 };

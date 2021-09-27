@@ -8,14 +8,14 @@ import * as HapiCors from "hapi-cors";
 import * as HapiBearer from "hapi-auth-bearer-token";
 import * as HapiPulse from "hapi-pulse";
 import * as Bell from "@hapi/bell";
-import { initDatabase } from "@workquest/database-models/lib/models";
+import * as Qs from "qs";
 import routes from "./routes";
 import config from "./config/config";
-import * as Qs from "qs";
+import SwaggerOptions from "./config/swagger";
+import { initDatabase } from "@workquest/database-models/lib/models";
 import { handleValidationError, responseHandler } from "./utils";
 import { chatNotificationsFilter } from "./utils/chatSubscription";
 import { tokenValidate } from "./utils/auth";
-import SwaggerOptions from "./config/swagger";
 import { pinoConfig } from "./config/pino";
 import { run } from "graphile-worker";
 import { networks } from "./config/constant";
@@ -122,8 +122,6 @@ const init = async () => {
 
   initAuthStrategiesOfSocialNetworks(server);
 
-  // Listeners networks
-  console.log('\x1b[32m%s\x1b[0m', 'Initialise web3 providers!');
   initWeb3();
 
   // Загружаем маршруты
