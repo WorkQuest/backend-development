@@ -29,18 +29,12 @@ const api = axios.create({
   baseURL: 'https://api.thegraph.com/subgraphs/name/uniswap/uniswap-v2'
 });
 
-// const { url, params, query } = {
-//   url: 'https://api.thegraph.com/subgraphs/name/uniswap/uniswap-v2',
-//   params: `orderBy: timestamp, orderDirection: desc, where: { pair: "${pair.liquidityToken.address.toLowerCase()}" }`,
-//   query: `transaction { id timestamp } pair { txCount }`
-// }
-
-
 export async function getSwaps(r) {
   try {
     const result = await api.post('', {query: `{
-        swaps(first:${r.query.limit}, skip:${r.query.offset}, ${`orderBy: timestamp, orderDirection: desc, 
-        where: { pair: "${pair.liquidityToken.address.toLowerCase()}" }`} ) { ${`transaction { id timestamp } pair { txCount }`}
+        swaps(first:${r.query.limit}, skip:${r.query.offset}, orderBy: timestamp, orderDirection: desc, 
+        where: { pair: "${pair.liquidityToken.address.toLowerCase()}" } ) 
+        { transaction { id timestamp } pair { txCount }
         amount0In amount0Out amount1In amount1Out amountUSD to } }`
     });
 
@@ -57,8 +51,9 @@ export async function getSwaps(r) {
 export async function getMints(r) {
   try {
     const result = await api.post('', {query: `{ 
-        mints(first:${r.query.limit}, skip:${r.query.offset}, ${`orderBy: timestamp, orderDirection: desc, 
-        where: { pair: "${pair.liquidityToken.address.toLowerCase()}" }`}) { ${`transaction { id timestamp } pair { txCount }`}
+        mints(first:${r.query.limit}, skip:${r.query.offset}, orderBy: timestamp, orderDirection: desc, 
+        where: { pair: "${pair.liquidityToken.address.toLowerCase()}" }) 
+        { transaction { id timestamp } pair { txCount}
         to liquidity amount0 amount1 amountUSD } }`
     });
 
@@ -76,7 +71,8 @@ export async function getBurns(r) {
   try {
     const result = await api.post('', {query: `{ 
           burns(first:${r.query.limit}, skip:${r.query.offset}, ${`orderBy: timestamp, orderDirection: desc, 
-          where: { pair: "${pair.liquidityToken.address.toLowerCase()}" }`}) { ${`transaction { id timestamp } pair { txCount }`}
+          where: { pair: "${pair.liquidityToken.address.toLowerCase()}" }`}) 
+          { transaction { id timestamp } pair { txCount }
           to liquidity amount0 amount1 amountUSD } }`
     });
 
@@ -94,7 +90,7 @@ export async function getTokenDayData(r) {
   try {
     const result = await api.post('', {query: `{ 
         pairDayDatas (first: ${r.query.limit}, skip: ${r.query.offset},
-        orderBy:date, orderDirection: asc,
+        orderBy:date, orderDirection: desc,
         where: {pairAddress: "${pair.liquidityToken.address.toLowerCase()}"})
         { date reserve0 reserve1 totalSupply reserveUSD dailyVolumeToken0
           dailyVolumeToken1 dailyVolumeUSD dailyTxns 
