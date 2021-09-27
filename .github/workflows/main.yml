@@ -157,12 +157,23 @@ jobs:
             WQT_SYMBOL_TOKEN=${{ secrets.WQT_SYMBOL_TOKEN }} \
             WQT_NAME_TOKEN=${{ secrets.WQT_NAME_TOKEN }} \
             WQT_AMOUNT_MAX=${{ secrets.WQT_AMOUNT_MAX }} \
+            WQT_BRIDGE_CONTRACT_RINKEBY=${{ secrets.WQT_BRIDGE_CONTRACT_RINKEBY }} \
+            WQT_BRIDGE_CONTRACT_BSCTESTNET=${{ secrets.WQT_BRIDGE_CONTRACT_BSCTESTNET }} \
+            WQT_PROVIDER_RINKEBY=${{ secrets.WQT_PROVIDER_RINKEBY }} \
+            WQT_PROVIDER_BSCTESTNET=${{ secrets.WQT_PROVIDER_BSCTESTNET }} \
+            WQT_PRIVATE_KEY=${{ secrets.WQT_PRIVATE_KEY }} \
 
             WETH_ADDRESS_TOKEN=${{ secrets.WETH_ADDRESS_TOKEN }} \
             WETH_DECIMAL_TOKEN=${{ secrets.WETH_DECIMAL_TOKEN }} \
             WETH_SYMBOL_TOKEN=${{ secrets.WETH_SYMBOL_TOKEN }} \
             WETH_NAME_TOKEN=${{ secrets.WETH_NAME_TOKEN }} \
             WETH_AMOUNT_MAX=${{ secrets.WETH_AMOUNT_MAX }} \
+
+            WBNB_ADDRESS_TOKEN=${{ secrets.WBNB_ADDRESS_TOKEN }} \
+            WBNB_DECIMAL_TOKEN=${{ secrets.WBNB_DECIMAL_TOKEN }} \
+            WBNB_SYMBOL_TOKEN=${{ secrets.WBNB_SYMBOL_TOKEN }} \
+            WBNB_NAME_TOKEN=${{ secrets.WBNB_NAME_TOKEN }} \
+            WBNB_AMOUNT_MAX=${{ secrets.WBNB_AMOUNT_MAX }} \
 
             DEBUG=${{ secrets.DEBUG }} \
             backend_bin=${{ secrets.backend_bin }} \

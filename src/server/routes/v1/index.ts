@@ -10,11 +10,13 @@ import restorePassword from './restorePassword';
 import portfolio from './portfolio';
 import totp from './totp';
 import chat from "./chat";
-import wqtWETH from "./liquidityPool(wqt-weth)";
-import wqtWBNB from "./liquidityPool(wqt-wbnb)";
-
+import swaps from "./swaps";
+import liquidityPoolWETH from "./liquidityPool(wqt-weth)";
+import liquidityPoolWBNB from "./liquidityPool(wqt-wbnb)";
 
 export default [
+  ...liquidityPoolWETH,
+  ...liquidityPoolWBNB,
   ...profile,
   ...auth,
   ...map,
@@ -27,6 +29,5 @@ export default [
   ...portfolio,
   ...totp,
   ...chat,
-  ...wqtWETH,
-  ...wqtWBNB,
+  ...swaps,
 ];
