@@ -35,9 +35,9 @@ export const normalizeEventData = (data: EventData, isEntity = true): object => 
 
 export const wsSendSwaps = async (server: Server, recipient: string, isWs) => {
   if (isWs) {
-    const channel = `/bridge/swaps/${recipient}`.toUpperCase()
-    const {count, swaps} = await getSwapsTake(recipient, 100, 0)
-    server.publish(channel, {count, swaps})
+    const { count, swaps } = await getSwapsTake(recipient, 100, 0);
+
+    server.publish(`/bridge/swaps/${recipient.toUpperCase()}`, { count, swaps });
   }
 }
 
