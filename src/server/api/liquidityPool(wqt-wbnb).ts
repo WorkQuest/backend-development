@@ -70,8 +70,8 @@ export async function getMints(r) {
 export async function getBurns(r) {
   try {
     const result = await api.post('', {query: `{
-        burns(first:${r.query.limit}, skip:${r.query.offset}, ${`orderBy: timestamp, orderDirection: desc,
-        where: { pair: "${pair.liquidityToken.address.toLowerCase()}" }`})
+        burns(first:${r.query.limit}, skip:${r.query.offset}, orderBy: timestamp, orderDirection: desc,
+        where: { pair: "${pair.liquidityToken.address.toLowerCase()}" })
         { transaction { id timestamp }
         to liquidity amount0 amount1 amountUSD } }`
     });
