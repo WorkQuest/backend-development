@@ -5,15 +5,23 @@ import Handlebars = require("handlebars");
 import { Op } from "sequelize";
 import config from "../config/config";
 import { Errors } from "../utils/errors";
-import { error, getDevice, getGeo, getRandomHexToken, getRealIp, output } from "../utils";
 import { addSendEmailJob } from "../jobs/sendEmail";
 import { generateJwt } from "../utils/auth";
-import { Session,
-	defaultUserSettings,
-	getDefaultAdditionalInfo,
+import {
+	error,
+	output,
+	getDevice,
+	getGeo,
+	getRandomHexToken,
+	getRealIp,
+} from "../utils";
+import {
 	User,
+	Session,
 	UserStatus,
-	RatingStatistic
+	RatingStatistic,
+	getDefaultAdditionalInfo,
+	defaultUserSettings,
 } from "@workquest/database-models/lib/models";
 
 const confirmTemplatePath = path.join(__dirname, "..", "..", "..", "templates", "confirmEmail.html");
@@ -85,7 +93,14 @@ export async function register(r) {
 		}
 	});
 
-	const session = await Session.create({ userId: user.id, invalidating: false, place: getGeo(r), ip: getRealIp(r), device: getDevice(r) });
+	const session = await Session.create({
+		userId: user.id,
+		invalidating: false,
+		place: getGeo(r),
+		ip: getRealIp(r),
+		device: getDevice(r),
+	});
+
 	const result = {
 		...generateJwt({ id: session.id }),
 		userStatus: user.status,
@@ -108,12 +123,13 @@ export function getLoginViaSocialNetworkHandler(returnType: "token" | "redirect"
 			invalidating: false,
 			place: getGeo(r),
 			ip: getRealIp(r),
-			device: getDevice(r)
+			device: getDevice(r),
 		});
 		const result = {
 			...generateJwt({ id: session.id }),
 			userStatus: user.status
 		};
+
 		if (returnType === "redirect") {
 			const qs = querystring.stringify(result);
 			return h.redirect(config.baseUrl + "/sign-in?" + qs);
@@ -150,25 +166,26 @@ export async function confirmEmail(r) {
 export async function login(r) {
 	const user = await User.scope("withPassword").findOne({
 		where: {
-			email: {
-				[Op.iLike]: r.payload.email
-			}
+			email: { [Op.iLike]: r.payload.email }
 		}
 	});
 
-	if (!user) return error(Errors.NotFound, "User not found", {});
-	if (!(await user.passwordCompare(r.payload.password))) return error(Errors.NotFound, "User not found", {});
+	if (!user) {
+		return error(Errors.NotFound, "User not found", {});
+	}
+	if (!(await user.passwordCompare(r.payload.password))) {
+		return error(Errors.NotFound, "User not found", {});
+	}
 	if (user.isTOTPEnabled()) {
 		user.validateTOTP(r.payload.totp);
 	}
-
 
 	const session = await Session.create({
 		userId: user.id,
 		invalidating: false,
 		place: getGeo(r),
 		ip: getRealIp(r),
-		device: getDevice(r)
+		device: getDevice(r),
 	});
 
 	const result = {
@@ -187,6 +204,7 @@ export async function refreshTokens(r) {
 		ip: getRealIp(r),
 		device: getDevice(r)
 	});
+
 	const result = {
 		...generateJwt({ id: newSession.id }),
 		userStatus: r.auth.credentials.status,
@@ -200,10 +218,8 @@ export async function logout(r) {
 		invalidating: true,
 		logoutAt: Date.now(),
 	}, {
-		where: {
-			id: r.auth.artifacts.sessionId
-		}
+		where: { id: r.auth.artifacts.sessionId	}
 	});
+
 	return output();
 }
-

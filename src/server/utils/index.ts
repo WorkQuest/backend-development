@@ -2,7 +2,7 @@ import { v4 as uuidv4 } from "uuid";
 import { Boom } from "@hapi/boom";
 import * as crypto from "crypto";
 import config from "../config/config";
-var geoip = require('geoip-lite');
+const geoip = require('geoip-lite');
 
 export function getUUID(): string {
   return uuidv4();
@@ -14,21 +14,21 @@ export function getRealIp(request): string {
     request.info.remoteAddress;
 }
 
-//DO NOT WORK WITH LOCAL IP
 export function getGeo(request) {
-  if (config.debug) {
+  if (config.server.host === 'localhost') {
     return {
       country: "localhost",
       city: "localhost",
     }
   }
-  let ip = getRealIp(request);
-  let geo = geoip.lookup(ip);
-  let place = {
+
+  const ip = getRealIp(request);
+  const geo = geoip.lookup(ip);
+
+  return {
     country: geo.country,
-    city: geo.city
+    city: geo.city,
   }
-  return place
 }
 
 export function getDevice(request): string {
