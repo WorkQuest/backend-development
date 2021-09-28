@@ -17,6 +17,7 @@ import {
 } from "@workquest/database-models/lib/schemes";
 import { transformToGeoPostGIS } from "@workquest/database-models/lib/utils/quest";
 
+/** TODO: Old, delete later with editProfile */
 function getAdditionalInfoSchema(role: UserRole): Joi.Schema {
   if (role === UserRole.Employer)
     return userAdditionalInfoEmployerSchema;
@@ -60,7 +61,8 @@ export async function setRole(r) {
   return output();
 }
 
-export async function editProfile(r) {
+/** TODO: Old, delete later with getAdditionalInfoSchema */
+export async function editProfiles(r) {
   const user = r.auth.credentials;
   const additionalInfoSchema = getAdditionalInfoSchema(user.role);
   const validateAdditionalInfo = additionalInfoSchema.validate(r.payload.additionalInfo);
@@ -103,6 +105,53 @@ export async function editProfile(r) {
   return output(
     await User.findByPk(user.id)
   );
+}
+
+export function editProfile(userRole: UserRole) {
+  return async function(r) {
+    if (r.auth.credentials.role !== userRole) {
+      return error(Errors.InvalidRole, 'User does not match role', {userRole});
+    }
+
+    if (r.payload.avatarId) {
+      const media = await Media.findByPk(r.payload.avatarId);
+
+      if (!media) {
+        return error(Errors.NotFound, 'Media is not found', {
+          avatarId: r.payload.avatarId
+        });
+      }
+      if (!await isMediaExists(media)) {
+        return error(Errors.NotFound, 'Media is not exists', {
+          avatarId: r.payload.avatarId
+        });
+      }
+    }
+
+    const transaction = await r.server.app.db.transaction();
+    const userFieldsUpdate = {
+      ...r.payload,
+      locationPostGIS: r.payload.location ? transformToGeoPostGIS(r.payload.location) : null,
+    };
+
+    await User.update(userFieldsUpdate, { where: {id: r.auth.credentials.id }, transaction });
+
+    if (userRole === UserRole.Worker) {
+      await SkillFilter.destroy({ where: { userId: r.auth.credentials.id }, transaction });
+
+      if (r.payload.skillFilters) {
+        const userSkillFilters = SkillFilter.toRawUserSkills(r.payload.skillFilters, r.auth.credentials.id);
+
+        await SkillFilter.bulkCreate(userSkillFilters, { transaction });
+      }
+    }
+
+    await transaction.commit();
+
+    return output(
+      await User.findByPk(r.auth.credentials.id)
+    );
+  }
 }
 
 export async function changePassword(r) {
@@ -157,98 +206,4 @@ export async function sendCodeOnPhoneNumber(r) {
   });
 
   return output();
-}
-
-export async function editEmployerProfile(r) {
-  if(r.auth.credentials.role !== UserRole.Employer){
-    return error(Errors.InvalidRole, 'Wrong role', {})
-  }
-  const additionalInfoSchema = getAdditionalInfoSchema(UserRole.Employer);
-  const validateAdditionalInfo = additionalInfoSchema.validate(r.payload.additionalInfo);
-
-  if (validateAdditionalInfo.error) {
-    return await handleValidationError(r, null, validateAdditionalInfo.error);
-  }
-  if (r.payload.avatarId) {
-    const media = await Media.findByPk(r.payload.avatarId);
-
-    if (!media) {
-      return error(Errors.NotFound, 'Media is not found', {
-        avatarId: r.payload.avatarId
-      });
-    }
-    if (!await isMediaExists(media)) {
-      return error(Errors.NotFound, 'Media is not exists', {
-        avatarId: r.payload.avatarId
-      });
-    }
-  }
-
-  const transaction = await r.server.app.db.transaction();
-  const userFieldsUpdate = {
-    ...r.payload,
-    locationPostGIS: r.payload.location ? transformToGeoPostGIS(r.payload.location) : null,
-  };
-
-  await User.update(userFieldsUpdate, { where: {id: r.auth.credentials.id }, transaction });
-  await SkillFilter.destroy({ where: { userId: r.auth.credentials.id }, transaction });
-
-  if (r.payload.skillFilters) {
-    const userSkillFilters = SkillFilter.toRawUserSkills(r.payload.skillFilters, r.auth.credentials.id);
-
-    await SkillFilter.bulkCreate(userSkillFilters, { transaction });
-  }
-
-  await transaction.commit();
-
-  return output(
-    await User.findByPk(r.auth.credentials.id)
-  );
-}
-
-export async function editWorkerProfile(r) {
-  if(r.auth.credentials.role !== UserRole.Worker){
-    return error(Errors.InvalidRole, 'Wrong role', {})
-  }
-  const additionalInfoSchema = getAdditionalInfoSchema(UserRole.Worker);
-  const validateAdditionalInfo = additionalInfoSchema.validate(r.payload.additionalInfo);
-
-  if (validateAdditionalInfo.error) {
-    return await handleValidationError(r, null, validateAdditionalInfo.error);
-  }
-  if (r.payload.avatarId) {
-    const media = await Media.findByPk(r.payload.avatarId);
-
-    if (!media) {
-      return error(Errors.NotFound, 'Media is not found', {
-        avatarId: r.payload.avatarId
-      });
-    }
-    if (!await isMediaExists(media)) {
-      return error(Errors.NotFound, 'Media is not exists', {
-        avatarId: r.payload.avatarId
-      });
-    }
-  }
-
-  const transaction = await r.server.app.db.transaction();
-  const userFieldsUpdate = {
-    ...r.payload,
-    locationPostGIS: r.payload.location ? transformToGeoPostGIS(r.payload.location) : null,
-  };
-
-  await User.update(userFieldsUpdate, { where: {id: r.auth.credentials.id }, transaction });
-  await SkillFilter.destroy({ where: { userId: r.auth.credentials.id }, transaction });
-
-  if (r.payload.skillFilters) {
-    const userSkillFilters = SkillFilter.toRawUserSkills(r.payload.skillFilters, r.auth.credentials.id);
-
-    await SkillFilter.bulkCreate(userSkillFilters, { transaction });
-  }
-
-  await transaction.commit();
-
-  return output(
-    await User.findByPk(r.auth.credentials.id)
-  );
 }

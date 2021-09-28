@@ -1,27 +1,30 @@
 import * as Joi from "joi";
 import {
   changePassword,
-  confirmPhoneNumber, editEmployerProfile,
-  editProfile, editWorkerProfile,
-  getMe, getUser,
+  confirmPhoneNumber,
+  editProfile,
+  editProfiles,
+  getMe,
+  getUser,
+  setRole,
   sendCodeOnPhoneNumber,
-  setRole
 } from "../../api/profile";
 import {
-  outputOkSchema,
   emptyOkSchema,
   idSchema,
+  locationSchema,
+  mobilePhoneSchema,
+  outputOkSchema,
+  skillFilterSchema,
   userAdditionalInfoEmployerSchema,
   userAdditionalInfoWorkerSchema,
   userFirstNameSchema,
   userLastNameSchema,
   userPasswordSchema,
   userRoleSchema,
-  userSchema,
-  skillFilterSchema,
-  mobilePhoneSchema,
-  locationSchema,
+  userSchema
 } from "@workquest/database-models/lib/schemes";
+import { UserRole } from "@workquest/database-models/lib/models";
 
 export default [{
   method: "GET",
@@ -55,11 +58,11 @@ export default [{
 }, {
   method: "PUT",
   path: "/v1/profile/edit",
-  handler: editProfile,
+  handler: editProfiles,
   options: {
     id: "v1.profile.edit",
     tags: ["api", "profile"],
-    description: "Edit profile information",
+    description: "Edit profile information (old)",
     validate: {
       payload: Joi.object({
         avatarId: idSchema.allow(null).required(),
@@ -147,10 +150,10 @@ export default [{
     }
   }
 }, {
-    method: "PUT",
-    path: "/v1/profile/employer/edit",
-    handler: editEmployerProfile,
-    options: {
+  method: "PUT",
+  path: "/v1/profile/employer/edit",
+  handler: editProfile(UserRole.Employer),
+  options: {
       id: "v1.employer.profile.edit",
       tags: ["api", "profile"],
       description: "Edit employer profile information",
@@ -161,17 +164,17 @@ export default [{
           lastName: userLastNameSchema.required(),
           location: locationSchema.allow(null).required(),
           skillFilters: skillFilterSchema.allow(null).required(),
-          additionalInfo: userAdditionalInfoEmployerSchema.options({ presence: "required" })
+          additionalInfo: userAdditionalInfoEmployerSchema.required(),
         }).label("EditEmployerProfilePayload")
       },
       response: {
         schema: outputOkSchema(userSchema).label("UserResponse")
       }
     }
-  }, {
+}, {
   method: "PUT",
   path: "/v1/profile/worker/edit",
-  handler: editWorkerProfile,
+  handler: editProfile(UserRole.Worker),
   options: {
     id: "v1.worker.profile.edit",
     tags: ["api", "profile"],
@@ -183,7 +186,7 @@ export default [{
         lastName: userLastNameSchema.required(),
         location: locationSchema.allow(null).required(),
         skillFilters: skillFilterSchema.allow(null).required(),
-        additionalInfo: userAdditionalInfoWorkerSchema.options({ presence: "required" })
+        additionalInfo: userAdditionalInfoWorkerSchema.required(),
       }).label("EditWorkerProfilePayload")
     },
     response: {
