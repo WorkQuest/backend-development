@@ -23,8 +23,7 @@ async function setRatingStatus(questCounter: number, userId: string): Promise<{ 
     // }
     Object.keys(user.additionalInfo).map(function(key, index) {
       if(user.additionalInfo[key]) {
-        console.log(user.additionalInfo[key])
-        console.log(Object.keys(user.additionalInfo[key]).length);
+        console.log(typeof(user.additionalInfo[key]), user.additionalInfo[key].length);
         if(user.additionalInfo[key].length){
           console.log(user.additionalInfo[key])
         }
