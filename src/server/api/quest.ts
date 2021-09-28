@@ -292,14 +292,14 @@ export async function getQuests(r) {
   const include = [];
   const where = {
     ...(r.query.performing && { assignedWorkerId: r.auth.credentials.id }),
-    ...(r.query.priority && { priority: r.query.priority }),
     ...(r.query.status && { status: r.query.status }),
     ...(r.query.adType && { adType: r.query.adType }),
     ...(r.params.userId && { userId: r.params.userId }),
     ...(r.query.north && r.query.south && { [Op.and]: entersAreaLiteral }),
     ...(r.query.filter && { filter: r.params.filter }),
     ...(r.query.workplace && { workplace: r.params.workplace }),
-    ...(r.query.employment && { employment: r.params.employment }),
+    employment: {[Op.in]: r.payload.employment},
+    priority: {[Op.in]: r.payload.priority}
   };
 
   if (r.query.q) {

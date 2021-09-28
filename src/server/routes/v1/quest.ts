@@ -36,6 +36,8 @@ import {
   questLocationPlaceNameSchema,
   skillFilterSchema,
   questEmploymentSchema,
+  questEmploymentsSchema,
+  questPrioritiesSchema
 } from "@workquest/database-models/lib/schemes";
 
 export default [{
@@ -158,6 +160,8 @@ export default [{
       query: questsQuerySchema,
       payload: Joi.object({
         skillFilters: skillFilterSchema,
+        employment: questEmploymentsSchema,
+        priority: questPrioritiesSchema,
         location: Joi.object({
           north: locationSchema,
           south: locationSchema,
