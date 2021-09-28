@@ -207,3 +207,7 @@ export async function sendCodeOnPhoneNumber(r) {
 
   return output();
 }
+
+export async function getUsers(r) {
+
+}
