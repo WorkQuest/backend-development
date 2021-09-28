@@ -1,14 +1,12 @@
 import * as jwt from 'jsonwebtoken';
 import config from '../config/config';
-import { error, output } from "./index";
+import { error } from "./index";
 import { Errors } from './errors';
 import {
   User,
   UserStatus,
   Session,
 } from "@workquest/database-models/lib/models";
-
-
 
 export const generateJwt = (data: object) => {
   let access = jwt.sign(data, config.auth.jwt.access.secret, { expiresIn: config.auth.jwt.access.lifetime });
@@ -38,12 +36,14 @@ export function tokenValidate(tokenType: 'access' | 'refresh', allowedUnconfirme
       include: [{model: User, as: 'user'}]
     });
 
-    if(session.invalidating) {
-      throw error(Errors.TokenInvalid,  'Session expired', {});
+    if (!session) {
+      throw error(Errors.SessionNotFound, 'Session not found', {});
     }
-
+    if (session.invalidating) {
+      throw error(Errors.SessionNotFound, 'Session not found', {});
+    }
     if (!session.user) {
-      throw error(Errors.SessionNotFound, 'User not found', {});
+      throw error(Errors.NotFound, 'User not found', {});
     }
     if (session.user.status === UserStatus.Unconfirmed && !allowedUnconfirmedRoutes.includes(r.route.path)) {
       throw error(Errors.UnconfirmedUser, 'Unconfirmed user', {});
