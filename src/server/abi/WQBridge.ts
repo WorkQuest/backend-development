@@ -398,7 +398,7 @@ export const WQBridge: AbiItem[] = [
         "type": "uint256"
       },
       {
-        "internalType": "address",
+        "internalType": "address payable",
         "name": "_pool",
         "type": "address"
       }
@@ -433,7 +433,7 @@ export const WQBridge: AbiItem[] = [
     "name": "pool",
     "outputs": [
       {
-        "internalType": "address",
+        "internalType": "address payable",
         "name": "",
         "type": "address"
       }
@@ -686,7 +686,7 @@ export const WQBridge: AbiItem[] = [
   {
     "inputs": [
       {
-        "internalType": "address",
+        "internalType": "address payable",
         "name": "_pool",
         "type": "address"
       }
