@@ -16,6 +16,12 @@ import {
   userAdditionalInfoWorkerSchema
 } from "@workquest/database-models/lib/schemes";
 import { transformToGeoPostGIS } from "@workquest/database-models/lib/utils/quest";
+import { literal, Op } from "sequelize";
+
+export const searchFields = [
+  "firstName",
+  "lastName",
+];
 
 /** TODO: Old, delete later with editProfile */
 function getAdditionalInfoSchema(role: UserRole): Joi.Schema {
@@ -208,6 +214,61 @@ export async function sendCodeOnPhoneNumber(r) {
   return output();
 }
 
-export async function getUsers(r) {
+export function getUsers(role: UserRole) {
+  return async function(r) {
+    const entersAreaLiteral = literal(
+      'st_within("Quest"."locationPostGIS", st_makeenvelope(:northLng, :northLat, :southLng, :southLat, 4326))'
+    );
+    const order = [];
+    const include = [];
+    const where = {role: role};
 
+    if (r.query.q) {
+      where[Op.or] = searchFields.map(field => ({
+        [field]: {
+          [Op.iLike]: `%${r.query.q}%`
+        }
+      }))
+    }
+    if(role === UserRole.Worker){
+      if (r.payload.skillFilters) {
+        const { categories, skills } = SkillFilter.splitByFields(r.payload.skillFilters);
+
+        include.push({
+          model: SkillFilter,
+          as: 'userSkillFilters',
+          attributes: [],
+          where: {
+            category: { [Op.in]: categories },
+            skill: { [Op.in]: skills },
+          }
+        });
+      }
+    }
+
+    if (r.query.sort) {
+      for (const [key, value] of Object.entries(r.query.sort)) {
+        order.push([key, value]);
+      }
+    }
+
+    const queryOption = {
+      limit: r.query.limit,
+      offset: r.query.offset,
+      include, order, where,
+      replacements: {
+        ...(r.payload.location && {
+          northLng: r.payload.location.north.longitude,
+          northLat: r.payload.location.north.latitude,
+          southLng: r.payload.location.south.longitude,
+          southLat: r.payload.location.south.latitude,
+        })
+      }
+    }
+
+    const count = await User.unscoped().count(queryOption);
+    const quests = await User.findAll(queryOption);
+
+    return output({count, quests});
+  }
 }

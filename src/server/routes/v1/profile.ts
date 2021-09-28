@@ -7,9 +7,10 @@ import {
   getMe,
   getUser,
   setRole,
-  sendCodeOnPhoneNumber,
+  sendCodeOnPhoneNumber, getUsers
 } from "../../api/profile";
 import {
+  employerQuerySchema,
   emptyOkSchema,
   idSchema,
   locationSchema,
@@ -22,7 +23,8 @@ import {
   userLastNameSchema,
   userPasswordSchema,
   userRoleSchema,
-  userSchema
+  userSchema,
+  userShortSchema
 } from "@workquest/database-models/lib/schemes";
 import { UserRole } from "@workquest/database-models/lib/models";
 
@@ -193,5 +195,48 @@ export default [{
       schema: outputOkSchema(userSchema).label("UserResponse")
     }
   }
-}];
+}, {
+  method: "POST",
+  path: "/v1/employers/get",
+  handler: getUsers(UserRole.Employer),
+  options: {
+    id: "v1.getEmployers",
+    tags: ["api", "profile"],
+    description: "Get employers with filters",
+    validate: {
+      query: employerQuerySchema,
+      payload: Joi.object({
+        location: Joi.object({
+          north: locationSchema,
+          south: locationSchema,
+        }),
+      }),
+    },
+    response: {
+      schema: outputOkSchema(userShortSchema).label("GetQuestsResponse")
+    },
+  }
+}, {
+  method: "POST",
+  path: "/v1/workers/get",
+  handler: getUsers(UserRole.Worker),
+  options: {
+    id: "v1.getWorkers",
+    tags: ["api", "profile"],
+    description: "Get workers with filters",
+    validate: {
+      query: employerQuerySchema,
+      payload: Joi.object({
+        skillFilters: skillFilterSchema,
+        location: Joi.object({
+          north: locationSchema,
+          south: locationSchema,
+        }),
+      }),
+    },
+    response: {
+      schema: outputOkSchema(userShortSchema).label("GetQuestsResponse")
+    },
+  }
+},];
 
