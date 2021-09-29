@@ -14,32 +14,23 @@ export function getRealIp(request): string {
     request.info.remoteAddress;
 }
 
-export function getGeo(request) {
+export function getGeo(request): { country: string, city: string } {
   if (config.server.host === 'localhost') {
-    return {
-      country: "localhost",
-      city: "localhost",
-    }
+    return { country: "localhost", city: "localhost" }
   }
 
   const ip = getRealIp(request);
   const geo = geoip.lookup(ip);
 
-  return {
-    country: geo.country,
-    city: geo.city,
-  }
+  return { country: geo.country, city: geo.city }
 }
 
 export function getDevice(request): string {
   return request.headers['user-agent'];
 }
 
-export function output(res?: object | null): object {
-  return {
-    ok: true,
-    result: res
-  };
+export function output(result?: any | null): { ok: boolean, result: any | null } {
+  return { ok: true, result };
 }
 
 export function error(code: number, msg: string, data: object): Boom {
@@ -49,7 +40,7 @@ export function error(code: number, msg: string, data: object): Boom {
       data,
       api: true
     },
-    statusCode: Math.floor(code / 1000)
+    statusCode: Math.floor(code / 1000),
   });
 }
 
@@ -86,7 +77,6 @@ export function responseHandler(r, h) {
   }
 
   return h.continue;
-
 }
 
 export function getRandomHexToken(): string {
