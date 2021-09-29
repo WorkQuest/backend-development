@@ -2,7 +2,7 @@ import { addJob } from "../utils/scheduler";
 import { Message, ChatMember } from "@workquest/database-models/lib/models";
 import { Op } from "sequelize";
 
-export interface MemberUnreadMessagesPayload {
+export type MemberUnreadMessagesPayload = {
   lastUnreadMessage: { id: string, createdAt: Date };
   readerUserId: string;
   chatId: string;
@@ -24,24 +24,24 @@ export default async function updateCountUnreadMessages(payload: MemberUnreadMes
     unreadCountMessages: number,
     lastReadMessageId?: string,
     lastReadMessageDate?: Date,
-  };
+  } = null;
 
   if (chatMember.lastReadMessageId === payload.lastUnreadMessage.id) {
     if (chatMember.unreadCountMessages === 0) return;
 
     unreadMessageCounter = { unreadCountMessages: 0 };
   } else {
-    const minDate = new Date(0); //1970, January 1, 12:00 am, the most min date in SQL
+    const minDate = new Date(0);
     const unreadMessageCount = await Message.count({
       where: {
+        id: { [Op.ne]: chatMember.lastReadMessageId },
+        senderUserId: { [Op.ne]: chatMember.userId },
         createdAt: {
           [Op.between]: [
             chatMember.lastReadMessageDate ? chatMember.lastReadMessageDate : minDate,
             payload.lastUnreadMessage.createdAt,
           ]
         },
-        id: { [Op.ne]: chatMember.lastReadMessageId },
-        senderUserId: { [Op.ne]: chatMember.userId }
       }
     });
 

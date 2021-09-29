@@ -16,8 +16,8 @@ import {
   User,
 } from "@workquest/database-models/lib/models";
 import { ChatNotificationActions } from "../utils/chatSubscription";
-import { incrementUnreadCountMessageJob } from "../jobs/incrementUnreadCountMessage";
-import { zeroingUnreadMessageCountJob } from "../jobs/zeroingUnreadMessageCount";
+import { incrementUnreadCountMessageOfMembersJob } from "../jobs/incrementUnreadCountMessage";
+import { resetUnreadCountMessagesOfMemberJob } from "../jobs/resetUnreadCountMessages";
 import { setMessageAsReadJob } from "../jobs/setMessageAsRead";
 import { updateCountUnreadMessagesJob } from "../jobs/updateCountUnreadMessages";
 
@@ -151,8 +151,11 @@ export async function createGroupChat(r) {
 
   const chatMembers = memberUserIds.map(userId => {
     return {
+      userId,
+      chatId: groupChat.id,
       unreadCountMessages: (userId === r.auth.credentials.id ? 0 : 1),
-      userId, chatId: groupChat.id, lastReadMessageId: (userId === r.auth.credentials.id ? message.id : null), lastReadMessageDate: (userId === r.auth.credentials.id ? message.createdAt : null),
+      lastReadMessageId: (userId === r.auth.credentials.id ? message.id : null),
+      lastReadMessageDate: (userId === r.auth.credentials.id ? message.createdAt : null),
     }
   });
 
@@ -185,7 +188,7 @@ export async function sendMessageToUser(r) {
     senderUserId: r.auth.credentials.id,
     type: MessageType.message,
     senderStatus: SenderMessageStatus.unread,
-    text: r.payload.text
+    text: r.payload.text,
   });
 
   const [chat, isChatCreated] = await Chat.findOrCreate({
@@ -239,14 +242,14 @@ export async function sendMessageToUser(r) {
   await transaction.commit();
 
   if (!isChatCreated) {
-    await zeroingUnreadMessageCountJob({
+    await resetUnreadCountMessagesOfMemberJob({
       chatId: chat.id,
       lastReadMessageId: message.id,
-      zeroingCounterUserId: r.auth.credentials.id,
+      userId: r.auth.credentials.id,
       lastReadMessageDate: message.createdAt,
     });
 
-    await incrementUnreadCountMessageJob({
+    await incrementUnreadCountMessageOfMembersJob({
       chatId: chat.id, notifierUserId: r.auth.credentials.id,
     });
   }
@@ -291,14 +294,14 @@ export async function sendMessageToChat(r) {
 
   await transaction.commit();
 
-  await zeroingUnreadMessageCountJob({
+  await resetUnreadCountMessagesOfMemberJob({
     chatId: chat.id,
     lastReadMessageId: message.id,
-    zeroingCounterUserId: r.auth.credentials.id,
+    userId: r.auth.credentials.id,
     lastReadMessageDate: message.createdAt,
   });
 
-  await incrementUnreadCountMessageJob({
+  await incrementUnreadCountMessageOfMembersJob({
     chatId: chat.id, notifierUserId: r.auth.credentials.id,
   });
 
@@ -334,24 +337,32 @@ export async function addUserInGroupChat(r) {
   groupChat.mustHaveType(ChatType.group);
   groupChat.mustHaveOwner(r.auth.credentials.id);
 
-  const transaction = await r.server.app.db.transaction();
-
-  const message = await Message.create({
+  const message = Message.build({
     senderUserId: r.auth.credentials.id,
     chatId: groupChat.id,
     type: MessageType.info,
-  }, { transaction });
+  });
 
-  await ChatMember.create({
+  const chatMember = ChatMember.build({
     chatId: groupChat.id,
     userId: r.params.userId,
-  }, { transaction });
+    unreadCountMessages: 1, /** Because info message */
+    lastReadMessageId: groupChat.lastMessage, /** Because new member */
+  });
 
-  await InfoMessage.create({
-    userId: r.params.userId,
+  const infoMessage = InfoMessage.build({
     messageId: message.id,
+    userId: r.params.userId,
     messageAction: MessageAction.groupChatAddUser,
-  }, { transaction });
+  });
+
+  const transaction = await r.server.app.db.transaction();
+
+  await Promise.all([
+    message.save({ transaction }),
+    chatMember.save({ transaction }),
+    infoMessage.save({ transaction }),
+  ]);
 
   await groupChat.update({
     lastMessageId: message.id,
@@ -360,14 +371,14 @@ export async function addUserInGroupChat(r) {
 
   await transaction.commit();
 
-  await zeroingUnreadMessageCountJob({
+  await resetUnreadCountMessagesOfMemberJob({
     chatId: groupChat.id,
     lastReadMessageId: message.id,
-    zeroingCounterUserId: r.auth.credentials.id,
+    userId: r.auth.credentials.id,
     lastReadMessageDate: message.createdAt,
   });
 
-  await incrementUnreadCountMessageJob({
+  await incrementUnreadCountMessageOfMembersJob({
     chatId: groupChat.id,
     notifierUserId: r.auth.credentials.id,
   });
@@ -428,14 +439,14 @@ export async function removeUserInGroupChat(r) {
 
   await transaction.commit();
 
-  await zeroingUnreadMessageCountJob({
+  await resetUnreadCountMessagesOfMemberJob({
     chatId: groupChat.id,
     lastReadMessageId: message.id,
-    zeroingCounterUserId: r.auth.credentials.id,
+    userId: r.auth.credentials.id,
     lastReadMessageDate: message.createdAt,
   });
 
-  await incrementUnreadCountMessageJob({
+  await incrementUnreadCountMessageOfMembersJob({
     chatId: groupChat.id,
     notifierUserId: r.auth.credentials.id,
   });
@@ -494,7 +505,7 @@ export async function leaveFromGroupChat(r) {
 
   await transaction.commit();
 
-  await incrementUnreadCountMessageJob({
+  await incrementUnreadCountMessageOfMembersJob({
     chatId: groupChat.id,
     notifierUserId: r.auth.credentials.id,
   });
