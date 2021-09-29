@@ -217,11 +217,14 @@ export async function sendCodeOnPhoneNumber(r) {
 export function getUsers(role: UserRole) {
   return async function(r) {
     const entersAreaLiteral = literal(
-      'st_within("Quest"."locationPostGIS", st_makeenvelope(:northLng, :northLat, :southLng, :southLat, 4326))'
+      'st_within("User"."locationPostGIS", st_makeenvelope(:northLng, :northLat, :southLng, :southLat, 4326))'
     );
     const order = [];
     const include = [];
-    const where = {role: role};
+    const where = {
+      role: role,
+      //...(r.payload.location.north && r.payload.location.south && { [Op.and]: entersAreaLiteral })
+    };
 
     if (r.query.q) {
       where[Op.or] = searchFields.map(field => ({
@@ -230,7 +233,7 @@ export function getUsers(role: UserRole) {
         }
       }))
     }
-    if(role === UserRole.Worker){
+    if(role === UserRole.Worker) {
       if (r.payload.skillFilters) {
         const { categories, skills } = SkillFilter.splitByFields(r.payload.skillFilters);
 

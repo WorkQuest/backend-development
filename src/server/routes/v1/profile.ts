@@ -209,8 +209,8 @@ export default [{
         location: Joi.object({
           north: locationSchema,
           south: locationSchema,
-        }),
-      }),
+        }).label('GetEmployerLocation'),
+      }).label('GetEmployersPayload'),
     },
     response: {
       schema: outputOkSchema(userShortSchema).label("GetQuestsResponse")
@@ -231,8 +231,8 @@ export default [{
         location: Joi.object({
           north: locationSchema,
           south: locationSchema,
-        }),
-      }),
+        }).label('GetWorkersLocation'),
+      }).label('GetWorkersPayload'),
     },
     response: {
       schema: outputOkSchema(userShortSchema).label("GetQuestsResponse")
