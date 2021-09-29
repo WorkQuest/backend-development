@@ -298,16 +298,14 @@ export async function getQuests(r) {
     ...(r.query.north && r.query.south && { [Op.and]: entersAreaLiteral }),
     ...(r.query.filter && { filter: r.params.filter }),
     ...(r.query.workplace && { workplace: r.params.workplace }),
-    employment: {[Op.in]: r.payload.employment},
-    priority: {[Op.in]: r.payload.priority}
+    employment: { [Op.in]: r.payload.employment }, // TODO проверить совместимость с GET запросом
+    priority: { [Op.in]: r.payload.priority }, // TODO проверить совместимость с GET запросом
   };
 
   if (r.query.q) {
     where[Op.or] = searchFields.map(field => ({
-      [field]: {
-        [Op.iLike]: `%${r.query.q}%`
-      }
-    }))
+      [field]: { [Op.iLike]: `%${r.query.q}%` }
+    }));
   }
   if (r.query.invited) {
     include.push({
