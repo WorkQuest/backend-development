@@ -223,7 +223,7 @@ export function getUsers(role: UserRole) {
     const include = [];
     const where = {
       role: role,
-      //...(r.payload.location.north && r.payload.location.south && { [Op.and]: entersAreaLiteral })
+      ...(r.payload.location && { [Op.and]: entersAreaLiteral })
     };
 
     if (r.query.q) {
@@ -270,8 +270,8 @@ export function getUsers(role: UserRole) {
     }
 
     const count = await User.unscoped().count(queryOption);
-    const quests = await User.findAll(queryOption);
+    const users = await User.findAll(queryOption);
 
-    return output({count, quests});
+    return output({count, users});
   }
 }
