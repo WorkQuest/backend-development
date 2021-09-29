@@ -10,28 +10,24 @@ export async function addUpdateReviewStatisticsJob(payload: StatisticPayload) {
   return addJob("updateReviewStatistics", payload);
 }
 
+function checkObjectFields(obj: object): boolean {
+  for(let value of Object.values(obj)){
+    if(value){
+      return true
+    }
+  }
+  return false
+}
+
 async function setRatingStatus(questCounter: number, userId: string): Promise<{ isStatus: boolean, status?: string }>  {
   const minQuestsForVerifiedLevel = 10;
   if(questCounter >= minQuestsForVerifiedLevel) {
-     const user = await User.findByPk(userId);
-    // for(let [key, value] of Object.entries(user.additionalInfo)) {
-    //   if(value){
-    //     if(Object.keys(value).length){
-    //       value.map(a => console.log(a) )
-    //     }
-    //   }
-    // }
-    Object.keys(user.additionalInfo).map(function(key, index) {
-      if(user.additionalInfo[key]) {
-        console.log(typeof(user.additionalInfo[key]), user.additionalInfo[key].length);
-        if(user.additionalInfo[key].length){
-          console.log(user.additionalInfo[key])
-        }
+    const user = await User.findByPk(userId);
+    for(let value of Object.values(user.additionalInfo)) {
+      if(!value || (Array.isArray(value) && !value.length) || (typeof value === "object" && !Array.isArray(value) && !checkObjectFields(value))) { //null and empty arrays
+        return {isStatus: false}
       }
-
-
-    });
-
+    }
   }else {
     return {isStatus: false}
   }
