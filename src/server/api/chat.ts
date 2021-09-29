@@ -305,11 +305,6 @@ export async function sendMessageToChat(r) {
     chatId: chat.id, notifierUserId: r.auth.credentials.id,
   });
 
-  // await setMessageAsReadJob({
-  //   lastUnreadMessage: { id: message.id, createdAt: message.createdAt },
-  //   chatId: r.params.chatId,
-  // });
-
   const members = await ChatMember.scope('userIdsOnly').findAll({
     where: { chatId: chat.id, userId: { [Op.ne]: r.auth.credentials.id } }
   });
