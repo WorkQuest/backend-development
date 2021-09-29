@@ -9,7 +9,7 @@ import {
   UserRole,
   UserStatus,
   Media,
-  SkillFilter,
+  SkillFilter, Session
 } from "@workquest/database-models/lib/models";
 import {
   userAdditionalInfoEmployerSchema,
@@ -118,6 +118,14 @@ export async function changePassword(r) {
 
   await user.update({
     password: r.payload.newPassword
+  });
+
+  await Session.update({
+    invalidating: true
+  }, {
+    where: {
+      userId: r.auth.credentials.id,
+    }
   });
 
   return output();
