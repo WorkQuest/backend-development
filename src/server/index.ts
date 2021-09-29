@@ -116,7 +116,6 @@ const init = async () => {
       "/v1/auth/refresh-tokens"
     ]),
   });
-;
   server.auth.default('jwt-access');
 
   initAuthStrategiesOfSocialNetworks(server);
