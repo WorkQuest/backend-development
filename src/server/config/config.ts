@@ -3,6 +3,8 @@ import { config } from "dotenv";
 config();
 
 export default {
+  baseUrl: process.env.BASE_URL,
+  debug: process.env.DEBUG === "true",
   dbLink: process.env.DB_LINK,
   auth: {
     jwt: {
@@ -103,28 +105,29 @@ export default {
       amountMax: process.env.WBNB_AMOUNT_MAX
     },
   },
-  baseUrl: process.env.BASE_URL,
-  debug: process.env.DEBUG === "true",
-  contracts: {
-    testnetRinkeby: {
-      hash: '',
-      provider: '',
+  bridge: {
+    rinkebyTestnetNetwork: {
+      contract: process.env.BRIDGE_TESTNET_RINKEBY_CONTRACT,
+      providerWebSocket: process.env.BRIDGE_TESTNET_RINKEBY_WEBSOCKET_PROVIDER,
     },
-    testnetBinance: {
-      hash: '',
-      provider: '',
+    bscTestnetNetwork: {
+      contract: process.env.BRIDGE_TESTNET_BSC_CONTRACT,
+      providerWebSocket: process.env.BRIDGE_TESTNET_BSC_WEBSOCKET_PROVIDER,
     },
-    privateKey: process.env.WQT_PRIVATE_KEY,
-  }
-
-
-  // contracts: {
-  //   wqtBridgeRinkeby: process.env.WQT_BRIDGE_CONTRACT_RINKEBY,
-  //   wqtBridgeBsctestnet: process.env.WQT_BRIDGE_CONTRACT_BSCTESTNET,
-
-  //   wqtProviderRinkeby:process.env.WQT_PROVIDER_RINKEBY,
-  //   wqtProviderBsctestnet: process.env.WQT_PROVIDER_BSCTESTNET,
-
-  //   wqtPrivateKey: process.env.WQT_PRIVATE_KEY,
-  // }
+    privateKey: process.env.BRIDGE_PRIVATE_KEY,
+  },
+  web3: {
+    websocketProvider: {
+      clientConfig: {
+        maxReceivedFrameSize: 100000000,
+        maxReceivedMessageSize: 100000000,
+      },
+      reconnect: {
+        auto: true,
+        delay: 5000, // ms
+        maxAttempts: 15,
+        onTimeout: false,
+      },
+    }
+  },
 };
