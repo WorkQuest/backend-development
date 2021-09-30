@@ -1,5 +1,5 @@
 import { addJob } from "../utils/scheduler";
-import { Quest, RatingStatistic, Review, StatusKYC, User, UserRole } from "@workquest/database-models/lib/models";
+import { Quest, RatingStatistic, Review, StatusKYC, User, UserRole, RatingStatus } from "@workquest/database-models/lib/models";
 import { col, fn } from "sequelize";
 
 export interface StatisticPayload {
@@ -11,7 +11,7 @@ export async function addUpdateReviewStatisticsJob(payload: StatisticPayload) {
 }
 
 function checkObjectFields(obj: object): boolean {
-  for(let value of Object.values(obj)){
+  for(let value of Object.values(obj)) {
     if(value){
       return true
     }
@@ -19,21 +19,24 @@ function checkObjectFields(obj: object): boolean {
   return false
 }
 
-function checkData(questCounter: number, userId) {
-
+function checkData(questCounter: number, userPhone: string, userKYC: StatusKYC): boolean {
+  const minQuestsForVerifiedLevel = 10;
+  return ((questCounter >= minQuestsForVerifiedLevel) && userPhone && (userKYC === StatusKYC.Confirmed));
 }
 
-async function setRatingStatus(questCounter: number, userId: string): Promise<{ isStatus: boolean, status?: string }>  {
-  const minQuestsForVerifiedLevel = 10;
-  const user = await User.findByPk(userId);
-  if(questCounter >= minQuestsForVerifiedLevel && user.statusKYC === StatusKYC.Confirmed) {
-    for(let value of Object.values(user.additionalInfo)) {
-      if(!value || (Array.isArray(value) && !value.length) || (typeof value === "object" && !Array.isArray(value) && !checkObjectFields(value))) { //null and empty arrays
-        return {isStatus: false}
+function setRatingStatus(questCounter: number, userPhone: string, userKYC: StatusKYC, userAdditionalInfo: object): { isStatus: boolean, status?: string} {
+  if(checkData(questCounter, userPhone, userKYC)) {
+    for(let value of Object.values(userAdditionalInfo)) {
+      if(!value || (Array.isArray(value) && !value.length) ||
+        (typeof value === "object" && !Array.isArray(value) && !checkObjectFields(value))) {
+        return { isStatus: false }
       }
     }
+    const status = questCounter < 20 ? RatingStatus.verify :
+      (questCounter < 30 ? RatingStatus.reliable : RatingStatus.topRanked);
+    return { isStatus: true, status: status }
   }else {
-    return {isStatus: false}
+    return { isStatus: false }
   }
 }
 
@@ -71,10 +74,11 @@ export default async function(payload: StatisticPayload) {
     });
   }
 
-  const a = await setRatingStatus(30, payload.userId)
+  const countStatus = setRatingStatus(quests, ratingStatistic.user.phone, ratingStatistic.user.statusKYC, ratingStatistic.user.additionalInfo)
 
   await ratingStatistic.update({
     averageMark: averageMarkResult.getDataValue('avgMark'),
     reviewCount,
+    status: countStatus.isStatus ? countStatus.status : null
   });
 }
