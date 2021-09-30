@@ -1,7 +1,7 @@
 import { addJob } from "../utils/scheduler";
-import { RatingStatistic, Review, User, UserRole, Quest } from "@workquest/database-models/lib/models";
-import { col, fn } from "sequelize"
-import { array } from "joi";
+import { Quest, RatingStatistic, Review, StatusKYC, User, UserRole } from "@workquest/database-models/lib/models";
+import { col, fn } from "sequelize";
+
 export interface StatisticPayload {
   userId: string,
 }
@@ -19,10 +19,14 @@ function checkObjectFields(obj: object): boolean {
   return false
 }
 
+function checkData(questCounter: number, userId) {
+
+}
+
 async function setRatingStatus(questCounter: number, userId: string): Promise<{ isStatus: boolean, status?: string }>  {
   const minQuestsForVerifiedLevel = 10;
-  if(questCounter >= minQuestsForVerifiedLevel) {
-    const user = await User.findByPk(userId);
+  const user = await User.findByPk(userId);
+  if(questCounter >= minQuestsForVerifiedLevel && user.statusKYC === StatusKYC.Confirmed) {
     for(let value of Object.values(user.additionalInfo)) {
       if(!value || (Array.isArray(value) && !value.length) || (typeof value === "object" && !Array.isArray(value) && !checkObjectFields(value))) { //null and empty arrays
         return {isStatus: false}
