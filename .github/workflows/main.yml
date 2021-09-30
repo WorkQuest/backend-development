@@ -98,6 +98,12 @@ jobs:
             SUMSUB_BASE_URL=${{ secrets.SUMSUB_BASE_URL }} \
             SUMSUB_ACCESS_TOKEN_TTL=${{ secrets.SUMSUB_ACCESS_TOKEN_TTL }} \
 
+            WQT_BRIDGE_CONTRACT_RINKEBY=${{ secrets.WQT_BRIDGE_CONTRACT_RINKEBY }} \
+            WQT_BRIDGE_CONTRACT_BSCTESTNET=${{ secrets.WQT_BRIDGE_CONTRACT_BSCTESTNET }} \
+            WQT_PROVIDER_RINKEBY=${{ secrets.WQT_PROVIDER_RINKEBY }} \
+            WQT_PROVIDER_BSCTESTNET=${{ secrets.WQT_PROVIDER_BSCTESTNET }} \
+            WQT_PRIVATE_KEY=${{ secrets.WQT_PRIVATE_KEY }} \
+
             DEBUG=${{ secrets.DEBUG }} \
             BASE_URL=${{ secrets.BASE_URL }} \
             backend_bin=${{ secrets.backend_bin }} \
