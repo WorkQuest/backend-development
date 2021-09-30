@@ -6,7 +6,7 @@ import { Errors } from "../utils/errors";
 
 const WQT = new Token(
   ChainId.MAINNET,
-  config.token.WQT.address,
+  config.token.WQT.bscAddress,
   config.token.WQT.decimals,
   config.token.WQT.symbol,
   config.token.WQT.name,
