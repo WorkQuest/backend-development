@@ -17,6 +17,17 @@ export async function sendReview(r) {
     return error(Errors.NotFound, "Quest not found", {});
   }
 
+  const alreadyReviewed = await Review.findOne({
+    where: {
+      questId: quest.id,
+      fromUserId: fromUser.id,
+    }
+  });
+
+  if(alreadyReviewed) {
+    return error(Errors.AlreadyExists, 'You already valued this quest', {});
+  }
+
   quest.mustHaveStatus(QuestStatus.Done);
 
   if (fromUser.id !== quest.userId && fromUser.id !== quest.assignedWorkerId) {
