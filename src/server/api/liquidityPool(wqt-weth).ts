@@ -6,10 +6,10 @@ import { Errors } from "../utils/errors";
 
 const WQT = new Token(
   ChainId.MAINNET,
-  config.token.WQT.address,
-  config.token.WQT.decimals,
-  config.token.WQT.symbol,
-  config.token.WQT.name,
+  config.token.WQT.ethereumNetwork.address,
+  config.token.WQT.ethereumNetwork.decimals,
+  config.token.WQT.ethereumNetwork.symbol,
+  config.token.WQT.ethereumNetwork.name,
 );
 
 const WETH = new Token(
@@ -21,7 +21,7 @@ const WETH = new Token(
 );
 
 const pair = new Pair(
-  new TokenAmount(WQT, config.token.WQT.amountMax),
+  new TokenAmount(WQT, config.token.WQT.ethereumNetwork.amountMax),
   new TokenAmount(WETH, config.token.WETH.amountMax),
 );
 

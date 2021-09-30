@@ -6,10 +6,10 @@ import { Errors } from "../utils/errors";
 
 const WQT = new Token(
   ChainId.MAINNET,
-  config.token.WQT.bscAddress,
-  config.token.WQT.decimals,
-  config.token.WQT.symbol,
-  config.token.WQT.name,
+  config.token.WQT.bscNetwork.address,
+  config.token.WQT.bscNetwork.decimals,
+  config.token.WQT.bscNetwork.symbol,
+  config.token.WQT.bscNetwork.name,
 );
 
 const WBNB = new Token(
@@ -21,7 +21,7 @@ const WBNB = new Token(
 );
 
 const pair = new Pair(
-  new TokenAmount(WQT, config.token.WQT.amountMax),
+  new TokenAmount(WQT, config.token.WQT.bscNetwork.amountMax),
   new TokenAmount(WBNB, config.token.WBNB.amountMax)
 );
 

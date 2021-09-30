@@ -82,12 +82,20 @@ export default {
   },
   token: {
     WQT: {
-      address: process.env.WQT_ADDRESS_TOKEN,
-      bscAddress: process.env.WQT_BSC_ADDRESS_TOKEN,
-      decimals: parseInt(process.env.WQT_DECIMAL_TOKEN),
-      symbol: process.env.WQT_SYMBOL_TOKEN,
-      name: process.env.WQT_NAME_TOKEN,
-      amountMax:process.env.WQT_AMOUNT_MAX,
+      bscNetwork: {
+        address: process.env.TOKEN_WQT_BSC_NETWORK,
+        decimals: parseInt(process.env.WQT_DECIMAL_TOKEN),
+        symbol: process.env.WQT_SYMBOL_TOKEN,
+        name: process.env.WQT_NAME_TOKEN,
+        amountMax:process.env.WQT_AMOUNT_MAX,
+      },
+      ethereumNetwork: {
+        address: process.env.TOKEN_WQT_ETHEREUM_NETWORK,
+        decimals: parseInt(process.env.WQT_DECIMAL_TOKEN),
+        symbol: process.env.WQT_SYMBOL_TOKEN,
+        name: process.env.WQT_NAME_TOKEN,
+        amountMax:process.env.WQT_AMOUNT_MAX,
+      }
     },
     WETH: {
       address: process.env.WETH_ADDRESS_TOKEN,
