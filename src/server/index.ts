@@ -147,7 +147,7 @@ const init = async () => {
     await server.start();
     server.log('info', `Server running at: ${server.info.uri}`);
 
-    server.subscription('notifications/swap/{recipient}', { auth: false });
+    // server.subscription('notifications/swap/{recipient}', { auth: false });
 
     console.log('\x1b[32m%s\x1b[0m', 'Contract listeners Bridge bsc start!');
     await listenerBridge(server, networks.bsc)

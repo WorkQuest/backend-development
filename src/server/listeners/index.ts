@@ -3,7 +3,7 @@ import { contractAddresses, networks } from "../config/constant";
 import { createContract, getBlockNumber } from "./core";
 import { WQBridge } from "../abi/WQBridge";
 import { ParserInfo } from "@workquest/database-models/lib/models";
-import { normalizeEventData, parseEvents, subscribeAllEvents, wsSendSwaps } from './misc';
+import { normalizeEventData, parseEvents, subscribeAllEvents } from './misc';
 import processSwapInitialized, { swapInitializedReadInterface } from "../jobs/processSwapInitialized";
 import processSwapRedeemed, { swapRedeemedReadInterface } from "../jobs/processSwapRedeemed";
 
@@ -27,14 +27,14 @@ export const listenerBridge = async (server: Server, network ): Promise<void> =>
         console.log(contractEventsBridge.swapInitialized)
         const swapInitializedData = <swapInitializedReadInterface>normalizeEventData(data)
         const res = await processSwapInitialized(swapInitializedData)
-        await wsSendSwaps(server, swapInitializedData.recipient.toLowerCase(), isWs)
+        // await wsSendSwaps(server, swapInitializedData.recipient.toLowerCase(), isWs)
         break;
       }
       case contractEventsBridge.swapRedeemed: {
         console.log(contractEventsBridge.swapRedeemed)
         const swapRedeemedData = <swapRedeemedReadInterface>normalizeEventData(data)
         const res = await processSwapRedeemed(swapRedeemedData)
-        await wsSendSwaps(server, swapRedeemedData.recipient.toLowerCase(), isWs)
+        // await wsSendSwaps(server, swapRedeemedData.recipient.toLowerCase(), isWs)
         break;
       }
       default:

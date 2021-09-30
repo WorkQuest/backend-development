@@ -33,13 +33,13 @@ export const normalizeEventData = (data: EventData, isEntity = true): object => 
   return dataQuery;
 };
 
-export const wsSendSwaps = async (server: Server, recipient: string, isWs) => {
-  if (isWs) {
-    const { count, swaps } = await getSwapsTake(recipient, 100, 0);
-
-    server.publish(`/bridge/swaps/${recipient.toUpperCase()}`, { count, swaps });
-  }
-}
+// export const wsSendSwaps = async (server: Server, recipient: string, isWs) => {
+//   if (isWs) {
+//     const { count, swaps } = await getSwapsTake(recipient, 100, 0);
+//
+//     server.publish(`/bridge/swaps/${recipient.toUpperCase()}`, { count, swaps });
+//   }
+// }
 
 export const parseEvents = async (payload: ParseEventsInterface): Promise<void> => {
   if (payload.network === networks.bsc || payload.network === networks.eth) {
