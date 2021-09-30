@@ -164,17 +164,17 @@ jobs:
             TOKEN_WQT_ETHEREUM_NETWORK_NAME={{ secrets.TOKEN_WQT_ETHEREUM_NETWORK_NAME }} \
             TOKEN_WQT_ETHEREUM_NETWORK_AMOUNT_MAX={{ secrets.TOKEN_WQT_ETHEREUM_NETWORK_AMOUNT_MAX }} \
 
-            TOKEN_WETH_ADDRESS={{ secret.TOKEN_WETH_ADDRESS }} \
-            TOKEN_WETH_DECIMAL={{ secret.TOKEN_WETH_DECIMAL }} \
-            TOKEN_WETH_SYMBOL={{ secret.TOKEN_WETH_SYMBOL }} \
-            TOKEN_WETH_NAME={{ secret.TOKEN_WETH_NAME }} \
-            TOKEN_WETH_AMOUNT_MAX={{ secret.TOKEN_WETH_AMOUNT_MAX }} \
+            TOKEN_WETH_ADDRESS={{ secrets.TOKEN_WETH_ADDRESS }} \
+            TOKEN_WETH_DECIMAL={{ secrets.TOKEN_WETH_DECIMAL }} \
+            TOKEN_WETH_SYMBOL={{ secrets.TOKEN_WETH_SYMBOL }} \
+            TOKEN_WETH_NAME={{ secrets.TOKEN_WETH_NAME }} \
+            TOKEN_WETH_AMOUNT_MAX={{ secrets.TOKEN_WETH_AMOUNT_MAX }} \
 
-            TOKEN_WBNB_ADDRESS={{ secret.TOKEN_WBNB_ADDRESS }} \
-            TOKEN_WBNB_DECIMAL={{ secret.TOKEN_WBNB_DECIMAL }} \
-            TOKEN_WBNB_SYMBOL={{ secret.TOKEN_WBNB_SYMBOL }} \
-            TOKEN_WBNB_NAME={{ secret.TOKEN_WBNB_NAME }} \
-            TOKEN_WBNB_AMOUNT_MAX={{ secret.TOKEN_WBNB_AMOUNT_MAX }} \
+            TOKEN_WBNB_ADDRESS={{ secrets.TOKEN_WBNB_ADDRESS }} \
+            TOKEN_WBNB_DECIMAL={{ secrets.TOKEN_WBNB_DECIMAL }} \
+            TOKEN_WBNB_SYMBOL={{ secrets.TOKEN_WBNB_SYMBOL }} \
+            TOKEN_WBNB_NAME={{ secrets.TOKEN_WBNB_NAME }} \
+            TOKEN_WBNB_AMOUNT_MAX={{ secrets.TOKEN_WBNB_AMOUNT_MAX }} \
 
             WQT_BRIDGE_CONTRACT_RINKEBY=${{ secrets.WQT_BRIDGE_CONTRACT_RINKEBY }} \
             WQT_BRIDGE_CONTRACT_BSCTESTNET=${{ secrets.WQT_BRIDGE_CONTRACT_BSCTESTNET }} \
