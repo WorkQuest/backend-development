@@ -100,18 +100,18 @@ export default {
       }
     },
     WETH: {
-      address: process.env.WETH_ADDRESS_TOKEN,
-      decimals: parseInt(process.env.WETH_DECIMAL_TOKEN),
-      symbol: process.env.WETH_SYMBOL_TOKEN,
-      name: process.env.WETH_NAME_TOKEN,
-      amountMax: process.env.WETH_AMOUNT_MAX
+      address: process.env.TOKEN_WETH_ADDRESS,
+      decimals: parseInt(process.env.TOKEN_WETH_DECIMAL),
+      symbol: process.env.TOKEN_WETH_SYMBOL,
+      name: process.env.TOKEN_WETH_NAME,
+      amountMax: process.env.TOKEN_WETH_AMOUNT_MAX,
     },
     WBNB: {
-      address: process.env.WBNB_ADDRESS_TOKEN,
-      decimals: parseInt(process.env.WBNB_DECIMAL_TOKEN),
-      symbol: process.env.WBNB_SYMBOL_TOKEN,
-      name: process.env.WBNB_NAME_TOKEN,
-      amountMax: process.env.WBNB_AMOUNT_MAX
+      address: process.env.TOKEN_WBNB_ADDRESS,
+      decimals: parseInt(process.env.TOKEN_WBNB_DECIMAL),
+      symbol: process.env.TOKEN_WBNB_SYMBOL,
+      name: process.env.TOKEN_WBNB_NAME,
+      amountMax: process.env.TOKEN_WBNB_AMOUNT_MAX,
     },
   },
   contracts: {

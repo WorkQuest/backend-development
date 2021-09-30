@@ -17,7 +17,7 @@ const WBNB = new Token(
   config.token.WBNB.address,
   config.token.WBNB.decimals,
   config.token.WBNB.symbol,
-  config.token.WBNB.name
+  config.token.WBNB.name,
 );
 
 const pair = new Pair(
