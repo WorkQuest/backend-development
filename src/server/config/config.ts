@@ -3,6 +3,8 @@ import { config } from "dotenv";
 config();
 
 export default {
+  baseUrl: process.env.BASE_URL,
+  debug: process.env.DEBUG === "true",
   dbLink: process.env.DB_LINK,
   auth: {
     jwt: {
@@ -87,7 +89,7 @@ export default {
         decimals: parseInt(process.env.TOKEN_WQT_BSC_NETWORK_DECIMAL),
         symbol: process.env.TOKEN_WQT_BSC_NETWORK_SYMBOL,
         name: process.env.TOKEN_WQT_BSC_NETWORK_NAME,
-        amountMax:process.env.TOKEN_WQT_BSC_NETWORK_AMOUNT_MAX,
+        amountMax: process.env.TOKEN_WQT_BSC_NETWORK_AMOUNT_MAX,
       },
       ethereumNetwork: {
         address: process.env.TOKEN_WQT_ETHEREUM_NETWORK_ADDRESS,
@@ -112,8 +114,6 @@ export default {
       amountMax: process.env.WBNB_AMOUNT_MAX
     },
   },
-  baseUrl: process.env.BASE_URL,
-  debug: process.env.DEBUG === "true",
   contracts: {
     wqtBridgeRinkeby: process.env.WQT_BRIDGE_CONTRACT_RINKEBY,
     wqtBridgeBsctestnet: process.env.WQT_BRIDGE_CONTRACT_BSCTESTNET,
