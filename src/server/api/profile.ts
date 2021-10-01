@@ -1,19 +1,19 @@
 import * as Joi from "joi";
-import { error, getRandomCodeNumber, handleValidationError, output } from '../utils';
+import { error, getRandomCodeNumber, handleValidationError, output } from "../utils";
 import { isMediaExists } from "../utils/storageService";
 import { Errors } from "../utils/errors";
-import { addSendSmsJob } from '../jobs/sendSms';
+import { addSendSmsJob } from "../jobs/sendSms";
 import {
   getDefaultAdditionalInfo,
-  User,
-  UserRole,
-  UserStatus,
   Media,
   SkillFilter,
+  User,
+  UserRole,
+  UserStatus
 } from "@workquest/database-models/lib/models";
 import {
   userAdditionalInfoEmployerSchema,
-  userAdditionalInfoWorkerSchema,
+  userAdditionalInfoWorkerSchema
 } from "@workquest/database-models/lib/schemes";
 import { transformToGeoPostGIS } from "@workquest/database-models/lib/utils/quest";
 
@@ -163,16 +163,27 @@ export async function changeUserRole(r) {
   const dayInMonth = 31;
 
   let date = new Date();
+  if(!r.auth.credentials.changedRoleAt) {
+    const role = r.auth.credentials.role === UserRole.Employer ? UserRole.Worker : UserRole.Employer;
+    await r.auth.credentials.update({
+      role,
+      changedRoleAt: Date.now(),
+    });
+    return output();
+  }
+
   date.setDate(r.auth.credentials.changedRoleAt.getDate() + dayInMonth);
   const canChangeRole = date <= r.auth.credentials.changedRoleAt
 
   if(!canChangeRole){
     return error(Errors.InvalidDate, 'User can change role once in 31 days', {})
   }
+
+  const role = r.auth.credentials.role === UserRole.Employer ? UserRole.Worker : UserRole.Employer;
   await r.auth.credentials.update({
-    role: r.payload.role,
+    role,
     changedRoleAt: Date.now(),
-  })
+  });
 
   return output();
 }

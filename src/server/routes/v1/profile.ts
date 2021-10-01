@@ -1,6 +1,6 @@
 import * as Joi from "joi";
 import {
-  changePassword,
+  changePassword, changeUserRole,
   confirmPhoneNumber,
   editProfile,
   getMe, getUser,
@@ -91,6 +91,18 @@ export default [{
         newPassword: userPasswordSchema.required()
       }).label("ChangePasswordPayload")
     },
+    response: {
+      schema: emptyOkSchema
+    }
+  }
+}, {
+  method: "PUT",
+  path: "/v1/profile/change-role",
+  handler: changeUserRole,
+  options: {
+    id: "v1.profile.changeRole",
+    tags: ["api", "profile"],
+    description: "Change user role",
     response: {
       schema: emptyOkSchema
     }
