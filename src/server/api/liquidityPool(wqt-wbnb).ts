@@ -6,10 +6,10 @@ import { Errors } from "../utils/errors";
 
 const WQT = new Token(
   ChainId.MAINNET,
-  config.token.WQT.address,
-  config.token.WQT.decimals,
-  config.token.WQT.symbol,
-  config.token.WQT.name,
+  config.token.WQT.bscNetwork.address,
+  config.token.WQT.bscNetwork.decimals,
+  config.token.WQT.bscNetwork.symbol,
+  config.token.WQT.bscNetwork.name,
 );
 
 const WBNB = new Token(
@@ -17,34 +17,26 @@ const WBNB = new Token(
   config.token.WBNB.address,
   config.token.WBNB.decimals,
   config.token.WBNB.symbol,
-  config.token.WBNB.name
+  config.token.WBNB.name,
 );
 
 const pair = new Pair(
-  new TokenAmount(WQT, config.token.WQT.amountMax),
+  new TokenAmount(WQT, config.token.WQT.bscNetwork.amountMax),
   new TokenAmount(WBNB, config.token.WBNB.amountMax)
 );
 
-const { url, params, query } = {
-  url: 'https://bsc.streamingfast.io/subgraphs/name/pancakeswap/exchange-v2',
-  params: `orderBy: timestamp, orderDirection: desc, where: { pair: "${pair.liquidityToken.address.toLowerCase()}" }`,
-  query: `transaction { id timestamp }`
-}
-
+const api = axios.create({
+  baseURL: 'https://bsc.streamingfast.io/subgraphs/name/pancakeswap/exchange-v2'
+});
 
 export async function getSwaps(r) {
   try {
-    const result = await axios({
-      url: url,
-      method: 'POST',
-      data: {
-        query: `{ 
-          swaps(first:${r.query.limit}, skip:${r.query.offset}, ${params} ) {
-            ${query}
-            amount0In amount0Out amount1In amount1Out amountUSD to
-          }
-        }`
-      }
+    const result = await api.post('', {
+      query: `{
+        swaps(first:${r.query.limit}, skip:${r.query.offset}, orderBy: timestamp, orderDirection: desc, 
+        where: { pair: "${pair.liquidityToken.address.toLowerCase()}" }) 
+        { transaction { id timestamp } 
+        amount0In amount0Out amount1In amount1Out amountUSD to } }`
     });
 
     if (result.data.errors) {
@@ -59,17 +51,12 @@ export async function getSwaps(r) {
 
 export async function getMints(r) {
   try {
-    const result = await axios({
-      url: url,
-      method: "POST",
-      data: {
-        query: `{ 
-          mints(first:${r.query.limit}, skip:${r.query.offset}, ${params}) {
-            ${query}
-            to liquidity amount0 amount1 amountUSD
-          }
-        }`
-      }
+    const result = await api.post('', {
+      query: `{ 
+        mints(first:${r.query.limit}, skip:${r.query.offset}, orderBy: timestamp, orderDirection: desc, 
+        where: { pair: "${pair.liquidityToken.address.toLowerCase()}" }) {
+        transaction { id timestamp } 
+        to liquidity amount0 amount1 amountUSD } }`
     });
 
     if (result.data.errors) {
@@ -84,17 +71,12 @@ export async function getMints(r) {
 
 export async function getBurns(r) {
   try {
-    const result = await axios({
-      url: url,
-      method: "POST",
-      data: {
-        query: `{ 
-          burns(first:${r.query.limit}, skip:${r.query.offset}, ${params}) {
-            ${query}
-            to liquidity amount0 amount1 amountUSD
-          }
-        }`
-      }
+    const result = await api.post('', {
+      query: `{
+        burns(first:${r.query.limit}, skip:${r.query.offset}, orderBy: timestamp, orderDirection: desc,
+        where: { pair: "${pair.liquidityToken.address.toLowerCase()}" })
+        { transaction { id timestamp }
+        to liquidity amount0 amount1 amountUSD } }`
     });
 
     if (result.data.errors) {
@@ -109,26 +91,21 @@ export async function getBurns(r) {
 
 export async function getTokenDayData(r) {
   try {
-    const result = await axios({
-      url: url,
-      method: "POST",
-      data: {
-        query: `{ 
-        tokenDayDatas(first:${r.query.limit}, skip:${r.query.offset},orderBy: date, orderDirection: desc,
-        where: {
-          token: "${WQT.address.toLowerCase()}"
-          }) { id date priceUSD totalLiquidityToken totalLiquidityUSD totalLiquidityBNB
-            dailyVolumeBNB dailyVolumeToken dailyVolumeUSD
-        }
-      }`
-      }
+    const result = await api.post('', {
+      query: `{ 
+        pairDayDatas (first: ${r.query.limit}, skip: ${r.query.offset},
+        orderBy:date, orderDirection: desc,
+        where: {pairAddress: "${pair.liquidityToken.address.toLowerCase()}"})
+        { date reserve0 reserve1 totalSupply reserveUSD dailyVolumeToken0
+          dailyVolumeToken1 dailyVolumeUSD dailyTxns 
+        }}`
     });
 
     if (result.data.errors) {
       return error(Errors.LiquidityError, 'Query error', result.data.errors);
     }
 
-    return output(result.data.data.tokenDayDatas);
+    return output(result.data.data.pairDayDatas);
   } catch (err) {
     return error(Errors.LiquidityError, err.response.statusText, err.response.data);
   }
