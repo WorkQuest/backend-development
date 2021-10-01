@@ -158,3 +158,21 @@ export async function sendCodeOnPhoneNumber(r) {
 
   return output();
 }
+
+export async function changeUserRole(r) {
+  const dayInMonth = 31;
+
+  let date = new Date();
+  date.setDate(r.auth.credentials.changedRoleAt.getDate() + dayInMonth);
+  const canChangeRole = date <= r.auth.credentials.changedRoleAt
+
+  if(!canChangeRole){
+    return error(Errors.InvalidDate, 'User can change role once in 31 days', {})
+  }
+  await r.auth.credentials.update({
+    role: r.payload.role,
+    changedRoleAt: Date.now(),
+  })
+
+  return output();
+}
