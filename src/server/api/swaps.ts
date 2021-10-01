@@ -1,8 +1,6 @@
-import { RequestOrig } from "hapi";
 import BigNumber from "bignumber.js";
-import { SwapData } from "@workquest/database-models/lib/models";
+import { SwapTokenEvent } from "@workquest/database-models/lib/models";
 import { metaMaskKey, wsProviders } from "../config/constant";
-import { output } from "../utils";
 
 const Web3 = require("web3");
 
@@ -17,7 +15,7 @@ export interface QueryPaginationInterface {
 export async function getSwapsTake(recipient: string, limit = 10, offset = 0)
   : Promise<{ count: number; swaps: Array<any> }> {
   const swaps = [];
-  const { count, rows } = await SwapData.findAndCountAll({
+  const { count, rows } = await SwapTokenEvent.findAndCountAll({
     limit,
     offset,
     order: [
@@ -40,7 +38,7 @@ export async function getSwapsTake(recipient: string, limit = 10, offset = 0)
       amount: e.amount.toString(),
       chainTo: e.chainTo,
       chainFrom: e.chainFrom,
-      symbol: e.token,
+      symbol: e.symbol,
       createdAt: e.createdAt,
       signData: []
     };
@@ -50,7 +48,7 @@ export async function getSwapsTake(recipient: string, limit = 10, offset = 0)
     signArr.push(e.recipient);
     signArr.push(e.chainFrom);
     signArr.push(e.chainTo);
-    signArr.push(e.token);
+    signArr.push(e.symbol);
     obj.signData.push(e.nonce.toString());
     obj.signData.push(e.chainFrom.toString());
     obj.signData.push(toFixed(e.amount).toString());
@@ -60,7 +58,7 @@ export async function getSwapsTake(recipient: string, limit = 10, offset = 0)
     obj.signData.push(res.v.toString());
     obj.signData.push(res.r.toString());
     obj.signData.push(res.s.toString());
-    obj.signData.push(e.token.toString());
+    obj.signData.push(e.symbol.toString());
     swaps.push(obj);
   }
 

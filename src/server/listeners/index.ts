@@ -2,7 +2,7 @@ import {Server,} from '@hapi/hapi';
 import { contractAddresses, networks } from "../config/constant";
 import { createContract, getBlockNumber } from "./core";
 import { WQBridge } from "../abi/WQBridge";
-import { ParserInfo } from "@workquest/database-models/lib/models";
+import { ParserBlockInfo } from "@workquest/database-models/lib/models";
 import { normalizeEventData, parseEvents, subscribeAllEvents } from './misc';
 import processSwapInitialized, { swapInitializedReadInterface } from "../jobs/processSwapInitialized";
 import processSwapRedeemed, { swapRedeemedReadInterface } from "../jobs/processSwapRedeemed";
@@ -20,7 +20,7 @@ export const listenerBridge = async (server: Server, network ): Promise<void> =>
   const eventData = async (data, isWs = true) => {
     if(isWs){
       const lastBlock = await getBlockNumber(network);
-      await ParserInfo.update({'info.lastParsedBlock': lastBlock,}, {where: {network, contract: 'Bridge'},});
+      await ParserBlockInfo.update({'lastParsedBlock': lastBlock,}, {where: {network, contract: 'Bridge'},});
     }
     switch (data.event) {
       case contractEventsBridge.swapInitialized: {
@@ -42,9 +42,10 @@ export const listenerBridge = async (server: Server, network ): Promise<void> =>
     }
   };
 
-  const fromBlock = (await ParserInfo.findOrCreate({
+  const fromBlock = (await ParserBlockInfo.findOrCreate({
     where: {network, contract: 'Bridge'},
-  }))[0].info.lastParsedBlock + 1;
+  }))[0].lastParsedBlock + 1;
+  console.log(fromBlock, 'fromBlock fromBlock fromBlock fromBlock fromBlock');
 
   console.log('\x1b[35m%s\x1b[0m', `fromBlock: '${fromBlock}' | parseEvents Bridge started!!!`);
 
@@ -65,6 +66,6 @@ export const listenerBridge = async (server: Server, network ): Promise<void> =>
   })
 
   if (lastBlock > fromBlock) {
-    await ParserInfo.update({'info.lastParsedBlock': lastBlock,}, {where: {network, contract: 'Bridge'},});
+    await ParserBlockInfo.update({'lastParsedBlock': lastBlock,}, {where: {network, contract: 'Bridge'},});
   }
 };

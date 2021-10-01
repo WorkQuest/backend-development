@@ -2,8 +2,6 @@ import { networks } from "../config/constant";
 import { getBlockNumber } from "./core";
 import {Contract, EventData,} from 'web3-eth-contract';
 import BigNumber from 'bignumber.js';
-import { Server } from '@hapi/hapi';
-import { getSwapsTake } from '../api/swaps';
 
 /** Types */
 export type UInt = number | BigNumber;

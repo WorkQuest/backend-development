@@ -1,6 +1,6 @@
 import {BlockTransactionInterface,} from "./processSwapInitialized";
 import processMessageHashCreator from "./processMessageHashCreator";
-import { SwapData } from "@workquest/database-models/lib/models";
+import { SwapTokenEvent } from "@workquest/database-models/lib/models";
 
 
 export interface swapRedeemedReadInterface extends BlockTransactionInterface {
@@ -17,7 +17,7 @@ export interface swapRedeemedReadInterface extends BlockTransactionInterface {
 export default async (swapRedeemedData: swapRedeemedReadInterface) => {
     try {
         const messageHash = await processMessageHashCreator(swapRedeemedData)
-        const res = await SwapData.update({
+        const res = await SwapTokenEvent.update({
                 active: false,
             },
             {

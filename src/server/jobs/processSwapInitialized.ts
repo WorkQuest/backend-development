@@ -1,4 +1,4 @@
-import { SwapData } from "@workquest/database-models/lib/models";
+import { SwapTokenEvent } from "@workquest/database-models/lib/models";
 import {UInt} from "../listeners/misc";
 import processMessageHashCreator from "./processMessageHashCreator";
 
@@ -30,10 +30,10 @@ export default async (swapInitializedData: swapInitializedReadInterface) => {
             active: true,
             initiator: swapInitializedData.sender.toLowerCase(),
             recipient: swapInitializedData.recipient.toLowerCase(),
-            amount: +swapInitializedData.amount,
+            amount: swapInitializedData.amount,
             chainTo: +swapInitializedData.chainTo,
             chainFrom: +swapInitializedData.chainFrom,
-            token: swapInitializedData.symbol,
+            symbol: swapInitializedData.symbol,
             transactionHash: swapInitializedData.transactionHash,
             blockNumber: +swapInitializedData.blockNumber,
             nonce: +swapInitializedData.nonce,
@@ -41,7 +41,7 @@ export default async (swapInitializedData: swapInitializedReadInterface) => {
         };
         console.log(model, 'model');
         try {
-            await SwapData.create(model);
+            await SwapTokenEvent.create(model);
         } catch (err) {
             console.log(err);
         }
@@ -52,15 +52,15 @@ export default async (swapInitializedData: swapInitializedReadInterface) => {
 
 interface SwapInterface {
     transactionHash: string;
+    messageHash: string
+    nonce: UInt,
     active: boolean,
     timestamp: string;
     initiator: string;
     recipient: string;
-    amount: UInt;
+    amount: string;
     chainTo: UInt;
     chainFrom: UInt;
-    token: string;
+    symbol: string;
     blockNumber: UInt;
-    nonce: UInt,
-    messageHash: string
 }
