@@ -115,28 +115,23 @@ export default {
     },
   },
   bridge: {
+    debug: process.env.BRIDGE_DEBUG === "true",
+    ethereumMainNetwork: {
+      contract: '',
+      webSocketProvider: '',
+    },
+    bscMainNetwork: {
+      contract: '',
+      webSocketProvider: '',
+    },
     rinkebyTestnetNetwork: {
       contract: process.env.BRIDGE_TESTNET_RINKEBY_CONTRACT,
-      providerWebSocket: process.env.BRIDGE_TESTNET_RINKEBY_WEBSOCKET_PROVIDER,
+      webSocketProvider: process.env.BRIDGE_TESTNET_RINKEBY_WEBSOCKET_PROVIDER,
     },
     bscTestnetNetwork: {
       contract: process.env.BRIDGE_TESTNET_BSC_CONTRACT,
-      providerWebSocket: process.env.BRIDGE_TESTNET_BSC_WEBSOCKET_PROVIDER,
+      webSocketProvider: process.env.BRIDGE_TESTNET_BSC_WEBSOCKET_PROVIDER,
     },
     privateKey: process.env.BRIDGE_PRIVATE_KEY,
-  },
-  web3: {
-    websocketProvider: {
-      clientConfig: {
-        maxReceivedFrameSize: 100000000,
-        maxReceivedMessageSize: 100000000,
-      },
-      reconnect: {
-        auto: true,
-        delay: 5000, // ms
-        maxAttempts: 15,
-        onTimeout: false,
-      },
-    }
   },
 };

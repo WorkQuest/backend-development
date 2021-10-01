@@ -210,6 +210,8 @@ jobs:
             TOKEN_WBNB_NAME=${{ secrets.DEV_TOKEN_WBNB_NAME }} \
             TOKEN_WBNB_AMOUNT_MAX=${{ secrets.DEV_TOKEN_WBNB_AMOUNT_MAX }} \
 
+            BRIDGE_DEBUG=${{ secrets.DEV_BRIDGE_DEBUG }} \
+
             WQT_BRIDGE_CONTRACT_RINKEBY=${{ secrets.DEV_WQT_BRIDGE_CONTRACT_RINKEBY }} \
             WQT_BRIDGE_CONTRACT_BSCTESTNET=${{ secrets.DEV_WQT_BRIDGE_CONTRACT_BSCTESTNET }} \
             WQT_PROVIDER_RINKEBY=${{ secrets.DEV_WQT_PROVIDER_RINKEBY }} \
