@@ -21,7 +21,7 @@
     "@ethersproject/contracts": "^5.4.1",
     "@ethersproject/providers": "^5.4.5",
     "@ethersproject/solidity": "^5.4.0",
-    "web3": "^1.5.3",
+    "web3": "^1.5.1",
     "@hapi/basic": "^5.1.1",
     "@hapi/bell": "^12.2.0",
     "@hapi/boom": "^9.1.0",

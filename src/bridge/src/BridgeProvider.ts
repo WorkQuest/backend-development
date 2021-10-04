@@ -1,6 +1,7 @@
 import Web3 from "web3";
 import { WebsocketProvider, HttpProvider, Sign } from "web3-core";
 import config from "../../server/config/config";
+import { Contract } from "web3-eth-contract";
 
 export class BridgeProvider {
   private readonly _web3: Web3;
@@ -31,7 +32,11 @@ export class BridgeProvider {
   }
 
   public async sing(fields: any[]): Promise<Sign> {
-    return Web3[this.network].accounts.sign(Web3.utils.soliditySha3(...fields), config.bridge.privateKey);
+    return this._web3.eth.accounts.sign(Web3.utils.soliditySha3(...fields), config.bridge.privateKey);
+  }
+
+  public makeContract(abi: any[], address: string): Contract {
+    return new this._web3.eth.Contract(abi, address);
   }
 
   static buildBridgeProvider(provider: WebsocketProvider | HttpProvider, network: 'eth' | 'bnb', fromBlock: number) {

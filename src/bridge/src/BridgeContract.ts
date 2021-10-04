@@ -8,33 +8,44 @@ type onEventCallBack = {
 
 // TODO описать eventData: any
 export class BridgeContract {
-  private readonly _abi: string;
   private readonly _address: string;
   private readonly _contract: Contract;
   private readonly _provider: BridgeProvider;
 
-  private readonly _onEventCallBacks: onEventCallBack[];
+  private readonly _onEventCallBacks: onEventCallBack[] = [];
 
-  constructor(provider: BridgeProvider, address: string, abi: string) {
-    this._abi = abi;
+  constructor(provider: BridgeProvider, address: string, abiItems: any[]) {
+    this._contract = provider.makeContract(abiItems, address);
     this._address = address;
-    this._provider = provider
-    this._contract = new Web3[provider.network].Contract(abi, address);
+    this._provider = provider;
 
     this._eventListenerInit();
   }
 
-  private async _onEventData(eventData: any) {
+  private async _onEventData(data: any) {
+    const eventData = {
+      timestamp: data.returnValues.timestamp,
+      sender: data.returnValues.sender,
+      recipient: data.returnValues.recipient,
+      amount: data.returnValues.amount,
+      chainFrom: data.returnValues.chainFrom,
+      chainTo: data.returnValues.chainTo,
+      nonce: data.returnValues.nonce,
+      symbol: data.returnValues.symbol,
+      event: data.event,
+      messageHash: null,
+    };
+
     const signedEventData = await this._singEventData(eventData);
 
-    this._provider.lastTrackedBlock = eventData.blockNumber;
+    this._provider.lastTrackedBlock = data.blockNumber;
     this._onEventCallBacks.forEach(callBack => callBack(signedEventData));
   }
 
   private _eventListenerInit() {
     this._contract.events.allEvents({ fromBlock: this._provider.lastTrackedBlock })
-      .on('error', (err) => { /** TODO */ })
-      .on('data', this._onEventData);
+      .on('error', (err) => { console.error(err) })
+      .on('data', (data) => this._onEventData(data));
   }
 
   private async _singEventData(eventData: any): Promise<any> {
@@ -48,7 +59,7 @@ export class BridgeContract {
       eventData.symbol,
     ];
 
-    eventData['messageHash'] = (await this._provider.sing(fields)).message;
+    eventData.messageHash = (await this._provider.sing(fields)).message;
 
     return eventData;
   }

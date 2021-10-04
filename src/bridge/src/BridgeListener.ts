@@ -21,16 +21,16 @@ abstract class BridgeListener {
   protected abstract _parseSwapInitializedEvent(data: any): Promise<void>;
   protected abstract _parseSwapRedeemedEvent(data: any): Promise<void>;
 
-  protected async _onEvent(data: any): Promise<void> {
-    if (data.event === TrackedEvents.swapInitialized) {
-      return this._parseSwapInitializedEvent(data);
-    } else if (data.event === TrackedEvents.swapRedeemed) {
-      return this._parseSwapRedeemedEvent(data);
+  private async _onEvent(eventData: any): Promise<void> {
+    if (eventData.event === TrackedEvents.swapInitialized) {
+      await this._parseSwapInitializedEvent(eventData);
+    } else if (eventData.event === TrackedEvents.swapRedeemed) {
+      await this._parseSwapRedeemedEvent(eventData);
     }
   }
 
   startListen() {
-    this._contract.signCallbackOnEvent(this._onEvent);
+    this._contract.signCallbackOnEvent(eventData => this._onEvent(eventData));
   }
 }
 
