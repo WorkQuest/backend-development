@@ -28,4 +28,3 @@ const bridgeBnbListener = new BridgeBnbListener(bridgeBnbContract);
 
 bridgeEthListener.startListen();
 bridgeBnbListener.startListen();
-

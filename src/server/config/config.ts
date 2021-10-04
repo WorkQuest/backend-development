@@ -117,21 +117,21 @@ export default {
   bridge: {
     debug: process.env.BRIDGE_DEBUG === "true",
     ethereumMainNetwork: {
-      contract: '',
-      webSocketProvider: '',
+      contract: process.env.BRIDGE_ETH_MAINNETWORK_CONTRACT,
+      webSocketProvider: process.env.BRIDGE_ETH_MAINNETWORK_WEBSOCKET_PROVIDER,
     },
     bscMainNetwork: {
-      contract: '',
-      webSocketProvider: '',
+      contract: process.env.BRIDGE_BSC_MAINNETWORK_CONTRACT,
+      webSocketProvider: process.env.BRIDGE_BSC_MAINNETWORK_WEBSOCKET_PROVIDER,
     },
     rinkebyTestNetwork: {
-      contract: process.env.BRIDGE_TESTNET_RINKEBY_CONTRACT,
-      webSocketProvider: process.env.BRIDGE_TESTNET_RINKEBY_WEBSOCKET_PROVIDER,
+      contract: process.env.BRIDGE_RINKEBY_TESTNETWORK_CONTRACT,
+      webSocketProvider: process.env.BRIDGE_RINKEBY_TESTNETWORK_WEBSOCKET_PROVIDER,
     },
     bscTestNetwork: {
-      contract: process.env.BRIDGE_TESTNET_BSC_CONTRACT,
-      webSocketProvider: process.env.BRIDGE_TESTNET_BSC_WEBSOCKET_PROVIDER,
+      contract: process.env.BRIDGE_BSC_TESTNETWORK_CONTRACT,
+      webSocketProvider: process.env.BRIDGE_BSC_TESTNETWORK_WEBSOCKET_PROVIDER,
     },
-    privateKey: process.env.BRIDGE_PRIVATE_KEY,
+    privateKey: process.env.BRIDGE_CONTRACT_PRIVAT_KEY,
   },
 };
