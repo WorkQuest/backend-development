@@ -1,5 +1,6 @@
 import Web3 from "web3";
-import { WebsocketProvider, HttpProvider } from "web3-core";
+import { WebsocketProvider, HttpProvider, Sign } from "web3-core";
+import config from "../../server/config/config";
 
 export class BridgeProvider {
   private readonly _web3: Web3;
@@ -27,6 +28,10 @@ export class BridgeProvider {
 
   public async getBlockNumber(): Promise<number> {
     return this._web3[this._network].getBlockNumber();
+  }
+
+  public async sing(fields: any[]): Promise<Sign> {
+    return Web3[this.network].accounts.sign(Web3.utils.soliditySha3(...fields), config.bridge.privateKey);
   }
 
   static buildBridgeProvider(provider: WebsocketProvider | HttpProvider, network: 'eth' | 'bnb', fromBlock: number) {

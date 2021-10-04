@@ -1,3 +1,4 @@
+/**
 import {Server,} from '@hapi/hapi';
 import { contractAddresses, networks } from "../config/constant";
 import { createContract, getBlockNumber } from "./core";
@@ -69,3 +70,4 @@ export const listenerBridge = async (server: Server, network ): Promise<void> =>
     await ParserInfo.update({'info.lastParsedBlock': lastBlock,}, {where: {network, contract: 'Bridge'},});
   }
 };
+*/

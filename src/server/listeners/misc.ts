@@ -1,9 +1,9 @@
+/**
 import { networks } from "../config/constant";
 import { getBlockNumber } from "./core";
 import {Contract, EventData,} from 'web3-eth-contract';
 import BigNumber from 'bignumber.js';
 
-/** Types */
 export type UInt = number | BigNumber;
 
 // eslint-disable-next-line @typescript-eslint/ban-types
@@ -118,3 +118,4 @@ export const subscribeAllEvents = (params: SubscribeParamsInterface): void => {
       subscribeAllEvents(params);
     });
 };
+*/

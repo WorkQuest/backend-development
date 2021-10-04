@@ -1,3 +1,4 @@
+/**
 import {BlockTransactionInterface,} from "./processSwapInitialized";
 import processMessageHashCreator from "./processMessageHashCreator";
 import { SwapData } from "@workquest/database-models/lib/models";
@@ -32,3 +33,4 @@ export default async (swapRedeemedData: swapRedeemedReadInterface) => {
         console.log('Error process event SwapRedeemed', e)
     }
 }
+ */

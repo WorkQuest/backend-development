@@ -6,6 +6,7 @@ type onEventCallBack = {
   (eventData: EventData): void;
 }
 
+// TODO описать eventData: any
 export class BridgeContract {
   private readonly _abi: string;
   private readonly _address: string;
@@ -23,21 +24,40 @@ export class BridgeContract {
     this._eventListenerInit();
   }
 
+  private async _onEventData(eventData: any) {
+    const signedEventData = await this._singEventData(eventData);
+
+    this._provider.lastTrackedBlock = eventData.blockNumber;
+    this._onEventCallBacks.forEach(callBack => callBack(signedEventData));
+  }
+
   private _eventListenerInit() {
     this._contract.events.allEvents({ fromBlock: this._provider.lastTrackedBlock })
       .on('error', (err) => { /** TODO */ })
-      .on('data', (data: EventData) => {
-        this._provider.lastTrackedBlock = data.blockNumber;
+      .on('data', this._onEventData);
+  }
 
-        this._onEventCallBacks.forEach(callBack => callBack(data));
-      });
+  private async _singEventData(eventData: any): Promise<any> {
+    const fields = [
+      eventData.nonce,
+      eventData.amount,
+      eventData.recipient,
+      eventData.sender,
+      eventData.chainFrom,
+      eventData.chainTo,
+      eventData.symbol,
+    ];
+
+    eventData['messageHash'] = (await this._provider.sing(fields)).message;
+
+    return eventData;
   }
 
   public signCallbackOnEvent(callBack: onEventCallBack) {
     this._onEventCallBacks.push(callBack);
   }
 
-  public async getPastEvents(event: string, options: PastEventOptions): Promise<EventData[]> {
+  public async getPastEvents(event: string, options: PastEventOptions): Promise<any[]> {
     return this._contract.getPastEvents(event, options);
   }
 }

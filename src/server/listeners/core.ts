@@ -1,3 +1,4 @@
+/**
 import { AbiItem, } from 'web3-utils';
 import { Contract } from "@ethersproject/contracts";
 import { networks, wsProviders } from "../config/constant";
@@ -31,3 +32,5 @@ export const createContract = (Abi: AbiItem[], address: string, network: string)
 
 export const getBlockNumber = async (network: string)
   : Promise<number> => await web3[network].eth.getBlockNumber();
+
+ */

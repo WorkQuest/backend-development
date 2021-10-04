@@ -124,11 +124,11 @@ export default {
       contract: '',
       webSocketProvider: '',
     },
-    rinkebyTestnetNetwork: {
+    rinkebyTestNetwork: {
       contract: process.env.BRIDGE_TESTNET_RINKEBY_CONTRACT,
       webSocketProvider: process.env.BRIDGE_TESTNET_RINKEBY_WEBSOCKET_PROVIDER,
     },
-    bscTestnetNetwork: {
+    bscTestNetwork: {
       contract: process.env.BRIDGE_TESTNET_BSC_CONTRACT,
       webSocketProvider: process.env.BRIDGE_TESTNET_BSC_WEBSOCKET_PROVIDER,
     },

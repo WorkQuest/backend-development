@@ -1,3 +1,4 @@
+/**
 import { SwapData } from "@workquest/database-models/lib/models";
 import {UInt} from "../listeners/misc";
 import processMessageHashCreator from "./processMessageHashCreator";
@@ -64,3 +65,4 @@ interface SwapInterface {
     nonce: UInt,
     messageHash: string
 }
+ */

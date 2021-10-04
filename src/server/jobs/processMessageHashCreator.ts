@@ -1,3 +1,4 @@
+/**
 import {metaMaskKey, wsProviders} from "../config/constant";
 
 const Web3 = require("web3");
@@ -29,3 +30,4 @@ export default async (messageHashCreatorData: messageHashCreatorInterface):Promi
     console.log('Error process Message Hash Creator', e)
   }
 }
+*/
