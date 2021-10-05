@@ -146,7 +146,7 @@ export default [{
   }
 }, {
   method: "GET",
-  path: "/v1/pro1file/workers",
+  path: "/v1/profile/workers",
   handler: getWorkers,
   options: {
     id: "v1.profile.workers",
@@ -157,9 +157,6 @@ export default [{
         limit: limitSchema,
         offset: offsetSchema,
       }).label("GetWorkersQuery"),
-      params: Joi.object({
-//TODO: filters
-      }).label("GetWorkersParams")
     },
     response: {
       schema: outputPaginationSchema('workers', userSchema).label("GetWorkersResponse")
