@@ -2,7 +2,7 @@ import {Server,} from '@hapi/hapi';
 import { contractAddresses, networks } from "../config/constant";
 import { createContract, getBlockNumber } from "./core";
 import { WQBridge } from "../abi/WQBridge";
-import { ParserInfo } from "@workquest/database-models/lib/models";
+import { BlockchainNetworks, BridgeParserBlockInfo } from "@workquest/database-models/lib/models";
 import { normalizeEventData, parseEvents, subscribeAllEvents } from "./misc";
 import processSwapInitialized, { swapInitializedReadInterface } from "../jobs/processSwapInitialized";
 import processSwapRedeemed, { swapRedeemedReadInterface } from "../jobs/processSwapRedeemed";
@@ -13,6 +13,7 @@ const contractEventsBridge = {
 }
 
 export const listenerBridge = async (server: Server, network ): Promise<void> => {
+  const blockchainNetwork = (network === 'ETH' ? BlockchainNetworks.ethMainNetwork : BlockchainNetworks.bscMainNetwork);
   const [key] = Object.entries(networks).find(([, val]) => val === network);
   const contract : any = createContract(WQBridge, contractAddresses[key], network);
   console.log('\x1b[32m%s\x1b[0m', 'Subscribed contract * WQ Bridge * | network:', network);
@@ -20,19 +21,22 @@ export const listenerBridge = async (server: Server, network ): Promise<void> =>
   const eventData = async (data, isWs = true) => {
     if(isWs){
       const lastBlock = await getBlockNumber(network);
-      await ParserInfo.update({'info.lastParsedBlock': lastBlock,}, {where: {network, contract: 'Bridge'},});
+
+      await BridgeParserBlockInfo.update({ lastParsedBlock: lastBlock }, {
+        where: { network: blockchainNetwork }
+      });
     }
     switch (data.event) {
       case contractEventsBridge.swapInitialized: {
         console.log(contractEventsBridge.swapInitialized)
-        const swapInitializedData = <swapInitializedReadInterface>normalizeEventData(data)
-        const res = await processSwapInitialized(swapInitializedData)
+        const swapInitializedData = <swapInitializedReadInterface>normalizeEventData(data);
+        const res = await processSwapInitialized(swapInitializedData, blockchainNetwork);
         break;
       }
       case contractEventsBridge.swapRedeemed: {
         console.log(contractEventsBridge.swapRedeemed)
-        const swapRedeemedData = <swapRedeemedReadInterface>normalizeEventData(data)
-        const res = await processSwapRedeemed(swapRedeemedData)
+        const swapRedeemedData = <swapRedeemedReadInterface>normalizeEventData(data);
+        const res = await processSwapRedeemed(swapRedeemedData, blockchainNetwork);
         break;
       }
       default:
@@ -40,9 +44,12 @@ export const listenerBridge = async (server: Server, network ): Promise<void> =>
     }
   };
 
-  const fromBlock = (await ParserInfo.findOrCreate({
-    where: {network, contract: 'Bridge'},
-  }))[0].info.lastParsedBlock + 1;
+  const [parserInfo, ] = await BridgeParserBlockInfo.findOrCreate({
+    where: { network: blockchainNetwork },
+    defaults: { network: blockchainNetwork },
+  });
+
+  const fromBlock = parserInfo.lastParsedBlock + 1;
 
   console.log('\x1b[35m%s\x1b[0m', `fromBlock: '${fromBlock}' | parseEvents Bridge started!!!`);
 
@@ -63,6 +70,8 @@ export const listenerBridge = async (server: Server, network ): Promise<void> =>
   })
 
   if (lastBlock > fromBlock) {
-    await ParserInfo.update({'info.lastParsedBlock': lastBlock,}, {where: {network, contract: 'Bridge'},});
+    await BridgeParserBlockInfo.update({ lastParsedBlock: lastBlock }, {
+      where: { network: blockchainNetwork }
+    });
   }
 };

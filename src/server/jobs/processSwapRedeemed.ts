@@ -1,34 +1,70 @@
 import {BlockTransactionInterface,} from "./processSwapInitialized";
 import processMessageHashCreator from "./processMessageHashCreator";
-import { SwapData } from "@workquest/database-models/lib/models";
+import { BlockchainNetworks, BridgeSwapTokenEvent, SwapEvents } from "@workquest/database-models/lib/models";
+import { UInt } from "../listeners/misc";
 
 
 export interface swapRedeemedReadInterface extends BlockTransactionInterface {
-    readonly timestamp: string
-    readonly sender: string
-    readonly recipient: string
-    readonly amount: string
-    readonly chainFrom: string
-    readonly chainTo: string
-    readonly nonce: string
-    readonly symbol: string
+  readonly timestamp: string
+  readonly sender: string
+  readonly recipient: string
+  readonly amount: string
+  readonly chainFrom: number
+  readonly chainTo: number
+  readonly nonce: number
+  readonly symbol: string
 }
 
-export default async (swapRedeemedData: swapRedeemedReadInterface) => {
-    try {
-        const messageHash = await processMessageHashCreator(swapRedeemedData)
-        const res = await SwapData.update({
-                active: false,
-            },
-            {
-                where: {
-                    messageHash
-                }
-            }
-        );
-        return (res)
+interface SwapInterface {
+  transactionHash: string;
+  active: boolean,
+  timestamp: string;
+  initiator: string;
+  recipient: string;
+  amount: string;
+  chainTo: number;
+  chainFrom: number;
+  token: string;
+  blockNumber: number;
+  nonce: number,
+  messageHash: string
+}
 
-    } catch (e) {
-        console.log('Error process event SwapRedeemed', e)
-    }
+export default async (swapRedeemedData: swapRedeemedReadInterface, blockchainNetwork: BlockchainNetworks) => {
+  try {
+    const messageHash = await processMessageHashCreator(swapRedeemedData);
+
+    const model: SwapInterface = {
+      timestamp: swapRedeemedData.timestamp,
+      active: true,
+      initiator: swapRedeemedData.sender.toLowerCase(),
+      recipient: swapRedeemedData.recipient.toLowerCase(),
+      amount: swapRedeemedData.amount,
+      chainTo: swapRedeemedData.chainTo,
+      chainFrom: swapRedeemedData.chainFrom,
+      token: swapRedeemedData.symbol,
+      transactionHash: swapRedeemedData.transactionHash,
+      blockNumber: swapRedeemedData.blockNumber,
+      nonce: swapRedeemedData.nonce,
+      messageHash: messageHash
+    };
+
+    return BridgeSwapTokenEvent.create({
+      transactionHash: model.transactionHash,
+      blockNumber: model.blockNumber,
+      network: blockchainNetwork,
+      event: SwapEvents.swapInitialized,
+      nonce: model.nonce,
+      timestamp: model.timestamp,
+      initiator: model.initiator,
+      recipient: model.recipient,
+      amount: model.amount,
+      chainTo: model.chainTo,
+      chainFrom: model.chainFrom,
+      symbol: model.token,
+      messageHash,
+    });
+  } catch (e) {
+    console.log('Error process event SwapRedeemed', e)
+  }
 }

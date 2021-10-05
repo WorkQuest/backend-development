@@ -5,11 +5,11 @@ const Web3 = require("web3");
 export interface messageHashCreatorInterface {
   readonly recipient: string
   readonly sender: string
-  readonly nonce: string
+  readonly nonce: number
   readonly symbol: string
   readonly amount: string
-  readonly chainFrom: string
-  readonly chainTo: string
+  readonly chainFrom: number
+  readonly chainTo: number
 }
 
 export default async (messageHashCreatorData: messageHashCreatorInterface):Promise<string> => {
