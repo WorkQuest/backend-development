@@ -54,7 +54,7 @@ export async function getRecipientSwaps(r) {
       chainTo: swapEvent.chainTo,
       chainFrom: swapEvent.chainFrom,
       symbol: swapEvent.symbol,
-      signData: [
+      signData: [ /** Не трогать последовательность! Метод redeem на контракте */
         swapEvent.nonce.toString(),
         swapEvent.chainFrom.toString(),
         swapEvent.amount,
