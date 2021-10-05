@@ -41,20 +41,26 @@ export default async (swapInitializedData: swapInitializedReadInterface, blockch
     };
     console.log(model, 'model');
     try {
-      await BridgeSwapTokenEvent.create({
-        transactionHash: model.transactionHash,
-        blockNumber: model.blockNumber,
-        network: blockchainNetwork,
-        event: SwapEvents.swapInitialized,
-        nonce: model.nonce,
-        timestamp: model.timestamp,
-        initiator: model.initiator,
-        recipient: model.recipient,
-        amount: model.amount,
-        chainTo: model.chainTo,
-        chainFrom: model.chainFrom,
-        symbol: model.token,
-        messageHash,
+      await BridgeSwapTokenEvent.findOrCreate({
+        where: {
+          transactionHash: model.transactionHash,
+          event: SwapEvents.swapInitialized
+        },
+        defaults: {
+          transactionHash: model.transactionHash,
+          blockNumber: model.blockNumber,
+          network: blockchainNetwork,
+          event: SwapEvents.swapInitialized,
+          nonce: model.nonce,
+          timestamp: model.timestamp,
+          initiator: model.initiator,
+          recipient: model.recipient,
+          amount: model.amount,
+          chainTo: model.chainTo,
+          chainFrom: model.chainFrom,
+          symbol: model.token,
+          messageHash,
+        }
       });
     } catch (err) {
       console.log(err);
