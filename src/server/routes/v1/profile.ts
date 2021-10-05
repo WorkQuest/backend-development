@@ -3,7 +3,8 @@ import {
   changePassword,
   confirmPhoneNumber,
   editProfile,
-  getMe, getUser, getWorkers,
+  getMe, getUser,
+  getWorkers,
   sendCodeOnPhoneNumber,
   setRole
 } from "../../api/profile";
@@ -19,7 +20,11 @@ import {
   userRoleSchema,
   userSchema,
   skillFilterSchema,
-  mobilePhoneSchema, outputPaginationSchema, limitSchema, offsetSchema
+  mobilePhoneSchema,
+  outputPaginationSchema,
+  limitSchema,
+  offsetSchema,
+  locationSchema,
 } from "@workquest/database-models/lib/schemes";
 
 export default [{
@@ -64,11 +69,12 @@ export default [{
         avatarId: idSchema.allow(null).required(),
         firstName: userFirstNameSchema.required(),
         lastName: userLastNameSchema.required(),
-        skillFilters: skillFilterSchema,
+        location: locationSchema.allow(null).required(),
+        skillFilters: skillFilterSchema.allow(null).required(),
         additionalInfo: Joi.alternatives(
           userAdditionalInfoEmployerSchema.options({ presence: "required" }),
           userAdditionalInfoWorkerSchema.options({ presence: "required" })
-        ).required()
+        ).required(),
       }).label("EditProfilePayload")
     },
     response: {
