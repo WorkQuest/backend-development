@@ -49,20 +49,26 @@ export default async (swapRedeemedData: swapRedeemedReadInterface, blockchainNet
       messageHash: messageHash
     };
 
-    return BridgeSwapTokenEvent.create({
-      transactionHash: model.transactionHash,
-      blockNumber: model.blockNumber,
-      network: blockchainNetwork,
-      event: SwapEvents.swapRedeemed,
-      nonce: model.nonce,
-      timestamp: model.timestamp,
-      initiator: model.initiator,
-      recipient: model.recipient,
-      amount: model.amount,
-      chainTo: model.chainTo,
-      chainFrom: model.chainFrom,
-      symbol: model.token,
-      messageHash,
+    return BridgeSwapTokenEvent.findOrCreate({
+      where: {
+        transactionHash: model.transactionHash,
+        event: SwapEvents.swapRedeemed,
+      },
+      defaults: {
+        transactionHash: model.transactionHash,
+        blockNumber: model.blockNumber,
+        network: blockchainNetwork,
+        event: SwapEvents.swapRedeemed,
+        nonce: model.nonce,
+        timestamp: model.timestamp,
+        initiator: model.initiator,
+        recipient: model.recipient,
+        amount: model.amount,
+        chainTo: model.chainTo,
+        chainFrom: model.chainFrom,
+        symbol: model.token,
+        messageHash
+      }
     });
   } catch (e) {
     console.log('Error process event SwapRedeemed', e)
