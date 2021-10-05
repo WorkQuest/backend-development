@@ -37,7 +37,7 @@ export default async (swapInitializedData: swapInitializedReadInterface, blockch
       transactionHash: swapInitializedData.transactionHash,
       blockNumber: swapInitializedData.blockNumber,
       nonce: swapInitializedData.nonce,
-      messageHash: messageHash
+      messageHash: messageHash,
     };
     console.log(model, 'model');
     try {

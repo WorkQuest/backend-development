@@ -53,7 +53,7 @@ export default async (swapRedeemedData: swapRedeemedReadInterface, blockchainNet
       transactionHash: model.transactionHash,
       blockNumber: model.blockNumber,
       network: blockchainNetwork,
-      event: SwapEvents.swapInitialized,
+      event: SwapEvents.swapRedeemed,
       nonce: model.nonce,
       timestamp: model.timestamp,
       initiator: model.initiator,
