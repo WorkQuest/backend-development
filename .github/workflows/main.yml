@@ -57,6 +57,11 @@ jobs:
             SERVER_HOST=${{ secrets.PROD_SERVER_HOST }} \
             SERVER_PORT=${{ secrets.PROD_SERVER_PORT }} \
 
+            DB_HOST=${{ secrets.PROD_DB_HOST }} \
+            DB_USERNAME=${{ secrets.PROD_DB_USERNAME }} \
+            DB_PASSWORD=${{ secrets.PROD_DB_PASSWORD }} \
+            DB_NAME=${{ secrets.PROD_DB_NAME }} \
+
             SMTP_HOST=${{ secrets.PROD_SMTP_HOST }} \
             SMTP_PORT=${{ secrets.PROD_SMTP_PORT }} \
             SMTP_SECURE=${{ secrets.PROD_SMTP_SECURE }} \
@@ -161,6 +166,11 @@ jobs:
             JWT_REFRESH_SECRET=${{ secrets.DEV_JWT_REFRESH_SECRET }} \
             SERVER_HOST=${{ secrets.DEV_SERVER_HOST }} \
             SERVER_PORT=${{ secrets.DEV_SERVER_PORT }} \
+
+            DB_HOST=${{ secrets.DEV_DB_HOST }} \
+            DB_USERNAME=${{ secrets.DEV_DB_USERNAME }} \
+            DB_PASSWORD=${{ secrets.DEV_DB_PASSWORD }} \
+            DB_NAME=${{ secrets.DEV_DB_NAME }} \
 
             SMTP_HOST=${{ secrets.DEV_SMTP_HOST }} \
             SMTP_PORT=${{ secrets.DEV_SMTP_PORT }} \
