@@ -5,6 +5,7 @@ import {
   editProfile,
   getMe, getUser,
   getWorkers,
+  getEmployers,
   sendCodeOnPhoneNumber,
   setRole
 } from "../../api/profile";
@@ -166,6 +167,24 @@ export default [{
     },
     response: {
       schema: outputPaginationSchema('workers', userSchema).label("GetWorkersResponse")
+    }
+  }
+}, {
+  method: "GET",
+  path: "/v1/profile/employers",
+  handler: getEmployers,
+  options: {
+    id: "v1.profile.employers",
+    tags: ["api", "profile"],
+    description: "Get employers (for workers only)",
+    validate: {
+      query: Joi.object({
+        limit: limitSchema,
+        offset: offsetSchema,
+      }).label("GetEmployersQuery"),
+    },
+    response: {
+      schema: outputPaginationSchema('employers', userSchema).label("GetEmployersResponse")
     }
   }
 }];
