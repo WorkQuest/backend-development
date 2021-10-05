@@ -59,8 +59,8 @@ export async function getRecipientSwaps(r) {
         swapEvent.chainFrom.toString(),
         swapEvent.amount,
         swapEvent.recipient,
-        swapEvent.symbol,
         sing.v, sing.r, sing.s,
+        swapEvent.symbol,
       ],
     });
   }
