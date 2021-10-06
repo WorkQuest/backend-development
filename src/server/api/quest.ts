@@ -426,3 +426,12 @@ export async function removeStar(r) {
 
   return output();
 }
+
+export async function getWorkerQuests(r) {
+  const quests = await Quest.findAndCountAll({
+    where: {
+      assignedWorkerId: r.params.workerId,
+    }
+  });
+  return output(quests);
+}

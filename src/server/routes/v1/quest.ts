@@ -14,8 +14,8 @@ import {
   setStar,
   startQuest,
   removeStar,
-  getQuest,
-} from '../../api/quest';
+  getQuest, getWorkerQuests
+} from "../../api/quest";
 import {
   outputOkSchema,
   idSchema,
@@ -330,6 +330,23 @@ export default [{
     },
     response: {
       schema: emptyOkSchema
+    },
+  }
+}, {
+  method: "GET",
+  path: '/v1/worker/{workerId}/quests',
+  handler: getWorkerQuests,
+  options: {
+    id: 'v1.get.quests.worker',
+    tags: ["api", "quest"],
+    description: 'Get all quests of worker',
+    validate: {
+      params: Joi.object({
+        workerId: idSchema.required(),
+      }).label("GetWorkerQuestsParams")
+    },
+    response: {
+      schema: outputOkSchema(questsSchema).label('GetWorkerQuestsResponse')
     },
   }
 }];
