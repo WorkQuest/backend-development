@@ -120,5 +120,9 @@ export default {
     wqtProviderRinkeby:process.env.WQT_PROVIDER_RINKEBY,
     wqtProviderBsctestnet: process.env.WQT_PROVIDER_BSCTESTNET,
     wqtPrivateKey: process.env.WQT_PRIVATE_KEY,
+  },
+  distribution: {
+    providerLink: process.env.DISTRIBUTION_WQT_PROVIDER_LINK,
+    contractAddress: process.env.DISTRIBUTION_WQT_CONTRACT_ADDRESS
   }
 };
