@@ -21,6 +21,7 @@ import { run } from "graphile-worker";
 import { networks } from "./config/constant";
 import { listenerBridge } from "./listeners";
 import { initWeb3 } from "./listeners/core";
+import { wqtDistribution } from './api/wqtDistribution';
 
 const HapiSwagger = require("hapi-swagger");
 const Package = require("../../package.json");
@@ -154,6 +155,7 @@ const init = async () => {
       console.log('\x1b[32m%s\x1b[0m', 'Contract listeners Bridge eth start!');
       await listenerBridge(server, networks.eth)
     // }
+    await wqtDistribution()
   } catch (err) {
     server.log('error', JSON.stringify(err));
   }
