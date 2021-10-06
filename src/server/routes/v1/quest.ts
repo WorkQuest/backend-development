@@ -160,8 +160,8 @@ export default [{
       query: questsQuerySchema,
       payload: Joi.object({
         skillFilters: skillFilterSchema,
-        employment: questEmploymentsSchema,
-        priority: questPrioritiesSchema,
+        employment: questEmploymentsSchema.default([]),
+        priority: questPrioritiesSchema.default([]),
         location: Joi.object({
           north: locationSchema,
           south: locationSchema,
