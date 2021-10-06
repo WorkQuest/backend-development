@@ -15,6 +15,7 @@ import {
   userAdditionalInfoEmployerSchema,
   userAdditionalInfoWorkerSchema,
 } from "@workquest/database-models/lib/schemes";
+import { transformToGeoPostGIS } from "@workquest/database-models/lib/utils/quest";
 
 function getAdditionalInfoSchema(role: UserRole): Joi.Schema {
   if (role === UserRole.Employer)
@@ -83,15 +84,19 @@ export async function editProfile(r) {
   }
 
   const transaction = await r.server.app.db.transaction();
+  const userFieldsUpdate = {
+    ...r.payload,
+    locationPostGIS: r.payload.location ? transformToGeoPostGIS(r.payload.location) : null,
+  };
+
+  await user.update(userFieldsUpdate, { transaction });
+  await SkillFilter.destroy({ where: { userId: user.id }, transaction });
 
   if (r.payload.skillFilters) {
     const userSkillFilters = SkillFilter.toRawUserSkills(r.payload.skillFilters, user.id);
 
-    await SkillFilter.destroy({ where: { userId: user.id }, transaction });
     await SkillFilter.bulkCreate(userSkillFilters, { transaction });
   }
-
-  await user.update({...r.payload}, { transaction });
 
   await transaction.commit();
 

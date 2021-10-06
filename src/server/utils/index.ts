@@ -19,6 +19,11 @@ export function output(res?: object | null): object {
   };
 }
 
+export interface OutputInterface {
+  ok: boolean,
+  result?: object
+}
+
 export function error(code: number, msg: string, data: object): Boom {
   return new Boom(msg, {
     data: {

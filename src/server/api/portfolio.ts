@@ -2,7 +2,6 @@ import { error, output } from '../utils';
 import { Errors } from '../utils/errors';
 import { getMedias } from '../utils/medias';
 import {
-  Media,
   Portfolio,
   User,
   UserRole,
