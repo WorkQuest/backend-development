@@ -34,6 +34,11 @@ async function answerWorkOnQuest(questId: string, worker: User, acceptWork: bool
 
   if (acceptWork) {
     await quest.update({ status: QuestStatus.Active });
+    await QuestsResponse.destroy({
+      where: {
+        questId: quest.id
+      }
+    });
   } else {
     await quest.update({ status: QuestStatus.Created, assignedWorkerId: null });
   }
