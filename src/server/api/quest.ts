@@ -298,8 +298,8 @@ export async function getQuests(r) {
     ...(r.query.north && r.query.south && { [Op.and]: entersAreaLiteral }),
     ...(r.query.filter && { filter: r.params.filter }),
     ...(r.query.workplace && { workplace: r.params.workplace }),
-    ...(r.payload && r.payload.employment && { employment: { [Op.in]: r.payload.employment } }),// TODO проверить совместимость с GET запросом
-    ...(r.payload && r.payload.priority && { priority: { [Op.in]: r.payload.priority } }) // TODO проверить совместимость с GET запросом
+    ...(r.payload && r.payload.employment && { employment: { [Op.in]: r.payload.employment } }),
+    ...(r.payload && r.payload.priority && { priority: { [Op.in]: r.payload.priority } }),
   };
 
   if (r.query.q) {
