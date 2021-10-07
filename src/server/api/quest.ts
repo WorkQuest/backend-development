@@ -298,8 +298,8 @@ export async function getQuests(r) {
     ...(r.query.north && r.query.south && { [Op.and]: entersAreaLiteral }),
     ...(r.query.filter && { filter: r.params.filter }),
     ...(r.query.workplace && { workplace: r.params.workplace }),
-    employment: { [Op.in]: r.payload.employment }, // TODO проверить совместимость с GET запросом
-    priority: { [Op.in]: r.payload.priority }, // TODO проверить совместимость с GET запросом
+    ...(r.payload && r.payload.employment && { employment: { [Op.in]: r.payload.employment } }),// TODO проверить совместимость с GET запросом
+    ...(r.payload && r.payload.priority && { priority: { [Op.in]: r.payload.priority } }) // TODO проверить совместимость с GET запросом
   };
 
   if (r.query.q) {
@@ -320,7 +320,7 @@ export async function getQuests(r) {
       }
     });
   }
-  if (r.payload.skillFilters) {
+  if (r.payload && r.payload.skillFilters) {
     const { categories, skills } = SkillFilter.splitByFields(r.payload.skillFilters);
 
     include.push({
@@ -357,7 +357,7 @@ export async function getQuests(r) {
     offset: r.query.offset,
     include, order, where,
     replacements: {
-      ...(r.payload.location && {
+      ...(r.payload && r.payload.location && {
         northLng: r.payload.location.north.longitude,
         northLat: r.payload.location.north.latitude,
         southLng: r.payload.location.south.longitude,
