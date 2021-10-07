@@ -5,7 +5,7 @@ import { Contract } from "web3-eth-contract";
 
 export class BridgeProvider {
   private readonly _web3: Web3;
-  private readonly _network: 'eth' | 'bnb';
+  private readonly _network: 'eth' | 'bsc';
 
   private _lastTrackedBlock: number;
 
@@ -21,14 +21,14 @@ export class BridgeProvider {
     this._lastTrackedBlock = value;
   }
 
-  constructor(web3: Web3, network: 'eth' | 'bnb', fromBlock: number) {
+  constructor(web3: Web3, network: 'eth' | 'bsc', fromBlock: number) {
     this._lastTrackedBlock = fromBlock;
     this._network = network;
     this._web3 = web3;
   }
 
   public async getBlockNumber(): Promise<number> {
-    return this._web3[this._network].getBlockNumber();
+    return this._web3.eth.getBlockNumber();
   }
 
   public async sing(fields: any[]): Promise<Sign> {
@@ -37,11 +37,5 @@ export class BridgeProvider {
 
   public makeContract(abi: any[], address: string): Contract {
     return new this._web3.eth.Contract(abi, address);
-  }
-
-  static buildBridgeProvider(provider: WebsocketProvider | HttpProvider, network: 'eth' | 'bnb', fromBlock: number) {
-    const web3 = new Web3(provider);
-
-    return new BridgeProvider(web3, network, fromBlock);
   }
 }

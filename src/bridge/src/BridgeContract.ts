@@ -11,6 +11,7 @@ export class BridgeContract {
   private readonly _address: string;
   private readonly _contract: Contract;
   private readonly _provider: BridgeProvider;
+  private readonly _preParsingSteps = 6000;
 
   private readonly _onEventCallBacks: onEventCallBack[] = [];
 
@@ -70,5 +71,23 @@ export class BridgeContract {
 
   public async getPastEvents(event: string, options: PastEventOptions): Promise<any[]> {
     return this._contract.getPastEvents(event, options);
+  }
+
+  public async* preParsingEvents() {
+    const lastBlockNumber = await this._provider.getBlockNumber();
+
+    let fromBlock = this._provider.lastTrackedBlock;
+    let toBlock = fromBlock + this._preParsingSteps;
+
+    while(true) {
+      yield this.getPastEvents('allEvents', { fromBlock, toBlock });
+
+      fromBlock += this._preParsingSteps;
+      toBlock = fromBlock + this._preParsingSteps;
+
+      if (toBlock >= lastBlockNumber) {
+        yield this.getPastEvents('allEvents', { fromBlock, toBlock }); break;
+      }
+    }
   }
 }
