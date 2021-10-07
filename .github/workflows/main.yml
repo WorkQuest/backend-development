@@ -57,17 +57,17 @@ jobs:
             SERVER_HOST=${{ secrets.PROD_SERVER_HOST }} \
             SERVER_PORT=${{ secrets.PROD_SERVER_PORT }} \
 
+            DB_HOST=${{ secrets.PROD_DB_HOST }} \
+            DB_USERNAME=${{ secrets.PROD_DB_USERNAME }} \
+            DB_PASSWORD=${{ secrets.PROD_DB_PASSWORD }} \
+            DB_NAME=${{ secrets.PROD_DB_NAME }} \
+
             SMTP_HOST=${{ secrets.PROD_SMTP_HOST }} \
             SMTP_PORT=${{ secrets.PROD_SMTP_PORT }} \
             SMTP_SECURE=${{ secrets.PROD_SMTP_SECURE }} \
             SMTP_USER=${{ secrets.PROD_SMTP_USER }} \
             SMTP_PASSWORD=${{ secrets.PROD_SMTP_PASSWORD }} \
             SMTP_SENDER=${{ secrets.PROD_SMTP_SENDER }} \
-
-            DB_HOST=${{ secrets.PROD_DB_HOST }} \
-            DB_USERNAME=${{ secrets.PROD_DB_USERNAME }} \
-            DB_PASSWORD=${{ secrets.PROD_DB_PASSWORD }} \
-            DB_NAME=${{ secrets.PROD_DB_NAME }} \
 
             FACEBOOK_CLIENT_ID=${{ secrets.PROD_FACEBOOK_CLIENT_ID }} \
             FACEBOOK_SECRET_KEY=${{ secrets.PROD_FACEBOOK_SECRET_KEY }} \
@@ -97,6 +97,30 @@ jobs:
             SUMSUB_SECRET_KEY=${{ secrets.PROD_SUMSUB_SECRET_KEY }} \
             SUMSUB_BASE_URL=${{ secrets.PROD_SUMSUB_BASE_URL }} \
             SUMSUB_ACCESS_TOKEN_TTL=${{ secrets.PROD_SUMSUB_ACCESS_TOKEN_TTL }} \
+
+            TOKEN_WQT_BSC_NETWORK_ADDRESS=${{ secrets.PROD_TOKEN_WQT_BSC_NETWORK_ADDRESS }} \
+            TOKEN_WQT_BSC_NETWORK_DECIMAL=${{ secrets.PROD_TOKEN_WQT_BSC_NETWORK_DECIMAL }} \
+            TOKEN_WQT_BSC_NETWORK_SYMBOL=${{ secrets.PROD_TOKEN_WQT_BSC_NETWORK_SYMBOL }} \
+            TOKEN_WQT_BSC_NETWORK_NAME=${{ secrets.PROD_TOKEN_WQT_BSC_NETWORK_NAME }} \
+            TOKEN_WQT_BSC_NETWORK_AMOUNT_MAX=${{ secrets.PROD_TOKEN_WQT_BSC_NETWORK_AMOUNT_MAX }} \
+
+            TOKEN_WQT_ETHEREUM_NETWORK_ADDRESS=${{ secrets.PROD_TOKEN_WQT_ETHEREUM_NETWORK_ADDRESS }} \
+            TOKEN_WQT_ETHEREUM_NETWORK_DECIMAL=${{ secrets.PROD_TOKEN_WQT_ETHEREUM_NETWORK_DECIMAL }} \
+            TOKEN_WQT_ETHEREUM_NETWORK_SYMBOL=${{ secrets.PROD_TOKEN_WQT_ETHEREUM_NETWORK_SYMBOL }} \
+            TOKEN_WQT_ETHEREUM_NETWORK_NAME=${{ secrets.PROD_TOKEN_WQT_ETHEREUM_NETWORK_NAME }} \
+            TOKEN_WQT_ETHEREUM_NETWORK_AMOUNT_MAX=${{ secrets.PROD_TOKEN_WQT_ETHEREUM_NETWORK_AMOUNT_MAX }} \
+
+            TOKEN_WETH_ADDRESS=${{ secrets.PROD_TOKEN_WETH_ADDRESS }} \
+            TOKEN_WETH_DECIMAL=${{ secrets.PROD_TOKEN_WETH_DECIMAL }} \
+            TOKEN_WETH_SYMBOL=${{ secrets.PROD_TOKEN_WETH_SYMBOL }} \
+            TOKEN_WETH_NAME=${{ secrets.PROD_TOKEN_WETH_NAME }} \
+            TOKEN_WETH_AMOUNT_MAX=${{ secrets.PROD_TOKEN_WETH_AMOUNT_MAX }} \
+
+            TOKEN_WBNB_ADDRESS=${{ secrets.PROD_TOKEN_WBNB_ADDRESS }} \
+            TOKEN_WBNB_DECIMAL=${{ secrets.PROD_TOKEN_WBNB_DECIMAL }} \
+            TOKEN_WBNB_SYMBOL=${{ secrets.PROD_TOKEN_WBNB_SYMBOL }} \
+            TOKEN_WBNB_NAME=${{ secrets.PROD_TOKEN_WBNB_NAME }} \
+            TOKEN_WBNB_AMOUNT_MAX=${{ secrets.PROD_TOKEN_WBNB_AMOUNT_MAX }} \
 
             WQT_BRIDGE_CONTRACT_RINKEBY=${{ secrets.PROD_WQT_BRIDGE_CONTRACT_RINKEBY }} \
             WQT_BRIDGE_CONTRACT_BSCTESTNET=${{ secrets.PROD_WQT_BRIDGE_CONTRACT_BSCTESTNET }} \
@@ -143,19 +167,17 @@ jobs:
             SERVER_HOST=${{ secrets.DEV_SERVER_HOST }} \
             SERVER_PORT=${{ secrets.DEV_SERVER_PORT }} \
 
+            DB_HOST=${{ secrets.DEV_DB_HOST }} \
+            DB_USERNAME=${{ secrets.DEV_DB_USERNAME }} \
+            DB_PASSWORD=${{ secrets.DEV_DB_PASSWORD }} \
+            DB_NAME=${{ secrets.DEV_DB_NAME }} \
+
             SMTP_HOST=${{ secrets.DEV_SMTP_HOST }} \
             SMTP_PORT=${{ secrets.DEV_SMTP_PORT }} \
             SMTP_SECURE=${{ secrets.DEV_SMTP_SECURE }} \
             SMTP_USER=${{ secrets.DEV_SMTP_USER }} \
             SMTP_PASSWORD=${{ secrets.DEV_SMTP_PASSWORD }} \
             SMTP_SENDER=${{ secrets.DEV_SMTP_SENDER }} \
-
-            BASE_URL=${{ secrets.DEV_BASE_URL }} \
-
-            DB_HOST=${{ secrets.DEV_DB_HOST }} \
-            DB_USERNAME=${{ secrets.DEV_DB_USERNAME }} \
-            DB_PASSWORD=${{ secrets.DEV_DB_PASSWORD }} \
-            DB_NAME=${{ secrets.DEV_DB_NAME }} \
 
             FACEBOOK_CLIENT_ID=${{ secrets.DEV_FACEBOOK_CLIENT_ID }} \
             FACEBOOK_SECRET_KEY=${{ secrets.DEV_FACEBOOK_SECRET_KEY }} \
@@ -219,6 +241,7 @@ jobs:
             WQT_PRIVATE_KEY=${{ secrets.DEV_WQT_PRIVATE_KEY }} \
 
             DEBUG=${{ secrets.DEV_DEBUG }} \
+            BASE_URL=${{ secrets.DEV_BASE_URL }} \
             backend_bin=${{ secrets.backend_bin }} \
             PM2_SERVICE_NAME=${{ secrets.PM2_SERVICE_NAME }} \
             SRC_DIR=${{ github.workspace }}/" backend-update.yml;
