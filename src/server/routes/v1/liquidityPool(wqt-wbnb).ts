@@ -5,8 +5,9 @@ import {
   tokensDayWQTSchema,
   swapWQTSchema,
   offsetSchema,
-  limitSchema
-} from "@workquest/database-models/lib/schemes";
+  limitSchema, emptyOkSchema
+} from '@workquest/database-models/lib/schemes';
+import { wqtDistribution } from '../../api/wqtDistribution';
 
 export default [{
   method: "GET",
@@ -82,6 +83,19 @@ export default [{
     },
     response: {
       schema: outputOkSchema(tokensDayWQTSchema).label("GetTokenDayDataResponse")
+    }
+  }
+}, {
+  method: "GET",
+  path: "/v1/pool-liquidity/wqtDistribution",
+  handler: wqtDistribution,
+  options: {
+    auth: false,
+    id: "v1.liquidity.wqtDistribution",
+    tags: ["api", "pool-liquidity"],
+    description: "Distribution of the WQT to users",
+    response: {
+      schema: emptyOkSchema
     }
   }
 }];

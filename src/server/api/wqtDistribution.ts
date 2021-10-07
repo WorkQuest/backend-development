@@ -15,7 +15,7 @@ const WQT = new Token(
   config.token.WQT.bscNetwork.address,
   config.token.WQT.bscNetwork.decimals,
   config.token.WQT.bscNetwork.symbol,
-  config.token.WQT.bscNetwork.name,
+  config.token.WQT.bscNetwork.name
 );
 
 const WBNB = new Token(
@@ -23,7 +23,7 @@ const WBNB = new Token(
   config.token.WBNB.address,
   config.token.WBNB.decimals,
   config.token.WBNB.symbol,
-  config.token.WBNB.name,
+  config.token.WBNB.name
 );
 
 const pair = new Pair(
@@ -35,36 +35,67 @@ const filePath = path.join('src/server/abi/WQLiquidityMining.json');
 const abi: any[] = JSON.parse(fs.readFileSync(filePath).toString()).abi;
 
 export async function wqtDistribution() {
+  let priceWQT: any;
+  let reserveUSD: any;
+  let totalSupply: any;
+  let sum: any;
   const provider = new Web3.providers.WebsocketProvider(distributionWQT.provider);
   const web3 = new Web3(provider);
   const tradeContract = new web3.eth.Contract(abi, distributionWQT.contract);
   try {
-    await tradeContract.methods.getStakingInfo().call().then(async function(events, err) {
+    await tradeContract.methods.getStakingInfo().call().then(async function(events) {
       const totalStaked = Number(new BigNumber(events.totalStaked).shiftedBy(-18));
-      const rewardTotal = Number(new BigNumber(events.rewardTotal).shiftedBy(-18));
-      const priceUSD: any = (await axios.get(`https://api.coingecko.com/api/v3/coins/work-quest`)).data.market_data.current_price.usd;
-      const result = await axios.post('https://bsc.streamingfast.io/subgraphs/name/pancakeswap/exchange-v2', {
-        query: `{ 
-        pairDayDatas (first: 1, skip: 0,
-        orderBy:date, orderDirection: desc,
-        where: {pairAddress: "${pair.liquidityToken.address.toLowerCase()}"})
-        { date reserve0 reserve1 totalSupply reserveUSD dailyVolumeToken0
-          dailyVolumeToken1 dailyVolumeUSD dailyTxns 
-        }}`
-      });
-
-      if (result.data.errors) {
-        return error(Errors.LiquidityError, 'Query error', result.data.errors);
+      if (!totalStaked) {
+        error(Errors.NotFound, 'totalStaked not found', {});
       }
-      const reserveUSD = result.data.data.pairDayDatas[0].reserveUSD
-      const totalSupply = result.data.data.pairDayDatas[0].totalSupply
-      console.log("priceUSD",priceUSD,"rewardTotal", rewardTotal,"totalStaked", totalStaked,"reserveUSD", reserveUSD,"totalSupply", totalSupply);
-      const sum = ((rewardTotal * priceUSD) * 12)/(totalStaked * (reserveUSD/totalSupply))
-      console.log(sum);
-      return sum
+
+      const rewardTotal = Number(new BigNumber(events.rewardTotal).shiftedBy(-18));
+      if (!rewardTotal) {
+        error(Errors.NotFound, 'rewardTotal not found', {});
+      }
+
+      await axios({
+        method: 'GET',
+        baseURL: 'https://api.coingecko.com/api/v3/coins/work-quest'
+      }).then(function(response) {
+        if (response.status !== 200) {
+          error(Errors.NotFound, `${response.data}`, {});
+        }
+        priceWQT = response.data.market_data.current_price.usd;
+      });
+      if (!priceWQT) {
+        error(Errors.NotFound, 'priceWQT not found', {});
+      }
+
+      await axios({
+        method: 'POST',
+        baseURL: 'https://bsc.streamingfast.io/subgraphs/name/pancakeswap/exchange-v2',
+        data: {
+          query: `{ pairDayDatas (first: 1, skip: 0, orderBy:date, orderDirection: desc,
+          where: {pairAddress: "${pair.liquidityToken.address.toLowerCase()}"})
+        { totalSupply reserveUSD }}`
+        }
+      }).then(function(response) {
+        if (response.status !== 200) {
+          error(Errors.NotFound, `${response.data}`, {});
+        }
+        reserveUSD = response.data.data.pairDayDatas[0].reserveUSD;
+        totalSupply = response.data.data.pairDayDatas[0].totalSupply;
+      });
+      if (!reserveUSD) {
+        error(Errors.NotFound, 'ReserveUSD not found', {});
+      }
+      if (!totalSupply) {
+        error(Errors.NotFound, 'TotalSupply not found', {});
+      }
+
+      sum = ((rewardTotal * priceWQT) * 12) / (totalStaked * (reserveUSD / totalSupply));
+      if (!sum) {
+        error(Errors.NotFound, 'Bad value result', {});
+      }
     });
   } catch (err) {
-    console.log('Error math process', err)
+    console.log('Error math process', err);
   }
+  return output({ sum });
 }
-
