@@ -21,7 +21,6 @@ import { run } from "graphile-worker";
 import { networks } from "./config/constant";
 import { listenerBridge } from "./listeners";
 import { initWeb3 } from "./listeners/core";
-import { wqtDistribution } from './api/wqtDistribution';
 
 const HapiSwagger = require("hapi-swagger");
 const Package = require("../../package.json");

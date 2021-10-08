@@ -18,15 +18,4 @@ export const contractAddresses = {
   eth: config.contracts.wqtBridgeRinkeby,
 };
 
-export const distributionWQT = {
-  contract: config.distribution.contractAddress,
-  provider: config.distribution.providerLink
-}
-
 export const metaMaskKey = `0x${process.env.WQT_PRIVATE_KEY}`
-
-
-// export const chainIds = {
-//   heco: process.env.CHAIN_ID_HECO,
-//   bsc: process.env.CHAIN_ID_BSC
-// }
