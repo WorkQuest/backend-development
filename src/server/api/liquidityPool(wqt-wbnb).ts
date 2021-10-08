@@ -124,7 +124,7 @@ export async function getDistribution() {
   let priceWQT: any;
   let reserveUSD: any;
   let totalSupply: any;
-  let sum: any;
+  let lpToken: any;
 
   try {
     await tradeContract.methods.getStakingInfo().call().then(async function(events) {
@@ -138,20 +138,16 @@ export async function getDistribution() {
         error(Errors.NotFound, 'rewardTotal not found', {});
       }
 
-      await axios({
+      const getWQT = await axios({
         method: 'GET',
         baseURL: 'https://api.coingecko.com/api/v3/coins/work-quest'
-      }).then(function(response) {
-        if (response.status !== 200) {
-          error(Errors.NotFound, `${response.data}`, {});
-        }
-        priceWQT = response.data.market_data.current_price.usd;
-      });
-      if (!priceWQT) {
-        error(Errors.NotFound, 'priceWQT not found', {});
+      })
+      if (getWQT.data.errors) {
+        return error(Errors.LiquidityError, 'Get price WQT', getWQT.data.errors);
       }
+      priceWQT = getWQT.data.market_data.current_price.usd;
 
-      await axios({
+      const variables = await axios({
         method: 'POST',
         baseURL: 'https://bsc.streamingfast.io/subgraphs/name/pancakeswap/exchange-v2',
         data: {
@@ -159,28 +155,20 @@ export async function getDistribution() {
           where: {pairAddress: "${pair.liquidityToken.address.toLowerCase()}"})
         { totalSupply reserveUSD }}`
         }
-      }).then(function(response) {
-        if (response.status !== 200) {
-          error(Errors.NotFound, `${response.data}`, {});
-        }
-        reserveUSD = response.data.data.pairDayDatas[0].reserveUSD;
-        totalSupply = response.data.data.pairDayDatas[0].totalSupply;
-      });
-      if (!reserveUSD) {
-        error(Errors.NotFound, 'ReserveUSD not found', {});
+      })
+      if (variables.data.errors) {
+        return error(Errors.LiquidityError, 'Can`t get reserveUSD and totalSupply', variables.data.errors);
       }
-      if (!totalSupply) {
-        error(Errors.NotFound, 'TotalSupply not found', {});
-      }
+      reserveUSD = variables.data.data.pairDayDatas[0].reserveUSD;
+      totalSupply = variables.data.data.pairDayDatas[0].totalSupply;
 
-      sum = ((rewardTotal * priceWQT) * 12) / (totalStaked * (reserveUSD / totalSupply));
-      if (!sum) {
+      lpToken = ((rewardTotal * priceWQT) * 12) / (totalStaked * (reserveUSD / totalSupply));
+      if (!lpToken) {
         error(Errors.NotFound, 'Bad value result', {});
       }
-      console.log(sum);
     });
   } catch (err) {
     console.log('Error math process', err);
   }
-  return output({ sum });
+  return output({ lpToken });
 }
