@@ -123,6 +123,6 @@ export default {
   },
   distribution: {
     providerLink: process.env.DISTRIBUTION_WQT_PROVIDER_LINK,
-    contractAddress: process.env.DISTRIBUTION_WQT_CONTRACT_ADDRESS
+    contractAddress: process.env.DISTRIBUTION_WQT_CONTRACT_ADDRESS,
   }
 };

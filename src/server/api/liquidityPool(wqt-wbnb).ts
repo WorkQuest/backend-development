@@ -30,17 +30,21 @@ const pair = new Pair(
 );
 
 const provider = new Web3( new Web3.providers.WebsocketProvider(config.distribution.providerLink));
-const filePath = path.join('src/server/abi/WQLiquidityMining.json');
-const abi: any[] = JSON.parse(fs.readFileSync(filePath).toString()).abi;
+const abiPath = path.join('src/server/abi/WQLiquidityMining.json');
+const abi: [] = JSON.parse(fs.readFileSync(abiPath).toString()).abi;
 const tradeContract = new provider.eth.Contract(abi, config.distribution.contractAddress);
 
-const api = axios.create({
+const apiPancakeSwap = axios.create({
   baseURL: 'https://bsc.streamingfast.io/subgraphs/name/pancakeswap/exchange-v2'
+});
+
+const apiLiquidity = axios.create({
+  baseURL: 'https://apiLiquidity.coingecko.com/apiLiquidity/v3/coins/work-quest'
 });
 
 export async function getSwaps(r) {
   try {
-    const result = await api.post('', {
+    const result = await apiPancakeSwap.post('', {
       query: `{
         swaps(first:${r.query.limit}, skip:${r.query.offset}, orderBy: timestamp, orderDirection: desc, 
         where: { pair: "${pair.liquidityToken.address.toLowerCase()}" }) 
@@ -60,7 +64,7 @@ export async function getSwaps(r) {
 
 export async function getMints(r) {
   try {
-    const result = await api.post('', {
+    const result = await apiPancakeSwap.post('', {
       query: `{ 
         mints(first:${r.query.limit}, skip:${r.query.offset}, orderBy: timestamp, orderDirection: desc, 
         where: { pair: "${pair.liquidityToken.address.toLowerCase()}" }) {
@@ -80,7 +84,7 @@ export async function getMints(r) {
 
 export async function getBurns(r) {
   try {
-    const result = await api.post('', {
+    const result = await apiPancakeSwap.post('', {
       query: `{
         burns(first:${r.query.limit}, skip:${r.query.offset}, orderBy: timestamp, orderDirection: desc,
         where: { pair: "${pair.liquidityToken.address.toLowerCase()}" })
@@ -100,7 +104,7 @@ export async function getBurns(r) {
 
 export async function getTokenDayData(r) {
   try {
-    const result = await api.post('', {
+    const result = await apiPancakeSwap.post('', {
       query: `{ 
         pairDayDatas (first: ${r.query.limit}, skip: ${r.query.offset},
         orderBy:date, orderDirection: desc,
@@ -121,54 +125,27 @@ export async function getTokenDayData(r) {
 }
 
 export async function getDistribution() {
-  let priceWQT: any;
-  let reserveUSD: any;
-  let totalSupply: any;
-  let lpToken: any;
-
   try {
-    await tradeContract.methods.getStakingInfo().call().then(async function(events) {
-      const totalStaked = Number(new BigNumber(events.totalStaked).shiftedBy(-18));
-      if (!totalStaked) {
-        error(Errors.NotFound, 'totalStaked not found', {});
-      }
+    const stakingInfoEvent = await tradeContract.methods.getStakingInfo().call();
+    const totalStaked = new BigNumber(stakingInfoEvent.totalStaked).shiftedBy(-18).toNumber();
+    const rewardTotal = new BigNumber(stakingInfoEvent.rewardTotal).shiftedBy(-18).toNumber();
 
-      const rewardTotal = Number(new BigNumber(events.rewardTotal).shiftedBy(-18));
-      if (!rewardTotal) {
-        error(Errors.NotFound, 'rewardTotal not found', {});
-      }
+    const infoLiquidity = await apiLiquidity.get('');
 
-      const getWQT = await axios({
-        method: 'GET',
-        baseURL: 'https://api.coingecko.com/api/v3/coins/work-quest'
-      })
-      if (getWQT.data.errors) {
-        return error(Errors.LiquidityError, 'Get price WQT', getWQT.data.errors);
-      }
-      priceWQT = getWQT.data.market_data.current_price.usd;
+    const currentUsdPrice = infoLiquidity.data.market_data.current_price.usd;
 
-      const variables = await axios({
-        method: 'POST',
-        baseURL: 'https://bsc.streamingfast.io/subgraphs/name/pancakeswap/exchange-v2',
-        data: {
-          query: `{ pairDayDatas (first: 1, skip: 0, orderBy:date, orderDirection: desc,
+    const responsePairDayDatas = await apiPancakeSwap.post('', {
+      query: `{ pairDayDatas (first: 1, skip: 0, orderBy:date, orderDirection: desc,
           where: {pairAddress: "${pair.liquidityToken.address.toLowerCase()}"})
         { totalSupply reserveUSD }}`
-        }
-      })
-      if (variables.data.errors) {
-        return error(Errors.LiquidityError, 'Can`t get reserveUSD and totalSupply', variables.data.errors);
-      }
-      reserveUSD = variables.data.data.pairDayDatas[0].reserveUSD;
-      totalSupply = variables.data.data.pairDayDatas[0].totalSupply;
-
-      lpToken = ((rewardTotal * priceWQT) * 12) / (totalStaked * (reserveUSD / totalSupply));
-      if (!lpToken) {
-        error(Errors.NotFound, 'Bad value result', {});
-      }
     });
+
+    const reserveUSD = responsePairDayDatas.data.data.pairDayDatas[0].reserveUSD;
+    const totalSupply = responsePairDayDatas.data.data.pairDayDatas[0].totalSupply;
+    const lpToken = ((rewardTotal * currentUsdPrice) * 12) / (totalStaked * (reserveUSD / totalSupply));
+
+    return output({ lpToken });
   } catch (err) {
     console.log('Error math process', err);
   }
-  return output({ lpToken });
 }
