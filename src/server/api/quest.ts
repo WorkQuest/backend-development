@@ -11,7 +11,8 @@ import {
   QuestsResponseStatus,
   QuestsResponseType,
   StarredQuests,
-  SkillFilter,
+  SpecializationFilter,
+  QuestSpecializationFilter,
 } from "@workquest/database-models/lib/models";
 import { locationForValidateSchema } from "@workquest/database-models/lib/schemes";
 import { transformToGeoPostGIS } from "@workquest/database-models/lib/utils/quest"
@@ -63,6 +64,7 @@ export async function getQuest(r) {
 }
 
 export async function createQuest(r) {
+  const questSpecializations = [];
   const user = r.auth.credentials;
 
   user.mustHaveRole(UserRole.Employer);
@@ -79,9 +81,13 @@ export async function createQuest(r) {
 
   const quest = await Quest.create(questValues, { transaction });
 
-  const questSkillFilters = SkillFilter.toRawQuestSkills(r.payload.skillFilters, quest.id);
+  for (const specialization of r.query.specializations) {
+    // TODO Думаю лучше specializationKey
+    const [industryKey, specializationKey]: [string, string] = specialization.split(/\./);
 
-  await SkillFilter.bulkCreate(questSkillFilters, { transaction });
+    questSpecializations.push({ questId: quest.id, specializationKey });
+    // TODO Проверка к кеше специализацию
+  }
 
   await quest.$set('medias', medias, { transaction });
 

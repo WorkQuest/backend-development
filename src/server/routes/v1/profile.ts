@@ -18,9 +18,8 @@ import {
   userPasswordSchema,
   userRoleSchema,
   userSchema,
-  skillFilterSchema,
   mobilePhoneSchema,
-  locationSchema,
+  locationSchema, specializationSchema
 } from "@workquest/database-models/lib/schemes";
 
 export default [{
@@ -66,7 +65,7 @@ export default [{
         firstName: userFirstNameSchema.required(),
         lastName: userLastNameSchema.required(),
         location: locationSchema.allow(null).required(),
-        skillFilters: skillFilterSchema.allow(null).required(),
+        specializations: specializationSchema.allow(null).required(),
         additionalInfo: Joi.alternatives(
           userAdditionalInfoEmployerSchema.options({ presence: "required" }),
           userAdditionalInfoWorkerSchema.options({ presence: "required" })
