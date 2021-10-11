@@ -5,7 +5,7 @@ import config from "../server/config/config";
 import {BridgeContract} from "./src/BridgeContract";
 import {BridgeEthListener, BridgeBscListener} from "./src/BridgeListener";
 import {BridgeProvider} from "./src/BridgeProvider";
-import {BridgeParserBlockInfo, BlockchainNetworks} from "@workquest/database-models/src/models";
+import { BridgeParserBlockInfo, BlockchainNetworks, initDatabase } from '@workquest/database-models/lib/models';
 
 const abiFilePath = path.join(__dirname, '/abi/liquidityMiningAbi.json');
 const abi: any[] = JSON.parse(fs.readFileSync(abiFilePath).toString()).abi;
@@ -18,7 +18,8 @@ const parseBscEventsFromHeight = config.bridge.debug ? config.bridge.bscTestNetw
 const contractBscAddress = config.bridge.debug ? config.bridge.bscTestNetwork.contract : config.bridge.bscTestNetwork.contract;
 const urlBscProvider = config.bridge.debug ? config.bridge.bscTestNetwork.webSocketProvider : config.bridge.bscTestNetwork.webSocketProvider;
 
-async function init() {
+export async function init() {
+  await initDatabase(config.dbLink, true, true);
   const web3Eth = new Web3(new Web3.providers.WebsocketProvider(urlEthProvider));
   const web3Bsc = new Web3(new Web3.providers.WebsocketProvider(urlBscProvider));
 

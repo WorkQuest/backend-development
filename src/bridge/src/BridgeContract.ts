@@ -38,6 +38,7 @@ export class BridgeContract {
     };
 
     const signedEventData = await this._singEventData(eventData);
+    // console.log(signedEventData, 'signedEventData');
 
     this._provider.lastTrackedBlock = data.blockNumber;
     this._onEventCallBacks.forEach(callBack => callBack(signedEventData));

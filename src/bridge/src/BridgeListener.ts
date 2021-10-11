@@ -74,6 +74,12 @@ export class BridgeBscListener extends BridgeListener {
   }
 
   protected async _parseSwapRedeemedEvent(data: any): Promise<void> {
+
+    console.log(JSON.stringify(data));
+    // const testSender = data.returnValues.sender.toLowerCase()
+    // const testRecipient = data.returnValues.recipient.toLowerCase()
+    // console.log('testSender',testSender,'testRecipient',testRecipient);
+
     await BridgeSwapTokenEvent.findOrCreate({
       where: {
         transactionHash: data.transactionHash,
