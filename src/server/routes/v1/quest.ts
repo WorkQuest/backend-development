@@ -30,12 +30,12 @@ import {
   questPrioritySchema,
   questSchema,
   questTitleSchema,
-  questsQuerySchema,
+  questQuerySchema,
   questsSchema,
   questsForGetWithCountSchema,
   questLocationPlaceNameSchema,
   questEmploymentSchema,
-  specializationSchema,
+  specializationKeysSchema,
 } from "@workquest/database-models/lib/schemes";
 
 export default [{
@@ -76,7 +76,7 @@ export default [{
         price: questPriceSchema.required(),
         medias: idsSchema.required().unique(),
         adType: questAdTypeSchema, // TODO как появится flow добавить required()
-        specializations: specializationSchema.required(),
+        specializationKeys: specializationKeysSchema.required(),
       }).label("CreateQuestPayload")
     },
     response: {
@@ -123,8 +123,8 @@ export default [{
         description: questDescriptionSchema,
         price: questPriceSchema,
         adType: questAdTypeSchema,
-        specializations: specializationSchema.required(),
         medias: idsSchema.unique(),
+        specializationKeys: specializationKeysSchema.required(),
       }).label("EditQuestPayload"),
     },
     response: {
@@ -140,7 +140,7 @@ export default [{
     tags: ["api", "quest"],
     description: "Get quests",
     validate: {
-      query: questsQuerySchema
+      query: questQuerySchema
     },
     response: {
       schema: outputOkSchema(questsForGetWithCountSchema).label("GetQuestsResponse")
@@ -158,7 +158,7 @@ export default [{
       params: Joi.object({
         userId: idSchema.required(),
       }).label("EmployerGetQuestsParams"),
-      query: questsQuerySchema
+      query: questQuerySchema
     },
     response: {
       schema: outputOkSchema(questsForGetWithCountSchema).label("EmployerGetQuestsResponse")

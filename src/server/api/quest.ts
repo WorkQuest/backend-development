@@ -11,7 +11,6 @@ import {
   QuestsResponseStatus,
   QuestsResponseType,
   StarredQuests,
-  SpecializationFilter,
   QuestSpecializationFilter,
 } from "@workquest/database-models/lib/models";
 import { locationForValidateSchema } from "@workquest/database-models/lib/schemes";
@@ -64,32 +63,41 @@ export async function getQuest(r) {
 }
 
 export async function createQuest(r) {
-  const questSpecializations = [];
   const user = r.auth.credentials;
+  const questSpecializations = [];
 
   user.mustHaveRole(UserRole.Employer);
 
   const medias = await getMedias(r.payload.medias);
   const transaction = await r.server.app.db.transaction();
 
-  const questValues = {
-    ...r.payload,
+  const quest = await Quest.create({
     userId: user.id,
     status: QuestStatus.Created,
+    category: r.payload.category,
+    workplace: r.payload.workplace,
+    employment: r.payload.employment,
+    priority: r.payload.priority,
+    location: r.payload.location,
+    title: r.payload.title,
+    description: r.payload.description,
+    price: r.payload.price,
+    medias: r.payload.medias,
+    adType: r.payload.adType,
+    locationPlaceName: r.payload.locationPlaceName,
     locationPostGIS: transformToGeoPostGIS(r.payload.location),
-  }
+  }, { transaction });
 
-  const quest = await Quest.create(questValues, { transaction });
-
-  for (const specialization of r.query.specializations) {
-    // TODO Думаю лучше specializationKey
+  for (const specialization of r.payload.specializationKeys) {
     const [industryKey, specializationKey]: [string, string] = specialization.split(/\./);
 
-    questSpecializations.push({ questId: quest.id, specializationKey });
-    // TODO Проверка к кеше специализацию
+    // TODO Добавить проверку в кеше industryKey, specializationKey
+    questSpecializations.push({ questId: quest.id, specializationKey, industryKey });
   }
 
   await quest.$set('medias', medias, { transaction });
+
+  await QuestSpecializationFilter.bulkCreate(questSpecializations, { transaction });
 
   await transaction.commit();
 
@@ -107,6 +115,17 @@ export async function editQuest(r) {
     }
   }
 
+  const questValues = {
+    ...(r.payload.category && { category: r.payload.category }),
+    ...(r.payload.workplace && { workplace: r.payload.workplace }),
+    ...(r.payload.employment && { employment: r.payload.employment }),
+    ...(r.payload.priority && { priority: r.payload.priority }),
+    ...(r.payload.title && { title: r.payload.title }),
+    ...(r.payload.description && { description: r.payload.description }),
+    ...(r.payload.price && { price: r.payload.price }),
+    ...(r.payload.adType && { adType: r.payload.adType }),
+  };
+
   const quest = await Quest.findByPk(r.params.questId);
   const transaction = await r.server.app.db.transaction();
 
@@ -123,24 +142,33 @@ export async function editQuest(r) {
     await quest.$set('medias', medias, { transaction });
   }
   if (r.payload.location) {
-    r.payload.locationPostGIS = transformToGeoPostGIS(r.payload.location);
+    questValues['locationPostGIS'] = transformToGeoPostGIS(r.payload.location);
+    questValues['locationPlaceName'] = r.payload.locationPlaceName;
+    questValues['location'] = r.payload.location;
   }
-  if (r.payload.skillFilters) {
-    const questSkillFilters = SkillFilter.toRawQuestSkills(r.payload.skillFilters, quest.id);
+  if (r.payload.specializationKeys) {
+    const questSpecializations = [];
 
-    await SkillFilter.destroy({ where: { questId: quest.id }, transaction });
-    await SkillFilter.bulkCreate(questSkillFilters, { transaction });
+    for (const specialization of r.payload.specializationKeys) {
+      const [industryKey, specializationKey]: [string, string] = specialization.split(/\./);
+
+      // TODO Добавить проверку в кеше industryKey, specializationKey
+      questSpecializations.push({ questId: quest.id, industryKey, specializationKey });
+    }
+
+    await QuestSpecializationFilter.destroy({ where: { questId: quest.id }, transaction });
+    await QuestSpecializationFilter.bulkCreate(questSpecializations, { transaction });
   }
 
   quest.updateFieldLocationPostGIS();
 
-  await quest.update({...r.payload}, { transaction });
+  await quest.update(questValues, { transaction });
 
   await transaction.commit();
 
   return output(
     await Quest.findByPk(quest.id)
-  )
+  );
 }
 
 export async function deleteQuest(r) {
@@ -157,7 +185,7 @@ export async function deleteQuest(r) {
     return error(Errors.InvalidStatus, "Quest cannot be deleted at current stage", {});
   }
 
-  await SkillFilter.destroy({ where: { questId: quest.id }, transaction });
+  await QuestSpecializationFilter.destroy({ where: { questId: quest.id }, transaction });
   await QuestsResponse.destroy({ where: { questId: quest.id }, transaction })
   await quest.destroy({ force: true, transaction });
 
@@ -297,11 +325,11 @@ export async function getQuests(r) {
   const order = [];
   const include = [];
   const where = {
+    ...(r.params.userId && { userId: r.params.userId }),
     ...(r.query.performing && { assignedWorkerId: r.auth.credentials.id }),
     ...(r.query.priority && { priority: r.query.priority }),
     ...(r.query.status && { status: r.query.status }),
     ...(r.query.adType && { adType: r.query.adType }),
-    ...(r.params.userId && { userId: r.params.userId }),
     ...(r.query.north && r.query.south && { [Op.and]: entersAreaLiteral }),
     ...(r.query.filter && { filter: r.params.filter }),
     ...(r.query.workplace && { workplace: r.params.workplace }),
@@ -310,10 +338,8 @@ export async function getQuests(r) {
 
   if (r.query.q) {
     where[Op.or] = searchFields.map(field => ({
-      [field]: {
-        [Op.iLike]: `%${r.query.q}%`
-      }
-    }))
+      [field]: { [Op.iLike]: `%${r.query.q}%` }
+    }));
   }
   if (r.query.invited) {
     include.push({
@@ -328,14 +354,27 @@ export async function getQuests(r) {
       }
     });
   }
-  if (r.query.filterByCategories || r.query.filterBySkills) {
+  if (r.query.specialization) {
+    const industryKeys = [];
+    const specializationKeys = [];
+
+    for (const specialization of r.query.specialization) {
+      const [industryKey, specializationKey]: [string, string | null] = specialization.split(/\./);
+
+      if (specializationKey) {
+        specializationKeys.push(parseInt(specializationKey));
+      }
+
+      industryKeys.push(parseInt(industryKey));
+    }
+
     include.push({
-      model: SkillFilter,
-      as: 'filterBySkillFilter',
+      model: QuestSpecializationFilter,
+      as: 'questSpecializationsForFiltering',
       attributes: [],
       where: {
-        ...(r.query.filterByCategories && { category: { [Op.in]: r.query.filterByCategories } }),
-        ...(r.query.filterBySkills && { skill: { [Op.in]: r.query.filterBySkills } }),
+        ...(specializationKeys.length > 0 && { specializationKey: { [Op.in]: specializationKeys } }),
+        industryKey: { [Op.in]: industryKeys },
       }
     });
   }
@@ -357,7 +396,8 @@ export async function getQuests(r) {
     order.push([key, value]);
   }
 
-  const queryOption = {
+  const { count, rows } = await Quest.findAndCountAll({
+    distinct: true,
     limit: r.query.limit,
     offset: r.query.offset,
     include, order, where,
@@ -369,13 +409,9 @@ export async function getQuests(r) {
         southLat: r.query.south.latitude,
       })
     }
-  }
+  });
 
-  // TODO: исправить
-  const count = await Quest.unscoped().count(queryOption);
-  const quests = await Quest.findAll(queryOption);
-
-  return output({count, quests});
+  return output({ count, quests: rows });
 }
 
 export async function getMyStarredQuests(r) {

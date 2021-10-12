@@ -3,7 +3,10 @@ import {
   changePassword,
   confirmPhoneNumber,
   editProfile,
-  getMe, getUser,
+  editProfiles,
+  getMe,
+  getUser,
+  getUsers,
   sendCodeOnPhoneNumber,
   setRole
 } from "../../api/profile";
@@ -19,8 +22,13 @@ import {
   userRoleSchema,
   userSchema,
   mobilePhoneSchema,
-  locationSchema, specializationSchema
+  locationSchema,
+  specializationSchema,
+  userQuerySchema,
+  userEmployersSchema,
+  userWorkersSchema,
 } from "@workquest/database-models/lib/schemes";
+import { UserRole } from "@workquest/database-models/lib/models";
 
 export default [{
   method: "GET",
@@ -35,26 +43,39 @@ export default [{
     }
   }
 }, {
-  method: "POST",
-  path: "/v1/profile/set-role",
-  handler: setRole,
+  method: "GET",
+  path: "/v1/profile/employers",
+  handler: getUsers(UserRole.Employer),
   options: {
-    id: "v1.profile.setRole",
+    id: "v1.profile.getEmployers",
     tags: ["api", "profile"],
-    description: "Set role user (Only for need set role)",
+    description: "Get employers",
     validate: {
-      payload: Joi.object({
-        role: userRoleSchema.required()
-      }).label("SetUserRolePayload")
+      query: userQuerySchema,
     },
     response: {
-      schema: emptyOkSchema
-    }
+      schema: outputOkSchema(userEmployersSchema).label("GetEmployersResponse")
+    },
+  }
+}, {
+  method: "GET",
+  path: "/v1/profile/workers",
+  handler: getUsers(UserRole.Worker),
+  options: {
+    id: "v1.profile.getWorkers",
+    tags: ["api", "profile"],
+    description: "Get workers",
+    validate: {
+      query: userQuerySchema,
+    },
+    response: {
+      schema: outputOkSchema(userWorkersSchema).label("GetWorkersResponse")
+    },
   }
 }, {
   method: "PUT",
   path: "/v1/profile/edit",
-  handler: editProfile,
+  handler: editProfiles,
   options: {
     id: "v1.profile.edit",
     tags: ["api", "profile"],
@@ -74,6 +95,65 @@ export default [{
     },
     response: {
       schema: outputOkSchema(userSchema).label("UserResponse")
+    }
+  }
+}, {
+  method: "PUT",
+  path: "/v1/employer/profile/edit",
+  handler: editProfile(UserRole.Employer),
+  options: {
+    id: "v1.profile.editEmployer",
+    tags: ["api", "profile"],
+    description: "Edit employer profile information",
+    validate: {
+      payload: Joi.object({
+        avatarId: idSchema.allow(null).required(),
+        firstName: userFirstNameSchema.required(),
+        lastName: userLastNameSchema.required(),
+        location: locationSchema.allow(null).required(),
+        additionalInfo: userAdditionalInfoEmployerSchema.required(),
+      }).label("EditEmployerProfilePayload")
+    },
+    response: {
+      schema: outputOkSchema(userSchema).label("EditEmployerResponse")
+    }
+  }
+}, {
+  method: "PUT",
+  path: "/v1/worker/profile/edit",
+  handler: editProfile(UserRole.Worker),
+  options: {
+    id: "v1.profile.editWorker",
+    tags: ["api", "profile"],
+    description: "Edit worker profile",
+    validate: {
+      payload: Joi.object({
+        avatarId: idSchema.allow(null).required(),
+        firstName: userFirstNameSchema.required(),
+        lastName: userLastNameSchema.required(),
+        location: locationSchema.allow(null).required(),
+        additionalInfo: userAdditionalInfoWorkerSchema.required(),
+      }).label("EditWorkerProfilePayload")
+    },
+    response: {
+      schema: outputOkSchema(userSchema).label("UserResponse")
+    }
+  }
+}, {
+  method: "POST",
+  path: "/v1/profile/set-role",
+  handler: setRole,
+  options: {
+    id: "v1.profile.setRole",
+    tags: ["api", "profile"],
+    description: "Set role user (Only for need set role)",
+    validate: {
+      payload: Joi.object({
+        role: userRoleSchema.required()
+      }).label("SetUserRolePayload")
+    },
+    response: {
+      schema: emptyOkSchema
     }
   }
 }, {
