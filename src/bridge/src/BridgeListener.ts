@@ -1,4 +1,4 @@
-import { BridgeContract } from "./BridgeContract";
+import { BridgeContract, BridgeEventType } from "./BridgeContract";
 import {
   BlockchainNetworks,
   BridgeParserBlockInfo,
@@ -13,9 +13,13 @@ export enum TrackedEvents {
 
 abstract class BridgeListener {
   protected readonly _contract: BridgeContract;
+  protected readonly _parserBlockInfo: BridgeParserBlockInfo;
 
-  protected constructor(contract: BridgeContract) {
+  protected constructor(contract: BridgeContract, parserBlockInfo: BridgeParserBlockInfo) {
     this._contract = contract;
+    this._parserBlockInfo = parserBlockInfo;
+
+    this._contract.signCallbackOnEvent(eventData => this._onEvent(eventData));
   }
 
   protected abstract _parseSwapInitializedEvent(data: any): Promise<void>;
@@ -27,145 +31,127 @@ abstract class BridgeListener {
     }
   }
 
-  protected async _onEvent(eventData: any): Promise<void> {
-    if (eventData.event === TrackedEvents.swapInitialized) {
-      await this._parseSwapInitializedEvent(eventData);
-    } else if (eventData.event === TrackedEvents.swapRedeemed) {
-      await this._parseSwapRedeemedEvent(eventData);
+  protected async _onEvent(event: BridgeEventType): Promise<void> {
+    if (event.event === TrackedEvents.swapInitialized) {
+      await this._parseSwapInitializedEvent(event);
+    } else if (event.event === TrackedEvents.swapRedeemed) {
+      await this._parseSwapRedeemedEvent(event);
     }
+
+    this._parserBlockInfo.lastParsedBlock = event.blockNumber;
+
+    await this._parserBlockInfo.save();
   }
 
-  startListen() {
-    this._contract.signCallbackOnEvent(eventData => this._onEvent(eventData));
+  start(): Promise<void> {
+    return this._contract.startListener()
   }
 }
 
 export class BridgeBscListener extends BridgeListener {
-  constructor(contract: BridgeContract) {
-    super(contract);
+  constructor(contract: BridgeContract, parserBlockInfo: BridgeParserBlockInfo) {
+    super(contract, parserBlockInfo);
   }
 
-  protected async _parseSwapInitializedEvent(data: any): Promise<void> {
+  protected async _parseSwapInitializedEvent(event: BridgeEventType): Promise<void> {
     await BridgeSwapTokenEvent.findOrCreate({
       where: {
-        transactionHash: data.transactionHash,
+        transactionHash: event.transactionHash,
         network: BlockchainNetworks.bscMainNetwork, // TODO
       },
       defaults: {
-        transactionHash: data.transactionHash,
-        blockNumber: data.blockNumber,
+        transactionHash: event.transactionHash,
+        blockNumber: event.blockNumber,
         network: BlockchainNetworks.bscMainNetwork, // TODO
         event: SwapEvents.swapInitialized,
-        messageHash: data.messageHash,
-        nonce: data.nonce,
-        timestamp: data.timestamp,
-        initiator: data.sender.toLowerCase(),
-        recipient: data.recipient.toLowerCase(),
-        amount: data.amount,
-        chainTo: data.chainTo,
-        chainFrom: data.chainFrom,
-        symbol: data.symbol,
+        messageHash: event.messageHash,
+        nonce: event.nonce,
+        timestamp: event.timestamp,
+        initiator: event.sender.toLowerCase(),
+        recipient: event.recipient.toLowerCase(),
+        amount: event.amount,
+        chainTo: event.chainTo,
+        chainFrom: event.chainFrom,
+        symbol: event.symbol,
       }
-    });
-
-    await BridgeParserBlockInfo.increment('lastParsedBlock', {
-      where: { network: BlockchainNetworks.bscMainNetwork }
     });
   }
 
-  protected async _parseSwapRedeemedEvent(data: any): Promise<void> {
-
-    console.log(JSON.stringify(data));
-    // const testSender = data.returnValues.sender.toLowerCase()
-    // const testRecipient = data.returnValues.recipient.toLowerCase()
-    // console.log('testSender',testSender,'testRecipient',testRecipient);
-
+  protected async _parseSwapRedeemedEvent(event: BridgeEventType): Promise<void> {
     await BridgeSwapTokenEvent.findOrCreate({
       where: {
-        transactionHash: data.transactionHash,
+        transactionHash: event.transactionHash,
         network: BlockchainNetworks.bscMainNetwork, // TODO
       },
       defaults: {
-        transactionHash: data.transactionHash,
-        blockNumber: data.blockNumber,
+        transactionHash: event.transactionHash,
+        blockNumber: event.blockNumber,
         network: BlockchainNetworks.bscMainNetwork, // TODO
         event: SwapEvents.swapRedeemed,
-        messageHash: data.messageHash,
-        nonce: data.nonce,
-        timestamp: data.timestamp,
-        initiator: data.sender.toLowerCase(),
-        recipient: data.recipient.toLowerCase(),
-        amount: data.amount,
-        chainTo: data.chainTo,
-        chainFrom: data.chainFrom,
-        symbol: data.symbol,
+        messageHash: event.messageHash,
+        nonce: event.nonce,
+        timestamp: event.timestamp,
+        initiator: event.sender.toLowerCase(),
+        recipient: event.recipient.toLowerCase(),
+        amount: event.amount,
+        chainTo: event.chainTo,
+        chainFrom: event.chainFrom,
+        symbol: event.symbol,
       }
-    });
-
-    await BridgeParserBlockInfo.increment('lastParsedBlock', {
-      where: { network: BlockchainNetworks.bscMainNetwork }
     });
   }
 }
 
 export class BridgeEthListener extends BridgeListener {
-  constructor(contract: BridgeContract) {
-    super(contract);
+  constructor(contract: BridgeContract, parserBlockInfo: BridgeParserBlockInfo) {
+    super(contract, parserBlockInfo);
   }
 
-  protected async _parseSwapInitializedEvent(data: any): Promise<void> {
+  protected async _parseSwapInitializedEvent(event: BridgeEventType): Promise<void> {
     await BridgeSwapTokenEvent.findOrCreate({
       where: {
-        transactionHash: data.transactionHash,
+        transactionHash: event.transactionHash,
         network: BlockchainNetworks.ethMainNetwork, // TODO
       },
       defaults: {
-        transactionHash: data.transactionHash,
-        blockNumber: data.blockNumber,
+        transactionHash: event.transactionHash,
+        blockNumber: event.blockNumber,
         network: BlockchainNetworks.ethMainNetwork, // TODO
         event: SwapEvents.swapInitialized,
-        messageHash: data.messageHash,
-        nonce: data.nonce,
-        timestamp: data.timestamp,
-        initiator: data.sender.toLowerCase(),
-        recipient: data.recipient.toLowerCase(),
-        amount: data.amount,
-        chainTo: data.chainTo,
-        chainFrom: data.chainFrom,
-        symbol: data.symbol,
+        messageHash: event.messageHash,
+        nonce: event.nonce,
+        timestamp: event.timestamp,
+        initiator: event.sender.toLowerCase(),
+        recipient: event.recipient.toLowerCase(),
+        amount: event.amount,
+        chainTo: event.chainTo,
+        chainFrom: event.chainFrom,
+        symbol: event.symbol,
       }
-    });
-
-    await BridgeParserBlockInfo.increment('lastParsedBlock', {
-      where: { network: BlockchainNetworks.ethMainNetwork }
     });
   }
 
-  protected async _parseSwapRedeemedEvent(data: any): Promise<void> {
+  protected async _parseSwapRedeemedEvent(event: BridgeEventType): Promise<void> {
     await BridgeSwapTokenEvent.findOrCreate({
       where: {
-        transactionHash: data.transactionHash,
+        transactionHash: event.transactionHash,
         network: BlockchainNetworks.ethMainNetwork, // TODO
       },
       defaults: {
-        transactionHash: data.transactionHash,
-        blockNumber: data.blockNumber,
+        transactionHash: event.transactionHash,
+        blockNumber: event.blockNumber,
         network: BlockchainNetworks.ethMainNetwork, // TODO
         event: SwapEvents.swapRedeemed,
-        messageHash: data.messageHash,
-        nonce: data.nonce,
-        timestamp: data.timestamp,
-        initiator: data.sender.toLowerCase(),
-        recipient: data.recipient.toLowerCase(),
-        amount: data.amount,
-        chainTo: data.chainTo,
-        chainFrom: data.chainFrom,
-        symbol: data.symbol,
+        messageHash: event.messageHash,
+        nonce: event.nonce,
+        timestamp: event.timestamp,
+        initiator: event.sender.toLowerCase(),
+        recipient: event.recipient.toLowerCase(),
+        amount: event.amount,
+        chainTo: event.chainTo,
+        chainFrom: event.chainFrom,
+        symbol: event.symbol,
       }
-    });
-
-    await BridgeParserBlockInfo.increment('lastParsedBlock', {
-      where: { network: BlockchainNetworks.ethMainNetwork }
     });
   }
 }

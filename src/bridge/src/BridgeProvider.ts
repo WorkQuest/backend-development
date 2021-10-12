@@ -1,7 +1,7 @@
 import Web3 from "web3";
-import { WebsocketProvider, HttpProvider, Sign } from "web3-core";
-import config from "../../server/config/config";
+import { Sign } from "web3-core";
 import { Contract } from "web3-eth-contract";
+import config from "../../server/config/config";
 
 export class BridgeProvider {
   private readonly _web3: Web3;
@@ -36,6 +36,7 @@ export class BridgeProvider {
   }
 
   public makeContract(abi: any[], address: string): Contract {
+    // @ts-ignore
     return new this._web3.eth.Contract(abi, address);
   }
 }

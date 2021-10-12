@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "start": "nodemon -e ts --exec \"npm run compile\"",
-    "bridge": "tsc && node ./build/bridge/index.js",
+    "bridge:start": "nodemon -e ts --exec \"npm run bridge:compile\"",
+    "bridge:compile": "tsc && node ./build/bridge/index.js",
     "compile": "tsc && node ./build/main.js --ignore ./build/bridge/",
     "build": "tsc",
     "test": "lab --sourcemaps --transform node_modules/lab-transform-typescript -v --leaks"

@@ -14,12 +14,13 @@ const parseEthEventsFromHeight = config.bridge.debug ? config.bridge.rinkebyTest
 const contractEthAddress = config.bridge.debug ? config.bridge.rinkebyTestNetwork.contract : config.bridge.ethereumMainNetwork.contract;
 const urlEthProvider = config.bridge.debug ? config.bridge.rinkebyTestNetwork.webSocketProvider : config.bridge.ethereumMainNetwork.webSocketProvider;
 
-const parseBscEventsFromHeight = config.bridge.debug ? config.bridge.bscTestNetwork.parseEventsFromHeight : config.bridge.bscTestNetwork.parseEventsFromHeight;
-const contractBscAddress = config.bridge.debug ? config.bridge.bscTestNetwork.contract : config.bridge.bscTestNetwork.contract;
-const urlBscProvider = config.bridge.debug ? config.bridge.bscTestNetwork.webSocketProvider : config.bridge.bscTestNetwork.webSocketProvider;
+const parseBscEventsFromHeight = config.bridge.debug ? config.bridge.bscTestNetwork.parseEventsFromHeight : config.bridge.bscMainNetwork.parseEventsFromHeight;
+const contractBscAddress = config.bridge.debug ? config.bridge.bscTestNetwork.contract : config.bridge.bscMainNetwork.contract;
+const urlBscProvider = config.bridge.debug ? config.bridge.bscTestNetwork.webSocketProvider : config.bridge.bscMainNetwork.webSocketProvider;
 
 export async function init() {
-  await initDatabase(config.dbLink, true, true);
+  await initDatabase(config.dbLink, false, true);
+
   const web3Eth = new Web3(new Web3.providers.WebsocketProvider(urlEthProvider));
   const web3Bsc = new Web3(new Web3.providers.WebsocketProvider(urlBscProvider));
 
@@ -31,7 +32,7 @@ export async function init() {
     }
   });
   const [bcsBridgeInfo, ] = await BridgeParserBlockInfo.findOrCreate({
-    where: { network: BlockchainNetworks.ethMainNetwork },
+    where: { network: BlockchainNetworks.bscMainNetwork },
     defaults: {
       network: BlockchainNetworks.bscMainNetwork,
       lastParsedBlock: parseBscEventsFromHeight
@@ -55,16 +56,18 @@ export async function init() {
   const bridgeEthContract = new BridgeContract(bridgeEthProvider, contractEthAddress, abi);
   const bridgeBscContract = new BridgeContract(bridgeBscProvider, contractBscAddress, abi);
 
-  const bridgeEthListener = new BridgeEthListener(bridgeEthContract);
-  const bridgeBscListener = new BridgeBscListener(bridgeBscContract);
+  const bridgeEthListener = new BridgeEthListener(bridgeEthContract, ethBridgeInfo);
+  const bridgeBscListener = new BridgeBscListener(bridgeBscContract, bcsBridgeInfo);
 
   await Promise.all([
     bridgeEthListener.preParseSwaps(),
     bridgeBscListener.preParseSwaps(),
   ]);
 
-  bridgeEthListener.startListen();
-  bridgeBscListener.startListen();
+  await Promise.all([
+    bridgeEthListener.start(),
+    bridgeBscListener.start(),
+  ]);
 }
 
 init().catch(error => { /** TODO */ });
