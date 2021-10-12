@@ -1,9 +1,7 @@
 import * as main from './server';
-import { init } from './bridge';
 
 try{
-  // main.init();
-  init();
+  main.init();
 } catch (e) {
   console.error(e);
 }
