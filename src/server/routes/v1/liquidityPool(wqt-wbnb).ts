@@ -5,7 +5,8 @@ import {
   tokensDayWQTSchema,
   swapWQTSchema,
   offsetSchema,
-  limitSchema, emptyOkSchema
+  limitSchema,
+  lpTokenWQTW_WBNB
 } from '@workquest/database-models/lib/schemes';
 
 export default [{
@@ -94,7 +95,7 @@ export default [{
     tags: ["api", "pool-liquidity"],
     description: "Distribution of the WQT to users",
     response: {
-      schema: emptyOkSchema
+      schema: outputOkSchema(lpTokenWQTW_WBNB).label("GetTokenDayDataResponse")
     }
   }
 }];
