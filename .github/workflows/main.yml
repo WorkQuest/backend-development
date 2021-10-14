@@ -146,6 +146,7 @@ jobs:
             BASE_URL=${{ secrets.PROD_BASE_URL }} \
             backend_bin=${{ secrets.backend_bin }} \
             PM2_SERVICE_NAME=${{ secrets.PM2_SERVICE_NAME }} \
+            PM2_BRIDGE_SERVICE_NAME=${{ secrets.PROD_PM2_BRIDGE_SERVICE_NAME }} \
             SRC_DIR=${{ github.workspace }}/" backend-update.yml;
 
   deploy-dev:
@@ -270,4 +271,5 @@ jobs:
             BASE_URL=${{ secrets.DEV_BASE_URL }} \
             backend_bin=${{ secrets.backend_bin }} \
             PM2_SERVICE_NAME=${{ secrets.PM2_SERVICE_NAME }} \
+            PM2_BRIDGE_SERVICE_NAME=${{ secrets.DEV_PM2_BRIDGE_SERVICE_NAME }} \
             SRC_DIR=${{ github.workspace }}/" backend-update.yml;
