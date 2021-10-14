@@ -8,7 +8,7 @@ import {
   QuestStatus,
   QuestsResponse,
   QuestsResponseStatus,
-  QuestsResponseType
+  QuestsResponseType, AdType
 } from "@workquest/database-models/lib/models";
 import {
   makeWorker,
@@ -16,6 +16,7 @@ import {
   makeAccessToken,
   makeQuest
 } from './index';
+import { QuestEmployment, QuestWorkPlace } from "@workquest/database-models/src/models/quest/Quest";
 
 let server = null;
 const { it, suite,
@@ -33,10 +34,15 @@ async function postRequestOnCreateQuest(accessToken: string) {
         longitude: -77.0364,
         latitude: 38.8951,
       },
+      locationPlaceName: 'Tomsk',
       title: 'Test',
       description: 'Test',
       price: '1000',
       medias: [],
+      workplace: QuestWorkPlace.Both,
+      employment: QuestEmployment.FullTime,
+      adType: AdType.Free,
+      specializationKeys: [],
     },
     headers: {
       authorization: 'Bearer ' + accessToken
@@ -165,6 +171,7 @@ async function Should_Ok_When_EmployerWantsToEditQuestAtStatusCreated() {
     title: 'Test2',
     description: 'Test2',
     price: '10000',
+    locationPlaceName: 'Tomsk 1',
     priority: QuestPriority.Low,
     location: { longitude: -69.0364, latitude: 40.8951 },
   };
@@ -192,6 +199,7 @@ async function Should_Forbidden_When_OtherUserWantsToEditQuestAtStatusCreated() 
     title: 'Test2',
     description: 'Test2',
     price: '10000',
+    locationPlaceName: 'Tomsk 1',
     priority: QuestPriority.Low,
     location: { longitude: -69.0364, latitude: 40.8951 },
   };

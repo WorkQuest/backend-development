@@ -8,19 +8,16 @@ import * as HapiCors from "hapi-cors";
 import * as HapiBearer from "hapi-auth-bearer-token";
 import * as HapiPulse from "hapi-pulse";
 import * as Bell from "@hapi/bell";
-import { initDatabase } from "@workquest/database-models/lib/models";
+import * as Qs from "qs";
 import routes from "./routes";
 import config from "./config/config";
-import * as Qs from "qs";
+import SwaggerOptions from "./config/swagger";
+import { initDatabase } from "@workquest/database-models/lib/models";
 import { handleValidationError, responseHandler } from "./utils";
 import { chatNotificationsFilter } from "./utils/chatSubscription";
 import { tokenValidate } from "./utils/auth";
-import SwaggerOptions from "./config/swagger";
 import { pinoConfig } from "./config/pino";
 import { run } from "graphile-worker";
-import { networks } from "./config/constant";
-import { listenerBridge } from "./listeners";
-import { initWeb3 } from "./listeners/core";
 
 const HapiSwagger = require("hapi-swagger");
 const Package = require("../../package.json");
@@ -66,24 +63,18 @@ const init = async () => {
   const server = await new Hapi.Server({
     port: config.server.port,
     host: config.server.host,
-    query: {
-      parser: (query) => Qs.parse(query)
-    },
+    query: { parser: (query) => Qs.parse(query) },
     routes: {
       validate: {
-        options: {
-          // Handle all validation errors
-          abortEarly: false,
-        },
+        options: { abortEarly: false },
         failAction: handleValidationError,
       },
-      response: {
-        failAction: 'log',
-      },
+      response: { failAction: 'log' },
     },
   });
+
   server.realm.modifiers.route.prefix = '/api';
-  // Регистрируем расширения
+
   await server.register([
     Basic,
     Nes,
@@ -94,7 +85,9 @@ const init = async () => {
     { plugin: Pino, options: pinoConfig(false) },
     { plugin: HapiSwagger, options: SwaggerOptions }
   ]);
+
   server.app.db = await initDatabase(config.dbLink, true, true);
+
   server.app.scheduler = await run({
     connectionString: config.dbLink,
     concurrency: 5,
@@ -106,7 +99,7 @@ const init = async () => {
     filter: chatNotificationsFilter
   });
 
-  // JWT Auth
+  /** JWT Auth */
   server.auth.strategy('jwt-access', 'bearer-access-token', {
     validate: tokenValidate('access', [
       "/api/v1/auth/confirm-email",
@@ -122,14 +115,10 @@ const init = async () => {
 
   initAuthStrategiesOfSocialNetworks(server);
 
-  // Listeners networks
-  console.log('\x1b[32m%s\x1b[0m', 'Initialise web3 providers!');
-  initWeb3();
-
-  // Загружаем маршруты
   server.route(routes);
-  // Error handler
+
   server.ext('onPreResponse', responseHandler);
+
   await server.register({
     plugin: HapiPulse,
     options: {
@@ -137,23 +126,16 @@ const init = async () => {
       signals: ['SIGINT'],
     },
   });
-  // Enable CORS (Do it last required!)
+
   await server.register({
     plugin: HapiCors,
     options: config.cors,
   });
-  // Запускаем сервер
+
   try {
     await server.start();
-    server.log('info', `Server running at: ${server.info.uri}`);
 
-    // if (!process.env.LOCAL){
-    //   Start contract listeners
-      console.log('\x1b[32m%s\x1b[0m', 'Contract listeners Bridge bsc start!');
-      await listenerBridge(server, networks.bsc)
-      console.log('\x1b[32m%s\x1b[0m', 'Contract listeners Bridge eth start!');
-      await listenerBridge(server, networks.eth)
-    // }
+    server.log('info', `Server running at: ${server.info.uri}`);
   } catch (err) {
     server.log('error', JSON.stringify(err));
   }

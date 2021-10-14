@@ -4,7 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "nodemon -e ts  --exec \"npm run compile\"",
+    "start": "nodemon -e ts --exec \"npm run compile\"",
+    "bridge:start": "nodemon -e ts --exec \"npm run bridge:compile\"",
+    "bridge:compile": "tsc && node ./build/bridge/index.js",
     "compile": "tsc && node ./build/main.js",
     "build": "tsc",
     "test": "lab --sourcemaps --transform node_modules/lab-transform-typescript -v --leaks"
