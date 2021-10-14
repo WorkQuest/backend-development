@@ -5,7 +5,7 @@ import * as path from "path";
 import * as fs from "fs";
 import Handlebars = require("handlebars");
 import {
-  User
+  User,
 } from "@workquest/database-models/lib/models";
 
 const confirmTemplatePath = path.join(__dirname, "..", "..", "..", "templates", "resetPasswordConfirmation.html");
@@ -36,12 +36,12 @@ export async function sendCodeForRestorePassword(r) {
 
 export async function setNewPassword(r) {
   const user = await User.scope("withPassword").findOne({
-    where: {
-      "settings.restorePassword": r.payload.token
-    }
+    where: { "settings.restorePassword": r.payload.token }
   });
+
   if (!user) return output();
 
   await user.update({ password: r.payload.newPassword , "settings.restorePassword": null });
+
   return output();
 }

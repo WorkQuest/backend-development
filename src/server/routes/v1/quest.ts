@@ -75,8 +75,8 @@ export default [{
         description: questDescriptionSchema.required(),
         price: questPriceSchema.required(),
         medias: idsSchema.required().unique(),
-        adType: questAdTypeSchema, // TODO как появится flow добавить required()
-        specializationKeys: specializationKeysSchema.required(),
+        adType: questAdTypeSchema.required(),
+        specializationKeys: specializationKeysSchema.required().unique(),
       }).label("CreateQuestPayload")
     },
     response: {
@@ -124,7 +124,7 @@ export default [{
         price: questPriceSchema,
         adType: questAdTypeSchema,
         medias: idsSchema.unique(),
-        specializationKeys: specializationKeysSchema.required(),
+        specializationKeys: specializationKeysSchema.unique(),
       }).label("EditQuestPayload"),
     },
     response: {
