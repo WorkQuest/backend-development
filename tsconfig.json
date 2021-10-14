@@ -2,6 +2,7 @@
   "compilerOptions": {
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
+    "esModuleInterop": true,
     "outDir": "build",
     "allowJs": false,
     "target": "es6",
@@ -9,12 +10,15 @@
     "module": "commonjs",
     "moduleResolution": "node",
     "resolveJsonModule": true,
-    "removeComments": true
+    "removeComments": true,
   },
-  "include": ["./src/**/*.ts"],
   "exclude": ["node_modules"],
+  "include": [
+    "./src/**/*.ts",
+    "./src/bridge/abi/*.json"
+  ],
   "rootDirs": [
     "src",
-    "test"
+    "test",
   ]
 }

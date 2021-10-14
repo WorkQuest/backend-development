@@ -40,7 +40,7 @@ async function Should_Ok_When_WorkerSentReviewToEmployer() {
   expect(result.ok).to.true();
 
   // TODO: нужно что-то с Job addUpdateReviewStatisticsJob
-  await updateReviewStatistics.default({ ratingStatisticId: employer.ratingStatistic.id });
+  await updateReviewStatistics.default({ userId: employer.id });
   const ratingStatisticOfEmployer = await RatingStatistic.findByPk(employer.ratingStatistic.id);
   const reviews = await Review.findAll({
     where: { toUserId: employer.id },
@@ -80,7 +80,7 @@ async function Should_Ok_When_EmployerSentReviewToWorker() {
   expect(result.ok).to.true();
 
   // TODO: нужно что-то с Job addUpdateReviewStatisticsJob
-  await updateReviewStatistics.default({ ratingStatisticId: worker.ratingStatistic.id });
+  await updateReviewStatistics.default({ userId: worker.id });
   const ratingStatisticOfWorker = await RatingStatistic.findByPk(worker.ratingStatistic.id);
   const reviews = await Review.findAll({
     where: { toUserId: worker.id },
@@ -132,7 +132,7 @@ async function Should_Ok_When_AnyEmployersSentReviewToWorker() {
   expect(secondEmployerResponse.result.ok).to.true();
 
   // TODO: нужно что-то с Job addUpdateReviewStatisticsJob
-  await updateReviewStatistics.default({ ratingStatisticId: worker.ratingStatistic.id });
+  await updateReviewStatistics.default({ userId: worker.id });
   const ratingStatisticOfWorker = await RatingStatistic.findByPk(worker.ratingStatistic.id);
   const reviews = await Review.findAll({
     where: { toUserId: worker.id },
