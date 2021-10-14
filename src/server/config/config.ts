@@ -138,4 +138,10 @@ export default {
     },
     privateKey: process.env.BRIDGE_CONTRACT_PRIVAT_KEY,
   },
+  contracts: {
+    liquidityMining: {
+      webSocketProvider: process.env.CONTRACT_LIQUIDITY_MINING_WEBSOCKET_PROVIDER,
+      contract: process.env.CONTRACT_LIQUIDITY_MINING_ADDRESS,
+    }
+  }
 };
