@@ -39,7 +39,7 @@ const apiPancakeSwap = axios.create({
 });
 
 const apiLiquidity = axios.create({
-  baseURL: 'https://apiLiquidity.coingecko.com/apiLiquidity/v3/coins/work-quest'
+  baseURL: 'https://api.coingecko.com/api/v3/coins/work-quest'
 });
 
 export async function getSwaps(r) {
@@ -131,7 +131,6 @@ export async function getDistribution() {
     const rewardTotal = new BigNumber(stakingInfoEvent.rewardTotal).shiftedBy(-18).toNumber();
 
     const infoLiquidity = await apiLiquidity.get('');
-
     const currentUsdPrice = infoLiquidity.data.market_data.current_price.usd;
 
     const responsePairDayDatas = await apiPancakeSwap.post('', {
@@ -142,7 +141,8 @@ export async function getDistribution() {
 
     const reserveUSD = responsePairDayDatas.data.data.pairDayDatas[0].reserveUSD;
     const totalSupply = responsePairDayDatas.data.data.pairDayDatas[0].totalSupply;
-    const lpToken = ((rewardTotal * currentUsdPrice) * 12) / (totalStaked * (reserveUSD / totalSupply));
+
+    const lpToken = (((rewardTotal * currentUsdPrice) * 12) / (totalStaked * (reserveUSD / totalSupply))) * 100;
 
     return output({ lpToken });
   } catch (err) {
