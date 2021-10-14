@@ -19,6 +19,8 @@ const contractBscAddress = config.bridge.debug ? config.bridge.bscTestNetwork.co
 const urlBscProvider = config.bridge.debug ? config.bridge.bscTestNetwork.webSocketProvider : config.bridge.bscMainNetwork.webSocketProvider;
 
 export async function init() {
+  console.log('Start bridge'); // TODO add pino
+
   await initDatabase(config.dbLink, false, true);
 
   const web3Eth = new Web3(new Web3.providers.WebsocketProvider(urlEthProvider));
