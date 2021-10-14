@@ -351,7 +351,6 @@ export async function getQuests(r) {
 
   const { count, rows } = await Quest.findAndCountAll({
     distinct: true,
-    col: '"Quest"."id"',
     limit: r.query.limit,
     offset: r.query.offset,
     include, order, where,
