@@ -6,7 +6,7 @@ import config from "../config/config";
 import { error, output } from "../utils";
 import { Errors } from "../utils/errors";
 import BigNumber from 'bignumber.js';
-const Web3 = require('web3')
+const Web3 = require('web3');
 
 const WQT = new Token(
   ChainId.MAINNET,
@@ -29,16 +29,16 @@ const pair = new Pair(
   new TokenAmount(WBNB, config.token.WBNB.amountMax)
 );
 
-const provider = new Web3( new Web3.providers.WebsocketProvider(config.distribution.providerLink));
-const abiPath = path.join('src/server/abi/WQLiquidityMining.json');
-const abi: [] = JSON.parse(fs.readFileSync(abiPath).toString()).abi;
-const tradeContract = new provider.eth.Contract(abi, config.distribution.contractAddress);
+const liquidityMiningProvider = new Web3( new Web3.providers.WebsocketProvider(config.contracts.liquidityMining.webSocketProvider));
+const liquidityMiningAbiPath = path.join(__dirname, '../abi/WQLiquidityMining.json');
+const liquidityMiningAbi: [] = JSON.parse(fs.readFileSync(liquidityMiningAbiPath).toString()).abi;
+const liquidityMiningContract = new liquidityMiningProvider.eth.Contract(liquidityMiningAbi, config.contracts.liquidityMining.contract);
 
 const apiPancakeSwap = axios.create({
   baseURL: 'https://bsc.streamingfast.io/subgraphs/name/pancakeswap/exchange-v2'
 });
 
-const apiLiquidity = axios.create({
+const apiCoingecko = axios.create({
   baseURL: 'https://api.coingecko.com/api/v3/coins/work-quest'
 });
 
@@ -126,11 +126,11 @@ export async function getTokenDayData(r) {
 
 export async function getDistribution() {
   try {
-    const stakingInfoEvent = await tradeContract.methods.getStakingInfo().call();
+    const stakingInfoEvent = await liquidityMiningContract.methods.getStakingInfo().call();
     const totalStaked = new BigNumber(stakingInfoEvent.totalStaked).shiftedBy(-18).toNumber();
     const rewardTotal = new BigNumber(stakingInfoEvent.rewardTotal).shiftedBy(-18).toNumber();
 
-    const infoLiquidity = await apiLiquidity.get('');
+    const infoLiquidity = await apiCoingecko.get('');
     const currentUsdPrice = infoLiquidity.data.market_data.current_price.usd;
 
     const responsePairDayDatas = await apiPancakeSwap.post('', {
@@ -146,6 +146,6 @@ export async function getDistribution() {
 
     return output({ lpToken });
   } catch (err) {
-    console.log('Error math process', err);
+    return error(Errors.LiquidityError, err.response.statusText, err.response.data);
   }
 }

@@ -1,12 +1,12 @@
 import * as Joi from "joi";
 import { getBurns, getMints, getSwaps, getTokenDayData, getDistribution } from "../../api/liquidityPool(wqt-wbnb)";
 import {
+  limitSchema,
+  offsetSchema,
+  swapWQTSchema,
   outputOkSchema,
   tokensDayWQTSchema,
-  swapWQTSchema,
-  offsetSchema,
-  limitSchema,
-  lpTokenWQTW_WBNB
+  contractAmountSchema,
 } from '@workquest/database-models/lib/schemes';
 
 export default [{
@@ -87,15 +87,15 @@ export default [{
   }
 }, {
   method: "GET",
-  path: "/v1/pool-liquidity/getDistribution",
+  path: "/v1/pool-liquidity/wqt-wbnb/getDistribution",
   handler: getDistribution,
   options: {
     auth: false,
-    id: "v1.liquidity.getDistribution",
+    id: "v1.liquidity.wqt-wbnb.getDistribution",
     tags: ["api", "pool-liquidity"],
     description: "Distribution of the WQT to users",
     response: {
-      schema: outputOkSchema(lpTokenWQTW_WBNB).label("GetTokenDayDataResponse")
+      schema: outputOkSchema(contractAmountSchema).label("GetTokenDayDataResponse")
     }
   }
 }];
