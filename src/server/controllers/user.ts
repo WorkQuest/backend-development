@@ -2,7 +2,7 @@ import {Transaction} from "sequelize";
 import {error} from "../utils";
 import {Errors} from '../utils/errors';
 import {getMedia} from "../utils/medias";
-import {keysToRecords} from "./filters";
+import {keysToRecords} from "../utils/filters";
 import {totpValidate} from "@workquest/database-models/lib/utils";
 import {
   User,

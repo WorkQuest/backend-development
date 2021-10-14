@@ -16,7 +16,7 @@ import {
   userAdditionalInfoWorkerSchema,
 } from "@workquest/database-models/lib/schemes";
 import { UserController } from "../controllers/user";
-import { splitSpecialisationAndIndustry } from "../controllers/filters";
+import { splitSpecialisationAndIndustry } from "../utils/filters";
 import { transformToGeoPostGIS } from "../utils/postGIS";
 
 export const searchFields = [

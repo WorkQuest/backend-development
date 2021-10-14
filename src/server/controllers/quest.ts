@@ -2,7 +2,7 @@ import {error} from "../utils";
 import {Transaction} from "sequelize";
 import {UserController} from "./user";
 import {Errors} from "../utils/errors";
-import {keysToRecords} from "./filters";
+import {keysToRecords} from "../utils/filters";
 import {getMedias} from "../utils/medias";
 import { transformToGeoPostGIS } from "../utils/postGIS";
 import {

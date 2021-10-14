@@ -4,7 +4,7 @@ import { UserController } from "../controllers/user";
 import { QuestController } from "../controllers/quest";
 import { transformToGeoPostGIS } from "../utils/postGIS";
 import { error, handleValidationError, output } from "../utils";
-import { splitSpecialisationAndIndustry } from "../controllers/filters";
+import { splitSpecialisationAndIndustry } from "../utils/filters";
 import { locationForValidateSchema } from "@workquest/database-models/lib/schemes";
 import {
   User,
