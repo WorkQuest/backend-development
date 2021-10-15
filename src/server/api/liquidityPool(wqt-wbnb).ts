@@ -97,7 +97,10 @@ export async function getDistribution(r) {
   const reserveUSD = tokenDayData[0].reserveUSD;
   const totalSupply = tokenDayData[0].totalSupply;
 
-  const lpToken = (((rewardTotal * UsdPrice) * 12) / (totalStaked * (reserveUSD / totalSupply))) * 100;
-
-  return output({ lpToken });
+  return output({
+    rewardTotal: rewardTotal.toString(),
+    priceUSD: UsdPrice.toString(),
+    totalStaked: totalStaked.toString(),
+    reserveUSD: reserveUSD,
+    totalSupply: totalSupply });
 }
