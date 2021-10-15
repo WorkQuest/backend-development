@@ -99,12 +99,10 @@ export async function getDistribution(r) {
   const reserveUSD = tokenDayData[0].reserveUSD;
   const totalSupply = tokenDayData[0].totalSupply;
 
-  const paramsAPY = {
+  return output({
     rewardTotal: toString(rewardTotal),
     priceUSD: toString(UsdPrice),
     totalStaked: toString(totalStaked),
     reserveUSD: reserveUSD,
-    totalSupply: totalSupply
-  }
-  return output({ paramsAPY });
+    totalSupply: totalSupply });
 }
