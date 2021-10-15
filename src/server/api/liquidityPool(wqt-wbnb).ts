@@ -6,8 +6,6 @@ import { output } from "../utils";
 import { ChainId, Token, TokenAmount, Pair } from "@pancakeswap/sdk";
 import { PancakeSwapApi } from "../controllers/pancakeSwap";
 import { CoingeckoApi } from "../controllers/coingecko";
-import validator from 'validator';
-import toString = validator.toString;
 
 const Web3 = require('web3');
 
@@ -100,9 +98,9 @@ export async function getDistribution(r) {
   const totalSupply = tokenDayData[0].totalSupply;
 
   return output({
-    rewardTotal: toString(rewardTotal),
-    priceUSD: toString(UsdPrice),
-    totalStaked: toString(totalStaked),
+    rewardTotal: rewardTotal.toString(),
+    priceUSD: UsdPrice.toString(),
+    totalStaked: totalStaked.toString(),
     reserveUSD: reserveUSD,
     totalSupply: totalSupply });
 }
