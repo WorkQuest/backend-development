@@ -23,8 +23,29 @@ export async function init() {
 
   await initDatabase(config.dbLink, false, true);
 
-  const web3Eth = new Web3(new Web3.providers.WebsocketProvider(urlEthProvider));
-  const web3Bsc = new Web3(new Web3.providers.WebsocketProvider(urlBscProvider));
+  const web3Eth = new Web3(new Web3.providers.WebsocketProvider(urlEthProvider, {
+    clientConfig: {
+      keepalive: true,
+      keepaliveInterval: 60000 // ms
+    },
+    reconnect: {
+      auto: true,
+      delay: 1000, // ms
+      onTimeout: false
+    }
+  }));
+
+  const web3Bsc = new Web3(new Web3.providers.WebsocketProvider(urlBscProvider, {
+    clientConfig: {
+      keepalive: true,
+      keepaliveInterval: 60000 // ms
+    },
+    reconnect: {
+      auto: true,
+      delay: 1000, // ms
+      onTimeout: false
+    }
+  }));
 
   const [ethBridgeInfo, ] = await BridgeParserBlockInfo.findOrCreate({
     where: { network: BlockchainNetworks.ethMainNetwork },
