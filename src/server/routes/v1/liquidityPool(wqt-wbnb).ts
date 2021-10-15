@@ -87,7 +87,7 @@ export default [{
   }
 }, {
   method: "GET",
-  path: "/v1/pool-liquidity/wqt-wbnb/getDistribution",
+  path: "/v1/pool-liquidity/wqt-wbnb/distribution",
   handler: getDistribution,
   options: {
     auth: false,
