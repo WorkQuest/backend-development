@@ -41,7 +41,7 @@ export async function register(r) {
 		email: r.payload.email,
 		subject: "Work Quest | Confirmation code",
 		text: `Your confirmation code is ${emailConfirmCode}. Follow this link ${config.baseUrl}/confirm?token=${emailConfirmCode}`,
-		html: emailHtml
+		html: emailHtml,
 	});
 
 	const user = await User.create({
@@ -80,6 +80,7 @@ export function getLoginViaSocialNetworkHandler(returnType: "token" | "redirect"
 		}
 
 		const user = await UserController.getUserByNetworkProfile(r.auth.strategy, profile);
+
 		const session = await Session.create({
 			userId: user.id,
 			invalidating: false,
@@ -87,6 +88,7 @@ export function getLoginViaSocialNetworkHandler(returnType: "token" | "redirect"
 			ip: getRealIp(r),
 			device: getDevice(r),
 		});
+
 		const result = {
 			...generateJwt({ id: session.id }),
 			userStatus: user.status
@@ -96,18 +98,18 @@ export function getLoginViaSocialNetworkHandler(returnType: "token" | "redirect"
 			const qs = querystring.stringify(result);
 			return h.redirect(config.baseUrl + "/sign-in?" + qs);
 		}
+
 		return output(result);
 	};
 }
 
 export async function confirmEmail(r) {
 	const user = await User.scope("withPassword").findByPk(r.auth.credentials.id);
+	const userController = new UserController(user.id, user);
 
-	if (!user.settings.emailConfirm)
-		return error(Errors.UserAlreadyConfirmed, "User already confirmed", {});
-	if (user.settings.emailConfirm.toLowerCase() !== r.payload.confirmCode.toLowerCase())
-		return error(Errors.InvalidPayload, "Invalid confirmation code", [{ field: "confirmCode", reason: "invalid" }]);
-	// If user sets role on confirm
+	await userController.checkUserAlreadyConfirmed();
+	await userController.checkUserConfirmationCode(r.payload.confirmCode);
+
 	if (r.payload.role) {
 		await user.update({
 			role: r.payload.role,
@@ -164,7 +166,7 @@ export async function refreshTokens(r) {
 		invalidating: false,
 		place: getGeo(r),
 		ip: getRealIp(r),
-		device: getDevice(r)
+		device: getDevice(r),
 	});
 
 	const result = {
@@ -180,7 +182,7 @@ export async function logout(r) {
 		invalidating: true,
 		logoutAt: Date.now(),
 	}, {
-		where: { id: r.auth.artifacts.sessionId	}
+		where: { id: r.auth.artifacts.sessionId }
 	});
 
 	return output();

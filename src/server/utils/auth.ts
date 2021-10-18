@@ -4,13 +4,13 @@ import { error } from "./index";
 import { Errors } from './errors';
 import {
   User,
-  UserStatus,
   Session,
+  UserStatus,
 } from "@workquest/database-models/lib/models";
 
 export const generateJwt = (data: object) => {
-  let access = jwt.sign(data, config.auth.jwt.access.secret, { expiresIn: config.auth.jwt.access.lifetime });
-  let refresh = jwt.sign(data, config.auth.jwt.refresh.secret, { expiresIn: config.auth.jwt.refresh.lifetime });
+  const access = jwt.sign(data, config.auth.jwt.access.secret, { expiresIn: config.auth.jwt.access.lifetime });
+  const refresh = jwt.sign(data, config.auth.jwt.refresh.secret, { expiresIn: config.auth.jwt.refresh.lifetime });
 
   return { access, refresh };
 };
