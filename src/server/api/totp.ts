@@ -1,16 +1,11 @@
 import * as speakeasy from "speakeasy";
-import { error, getUUID, output } from "../utils";
+import { getUUID, output } from "../utils";
 import { addSendEmailJob } from "../jobs/sendEmail";
-import { Errors } from "../utils/errors";
 import * as path from "path";
 import * as fs from "fs";
 import Handlebars = require("handlebars");
-import {
-  User
-} from "@workquest/database-models/lib/models";
-import {
-  totpValidate
-} from "@workquest/database-models/lib/utils";
+import { User } from "@workquest/database-models/lib/models";
+import { UserController } from "../controllers/user";
 
 const confirmTemplatePath = path.join(__dirname, "..", "..", "..", "templates", "confirm2FA.html");
 const confirmTemplate = Handlebars.compile(fs.readFileSync(confirmTemplatePath, {
@@ -19,8 +14,9 @@ const confirmTemplate = Handlebars.compile(fs.readFileSync(confirmTemplatePath, 
 
 export async function enableTOTP(r) {
   const user = await User.scope('withPassword').findByPk(r.auth.credentials.id);
+  const userController = new UserController(user.id, user);
 
-  user.mustHaveActiveStatusTOTP(false);
+  await userController.userMustHaveActiveStatusTOTP(false);
 
   const { base32 } = speakeasy.generateSecret({ length: 10, name: 'WorkQuest' });
   const confirmCode = getUUID().substr(0, 6).toUpperCase();
@@ -30,7 +26,6 @@ export async function enableTOTP(r) {
     "settings.security.TOTP.confirmCode": confirmCode,
     "settings.security.TOTP.secret": base32,
   });
-
 
   await addSendEmailJob({
     email: user.email,
@@ -44,18 +39,11 @@ export async function enableTOTP(r) {
 
 export async function confirmEnablingTOTP(r) {
   const user = await User.scope("withPassword").findByPk(r.auth.credentials.id);
+  const userController = new UserController(user.id, user);
 
-  user.mustHaveActiveStatusTOTP(false);
-
-  if (user.settings.security.TOTP.confirmCode !== r.payload.confirmCode) {
-    return error(Errors.InvalidPayload, "Confirmation code is not correct", [{
-      field: "confirmCode",
-      reason: "invalid"
-    }]);
-  }
-  if (!totpValidate(r.payload.totp, user.settings.security.TOTP.secret)) {
-    return error(Errors.InvalidPayload, "OTP is invalid", [{ field: "totp", reason: "invalid" }]);
-  }
+  await userController.userMustHaveActiveStatusTOTP(false);
+  await userController.checkActivationCodeTotp(r.payload.confirmCode);
+  await userController.checkTotpConfirmationCode(r.payload.totp);
 
   await user.update({
     "settings.security.TOTP.confirmCode": null,
@@ -67,9 +55,10 @@ export async function confirmEnablingTOTP(r) {
 
 export async function disableTOTP(r) {
   const user = await User.scope('withPassword').findByPk(r.auth.credentials.id);
+  const userController = new UserController(user.id, user);
 
-  user.mustHaveActiveStatusTOTP(true);
-  user.validateTOTP(r.payload.totp);
+  await userController.userMustHaveActiveStatusTOTP(false);
+  await userController.checkTotpConfirmationCode(r.payload.totp);
 
   await user.update({
     "settings.security.TOTP.active": false,

@@ -1,4 +1,9 @@
+import { col, fn } from 'sequelize';
 import { addJob } from "../utils/scheduler";
+import {
+  RatingStatistic,
+  Review,
+} from "@workquest/database-models/lib/models";
 import { Quest, RatingStatistic, Review, StatusKYC, User, UserRole, RatingStatus } from "@workquest/database-models/lib/models";
 import { col, fn } from "sequelize";
 
@@ -41,6 +46,8 @@ function setRatingStatus(questCounter: number, userPhone: string, userKYC: Statu
 }
 
 export default async function(payload: StatisticPayload) {
+  const [ratingStatistic, ] = await RatingStatistic.findOrCreate( { where: { userId: payload.userId } });
+
   const [ratingStatistic] = await RatingStatistic.findOrCreate({
     include: [{
       model: User,
@@ -52,10 +59,12 @@ export default async function(payload: StatisticPayload) {
   });
 
   const reviewCountPromise = Review.count({ where: { toUserId: ratingStatistic.userId } });
+
   const averageMarkResultPromise = Review.findOne({
     attributes: [[fn('AVG', col('mark')), 'avgMark']],
     where: { toUserId: ratingStatistic.userId }
   });
+
   const [reviewCount, averageMarkResult] = await Promise.all([reviewCountPromise, averageMarkResultPromise]);
 
   let quests = 0;

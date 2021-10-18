@@ -1,5 +1,7 @@
 import { error, output } from "../utils";
 import { Errors } from "../utils/errors";
+import { QuestController } from "../controllers/quest";
+import { UserController } from "../controllers/user";
 import {
   User,
   UserRole,
@@ -11,20 +13,18 @@ import {
 } from "@workquest/database-models/lib/models";
 
 export async function responseOnQuest(r) {
-  const user = r.auth.credentials;
-  const quest = await Quest.findByPk(r.params.questId);
+  const worker: User = r.auth.credentials;
+  const workerController = new UserController(worker.id, worker);
+  const questController = new QuestController(r.params.questId);
+  const quest = await questController.findModel();
 
-  if (!quest) {
-    return error(Errors.NotFound, "Quest not found", {});
-  }
-
-  quest.mustHaveStatus(QuestStatus.Created);
-  user.mustHaveRole(UserRole.Worker);
+  await questController.questMustHaveStatus(QuestStatus.Created);
+  await workerController.userMustHaveRole(UserRole.Worker);
 
   const questsResponse = await QuestsResponse.findOne({
     where: {
       questId: quest.id,
-      workerId: user.id
+      workerId: worker.id,
     }
   });
 
@@ -33,7 +33,7 @@ export async function responseOnQuest(r) {
   }
 
   await QuestsResponse.create({
-    workerId: user.id,
+    workerId: worker.id,
     questId: quest.id,
     message: r.payload.message,
     status: QuestsResponseStatus.Open,
@@ -44,24 +44,23 @@ export async function responseOnQuest(r) {
 }
 
 export async function inviteOnQuest(r) {
-  const user = r.auth.credentials;
-  const invitedWorker = await User.findOne({ where: { id: r.payload.invitedUserId } });
-  const quest = await Quest.findByPk(r.params.questId);
+  const employer: User = r.auth.credentials;
+  const invitedWorkerController = new UserController(r.payload.invitedUserId);
+  const employerController = new UserController(employer.id, employer);
+  const invitedWorker = await invitedWorkerController.findModel();
+  const questController = new QuestController(r.params.questId);
+  const quest = await questController.findModel();
 
-  user.mustHaveRole(UserRole.Employer);
-  invitedWorker.mustHaveRole(UserRole.Worker);
+  await employerController.userMustHaveRole(UserRole.Employer);
+  await invitedWorkerController.userMustHaveRole(UserRole.Worker);
 
-  if (!quest) {
-    return error(Errors.NotFound, "Quest not found", {});
-  }
-
-  quest.mustHaveStatus(QuestStatus.Created);
-  quest.mustBeQuestCreator(user.id);
+  await questController.questMustHaveStatus(QuestStatus.Created);
+  await questController.employerMustBeQuestCreator(employer.id);
 
   const questResponse = await QuestsResponse.findOne({
     where: {
       questId: quest.id,
-      workerId: invitedWorker.id
+      workerId: invitedWorker.id,
     }
   });
 
@@ -81,14 +80,11 @@ export async function inviteOnQuest(r) {
 }
 
 export async function userResponsesToQuest(r) {
-  const user = r.auth.credentials;
-  const quest = await Quest.findByPk(r.params.questId);
+  const employer: User = r.auth.credentials;
+  const questController = new QuestController(r.params.questId);
+  const quest = await questController.findModel();
 
-  if (!quest) {
-    return error(Errors.NotFound, "Quest not found", {});
-  }
-
-  quest.mustBeQuestCreator(user.id);
+  await questController.employerMustBeQuestCreator(employer.id);
 
   const { rows, count } = await QuestsResponse.findAndCountAll({
     where: { questId: quest.id },
@@ -98,12 +94,13 @@ export async function userResponsesToQuest(r) {
 }
 
 export async function responsesToQuestsForUser(r) {
-  const user = r.auth.credentials;
+  const worker: User = r.auth.credentials;
+  const workerController = new UserController(worker.id, worker);
 
-  user.mustHaveRole(UserRole.Worker);
+  await workerController.userMustHaveRole(UserRole.Worker);
 
   const { rows, count } = await QuestsResponse.findAndCountAll({
-    where: { workerId: user.id },
+    where: { workerId: worker.id },
     include: [{
       model: Quest,
       as: 'quest'
@@ -114,14 +111,15 @@ export async function responsesToQuestsForUser(r) {
 }
 
 export async function acceptInviteOnQuest(r) {
-  const user = r.auth.credentials;
+  const worker: User = r.auth.credentials;
   const questsResponse = await QuestsResponse.findOne({ where: { id: r.params.responseId } });
 
   if (!questsResponse) {
     return error(Errors.NotFound, "Quests response not found", {});
   }
 
-  questsResponse.mustBeInvitedToQuest(user.id);
+  questsResponse.mustBeInvitedToQuest(worker.id);
+  questsResponse.mustHaveType(QuestsResponseType.Invite);
   questsResponse.mustHaveStatus(QuestsResponseStatus.Open);
 
   await questsResponse.update({ status: QuestsResponseStatus.Accepted });
@@ -130,14 +128,15 @@ export async function acceptInviteOnQuest(r) {
 }
 
 export async function rejectInviteOnQuest(r) {
-  const user = r.auth.credentials;
+  const worker: User = r.auth.credentials;
   const questsResponse = await QuestsResponse.findOne({ where: { id: r.params.responseId } });
 
   if (!questsResponse) {
     return error(Errors.NotFound, "Quests response not found", {});
   }
 
-  questsResponse.mustBeInvitedToQuest(user.id);
+  questsResponse.mustBeInvitedToQuest(worker.id);
+  questsResponse.mustHaveType(QuestsResponseType.Invite);
   questsResponse.mustHaveStatus(QuestsResponseStatus.Open);
 
   await questsResponse.update({ status: QuestsResponseStatus.Rejected });
@@ -146,20 +145,18 @@ export async function rejectInviteOnQuest(r) {
 }
 
 export async function rejectResponseOnQuest(r) {
-  const user = r.auth.credentials;
+  const employer: User = r.auth.credentials;
   const questsResponse = await QuestsResponse.findOne({ where: { id: r.params.responseId } });
 
   if (!questsResponse) {
     return error(Errors.NotFound, "Quests response not found", {});
   }
 
-  const quest = await Quest.findOne({ where: { id: questsResponse.questId } });
+  const questController = new QuestController(questsResponse.questId);
 
-  if (!quest) {
-    return error(Errors.NotFound, "Quest not found", {});
-  }
+  await questController.findModel();
 
-  quest.mustBeQuestCreator(user.id);
+  await questController.employerMustBeQuestCreator(employer.id);
   questsResponse.mustHaveType(QuestsResponseType.Response);
   questsResponse.mustHaveStatus(QuestsResponseStatus.Open);
 

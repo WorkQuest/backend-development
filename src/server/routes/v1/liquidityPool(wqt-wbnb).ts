@@ -1,18 +1,20 @@
 import * as Joi from "joi";
-import { getBurns, getMints, getSwaps, getTokenDayData } from "../../api/liquidityPool(wqt-wbnb)";
+import { getBurns, getMints, getSwaps, getTokenDayData, getDistribution } from "../../api/liquidityPool(wqt-wbnb)";
 import {
+  limitSchema,
+  offsetSchema,
+  swapWQTSchema,
   outputOkSchema,
   tokensDayWQTSchema,
-  swapWQTSchema,
-  offsetSchema,
-  limitSchema
-} from "@workquest/database-models/lib/schemes";
+  contractAmountSchema,
+} from '@workquest/database-models/lib/schemes';
 
 export default [{
   method: "GET",
   path: "/v1/pool-liquidity/wqt-wbnb/swaps",
   handler: getSwaps,
   options: {
+    auth: false,
     id: "v1.liquidity.wqt-wbnb.getSwaps",
     tags: ["api", "pool-liquidity"],
     description: "Get swaps on a pair by fetching Swap events",
@@ -31,6 +33,7 @@ export default [{
   path: "/v1/pool-liquidity/wqt-wbnb/mints",
   handler: getMints,
   options: {
+    auth: false,
     id: "v1.liquidity.wqt-wbnb.getMints",
     tags: ["api", "pool-liquidity"],
     description: "Get mints on a pair by fetching Mints events",
@@ -49,6 +52,7 @@ export default [{
   path: "/v1/pool-liquidity/wqt-wbnb/burns",
   handler: getBurns,
   options: {
+    auth: false,
     id: "v1.liquidity.wqt-wbnb.getSBurns",
     tags: ["api", "pool-liquidity"],
     description: "Get burns on a pair by fetching Burns events",
@@ -67,6 +71,7 @@ export default [{
   path: "/v1/pool-liquidity/wqt-wbnb/tokenDay",
   handler: getTokenDayData,
   options: {
+    auth: false,
     id: "v1.liquidity.wqt-wbnb.getTokenDayData",
     tags: ["api", "pool-liquidity"],
     description: "Get daily information for DAI",
@@ -78,6 +83,19 @@ export default [{
     },
     response: {
       schema: outputOkSchema(tokensDayWQTSchema).label("GetTokenDayDataResponse")
+    }
+  }
+}, {
+  method: "GET",
+  path: "/v1/pool-liquidity/wqt-wbnb/distribution",
+  handler: getDistribution,
+  options: {
+    auth: false,
+    id: "v1.liquidity.wqt-wbnb.getDistribution",
+    tags: ["api", "pool-liquidity"],
+    description: "Distribution of the WQT to users",
+    response: {
+      schema: outputOkSchema(contractAmountSchema).label("GetTokenDayDataResponse")
     }
   }
 }];
