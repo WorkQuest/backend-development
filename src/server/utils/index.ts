@@ -33,6 +33,11 @@ export function output(result?: any | null): { ok: boolean, result: any | null }
   return { ok: true, result };
 }
 
+export interface OutputInterface {
+  ok: boolean,
+  result?: object
+}
+
 export function error(code: number, msg: string, data: object): Boom {
   return new Boom(msg, {
     data: {

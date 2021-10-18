@@ -51,29 +51,105 @@ jobs:
           chmod 700 ci-scripts
           cd ci-scripts
           ansible-playbook -i "${{ secrets.REMOTE_HOST }}" -e "ansible_user=${{ secrets.REMOTE_USER }} \
-            DB_LINK=${{ secrets.DB_LINK }} \
-            JWT_ACCESS_SECRET=${{ secrets.JWT_ACCESS_SECRET }} \
-            JWT_REFRESH_SECRET=${{ secrets.JWT_REFRESH_SECRET }} \
-            SERVER_HOST=${{ secrets.SERVER_HOST }} \
-            SERVER_PORT=${{ secrets.SERVER_PORT }} \
+            DB_LINK=${{ secrets.PROD_DB_LINK }} \
+            JWT_ACCESS_SECRET=${{ secrets.PROD_JWT_ACCESS_SECRET }} \
+            JWT_REFRESH_SECRET=${{ secrets.PROD_JWT_REFRESH_SECRET }} \
+            SERVER_HOST=${{ secrets.PROD_SERVER_HOST }} \
+            SERVER_PORT=${{ secrets.PROD_SERVER_PORT }} \
 
-            SMTP_HOST=${{ secrets.SMTP_HOST }} \
-            SMTP_PORT=${{ secrets.SMTP_PORT }} \
-            SMTP_SECURE=${{ secrets.SMTP_SECURE }} \
-            SMTP_USER=${{ secrets.SMTP_USER }} \
-            SMTP_PASSWORD=${{ secrets.SMTP_PASSWORD }} \
-            SMTP_SENDER=${{ secrets.SMTP_SENDER }} \
+            DB_HOST=${{ secrets.PROD_DB_HOST }} \
+            DB_USERNAME=${{ secrets.PROD_DB_USERNAME }} \
+            DB_PASSWORD=${{ secrets.PROD_DB_PASSWORD }} \
+            DB_NAME=${{ secrets.PROD_DB_NAME }} \
 
-            DB_HOST=${{ secrets.DB_HOST }} \
-            DB_USERNAME=${{ secrets.DB_USERNAME }} \
-            DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
-            DB_NAME=${{ secrets.DB_NAME }} \
+            SMTP_HOST=${{ secrets.PROD_SMTP_HOST }} \
+            SMTP_PORT=${{ secrets.PROD_SMTP_PORT }} \
+            SMTP_SECURE=${{ secrets.PROD_SMTP_SECURE }} \
+            SMTP_USER=${{ secrets.PROD_SMTP_USER }} \
+            SMTP_PASSWORD=${{ secrets.PROD_SMTP_PASSWORD }} \
+            SMTP_SENDER=${{ secrets.PROD_SMTP_SENDER }} \
 
-            BASE_URL=${{ secrets.BASE_URL }} \
+            FACEBOOK_CLIENT_ID=${{ secrets.PROD_FACEBOOK_CLIENT_ID }} \
+            FACEBOOK_SECRET_KEY=${{ secrets.PROD_FACEBOOK_SECRET_KEY }} \
+            FACEBOOK_COOKIE_PASSWORD=${{ secrets.PROD_FACEBOOK_COOKIE_PASSWORD }} \
+            GOOGLE_CLIENT_ID=${{ secrets.PROD_GOOGLE_CLIENT_ID }} \
+            GOOGLE_SECRET_KEY=${{ secrets.PROD_GOOGLE_SECRET_KEY }} \
+            GOOGLE_COOKIE_PASSWORD=${{ secrets.PROD_GOOGLE_COOKIE_PASSWORD }} \
+            LINKEDIN_CLIENT_ID=${{ secrets.PROD_LINKEDIN_CLIENT_ID }} \
+            LINKEDIN_SECRET_KEY=${{ secrets.PROD_LINKEDIN_SECRET_KEY }} \
+            LINKEDIN_COOKIE_PASSWORD=${{ secrets.PROD_LINKEDIN_COOKIE_PASSWORD }} \
+            TWITTER_CLIENT_ID=${{ secrets.PROD_TWITTER_CLIENT_ID }} \
+            TWITTER_SECRET_KEY=${{ secrets.PROD_TWITTER_SECRET_KEY }} \
+            TWITTER_COOKIE_PASSWORD=${{ secrets.PROD_TWITTER_COOKIE_PASSWORD }} \
 
-            DEBUG=${{ secrets.DEBUG }} \
+            TWILIO_ACCOUNT_SID=${{ secrets.PROD_TWILIO_ACCOUNT_SID }} \
+            TWILIO_AUTH_TOKEN=${{ secrets.PROD_TWILIO_AUTH_TOKEN }} \
+            TWILIO_PHONE_NUMBER_SENDER=${{ secrets.PROD_TWILIO_PHONE_NUMBER_SENDER }} \
+
+            CDN_ACCESS_KEY_ID=${{ secrets.PROD_CDN_ACCESS_KEY_ID }} \
+            CDN_SECRET_ACCESS_KEY=${{ secrets.PROD_CDN_SECRET_ACCESS_KEY }} \
+            CDN_END_POINT=${{ secrets.PROD_CDN_END_POINT }} \
+            CDN_BUCKET=${{ secrets.PROD_CDN_BUCKET }} \
+            CDN_PUB_END_POINT=${{ secrets.PROD_CDN_PUB_END_POINT }} \
+            CDN_EXPIRES_IN=${{ secrets.PROD_CDN_EXPIRES_IN }} \
+
+            SUMSUB_APP_TOKEN=${{ secrets.PROD_SUMSUB_APP_TOKEN }} \
+            SUMSUB_SECRET_KEY=${{ secrets.PROD_SUMSUB_SECRET_KEY }} \
+            SUMSUB_BASE_URL=${{ secrets.PROD_SUMSUB_BASE_URL }} \
+            SUMSUB_ACCESS_TOKEN_TTL=${{ secrets.PROD_SUMSUB_ACCESS_TOKEN_TTL }} \
+
+            TOKEN_WQT_BSC_NETWORK_ADDRESS=${{ secrets.PROD_TOKEN_WQT_BSC_NETWORK_ADDRESS }} \
+            TOKEN_WQT_BSC_NETWORK_DECIMAL=${{ secrets.PROD_TOKEN_WQT_BSC_NETWORK_DECIMAL }} \
+            TOKEN_WQT_BSC_NETWORK_SYMBOL=${{ secrets.PROD_TOKEN_WQT_BSC_NETWORK_SYMBOL }} \
+            TOKEN_WQT_BSC_NETWORK_NAME=${{ secrets.PROD_TOKEN_WQT_BSC_NETWORK_NAME }} \
+            TOKEN_WQT_BSC_NETWORK_AMOUNT_MAX=${{ secrets.PROD_TOKEN_WQT_BSC_NETWORK_AMOUNT_MAX }} \
+
+            TOKEN_WQT_ETHEREUM_NETWORK_ADDRESS=${{ secrets.PROD_TOKEN_WQT_ETHEREUM_NETWORK_ADDRESS }} \
+            TOKEN_WQT_ETHEREUM_NETWORK_DECIMAL=${{ secrets.PROD_TOKEN_WQT_ETHEREUM_NETWORK_DECIMAL }} \
+            TOKEN_WQT_ETHEREUM_NETWORK_SYMBOL=${{ secrets.PROD_TOKEN_WQT_ETHEREUM_NETWORK_SYMBOL }} \
+            TOKEN_WQT_ETHEREUM_NETWORK_NAME=${{ secrets.PROD_TOKEN_WQT_ETHEREUM_NETWORK_NAME }} \
+            TOKEN_WQT_ETHEREUM_NETWORK_AMOUNT_MAX=${{ secrets.PROD_TOKEN_WQT_ETHEREUM_NETWORK_AMOUNT_MAX }} \
+
+            TOKEN_WETH_ADDRESS=${{ secrets.PROD_TOKEN_WETH_ADDRESS }} \
+            TOKEN_WETH_DECIMAL=${{ secrets.PROD_TOKEN_WETH_DECIMAL }} \
+            TOKEN_WETH_SYMBOL=${{ secrets.PROD_TOKEN_WETH_SYMBOL }} \
+            TOKEN_WETH_NAME=${{ secrets.PROD_TOKEN_WETH_NAME }} \
+            TOKEN_WETH_AMOUNT_MAX=${{ secrets.PROD_TOKEN_WETH_AMOUNT_MAX }} \
+
+            TOKEN_WBNB_ADDRESS=${{ secrets.PROD_TOKEN_WBNB_ADDRESS }} \
+            TOKEN_WBNB_DECIMAL=${{ secrets.PROD_TOKEN_WBNB_DECIMAL }} \
+            TOKEN_WBNB_SYMBOL=${{ secrets.PROD_TOKEN_WBNB_SYMBOL }} \
+            TOKEN_WBNB_NAME=${{ secrets.PROD_TOKEN_WBNB_NAME }} \
+            TOKEN_WBNB_AMOUNT_MAX=${{ secrets.PROD_TOKEN_WBNB_AMOUNT_MAX }} \
+
+            BRIDGE_DEBUG=${{ secrets.secrets.PROD_BRIDGE_DEBUG }} \
+
+            BRIDGE_ETH_MAINNETWORK_PARSE_EVENTS_FROM_HEIGHT=${{ secrets.PROD_BRIDGE_ETH_MAINNETWORK_PARSE_EVENTS_FROM_HEIGHT }} \
+            BRIDGE_ETH_MAINNETWORK_CONTRACT=${{ secrets.PROD_BRIDGE_ETH_MAINNETWORK_CONTRACT }} \
+            BRIDGE_ETH_MAINNETWORK_WEBSOCKET_PROVIDER=${{ secrets.PROD_BRIDGE_ETH_MAINNETWORK_WEBSOCKET_PROVIDER }} \
+
+            BRIDGE_BSC_MAINNETWORK_PARSE_EVENTS_FROM_HEIGHT=${{ secrets.PROD_BRIDGE_BSC_MAINNETWORK_PARSE_EVENTS_FROM_HEIGHT }} \
+            BRIDGE_BSC_MAINNETWORK_CONTRACT=${{ secrets.PROD_BRIDGE_BSC_MAINNETWORK_CONTRACT }} \
+            BRIDGE_BSC_MAINNETWORK_WEBSOCKET_PROVIDER=${{ secrets.PROD_BRIDGE_BSC_MAINNETWORK_WEBSOCKET_PROVIDER }} \
+
+            BRIDGE_RINKEBY_TESTNETWORK_PARSE_EVENTS_FROM_HEIGHT=${{ secrets.PROD_BRIDGE_RINKEBY_TESTNETWORK_PARSE_EVENTS_FROM_HEIGHT }} \
+            BRIDGE_RINKEBY_TESTNETWORK_CONTRACT=${{ secrets.PROD_BRIDGE_RINKEBY_TESTNETWORK_CONTRACT }} \
+            BRIDGE_RINKEBY_TESTNETWORK_WEBSOCKET_PROVIDER=${{ secrets.PROD_BRIDGE_RINKEBY_TESTNETWORK_WEBSOCKET_PROVIDER }} \
+
+            BRIDGE_BSC_TESTNETWORK_PARSE_EVENTS_FROM_HEIGHT=${{ secrets.PROD_BRIDGE_BSC_TESTNETWORK_PARSE_EVENTS_FROM_HEIGHT }} \
+            BRIDGE_BSC_TESTNETWORK_CONTRACT=${{ secrets.PROD_BRIDGE_BSC_TESTNETWORK_CONTRACT }} \
+            BRIDGE_BSC_TESTNETWORK_WEBSOCKET_PROVIDER=${{ secrets.PROD_BRIDGE_BSC_TESTNETWORK_WEBSOCKET_PROVIDER }} \
+
+            BRIDGE_CONTRACT_PRIVAT_KEY=${{ secrets.PROD_BRIDGE_CONTRACT_PRIVAT_KEY }} \
+
+            CONTRACT_LIQUIDITY_MINING_WEBSOCKET_PROVIDER=${{ secrets.PROD_CONTRACT_LIQUIDITY_MINING_WEBSOCKET_PROVIDER }} \
+            CONTRACT_LIQUIDITY_MINING_ADDRESS=${{ secrets.PROD_CONTRACT_LIQUIDITY_MINING_ADDRESS }} \
+
+            DEBUG=${{ secrets.PROD_DEBUG }} \
+            BASE_URL=${{ secrets.PROD_BASE_URL }} \
             backend_bin=${{ secrets.backend_bin }} \
             PM2_SERVICE_NAME=${{ secrets.PM2_SERVICE_NAME }} \
+            PM2_BRIDGE_SERVICE_NAME=${{ secrets.PROD_PM2_BRIDGE_SERVICE_NAME }} \
             SRC_DIR=${{ github.workspace }}/" backend-update.yml;
 
   deploy-dev:
@@ -103,68 +179,103 @@ jobs:
           chmod 700 ci-scripts
           cd ci-scripts
           ansible-playbook -i "${{ secrets.REMOTE_HOST }}" -e "ansible_user=${{ secrets.REMOTE_USER }} \
-            DB_LINK=${{ secrets.DB_LINK }} \
-            JWT_ACCESS_SECRET=${{ secrets.JWT_ACCESS_SECRET }} \
-            JWT_REFRESH_SECRET=${{ secrets.JWT_REFRESH_SECRET }} \
-            SERVER_HOST=${{ secrets.SERVER_HOST }} \
-            SERVER_PORT=${{ secrets.SERVER_PORT }} \
+            DB_LINK=${{ secrets.DEV_DB_LINK }} \
+            JWT_ACCESS_SECRET=${{ secrets.DEV_JWT_ACCESS_SECRET }} \
+            JWT_REFRESH_SECRET=${{ secrets.DEV_JWT_REFRESH_SECRET }} \
+            SERVER_HOST=${{ secrets.DEV_SERVER_HOST }} \
+            SERVER_PORT=${{ secrets.DEV_SERVER_PORT }} \
 
-            SMTP_HOST=${{ secrets.SMTP_HOST }} \
-            SMTP_PORT=${{ secrets.SMTP_PORT }} \
-            SMTP_SECURE=${{ secrets.SMTP_SECURE }} \
-            SMTP_USER=${{ secrets.SMTP_USER }} \
-            SMTP_PASSWORD=${{ secrets.SMTP_PASSWORD }} \
-            SMTP_SENDER=${{ secrets.SMTP_SENDER }} \
+            DB_HOST=${{ secrets.DEV_DB_HOST }} \
+            DB_USERNAME=${{ secrets.DEV_DB_USERNAME }} \
+            DB_PASSWORD=${{ secrets.DEV_DB_PASSWORD }} \
+            DB_NAME=${{ secrets.DEV_DB_NAME }} \
 
-            BASE_URL=${{ secrets.BASE_URL }} \
+            SMTP_HOST=${{ secrets.DEV_SMTP_HOST }} \
+            SMTP_PORT=${{ secrets.DEV_SMTP_PORT }} \
+            SMTP_SECURE=${{ secrets.DEV_SMTP_SECURE }} \
+            SMTP_USER=${{ secrets.DEV_SMTP_USER }} \
+            SMTP_PASSWORD=${{ secrets.DEV_SMTP_PASSWORD }} \
+            SMTP_SENDER=${{ secrets.DEV_SMTP_SENDER }} \
 
-            DB_HOST=${{ secrets.DB_HOST }} \
-            DB_USERNAME=${{ secrets.DB_USERNAME }} \
-            DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
-            DB_NAME=${{ secrets.DB_NAME }} \
+            FACEBOOK_CLIENT_ID=${{ secrets.DEV_FACEBOOK_CLIENT_ID }} \
+            FACEBOOK_SECRET_KEY=${{ secrets.DEV_FACEBOOK_SECRET_KEY }} \
+            FACEBOOK_COOKIE_PASSWORD=${{ secrets.DEV_FACEBOOK_COOKIE_PASSWORD }} \
+            GOOGLE_CLIENT_ID=${{ secrets.DEV_GOOGLE_CLIENT_ID }} \
+            GOOGLE_SECRET_KEY=${{ secrets.DEV_GOOGLE_SECRET_KEY }} \
+            GOOGLE_COOKIE_PASSWORD=${{ secrets.DEV_GOOGLE_COOKIE_PASSWORD }} \
+            LINKEDIN_CLIENT_ID=${{ secrets.DEV_LINKEDIN_CLIENT_ID }} \
+            LINKEDIN_SECRET_KEY=${{ secrets.DEV_LINKEDIN_SECRET_KEY }} \
+            LINKEDIN_COOKIE_PASSWORD=${{ secrets.DEV_LINKEDIN_COOKIE_PASSWORD }} \
+            TWITTER_CLIENT_ID=${{ secrets.DEV_TWITTER_CLIENT_ID }} \
+            TWITTER_SECRET_KEY=${{ secrets.DEV_TWITTER_SECRET_KEY }} \
+            TWITTER_COOKIE_PASSWORD=${{ secrets.DEV_TWITTER_COOKIE_PASSWORD }} \
 
-            FACEBOOK_CLIENT_ID=${{ secrets.FACEBOOK_CLIENT_ID }} \
-            FACEBOOK_SECRET_KEY=${{ secrets.FACEBOOK_SECRET_KEY }} \
-            FACEBOOK_COOKIE_PASSWORD=${{ secrets.FACEBOOK_COOKIE_PASSWORD }} \
-            GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }} \
-            GOOGLE_SECRET_KEY=${{ secrets.GOOGLE_SECRET_KEY }} \
-            GOOGLE_COOKIE_PASSWORD=${{ secrets.GOOGLE_COOKIE_PASSWORD }} \
-            LINKEDIN_CLIENT_ID=${{ secrets.LINKEDIN_CLIENT_ID }} \
-            LINKEDIN_SECRET_KEY=${{ secrets.LINKEDIN_SECRET_KEY }} \
-            LINKEDIN_COOKIE_PASSWORD=${{ secrets.LINKEDIN_COOKIE_PASSWORD }} \
-            TWITTER_CLIENT_ID=${{ secrets.TWITTER_CLIENT_ID }} \
-            TWITTER_SECRET_KEY=${{ secrets.TWITTER_SECRET_KEY }} \
-            TWITTER_COOKIE_PASSWORD=${{ secrets.TWITTER_COOKIE_PASSWORD }} \
+            TWILIO_ACCOUNT_SID=${{ secrets.DEV_TWILIO_ACCOUNT_SID }} \
+            TWILIO_AUTH_TOKEN=${{ secrets.DEV_TWILIO_AUTH_TOKEN }} \
+            TWILIO_PHONE_NUMBER_SENDER=${{ secrets.DEV_TWILIO_PHONE_NUMBER_SENDER }} \
 
-            TWILIO_ACCOUNT_SID=${{ secrets.TWILIO_ACCOUNT_SID }} \
-            TWILIO_AUTH_TOKEN=${{ secrets.TWILIO_AUTH_TOKEN }} \
-            TWILIO_PHONE_NUMBER_SENDER=${{ secrets.TWILIO_PHONE_NUMBER_SENDER }} \
+            CDN_ACCESS_KEY_ID=${{ secrets.DEV_CDN_ACCESS_KEY_ID }} \
+            CDN_SECRET_ACCESS_KEY=${{ secrets.DEV_CDN_SECRET_ACCESS_KEY }} \
+            CDN_END_POINT=${{ secrets.DEV_CDN_END_POINT }} \
+            CDN_BUCKET=${{ secrets.DEV_CDN_BUCKET }} \
+            CDN_PUB_END_POINT=${{ secrets.DEV_CDN_PUB_END_POINT }} \
+            CDN_EXPIRES_IN=${{ secrets.DEV_CDN_EXPIRES_IN }} \
 
-            CDN_ACCESS_KEY_ID=${{ secrets.CDN_ACCESS_KEY_ID }} \
-            CDN_SECRET_ACCESS_KEY=${{ secrets.CDN_SECRET_ACCESS_KEY }} \
-            CDN_END_POINT=${{ secrets.CDN_END_POINT }} \
-            CDN_BUCKET=${{ secrets.CDN_BUCKET }} \
-            CDN_PUB_END_POINT=${{ secrets.CDN_PUB_END_POINT }} \
-            CDN_EXPIRES_IN=${{ secrets.CDN_EXPIRES_IN }} \
+            SUMSUB_APP_TOKEN=${{ secrets.DEV_SUMSUB_APP_TOKEN }} \
+            SUMSUB_SECRET_KEY=${{ secrets.DEV_SUMSUB_SECRET_KEY }} \
+            SUMSUB_BASE_URL=${{ secrets.DEV_SUMSUB_BASE_URL }} \
+            SUMSUB_ACCESS_TOKEN_TTL=${{ secrets.DEV_SUMSUB_ACCESS_TOKEN_TTL }} \
 
-            SUMSUB_APP_TOKEN=${{ secrets.SUMSUB_APP_TOKEN }} \
-            SUMSUB_SECRET_KEY=${{ secrets.SUMSUB_SECRET_KEY }} \
-            SUMSUB_BASE_URL=${{ secrets.SUMSUB_BASE_URL }} \
-            SUMSUB_ACCESS_TOKEN_TTL=${{ secrets.SUMSUB_ACCESS_TOKEN_TTL }} \
+            TOKEN_WQT_BSC_NETWORK_ADDRESS=${{ secrets.DEV_TOKEN_WQT_BSC_NETWORK_ADDRESS }} \
+            TOKEN_WQT_BSC_NETWORK_DECIMAL=${{ secrets.DEV_TOKEN_WQT_BSC_NETWORK_DECIMAL }} \
+            TOKEN_WQT_BSC_NETWORK_SYMBOL=${{ secrets.DEV_TOKEN_WQT_BSC_NETWORK_SYMBOL }} \
+            TOKEN_WQT_BSC_NETWORK_NAME=${{ secrets.DEV_TOKEN_WQT_BSC_NETWORK_NAME }} \
+            TOKEN_WQT_BSC_NETWORK_AMOUNT_MAX=${{ secrets.DEV_TOKEN_WQT_BSC_NETWORK_AMOUNT_MAX }} \
 
-            WQT_ADDRESS_TOKEN=${{ secrets.WQT_ADDRESS_TOKEN}} \
-            WQT_DECIMAL_TOKEN=${{ secrets.WQT_DECIMAL_TOKEN}} \
-            WQT_SYMBOL_TOKEN=${{ secrets.WQT_SYMBOL_TOKEN }} \
-            WQT_NAME_TOKEN=${{ secrets.WQT_NAME_TOKEN }} \
-            WQT_AMOUNT_MAX=${{ secrets.WQT_AMOUNT_MAX }} \
+            TOKEN_WQT_ETHEREUM_NETWORK_ADDRESS=${{ secrets.DEV_TOKEN_WQT_ETHEREUM_NETWORK_ADDRESS }} \
+            TOKEN_WQT_ETHEREUM_NETWORK_DECIMAL=${{ secrets.DEV_TOKEN_WQT_ETHEREUM_NETWORK_DECIMAL }} \
+            TOKEN_WQT_ETHEREUM_NETWORK_SYMBOL=${{ secrets.DEV_TOKEN_WQT_ETHEREUM_NETWORK_SYMBOL }} \
+            TOKEN_WQT_ETHEREUM_NETWORK_NAME=${{ secrets.DEV_TOKEN_WQT_ETHEREUM_NETWORK_NAME }} \
+            TOKEN_WQT_ETHEREUM_NETWORK_AMOUNT_MAX=${{ secrets.DEV_TOKEN_WQT_ETHEREUM_NETWORK_AMOUNT_MAX }} \
 
-            WETH_ADDRESS_TOKEN=${{ secrets.WETH_ADDRESS_TOKEN }} \
-            WETH_DECIMAL_TOKEN=${{ secrets.WETH_DECIMAL_TOKEN }} \
-            WETH_SYMBOL_TOKEN=${{ secrets.WETH_SYMBOL_TOKEN }} \
-            WETH_NAME_TOKEN=${{ secrets.WETH_NAME_TOKEN }} \
-            WETH_AMOUNT_MAX=${{ secrets.WETH_AMOUNT_MAX }} \
+            TOKEN_WETH_ADDRESS=${{ secrets.DEV_TOKEN_WETH_ADDRESS }} \
+            TOKEN_WETH_DECIMAL=${{ secrets.DEV_TOKEN_WETH_DECIMAL }} \
+            TOKEN_WETH_SYMBOL=${{ secrets.DEV_TOKEN_WETH_SYMBOL }} \
+            TOKEN_WETH_NAME=${{ secrets.DEV_TOKEN_WETH_NAME }} \
+            TOKEN_WETH_AMOUNT_MAX=${{ secrets.DEV_TOKEN_WETH_AMOUNT_MAX }} \
 
-            DEBUG=${{ secrets.DEBUG }} \
+            TOKEN_WBNB_ADDRESS=${{ secrets.DEV_TOKEN_WBNB_ADDRESS }} \
+            TOKEN_WBNB_DECIMAL=${{ secrets.DEV_TOKEN_WBNB_DECIMAL }} \
+            TOKEN_WBNB_SYMBOL=${{ secrets.DEV_TOKEN_WBNB_SYMBOL }} \
+            TOKEN_WBNB_NAME=${{ secrets.DEV_TOKEN_WBNB_NAME }} \
+            TOKEN_WBNB_AMOUNT_MAX=${{ secrets.DEV_TOKEN_WBNB_AMOUNT_MAX }} \
+
+            BRIDGE_DEBUG=${{ secrets.DEV_BRIDGE_DEBUG }} \
+
+            BRIDGE_ETH_MAINNETWORK_PARSE_EVENTS_FROM_HEIGHT=${{ secrets.DEV_BRIDGE_ETH_MAINNETWORK_PARSE_EVENTS_FROM_HEIGHT }} \
+            BRIDGE_ETH_MAINNETWORK_CONTRACT=${{ secrets.DEV_BRIDGE_ETH_MAINNETWORK_CONTRACT }} \
+            BRIDGE_ETH_MAINNETWORK_WEBSOCKET_PROVIDER=${{ secrets.DEV_BRIDGE_ETH_MAINNETWORK_WEBSOCKET_PROVIDER }} \
+
+            BRIDGE_BSC_MAINNETWORK_PARSE_EVENTS_FROM_HEIGHT=${{ secrets.DEV_BRIDGE_BSC_MAINNETWORK_PARSE_EVENTS_FROM_HEIGHT }} \
+            BRIDGE_BSC_MAINNETWORK_CONTRACT=${{ secrets.DEV_BRIDGE_BSC_MAINNETWORK_CONTRACT }} \
+            BRIDGE_BSC_MAINNETWORK_WEBSOCKET_PROVIDER=${{ secrets.DEV_BRIDGE_BSC_MAINNETWORK_WEBSOCKET_PROVIDER }} \
+
+            BRIDGE_RINKEBY_TESTNETWORK_PARSE_EVENTS_FROM_HEIGHT=${{ secrets.DEV_BRIDGE_RINKEBY_TESTNETWORK_PARSE_EVENTS_FROM_HEIGHT }} \
+            BRIDGE_RINKEBY_TESTNETWORK_CONTRACT=${{ secrets.DEV_BRIDGE_RINKEBY_TESTNETWORK_CONTRACT }} \
+            BRIDGE_RINKEBY_TESTNETWORK_WEBSOCKET_PROVIDER=${{ secrets.DEV_BRIDGE_RINKEBY_TESTNETWORK_WEBSOCKET_PROVIDER }} \
+
+            BRIDGE_BSC_TESTNETWORK_PARSE_EVENTS_FROM_HEIGHT=${{ secrets.DEV_BRIDGE_BSC_TESTNETWORK_PARSE_EVENTS_FROM_HEIGHT }} \
+            BRIDGE_BSC_TESTNETWORK_CONTRACT=${{ secrets.DEV_BRIDGE_BSC_TESTNETWORK_CONTRACT }} \
+            BRIDGE_BSC_TESTNETWORK_WEBSOCKET_PROVIDER=${{ secrets.DEV_BRIDGE_BSC_TESTNETWORK_WEBSOCKET_PROVIDER }} \
+
+            BRIDGE_CONTRACT_PRIVAT_KEY=${{ secrets.DEV_BRIDGE_CONTRACT_PRIVAT_KEY }} \
+
+            CONTRACT_LIQUIDITY_MINING_WEBSOCKET_PROVIDER=${{ secrets.DEV_CONTRACT_LIQUIDITY_MINING_WEBSOCKET_PROVIDER }} \
+            CONTRACT_LIQUIDITY_MINING_ADDRESS=${{ secrets.DEV_CONTRACT_LIQUIDITY_MINING_ADDRESS }} \
+
+            DEBUG=${{ secrets.DEV_DEBUG }} \
+            BASE_URL=${{ secrets.DEV_BASE_URL }} \
             backend_bin=${{ secrets.backend_bin }} \
             PM2_SERVICE_NAME=${{ secrets.PM2_SERVICE_NAME }} \
+            PM2_BRIDGE_SERVICE_NAME=${{ secrets.DEV_PM2_BRIDGE_SERVICE_NAME }} \
             SRC_DIR=${{ github.workspace }}/" backend-update.yml;

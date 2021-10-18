@@ -3,6 +3,8 @@ import { config } from "dotenv";
 config();
 
 export default {
+  baseUrl: process.env.BASE_URL,
+  debug: process.env.DEBUG === "true",
   dbLink: process.env.DB_LINK,
   auth: {
     jwt: {
@@ -81,21 +83,65 @@ export default {
     expiresIn: parseInt(process.env.CDN_EXPIRES_IN),
   },
   token: {
-    WQT:{
-      address: process.env.WQT_ADDRESS_TOKEN,
-      decimals: parseInt(process.env.WQT_DECIMAL_TOKEN),
-      symbol: process.env.WQT_SYMBOL_TOKEN,
-      name: process.env.WQT_NAME_TOKEN,
-      amountMax:process.env.WQT_AMOUNT_MAX,
+    WQT: {
+      bscNetwork: {
+        address: process.env.TOKEN_WQT_BSC_NETWORK_ADDRESS,
+        decimals: parseInt(process.env.TOKEN_WQT_BSC_NETWORK_DECIMAL),
+        symbol: process.env.TOKEN_WQT_BSC_NETWORK_SYMBOL,
+        name: process.env.TOKEN_WQT_BSC_NETWORK_NAME,
+        amountMax: process.env.TOKEN_WQT_BSC_NETWORK_AMOUNT_MAX,
+      },
+      ethereumNetwork: {
+        address: process.env.TOKEN_WQT_ETHEREUM_NETWORK_ADDRESS,
+        decimals: parseInt(process.env.TOKEN_WQT_ETHEREUM_NETWORK_DECIMAL),
+        symbol: process.env.TOKEN_WQT_ETHEREUM_NETWORK_SYMBOL,
+        name: process.env.TOKEN_WQT_ETHEREUM_NETWORK_NAME,
+        amountMax:process.env.TOKEN_WQT_ETHEREUM_NETWORK_AMOUNT_MAX,
+      }
     },
-    WETH:{
-      address: process.env.WETH_ADDRESS_TOKEN,
-      decimals: parseInt(process.env.WETH_DECIMAL_TOKEN),
-      symbol: process.env.WETH_SYMBOL_TOKEN,
-      name: process.env.WETH_NAME_TOKEN,
-      amountMax: process.env.WETH_AMOUNT_MAX
+    WETH: {
+      address: process.env.TOKEN_WETH_ADDRESS,
+      decimals: parseInt(process.env.TOKEN_WETH_DECIMAL),
+      symbol: process.env.TOKEN_WETH_SYMBOL,
+      name: process.env.TOKEN_WETH_NAME,
+      amountMax: process.env.TOKEN_WETH_AMOUNT_MAX,
+    },
+    WBNB: {
+      address: process.env.TOKEN_WBNB_ADDRESS,
+      decimals: parseInt(process.env.TOKEN_WBNB_DECIMAL),
+      symbol: process.env.TOKEN_WBNB_SYMBOL,
+      name: process.env.TOKEN_WBNB_NAME,
+      amountMax: process.env.TOKEN_WBNB_AMOUNT_MAX,
     },
   },
-  baseUrl: process.env.BASE_URL,
-  debug: process.env.DEBUG === "true",
+  bridge: {
+    debug: process.env.BRIDGE_DEBUG === "true",
+    ethereumMainNetwork: {
+      parseEventsFromHeight: parseInt(process.env.BRIDGE_ETH_MAINNETWORK_PARSE_EVENTS_FROM_HEIGHT),
+      contract: process.env.BRIDGE_ETH_MAINNETWORK_CONTRACT,
+      webSocketProvider: process.env.BRIDGE_ETH_MAINNETWORK_WEBSOCKET_PROVIDER,
+    },
+    bscMainNetwork: {
+      parseEventsFromHeight: parseInt(process.env.BRIDGE_BSC_MAINNETWORK_PARSE_EVENTS_FROM_HEIGHT),
+      contract: process.env.BRIDGE_BSC_MAINNETWORK_CONTRACT,
+      webSocketProvider: process.env.BRIDGE_BSC_MAINNETWORK_WEBSOCKET_PROVIDER,
+    },
+    rinkebyTestNetwork: {
+      parseEventsFromHeight: parseInt(process.env.BRIDGE_RINKEBY_TESTNETWORK_PARSE_EVENTS_FROM_HEIGHT),
+      contract: process.env.BRIDGE_RINKEBY_TESTNETWORK_CONTRACT,
+      webSocketProvider: process.env.BRIDGE_RINKEBY_TESTNETWORK_WEBSOCKET_PROVIDER,
+    },
+    bscTestNetwork: {
+      parseEventsFromHeight: parseInt(process.env.BRIDGE_BSC_TESTNETWORK_PARSE_EVENTS_FROM_HEIGHT),
+      contract: process.env.BRIDGE_BSC_TESTNETWORK_CONTRACT,
+      webSocketProvider: process.env.BRIDGE_BSC_TESTNETWORK_WEBSOCKET_PROVIDER,
+    },
+    privateKey: process.env.BRIDGE_CONTRACT_PRIVAT_KEY,
+  },
+  contracts: {
+    liquidityMining: {
+      webSocketProvider: process.env.CONTRACT_LIQUIDITY_MINING_WEBSOCKET_PROVIDER,
+      contract: process.env.CONTRACT_LIQUIDITY_MINING_ADDRESS,
+    }
+  }
 };
