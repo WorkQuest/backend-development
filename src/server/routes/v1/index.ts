@@ -10,9 +10,14 @@ import restorePassword from './restorePassword';
 import portfolio from './portfolio';
 import totp from './totp';
 import chat from "./chat";
-import forums from "./forums";
+import bridge from "./bridge";
+import liquidityPoolWETH from "./liquidityPool(wqt-weth)";
+import liquidityPoolWBNB from "./liquidityPool(wqt-wbnb)";
+import forum from "./forum";
 
 export default [
+  ...liquidityPoolWETH,
+  ...liquidityPoolWBNB,
   ...profile,
   ...auth,
   ...map,
@@ -25,5 +30,6 @@ export default [
   ...portfolio,
   ...totp,
   ...chat,
-  ...forums
+  ...bridge,
+  ...forum,
 ];

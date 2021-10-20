@@ -39,7 +39,7 @@ export default [{
   options: {
     id: "v1.map.points.list",
     tags: ["api", "map"],
-    description: "Get list points in map",
+    description: "Get list points in map (Old - use get quests)",
     validate: {
       query: Joi.object({
         north: locationSchema.label('NorthLocation').required(),
@@ -51,7 +51,7 @@ export default [{
       }).label('ListPointsQuery'),
     },
     response: {
-      schema: outputOkSchema(questsSchema).label('QuestsResponse'),
+      schema: outputOkSchema(questsSchema).label('ListPointsResponse'),
     }
   }
 }];

@@ -1,18 +1,19 @@
 import * as Joi from "joi";
 import {
-  emptyOkSchema,
   outputOkSchema,
   limitSchema,
   offsetSchema,
   idSchema,
   chatsSchema,
-  userIdsSchema,
   chatSchema,
   chatNameSchema,
-  messagesSchema,
+  messagesWithCountSchema,
+  messagesForGetWithCountSchema,
+  messageSchema,
   messageTextSchema,
-  mediaIdsSchema,
   usersSchema,
+  idsSchema,
+  emptyOkSchema,
 } from "@workquest/database-models/lib/schemes";
 import {
   getUserChats,
@@ -24,11 +25,8 @@ import {
   removeUserInGroupChat,
   addUserInGroupChat,
   leaveFromGroupChat,
-  getChatMembers
+  getChatMembers, getUserStarredMessages, markMessageStar, removeStarFromMessage
 } from "../../api/chat";
-
-const userIdSchema = idSchema.label('UserId');
-const chatIdSchema = idSchema.label('ChatId');
 
 export default [{
   method: "GET",
@@ -45,7 +43,7 @@ export default [{
       }).label('GetChatsQuery')
     },
     response: {
-      schema: outputOkSchema(chatsSchema).label('GetChatsResponse'),
+      schema: outputOkSchema(chatsSchema).label('GetChatsResponse'), // TODO with count
     }
   }
 }, {
@@ -58,15 +56,16 @@ export default [{
     description: "Get all messages for chat",
     validate: {
       params: Joi.object({
-        chatId: chatIdSchema.required(),
+        chatId: idSchema.required(),
       }).label('GetMessagesParams'),
       query: Joi.object({
+        starred: Joi.boolean().default(false),
         offset: offsetSchema,
         limit: limitSchema,
       }).label('GetMessagesQuery')
     },
     response: {
-      schema: outputOkSchema(messagesSchema).label('GetMessagesResponse')
+      schema: outputOkSchema(messagesForGetWithCountSchema).label('GetMessagesResponse')
     }
   }
 }, {
@@ -79,7 +78,7 @@ export default [{
     tags: ["api", "chat"],
     validate: {
       params: Joi.object({
-        chatId: chatIdSchema.required()
+        chatId: idSchema.required()
       }).label('GetUserChatParams')
     },
     response: {
@@ -97,7 +96,7 @@ export default [{
     validate: {
       payload: Joi.object({
         name: chatNameSchema.required(),
-        memberUserIds: userIdsSchema.required().min(2).unique().label('UserIds')
+        memberUserIds: idsSchema.required().min(2).unique(),
       }).label('CreateGroupChatPayload')
     },
     response: {
@@ -114,15 +113,15 @@ export default [{
     tags: ["api", "chat"],
     validate: {
       params: Joi.object({
-        userId: userIdSchema.required(),
+        userId: idSchema.required(),
       }).label('SendMessageToUserParams'),
       payload: Joi.object({
         text: messageTextSchema.default(''),
-        medias: mediaIdsSchema.required().unique().label("Medias"),
+        medias: idsSchema.required().unique(),
       }).label('SendMessageToUserPayload')
     },
     response: {
-      schema: emptyOkSchema
+      schema: outputOkSchema(messageSchema).label('SendMessageToUser')
     }
   }
 }, {
@@ -135,15 +134,15 @@ export default [{
     tags: ["api", "chat"],
     validate: {
       params: Joi.object({
-        chatId: chatIdSchema.required(),
+        chatId: idSchema.required(),
       }).label('SendMessageToChatParams'),
       payload: Joi.object({
         text: messageTextSchema.default(''),
-        medias: mediaIdsSchema.required().unique().label("Medias"),
+        medias: idsSchema.required().unique(),
       }).label('SendMessageToChatPayload'),
     },
     response: {
-      schema: emptyOkSchema
+      schema: outputOkSchema(messageSchema).label('SendMessageToChat')
     }
   }
 }, {
@@ -156,12 +155,12 @@ export default [{
     tags: ["api", "chat"],
     validate: {
       params: Joi.object({
-        chatId: chatIdSchema.required(),
-        userId: userIdSchema.required(),
+        chatId: idSchema.required(),
+        userId: idSchema.required(),
       }).label('AddUserInGroupChatParams')
     },
     response: {
-      schema: emptyOkSchema
+      schema: outputOkSchema(messageSchema).label('AddUserInGroupChatResponse')
     }
   }
 }, {
@@ -174,12 +173,12 @@ export default [{
     tags: ["api", "chat"],
     validate: {
       params: Joi.object({
-        chatId: chatIdSchema.required(),
-        userId: userIdSchema.required(),
+        chatId: idSchema.required(),
+        userId: idSchema.required(),
       }).label('RemoveUserInGroupChatParams')
     },
     response: {
-      schema: emptyOkSchema
+      schema: outputOkSchema(messageSchema).label('RemoveUserInGroupChatResponse')
     }
   }
 }, {
@@ -192,11 +191,11 @@ export default [{
     tags: ["api", "chat"],
     validate: {
       params: Joi.object({
-        chatId: chatIdSchema.required(),
+        chatId: idSchema.required(),
       }).label('LeaveFromGroupChatParams')
     },
     response: {
-      schema: emptyOkSchema
+      schema: outputOkSchema(messageSchema).label('LeaveFromGroupChatResponse')
     }
   }
 }, {
@@ -206,9 +205,10 @@ export default [{
   options: {
     id: "v1.chat.group.getMembers",
     description: "Get members in group chat (only for chat members)",
+    tags: ["api", "chat"],
     validate: {
       params: Joi.object({
-        chatId: chatIdSchema.required(),
+        chatId: idSchema.required(),
       }).label('GetChatMembersParams'),
       query: Joi.object({
         offset: offsetSchema,
@@ -216,7 +216,59 @@ export default [{
       }).label('GetChatMembersQuery')
     },
     response: {
-      schema: outputOkSchema(usersSchema).label('GetChatMembersResponse')
+      schema: outputOkSchema(usersSchema).label('GetChatMembersResponse') // TODO with count
+    }
+  }
+}, {
+  method: "GET",
+  path: "/v1/user/me/chat/messages/star",
+  handler: getUserStarredMessages,
+  options: {
+    id: "v1.chat.messages.getStarredMessages",
+    description: "Get starred messages of the user",
+    tags: ["api", "chat"],
+    validate: {
+      query: Joi.object({
+        offset: offsetSchema,
+        limit: limitSchema,
+      }).label('GetStarredMessagesQuery')
+    },
+    response: {
+      schema: outputOkSchema(messagesWithCountSchema).label('GetUserStarredMessagesResponse')
+    }
+  }
+}, {
+  method: "POST",
+  path: "/v1/user/me/chat/message/{messageId}/star",
+  handler: markMessageStar,
+  options: {
+    id: "v1.chat.message.markMessageStar",
+    description: "Mark message star",
+    tags: ["api", "chat"],
+    validate: {
+      params: Joi.object({
+        messageId: idSchema,
+      }).label('MarkMessageStarParams')
+    },
+    response: {
+      schema: emptyOkSchema
+    }
+  }
+}, {
+  method: "DELETE",
+  path: "/v1/user/me/chat/message/{messageId}/star",
+  handler: removeStarFromMessage,
+  options: {
+    id: "v1.chat.message.removeStar",
+    description: "Remove star from message",
+    tags: ["api", "chat"],
+    validate: {
+      params: Joi.object({
+        messageId: idSchema.required(),
+      }).label('RemoveStarFromMessageParams'),
+    },
+    response: {
+      schema: emptyOkSchema
     }
   }
 }];
