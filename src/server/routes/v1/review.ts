@@ -4,8 +4,7 @@ import {
   idSchema,
   reviewMarkSchema,
   reviewMessageSchema,
-  reviewSchema,
-  reviewsSchema,
+  userReviewSchema, outputPaginationSchema
 } from "@workquest/database-models/lib/schemes";
 import { sendReview, getReviewsOfUser } from '../../api/review';
 
@@ -25,7 +24,7 @@ export default [{
       }).label('ReviewSendPayload')
     },
     response: {
-      schema: outputOkSchema(reviewSchema).label('ReviewResponse')
+      schema: outputOkSchema(userReviewSchema).label('ReviewResponse')
     }
   }
 }, {
@@ -42,7 +41,7 @@ export default [{
       }).label('ParamsReviews')
     },
     response: {
-      schema: outputOkSchema(reviewsSchema).label('ReviewsResponse')
+      schema: outputPaginationSchema('reviews',userReviewSchema).label('ReviewsResponse')
     }
   }
 }];

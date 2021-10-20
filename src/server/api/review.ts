@@ -39,7 +39,11 @@ export async function sendReview(r) {
 
 export async function getReviewsOfUser(r) {
   const reviews = await Review.findAll({
-    where: { toUserId: r.params.userId }
+    include: {
+      model: User.scope('short'),
+      as: 'fromUser'
+    },
+    where: { toUserId: r.params.userId },
   });
 
   return output(reviews);
