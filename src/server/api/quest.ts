@@ -285,12 +285,12 @@ export async function getQuests(r) {
   const where = {
     ...(r.params.userId && { userId: r.params.userId }),
     ...(r.query.performing && { assignedWorkerId: r.auth.credentials.id }),
-    ...(r.query.priority && { priority: r.query.priority }),
+    ...(r.query.priority && { priority: {[Op.in]: r.query.priority} }),
     ...(r.query.status && { status: r.query.status }),
     ...(r.query.adType && { adType: r.query.adType }),
     ...(r.query.north && r.query.south && { [Op.and]: entersAreaLiteral }),
     ...(r.query.filter && { filter: r.params.filter }),
-    ...(r.query.workplace && { workplace: r.params.workplace }),
+    ...(r.query.workplace && { workplace: { [Op.in]: r.query.workplace } }),
     ...(r.query.employment && { employment: r.params.employment }),
   };
 
@@ -344,7 +344,7 @@ export async function getQuests(r) {
     where: { workerId: r.auth.credentials.id },
     required: false
   });
-  //TODO: test
+
   include.push({
     model: QuestsResponse,
     as: 'responses',
