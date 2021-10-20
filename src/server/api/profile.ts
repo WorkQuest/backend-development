@@ -1,41 +1,30 @@
-import * as Joi from "joi";
 import { literal, Op } from "sequelize";
-import { error, getRandomCodeNumber, handleValidationError, output } from '../utils';
-import { isMediaExists } from "../utils/storageService";
 import { Errors } from "../utils/errors";
 import { addSendSmsJob } from '../jobs/sendSms';
+import { error, getRandomCodeNumber, output } from '../utils';
+import { UserController } from "../controllers/user";
+import { splitSpecialisationAndIndustry } from "../utils/filters";
+import { transformToGeoPostGIS } from "../utils/postGIS";
 import {
   User,
-  Media,
+  Session,
   UserRole,
   UserStatus,
   UserSpecializationFilter,
 } from "@workquest/database-models/lib/models";
-import {
-  userAdditionalInfoEmployerSchema,
-  userAdditionalInfoWorkerSchema,
-} from "@workquest/database-models/lib/schemes";
-import { UserController } from "../controllers/user";
-import { splitSpecialisationAndIndustry } from "../utils/filters";
-import { transformToGeoPostGIS } from "../utils/postGIS";
+import config from "../config/config";
 
 export const searchFields = [
   "firstName",
   "lastName",
 ];
 
-// TODO удалить
-function getAdditionalInfoSchema(role: UserRole): Joi.Schema {
-  if (role === UserRole.Employer)
-    return userAdditionalInfoEmployerSchema;
-  else
-    return userAdditionalInfoWorkerSchema;
-}
-
 export async function getMe(r) {
-  return output(
-    await User.findByPk(r.auth.credentials.id, { attributes: { include: ['tempPhone'] }})
-  );
+  const user = await User.findByPk(r.auth.credentials.id, {
+    attributes: { include: ['tempPhone'] }
+  });
+
+  return output(user);
 }
 
 export async function getUser(r) {
@@ -126,45 +115,6 @@ export async function setRole(r) {
   return output();
 }
 
-// TODO удалить
-export async function editProfiles(r) {
-  const user = r.auth.credentials;
-  const additionalInfoSchema = getAdditionalInfoSchema(user.role);
-  const validateAdditionalInfo = additionalInfoSchema.validate(r.payload.additionalInfo);
-
-  if (validateAdditionalInfo.error) {
-    return await handleValidationError(r, null, validateAdditionalInfo.error);
-  }
-  if (r.payload.avatarId) {
-    const media = await Media.findByPk(r.payload.avatarId);
-
-    if (!media) {
-      return error(Errors.NotFound, 'Media is not found', {
-        avatarId: r.payload.avatarId
-      });
-    }
-    if (!await isMediaExists(media)) {
-      return error(Errors.NotFound, 'Media is not exists', {
-        avatarId: r.payload.avatarId
-      });
-    }
-  }
-
-  const transaction = await r.server.app.db.transaction();
-  const userFieldsUpdate = {
-    ...r.payload,
-    // locationPostGIS: r.payload.location ? transformToGeoPostGIS(r.payload.location) : null,
-  };
-
-  await user.update(userFieldsUpdate, { transaction });
-
-  await transaction.commit();
-
-  return output(
-    await User.findByPk(user.id)
-  );
-}
-
 export function editProfile(userRole: UserRole) {
   return async function(r) {
     const user: User = r.auth.credentials;
@@ -201,10 +151,25 @@ export async function changePassword(r) {
   const user = await User.scope("withPassword").findOne({
     where: { id: r.auth.credentials.id }
   });
-  const userController = new UserController(user.id, user);
+
+  const transaction = await r.server.app.db.transaction();
+  const userController = new UserController(user.id, user, transaction);
 
   await userController.checkPassword(r.payload.oldPassword);
-  await user.update({ password: r.payload.newPassword });
+
+  await user.update({ password: r.payload.newPassword }, { transaction });
+
+  await Session.update({ invalidating: true }, {
+    where: {
+      userId: r.auth.credentials.id,
+      createdAt: {
+        [Op.gte]: Date.now() - config.auth.jwt.refresh.lifetime * 1000
+      }
+    },
+    transaction,
+  });
+
+  await transaction.commit();
 
   return output();
 }

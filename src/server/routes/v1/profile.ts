@@ -5,7 +5,6 @@ import {
   setRole,
   getUsers,
   editProfile,
-  editProfiles,
   changePassword,
   confirmPhoneNumber,
   sendCodeOnPhoneNumber,
@@ -88,31 +87,6 @@ export default [{
     response: {
       schema: outputOkSchema(userWorkersSchema).label("GetWorkersResponse")
     },
-  }
-}, {
-  method: "PUT",
-  path: "/v1/profile/edit",
-  handler: editProfiles, // TODO Удалить
-  options: {
-    id: "v1.profile.edit",
-    tags: ["api", "profile"],
-    description: "Edit profile information",
-    validate: {
-      payload: Joi.object({
-        avatarId: idSchema.allow(null).required(),
-        firstName: userFirstNameSchema.required(),
-        lastName: userLastNameSchema.required(),
-        location: locationSchema.allow(null).required(),
-        specializationKeys: specializationKeysSchema.allow(null).required(),
-        additionalInfo: Joi.alternatives(
-          userAdditionalInfoEmployerSchema.options({ presence: "required" }),
-          userAdditionalInfoWorkerSchema.options({ presence: "required" })
-        ).required(),
-      }).label("EditProfilePayload")
-    },
-    response: {
-      schema: outputOkSchema(userSchema).label("UserResponse")
-    }
   }
 }, {
   method: "PUT",
