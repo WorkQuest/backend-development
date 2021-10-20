@@ -294,6 +294,10 @@ export async function getQuests(r) {
     ...(r.query.employment && { employment: r.params.employment }),
   };
 
+  if(r.query.responsesQuest) {
+
+  }
+
   if (r.query.q) {
     where[Op.or] = searchFields.map(field => ({
       [field]: { [Op.iLike]: `%${r.query.q}%` }
