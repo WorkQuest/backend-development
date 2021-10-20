@@ -294,10 +294,6 @@ export async function getQuests(r) {
     ...(r.query.employment && { employment: r.params.employment }),
   };
 
-  if(r.query.responsesQuest) {
-
-  }
-
   if (r.query.q) {
     where[Op.or] = searchFields.map(field => ({
       [field]: { [Op.iLike]: `%${r.query.q}%` }
@@ -346,6 +342,12 @@ export async function getQuests(r) {
     model: QuestsResponse,
     as: "response",
     where: { workerId: r.auth.credentials.id },
+    required: false
+  });
+  //TODO: test
+  include.push({
+    model: QuestsResponse,
+    as: 'responses',
     required: false
   });
 
