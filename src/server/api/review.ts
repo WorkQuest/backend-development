@@ -5,7 +5,7 @@ import {
   QuestStatus,
   UserRole,
   Quest,
-  Review,
+  Review, RatingStatistic
 } from "@workquest/database-models/lib/models";
 
 
@@ -32,8 +32,13 @@ export async function sendReview(r) {
     mark: r.payload.mark,
   });
 
+  const [ratingStatistic] = await RatingStatistic.findOrCreate({
+    where: { userId: toUser.id },
+    defaults: { userId: toUser.id },
+  });
+
   await addUpdateReviewStatisticsJob({
-    ratingStatisticId: toUser.ratingStatistic.id
+    ratingStatisticId: ratingStatistic.id,
   });
 
   return output(review);
