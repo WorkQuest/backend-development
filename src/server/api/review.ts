@@ -42,13 +42,10 @@ export async function getReviewsOfUser(r) {
     include: [{
       model: User.scope('short'),
       as: 'fromUser'
-    }, {
-      model: User.scope('short'),
-      as: 'toUser'
     }],
     where: { toUserId: r.params.userId },
-    limit: r.quest.limit,
-    offset: r.quest.offset,
+    limit: r.query.limit,
+    offset: r.query.offset,
   });
 
   return output({count, reviews: rows});
