@@ -113,6 +113,26 @@ abstract class CheckList {
       }]);
     }
   }
+
+  public async checkUserAlreadyConfirmed() {
+    await this._checkModel();
+
+    if (!this._user.settings.emailConfirm) {
+      this._rollbackTransaction();
+
+      return error(Errors.UserAlreadyConfirmed, "User already confirmed", {});
+    }
+  }
+
+  public async checkUserConfirmationCode(confirmCode) {
+    await this._checkModel();
+
+    if (this._user.settings.emailConfirm.toLowerCase() !== confirmCode.toLowerCase()) {
+      this._rollbackTransaction();
+
+      return error(Errors.InvalidPayload, "Invalid confirmation code", [{ field: "confirmCode", reason: "invalid" }]);
+    }
+  }
 }
 
 export class UserController extends CheckList {
