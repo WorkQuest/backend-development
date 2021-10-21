@@ -283,15 +283,15 @@ export async function getQuests(r) {
   const order = [];
   const include = [];
   const where = {
-    ...(r.params.userId && { userId: r.params.userId }),
-    ...(r.query.performing && { assignedWorkerId: r.auth.credentials.id }),
-    ...(r.query.priority && { priority: {[Op.in]: r.query.priority} }),
     ...(r.query.status && { status: r.query.status }),
     ...(r.query.adType && { adType: r.query.adType }),
-    ...(r.query.north && r.query.south && { [Op.and]: entersAreaLiteral }),
     ...(r.query.filter && { filter: r.params.filter }),
-    ...(r.query.workplace && { workplace: { [Op.in]: r.query.workplace } }),
-    ...(r.query.employment && { employment: r.params.employment }),
+    ...(r.params.userId && { userId: r.params.userId }),
+    ...(r.query.performing && { assignedWorkerId: r.auth.credentials.id }),
+    ...(r.query.north && r.query.south && { [Op.and]: entersAreaLiteral }),
+    ...(r.query.priorities && { priorities: {[Op.in]: r.query.priorities} }),
+    ...(r.query.workplaces && { workplaces: { [Op.in]: r.query.workplaces } }),
+    ...(r.query.employments && { employments: { [Op.in]: r.params.employments } }),
   };
 
   if (r.query.q) {
@@ -302,8 +302,9 @@ export async function getQuests(r) {
   if (r.query.invited) {
     include.push({
       model: QuestsResponse,
-      as: 'responses',
+      as: 'invited',
       attributes: [],
+      required: true,
       where: {
         [Op.and]: [
           { workerId: r.auth.credentials.id },
@@ -312,8 +313,22 @@ export async function getQuests(r) {
       }
     });
   }
-  if (r.query.specialization) {
-    const { specializationKeys, industryKeys } = splitSpecialisationAndIndustry(r.query.specialization);
+  if (r.query.responded) {
+    include.push({
+      model: QuestsResponse,
+      as: "responded",
+      attributes: [],
+      required: true,
+      where: {
+        [Op.and]: [
+          { workerId: r.auth.credentials.id },
+          { type: QuestsResponseType.Response },
+        ]
+      },
+    });
+  }
+  if (r.query.specializations) {
+    const { specializationKeys, industryKeys } = splitSpecialisationAndIndustry(r.query.specializations);
 
     include.push({
       model: QuestSpecializationFilter,
@@ -337,18 +352,11 @@ export async function getQuests(r) {
     as: "star",
     where: { userId: r.auth.credentials.id },
     required: r.query.starred,
-  });
-  include.push({
-    model: QuestsResponse,
-    as: "response",
-    where: { workerId: r.auth.credentials.id },
-    required: false
-  });
-
-  include.push({
+  }, {
     model: QuestsResponse,
     as: 'responses',
-    required: false
+    required: false,
+    where: { '$"Quest"."userId"$': r.auth.credentials.id },
   });
 
   for (const [key, value] of Object.entries(r.query.sort)) {

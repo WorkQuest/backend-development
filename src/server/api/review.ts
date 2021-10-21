@@ -38,13 +38,18 @@ export async function sendReview(r) {
 }
 
 export async function getReviewsOfUser(r) {
-  const reviews = await Review.findAll({
-    include: {
+  const { count, rows } = await Review.findAndCountAll({
+    include: [{
       model: User.scope('short'),
       as: 'fromUser'
-    },
+    }, {
+      model: User.scope('short'),
+      as: 'toUser'
+    }],
     where: { toUserId: r.params.userId },
+    limit: r.quest.limit,
+    offset: r.quest.offset,
   });
 
-  return output(reviews);
+  return output({count, reviews: rows});
 }
