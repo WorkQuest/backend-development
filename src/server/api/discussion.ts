@@ -21,7 +21,7 @@ export async function getSubComments(r) {
   const rootComment = await DiscussionComment.findByPk(r.params.commentId);
 
   if (!rootComment) {
-
+    return error(Errors.NotFound, 'Comment not found', {});
   }
 
   const { count, rows } = await DiscussionComment.findAndCountAll({
