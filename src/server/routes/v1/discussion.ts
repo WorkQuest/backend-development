@@ -8,7 +8,9 @@ import {
   createDiscussion,
   removeCommentLike,
   putDiscussionLike,
-  removeDiscussionLike, getDiscussionLikes, getCommentLikes
+  removeDiscussionLike,
+  getCommentUsersLikes,
+  getDiscussionUsersLikes,
 } from "../../api/discussion";
 import {
   idSchema,
@@ -17,15 +19,16 @@ import {
   offsetSchema,
   emptyOkSchema,
   outputOkSchema,
+  userShortSchema,
   discussionSchema,
   discussionsSchema,
   discussionTitleSchema,
+  outputPaginationSchema,
   discussionCommentSchema,
   discussionCommentsSchema,
   discussionDescriptionSchema,
-  discussionCommentTextSchema, commentLikesSchema
+  discussionCommentTextSchema,
 } from "@workquest/database-models/lib/schemes";
-import { discussionLikesSchema } from "@workquest/database-models/lib/schemes/discussion";
 
 export default [{
   method: "GET",
@@ -68,10 +71,10 @@ export default [{
   }
 }, {
   method: "GET",
-  path: "/v1/discussion/{discussionId}/likes",
-  handler: getDiscussionLikes,
+  path: "/v1/discussion/{discussionId}/usersLikes",
+  handler: getDiscussionUsersLikes,
   options: {
-    id: "v1.get.discussion.likes",
+    id: "v1.discussion.getUsersLikes",
     tags: ["api", "discussion"],
     description: "Get people who likes discussion",
     validate: {
@@ -84,15 +87,15 @@ export default [{
       }).label('GetDiscussionLikesParams'),
     },
     response: {
-      schema: outputOkSchema(discussionLikesSchema).label("GetDiscussionLikesResponse")
+      schema: outputPaginationSchema('users', userShortSchema).label("GetDiscussionLikesResponse")
     }
   }
 }, {
   method: "GET",
-  path: "/v1/discussion/comment/{commentId}/likes",
-  handler: getCommentLikes,
+  path: "/v1/discussion/comment/{commentId}/usersLikes",
+  handler: getCommentUsersLikes,
   options: {
-    id: "v1.get.comment.likes",
+    id: "v1.discussion.comment.getUsersLikes",
     tags: ["api", "discussion"],
     description: "Get people who likes comment",
     validate: {
@@ -105,7 +108,7 @@ export default [{
       }).label('GetCommentLikesParams'),
     },
     response: {
-      schema: outputOkSchema(commentLikesSchema).label("GetCommentLikesResponse")
+      schema: outputPaginationSchema('users', userShortSchema).label("GetCommentLikesResponse")
     }
   }
 }, {
