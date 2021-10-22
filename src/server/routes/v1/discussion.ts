@@ -4,6 +4,7 @@ import {
   getDiscussions,
   putCommentLike,
   getSubComments,
+  getRootComments,
   createDiscussion,
   removeCommentLike,
   putDiscussionLike,
@@ -62,6 +63,27 @@ export default [{
     },
     response: {
       schema: outputOkSchema(discussionCommentsSchema).label("GetSubCommentsResponse")
+    }
+  }
+}, {
+  method: "GET",
+  path: "/v1/discussion/{discussionId}/root-comments",
+  handler: getRootComments,
+  options: {
+    id: "v1.discussion.getRootComments",
+    tags: ["api", "discussion"],
+    description: "Get root comments",
+    validate: {
+      query: Joi.object({
+        limit: limitSchema,
+        offset: offsetSchema,
+      }).label("GetRootCommentsQuery"),
+      params: Joi.object({
+        discussionId: idSchema.required(),
+      }).label('GetRootCommentsParams'),
+    },
+    response: {
+      schema: outputOkSchema(discussionCommentsSchema).label("GetRootCommentsResponse")
     }
   }
 }, {

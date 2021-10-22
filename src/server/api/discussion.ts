@@ -9,7 +9,8 @@ import {
 } from "@workquest/database-models/lib/models";
 
 export async function getDiscussions(r) {
-  const { count, rows } = await Discussion.scope('short').findAndCountAll({
+  const { count, rows } = await Discussion.findAndCountAll({
+    order: [ ['createdAt', 'DESC'] ],
     limit: r.query.limit,
     offset: r.query.offset,
   });
@@ -21,11 +22,29 @@ export async function getSubComments(r) {
   const rootComment = await DiscussionComment.findByPk(r.params.commentId);
 
   if (!rootComment) {
-    return error(Errors.NotFound, 'Comment not found', {});
+    return error(Errors.NotFound, "Root comment not found", {});
   }
 
   const { count, rows } = await DiscussionComment.findAndCountAll({
     where: { rootCommentId: r.query.commentId },
+    order: [ ['createdAt', 'DESC'] ],
+    limit: r.query.limit,
+    offset: r.query.offset,
+  });
+
+  return output({ count, comments: rows });
+}
+
+export async function getRootComments(r) {
+  const discussion = await Discussion.findByPk(r.params.discussionId);
+
+  if (!discussion) {
+    return error(Errors.NotFound, "Discussion not found", {});
+  }
+
+  const { count, rows } = await DiscussionComment.findAndCountAll({
+    where: { rootCommentId: null, discussionId: r.params.discussionId },
+    order: [ ['createdAt', 'DESC'] ],
     limit: r.query.limit,
     offset: r.query.offset,
   });
