@@ -6,6 +6,7 @@ import {
   DiscussionLike,
   DiscussionComment,
   DiscussionCommentLike,
+  User
 } from "@workquest/database-models/lib/models";
 
 export async function getDiscussions(r) {
@@ -72,7 +73,7 @@ export async function createDiscussion(r) {
 export async function sendComment(r) {
   const medias = await getMedias(r.payload.medias);
 
-  const discussion = await Discussion.findOne({
+  const discussion = await Discussion.findAll({
     where: { id: r.params.discussionId }
   });
 
@@ -191,4 +192,42 @@ export async function removeCommentLike(r) {
   await transaction.commit();
 
   return output();
+}
+
+export async function getDiscussionLikes(r) {
+  const likes = await DiscussionLike.findAll({
+    include: {
+      model: User.scope('short'),
+      as: 'user'
+    },
+    where: {
+      discussionId: r.params.discussionId
+    },
+    limit: r.query.limit,
+    offset: r.query.offset,
+  });
+
+  if(!likes) {
+    return error(Errors.NotFound, 'Discussion not found', {});
+  }
+  return output(likes);
+}
+
+export async function getCommentLikes(r) {
+  const likes = await DiscussionCommentLike.findAll({
+    include: {
+      model: User.scope('short'),
+      as: 'user'
+    },
+    where: {
+      commentId: r.params.commentId
+    },
+    limit: r.query.limit,
+    offset: r.query.offset,
+  });
+
+  if(!likes) {
+    return error(Errors.NotFound, 'Comment not found', {});
+  }
+  return output(likes);
 }

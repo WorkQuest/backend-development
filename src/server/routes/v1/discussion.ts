@@ -8,7 +8,7 @@ import {
   createDiscussion,
   removeCommentLike,
   putDiscussionLike,
-  removeDiscussionLike,
+  removeDiscussionLike, getDiscussionLikes, getCommentLikes
 } from "../../api/discussion";
 import {
   idSchema,
@@ -23,8 +23,9 @@ import {
   discussionCommentSchema,
   discussionCommentsSchema,
   discussionDescriptionSchema,
-  discussionCommentTextSchema,
+  discussionCommentTextSchema, commentLikesSchema
 } from "@workquest/database-models/lib/schemes";
+import { discussionLikesSchema } from "@workquest/database-models/lib/schemes/discussion";
 
 export default [{
   method: "GET",
@@ -63,6 +64,48 @@ export default [{
     },
     response: {
       schema: outputOkSchema(discussionCommentsSchema).label("GetSubCommentsResponse")
+    }
+  }
+}, {
+  method: "GET",
+  path: "/v1/discussion/{discussionId}/likes",
+  handler: getDiscussionLikes,
+  options: {
+    id: "v1.get.discussion.likes",
+    tags: ["api", "discussion"],
+    description: "Get people who likes discussion",
+    validate: {
+      query: Joi.object({
+        limit: limitSchema,
+        offset: offsetSchema,
+      }).label("GetDiscussionLikesQuery"),
+      params: Joi.object({
+        discussionId: idSchema.required(),
+      }).label('GetDiscussionLikesParams'),
+    },
+    response: {
+      schema: outputOkSchema(discussionLikesSchema).label("GetDiscussionLikesResponse")
+    }
+  }
+}, {
+  method: "GET",
+  path: "/v1/discussion/comment/{commentId}/likes",
+  handler: getCommentLikes,
+  options: {
+    id: "v1.get.comment.likes",
+    tags: ["api", "discussion"],
+    description: "Get people who likes comment",
+    validate: {
+      query: Joi.object({
+        limit: limitSchema,
+        offset: offsetSchema,
+      }).label("GetDiscussionLikesQuery"),
+      params: Joi.object({
+        commentId: idSchema.required(),
+      }).label('GetCommentLikesParams'),
+    },
+    response: {
+      schema: outputOkSchema(commentLikesSchema).label("GetCommentLikesResponse")
     }
   }
 }, {
