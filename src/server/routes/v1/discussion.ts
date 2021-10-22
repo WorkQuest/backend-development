@@ -23,9 +23,8 @@ import {
   discussionCommentSchema,
   discussionCommentsSchema,
   discussionDescriptionSchema,
-  discussionCommentTextSchema, commentLikesSchema
+  discussionCommentTextSchema, userShortSchema, outputPaginationSchema
 } from "@workquest/database-models/lib/schemes";
-import { discussionLikesSchema } from "@workquest/database-models/lib/schemes/discussion";
 
 export default [{
   method: "GET",
@@ -68,7 +67,7 @@ export default [{
   }
 }, {
   method: "GET",
-  path: "/v1/discussion/{discussionId}/likes",
+  path: "/v1/discussion/{discussionId}/usersLikes",
   handler: getDiscussionLikes,
   options: {
     id: "v1.get.discussion.likes",
@@ -84,12 +83,12 @@ export default [{
       }).label('GetDiscussionLikesParams'),
     },
     response: {
-      schema: outputOkSchema(discussionLikesSchema).label("GetDiscussionLikesResponse")
+      schema: outputPaginationSchema('users',userShortSchema).label("GetDiscussionLikesResponse")
     }
   }
 }, {
   method: "GET",
-  path: "/v1/discussion/comment/{commentId}/likes",
+  path: "/v1/discussion/comment/{commentId}/usersLikes",
   handler: getCommentLikes,
   options: {
     id: "v1.get.comment.likes",
@@ -105,7 +104,7 @@ export default [{
       }).label('GetCommentLikesParams'),
     },
     response: {
-      schema: outputOkSchema(commentLikesSchema).label("GetCommentLikesResponse")
+      schema: outputPaginationSchema('users', userShortSchema).label("GetCommentLikesResponse")
     }
   }
 }, {

@@ -195,39 +195,31 @@ export async function removeCommentLike(r) {
 }
 
 export async function getDiscussionLikes(r) {
-  const likes = await DiscussionLike.findAll({
-    include: {
-      model: User.scope('short'),
-      as: 'user'
-    },
-    where: {
-      discussionId: r.params.discussionId
-    },
+  const users = await User.scope('short').findAndCountAll({
+    include: [{
+      model: DiscussionLike,
+      as: 'discussionLikes',
+      where: {
+        discussionId: r.params.discussionId
+      }
+    }],
     limit: r.query.limit,
-    offset: r.query.offset,
+    offset: r.query.offset
   });
-
-  if(!likes) {
-    return error(Errors.NotFound, 'Discussion not found', {});
-  }
-  return output(likes);
+  return output({data: users.rows, count: users.count})
 }
 
 export async function getCommentLikes(r) {
-  const likes = await DiscussionCommentLike.findAll({
-    include: {
-      model: User.scope('short'),
-      as: 'user'
-    },
-    where: {
-      commentId: r.params.commentId
-    },
+  const users = await User.scope('short').findAndCountAll({
+    include: [{
+      model: DiscussionCommentLike,
+      as: 'commentLikes',
+      where: {
+        commentId: r.params.commentId
+      }
+    }],
     limit: r.query.limit,
-    offset: r.query.offset,
+    offset: r.query.offset
   });
-
-  if(!likes) {
-    return error(Errors.NotFound, 'Comment not found', {});
-  }
-  return output(likes);
+  return output({data: users.rows, count: users.count})
 }
