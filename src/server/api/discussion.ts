@@ -195,31 +195,28 @@ export async function removeCommentLike(r) {
 }
 
 export async function getDiscussionLikes(r) {
-  const users = await User.scope('short').findAndCountAll({
+  const { count, rows } = await User.scope('short').findAndCountAll({
     include: [{
       model: DiscussionLike,
       as: 'discussionLikes',
-      where: {
-        discussionId: r.params.discussionId
-      }
+      where: { discussionId: r.params.discussionId }
     }],
     limit: r.query.limit,
     offset: r.query.offset
   });
-  return output({data: users.rows, count: users.count})
+  return output({count, users: rows});
 }
 
 export async function getCommentLikes(r) {
-  const users = await User.scope('short').findAndCountAll({
+  const { count, rows } = await User.scope('short').findAndCountAll({
     include: [{
       model: DiscussionCommentLike,
       as: 'commentLikes',
-      where: {
-        commentId: r.params.commentId
-      }
+      where: { commentId: r.params.commentId }
     }],
     limit: r.query.limit,
     offset: r.query.offset
   });
-  return output({data: users.rows, count: users.count})
+
+  return output({count, users: rows});
 }
