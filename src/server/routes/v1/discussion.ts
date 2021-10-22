@@ -8,7 +8,9 @@ import {
   createDiscussion,
   removeCommentLike,
   putDiscussionLike,
-  removeDiscussionLike, getDiscussionLikes, getCommentLikes
+  removeDiscussionLike,
+  getCommentUsersLikes,
+  getDiscussionUsersLikes,
 } from "../../api/discussion";
 import {
   idSchema,
@@ -17,13 +19,15 @@ import {
   offsetSchema,
   emptyOkSchema,
   outputOkSchema,
+  userShortSchema,
   discussionSchema,
   discussionsSchema,
   discussionTitleSchema,
+  outputPaginationSchema,
   discussionCommentSchema,
   discussionCommentsSchema,
   discussionDescriptionSchema,
-  discussionCommentTextSchema, userShortSchema, outputPaginationSchema
+  discussionCommentTextSchema,
 } from "@workquest/database-models/lib/schemes";
 
 export default [{
@@ -68,9 +72,9 @@ export default [{
 }, {
   method: "GET",
   path: "/v1/discussion/{discussionId}/usersLikes",
-  handler: getDiscussionLikes,
+  handler: getDiscussionUsersLikes,
   options: {
-    id: "v1.get.discussion.likes",
+    id: "v1.discussion.getUsersLikes",
     tags: ["api", "discussion"],
     description: "Get people who likes discussion",
     validate: {
@@ -83,15 +87,15 @@ export default [{
       }).label('GetDiscussionLikesParams'),
     },
     response: {
-      schema: outputPaginationSchema('users',userShortSchema).label("GetDiscussionLikesResponse")
+      schema: outputPaginationSchema('users', userShortSchema).label("GetDiscussionLikesResponse")
     }
   }
 }, {
   method: "GET",
   path: "/v1/discussion/comment/{commentId}/usersLikes",
-  handler: getCommentLikes,
+  handler: getCommentUsersLikes,
   options: {
-    id: "v1.get.comment.likes",
+    id: "v1.discussion.comment.getUsersLikes",
     tags: ["api", "discussion"],
     description: "Get people who likes comment",
     validate: {

@@ -194,7 +194,7 @@ export async function removeCommentLike(r) {
   return output();
 }
 
-export async function getDiscussionLikes(r) {
+export async function getDiscussionUsersLikes(r) {
   const { count, rows } = await User.scope('short').findAndCountAll({
     include: [{
       model: DiscussionLike,
@@ -204,10 +204,11 @@ export async function getDiscussionLikes(r) {
     limit: r.query.limit,
     offset: r.query.offset
   });
+
   return output({count, users: rows});
 }
 
-export async function getCommentLikes(r) {
+export async function getCommentUsersLikes(r) {
   const { count, rows } = await User.scope('short').findAndCountAll({
     include: [{
       model: DiscussionCommentLike,
