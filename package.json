@@ -35,7 +35,7 @@
     "@types/dotenv": "^6.1.1",
     "@types/joi": "^14.3.4",
     "@types/validator": "^13.1.0",
-    "@workquest/database-models": "git+https://github.com/WorkQuest/database-models.git#cc82bd414185fc32470ae343baee6bc1746c80db",
+    "@workquest/database-models": "git+https://github.com/WorkQuest/database-models.git#d55c79f793b64e06fdf96e0d37f3a89a84a1b952",
     "aws-sdk": "^2.918.0",
     "axios": "^0.21.1",
     "bcrypt": "^5.0.0",
