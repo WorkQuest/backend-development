@@ -58,10 +58,7 @@ export async function inviteOnQuest(r) {
   await questController.employerMustBeQuestCreator(employer.id);
 
   const questResponse = await QuestsResponse.findOne({
-    where: {
-      questId: quest.id,
-      workerId: invitedWorker.id,
-    }
+    where: { questId: quest.id, workerId: invitedWorker.id }
   });
 
   if (questResponse) {
