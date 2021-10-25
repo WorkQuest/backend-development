@@ -197,9 +197,7 @@ export async function startQuest(r) {
   quest.mustHaveStatus(QuestStatus.Created);
 
   const questResponse = await QuestsResponse.findOne({
-    where: {
-      workerId: assignedWorker.id
-    }
+    where: { workerId: assignedWorker.id, questId: quest.id }
   });
 
   if (!questResponse) {
