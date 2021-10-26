@@ -14,7 +14,8 @@ export async function addUpdateReviewStatisticsJob(payload: StatisticPayload) {
 }
 
 export default async function(payload: StatisticPayload) {
-  const  [ ratingStatistic ] = await RatingStatistic.findOrCreate( { where: { ratingStatisticId: payload.ratingStatisticId } });
+  const  [ ratingStatistic ] = await RatingStatistic.findOrCreate( { where: { id: payload.ratingStatisticId } });
+
   const reviewCountPromise = Review.count({ where: { toUserId: ratingStatistic.userId } });
   const averageMarkResultPromise = Review.findOne({
       attributes: [[fn('AVG', col('mark')), 'avgMark']],
