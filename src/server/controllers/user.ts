@@ -22,7 +22,7 @@ abstract class CheckList {
     if (!this._user) {
       await this._rollbackTransaction();
 
-      throw error(500, "", {}); // TODO
+      throw error(Errors.NotFound, "Model User not found", {});
     }
   }
 
@@ -87,7 +87,7 @@ abstract class CheckList {
     if (this._user.settings.phoneConfirm !== code) {
       await this._rollbackTransaction();
 
-      return error(Errors.Forbidden, 'Confirmation code is not correct', {});
+      throw error(Errors.Forbidden, 'Confirmation code is not correct', {});
     }
   }
 
@@ -107,7 +107,7 @@ abstract class CheckList {
     if (this._user.settings.security.TOTP.confirmCode !== code) {
       this._rollbackTransaction();
 
-      return error(Errors.InvalidPayload, "Confirmation code is not correct", [{
+      throw error(Errors.InvalidPayload, "Confirmation code is not correct", [{
         field: "confirmCode",
         reason: "invalid"
       }]);
@@ -120,7 +120,7 @@ abstract class CheckList {
     if (!this._user.settings.emailConfirm) {
       this._rollbackTransaction();
 
-      return error(Errors.UserAlreadyConfirmed, "User already confirmed", {});
+      throw error(Errors.UserAlreadyConfirmed, "User already confirmed", {});
     }
   }
 
@@ -130,7 +130,7 @@ abstract class CheckList {
     if (this._user.settings.emailConfirm.toLowerCase() !== confirmCode.toLowerCase()) {
       this._rollbackTransaction();
 
-      return error(Errors.InvalidPayload, "Invalid confirmation code", [{ field: "confirmCode", reason: "invalid" }]);
+      throw error(Errors.InvalidPayload, "Invalid confirmation code", [{ field: "confirmCode", reason: "invalid" }]);
     }
   }
 }
