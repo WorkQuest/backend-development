@@ -2,7 +2,6 @@ import {error, output} from "../utils";
 import {getMedias} from "../utils/medias";
 import {Errors} from "../utils/errors";
 import {Op} from "sequelize";
-import {ChatNotificationActions} from "../utils/chatSubscription";
 import {incrementUnreadCountMessageOfMembersJob} from "../jobs/chat/incrementUnreadCountMessage";
 import {resetUnreadCountMessagesOfMemberJob} from "../jobs/chat/resetUnreadCountMessages";
 import {setMessageAsReadJob} from "../jobs/chat/setMessageAsRead";
@@ -22,6 +21,7 @@ import {
   StarredChat,
   User,
 } from "@workquest/database-models/lib/models";
+import { ChatNotificationActions, publishChatNotifications } from "../websocket/websocket.chat";
 
 export async function getUserChats(r) {
   const include = [{
@@ -156,10 +156,10 @@ export async function createGroupChat(r) {
 
   const result = await Chat.findByPk(groupChat.id);
 
-  await r.server.publish('/notifications/chat', {
+  await publishChatNotifications(r.server, {
     recipients: memberUserIds.filter(userId => userId !== r.auth.credentials.id),
     action: ChatNotificationActions.groupChatCreate,
-    data: result, lastReadMessageId: message.id
+    data: result, // TODO lastReadMessageId: message.id
   });
 
   return output(result);
@@ -247,7 +247,7 @@ export async function sendMessageToUser(r) {
 
   const result = await Message.findByPk(message.id);
 
-  await r.server.publish('/notifications/chat', {
+  await publishChatNotifications(r.server, {
     action: ChatNotificationActions.newMessage,
     recipients: [r.params.userId],
     data: result,
@@ -299,7 +299,7 @@ export async function sendMessageToChat(r) {
 
   const result = await Message.findByPk(message.id);
 
-  await r.server.publish('/notifications/chat', {
+  await publishChatNotifications(r.server, {
     action: ChatNotificationActions.newMessage,
     recipients: members.map(member => member.userId),
     data: result,
@@ -369,7 +369,7 @@ export async function addUserInGroupChat(r) {
 
   const result = await Message.findByPk(message.id);
 
-  await r.server.publish('/notifications/chat', {
+  await publishChatNotifications(r.server, {
     action: ChatNotificationActions.groupChatAddUser,
     recipients: members.map(member => member.userId),
     data: result,
@@ -434,7 +434,7 @@ export async function removeUserInGroupChat(r) {
 
   const result = await Message.findByPk(message.id);
 
-  await r.server.publish('/notifications/chat', {
+  await publishChatNotifications(r.server, {
     action: ChatNotificationActions.groupChatDeleteUser,
     recipients: members.map(member => member.userId),
     data: result,
@@ -490,7 +490,7 @@ export async function leaveFromGroupChat(r) {
 
   const result = await Message.findByPk(message.id);
 
-  await r.server.publish('/notifications/chat', {
+  await publishChatNotifications(r.server, {
     action: ChatNotificationActions.groupChatLeaveUser,
     recipients: members.map(member => member.userId),
     data: result,
@@ -536,7 +536,7 @@ export async function setMessagesAsRead(r) {
     chatId: r.params.chatId,
   });
 
-  await r.server.publish('/notifications/chat', {
+  await publishChatNotifications(r.server, {
     action: ChatNotificationActions.messageReadByRecipient,
     recipients: otherSenders.map(sender => sender.senderUserId),
     data: message,

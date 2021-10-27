@@ -14,7 +14,6 @@ import config from "./config/config";
 import SwaggerOptions from "./config/swagger";
 import { initDatabase } from "@workquest/database-models/lib/models";
 import { handleValidationError, responseHandler } from "./utils";
-import { chatNotificationsFilter } from "./utils/chatSubscription";
 import { tokenValidate } from "./utils/auth";
 import { pinoConfig } from "./config/pino";
 import { run } from "graphile-worker";
@@ -93,10 +92,6 @@ const init = async () => {
     concurrency: 5,
     pollInterval: 1000,
     taskDirectory: `${__dirname}/jobs` // Папка с исполняемыми тасками.
-  });
-
-  server.subscription('/notifications/chat', {
-    filter: chatNotificationsFilter
   });
 
   /** JWT Auth */

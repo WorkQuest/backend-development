@@ -56,7 +56,8 @@ export function responseHandler(r, h) {
       code: Math.floor(r.response.output.statusCode * 1000),
       data: {},
       msg: r.response.message
-    }).code(r.response.output.statusCode)
+    }).code(r.response.output.statusCode);
+
     return h.continue;
   }
   // Handle custom api error
@@ -67,6 +68,7 @@ export function responseHandler(r, h) {
       data: r.response.data.data,
       msg: r.response.output.payload.message
     }).code(Math.floor(r.response.data.code / 1000));
+
     return h.continue;
   }
   // Handle non api errors with data
@@ -76,7 +78,8 @@ export function responseHandler(r, h) {
       code: Math.floor(r.response.output.statusCode * 1000),
       data: r.response.data,
       msg: r.response.message
-    }).code(r.response.output.statusCode)
+    }).code(r.response.output.statusCode);
+
     return h.continue;
   }
 
