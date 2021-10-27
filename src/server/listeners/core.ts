@@ -4,15 +4,14 @@ import { networks, wsProviders } from "../config/constant";
 
 const options = {
   clientConfig: {
-    maxReceivedFrameSize: 100000000,
-    maxReceivedMessageSize: 100000000,
+    keepalive: true,
+    keepaliveInterval: 60000 // ms
   },
   reconnect: {
     auto: true,
-    delay: 5000, // ms
-    maxAttempts: 15,
-    onTimeout: false,
-  },
+    delay: 1000, // ms
+    onTimeout: false
+  }
 };
 
 const Web3 = require('web3');
