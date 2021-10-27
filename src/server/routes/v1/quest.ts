@@ -30,11 +30,12 @@ import {
   questPrioritySchema,
   questSchema,
   questTitleSchema,
-  questsQuerySchema,
+  questQuerySchema,
   questsSchema,
   questsForGetWithCountSchema,
   questLocationPlaceNameSchema,
-  skillFilterSchema,
+  questEmploymentSchema,
+  specializationKeysSchema,
 } from "@workquest/database-models/lib/schemes";
 
 export default [{
@@ -66,6 +67,7 @@ export default [{
       payload: Joi.object({
         category: questCategorySchema.required(),
         workplace: questWorkPlaceSchema.required(),
+        employment: questEmploymentSchema.required(),
         priority: questPrioritySchema.required(),
         locationPlaceName: questLocationPlaceNameSchema.required(),
         location: locationSchema.required(),
@@ -73,8 +75,8 @@ export default [{
         description: questDescriptionSchema.required(),
         price: questPriceSchema.required(),
         medias: idsSchema.required().unique(),
-        adType: questAdTypeSchema,
-        skillFilters: skillFilterSchema.required(),
+        adType: questAdTypeSchema.required(),
+        specializationKeys: specializationKeysSchema.required().unique(),
       }).label("CreateQuestPayload")
     },
     response: {
@@ -112,7 +114,8 @@ export default [{
       }).label("EditQuestParams"),
       payload: Joi.object({
         category: questCategorySchema,
-        workplace: questWorkPlaceSchema.required(),
+        workplace: questWorkPlaceSchema,
+        employment: questEmploymentSchema,
         priority: questPrioritySchema,
         location: locationSchema,
         locationPlaceName: questLocationPlaceNameSchema,
@@ -120,8 +123,8 @@ export default [{
         description: questDescriptionSchema,
         price: questPriceSchema,
         adType: questAdTypeSchema,
-        skillFilters: skillFilterSchema,
         medias: idsSchema.unique(),
+        specializationKeys: specializationKeysSchema.unique(),
       }).label("EditQuestPayload"),
     },
     response: {
@@ -137,7 +140,7 @@ export default [{
     tags: ["api", "quest"],
     description: "Get quests",
     validate: {
-      query: questsQuerySchema
+      query: questQuerySchema
     },
     response: {
       schema: outputOkSchema(questsForGetWithCountSchema).label("GetQuestsResponse")
@@ -155,7 +158,7 @@ export default [{
       params: Joi.object({
         userId: idSchema.required(),
       }).label("EmployerGetQuestsParams"),
-      query: questsQuerySchema
+      query: questQuerySchema
     },
     response: {
       schema: outputOkSchema(questsForGetWithCountSchema).label("EmployerGetQuestsResponse")

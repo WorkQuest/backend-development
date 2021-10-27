@@ -2,17 +2,20 @@ import { error, output } from '../utils';
 import { Errors } from '../utils/errors';
 import { getMedias } from '../utils/medias';
 import {
-  Media,
   Portfolio,
   User,
   UserRole,
 } from "@workquest/database-models/lib/models";
+import { UserController } from "../controllers/user";
 
 export async function addCase(r) {
-  r.auth.credentials.mustHaveRole(UserRole.Worker);
+  const userController = new UserController(r.auth.credentials.id, r.auth.credentials);
+
+  await userController.userMustHaveRole(UserRole.Worker);
 
   const medias = await getMedias(r.payload.medias);
   const transaction = await r.server.app.db.transaction();
+
   const portfolio = await Portfolio.create({
     userId: r.auth.credentials.id,
     title: r.payload.title,
@@ -34,9 +37,7 @@ export async function getCases(r) {
   }
 
   const cases = await Portfolio.findAll({
-    where: {
-      userId: worker.id
-    }
+    where: { userId: worker.id }
   });
 
   return output(cases);

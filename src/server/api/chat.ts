@@ -97,7 +97,7 @@ export async function getChatMembers(r) {
 
   await chat.mustHaveMember(r.auth.credentials.id);
 
-  const { count, rows } = await User.scope('short').findAndCountAll({
+  const { count, rows } = await User.scope('shortWithAdditionalInfo').findAndCountAll({
     include: [{
       model: ChatMember,
       attributes: [],
