@@ -163,7 +163,7 @@ export class UserController extends CheckList {
     this._user = user;
   }
 
-  public async findModel() {
+  public async findModel(): Promise<User> {
     if (this._user) return this._user;
 
     const user = await User.findByPk(this._userId);
@@ -252,6 +252,7 @@ export class UserController extends CheckList {
     }
 
     const foundUserByEmail = await User.findWithEmail(profile.email);
+
     const socialInfo = {
       id: profile.id,
       email: profile.email,

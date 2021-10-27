@@ -7,7 +7,7 @@ import config from "../config/config";
 import { Errors } from "../utils/errors";
 import { addSendEmailJob } from "../jobs/sendEmail";
 import { generateJwt } from "../utils/auth";
-import { UserController } from "../controllers/user";
+import { UserController } from "../controllers/controller.user";
 import {
 	error,
 	output,
@@ -34,7 +34,6 @@ export async function register(r) {
 	if (emailUsed) return error(Errors.InvalidPayload, "Email used", [{ field: "email", reason: "used" }]);
 
 	const emailConfirmCode = getRandomHexToken().substring(0, 6).toUpperCase();
-	console.log(emailConfirmCode);
 	const emailConfirmLink = `${config.baseUrl}/confirm?token=${emailConfirmCode}`;
 	const emailHtml = confirmTemplate({ confirmLink: emailConfirmLink, confirmCode: emailConfirmCode });
 

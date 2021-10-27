@@ -2,7 +2,7 @@ import { literal, Op } from "sequelize";
 import { Errors } from "../utils/errors";
 import { addSendSmsJob } from '../jobs/sendSms';
 import { error, getRandomCodeNumber, output } from '../utils';
-import { UserController } from "../controllers/user";
+import { UserController } from "../controllers/controller.user";
 import { splitSpecialisationAndIndustry } from "../utils/filters";
 import { transformToGeoPostGIS } from "../utils/postGIS";
 import {

@@ -4,8 +4,8 @@ import config from "../config/config";
 import BigNumber from 'bignumber.js';
 import { output } from "../utils";
 import { ChainId, Token, TokenAmount, Pair } from "@pancakeswap/sdk";
-import { PancakeSwapApi } from "../controllers/pancakeSwap";
-import { CoingeckoApi } from "../controllers/coingecko";
+import { PancakeSwapApi } from "../controllers/controller.pancakeSwap";
+import { CoingeckoApi } from "../controllers/controller.coingecko";
 
 const Web3 = require('web3');
 

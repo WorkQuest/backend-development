@@ -1,12 +1,12 @@
 import { error, output } from '../utils';
 import { Errors } from '../utils/errors';
 import { getMedias } from '../utils/medias';
+import { UserController } from "../controllers/controller.user";
 import {
   Portfolio,
   User,
   UserRole,
 } from "@workquest/database-models/lib/models";
-import { UserController } from "../controllers/user";
 
 export async function addCase(r) {
   const userController = new UserController(r.auth.credentials.id, r.auth.credentials);

@@ -1,7 +1,7 @@
 import { Op, literal } from 'sequelize';
 import { Errors } from '../utils/errors';
-import { UserController } from "../controllers/user";
-import { QuestController } from "../controllers/quest";
+import { UserController } from "../controllers/controller.user";
+import { QuestController } from "../controllers/controller.quest";
 import { transformToGeoPostGIS } from "../utils/postGIS";
 import { error, handleValidationError, output } from "../utils";
 import { splitSpecialisationAndIndustry } from "../utils/filters";

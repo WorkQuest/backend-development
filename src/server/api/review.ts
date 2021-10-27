@@ -1,7 +1,7 @@
 import { error, output } from '../utils';
 import { Errors } from '../utils/errors';
 import { addUpdateReviewStatisticsJob } from '../jobs/updateReviewStatistics';
-import { QuestController } from "../controllers/quest";
+import { QuestController } from "../controllers/controller.quest";
 import {
   User,
   Review,

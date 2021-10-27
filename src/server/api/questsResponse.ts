@@ -1,7 +1,7 @@
 import { error, output } from "../utils";
 import { Errors } from "../utils/errors";
-import { QuestController } from "../controllers/quest";
-import { UserController } from "../controllers/user";
+import { QuestController } from "../controllers/controller.quest";
+import { UserController } from "../controllers/controller.user";
 import {
   User,
   UserRole,

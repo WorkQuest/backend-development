@@ -1,6 +1,6 @@
 import {error} from "../utils";
 import {Transaction} from "sequelize";
-import {UserController} from "./user";
+import {UserController} from "./controller.user";
 import {Errors} from "../utils/errors";
 import {keysToRecords} from "../utils/filters";
 import {getMedias} from "../utils/medias";

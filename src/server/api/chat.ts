@@ -1,7 +1,14 @@
-import { error, output } from "../utils";
-import { getMedias } from "../utils/medias";
-import { Errors } from "../utils/errors";
-import { Op } from "sequelize";
+import {error, output} from "../utils";
+import {getMedias} from "../utils/medias";
+import {Errors} from "../utils/errors";
+import {Op} from "sequelize";
+import {ChatNotificationActions} from "../utils/chatSubscription";
+import {incrementUnreadCountMessageOfMembersJob} from "../jobs/chat/incrementUnreadCountMessage";
+import {resetUnreadCountMessagesOfMemberJob} from "../jobs/chat/resetUnreadCountMessages";
+import {setMessageAsReadJob} from "../jobs/chat/setMessageAsRead";
+import {updateCountUnreadMessagesJob} from "../jobs/chat/updateCountUnreadMessages";
+import {ChatController} from "../controllers/chat/controller.chat";
+import {MessageController} from "../controllers/chat/controller.message";
 import {
   Chat,
   ChatMember,
@@ -15,11 +22,6 @@ import {
   StarredChat,
   User,
 } from "@workquest/database-models/lib/models";
-import { ChatNotificationActions } from "../utils/chatSubscription";
-import { incrementUnreadCountMessageOfMembersJob } from "../jobs/incrementUnreadCountMessage";
-import { resetUnreadCountMessagesOfMemberJob } from "../jobs/resetUnreadCountMessages";
-import { setMessageAsReadJob } from "../jobs/setMessageAsRead";
-import { updateCountUnreadMessagesJob } from "../jobs/updateCountUnreadMessages";
 
 export async function getUserChats(r) {
   const include = [{
@@ -46,13 +48,10 @@ export async function getUserChats(r) {
 }
 
 export async function getChatMessages(r) {
-  const chat = await Chat.findByPk(r.params.chatId);
+  const chatController = new ChatController(r.params.chatId);
+  const chat = await chatController.findModel();
 
-  if (!chat) {
-    return error(Errors.NotFound, "Chat not found", {});
-  }
-
-  await chat.mustHaveMember(r.auth.credentials.id);
+  await chatController.chatMustHaveMember(r.auth.credentials.id);
 
   const { count, rows } = await Message.findAndCountAll({
     where: { chatId: chat.id },
@@ -71,31 +70,23 @@ export async function getChatMessages(r) {
 }
 
 export async function getUserChat(r) {
-  const chat = await Chat.findByPk(r.params.chatId, {
-    include: [{
-      model: StarredChat,
-      as: "star",
-      required: false,
-    }]
+  const chatController = new ChatController(r.params.chatId);
+  const chat = await chatController.findModel({
+    model: StarredChat,
+    as: "star",
+    required: false,
   });
 
-  if (!chat) {
-    return error(Errors.NotFound, "Chat not found", {});
-  }
-
-  await chat.mustHaveMember(r.auth.credentials.id);
+  await chatController.chatMustHaveMember(r.auth.credentials.id);
 
   return output(chat);
 }
 
 export async function getChatMembers(r) {
-  const chat = await Chat.findByPk(r.params.chatId);
+  const chatController = new ChatController(r.params.chatId);
+  const chat = await chatController.findModel();
 
-  if (!chat) {
-    return error(Errors.NotFound, "Chat not found", {});
-  }
-
-  await chat.mustHaveMember(r.auth.credentials.id);
+  await chatController.chatMustHaveMember(r.auth.credentials.id);
 
   const { count, rows } = await User.scope('shortWithAdditionalInfo').findAndCountAll({
     include: [{
@@ -267,13 +258,10 @@ export async function sendMessageToUser(r) {
 
 export async function sendMessageToChat(r) {
   const medias = await getMedias(r.payload.medias);
-  const chat = await Chat.findByPk(r.params.chatId);
+  const chatController = new ChatController(r.params.chatId);
+  const chat = await chatController.findModel();
 
-  if (!chat) {
-    return error(Errors.NotFound, "Chat not found", {});
-  }
-
-  await chat.mustHaveMember(r.auth.credentials.id);
+  await chatController.chatMustHaveMember(r.auth.credentials.id);
 
   const transaction = await r.server.app.db.transaction();
 
@@ -323,14 +311,11 @@ export async function sendMessageToChat(r) {
 export async function addUserInGroupChat(r) {
   await User.userMustExist(r.params.userId);
 
-  const groupChat = await Chat.findByPk(r.params.chatId);
+  const chatController = new ChatController(r.params.chatId);
+  const groupChat = await chatController.findModel();
 
-  if (!groupChat) {
-    return error(Errors.NotFound, "Chat not found", {});
-  }
-
-  groupChat.mustHaveType(ChatType.group);
-  groupChat.mustHaveOwner(r.auth.credentials.id);
+  await chatController.chatMustHaveType(ChatType.group);
+  await chatController.chatMustHaveOwner(r.auth.credentials.id);
 
   const message = Message.build({
     senderUserId: r.auth.credentials.id,
@@ -396,15 +381,12 @@ export async function addUserInGroupChat(r) {
 export async function removeUserInGroupChat(r) {
   await User.userMustExist(r.params.userId);
 
-  const groupChat = await Chat.findByPk(r.params.chatId);
+  const chatController = new ChatController(r.params.chatId);
+  const groupChat = await chatController.findModel();
 
-  if (!groupChat) {
-    return error(Errors.NotFound, "Chat not found", {});
-  }
-
-  groupChat.mustHaveType(ChatType.group);
-  groupChat.mustHaveOwner(r.auth.credentials.id);
-  await groupChat.mustHaveMember(r.params.userId);
+  await chatController.chatMustHaveType(ChatType.group);
+  await chatController.chatMustHaveOwner(r.auth.credentials.id);
+  await chatController.chatMustHaveMember(r.params.userId);
 
   const transaction = await r.server.app.db.transaction();
 
@@ -462,14 +444,11 @@ export async function removeUserInGroupChat(r) {
 }
 
 export async function leaveFromGroupChat(r) {
-  const groupChat = await Chat.findByPk(r.params.chatId);
+  const chatController = new ChatController(r.params.chatId);
+  const groupChat = await chatController.findModel();
 
-  if (!groupChat) {
-    return error(Errors.NotFound, "Chat not found", {});
-  }
-
-  groupChat.mustHaveType(ChatType.group);
-  await groupChat.mustHaveMember(r.auth.credentials.id);
+  await chatController.chatMustHaveType(ChatType.group);
+  await chatController.chatMustHaveMember(r.auth.credentials.id);
 
   if (groupChat.ownerUserId === r.auth.credentials.id) {
     return error(Errors.Forbidden, "User is chat owner", {}); // TODO
@@ -521,13 +500,10 @@ export async function leaveFromGroupChat(r) {
 }
 
 export async function setMessagesAsRead(r) {
-  const chat = await Chat.unscoped().findByPk(r.params.chatId);
+  const chatController = new ChatController(r.params.chatId);
+  const chat = await chatController.findModel();
 
-  if (!chat) {
-    return error(Errors.NotFound, "Chat not found", {});
-  }
-
-  await chat.mustHaveMember(r.auth.credentials.id);
+  await chatController.chatMustHaveMember(r.auth.credentials.id);
 
   const message = await Message.unscoped().findByPk(r.payload.messageId);
 
@@ -586,19 +562,13 @@ export async function getUserStarredMessages(r) {
 }
 
 export async function markMessageStar(r) {
-  const message = await Message.findByPk(r.params.messageId);
+  const chatController = new ChatController(r.params.chatId);
+  const messageController = new MessageController(r.params.messageId);
 
-  if (!message) {
-    return error(Errors.NotFound, 'Message is not found', {});
-  }
+  const chat = await chatController.findModel();
+  const message = await messageController.findModel();
 
-  const chat = await Chat.findByPk(message.chatId);
-
-  if (!chat) {
-    return error(Errors.NotFound, 'Chat is not found', {});
-  }
-
-  await chat.mustHaveMember(r.auth.credentials.id);
+  await chatController.chatMustHaveMember(r.auth.credentials.id);
 
   await StarredMessage.create({
     userId: r.auth.credentials.id,
@@ -626,13 +596,10 @@ export async function removeStarFromMessage(r) {
 }
 
 export async function markChatStar(r) {
-  const chat = await Chat.findByPk(r.params.chatId);
+  const chatController = new ChatController(r.params.chatId);
+  const chat = await chatController.findModel();
 
-  if (!chat) {
-    return error(Errors.NotFound, 'Chat is not found', {});
-  }
-
-  await chat.mustHaveMember(r.auth.credentials.id);
+  await chatController.chatMustHaveMember(r.auth.credentials.id);
 
   await StarredChat.create({
     userId: r.auth.credentials.id,
@@ -643,7 +610,7 @@ export async function markChatStar(r) {
 }
 
 export async function removeStarFromChat(r) {
-  await Chat.chatMustExists(r.params.chatId);
+  await ChatController.chatMustExists(r.params.chatId);
 
   //TODO: что делать до звёздочкой, если исключили из чата?
   //await chat.mustHaveMember(r.auth.credentials.id);

@@ -1,4 +1,4 @@
-import { addJob } from "../utils/scheduler";
+import { addJob } from "../../utils/scheduler";
 import { ChatMember, Message, SenderMessageStatus } from "@workquest/database-models/lib/models";
 import {Op} from "sequelize"
 
