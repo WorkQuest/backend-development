@@ -12,6 +12,7 @@ import * as Qs from "qs";
 import routes from "./routes";
 import config from "./config/config";
 import SwaggerOptions from "./config/swagger";
+import initWebsocket from "./websocket/index";
 import { initDatabase } from "@workquest/database-models/lib/models";
 import { handleValidationError, responseHandler } from "./utils";
 import { tokenValidate } from "./utils/auth";
@@ -109,6 +110,7 @@ const init = async () => {
   });
   server.auth.default('jwt-access');
 
+  initWebsocket(server);
   initAuthStrategiesOfSocialNetworks(server);
 
   server.route(routes);

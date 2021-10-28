@@ -28,8 +28,7 @@ export async function getUserChats(r) {
     model: ChatMember,
     where: { userId: r.auth.credentials.id },
     required: true,
-    as: 'chatMembers',
-    attributes: [],
+    as: 'meMember',
   }, {
     model: StarredChat,
     as: 'star',
