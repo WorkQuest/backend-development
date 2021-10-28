@@ -1,7 +1,7 @@
 import { Op, literal } from 'sequelize';
 import { Errors } from '../utils/errors';
 import { UserController } from "../controllers/controller.user";
-import { QuestController } from "../controllers/controller.quest";
+import { QuestController } from "../controllers/quest/controller.quest";
 import { transformToGeoPostGIS } from "../utils/postGIS";
 import { error, handleValidationError, output } from "../utils";
 import { splitSpecialisationAndIndustry } from "../utils/filters";
@@ -17,6 +17,8 @@ import {
   QuestsResponseStatus,
   QuestSpecializationFilter,
 } from "@workquest/database-models/lib/models";
+import { publishQuestNotifications, QuestNotificationActions } from "../websocket/websocket.quest";
+import { QuestsResponseController } from "../controllers/quest/controller.questsResponse";
 
 export const searchFields = [
   "title",
@@ -191,20 +193,14 @@ export async function startQuest(r) {
   await questController.employerMustBeQuestCreator(employer.id);
   await questController.questMustHaveStatus(QuestStatus.Created);
 
-  const questResponse = await QuestsResponse.findOne({
-    where: { workerId: assignedWorker.id, questId: quest.id }
-  });
+  const questsResponseController = await QuestsResponseController.makeControllerByQuery({
+    where: { workerId: assignedWorker.id, questId: quest.id },
+  }, transaction);
 
-  // TODO в контроллер
-  if (!questResponse) {
-    await transaction.rollback();
-
-    return error(Errors.NotFound, "Assigned user did not respond on quest", {});
-  }
-  if (questResponse.type === QuestsResponseType.Response) {
-    questResponse.mustHaveStatus(QuestsResponseStatus.Open);
-  } else if (questResponse.type === QuestsResponseType.Invite) {
-    questResponse.mustHaveStatus(QuestsResponseStatus.Accepted);
+  if (questsResponseController.questsResponse.type === QuestsResponseType.Response) {
+    questsResponseController.questsResponse.mustHaveStatus(QuestsResponseStatus.Open);
+  } else if (questsResponseController.questsResponse.type === QuestsResponseType.Invite) {
+    questsResponseController.questsResponse.mustHaveStatus(QuestsResponseStatus.Accepted);
   }
 
   await quest.update({ assignedWorkerId: assignedWorker.id, status: QuestStatus.WaitWorker },
@@ -213,10 +209,16 @@ export async function startQuest(r) {
   await QuestsResponse.update({ status: QuestsResponseStatus.Closed }, {
     where: {
       questId: quest.id,
-      id: { [Op.ne]: questResponse.id }
+      id: { [Op.ne]: questsResponseController.questsResponse.id }
   }, transaction });
 
-  await transaction.commit()
+  await transaction.commit();
+
+  await publishQuestNotifications(r.server, {
+    recipients: [assignedWorker.id],
+    action: QuestNotificationActions.questStarted,
+    data: quest,
+  });
 
   return output();
 }

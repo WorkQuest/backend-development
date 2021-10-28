@@ -1,10 +1,10 @@
-import {error} from "../utils";
+import {error} from "../../utils";
 import {Transaction} from "sequelize";
-import {UserController} from "./controller.user";
-import {Errors} from "../utils/errors";
-import {keysToRecords} from "../utils/filters";
-import {getMedias} from "../utils/medias";
-import { transformToGeoPostGIS } from "../utils/postGIS";
+import {UserController} from "../controller.user";
+import {Errors} from "../../utils/errors";
+import {keysToRecords} from "../../utils/filters";
+import {getMedias} from "../../utils/medias";
+import { transformToGeoPostGIS } from "../../utils/postGIS";
 import {
   User,
   Quest,

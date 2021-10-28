@@ -11,6 +11,7 @@ import * as Bell from "@hapi/bell";
 import * as Qs from "qs";
 import routes from "./routes";
 import config from "./config/config";
+import initWebSocketService from "./websocket/index";
 import SwaggerOptions from "./config/swagger";
 import { initDatabase } from "@workquest/database-models/lib/models";
 import { handleValidationError, responseHandler } from "./utils";
@@ -109,6 +110,7 @@ const init = async () => {
   });
   server.auth.default('jwt-access');
 
+  initWebSocketService(server);
   initAuthStrategiesOfSocialNetworks(server);
 
   server.route(routes);
