@@ -247,7 +247,7 @@ export default [{
   }
 }, {
   method: "POST",
-  path: "/v1/user/me/chat/message/{messageId}/star",
+  path: "/v1/user/me/chat/{chatId}/message/{messageId}/star",
   handler: markMessageStar,
   options: {
     id: "v1.chat.message.markMessageStar",
@@ -256,6 +256,7 @@ export default [{
     validate: {
       params: Joi.object({
         messageId: idSchema,
+        chatId: idSchema,
       }).label('MarkMessageStarParams')
     },
     response: {
