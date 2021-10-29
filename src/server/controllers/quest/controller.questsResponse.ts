@@ -15,14 +15,6 @@ abstract class CheckList {
 
   protected abstract _rollbackTransaction();
 
-  protected async _checkModel(): Promise<void | never> {
-    if (!this.questsResponse) {
-      await this._rollbackTransaction();
-
-      throw error(500, "QuestsResponse model not found in quest controller", {});
-    }
-  }
-
   async workerMustBeInvitedToQuest(workerId: String) {
     await this.questsResponseMustHaveType(QuestsResponseType.Invite);
 
@@ -34,8 +26,6 @@ abstract class CheckList {
   }
 
   async questsResponseMustHaveStatus(status: QuestsResponseStatus) {
-    await this._checkModel();
-
     if (this.questsResponse.status !== status) {
       await this._rollbackTransaction();
 
@@ -47,8 +37,6 @@ abstract class CheckList {
   }
 
   async questsResponseMustHaveType(type: QuestsResponseType) {
-    await this._checkModel();
-
     if (this.questsResponse.type !== type) {
       await this._rollbackTransaction();
 

@@ -11,6 +11,7 @@ import {
   QuestsResponseStatus,
   QuestsResponseType,
 } from "@workquest/database-models/lib/models";
+import { QuestsResponseController } from "../controllers/quest/controller.questsResponse";
 
 export async function responseOnQuest(r) {
   const worker: User = r.auth.credentials;
@@ -109,17 +110,14 @@ export async function responsesToQuestsForUser(r) {
 
 export async function acceptInviteOnQuest(r) {
   const worker: User = r.auth.credentials;
-  const questsResponse = await QuestsResponse.findOne({ where: { id: r.params.responseId } });
 
-  if (!questsResponse) {
-    return error(Errors.NotFound, "Quests response not found", {});
-  }
+  const questsResponseController = await QuestsResponseController.makeControllerByPk(r.params.responseId);
 
-  questsResponse.mustBeInvitedToQuest(worker.id);
-  questsResponse.mustHaveType(QuestsResponseType.Invite);
-  questsResponse.mustHaveStatus(QuestsResponseStatus.Open);
-
-  await questsResponse.update({ status: QuestsResponseStatus.Accepted });
+  // questsResponse.mustBeInvitedToQuest(worker.id);
+  // questsResponse.mustHaveType(QuestsResponseType.Invite);
+  // questsResponse.mustHaveStatus(QuestsResponseStatus.Open);
+  //
+  // await questsResponse.update({ status: QuestsResponseStatus.Accepted });
 
   return output();
 }
