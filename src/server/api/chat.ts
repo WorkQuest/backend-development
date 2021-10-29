@@ -32,6 +32,7 @@ export async function getUserChats(r) {
   }, {
     model: StarredChat,
     as: 'star',
+    where: { userId: r.auth.credentials.id },
     required: r.query.starred,
   }];
 
