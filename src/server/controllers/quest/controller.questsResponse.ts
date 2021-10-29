@@ -5,7 +5,7 @@ import {
   Quest,
   QuestsResponse,
   QuestsResponseStatus,
-  QuestsResponseType
+  QuestsResponseType, User
 } from "@workquest/database-models/lib/models";
 import { QueryOptions } from "sequelize/types/lib/query-interface";
 import { FindOptions } from "sequelize/types/lib/model";
@@ -71,22 +71,8 @@ export class QuestsResponseController extends CheckList {
     this._transaction = transaction;
   }
 
-  public static async makeControllerByPk(id: string, queryOptions: QueryOptions = {}, transaction?: Transaction): Promise<QuestsResponseController> {
-    const questsResponse = await QuestsResponse.findByPk(id, queryOptions);
-
-    if (!questsResponse) {
-      if (transaction) {
-        await transaction.rollback();
-      }
-
-      throw error(Errors.NotFound, "QuestsResponse not found", { questsResponseId: id });
-    }
-
-    return new QuestsResponseController(questsResponse, transaction);
-  }
-
-  public static async makeControllerByQuery(findOptions: FindOptions, transaction?: Transaction): Promise<QuestsResponseController> {
-    const questsResponse = await QuestsResponse.findOne(findOptions);
+  public static async makeControllerByModelPromise(questsResponsePromise: Promise<QuestsResponse>, transaction?: Transaction) {
+    const questsResponse = await questsResponsePromise;
 
     if (!questsResponse) {
       if (transaction) {

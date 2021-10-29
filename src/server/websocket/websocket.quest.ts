@@ -8,7 +8,7 @@ const questSubscriptionFilter = async function (path, notification, options): Pr
 }
 
 export const questSubscriptionOption = {
-  subscription: "/notifications/chat",
+  subscription: "/notifications/quest",
   option: { filter: questSubscriptionFilter },
 }
 

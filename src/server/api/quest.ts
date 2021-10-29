@@ -6,6 +6,8 @@ import { transformToGeoPostGIS } from "../utils/postGIS";
 import { error, handleValidationError, output } from "../utils";
 import { splitSpecialisationAndIndustry } from "../utils/filters";
 import { locationForValidateSchema } from "@workquest/database-models/lib/schemes";
+import { publishQuestNotifications, QuestNotificationActions } from "../websocket/websocket.quest";
+import { QuestsResponseController } from "../controllers/quest/controller.questsResponse";
 import {
   User,
   Quest,
@@ -17,8 +19,6 @@ import {
   QuestsResponseStatus,
   QuestSpecializationFilter,
 } from "@workquest/database-models/lib/models";
-import { publishQuestNotifications, QuestNotificationActions } from "../websocket/websocket.quest";
-import { QuestsResponseController } from "../controllers/quest/controller.questsResponse";
 
 export const searchFields = [
   "title",
@@ -50,7 +50,7 @@ export async function getQuest(r) {
 
 export async function createQuest(r) {
   const employer: User = r.auth.credentials;
-  const userController = new UserController(employer.id, employer);
+  const userController = new UserController(employer);
 
   await userController.userMustHaveRole(UserRole.Employer);
 
@@ -73,7 +73,7 @@ export async function createQuest(r) {
     locationPostGIS: transformToGeoPostGIS(r.payload.location),
   }, { transaction });
 
-  const questController = new QuestController(quest.id, quest, transaction);
+  const questController = new QuestController(quest, transaction);
 
   await questController.setMedias(r.payload.medias);
   await questController.setQuestSpecializations(r.payload.specializationKeys, true);
@@ -112,8 +112,9 @@ export async function editQuest(r) {
     }),
   };
 
-  const questController = new QuestController(r.params.questId);
-  const quest = await questController.findModel();
+  const questController = await QuestController.makeControllerByModelPromise(
+    Quest.findByPk(r.params.questId)
+  );
 
   await questController.employerMustBeQuestCreator(employer.id);
   await questController.questMustHaveStatus(QuestStatus.Created);
@@ -131,19 +132,22 @@ export async function editQuest(r) {
 
   await questController.updateFieldLocationPostGIS();
 
-  await quest.update(questValues, { transaction });
+  await questController.quest.update(questValues, { transaction });
 
   await transaction.commit();
 
   return output(
-    await Quest.findByPk(quest.id)
+    await Quest.findByPk(questController.quest.id)
   );
 }
 
 export async function deleteQuest(r) {
   const employer: User = r.auth.credentials;
-  const questController = new QuestController(r.params.questId);
-  const quest = await questController.findModel();
+
+  const questController = await QuestController.makeControllerByModelPromise(
+    Quest.findByPk(r.params.questId)
+  );
+
   const transaction = await r.server.app.db.transaction();
 
   questController.setTransaction(transaction);
@@ -151,9 +155,9 @@ export async function deleteQuest(r) {
   await questController.employerMustBeQuestCreator(employer.id);
   await questController.questMustHaveStatus(QuestStatus.Created, QuestStatus.Closed)
 
-  await QuestSpecializationFilter.destroy({ where: { questId: quest.id }, transaction });
-  await QuestsResponse.destroy({ where: { questId: quest.id }, transaction })
-  await quest.destroy({ force: true, transaction });
+  await QuestSpecializationFilter.destroy({ where: { questId: questController.quest.id }, transaction });
+  await QuestsResponse.destroy({ where: { questId: questController.quest.id }, transaction })
+  await questController.quest.destroy({ force: true, transaction });
 
   await transaction.commit();
 
@@ -162,17 +166,20 @@ export async function deleteQuest(r) {
 
 export async function closeQuest(r) {
   const employer: User = r.auth.credentials;
-  const questController = new QuestController(r.params.questId);
-  const quest = await questController.findModel();
+
+  const questController = await QuestController.makeControllerByModelPromise(
+    Quest.findByPk(r.params.questId)
+  );
+
   const transaction = await r.server.app.db.transaction();
 
   await questController.employerMustBeQuestCreator(employer.id);
   await questController.questMustHaveStatus(QuestStatus.Created, QuestStatus.WaitConfirm);
 
-  await quest.update({ status: QuestStatus.Closed }, { transaction });
+  await questController.quest.update({ status: QuestStatus.Closed }, { transaction });
 
   await QuestsResponse.update({ status: QuestsResponseStatus.Closed }, {
-    where: { questId: quest.id }, transaction });
+    where: { questId: questController.quest.id }, transaction });
 
   await transaction.commit();
 
@@ -181,21 +188,27 @@ export async function closeQuest(r) {
 
 export async function startQuest(r) {
   const employer: User = r.auth.credentials;
-  const questController = new QuestController(r.params.questId);
-  const userController = new UserController(r.payload.assignedWorkerId);
-  const quest = await questController.findModel();
-  const assignedWorker = await userController.findModel();
+
+  const questController = await QuestController.makeControllerByModelPromise(
+    Quest.findByPk(r.params.questId)
+  );
+  const assignedWorkerController = await UserController.makeControllerByModelPromise(
+    User.findByPk(r.payload.assignedWorkerId)
+  );
+
   const transaction = await r.server.app.db.transaction();
 
   questController.setTransaction(transaction);
-  userController.setTransaction(transaction);
+  assignedWorkerController.setTransaction(transaction);
 
   await questController.employerMustBeQuestCreator(employer.id);
   await questController.questMustHaveStatus(QuestStatus.Created);
 
-  const questsResponseController = await QuestsResponseController.makeControllerByQuery({
-    where: { workerId: assignedWorker.id, questId: quest.id },
-  }, transaction);
+  const questsResponseController = await QuestsResponseController.makeControllerByModelPromise(
+    QuestsResponse.findOne({
+      where: { workerId: assignedWorkerController.user.id, questId: questController.quest.id }
+    }), transaction
+  );
 
   if (questsResponseController.questsResponse.type === QuestsResponseType.Response) {
     questsResponseController.questsResponse.mustHaveStatus(QuestsResponseStatus.Open);
@@ -203,21 +216,23 @@ export async function startQuest(r) {
     questsResponseController.questsResponse.mustHaveStatus(QuestsResponseStatus.Accepted);
   }
 
-  await quest.update({ assignedWorkerId: assignedWorker.id, status: QuestStatus.WaitWorker },
-    { transaction });
+  await questController.quest.update({
+      assignedWorkerId: assignedWorkerController.user.id,
+      status: QuestStatus.WaitWorker
+  }, { transaction });
 
   await QuestsResponse.update({ status: QuestsResponseStatus.Closed }, {
     where: {
-      questId: quest.id,
+      questId: questController.quest.id,
       id: { [Op.ne]: questsResponseController.questsResponse.id }
   }, transaction });
 
   await transaction.commit();
 
   await publishQuestNotifications(r.server, {
-    recipients: [assignedWorker.id],
+    recipients: [assignedWorkerController.user.id],
     action: QuestNotificationActions.questStarted,
-    data: quest,
+    data: questController.quest,
   });
 
   return output();
@@ -241,39 +256,45 @@ export async function acceptWorkOnQuest(r) {
 
 export async function completeWorkOnQuest(r) {
   const worker: User = r.auth.credentials;
-  const questController = new QuestController(r.params.questId);
-  const quest = await questController.findModel();
+
+  const questController = await QuestController.makeControllerByModelPromise(
+    Quest.findByPk(r.params.questId)
+  );
 
   await questController.questMustHaveStatus(QuestStatus.Active);
   await questController.workerMustBeAppointedOnQuest(worker.id);
 
-  await quest.update({ status: QuestStatus.WaitConfirm });
+  await questController.quest.update({ status: QuestStatus.WaitConfirm });
 
   return output();
 }
 
 export async function acceptCompletedWorkOnQuest(r) {
   const employer: User = r.auth.credentials;
-  const questController = new QuestController(r.params.questId);
-  const quest = await questController.findModel();
+
+  const questController = await QuestController.makeControllerByModelPromise(
+    Quest.findByPk(r.params.questId)
+  );
 
   await questController.employerMustBeQuestCreator(employer.id);
   await questController.questMustHaveStatus(QuestStatus.WaitConfirm);
 
-  await quest.update({ status: QuestStatus.Done });
+  await questController.quest.update({ status: QuestStatus.Done });
 
   return output();
 }
 
 export async function rejectCompletedWorkOnQuest(r) {
   const employer: User = r.auth.credentials;
-  const questController = new QuestController(r.params.questId);
-  const quest = await questController.findModel();
+
+  const questController = await QuestController.makeControllerByModelPromise(
+    Quest.findByPk(r.params.questId)
+  );
 
   await questController.employerMustBeQuestCreator(employer.id);
   await questController.questMustHaveStatus(QuestStatus.WaitConfirm);
 
-  await quest.update({ status: QuestStatus.Dispute });
+  await questController.quest.update({ status: QuestStatus.Dispute });
 
   return output();
 }
@@ -399,9 +420,9 @@ export async function getMyStarredQuests(r) {
 }
 
 export async function setStar(r) {
-  const questController = new QuestController(r.params.questId);
-
-  await questController.findModel();
+  const questController = await QuestController.makeControllerByModelPromise(
+    Quest.findByPk(r.params.questId)
+  );
 
   const starred = await StarredQuests.findOne({
     where: {

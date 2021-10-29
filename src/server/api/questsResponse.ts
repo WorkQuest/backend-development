@@ -15,16 +15,18 @@ import { QuestsResponseController } from "../controllers/quest/controller.quests
 
 export async function responseOnQuest(r) {
   const worker: User = r.auth.credentials;
-  const workerController = new UserController(worker.id, worker);
-  const questController = new QuestController(r.params.questId);
-  const quest = await questController.findModel();
+
+  const workerController = new UserController(worker);
+  const questController = await QuestController.makeControllerByModelPromise(
+    Quest.findByPk(r.params.questId)
+  );
 
   await questController.questMustHaveStatus(QuestStatus.Created);
   await workerController.userMustHaveRole(UserRole.Worker);
 
   const questsResponse = await QuestsResponse.findOne({
     where: {
-      questId: quest.id,
+      questId: questController.quest.id,
       workerId: worker.id,
     }
   });
@@ -35,7 +37,7 @@ export async function responseOnQuest(r) {
 
   await QuestsResponse.create({
     workerId: worker.id,
-    questId: quest.id,
+    questId: questController.quest.id,
     message: r.payload.message,
     status: QuestsResponseStatus.Open,
     type: QuestsResponseType.Response,
@@ -46,11 +48,14 @@ export async function responseOnQuest(r) {
 
 export async function inviteOnQuest(r) {
   const employer: User = r.auth.credentials;
-  const invitedWorkerController = new UserController(r.payload.invitedUserId);
-  const employerController = new UserController(employer.id, employer);
-  const invitedWorker = await invitedWorkerController.findModel();
-  const questController = new QuestController(r.params.questId);
-  const quest = await questController.findModel();
+  const employerController = new UserController(employer);
+
+  const invitedWorkerController = await UserController.makeControllerByModelPromise(
+    User.findByPk(r.payload.invitedUserId)
+  );
+  const questController = await QuestController.makeControllerByModelPromise(
+    Quest.findByPk(r.params.questId)
+  );
 
   await employerController.userMustHaveRole(UserRole.Employer);
   await invitedWorkerController.userMustHaveRole(UserRole.Worker);
@@ -59,7 +64,7 @@ export async function inviteOnQuest(r) {
   await questController.employerMustBeQuestCreator(employer.id);
 
   const questResponse = await QuestsResponse.findOne({
-    where: { questId: quest.id, workerId: invitedWorker.id }
+    where: { questId: questController.quest.id, workerId: invitedWorkerController.user.id }
   });
 
   if (questResponse) {
@@ -67,8 +72,8 @@ export async function inviteOnQuest(r) {
   }
 
   await QuestsResponse.create({
-    workerId: invitedWorker.id,
-    questId: quest.id,
+    workerId: invitedWorkerController.user.id,
+    questId: questController.quest.id,
     message: r.payload.message,
     status: QuestsResponseStatus.Open,
     type: QuestsResponseType.Invite,
@@ -79,13 +84,15 @@ export async function inviteOnQuest(r) {
 
 export async function userResponsesToQuest(r) {
   const employer: User = r.auth.credentials;
-  const questController = new QuestController(r.params.questId);
-  const quest = await questController.findModel();
+
+  const questController = await QuestController.makeControllerByModelPromise(
+    Quest.findByPk(r.params.questId)
+  );
 
   await questController.employerMustBeQuestCreator(employer.id);
 
   const { rows, count } = await QuestsResponse.findAndCountAll({
-    where: { questId: quest.id },
+    where: { questId: questController.quest.id },
   });
 
   return output({ count, responses: rows });
@@ -93,7 +100,7 @@ export async function userResponsesToQuest(r) {
 
 export async function responsesToQuestsForUser(r) {
   const worker: User = r.auth.credentials;
-  const workerController = new UserController(worker.id, worker);
+  const workerController = new UserController(worker);
 
   await workerController.userMustHaveRole(UserRole.Worker);
 
@@ -111,51 +118,49 @@ export async function responsesToQuestsForUser(r) {
 export async function acceptInviteOnQuest(r) {
   const worker: User = r.auth.credentials;
 
-  const questsResponseController = await QuestsResponseController.makeControllerByPk(r.params.responseId);
+  const questsResponseController = await QuestsResponseController.makeControllerByModelPromise(
+    QuestsResponse.findByPk(r.params.responseId)
+  );
 
-  // questsResponse.mustBeInvitedToQuest(worker.id);
-  // questsResponse.mustHaveType(QuestsResponseType.Invite);
-  // questsResponse.mustHaveStatus(QuestsResponseStatus.Open);
-  //
-  // await questsResponse.update({ status: QuestsResponseStatus.Accepted });
+  await questsResponseController.workerMustBeInvitedToQuest(worker.id);
+  await questsResponseController.questsResponseMustHaveType(QuestsResponseType.Invite);
+  await questsResponseController.questsResponseMustHaveStatus(QuestsResponseStatus.Open);
+
+  await questsResponseController.questsResponse.update({ status: QuestsResponseStatus.Accepted });
 
   return output();
 }
 
 export async function rejectInviteOnQuest(r) {
   const worker: User = r.auth.credentials;
-  const questsResponse = await QuestsResponse.findOne({ where: { id: r.params.responseId } });
 
-  if (!questsResponse) {
-    return error(Errors.NotFound, "Quests response not found", {});
-  }
+  const questsResponseController = await QuestsResponseController.makeControllerByModelPromise(
+    QuestsResponse.findByPk(r.params.responseId)
+  );
 
-  questsResponse.mustBeInvitedToQuest(worker.id);
-  questsResponse.mustHaveType(QuestsResponseType.Invite);
-  questsResponse.mustHaveStatus(QuestsResponseStatus.Open);
+  await questsResponseController.workerMustBeInvitedToQuest(worker.id);
+  await questsResponseController.questsResponseMustHaveType(QuestsResponseType.Invite);
+  await questsResponseController.questsResponseMustHaveStatus(QuestsResponseStatus.Open);
 
-  await questsResponse.update({ status: QuestsResponseStatus.Rejected });
+  await questsResponseController.questsResponse.update({ status: QuestsResponseStatus.Rejected });
 
   return output();
 }
 
 export async function rejectResponseOnQuest(r) {
   const employer: User = r.auth.credentials;
-  const questsResponse = await QuestsResponse.findOne({ where: { id: r.params.responseId } });
 
-  if (!questsResponse) {
-    return error(Errors.NotFound, "Quests response not found", {});
-  }
+  const questsResponseController = await QuestsResponseController.makeControllerByModelPromise(
+    QuestsResponse.findByPk(r.params.responseId, { include: { model: Quest, as: 'quest' } })
+  );
 
-  const questController = new QuestController(questsResponse.questId);
-
-  await questController.findModel();
+  const questController = new QuestController(questsResponseController.questsResponse.quest); // TODO проверить
 
   await questController.employerMustBeQuestCreator(employer.id);
-  questsResponse.mustHaveType(QuestsResponseType.Response);
-  questsResponse.mustHaveStatus(QuestsResponseStatus.Open);
+  await questsResponseController.questsResponseMustHaveType(QuestsResponseType.Response);
+  await questsResponseController.questsResponseMustHaveStatus(QuestsResponseStatus.Open);
 
-  await questsResponse.update({ status: QuestsResponseStatus.Rejected });
+  await questsResponseController.questsResponse.update({ status: QuestsResponseStatus.Rejected });
 
   return output();
 }

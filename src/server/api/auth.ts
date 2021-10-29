@@ -105,7 +105,7 @@ export function getLoginViaSocialNetworkHandler(returnType: "token" | "redirect"
 
 export async function confirmEmail(r) {
 	const user = await User.scope("withPassword").findByPk(r.auth.credentials.id);
-	const userController = new UserController(user.id, user);
+	const userController = new UserController(user);
 
 	await userController.checkUserAlreadyConfirmed();
 	await userController.checkUserConfirmationCode(r.payload.confirmCode);
@@ -128,24 +128,18 @@ export async function confirmEmail(r) {
 }
 
 export async function login(r) {
-	const user = await User.scope("withPassword").findOne({
-		where: { email: { [Op.iLike]: r.payload.email }	}
-	});
-
-	if (!user) {
-		return error(Errors.NotFound, "User not found", {});
-	}
-
-	const userController = new UserController(user.id, user);
+	const userController = await UserController.makeControllerByModelPromise(
+		User.scope("withPassword").findOne({ where: { email: { [Op.iLike]: r.payload.email }	} })
+	);
 
 	await userController.checkPassword(r.payload.password);
 
-	if (user.isTOTPEnabled()) {
+	if (userController.user.isTOTPEnabled()) {
 		await userController.checkTotpConfirmationCode(r.payload.totp);
 	}
 
 	const session = await Session.create({
-		userId: user.id,
+		userId: userController.user.id,
 		invalidating: false,
 		place: getGeo(r),
 		ip: getRealIp(r),
@@ -154,7 +148,7 @@ export async function login(r) {
 
 	const result = {
 		...generateJwt({ id: session.id }),
-		userStatus: user.status,
+		userStatus: userController.user.status,
 	};
 
 	return output(result);

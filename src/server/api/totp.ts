@@ -13,8 +13,9 @@ const confirmTemplate = Handlebars.compile(fs.readFileSync(confirmTemplatePath, 
 }));
 
 export async function enableTOTP(r) {
-  const user = await User.scope('withPassword').findByPk(r.auth.credentials.id);
-  const userController = new UserController(user.id, user);
+  const userController = await UserController.makeControllerByModelPromise(
+    User.scope('withPassword').findByPk(r.auth.credentials.id)
+  );
 
   await userController.userMustHaveActiveStatusTOTP(false);
 
@@ -22,13 +23,13 @@ export async function enableTOTP(r) {
   const confirmCode = getUUID().substr(0, 6).toUpperCase();
   const emailHtml = confirmTemplate({ confirmCode });
 
-  await user.update( {
+  await userController.user.update({
     "settings.security.TOTP.confirmCode": confirmCode,
     "settings.security.TOTP.secret": base32,
   });
 
   await addSendEmailJob({
-    email: user.email,
+    email: userController.user.email,
     text: `Confirmation code Google Authenticator: ${confirmCode}`,
     subject: "WorkQuest | Google Authenticator confirmation",
     html: emailHtml
@@ -39,7 +40,7 @@ export async function enableTOTP(r) {
 
 export async function confirmEnablingTOTP(r) {
   const user = await User.scope("withPassword").findByPk(r.auth.credentials.id);
-  const userController = new UserController(user.id, user);
+  const userController = new UserController(user);
 
   await userController.userMustHaveActiveStatusTOTP(false);
   await userController.checkActivationCodeTotp(r.payload.confirmCode);
@@ -55,7 +56,7 @@ export async function confirmEnablingTOTP(r) {
 
 export async function disableTOTP(r) {
   const user = await User.scope('withPassword').findByPk(r.auth.credentials.id);
-  const userController = new UserController(user.id, user);
+  const userController = new UserController(user);
 
   await userController.userMustHaveActiveStatusTOTP(false);
   await userController.checkTotpConfirmationCode(r.payload.totp);

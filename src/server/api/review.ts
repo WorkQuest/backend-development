@@ -6,26 +6,28 @@ import {
   User,
   Review,
   UserRole,
-  QuestStatus,
+  QuestStatus, Quest
 } from "@workquest/database-models/lib/models";
 
 export async function sendReview(r) {
   const fromUser: User = r.auth.credentials;
-  const questController = new QuestController(r.payload.questId);
-  const quest = await questController.findModel();
+
+  const questController = await QuestController.makeControllerByModelPromise(
+    Quest.findByPk(r.payload.questId)
+  );
 
   await questController.questMustHaveStatus(QuestStatus.Done);
 
-  if (fromUser.id !== quest.userId && fromUser.id !== quest.assignedWorkerId) {
+  if (fromUser.id !== questController.quest.userId && fromUser.id !== questController.quest.assignedWorkerId) {
     return error(Errors.Forbidden, "User does not belong to quest", {});
   }
 
-  const toUser: User = fromUser.role === UserRole.Worker ? quest.user : quest.assignedWorker;
+  const toUser: User = fromUser.role === UserRole.Worker ? questController.quest.user : questController.quest.assignedWorker;
 
   const review = await Review.create({
     toUserId: toUser.id,
     fromUserId: fromUser.id,
-    questId: quest.id,
+    questId: questController.quest.id,
     message: r.payload.message,
     mark: r.payload.mark,
   });

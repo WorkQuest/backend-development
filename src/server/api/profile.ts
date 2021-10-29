@@ -32,10 +32,11 @@ export async function getUser(r) {
     return error(Errors.Forbidden, 'You can\'t see your profile (use "get me")', {});
   }
 
-  const userController = new UserController(r.params.userId);
-  const user = await userController.findModel();
+  const userController = await UserController.makeControllerByModelPromise(
+    User.findByPk(r.params.userId)
+  );
 
-  return output(user);
+  return output(userController.user);
 }
 
 export function getUsers(role: UserRole) {
@@ -102,7 +103,7 @@ export function getUsers(role: UserRole) {
 
 export async function setRole(r) {
   const user: User = r.auth.credentials;
-  const userController = new UserController(user.id, user);
+  const userController = new UserController(user);
 
   await userController.userNeedsSetRole();
 
@@ -118,7 +119,7 @@ export async function setRole(r) {
 export function editProfile(userRole: UserRole) {
   return async function(r) {
     const user: User = r.auth.credentials;
-    const userController = new UserController(user.id, user);
+    const userController = new UserController(user);
 
     await userController.userMustHaveRole(userRole);
 
@@ -153,7 +154,7 @@ export async function changePassword(r) {
   });
 
   const transaction = await r.server.app.db.transaction();
-  const userController = new UserController(user.id, user, transaction);
+  const userController = new UserController(user, transaction);
 
   await userController.checkPassword(r.payload.oldPassword);
 
@@ -165,8 +166,7 @@ export async function changePassword(r) {
       createdAt: {
         [Op.gte]: Date.now() - config.auth.jwt.refresh.lifetime * 1000
       }
-    },
-    transaction,
+    }, transaction,
   });
 
   await transaction.commit();
@@ -176,7 +176,8 @@ export async function changePassword(r) {
 
 export async function confirmPhoneNumber(r) {
   const user = await User.scope("withPassword").findByPk(r.auth.credentials.id);
-  const userController = new UserController(user.id, user);
+
+  const userController = new UserController(user);
 
   await userController.userMustHaveVerificationPhone();
   await userController.checkPhoneConfirmationCode(r.payload.confirmCode);
