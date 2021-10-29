@@ -8,7 +8,7 @@ export type UnreadMessageIncrementPayload = {
 }
 
 export async function incrementUnreadCountMessageOfMembersJob(payload: UnreadMessageIncrementPayload) {
-  return addJob("chat/incrementUnreadCountMessageOfMembers", payload);
+  return addJob("incrementUnreadCountMessageOfMembers", payload);
 }
 
 export default async function incrementUnreadCountMessageOfMembers(payload: UnreadMessageIncrementPayload) {
