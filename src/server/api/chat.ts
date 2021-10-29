@@ -2,10 +2,10 @@ import {error, output} from "../utils";
 import {getMedias} from "../utils/medias";
 import {Errors} from "../utils/errors";
 import {Op} from "sequelize";
-import {incrementUnreadCountMessageOfMembersJob} from "../jobs/chat/incrementUnreadCountMessage";
-import {resetUnreadCountMessagesOfMemberJob} from "../jobs/chat/resetUnreadCountMessages";
-import {setMessageAsReadJob} from "../jobs/chat/setMessageAsRead";
-import {updateCountUnreadMessagesJob} from "../jobs/chat/updateCountUnreadMessages";
+import {incrementUnreadCountMessageOfMembersJob} from "../jobs/incrementUnreadCountMessageOfMembers";
+import {resetUnreadCountMessagesOfMemberJob} from "../jobs/resetUnreadCountMessagesOfMember";
+import {setMessageAsReadJob} from "../jobs/setMessageAsRead";
+import {updateCountUnreadMessagesJob} from "../jobs/updateCountUnreadMessages";
 import {ChatController} from "../controllers/chat/controller.chat";
 import {MessageController} from "../controllers/chat/controller.message";
 import {

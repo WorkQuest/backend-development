@@ -1,4 +1,4 @@
-import {addJob} from "../../utils/scheduler";
+import {addJob} from "../utils/scheduler";
 import {ChatMember} from "@workquest/database-models/lib/models";
 import {Op} from "sequelize"
 
@@ -8,7 +8,7 @@ export type UnreadMessageIncrementPayload = {
 }
 
 export async function incrementUnreadCountMessageOfMembersJob(payload: UnreadMessageIncrementPayload) {
-  return addJob("incrementUnreadCountMessageOfMembers", payload);
+  return addJob("chat/incrementUnreadCountMessageOfMembers", payload);
 }
 
 export default async function incrementUnreadCountMessageOfMembers(payload: UnreadMessageIncrementPayload) {
