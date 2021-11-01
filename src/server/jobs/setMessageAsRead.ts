@@ -3,7 +3,7 @@ import { ChatMember, Message, SenderMessageStatus } from "@workquest/database-mo
 import {Op} from "sequelize"
 
 export interface MessageAsReadPayload {
-  lastUnreadMessage: { id: string, createdAt: Date };
+  lastUnreadMessage: { id: string, number: number };
   chatId: string;
 }
 
@@ -18,7 +18,7 @@ export default async function setMessageAsRead(payload: MessageAsReadPayload) {
     where: {
       chatId: payload.chatId,
       senderStatus: SenderMessageStatus.unread,
-      createdAt: { [Op.lte]: payload.lastUnreadMessage.createdAt },
+      number: { [Op.lte]: payload.lastUnreadMessage.number },
     }
   });
 }
