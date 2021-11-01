@@ -6,8 +6,8 @@ import {incrementUnreadCountMessageOfMembersJob} from "../jobs/chat/incrementUnr
 import {resetUnreadCountMessagesOfMemberJob} from "../jobs/chat/resetUnreadCountMessages";
 import {setMessageAsReadJob} from "../jobs/chat/setMessageAsRead";
 import {updateCountUnreadMessagesJob} from "../jobs/chat/updateCountUnreadMessages";
-import {ChatController} from "../controllers/chat/controller.chat";
-import {MessageController} from "../controllers/chat/controller.message";
+import { ChatController, ChatControllerFactory } from "../controllers/chat/controller.chat";
+import { MessageController, MessageControllerFactory } from "../controllers/chat/controller.message";
 import {
   Chat,
   ChatMember,
@@ -47,8 +47,8 @@ export async function getUserChats(r) {
 }
 
 export async function getChatMessages(r) {
-  const chatController = new ChatController(r.params.chatId);
-  const chat = await chatController.findModel();
+  const chat = await Chat.findByPk(r.params.chatId);
+  const chatController = await ChatControllerFactory.makeControllerByModel(chat)
 
   await chatController.chatMustHaveMember(r.auth.credentials.id);
 
@@ -69,12 +69,14 @@ export async function getChatMessages(r) {
 }
 
 export async function getUserChat(r) {
-  const chatController = new ChatController(r.params.chatId);
-  const chat = await chatController.findModel({
-    model: StarredChat,
-    as: "star",
-    required: false,
+  const chat = await Chat.findByPk(r.params.chatId,{
+    include: {
+      model: StarredChat,
+      as: "star",
+      required: false,
+    }
   });
+  const chatController = await ChatControllerFactory.makeControllerByModel(chat)
 
   await chatController.chatMustHaveMember(r.auth.credentials.id);
 
@@ -82,8 +84,8 @@ export async function getUserChat(r) {
 }
 
 export async function getChatMembers(r) {
-  const chatController = new ChatController(r.params.chatId);
-  const chat = await chatController.findModel();
+  const chat = await Chat.findByPk(r.params.chatId);
+  const chatController = await ChatControllerFactory.makeControllerByModel(chat)
 
   await chatController.chatMustHaveMember(r.auth.credentials.id);
 
@@ -257,8 +259,8 @@ export async function sendMessageToUser(r) {
 
 export async function sendMessageToChat(r) {
   const medias = await getMedias(r.payload.medias);
-  const chatController = new ChatController(r.params.chatId);
-  const chat = await chatController.findModel();
+  const chat = await Chat.findByPk(r.params.chatId);
+  const chatController = await ChatControllerFactory.makeControllerByModel(chat)
 
   await chatController.chatMustHaveMember(r.auth.credentials.id);
 
@@ -310,8 +312,8 @@ export async function sendMessageToChat(r) {
 export async function addUserInGroupChat(r) {
   await User.userMustExist(r.params.userId);
 
-  const chatController = new ChatController(r.params.chatId);
-  const groupChat = await chatController.findModel();
+  const groupChat = await Chat.findByPk(r.params.chatId);
+  const chatController = await ChatControllerFactory.makeControllerByModel(groupChat);
 
   await chatController.chatMustHaveType(ChatType.group);
   await chatController.chatMustHaveOwner(r.auth.credentials.id);
@@ -380,8 +382,8 @@ export async function addUserInGroupChat(r) {
 export async function removeUserInGroupChat(r) {
   await User.userMustExist(r.params.userId);
 
-  const chatController = new ChatController(r.params.chatId);
-  const groupChat = await chatController.findModel();
+  const groupChat = await Chat.findByPk(r.params.chatId);
+  const chatController = await ChatControllerFactory.makeControllerByModel(groupChat);
 
   await chatController.chatMustHaveType(ChatType.group);
   await chatController.chatMustHaveOwner(r.auth.credentials.id);
@@ -443,8 +445,8 @@ export async function removeUserInGroupChat(r) {
 }
 
 export async function leaveFromGroupChat(r) {
-  const chatController = new ChatController(r.params.chatId);
-  const groupChat = await chatController.findModel();
+  const groupChat = await Chat.findByPk(r.params.chatId);
+  const chatController = await ChatControllerFactory.makeControllerByModel(groupChat);
 
   await chatController.chatMustHaveType(ChatType.group);
   await chatController.chatMustHaveMember(r.auth.credentials.id);
@@ -499,8 +501,8 @@ export async function leaveFromGroupChat(r) {
 }
 
 export async function setMessagesAsRead(r) {
-  const chatController = new ChatController(r.params.chatId);
-  const chat = await chatController.findModel();
+  const chat = await Chat.findByPk(r.params.chatId);
+  const chatController = await ChatControllerFactory.makeControllerByModel(chat);
 
   await chatController.chatMustHaveMember(r.auth.credentials.id);
 
@@ -561,11 +563,11 @@ export async function getUserStarredMessages(r) {
 }
 
 export async function markMessageStar(r) {
-  const chatController = new ChatController(r.params.chatId);
-  const messageController = new MessageController(r.params.messageId);
+  const chat = await Chat.findByPk(r.params.chatId);
+  const message = await Message.findByPk(r.params.messageId);
 
-  const chat = await chatController.findModel();
-  const message = await messageController.findModel();
+  const chatController = await ChatControllerFactory.makeControllerByModel(chat);
+  const messageController = await MessageControllerFactory.makeControllerByModel(message);
 
   await chatController.chatMustHaveMember(r.auth.credentials.id);
 
@@ -595,8 +597,8 @@ export async function removeStarFromMessage(r) {
 }
 
 export async function markChatStar(r) {
-  const chatController = new ChatController(r.params.chatId);
-  const chat = await chatController.findModel();
+  const chat = await Chat.findByPk(r.params.chatId);
+  const chatController = await ChatControllerFactory.makeControllerByModel(chat);
 
   await chatController.chatMustHaveMember(r.auth.credentials.id);
 

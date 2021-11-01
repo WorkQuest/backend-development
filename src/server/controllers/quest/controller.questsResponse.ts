@@ -1,14 +1,11 @@
 import {error} from "../../utils";
 import {Transaction} from "sequelize";
-import { Errors } from "../../utils/errors";
+import {Errors} from "../../utils/errors";
 import {
-  Quest,
   QuestsResponse,
   QuestsResponseStatus,
-  QuestsResponseType, User
+  QuestsResponseType,
 } from "@workquest/database-models/lib/models";
-import { QueryOptions } from "sequelize/types/lib/query-interface";
-import { FindOptions } from "sequelize/types/lib/model";
 
 abstract class CheckList {
   public readonly questsResponse: QuestsResponse;
@@ -70,10 +67,10 @@ export class QuestsResponseController extends CheckList {
   public setTransaction(transaction: Transaction) {
     this._transaction = transaction;
   }
+}
 
-  public static async makeControllerByModelPromise(questsResponsePromise: Promise<QuestsResponse>, transaction?: Transaction) {
-    const questsResponse = await questsResponsePromise;
-
+export class QuestsResponseControllerFactory {
+  public static async makeControllerByModel(questsResponse: QuestsResponse, transaction?: Transaction): Promise<QuestsResponseController> {
     if (!questsResponse) {
       if (transaction) {
         await transaction.rollback();

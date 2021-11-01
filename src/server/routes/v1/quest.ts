@@ -7,7 +7,6 @@ import {
   createQuest,
   deleteQuest,
   editQuest,
-  getMyStarredQuests,
   getQuests,
   rejectCompletedWorkOnQuest,
   rejectWorkOnQuest,
@@ -286,18 +285,6 @@ export default [{
       schema: emptyOkSchema
     },
   }
-}, {
-  method: "GET", // TODO тут count добавить
-  path: '/v1/quests/starred',
-  handler: getMyStarredQuests,
-  options: {
-    id: 'v1.quest.starred',
-    tags: ["api", "quest"],
-    description: 'Get starred quests',
-    response: {
-      schema: outputOkSchema(questsSchema).label("GetMyStarredQuestsResponse")
-    },
-  },
 }, {
   method: "POST",
   path: '/v1/quest/{questId}/star',

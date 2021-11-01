@@ -1,15 +1,15 @@
-import { error, output } from '../utils';
-import { Errors } from '../utils/errors';
+import { output } from '../utils';
 import { getMedias } from '../utils/medias';
-import { UserController } from "../controllers/controller.user";
+import { UserController, UserControllerFactory } from "../controllers/user/controller.user";
+import { PortfolioControllerFactory } from "../controllers/user/controller.portfolio";
 import {
-  Portfolio,
   User,
   UserRole,
+  Portfolio,
 } from "@workquest/database-models/lib/models";
 
 export async function addCase(r) {
-  const userController = new UserController(r.auth.credentials.id, r.auth.credentials);
+  const userController = new UserController(r.auth.credentials);
 
   await userController.userMustHaveRole(UserRole.Worker);
 
@@ -31,26 +31,20 @@ export async function addCase(r) {
 
 export async function getCases(r) {
   const worker = await User.findByPk(r.params.userId);
-
-  if (!worker) {
-    error(Errors.NotFound, "Worker not found", {});
-  }
+  const workerController = await UserControllerFactory.makeControllerByModel(worker);
 
   const cases = await Portfolio.findAll({
-    where: { userId: worker.id }
+    where: { userId: worker.id },
   });
 
-  return output(cases);
+  return output(cases); // TODO add pagination
 }
 
 export async function deleteCase(r) {
   const portfolio = await Portfolio.findByPk(r.params.portfolioId);
+  const portfolioController = await PortfolioControllerFactory.makeControllerByModel(portfolio);
 
-  if (!portfolio) {
-    error(Errors.NotFound, "Portfolio not found", {});
-  }
-
-  portfolio.mustBeCaseCreator(r.auth.credentials.id);
+  portfolioController.mustBeCaseCreator(r.auth.credentials.id);
 
   await portfolio.destroy();
 
@@ -58,14 +52,12 @@ export async function deleteCase(r) {
 }
 
 export async function editCase(r) {
-  const transaction = await r.server.app.db.transaction();
   const portfolio = await Portfolio.findByPk(r.params.portfolioId);
+  const portfolioController = await PortfolioControllerFactory.makeControllerByModel(portfolio);
 
-  if (!portfolio) {
-    error(Errors.NotFound, "Portfolio not found", {});
-  }
+  portfolioController.mustBeCaseCreator(r.auth.credentials.id);
 
-  portfolio.mustBeCaseCreator(r.auth.credentials.id);
+  const transaction = await r.server.app.db.transaction();
 
   if (r.payload.medias) {
     const medias = await getMedias(r.payload.medias);

@@ -1,7 +1,7 @@
 import { error, output } from '../utils';
 import { Errors } from '../utils/errors';
 import { addUpdateReviewStatisticsJob } from '../jobs/updateReviewStatistics';
-import { QuestController } from "../controllers/quest/controller.quest";
+import { QuestController, QuestControllerFactory } from "../controllers/quest/controller.quest";
 import {
   User,
   Review,
@@ -12,9 +12,8 @@ import {
 export async function sendReview(r) {
   const fromUser: User = r.auth.credentials;
 
-  const questController = await QuestController.makeControllerByModelPromise(
-    Quest.findByPk(r.payload.questId)
-  );
+  const quest = await Quest.findByPk(r.payload.questId);
+  const questController = await QuestControllerFactory.makeControllerByModel(quest);
 
   await questController.questMustHaveStatus(QuestStatus.Done);
 

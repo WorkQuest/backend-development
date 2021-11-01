@@ -1,7 +1,7 @@
 import { error, output } from "../utils";
 import { Errors } from "../utils/errors";
-import { QuestController } from "../controllers/quest/controller.quest";
-import { UserController } from "../controllers/controller.user";
+import { QuestController, QuestControllerFactory } from "../controllers/quest/controller.quest";
+import { UserController, UserControllerFactory } from "../controllers/user/controller.user";
 import {
   User,
   UserRole,
@@ -11,15 +11,18 @@ import {
   QuestsResponseStatus,
   QuestsResponseType,
 } from "@workquest/database-models/lib/models";
-import { QuestsResponseController } from "../controllers/quest/controller.questsResponse";
+import {
+  QuestsResponseController,
+  QuestsResponseControllerFactory
+} from "../controllers/quest/controller.questsResponse";
 
 export async function responseOnQuest(r) {
   const worker: User = r.auth.credentials;
 
   const workerController = new UserController(worker);
-  const questController = await QuestController.makeControllerByModelPromise(
-    Quest.findByPk(r.params.questId)
-  );
+
+  const quest = await Quest.findByPk(r.params.questId);
+  const questController = await QuestControllerFactory.makeControllerByModel(quest);
 
   await questController.questMustHaveStatus(QuestStatus.Created);
   await workerController.userMustHaveRole(UserRole.Worker);
@@ -50,12 +53,11 @@ export async function inviteOnQuest(r) {
   const employer: User = r.auth.credentials;
   const employerController = new UserController(employer);
 
-  const invitedWorkerController = await UserController.makeControllerByModelPromise(
-    User.findByPk(r.payload.invitedUserId)
-  );
-  const questController = await QuestController.makeControllerByModelPromise(
-    Quest.findByPk(r.params.questId)
-  );
+  const invitedWorker = await User.findByPk(r.payload.invitedUserId);
+  const invitedWorkerController = await UserControllerFactory.makeControllerByModel(invitedWorker);
+
+  const quest = await Quest.findByPk(r.params.questId);
+  const questController = await QuestControllerFactory.makeControllerByModel(quest);
 
   await employerController.userMustHaveRole(UserRole.Employer);
   await invitedWorkerController.userMustHaveRole(UserRole.Worker);
@@ -85,9 +87,8 @@ export async function inviteOnQuest(r) {
 export async function userResponsesToQuest(r) {
   const employer: User = r.auth.credentials;
 
-  const questController = await QuestController.makeControllerByModelPromise(
-    Quest.findByPk(r.params.questId)
-  );
+  const quest = await Quest.findByPk(r.params.questId);
+  const questController = await QuestControllerFactory.makeControllerByModel(quest);
 
   await questController.employerMustBeQuestCreator(employer.id);
 
@@ -118,9 +119,8 @@ export async function responsesToQuestsForUser(r) {
 export async function acceptInviteOnQuest(r) {
   const worker: User = r.auth.credentials;
 
-  const questsResponseController = await QuestsResponseController.makeControllerByModelPromise(
-    QuestsResponse.findByPk(r.params.responseId)
-  );
+  const questsResponse = await QuestsResponse.findByPk(r.params.responseId);
+  const questsResponseController = await QuestsResponseControllerFactory.makeControllerByModel(questsResponse);
 
   await questsResponseController.workerMustBeInvitedToQuest(worker.id);
   await questsResponseController.questsResponseMustHaveType(QuestsResponseType.Invite);
@@ -134,9 +134,8 @@ export async function acceptInviteOnQuest(r) {
 export async function rejectInviteOnQuest(r) {
   const worker: User = r.auth.credentials;
 
-  const questsResponseController = await QuestsResponseController.makeControllerByModelPromise(
-    QuestsResponse.findByPk(r.params.responseId)
-  );
+  const questsResponse = await QuestsResponse.findByPk(r.params.responseId);
+  const questsResponseController = await QuestsResponseControllerFactory.makeControllerByModel(questsResponse);
 
   await questsResponseController.workerMustBeInvitedToQuest(worker.id);
   await questsResponseController.questsResponseMustHaveType(QuestsResponseType.Invite);
@@ -150,9 +149,8 @@ export async function rejectInviteOnQuest(r) {
 export async function rejectResponseOnQuest(r) {
   const employer: User = r.auth.credentials;
 
-  const questsResponseController = await QuestsResponseController.makeControllerByModelPromise(
-    QuestsResponse.findByPk(r.params.responseId, { include: { model: Quest, as: 'quest' } })
-  );
+  const questsResponse = await QuestsResponse.findByPk(r.params.responseId, { include: { model: Quest, as: 'quest' } });
+  const questsResponseController = await QuestsResponseControllerFactory.makeControllerByModel(questsResponse);
 
   const questController = new QuestController(questsResponseController.questsResponse.quest); // TODO проверить
 

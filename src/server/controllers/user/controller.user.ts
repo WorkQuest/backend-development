@@ -1,8 +1,8 @@
 import {Transaction} from "sequelize";
-import {error} from "../utils";
-import {Errors} from '../utils/errors';
-import {getMedia} from "../utils/medias";
-import {keysToRecords} from "../utils/filters";
+import {error} from "../../utils";
+import {Errors} from '../../utils/errors';
+import {getMedia} from "../../utils/medias";
+import {keysToRecords} from "../../utils/filters";
 import {totpValidate} from "@workquest/database-models/lib/utils";
 import {
   User,
@@ -10,7 +10,7 @@ import {
   UserStatus,
   RatingStatistic,
   defaultUserSettings,
-  UserSpecializationFilter, Quest
+  UserSpecializationFilter,
 } from "@workquest/database-models/lib/models";
 
 abstract class CheckList {
@@ -157,20 +157,6 @@ export class UserController extends CheckList {
     await UserSpecializationFilter.bulkCreate(userSpecializations, { transaction: this._transaction });
   }
 
-  public static async makeControllerByModelPromise(userPromise: Promise<User>, transaction?: Transaction) {
-    const user = await userPromise;
-
-    if (!user) {
-      if (transaction) {
-        await transaction.rollback();
-      }
-
-      throw error(Errors.NotFound, "User not found", {});
-    }
-
-    return new UserController(user, transaction);
-  }
-
   public static getDefaultAdditionalInfo(role: UserRole) {
     let additionalInfo: object = {
       description: null,
@@ -239,5 +225,19 @@ export class UserController extends CheckList {
     await RatingStatistic.create({ userId: user.id });
 
     return user;
+  }
+}
+
+export class UserControllerFactory {
+  public static async makeControllerByModel(user: User, transaction?: Transaction): Promise<UserController> {
+    if (!user) {
+      if (transaction) {
+        await transaction.rollback();
+      }
+
+      throw error(Errors.NotFound, "User not found", {});
+    }
+
+    return new UserController(user, transaction);
   }
 }

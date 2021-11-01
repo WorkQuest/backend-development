@@ -5,7 +5,7 @@ import * as path from "path";
 import * as fs from "fs";
 import Handlebars = require("handlebars");
 import { User } from "@workquest/database-models/lib/models";
-import { UserController } from "../controllers/controller.user";
+import { UserController, UserControllerFactory } from "../controllers/user/controller.user";
 
 const confirmTemplatePath = path.join(__dirname, "..", "..", "..", "templates", "confirm2FA.html");
 const confirmTemplate = Handlebars.compile(fs.readFileSync(confirmTemplatePath, {
@@ -13,9 +13,8 @@ const confirmTemplate = Handlebars.compile(fs.readFileSync(confirmTemplatePath, 
 }));
 
 export async function enableTOTP(r) {
-  const userController = await UserController.makeControllerByModelPromise(
-    User.scope('withPassword').findByPk(r.auth.credentials.id)
-  );
+  const user = await User.scope('withPassword').findByPk(r.auth.credentials.id);
+  const userController = await UserControllerFactory.makeControllerByModel(user);
 
   await userController.userMustHaveActiveStatusTOTP(false);
 

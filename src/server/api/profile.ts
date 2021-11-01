@@ -2,7 +2,7 @@ import { literal, Op } from "sequelize";
 import { Errors } from "../utils/errors";
 import { addSendSmsJob } from '../jobs/sendSms';
 import { error, getRandomCodeNumber, output } from '../utils';
-import { UserController } from "../controllers/controller.user";
+import { UserController, UserControllerFactory } from "../controllers/user/controller.user";
 import { splitSpecialisationAndIndustry } from "../utils/filters";
 import { transformToGeoPostGIS } from "../utils/postGIS";
 import {
@@ -32,9 +32,8 @@ export async function getUser(r) {
     return error(Errors.Forbidden, 'You can\'t see your profile (use "get me")', {});
   }
 
-  const userController = await UserController.makeControllerByModelPromise(
-    User.findByPk(r.params.userId)
-  );
+  const user = await User.findByPk(r.params.userId);
+  const userController = await UserControllerFactory.makeControllerByModel(user);
 
   return output(userController.user);
 }

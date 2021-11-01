@@ -1,6 +1,6 @@
 import {error} from "../../utils";
 import {Transaction} from "sequelize";
-import {UserController} from "../controller.user";
+import {UserController} from "../user/controller.user";
 import {Errors} from "../../utils/errors";
 import {keysToRecords} from "../../utils/filters";
 import {getMedias} from "../../utils/medias";
@@ -101,51 +101,9 @@ export class QuestController extends CheckList {
     this.quest.setDataValue('locationPostGIS', locationPostGIS);
   }
 
-  public static async makeControllerByModelPromise(questPromise: Promise<Quest>, transaction?: Transaction) {
-    const quest = await questPromise;
-
-    if (!quest) {
-      if (transaction) {
-        await transaction.rollback();
-      }
-
-      throw error(Errors.NotFound, "Quest not found", {});
-    }
-
-    return new QuestController(quest, transaction);
-  }
-
-  // public static async makeControllerByPk(id: string, queryOptions: QueryOptions = {}, transaction?: Transaction): Promise<QuestController> {
-  //   const quest = await Quest.findByPk(id, queryOptions);
-  //
-  //   if (!quest) {
-  //     if (transaction) {
-  //       await transaction.rollback();
-  //     }
-  //
-  //     throw error(Errors.NotFound, "quest not found", { questId: id });
-  //   }
-  //
-  //   return new QuestController(quest, transaction);
-  // }
-  //
-  // public static async makeControllerByQuery(findOptions: FindOptions, transaction?: Transaction): Promise<QuestController> {
-  //   const quest = await Quest.findOne(findOptions);
-  //
-  //   if (!quest) {
-  //     if (transaction) {
-  //       await transaction.rollback();
-  //     }
-  //
-  //     throw error(Errors.NotFound, "Quest not found", {});
-  //   }
-  //
-  //   return new QuestController(quest, transaction);
-  // }
-
   static async answerWorkOnQuest(questId: string, worker: User, acceptWork: boolean) {
     const userController = new UserController(worker);
-    const questController = await QuestController.makeControllerByModelPromise(Quest.findByPk(questId));
+    const questController = await QuestControllerFactory.makeControllerByModel(await Quest.findByPk(questId));
 
     await userController.userMustHaveRole(UserRole.Worker);
     await questController.questMustHaveStatus(QuestStatus.WaitWorker);
@@ -156,5 +114,19 @@ export class QuestController extends CheckList {
     } else {
       await questController.quest.update({ status: QuestStatus.Created, assignedWorkerId: null });
     }
+  }
+}
+
+export class QuestControllerFactory {
+  public static async makeControllerByModel(quest: Quest, transaction?: Transaction): Promise<QuestController> {
+    if (!quest) {
+      if (transaction) {
+        await transaction.rollback();
+      }
+
+      throw error(Errors.NotFound, "Quest not found", {});
+    }
+
+    return new QuestController(quest, transaction);
   }
 }

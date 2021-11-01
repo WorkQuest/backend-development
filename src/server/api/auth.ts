@@ -7,7 +7,7 @@ import config from "../config/config";
 import { Errors } from "../utils/errors";
 import { addSendEmailJob } from "../jobs/sendEmail";
 import { generateJwt } from "../utils/auth";
-import { UserController } from "../controllers/controller.user";
+import { UserController, UserControllerFactory } from "../controllers/user/controller.user";
 import {
 	error,
 	output,
@@ -128,9 +128,10 @@ export async function confirmEmail(r) {
 }
 
 export async function login(r) {
-	const userController = await UserController.makeControllerByModelPromise(
-		User.scope("withPassword").findOne({ where: { email: { [Op.iLike]: r.payload.email }	} })
-	);
+	const user = await User.scope("withPassword").findOne({
+		where: { email: { [Op.iLike]: r.payload.email }	}
+	});
+	const userController = await UserControllerFactory.makeControllerByModel(user);
 
 	await userController.checkPassword(r.payload.password);
 
@@ -139,7 +140,7 @@ export async function login(r) {
 	}
 
 	const session = await Session.create({
-		userId: userController.user.id,
+		userId: user.id,
 		invalidating: false,
 		place: getGeo(r),
 		ip: getRealIp(r),
@@ -148,7 +149,7 @@ export async function login(r) {
 
 	const result = {
 		...generateJwt({ id: session.id }),
-		userStatus: userController.user.status,
+		userStatus: user.status,
 	};
 
 	return output(result);
