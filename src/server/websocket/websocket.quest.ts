@@ -1,6 +1,19 @@
-export const enum QuestNotificationActions {
-  questStarted = "questStarted",
+import { completeWorkOnQuest } from "../api/quest";
 
+export const enum QuestNotificationActions {
+  /** Quest flow */
+  questStarted = "questStarted",
+  workerRejectedQuest = "workerRejectedQuest",
+  workerAcceptedQuest = "workerAcceptedQuest",
+  workerCompletedQuest = "workerCompletedQuest",
+  employerAcceptedCompletedQuest = "employerAcceptedCompletedQuest",
+  employerRejectedCompletedQuest = "employerRejectedCompletedQuest",
+  /** Quest Response */
+  workerRespondedToQuest = "workerRespondedToQuest",
+  employerInvitedWorkerToQuest = "employerInvitedWorkerToQuest",
+  workerAcceptedInvitationToQuest = "workerAcceptedInvitationToQuest",
+  workerRejectedInvitationToQuest = "workerRejectedInvitationToQuest",
+  employerRejectedWorkersResponse = "employerRejectedWorkersResponse",
 }
 
 const questSubscriptionFilter = async function (path, notification, options): Promise<boolean> {

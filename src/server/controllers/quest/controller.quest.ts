@@ -101,7 +101,7 @@ export class QuestController extends CheckList {
     this.quest.setDataValue('locationPostGIS', locationPostGIS);
   }
 
-  static async answerWorkOnQuest(questId: string, worker: User, acceptWork: boolean) {
+  static async answerWorkOnQuest(questId: string, worker: User, acceptWork: boolean): Promise<QuestController> {
     const userController = new UserController(worker);
     const questController = await QuestControllerFactory.makeControllerByModel(await Quest.findByPk(questId));
 
@@ -111,9 +111,15 @@ export class QuestController extends CheckList {
 
     if (acceptWork) {
       await questController.quest.update({ status: QuestStatus.Active });
+      questController.quest.status = QuestStatus.Active;
     } else {
-      await questController.quest.update({ status: QuestStatus.Created, assignedWorkerId: null });
+      questController.quest.status = QuestStatus.Created;
+      questController.quest.assignedWorkerId = null;
     }
+
+    await questController.quest.save();
+
+    return questController;
   }
 }
 

@@ -15,10 +15,10 @@ import {
   QuestsResponseController,
   QuestsResponseControllerFactory
 } from "../controllers/quest/controller.questsResponse";
+import { publishQuestNotifications, QuestNotificationActions } from "../websocket/websocket.quest";
 
 export async function responseOnQuest(r) {
   const worker: User = r.auth.credentials;
-
   const workerController = new UserController(worker);
 
   const quest = await Quest.findByPk(r.params.questId);
@@ -27,23 +27,29 @@ export async function responseOnQuest(r) {
   await questController.questMustHaveStatus(QuestStatus.Created);
   await workerController.userMustHaveRole(UserRole.Worker);
 
-  const questsResponse = await QuestsResponse.findOne({
+  let questResponse: QuestsResponse = await QuestsResponse.findOne({
     where: {
       questId: questController.quest.id,
       workerId: worker.id,
     }
   });
 
-  if (questsResponse) {
-    return error(Errors.AlreadyAnswer, "You already answered quest", { questsResponse });
+  if (questResponse) {
+    return error(Errors.AlreadyAnswer, "You already answered quest", { questResponse });
   }
 
-  await QuestsResponse.create({
+  questResponse = await QuestsResponse.create({
     workerId: worker.id,
     questId: questController.quest.id,
     message: r.payload.message,
     status: QuestsResponseStatus.Open,
     type: QuestsResponseType.Response,
+  });
+
+  await publishQuestNotifications(r.server, {
+    data: questResponse,
+    recipients: [quest.userId],
+    action: QuestNotificationActions.workerRespondedToQuest,
   });
 
   return output();
@@ -65,20 +71,26 @@ export async function inviteOnQuest(r) {
   await questController.questMustHaveStatus(QuestStatus.Created);
   await questController.employerMustBeQuestCreator(employer.id);
 
-  const questResponse = await QuestsResponse.findOne({
+  let questResponse: QuestsResponse = await QuestsResponse.findOne({
     where: { questId: questController.quest.id, workerId: invitedWorkerController.user.id }
   });
 
   if (questResponse) {
-    return error(Errors.AlreadyAnswer, "You already answered quest", { questResponse });
+    return error(Errors.AlreadyAnswer, "You have already been invited to the quest", { questResponse });
   }
 
-  await QuestsResponse.create({
+  questResponse = await QuestsResponse.create({
     workerId: invitedWorkerController.user.id,
     questId: questController.quest.id,
     message: r.payload.message,
     status: QuestsResponseStatus.Open,
     type: QuestsResponseType.Invite,
+  });
+
+  await publishQuestNotifications(r.server, {
+    data: questResponse,
+    recipients: [invitedWorker.id],
+    action: QuestNotificationActions.employerInvitedWorkerToQuest,
   });
 
   return output();
@@ -119,14 +131,20 @@ export async function responsesToQuestsForUser(r) {
 export async function acceptInviteOnQuest(r) {
   const worker: User = r.auth.credentials;
 
-  const questsResponse = await QuestsResponse.findByPk(r.params.responseId);
-  const questsResponseController = await QuestsResponseControllerFactory.makeControllerByModel(questsResponse);
+  let questResponse = await QuestsResponse.findByPk(r.params.responseId, { include: { model: Quest, as: 'quest' } });
+  const questsResponseController = await QuestsResponseControllerFactory.makeControllerByModel(questResponse);
 
   await questsResponseController.workerMustBeInvitedToQuest(worker.id);
   await questsResponseController.questsResponseMustHaveType(QuestsResponseType.Invite);
   await questsResponseController.questsResponseMustHaveStatus(QuestsResponseStatus.Open);
 
-  await questsResponseController.questsResponse.update({ status: QuestsResponseStatus.Accepted });
+  questResponse = await questResponse.update({ status: QuestsResponseStatus.Accepted });
+
+  await publishQuestNotifications(r.server, {
+    data: questResponse,
+    recipients: [questResponse.quest.userId],
+    action: QuestNotificationActions.workerAcceptedInvitationToQuest,
+  });
 
   return output();
 }
@@ -134,14 +152,20 @@ export async function acceptInviteOnQuest(r) {
 export async function rejectInviteOnQuest(r) {
   const worker: User = r.auth.credentials;
 
-  const questsResponse = await QuestsResponse.findByPk(r.params.responseId);
-  const questsResponseController = await QuestsResponseControllerFactory.makeControllerByModel(questsResponse);
+  let questResponse = await QuestsResponse.findByPk(r.params.responseId, { include: { model: Quest, as: 'quest' } });
+  const questsResponseController = await QuestsResponseControllerFactory.makeControllerByModel(questResponse);
 
   await questsResponseController.workerMustBeInvitedToQuest(worker.id);
   await questsResponseController.questsResponseMustHaveType(QuestsResponseType.Invite);
   await questsResponseController.questsResponseMustHaveStatus(QuestsResponseStatus.Open);
 
-  await questsResponseController.questsResponse.update({ status: QuestsResponseStatus.Rejected });
+  questResponse = await questResponse.update({ status: QuestsResponseStatus.Rejected });
+
+  await publishQuestNotifications(r.server, {
+    data: questResponse,
+    recipients: [questResponse.quest.userId],
+    action: QuestNotificationActions.workerRejectedInvitationToQuest,
+  });
 
   return output();
 }
@@ -149,16 +173,22 @@ export async function rejectInviteOnQuest(r) {
 export async function rejectResponseOnQuest(r) {
   const employer: User = r.auth.credentials;
 
-  const questsResponse = await QuestsResponse.findByPk(r.params.responseId, { include: { model: Quest, as: 'quest' } });
+  let questsResponse = await QuestsResponse.findByPk(r.params.responseId, { include: { model: Quest, as: 'quest' } });
   const questsResponseController = await QuestsResponseControllerFactory.makeControllerByModel(questsResponse);
 
-  const questController = new QuestController(questsResponseController.questsResponse.quest); // TODO проверить
+  const questController = new QuestController(questsResponse.quest); // TODO проверить
 
   await questController.employerMustBeQuestCreator(employer.id);
   await questsResponseController.questsResponseMustHaveType(QuestsResponseType.Response);
   await questsResponseController.questsResponseMustHaveStatus(QuestsResponseStatus.Open);
 
-  await questsResponseController.questsResponse.update({ status: QuestsResponseStatus.Rejected });
+  questsResponse = await questsResponse.update({ status: QuestsResponseStatus.Rejected });
+
+  await publishQuestNotifications(r.server, {
+    data: questsResponse,
+    recipients: [questsResponse.quest.userId],
+    action: QuestNotificationActions.employerRejectedWorkersResponse,
+  });
 
   return output();
 }
