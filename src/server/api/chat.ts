@@ -2,12 +2,12 @@ import {error, output} from "../utils";
 import {getMedias} from "../utils/medias";
 import {Errors} from "../utils/errors";
 import {Op} from "sequelize";
-import {incrementUnreadCountMessageOfMembersJob} from "../jobs/chat/incrementUnreadCountMessage";
-import {resetUnreadCountMessagesOfMemberJob} from "../jobs/chat/resetUnreadCountMessages";
-import {setMessageAsReadJob} from "../jobs/chat/setMessageAsRead";
-import {updateCountUnreadMessagesJob} from "../jobs/chat/updateCountUnreadMessages";
-import { ChatController, ChatControllerFactory } from "../controllers/chat/controller.chat";
-import { MessageController, MessageControllerFactory } from "../controllers/chat/controller.message";
+import {incrementUnreadCountMessageOfMembersJob} from "../jobs/incrementUnreadCountMessageOfMembers";
+import {resetUnreadCountMessagesOfMemberJob} from "../jobs/resetUnreadCountMessagesOfMember";
+import {setMessageAsReadJob} from "../jobs/setMessageAsRead";
+import {updateCountUnreadMessagesJob} from "../jobs/updateCountUnreadMessages";
+import {ChatController, ChatControllerFactory } from "../controllers/chat/controller.chat";
+import {MessageController, MessageControllerFactory } from "../controllers/chat/controller.message";
 import {
   Chat,
   ChatMember,
@@ -32,6 +32,7 @@ export async function getUserChats(r) {
   }, {
     model: StarredChat,
     as: 'star',
+    where: { userId: r.auth.credentials.id },
     required: r.query.starred,
   }];
 
@@ -81,6 +82,31 @@ export async function getUserChat(r) {
   await chatController.chatMustHaveMember(r.auth.credentials.id);
 
   return output(chat);
+}
+
+export async function listOfUsersByChats(r) {
+  const { count, rows } = await User.scope('shortWithAdditionalInfo').findAndCountAll({
+    include: {
+      model: ChatMember.unscoped(),
+      as: 'chatMember',
+      attributes: [],
+      where: { userId: { [Op.ne]: r.auth.credentials.id } },
+      include: [{
+        model: Chat.unscoped(),
+        as: 'chat',
+        where: { type: ChatType.private },
+        include: [{
+          model: ChatMember.unscoped(),
+          as: 'meMember',
+          where: { userId: r.auth.credentials.id },
+        }]
+      }],
+    },
+    limit: r.query.limit,
+    offset: r.query.offset,
+  });
+
+  return output({ count, users: rows });
 }
 
 export async function getChatMembers(r) {
@@ -559,7 +585,7 @@ export async function getUserStarredMessages(r) {
     }]
   });
 
-  return output({ count, rows });
+  return output({ count, messages: rows });
 }
 
 export async function markMessageStar(r) {
@@ -625,4 +651,3 @@ export async function removeStarFromChat(r) {
 
   return output();
 }
-

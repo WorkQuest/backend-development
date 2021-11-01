@@ -307,43 +307,15 @@ export async function getQuests(r) {
     ...(r.params.userId && { userId: r.params.userId }),
     ...(r.query.performing && { assignedWorkerId: r.auth.credentials.id }),
     ...(r.query.north && r.query.south && { [Op.and]: entersAreaLiteral }),
-    ...(r.query.priorities && { priorities: {[Op.in]: r.query.priorities } }),
-    ...(r.query.workplaces && { workplaces: { [Op.in]: r.query.workplaces } }),
-    ...(r.query.employments && { employments: { [Op.in]: r.params.employments } }),
+    ...(r.query.priorities && { priority: {[Op.in]: r.query.priorities } }),
+    ...(r.query.workplaces && { workplace: { [Op.in]: r.query.workplaces } }),
+    ...(r.query.employments && { employment: { [Op.in]: r.query.employments } }),
   };
 
   if (r.query.q) {
     where[Op.or] = searchFields.map(field => ({
       [field]: { [Op.iLike]: `%${r.query.q}%` }
     }));
-  }
-  if (r.query.invited) {
-    include.push({
-      model: QuestsResponse,
-      as: 'invited',
-      attributes: [],
-      required: true,
-      where: {
-        [Op.and]: [
-          { workerId: r.auth.credentials.id },
-          { type: QuestsResponseType.Invite },
-        ]
-      }
-    });
-  }
-  if (r.query.responded) {
-    include.push({
-      model: QuestsResponse,
-      as: "responded",
-      attributes: [],
-      required: true,
-      where: {
-        [Op.and]: [
-          { workerId: r.auth.credentials.id },
-          { type: QuestsResponseType.Response },
-        ]
-      },
-    });
   }
   if (r.query.specializations) {
     const { specializationKeys, industryKeys } = splitSpecialisationAndIndustry(r.query.specializations);
@@ -366,10 +338,30 @@ export async function getQuests(r) {
   }
 
   include.push({
-    model: StarredQuests,
+    model: StarredQuests.unscoped(),
     as: "star",
     where: { userId: r.auth.credentials.id },
     required: r.query.starred,
+  }, {
+    model: QuestsResponse.unscoped(),
+    as: 'invited',
+    required: r.query.invited,
+    where: {
+      [Op.and]: [
+        { workerId: r.auth.credentials.id },
+        { type: QuestsResponseType.Invite },
+      ]
+    }
+  }, {
+    model: QuestsResponse.unscoped(),
+    as: "responded",
+    required: r.query.responded,
+    where: {
+      [Op.and]: [
+        { workerId: r.auth.credentials.id },
+        { type: QuestsResponseType.Response },
+      ]
+    },
   });
 
   // {
