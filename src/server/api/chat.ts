@@ -558,7 +558,7 @@ export async function getUserStarredMessages(r) {
     }]
   });
 
-  return output({ count, rows });
+  return output({ count, messages: rows });
 }
 
 export async function markMessageStar(r) {
