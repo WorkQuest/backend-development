@@ -183,7 +183,7 @@ export async function sendMessageToUser(r) {
   });
 
   const [chat, isChatCreated] = await Chat.findOrCreate({
-    where: { },
+    where: {type: ChatType.private},
     include: [{
       model: ChatMember,
       as: 'firstMemberInPrivateChat',
@@ -244,6 +244,12 @@ export async function sendMessageToUser(r) {
       chatId: chat.id, notifierUserId: r.auth.credentials.id,
     });
   }
+
+  await setMessageAsReadJob({
+    lastUnreadMessage: { id: message.id, number: message.number },
+    chatId: chat.id,
+    senderId: r.auth.credentials.id,
+  });
 
   const result = await Message.findByPk(message.id);
 
