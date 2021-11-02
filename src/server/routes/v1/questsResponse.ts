@@ -4,7 +4,7 @@ import {
   emptyOkSchema,
   idSchema,
   questsResponseMessageSchema,
-  questsResponsesWithCountSchema,
+  questsResponsesWithCountSchema, offsetSchema, limitSchema
 } from "@workquest/database-models/lib/schemes";
 import {
   acceptInviteOnQuest,
@@ -68,7 +68,11 @@ export default [{
     validate: {
       params: Joi.object({
         questId: idSchema.required(),
-      }).label("ResponsesToQuestParams")
+      }).label("ResponsesToQuestParams"),
+      query: Joi.object({
+        offset: offsetSchema,
+        limit: limitSchema,
+      })
     },
     response: {
       schema: outputOkSchema(questsResponsesWithCountSchema).label("ResponsesToQuestWithCountResponse")

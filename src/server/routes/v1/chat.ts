@@ -33,7 +33,8 @@ import {
   getUserStarredMessages,
   removeStarFromMessage,
   getChatMembers,
-  markMessageStar, listOfUsersByChats
+  markMessageStar,
+  listOfUsersByChats,
 } from "../../api/chat";
 
 export default [{

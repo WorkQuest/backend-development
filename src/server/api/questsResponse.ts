@@ -106,6 +106,8 @@ export async function userResponsesToQuest(r) {
 
   const { rows, count } = await QuestsResponse.findAndCountAll({
     where: { questId: questController.quest.id },
+    limit: r.query.limit,
+    offset: r.query.offset,
   });
 
   return output({ count, responses: rows });

@@ -50,6 +50,14 @@ abstract class CheckList {
       });
     }
   }
+
+  public async userMustBelongToQuest(userId: string) {
+    if (userId !== this.quest.userId && userId !== this.quest.assignedWorkerId) {
+      await this._rollbackTransaction();
+
+      throw error(Errors.Forbidden, "User does not belong to quest", {});
+    }
+  }
 }
 
 export class QuestController extends CheckList {

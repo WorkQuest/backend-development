@@ -14,6 +14,8 @@ export const enum QuestNotificationActions {
   workerAcceptedInvitationToQuest = "workerAcceptedInvitationToQuest",
   workerRejectedInvitationToQuest = "workerRejectedInvitationToQuest",
   employerRejectedWorkersResponse = "employerRejectedWorkersResponse",
+  /** Review */
+  userLeftReviewAboutQuest = "userLeftReviewAboutQuest"
 }
 
 const questSubscriptionFilter = async function (path, notification, options): Promise<boolean> {

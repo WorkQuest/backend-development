@@ -8,6 +8,7 @@ import {
   UserRole,
   QuestStatus, Quest
 } from "@workquest/database-models/lib/models";
+import { publishQuestNotifications, QuestNotificationActions } from "../websocket/websocket.quest";
 
 export async function sendReview(r) {
   const fromUser: User = r.auth.credentials;
@@ -16,10 +17,7 @@ export async function sendReview(r) {
   const questController = await QuestControllerFactory.makeControllerByModel(quest);
 
   await questController.questMustHaveStatus(QuestStatus.Done);
-
-  if (fromUser.id !== questController.quest.userId && fromUser.id !== questController.quest.assignedWorkerId) {
-    return error(Errors.Forbidden, "User does not belong to quest", {});
-  }
+  await questController.userMustBelongToQuest(fromUser.id);
 
   const toUser: User = fromUser.role === UserRole.Worker ? questController.quest.user : questController.quest.assignedWorker;
 
@@ -33,6 +31,12 @@ export async function sendReview(r) {
 
   await addUpdateReviewStatisticsJob({
     userId: toUser.id,
+  });
+
+  await publishQuestNotifications(r.server, {
+    data: review,
+    recipients: [toUser.id],
+    action: QuestNotificationActions.userLeftReviewAboutQuest,
   });
 
   return output(review);

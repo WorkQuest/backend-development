@@ -6,8 +6,9 @@ import {incrementUnreadCountMessageOfMembersJob} from "../jobs/incrementUnreadCo
 import {resetUnreadCountMessagesOfMemberJob} from "../jobs/resetUnreadCountMessagesOfMember";
 import {setMessageAsReadJob} from "../jobs/setMessageAsRead";
 import {updateCountUnreadMessagesJob} from "../jobs/updateCountUnreadMessages";
-import {ChatController, ChatControllerFactory } from "../controllers/chat/controller.chat";
-import {MessageController, MessageControllerFactory } from "../controllers/chat/controller.message";
+import {ChatController, ChatControllerFactory} from "../controllers/chat/controller.chat";
+import {MessageControllerFactory} from "../controllers/chat/controller.message";
+import { ChatNotificationActions, publishChatNotifications } from "../websocket/websocket.chat";
 import {
   Chat,
   ChatMember,
@@ -21,7 +22,6 @@ import {
   StarredChat,
   User,
 } from "@workquest/database-models/lib/models";
-import { ChatNotificationActions, publishChatNotifications } from "../websocket/websocket.chat";
 
 export async function getUserChats(r) {
   const include = [{
@@ -210,7 +210,7 @@ export async function sendMessageToUser(r) {
   });
 
   const [chat, isChatCreated] = await Chat.findOrCreate({
-    where: { },
+    where: { type: ChatType.private },
     include: [{
       model: ChatMember,
       as: 'firstMemberInPrivateChat',
