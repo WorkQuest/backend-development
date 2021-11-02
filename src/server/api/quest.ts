@@ -283,7 +283,7 @@ export async function getQuests(r) {
   const order = [];
   const include = [];
   const where = {
-    ...(r.query.status && { status: r.query.status }),
+    ...(r.query.statuses && { status: { [Op.in]: r.query.statuses } }),
     ...(r.query.adType && { adType: r.query.adType }),
     ...(r.query.filter && { filter: r.params.filter }),
     ...(r.params.userId && { userId: r.params.userId }),
