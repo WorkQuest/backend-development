@@ -5,7 +5,7 @@ export type resetUnreadCountMessagesPayload = {
   chatId: string;
   userId: string;
   lastReadMessageId: string;
-  lastReadMessageDate: Date;
+  lastReadMessageNumber: number;
 }
 
 export async function resetUnreadCountMessagesOfMemberJob(payload: resetUnreadCountMessagesPayload) {
@@ -16,7 +16,7 @@ export default async function resetUnreadCountMessagesOfMember(payload: resetUnr
   await ChatMember.update({
     unreadCountMessages: 0,
     lastReadMessageId: payload.lastReadMessageId,
-    lastReadMessageDate: payload.lastReadMessageDate,
+    lastReadMessageNumber: payload.lastReadMessageNumber,
   }, {
     where: { chatId: payload.chatId, userId: payload.userId }
   });

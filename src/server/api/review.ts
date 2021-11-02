@@ -1,14 +1,14 @@
-import { error, output } from '../utils';
-import { Errors } from '../utils/errors';
-import { addUpdateReviewStatisticsJob } from '../jobs/updateReviewStatistics';
-import { QuestController, QuestControllerFactory } from "../controllers/quest/controller.quest";
+import {output} from '../utils';
+import {addUpdateReviewStatisticsJob} from '../jobs/updateReviewStatistics';
+import {QuestControllerFactory} from "../controllers/quest/controller.quest";
+import {publishQuestNotifications, QuestNotificationActions} from "../websocket/websocket.quest";
 import {
   User,
+  Quest,
   Review,
   UserRole,
-  QuestStatus, Quest
+  QuestStatus,
 } from "@workquest/database-models/lib/models";
-import { publishQuestNotifications, QuestNotificationActions } from "../websocket/websocket.quest";
 
 export async function sendReview(r) {
   const fromUser: User = r.auth.credentials;
@@ -47,6 +47,9 @@ export async function getReviewsOfUser(r) {
     include: [{
       model: User.scope('short'),
       as: 'fromUser'
+    }, {
+      model: Quest, // TODO добавить short scope
+      as: 'quest',
     }],
     where: { toUserId: r.params.userId },
     limit: r.query.limit,

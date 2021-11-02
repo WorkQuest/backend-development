@@ -3,7 +3,7 @@ import { Message, ChatMember } from "@workquest/database-models/lib/models";
 import { Op } from "sequelize";
 
 export type MemberUnreadMessagesPayload = {
-  lastUnreadMessage: { id: string, createdAt: Date };
+  lastUnreadMessage: { id: string, number: number };
   readerUserId: string;
   chatId: string;
 }
@@ -23,7 +23,7 @@ export default async function updateCountUnreadMessages(payload: MemberUnreadMes
   let unreadMessageCounter: {
     unreadCountMessages: number,
     lastReadMessageId?: string,
-    lastReadMessageDate?: Date,
+    lastReadMessageNumber?: number,
   } = null;
 
   if (chatMember.lastReadMessageId === payload.lastUnreadMessage.id) {
@@ -31,15 +31,15 @@ export default async function updateCountUnreadMessages(payload: MemberUnreadMes
 
     unreadMessageCounter = { unreadCountMessages: 0 };
   } else {
-    const minDate = new Date(0);
+    const firstUnreadMessageNumber = chatMember.lastReadMessageNumber ? chatMember.lastReadMessageNumber : 1
     const unreadMessageCount = await Message.count({
       where: {
         id: { [Op.ne]: chatMember.lastReadMessageId },
         senderUserId: { [Op.ne]: chatMember.userId },
-        createdAt: {
+        number: {
           [Op.between]: [
-            chatMember.lastReadMessageDate ? chatMember.lastReadMessageDate : minDate,
-            payload.lastUnreadMessage.createdAt,
+            firstUnreadMessageNumber,
+            payload.lastUnreadMessage.number,
           ]
         },
       }
@@ -50,7 +50,7 @@ export default async function updateCountUnreadMessages(payload: MemberUnreadMes
     unreadMessageCounter = {
       unreadCountMessages: unreadCountMessages < 0 ? 0 : unreadCountMessages,
       lastReadMessageId: payload.lastUnreadMessage.id,
-      lastReadMessageDate: payload.lastUnreadMessage.createdAt,
+      lastReadMessageNumber: payload.lastUnreadMessage.number,
     };
   }
 
