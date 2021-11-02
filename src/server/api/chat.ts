@@ -8,6 +8,7 @@ import {setMessageAsReadJob} from "../jobs/setMessageAsRead";
 import {updateCountUnreadMessagesJob} from "../jobs/updateCountUnreadMessages";
 import {ChatController} from "../controllers/chat/controller.chat";
 import {MessageController} from "../controllers/chat/controller.message";
+import {ChatNotificationActions, publishChatNotifications} from "../websocket/websocket.chat";
 import {
   Chat,
   ChatMember,
@@ -21,7 +22,6 @@ import {
   StarredChat,
   User,
 } from "@workquest/database-models/lib/models";
-import { ChatNotificationActions, publishChatNotifications } from "../websocket/websocket.chat";
 
 export async function getUserChats(r) {
   const include = [{
@@ -80,6 +80,31 @@ export async function getUserChat(r) {
   await chatController.chatMustHaveMember(r.auth.credentials.id);
 
   return output(chat);
+}
+
+export async function listOfUsersByChats(r) {
+  const { count, rows } = await User.scope('shortWithAdditionalInfo').findAndCountAll({
+    include: {
+      model: ChatMember.unscoped(),
+      as: 'chatMember',
+      attributes: [],
+      where: { userId: { [Op.ne]: r.auth.credentials.id } },
+      include: [{
+        model: Chat.unscoped(),
+        as: 'chat',
+        where: { type: ChatType.private },
+        include: [{
+          model: ChatMember.unscoped(),
+          as: 'meMember',
+          where: { userId: r.auth.credentials.id },
+        }]
+      }],
+    },
+    limit: r.query.limit,
+    offset: r.query.offset,
+  });
+
+  return output({ count, users: rows });
 }
 
 export async function getChatMembers(r) {
@@ -183,7 +208,7 @@ export async function sendMessageToUser(r) {
   });
 
   const [chat, isChatCreated] = await Chat.findOrCreate({
-    where: { },
+    where: { type: ChatType.private },
     include: [{
       model: ChatMember,
       as: 'firstMemberInPrivateChat',
@@ -200,7 +225,7 @@ export async function sendMessageToUser(r) {
     defaults: {
       type: ChatType.private,
       lastMessageId: message.id,
-      lastMessageDate: message.createdAt
+      lastMessageDate: message.createdAt,
     }, transaction,
   });
 
@@ -215,13 +240,13 @@ export async function sendMessageToUser(r) {
       chatId: chat.id,
       userId: r.auth.credentials.id,
       lastReadMessageId: message.id, /** Because created */
-      lastReadMessageDate: message.createdAt,
+      lastReadMessageNumber: message.number,
     }, {
       unreadCountMessages: 1, /** Because created */
       chatId: chat.id,
       userId: r.params.userId,
       lastReadMessageId: null, /** Because created */
-      lastReadMessageDate: null,
+      lastReadMessageNumber: null,
     }], { transaction })
   } else {
     await chat.update({
@@ -237,13 +262,19 @@ export async function sendMessageToUser(r) {
       chatId: chat.id,
       lastReadMessageId: message.id,
       userId: r.auth.credentials.id,
-      lastReadMessageDate: message.createdAt,
+      lastReadMessageNumber: message.number,
     });
 
     await incrementUnreadCountMessageOfMembersJob({
       chatId: chat.id, notifierUserId: r.auth.credentials.id,
     });
   }
+
+  await setMessageAsReadJob({
+    lastUnreadMessage: { id: message.id, number: message.number },
+    chatId: chat.id,
+    senderId: r.auth.credentials.id,
+  });
 
   const result = await Message.findByPk(message.id);
 
@@ -286,11 +317,17 @@ export async function sendMessageToChat(r) {
     chatId: chat.id,
     lastReadMessageId: message.id,
     userId: r.auth.credentials.id,
-    lastReadMessageDate: message.createdAt,
+    lastReadMessageNumber: message.number,
   });
 
   await incrementUnreadCountMessageOfMembersJob({
     chatId: chat.id, notifierUserId: r.auth.credentials.id,
+  });
+
+  await setMessageAsReadJob({
+    lastUnreadMessage: { id: message.id, number: message.number },
+    chatId: r.params.chatId,
+    senderId: r.auth.credentials.id,
   });
 
   const members = await ChatMember.scope('userIdsOnly').findAll({
@@ -355,7 +392,7 @@ export async function addUserInGroupChat(r) {
     chatId: groupChat.id,
     lastReadMessageId: message.id,
     userId: r.auth.credentials.id,
-    lastReadMessageDate: message.createdAt,
+    lastReadMessageNumber: message.number,
   });
 
   await incrementUnreadCountMessageOfMembersJob({
@@ -420,7 +457,7 @@ export async function removeUserInGroupChat(r) {
     chatId: groupChat.id,
     lastReadMessageId: message.id,
     userId: r.auth.credentials.id,
-    lastReadMessageDate: message.createdAt,
+    lastReadMessageNumber: message.number,
   });
 
   await incrementUnreadCountMessageOfMembersJob({
@@ -516,13 +553,13 @@ export async function setMessagesAsRead(r) {
     where: {
       senderUserId: { [Op.ne]: r.auth.credentials.id },
       senderStatus: SenderMessageStatus.unread,
-      createdAt: { [Op.gte]: message.createdAt },
+      number: { [Op.gte]: message.number },
     },
     group: ["senderUserId"]
   });
 
   await updateCountUnreadMessagesJob({
-    lastUnreadMessage: { id: message.id, createdAt: message.createdAt },
+    lastUnreadMessage: { id: message.id, number: message.number },
     chatId: chat.id,
     readerUserId: r.auth.credentials.id,
   });
@@ -532,8 +569,9 @@ export async function setMessagesAsRead(r) {
   }
 
   await setMessageAsReadJob({
-    lastUnreadMessage: { id: message.id, createdAt: message.createdAt },
+    lastUnreadMessage: { id: message.id, number: message.number },
     chatId: r.params.chatId,
+    senderId: r.auth.credentials.id
   });
 
   await publishChatNotifications(r.server, {
@@ -558,7 +596,7 @@ export async function getUserStarredMessages(r) {
     }]
   });
 
-  return output({ count, rows });
+  return output({ count, messages: rows });
 }
 
 export async function markMessageStar(r) {
@@ -624,4 +662,3 @@ export async function removeStarFromChat(r) {
 
   return output();
 }
-

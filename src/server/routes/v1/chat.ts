@@ -1,20 +1,21 @@
 import * as Joi from "joi";
 import {
-  outputOkSchema,
-  limitSchema,
-  offsetSchema,
   idSchema,
-  chatForGetSchema,
-  chatsForGetWithCountSchema,
-  chatSchema,
-  chatNameSchema,
-  messagesWithCountSchema,
-  messagesForGetWithCountSchema,
-  messageSchema,
-  messageTextSchema,
-  usersSchema,
   idsSchema,
+  chatSchema,
+  limitSchema,
+  usersSchema,
+  offsetSchema,
   emptyOkSchema,
+  messageSchema,
+  outputOkSchema,
+  chatNameSchema,
+  chatForGetSchema,
+  messageTextSchema,
+  messagesWithCountSchema,
+  chatsForGetWithCountSchema,
+  messagesForGetWithCountSchema,
+  usersShortWithAdditionalInfoSchema,
 } from "@workquest/database-models/lib/schemes";
 import {
   getUserChats,
@@ -32,7 +33,7 @@ import {
   getUserStarredMessages,
   removeStarFromMessage,
   getChatMembers,
-  markMessageStar,
+  markMessageStar, listOfUsersByChats
 } from "../../api/chat";
 
 export default [{
@@ -91,6 +92,24 @@ export default [{
     },
     response: {
       schema: outputOkSchema(chatForGetSchema).label('GetUserChatResponse')
+    }
+  }
+}, {
+  method: "GET",
+  path: "/v1/user/me/chat/members/users-by-chats",
+  handler: listOfUsersByChats,
+  options: {
+    id: "v1.user.me.chat.members.getUsersByChats",
+    description: "Get list of users by chats",
+    tags: ["api", "chat"],
+    validate: {
+      query: Joi.object({
+        offset: offsetSchema,
+        limit: limitSchema,
+      }).label('GetUsersByChatsQuery'),
+    },
+    response: {
+      schema: outputOkSchema(usersShortWithAdditionalInfoSchema).label('GetUsersByChatsResponse')
     }
   }
 }, {

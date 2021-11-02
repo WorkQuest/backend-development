@@ -6,6 +6,7 @@ import {
   User,
   Review,
   UserRole,
+  Quest,
   QuestStatus,
 } from "@workquest/database-models/lib/models";
 
@@ -42,6 +43,9 @@ export async function getReviewsOfUser(r) {
     include: [{
       model: User.scope('short'),
       as: 'fromUser'
+    }, {
+      model: Quest, // TODO добавить short scope
+      as: 'quest',
     }],
     where: { toUserId: r.params.userId },
     limit: r.query.limit,
