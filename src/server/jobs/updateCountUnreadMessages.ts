@@ -31,14 +31,14 @@ export default async function updateCountUnreadMessages(payload: MemberUnreadMes
 
     unreadMessageCounter = { unreadCountMessages: 0 };
   } else {
-    const minDate = new Date(0);
+    const a = chatMember.lastReadMessageNumber ? chatMember.lastReadMessageNumber : 1
     const unreadMessageCount = await Message.count({
       where: {
         id: { [Op.ne]: chatMember.lastReadMessageId },
         senderUserId: { [Op.ne]: chatMember.userId },
-        createdAt: {
+        number: {
           [Op.between]: [
-            chatMember.lastReadMessageNumber ? chatMember.lastReadMessageNumber : 1,
+            a,
             payload.lastUnreadMessage.number,
           ]
         },

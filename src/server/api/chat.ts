@@ -517,7 +517,7 @@ export async function setMessagesAsRead(r) {
     where: {
       senderUserId: { [Op.ne]: r.auth.credentials.id },
       senderStatus: SenderMessageStatus.unread,
-      createdAt: { [Op.gte]: message.createdAt },
+      number: { [Op.gte]: message.number },
     },
     group: ["senderUserId"]
   });
