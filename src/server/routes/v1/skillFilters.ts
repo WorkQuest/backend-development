@@ -14,15 +14,15 @@ export default [{
   options: {
     id: "v1.skillFilters",
     tags: ["api", "skillFilters"],
-    description: "Get discussions",
+    description: "Get all filters",
     validate: {
       query: Joi.object({
         limit: limitSchema,
         offset: offsetSchema,
-      }).label("GetDiscussionsQuery")
+      }).label("GetFiltersQuery")
     },
     response: {
-      schema: outputOkSchema(filterSchema).label("GetDiscussionsResponse")
+      schema: outputOkSchema(filterSchema).label("GetFiltersResponse")
     }
   }
 },];
