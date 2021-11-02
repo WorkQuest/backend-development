@@ -8,6 +8,7 @@ import {setMessageAsReadJob} from "../jobs/setMessageAsRead";
 import {updateCountUnreadMessagesJob} from "../jobs/updateCountUnreadMessages";
 import {ChatController} from "../controllers/chat/controller.chat";
 import {MessageController} from "../controllers/chat/controller.message";
+import {ChatNotificationActions, publishChatNotifications} from "../websocket/websocket.chat";
 import {
   Chat,
   ChatMember,
@@ -21,7 +22,6 @@ import {
   StarredChat,
   User,
 } from "@workquest/database-models/lib/models";
-import { ChatNotificationActions, publishChatNotifications } from "../websocket/websocket.chat";
 
 export async function getUserChats(r) {
   const include = [{
