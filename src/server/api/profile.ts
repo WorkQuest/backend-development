@@ -125,7 +125,15 @@ export function editProfile(userRole: UserRole) {
     const transaction = await r.server.app.db.transaction();
 
     userController.setTransaction(transaction);
-    await userController.setAvatar(r.payload.avatarId);
+
+    try {
+      await userController.setAvatar(r.payload.avatarId);
+    } catch (e) {
+      console.error(e);
+
+      await transaction.rollback();
+    }
+
 
     await user.update({
       lastName: r.payload.lastName,
