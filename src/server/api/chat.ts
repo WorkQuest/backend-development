@@ -293,6 +293,12 @@ export async function sendMessageToChat(r) {
     chatId: chat.id, notifierUserId: r.auth.credentials.id,
   });
 
+  await setMessageAsReadJob({
+    lastUnreadMessage: { id: message.id, number: message.number },
+    chatId: r.params.chatId,
+    senderId: r.auth.credentials.id,
+  });
+
   const members = await ChatMember.scope('userIdsOnly').findAll({
     where: { chatId: chat.id, userId: { [Op.ne]: r.auth.credentials.id } }
   });
@@ -535,6 +541,7 @@ export async function setMessagesAsRead(r) {
   await setMessageAsReadJob({
     lastUnreadMessage: { id: message.id, number: message.number },
     chatId: r.params.chatId,
+    senderId: r.auth.credentials.id
   });
 
   await publishChatNotifications(r.server, {
