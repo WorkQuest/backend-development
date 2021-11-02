@@ -82,6 +82,31 @@ export async function getUserChat(r) {
   return output(chat);
 }
 
+export async function listOfUsersByChats(r) {
+  const { count, rows } = await User.scope('shortWithAdditionalInfo').findAndCountAll({
+    include: {
+      model: ChatMember.unscoped(),
+      as: 'chatMember',
+      attributes: [],
+      where: { userId: { [Op.ne]: r.auth.credentials.id } },
+      include: [{
+        model: Chat.unscoped(),
+        as: 'chat',
+        where: { type: ChatType.private },
+        include: [{
+          model: ChatMember.unscoped(),
+          as: 'meMember',
+          where: { userId: r.auth.credentials.id },
+        }]
+      }],
+    },
+    limit: r.query.limit,
+    offset: r.query.offset,
+  });
+
+  return output({ count, users: rows });
+}
+
 export async function getChatMembers(r) {
   const chatController = new ChatController(r.params.chatId);
   const chat = await chatController.findModel();
@@ -558,7 +583,7 @@ export async function getUserStarredMessages(r) {
     }]
   });
 
-  return output({ count, rows });
+  return output({ count, messages: rows });
 }
 
 export async function markMessageStar(r) {
@@ -624,4 +649,3 @@ export async function removeStarFromChat(r) {
 
   return output();
 }
-
