@@ -129,9 +129,8 @@ export function editProfile(userRole: UserRole) {
     try {
       await userController.setAvatar(r.payload.avatarId);
     } catch (e) {
-      console.error(e);
-
       await transaction.rollback();
+      throw e;
     }
 
 
