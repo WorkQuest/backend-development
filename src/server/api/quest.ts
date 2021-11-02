@@ -244,6 +244,8 @@ export async function rejectWorkOnQuest(r) {
     data: questController.quest,
   });
 
+  await QuestsResponse.destroy({where:{workerId: r.auth.credentials.id, questId: r.params.questId }});
+
   return output();
 }
 
