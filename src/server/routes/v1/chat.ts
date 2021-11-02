@@ -169,7 +169,7 @@ export default [{
       }).label('SendMessageToChatPayload'),
     },
     response: {
-      schema: outputOkSchema(messageSchema).label('SendMessageToChat')
+      schema: outputOkSchema(messageSchema).label('SendMessageToChatResponse')
     }
   }
 }, {
@@ -330,7 +330,7 @@ export default [{
       }).label('RemoveStarParams'),
     },
     response: {
-      schema: emptyOkSchema
+      schema: emptyOkSchema,
     }
   }
 }, {
@@ -350,8 +350,7 @@ export default [{
       }).label('LeaveFromGroupChatParams')
     },
     response: {
-      schema: outputOkSchema(messageSchema).label('LeaveFromGroupChatResponse')
+      schema: emptyOkSchema,
     }
   }
 }];
-
