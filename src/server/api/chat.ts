@@ -39,7 +39,7 @@ export async function getUserChats(r) {
   const count = await Chat.unscoped().count({ include });
   const chats = await Chat.findAll({
     include,
-    order: [ ['number', 'DESC'] ],
+    order: [ ['lastMessageDate', 'DESC'] ],
     limit: r.query.limit,
     offset: r.query.offset,
   });
@@ -137,7 +137,7 @@ export async function createGroupChat(r) {
 
   await groupChat.update({
     lastMessageId: message.id,
-    lastMessageNumber: message.number,
+    lastMessageDate: message.createdAt,
   }, { transaction })
 
   const chatMembers = memberUserIds.map(userId => {
@@ -146,7 +146,7 @@ export async function createGroupChat(r) {
       chatId: groupChat.id,
       unreadCountMessages: (userId === r.auth.credentials.id ? 0 : 1),
       lastReadMessageId: (userId === r.auth.credentials.id ? message.id : null),
-      lastReadMessageNumber: (userId === r.auth.credentials.id ? message.number : null),
+      lastReadMessageDate: (userId === r.auth.credentials.id ? message.createdAt : null),
     }
   });
 
@@ -183,7 +183,7 @@ export async function sendMessageToUser(r) {
   });
 
   const [chat, isChatCreated] = await Chat.findOrCreate({
-    where: {type: ChatType.private},
+    where: { type: ChatType.private },
     include: [{
       model: ChatMember,
       as: 'firstMemberInPrivateChat',
@@ -200,7 +200,7 @@ export async function sendMessageToUser(r) {
     defaults: {
       type: ChatType.private,
       lastMessageId: message.id,
-      lastMessageNumber: message.number
+      lastMessageDate: message.createdAt,
     }, transaction,
   });
 
@@ -226,7 +226,7 @@ export async function sendMessageToUser(r) {
   } else {
     await chat.update({
       lastMessageId: message.id,
-      lastMessageNumber: message.number,
+      lastMessageDate: message.createdAt,
     }, { transaction });
   }
 
@@ -283,7 +283,7 @@ export async function sendMessageToChat(r) {
 
   await chat.update({
     lastMessageId: message.id,
-    lastMessageNumber: message.number,
+    lastMessageDate: message.createdAt,
   }, { transaction });
 
   await transaction.commit();
@@ -358,7 +358,7 @@ export async function addUserInGroupChat(r) {
 
   await groupChat.update({
     lastMessageId: message.id,
-    lastMessageNumber: message.number,
+    lastMessageDate: message.createdAt,
   }, { transaction });
 
   await transaction.commit();
@@ -423,8 +423,7 @@ export async function removeUserInGroupChat(r) {
 
   await groupChat.update({
     lastMessageId: message.id,
-    lastMessageNumber: message.number
-    ,
+    lastMessageDate: message.createdAt,
   }, { transaction });
 
   await transaction.commit();
@@ -487,7 +486,7 @@ export async function leaveFromGroupChat(r) {
 
   await groupChat.update({
     lastMessageId: message.id,
-    lastMessageNumber: message.number,
+    lastMessageDate: message.createdAt,
   }, { transaction });
 
   await transaction.commit();
