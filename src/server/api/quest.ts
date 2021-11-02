@@ -74,6 +74,7 @@ export async function createQuest(r) {
   const questController = new QuestController(quest, transaction);
 
   await questController.setMedias(r.payload.medias);
+  const specialization =
   await questController.setQuestSpecializations(r.payload.specializationKeys, true);
 
   await transaction.commit();
