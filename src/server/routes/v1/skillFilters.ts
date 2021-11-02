@@ -1,33 +1,9 @@
 import * as Joi from "joi";
 import {
-  sendComment,
-  getDiscussions,
-  putCommentLike,
-  getSubComments,
-  getRootComments,
-  createDiscussion,
-  removeCommentLike,
-  putDiscussionLike,
-  removeDiscussionLike,
-  getCommentUsersLikes,
-  getDiscussionUsersLikes,
-} from "../../api/discussion";
-import {
-  idSchema,
-  idsSchema,
   limitSchema,
   offsetSchema,
-  emptyOkSchema,
   outputOkSchema,
-  userShortSchema,
-  discussionSchema,
-  discussionsSchema,
-  discussionTitleSchema,
-  outputPaginationSchema,
-  discussionCommentSchema,
-  discussionCommentsSchema,
-  discussionDescriptionSchema,
-  discussionCommentTextSchema, filterSchema
+  filterSchema
 } from "@workquest/database-models/lib/schemes";
 import { getFilters } from "../../api/skillFilters";
 
