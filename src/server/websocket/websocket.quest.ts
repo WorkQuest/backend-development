@@ -1,4 +1,3 @@
-import { completeWorkOnQuest } from "../api/quest";
 
 export const enum QuestNotificationActions {
   /** Quest flow */

@@ -1,7 +1,8 @@
 import * as path from "path";
 import * as fs from "fs";
 import Web3 from "web3";
-import config from "../server/config/config";
+import configBridge from "./config/config.bridge";
+import configDatabase from "./config/config.database";
 import {BridgeContract} from "./src/BridgeContract";
 import {BridgeEthListener, BridgeBscListener} from "./src/BridgeListener";
 import {BridgeProvider} from "./src/BridgeProvider";
@@ -10,18 +11,18 @@ import { BridgeParserBlockInfo, BlockchainNetworks, initDatabase } from '@workqu
 const abiFilePath = path.join(__dirname, '/abi/liquidityMiningAbi.json');
 const abi: any[] = JSON.parse(fs.readFileSync(abiFilePath).toString()).abi;
 
-const parseEthEventsFromHeight = config.bridge.debug ? config.bridge.rinkebyTestNetwork.parseEventsFromHeight : config.bridge.ethereumMainNetwork.parseEventsFromHeight;
-const contractEthAddress = config.bridge.debug ? config.bridge.rinkebyTestNetwork.contract : config.bridge.ethereumMainNetwork.contract;
-const urlEthProvider = config.bridge.debug ? config.bridge.rinkebyTestNetwork.webSocketProvider : config.bridge.ethereumMainNetwork.webSocketProvider;
+const parseEthEventsFromHeight = configBridge.debug ? configBridge.rinkebyTestNetwork.parseEventsFromHeight : configBridge.ethereumMainNetwork.parseEventsFromHeight;
+const contractEthAddress = configBridge.debug ? configBridge.rinkebyTestNetwork.contract : configBridge.ethereumMainNetwork.contract;
+const urlEthProvider = configBridge.debug ? configBridge.rinkebyTestNetwork.webSocketProvider : configBridge.ethereumMainNetwork.webSocketProvider;
 
-const parseBscEventsFromHeight = config.bridge.debug ? config.bridge.bscTestNetwork.parseEventsFromHeight : config.bridge.bscMainNetwork.parseEventsFromHeight;
-const contractBscAddress = config.bridge.debug ? config.bridge.bscTestNetwork.contract : config.bridge.bscMainNetwork.contract;
-const urlBscProvider = config.bridge.debug ? config.bridge.bscTestNetwork.webSocketProvider : config.bridge.bscMainNetwork.webSocketProvider;
+const parseBscEventsFromHeight = configBridge.debug ? configBridge.bscTestNetwork.parseEventsFromHeight : configBridge.bscMainNetwork.parseEventsFromHeight;
+const contractBscAddress = configBridge.debug ? configBridge.bscTestNetwork.contract : configBridge.bscMainNetwork.contract;
+const urlBscProvider = configBridge.debug ? configBridge.bscTestNetwork.webSocketProvider : configBridge.bscMainNetwork.webSocketProvider;
 
 export async function init() {
   console.log('Start bridge'); // TODO add pino
 
-  await initDatabase(config.dbLink, false, true);
+  await initDatabase(configDatabase.dbLink, false, true);
 
   const web3Eth = new Web3(new Web3.providers.WebsocketProvider(urlEthProvider, {
     clientConfig: {
