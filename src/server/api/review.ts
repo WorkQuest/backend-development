@@ -44,9 +44,8 @@ export async function getReviewsOfUser(r) {
       model: User.scope('short'),
       as: 'fromUser'
     }, {
-      model: Quest.unscoped(),
+      model: Quest, // TODO добавить short scope
       as: 'quest',
-      attributes: ['title', 'description']
     }],
     where: { toUserId: r.params.userId },
     limit: r.query.limit,
