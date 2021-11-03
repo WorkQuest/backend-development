@@ -13,6 +13,7 @@ import {
   UserSpecializationFilter,
 } from "@workquest/database-models/lib/models";
 import config from "../config/config";
+import { getMedia } from "../utils/medias";
 
 export const searchFields = [
   "firstName",
