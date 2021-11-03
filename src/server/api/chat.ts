@@ -63,7 +63,7 @@ export async function getChatMessages(r) {
     }],
     limit: r.query.limit,
     offset: r.query.offset,
-    order: [ ['createdAt', 'DESC'] ],
+    order: [ ['createdAt', r.query.sort.createdAt] ],
   });
 
   return output({ count, messages: rows });
