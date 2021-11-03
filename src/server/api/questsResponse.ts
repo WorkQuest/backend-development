@@ -33,12 +33,14 @@ export async function responseOnQuest(r) {
     }
   });
 
-  if (questResponse.status === QuestsResponseStatus.Open) {
-    return error(Errors.AlreadyAnswer, "You already answered quest", { questResponse });
-  }
+  if(questResponse) {
+    if (questResponse.status === QuestsResponseStatus.Open) {
+      return error(Errors.AlreadyAnswer, "You already answered quest", { questResponse });
+    }
 
-  if (questResponse.previousStatus === QuestsResponseStatus.Rejected) {
-    return error(Errors.Forbidden, "Client already rejected your response on quest", { questResponse });
+    if (questResponse.previousStatus === QuestsResponseStatus.Rejected) {
+      return error(Errors.Forbidden, "Client already rejected your response on quest", { questResponse });
+    }
   }
 
   questResponse = await QuestsResponse.create({
@@ -79,12 +81,14 @@ export async function inviteOnQuest(r) {
     where: { questId: questController.quest.id, workerId: invitedWorkerController.user.id, status: {[Op.ne]: QuestsResponseStatus.Accepted} }
   });
 
-  if(questResponse.previousStatus === QuestsResponseStatus.Rejected) {
-    return error(Errors.Forbidden, 'Person reject quest invitation', {});
-  }
+  if(questResponse) {
+    if(questResponse.previousStatus === QuestsResponseStatus.Rejected) {
+      return error(Errors.Forbidden, 'Person reject quest invitation', {});
+    }
 
-  if (questResponse.status === QuestsResponseStatus.Open) {
-    return error(Errors.AlreadyAnswer, "You have already been invited to the quest", { questResponse });
+    if (questResponse.status === QuestsResponseStatus.Open) {
+      return error(Errors.AlreadyAnswer, "You have already been invited to the quest", { questResponse });
+    }
   }
 
   questResponse = await QuestsResponse.create({
