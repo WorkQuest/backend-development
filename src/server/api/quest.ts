@@ -245,6 +245,7 @@ export async function rejectWorkOnQuest(r) {
   });
 
   await QuestsResponse.destroy({where:{workerId: r.auth.credentials.id, questId: r.params.questId }});
+  await QuestsResponse.update({status: QuestsResponseStatus.Open},{where: {questId: r.params.questId, workerId: {[Op.ne]: r.auth.credentials.id}}});
 
   return output();
 }
