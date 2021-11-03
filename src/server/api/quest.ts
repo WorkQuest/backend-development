@@ -244,8 +244,8 @@ export async function rejectWorkOnQuest(r) {
     data: questController.quest,
   });
 
-  await QuestsResponse.destroy({where:{workerId: r.auth.credentials.id, questId: r.params.questId }});
   await QuestsResponse.update({status: QuestsResponseStatus.Open},{where: {questId: r.params.questId, workerId: {[Op.ne]: r.auth.credentials.id}}});
+  await QuestsResponse.update({status: QuestsResponseStatus.Rejected, previousStatus: QuestsResponseStatus.Rejected}, {where: { questId: r.params.questId, workerId:  r.auth.credentials.id}});
 
   return output();
 }

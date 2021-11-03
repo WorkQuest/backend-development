@@ -34,12 +34,12 @@ export async function responseOnQuest(r) {
   });
 
   if(questResponse) {
-    if (questResponse.status === QuestsResponseStatus.Open) {
-      return error(Errors.AlreadyAnswer, "You already answered quest", { questResponse });
-    }
-
     if (questResponse.previousStatus === QuestsResponseStatus.Rejected) {
       return error(Errors.Forbidden, "Client already rejected your response on quest", { questResponse });
+    }
+
+    if (questResponse.status === QuestsResponseStatus.Open) {
+      return error(Errors.AlreadyAnswer, "You already answered quest", { questResponse });
     }
   }
 
@@ -87,7 +87,7 @@ export async function inviteOnQuest(r) {
     }
 
     if (questResponse.status === QuestsResponseStatus.Open) {
-      return error(Errors.AlreadyAnswer, "You have already been invited to the quest", { questResponse });
+      return error(Errors.AlreadyAnswer, "You have already been invited user to the quest", { questResponse });
     }
   }
 
