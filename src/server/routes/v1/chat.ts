@@ -12,6 +12,7 @@ import {
   chatNameSchema,
   chatForGetSchema,
   messageTextSchema,
+  sortDirectionSchema,
   messagesWithCountSchema,
   chatsForGetWithCountSchema,
   messagesForGetWithCountSchema,
@@ -50,6 +51,9 @@ export default [{
         starred: Joi.boolean().default(false),
         offset: offsetSchema,
         limit: limitSchema,
+        sort: Joi.object({
+          lastMessageDate: sortDirectionSchema.default('DESC'),
+        }).default({ lastMessageDate: 'DESC' }).label('SortChats'),
       }).label('GetChatsQuery')
     },
     response: {
@@ -72,6 +76,9 @@ export default [{
         starred: Joi.boolean().default(false),
         offset: offsetSchema,
         limit: limitSchema,
+        sort: Joi.object({
+          createdAt: sortDirectionSchema.default('DESC'),
+        }).default({ createdAt: "DESC" }).label('SortMessages'),
       }).label('GetMessagesQuery')
     },
     response: {
