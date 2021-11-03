@@ -123,13 +123,6 @@ export function editProfile(userRole: UserRole) {
 
     await userController.userMustHaveRole(userRole);
 
-    // try {
-    //   await userController.setAvatar(r.payload.avatarId);
-    // } catch (e) {
-    //   await transaction.rollback();
-    //   throw e;
-    // }
-
     if (r.payload.avatarId) {
       const media = await getMedia(r.payload.avatarId);
 

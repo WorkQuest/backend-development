@@ -39,7 +39,7 @@ export async function getUserChats(r) {
   const count = await Chat.unscoped().count({ include });
   const chats = await Chat.findAll({
     include,
-    order: [ ['lastMessageDate', 'DESC'] ],
+    order: [ ['lastMessageDate', r.query.sort.lastMessageDate] ],
     limit: r.query.limit,
     offset: r.query.offset,
   });

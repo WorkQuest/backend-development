@@ -12,6 +12,7 @@ import {
   chatNameSchema,
   chatForGetSchema,
   messageTextSchema,
+  sortDirectionSchema,
   messagesWithCountSchema,
   chatsForGetWithCountSchema,
   messagesForGetWithCountSchema,
@@ -49,6 +50,9 @@ export default [{
         starred: Joi.boolean().default(false),
         offset: offsetSchema,
         limit: limitSchema,
+        sort: Joi.object({
+          lastMessageDate: sortDirectionSchema.default('DESC'),
+        }),
       }).label('GetChatsQuery')
     },
     response: {
