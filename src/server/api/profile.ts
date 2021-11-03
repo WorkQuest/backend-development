@@ -13,6 +13,7 @@ import {
   UserSpecializationFilter,
 } from "@workquest/database-models/lib/models";
 import config from "../config/config";
+import { getMedia } from "../utils/medias";
 
 export const searchFields = [
   "firstName",
@@ -122,19 +123,25 @@ export function editProfile(userRole: UserRole) {
 
     await userController.userMustHaveRole(userRole);
 
+    // try {
+    //   await userController.setAvatar(r.payload.avatarId);
+    // } catch (e) {
+    //   await transaction.rollback();
+    //   throw e;
+    // }
+
+    if (r.payload.avatarId) {
+      const media = await getMedia(r.payload.avatarId);
+
+      r.payload.avatarId = media.id;
+    }
+
     const transaction = await r.server.app.db.transaction();
 
     userController.setTransaction(transaction);
 
-    try {
-      await userController.setAvatar(r.payload.avatarId);
-    } catch (e) {
-      await transaction.rollback();
-      throw e;
-    }
-
-
     await user.update({
+      avatarId: r.payload.avatarId,
       lastName: r.payload.lastName,
       location: r.payload.location,
       firstName: r.payload.firstName,
