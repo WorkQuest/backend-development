@@ -1,5 +1,6 @@
 import {Op, literal} from 'sequelize';
 import {Errors} from '../utils/errors';
+import { getMedias } from "../utils/medias";
 import {UserController, UserControllerFactory} from "../controllers/user/controller.user";
 import {QuestController, QuestControllerFactory} from "../controllers/quest/controller.quest";
 import {transformToGeoPostGIS} from "../utils/postGIS";
@@ -19,7 +20,6 @@ import {
   QuestsResponseStatus,
   QuestSpecializationFilter,
 } from "@workquest/database-models/lib/models";
-import { getMedias } from "../utils/medias";
 
 export const searchFields = [
   "title",
