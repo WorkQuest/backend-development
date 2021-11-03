@@ -62,7 +62,7 @@ export default [{
       payload: Joi.object({
         title: portfolioTitleSchema,
         description: portfolioDescriptionSchema,
-        medias: idsSchema.unique(),
+        medias: idsSchema.unique().default([]),
       }).label('EditCasePayload')
     },
     response: {

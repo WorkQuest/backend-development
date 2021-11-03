@@ -57,15 +57,11 @@ export async function editCase(r) {
 
   portfolioController.mustBeCaseCreator(r.auth.credentials.id);
 
+  const medias = await getMedias(r.payload.medias);
   const transaction = await r.server.app.db.transaction();
 
-  if (r.payload.medias) {
-    const medias = await getMedias(r.payload.medias);
-
-    await portfolio.$set('medias', medias, { transaction });
-  }
-
   await portfolio.update(r.payload, { transaction });
+  await portfolio.$set('medias', medias, { transaction });
 
   await transaction.commit();
 

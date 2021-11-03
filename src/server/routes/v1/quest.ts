@@ -122,7 +122,7 @@ export default [{
         description: questDescriptionSchema,
         price: questPriceSchema,
         adType: questAdTypeSchema,
-        medias: idsSchema.unique(),
+        medias: idsSchema.unique().default([]),
         specializationKeys: specializationKeysSchema.unique(),
       }).label("EditQuestPayload"),
     },

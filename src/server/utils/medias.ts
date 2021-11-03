@@ -21,7 +21,7 @@ export async function getMedia(mediaId: string, transactions?: Transaction): Pro
   return media;
 }
 
-export async function getMedias(mediaIds: string[], transactions?: Transaction) {
+export async function getMedias(mediaIds: string[], transactions?: Transaction): Promise<Media[]> {
   const medias = [];
 
   for (const id of mediaIds) {

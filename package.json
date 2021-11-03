@@ -9,7 +9,7 @@
     "bridge:compile": "tsc && node ./build/bridge/index.js",
     "compile": "tsc && node ./build/main.js",
     "build": "tsc",
-    "test": "lab --sourcemaps --transform node_modules/lab-transform-typescript -v --leaks"
+    "test": "lab --sourcemaps --transform node_modules/lab-transform-typescript -v --leaks ./test/quest.ts --timeout 10000"
   },
   "keywords": [],
   "author": "",

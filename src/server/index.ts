@@ -86,7 +86,7 @@ const init = async () => {
     { plugin: HapiSwagger, options: SwaggerOptions }
   ]);
 
-  server.app.db = await initDatabase(config.dbLink, true, true);
+  server.app.db = await initDatabase(config.dbLink, false, true);
 
   server.app.scheduler = await run({
     connectionString: config.dbLink,

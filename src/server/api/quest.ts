@@ -19,6 +19,7 @@ import {
   QuestsResponseStatus,
   QuestSpecializationFilter,
 } from "@workquest/database-models/lib/models";
+import { getMedias } from "../utils/medias";
 
 export const searchFields = [
   "title",
@@ -52,6 +53,7 @@ export async function createQuest(r) {
 
   await userController.userMustHaveRole(UserRole.Employer);
 
+  const medias = await getMedias(r.payload.medias);
   const transaction = await r.server.app.db.transaction();
 
   const quest = await Quest.create({
@@ -71,10 +73,8 @@ export async function createQuest(r) {
     locationPostGIS: transformToGeoPostGIS(r.payload.location),
   }, { transaction });
 
-  const questController = new QuestController(quest, transaction);
-
-  await questController.setMedias(r.payload.medias);
-  await questController.setQuestSpecializations(r.payload.specializationKeys, true);
+  await QuestController.setMedias(quest, medias, transaction);
+  await QuestController.setQuestSpecializations(quest, r.payload.specializationKeys, true, transaction);
 
   await transaction.commit();
 
@@ -121,20 +121,19 @@ export async function editQuest(r) {
   questController.setTransaction(transaction);
 
   if (r.payload.medias) {
-    await questController.setMedias(r.payload.medias);
+    const medias = await getMedias(r.payload.medias, transaction);
+    await QuestController.setMedias(quest, medias, transaction);
   }
   if (r.payload.specializationKeys) {
-    await questController.setQuestSpecializations(r.payload.specializationKeys);
+    await QuestController.setQuestSpecializations(quest, r.payload.specializationKeys, false, transaction);
   }
-
-  await questController.updateFieldLocationPostGIS();
 
   await quest.update(questValues, { transaction });
 
   await transaction.commit();
 
   return output(
-    await Quest.findByPk(questController.quest.id)
+    await Quest.findByPk(quest.id)
   );
 }
 
@@ -144,12 +143,10 @@ export async function deleteQuest(r) {
   const quest = await Quest.findByPk(r.params.questId);
   const questController = await QuestControllerFactory.makeControllerByModel(quest);
 
-  const transaction = await r.server.app.db.transaction();
-
-  questController.setTransaction(transaction);
-
   await questController.employerMustBeQuestCreator(employer.id);
   await questController.questMustHaveStatus(QuestStatus.Created, QuestStatus.Closed)
+
+  const transaction = await r.server.app.db.transaction();
 
   await QuestSpecializationFilter.destroy({ where: { questId: questController.quest.id }, transaction });
   await QuestsResponse.destroy({ where: { questId: questController.quest.id }, transaction })
@@ -166,12 +163,12 @@ export async function closeQuest(r) {
   const quest = await Quest.findByPk(r.params.questId);
   const questController = await QuestControllerFactory.makeControllerByModel(quest);
 
-  const transaction = await r.server.app.db.transaction();
-
   await questController.employerMustBeQuestCreator(employer.id);
   await questController.questMustHaveStatus(QuestStatus.Created, QuestStatus.WaitConfirm);
 
-  await questController.quest.update({ status: QuestStatus.Closed }, { transaction });
+  const transaction = await r.server.app.db.transaction();
+
+  await quest.update({ status: QuestStatus.Closed }, { transaction });
 
   await QuestsResponse.update({ status: QuestsResponseStatus.Closed }, {
     where: { questId: quest.id }, transaction });
@@ -187,6 +184,9 @@ export async function startQuest(r) {
   let quest: Quest = await Quest.findByPk(r.params.questId);
   const questController = await QuestControllerFactory.makeControllerByModel(quest);
 
+  await questController.employerMustBeQuestCreator(employer.id);
+  await questController.questMustHaveStatus(QuestStatus.Created);
+
   let assignedWorker = await User.findByPk(r.payload.assignedWorkerId);
   const assignedWorkerController = await UserControllerFactory.makeControllerByModel(assignedWorker);
 
@@ -195,20 +195,13 @@ export async function startQuest(r) {
   });
   const questsResponseController = await QuestsResponseControllerFactory.makeControllerByModel(questsResponse);
 
-  const transaction = await r.server.app.db.transaction();
-
-  questController.setTransaction(transaction);
-  assignedWorkerController.setTransaction(transaction);
-  questsResponseController.setTransaction(transaction);
-
-  await questController.employerMustBeQuestCreator(employer.id);
-  await questController.questMustHaveStatus(QuestStatus.Created);
-
   if (questsResponse.type === QuestsResponseType.Response) {
     await questsResponseController.questsResponseMustHaveStatus(QuestsResponseStatus.Open);
   } else if (questsResponse.type === QuestsResponseType.Invite) {
     await questsResponseController.questsResponseMustHaveStatus(QuestsResponseStatus.Accepted);
   }
+
+  const transaction = await r.server.app.db.transaction();
 
   quest = await quest.update({
     assignedWorkerId: assignedWorker.id,

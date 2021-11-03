@@ -130,31 +130,18 @@ export class UserController extends CheckList {
     this._transaction = transaction;
   }
 
-  public async setAvatar(mediaId?: string): Promise<void | never> {
-    if (mediaId) {
-      const media = await getMedia(mediaId, this._transaction);
-
-      this.user.avatarId = media.id;
-    } else {
-      this.user.avatarId = null;
-    }
-
-    await this.user.save({ transaction: this._transaction });
-  }
-
-  public async setUserSpecializations(keys?: string[]) {
+  public static async setUserSpecializations(user: User, keys: string[], transaction: Transaction = null) {
     await UserSpecializationFilter.destroy({
-      where: { userId: this.user.id },
-      transaction: this._transaction,
+      where: { userId: user.id }, transaction,
     });
 
-    if (!keys) {
+    if (keys.length <= 0) {
       return;
     }
 
-    const userSpecializations = keysToRecords(keys, 'userId', this.user.id);
+    const userSpecializations = keysToRecords(keys, 'userId', user.id);
 
-    await UserSpecializationFilter.bulkCreate(userSpecializations, { transaction: this._transaction });
+    await UserSpecializationFilter.bulkCreate(userSpecializations, { transaction });
   }
 
   public static getDefaultAdditionalInfo(role: UserRole) {

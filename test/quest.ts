@@ -1130,7 +1130,6 @@ async function Should_InvalidStatus_When_EmployerRejectCompletedWorkAndQuestNotS
 }
 
 suite('Testing API Quest:', () => {
-
   before(async () => {
     server = await init();
   });
@@ -1217,6 +1216,7 @@ suite('Testing API Quest:', () => {
     await Should_Forbidden_When_WorkerCompletedWorkAndWorkerNotAssignedOnWork();
     await Should_Ok_When_WorkerCompletedWorkAndQuestStatusActive();
   });
+  /**
   it('Accept completed work', async () => {
     await Should_InvalidStatus_When_EmployerAcceptCompletedWorkAndQuestNotStatusOnWaitConfirm(QuestStatus.WaitWorker);
     await Should_InvalidStatus_When_EmployerAcceptCompletedWorkAndQuestNotStatusOnWaitConfirm(QuestStatus.Closed);
@@ -1237,4 +1237,5 @@ suite('Testing API Quest:', () => {
     await Should_Forbidden_When_EmployerRejectCompletedWorkAndEmployerNotQuestCreator();
     await Should_Ok_When_EmployerRejectCompletedWorkAndQuestStatusWaitConfirm();
   });
+ **/
 });

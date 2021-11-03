@@ -13,6 +13,7 @@ import {
   UserSpecializationFilter,
 } from "@workquest/database-models/lib/models";
 import config from "../config/config";
+import { getMedia } from "../utils/medias";
 
 export const searchFields = [
   "firstName",
@@ -122,12 +123,11 @@ export function editProfile(userRole: UserRole) {
 
     await userController.userMustHaveRole(userRole);
 
+    const avatarId = r.payload.avatarId ? (await getMedia(r.payload)).id : null;
     const transaction = await r.server.app.db.transaction();
 
-    userController.setTransaction(transaction);
-    await userController.setAvatar(r.payload.avatarId);
-
     await user.update({
+      avatarId: avatarId,
       lastName: r.payload.lastName,
       location: r.payload.location,
       firstName: r.payload.firstName,
@@ -136,7 +136,7 @@ export function editProfile(userRole: UserRole) {
     }, transaction);
 
     if (userRole === UserRole.Worker) {
-      await userController.setUserSpecializations(r.payload.specializationKeys);
+      await UserController.setUserSpecializations(user, r.payload.specializationKeys, transaction);
     }
 
     await transaction.commit();

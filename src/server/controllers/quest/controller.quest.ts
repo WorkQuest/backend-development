@@ -10,7 +10,7 @@ import {
   Quest,
   UserRole,
   QuestStatus,
-  QuestSpecializationFilter,
+  QuestSpecializationFilter, Media
 } from "@workquest/database-models/lib/models";
 
 abstract class CheckList {
@@ -83,30 +83,20 @@ export class QuestController extends CheckList {
     this._transaction = transaction;
   }
 
-  public async setMedias(mediaIds) {
-    const medias = await getMedias(mediaIds, this._transaction);
+  public static async setMedias(quest: Quest, medias: Media[], transaction: Transaction = null) {
+    const mediasIds = medias.map(media => media.id);
 
-    await this.quest.$set('medias', medias, { transaction: this._transaction });
+    await quest.$set('medias', mediasIds, { transaction });
   }
 
-  public async setQuestSpecializations(keys: string[], isCreatedNow: boolean = false) {
-    const questSpecializations = keysToRecords(keys, 'questId', this.quest.id);
+  public static async setQuestSpecializations(quest: Quest, keys: string[], isCreatedNow: boolean = false, transaction: Transaction = null) {
+    const questSpecializations = keysToRecords(keys, 'questId', quest.id);
 
     if (isCreatedNow) {
-      await QuestSpecializationFilter.destroy({ where: { questId: this.quest.id }, transaction: this._transaction });
+      await QuestSpecializationFilter.destroy({ where: { questId: quest.id }, transaction });
     }
 
-    await QuestSpecializationFilter.bulkCreate(questSpecializations, { transaction: this._transaction });
-  }
-
-  public async updateFieldLocationPostGIS(): Promise<void | never> {
-    const location = this.quest.getDataValue('location');
-
-    if (!location) throw error(500, '', {}) // TODO
-
-    const locationPostGIS = transformToGeoPostGIS(location);
-
-    this.quest.setDataValue('locationPostGIS', locationPostGIS);
+    await QuestSpecializationFilter.bulkCreate(questSpecializations, { transaction });
   }
 
   static async answerWorkOnQuest(questId: string, worker: User, acceptWork: boolean): Promise<QuestController> {
