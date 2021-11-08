@@ -9,7 +9,7 @@ import {
   QuestStatus,
   QuestsResponse,
   QuestsResponseStatus,
-  QuestsResponseType,
+  QuestsResponseType, QuestChat, Chat, ChatType, Message, MessageType, SenderMessageStatus
 } from "@workquest/database-models/lib/models";
 
 export async function responseOnQuest(r) {
@@ -20,6 +20,8 @@ export async function responseOnQuest(r) {
 
   await questController.questMustHaveStatus(QuestStatus.Created);
   await workerController.userMustHaveRole(UserRole.Worker);
+
+  const transaction = await r.server.app.db.transaction();
 
   const questsResponse = await QuestsResponse.findOne({
     where: {
@@ -32,13 +34,23 @@ export async function responseOnQuest(r) {
     return error(Errors.AlreadyAnswer, "You already answered quest", { questsResponse });
   }
 
-  await QuestsResponse.create({
+  const response = await QuestsResponse.create({
     workerId: worker.id,
     questId: quest.id,
     message: r.payload.message,
     status: QuestsResponseStatus.Open,
     type: QuestsResponseType.Response,
-  });
+  }, transaction);
+
+  const chat = await Chat.create({
+    type: ChatType.quest,
+  }, transaction);
+
+  await QuestChat.create({
+    questId: quest.id,
+    responseId: response.id,
+    chatId: chat.id,
+  }, transaction);
 
   return output();
 }
