@@ -8,7 +8,7 @@ export const enum ChatNotificationActions {
 }
 
 const chatSubscriptionFilter = async function (path, notification, options): Promise<boolean> {
-  return notification.recipients.includes(options.credentials.id);
+  return options.credentials ? notification.recipients.includes(options.credentials.id) : false;
 }
 
 export const chatSubscriptionOption = {

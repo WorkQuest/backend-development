@@ -125,6 +125,20 @@ abstract class UserHelper {
     return this;
   }
 
+  public static async usersMustExist(userIds: string[]) {
+   const users = await User.findAll({
+      where: { id: userIds }
+   });
+
+    if (users.length !== userIds.length) {
+      const notFoundIds = userIds.filter(id =>
+        users.findIndex(user => id === user.id) === -1
+      );
+
+      throw error(Errors.NotFound, 'Users is not found', { notFoundIds });
+    }
+  }
+
   public static async checkEmail(email: string) {
     const emailUsed = await User.findOne({ where: { email: { [Op.iLike]: email } } });
 

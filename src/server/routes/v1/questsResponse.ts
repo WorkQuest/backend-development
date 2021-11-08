@@ -21,6 +21,7 @@ export default [{
   path: "/v1/quest/{questId}/response",
   handler: responseOnQuest,
   options: {
+    auth: 'jwt-access',
     id: "v1.quest.response",
     tags: ["api", "questResponse"],
     description: "Respond on quest",
@@ -41,6 +42,7 @@ export default [{
   path: "/v1/quest/{questId}/invite",
   handler: inviteOnQuest,
   options: {
+    auth: 'jwt-access',
     id: "v1.quest.invite",
     tags: ["api", "questResponse"],
     description: "Invite on quest",
@@ -62,6 +64,7 @@ export default [{
   path: "/v1/quest/{questId}/responses",
   handler: userResponsesToQuest,
   options: {
+    auth: 'jwt-access',
     id: "v1.quest.responses",
     tags: ["api", "questResponse"],
     description: "Get responses to quest",
@@ -83,6 +86,7 @@ export default [{
   path: "/v1/quest/responses/my",
   handler: responsesToQuestsForUser,
   options: {
+    auth: 'jwt-access',
     id: "v1.quest.responses.my",
     tags: ["api", "questResponse"],
     description: "Get responses to quest for authorized user",
@@ -95,6 +99,7 @@ export default [{
   path: "/v1/quest/response/{responseId}/accept",
   handler: acceptInviteOnQuest,
   options: {
+    auth: 'jwt-access',
     id: "v1.quest.response.accept",
     tags: ["api", "questResponse"],
     description: "Accept quest invitation",
@@ -112,6 +117,7 @@ export default [{
   path: "/v1/quest/response/{responseId}/reject",
   handler: rejectInviteOnQuest,
   options: {
+    auth: 'jwt-access',
     id: "v1.quest.response.reject",
     tags: ["api", "questResponse"],
     description: "Reject quest invitation",
@@ -129,6 +135,7 @@ export default [{
   path: "/v1/quest/employer/{responseId}/reject",
   handler: rejectResponseOnQuest,
   options: {
+    auth: 'jwt-access',
     id: "v1.quest.response.rejectResponseOnQuest",
     tags: ["api", "questResponse"],
     description: "Reject the answer to the quest",

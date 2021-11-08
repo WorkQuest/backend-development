@@ -22,6 +22,7 @@ import {
   StarredChat,
   User,
 } from "@workquest/database-models/lib/models";
+import { UserController } from "../controllers/user/controller.user";
 
 export async function getUserChats(r) {
   const include = [{
@@ -137,7 +138,7 @@ export async function createGroupChat(r) {
     memberUserIds.push(r.auth.credentials.id);
   }
 
-  await User.usersMustExist(memberUserIds);
+  await UserController.usersMustExist(memberUserIds);
 
   const transaction = await r.server.app.db.transaction();
 

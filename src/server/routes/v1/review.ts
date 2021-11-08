@@ -16,6 +16,7 @@ export default [{
   path: "/v1/review/send",
   handler: sendReview,
   options: {
+    auth: 'jwt-access',
     id: "v1.review.send",
     tags: ["api", "review"],
     description: "Send review for user",
@@ -35,6 +36,7 @@ export default [{
   path: "/v1/user/{userId}/reviews",
   handler: getReviewsOfUser,
   options: {
+    auth: 'jwt-access',
     id: "v1.user.reviews",
     tags: ["api", "review"],
     description: "Get all reviews about user",

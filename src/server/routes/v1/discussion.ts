@@ -35,6 +35,7 @@ export default [{
   path: "/v1/discussions",
   handler: getDiscussions,
   options: {
+    auth: 'jwt-access',
     id: "v1.getDiscussions",
     tags: ["api", "discussion"],
     description: "Get discussions",
@@ -53,6 +54,7 @@ export default [{
   path: "/v1/discussion/comment/{commentId}/sub-comments",
   handler: getSubComments,
   options: {
+    auth: 'jwt-access',
     id: "v1.getSubComments",
     tags: ["api", "discussion"],
     description: "Get sub comments",
@@ -74,6 +76,7 @@ export default [{
   path: "/v1/discussion/{discussionId}/usersLikes",
   handler: getDiscussionUsersLikes,
   options: {
+    auth: 'jwt-access',
     id: "v1.discussion.getUsersLikes",
     tags: ["api", "discussion"],
     description: "Get people who likes discussion",
@@ -95,6 +98,7 @@ export default [{
   path: "/v1/discussion/comment/{commentId}/usersLikes",
   handler: getCommentUsersLikes,
   options: {
+    auth: 'jwt-access',
     id: "v1.discussion.comment.getUsersLikes",
     tags: ["api", "discussion"],
     description: "Get people who likes comment",
@@ -116,6 +120,7 @@ export default [{
   path: "/v1/discussion/{discussionId}/root-comments",
   handler: getRootComments,
   options: {
+    auth: 'jwt-access',
     id: "v1.discussion.getRootComments",
     tags: ["api", "discussion"],
     description: "Get root comments",
@@ -137,6 +142,7 @@ export default [{
   path: "/v1/discussion/create",
   handler: createDiscussion,
   options: {
+    auth: 'jwt-access',
     id: "v1.createDiscussion",
     tags: ["api", "discussion"],
     description: "Create discussion",
@@ -156,6 +162,7 @@ export default [{
   path: "/v1/discussion/{discussionId}/comment/send",
   handler: sendComment,
   options: {
+    auth: 'jwt-access',
     id: "v1.discussion.sendComment",
     tags: ["api", "discussion"],
     description: "Send comment",
@@ -178,6 +185,7 @@ export default [{
   path: "/v1/discussion/{discussionId}/like",
   handler: putDiscussionLike,
   options: {
+    auth: 'jwt-access',
     id: "v1.discussion.putLike",
     tags: ["api", "discussion"],
     description: "Like discussion",
@@ -195,6 +203,7 @@ export default [{
   path: "/v1/discussion/{discussionId}/like",
   handler: removeDiscussionLike,
   options: {
+    auth: 'jwt-access',
     id: "v1.discussion.removeLike",
     tags: ["api", "discussion"],
     description: "Remove like in discussion",
@@ -212,6 +221,7 @@ export default [{
   path: "/v1/discussion/comment/{commentId}/like",
   handler: putCommentLike,
   options: {
+    auth: 'jwt-access',
     id: "v1.discussion.comment.putLike",
     tags: ["api", "discussion"],
     description: "Put like the comment of discussion",
@@ -229,6 +239,7 @@ export default [{
   path: "/v1/discussion/comment/{commentId}/like",
   handler: removeCommentLike,
   options: {
+    auth: 'jwt-access',
     id: "v1.discussion.comment.removeLike",
     tags: ["api", "discussion"],
     description: "Delete like in comment",

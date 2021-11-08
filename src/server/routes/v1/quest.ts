@@ -26,6 +26,7 @@ export default [{
   path: "/v1/quest/{questId}",
   handler: questHandlers.getQuest,
   options: {
+    auth: 'jwt-access',
     id: "v1.getQuest",
     tags: ["api", "quest"],
     description: "Get quest",
@@ -43,6 +44,7 @@ export default [{
   path: "/v1/quest/create",
   handler: questHandlers.createQuest,
   options: {
+    auth: 'jwt-access',
     id: "v1.quest.create",
     tags: ["api", "quest"],
     description: "Register new quest",
@@ -71,6 +73,7 @@ export default [{
   path: "/v1/quest/{questId}",
   handler: questHandlers.deleteQuest,
   options: {
+    auth: 'jwt-access',
     id: "v1.quest.deleteQuest",
     tags: ["api", "quest"],
     description: "Delete quest (only status: Created and Closed)",
@@ -88,6 +91,7 @@ export default [{
   path: "/v1/quest/{questId}",
   handler: questHandlers.editQuest,
   options: {
+    auth: 'jwt-access',
     id: "v1.quest.editQuest",
     tags: ["api", "quest"],
     description: "Edit quest",
@@ -119,6 +123,7 @@ export default [{
   path: "/v1/quests",
   handler: questHandlers.getQuests,
   options: {
+    auth: 'jwt-access',
     id: "v1.getQuests",
     tags: ["api", "quest"],
     description: "Get quests",
@@ -134,6 +139,7 @@ export default [{
   path: "/v1/employer/{userId}/quests",
   handler: questHandlers.getQuests,
   options: {
+    auth: 'jwt-access',
     id: "v1.employer.quests",
     tags: ["api", "quest"],
     description: "Get quests for a given user",
@@ -152,6 +158,7 @@ export default [{
   path: "/v1/quest/{questId}/start",
   handler: questHandlers.startQuest,
   options: {
+    auth: 'jwt-access',
     id: "v1.quest.startQuest",
     tags: ["api", "quest"],
     description: "Start quest",
@@ -172,6 +179,7 @@ export default [{
   path: "/v1/quest/{questId}/close",
   handler: questHandlers.closeQuest,
   options: {
+    auth: 'jwt-access',
     id: "v1.quest.closeQuest",
     tags: ["api", "quest"],
     description: "Close quest",
@@ -189,6 +197,7 @@ export default [{
   path: "/v1/quest/{questId}/reject-work",
   handler: questHandlers.rejectWorkOnQuest,
   options: {
+    auth: 'jwt-access',
     id: "v1.quest.rejectWork",
     tags: ["api", "quest"],
     description: "Reject work on quest",
@@ -206,6 +215,7 @@ export default [{
   path: "/v1/quest/{questId}/accept-work",
   handler: questHandlers.acceptWorkOnQuest,
   options: {
+    auth: 'jwt-access',
     id: "v1.quest.acceptWork",
     tags: ["api", "quest"],
     description: "Accept work on quest",
@@ -223,6 +233,7 @@ export default [{
   path: "/v1/quest/{questId}/complete-work",
   handler: questHandlers.completeWorkOnQuest,
   options: {
+    auth: 'jwt-access',
     id: "v1.quest.completeWork",
     tags: ["api", "quest"],
     description: "Complete work on quest",
@@ -240,6 +251,7 @@ export default [{
   path: "/v1/quest/{questId}/accept-completed-work",
   handler: questHandlers.acceptCompletedWorkOnQuest,
   options: {
+    auth: 'jwt-access',
     id: "v1.quest.acceptCompletedWork",
     tags: ["api", "quest"],
     description: "Accept completed work on quest",
@@ -257,6 +269,7 @@ export default [{
   path: "/v1/quest/{questId}/reject-completed-work",
   handler: questHandlers.rejectCompletedWorkOnQuest,
   options: {
+    auth: 'jwt-access',
     id: "v1.quest.rejectCompletedWork",
     tags: ["api", "quest"],
     description: "Reject completed work on quest",
@@ -274,6 +287,7 @@ export default [{
   path: '/v1/quest/{questId}/star',
   handler: questHandlers.setStar,
   options: {
+    auth: 'jwt-access',
     id: 'v1.quest.star.setStar',
     tags: ["api", "quest"],
     description: 'Set star on quest',
@@ -291,6 +305,7 @@ export default [{
   path: '/v1/quest/{questId}/star',
   handler: questHandlers.removeStar,
   options: {
+    auth: 'jwt-access',
     id: 'v1.quest.star.takeAwayStar',
     tags: ["api", "quest"],
     description: 'Take away star on quest',

@@ -12,6 +12,7 @@ export default [{
   path: "/v1/totp/enable",
   handler: enableTOTP,
   options: {
+    auth: 'jwt-access',
     id: "v1.totp.enable",
     tags: ["api", "TOTP"],
     description: "Enable 2FA",
@@ -24,6 +25,7 @@ export default [{
   path: "/v1/totp/disable",
   handler: disableTOTP,
   options: {
+    auth: 'jwt-access',
     id: "v1.totp.disable",
     tags: ["api", "TOTP"],
     description: "Disable 2FA",
@@ -41,6 +43,7 @@ export default [{
   path: "/v1/totp/confirm",
   handler: confirmEnablingTOTP,
   options: {
+    auth: 'jwt-access',
     id: "v1.totp.confirm",
     tags: ["api", "TOTP"],
     description: "confirm enabling 2FA",

@@ -212,6 +212,7 @@ export default [{
   path: "/v1/auth/logout",
   handler: logout,
   options: {
+    auth: 'jwt-access',
     id: "v1.auth.logout",
     tags: ["api", "auth"],
     description: "Logout",
