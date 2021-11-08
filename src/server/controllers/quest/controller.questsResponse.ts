@@ -1,84 +1,123 @@
 import {error} from "../../utils";
-import {Transaction} from "sequelize";
+import { Op, Transaction } from "sequelize";
 import {Errors} from "../../utils/errors";
 import {
+  Quest,
   QuestsResponse,
   QuestsResponseStatus,
-  QuestsResponseType,
+  QuestsResponseType, User
 } from "@workquest/database-models/lib/models";
 
-abstract class CheckList {
-  public readonly questsResponse: QuestsResponse;
+abstract class QuestsResponseHelper {
+  public abstract questsResponse: QuestsResponse;
 
-  protected abstract _rollbackTransaction();
-
-  async workerMustBeInvitedToQuest(workerId: String) {
-    await this.questsResponseMustHaveType(QuestsResponseType.Invite);
+  /** Checks list */
+  public workerMustBeInvitedToQuest(workerId: String): QuestsResponseHelper {
+    this.questsResponseMustHaveType(QuestsResponseType.Invite);
 
     if (this.questsResponse.workerId !== workerId) {
-      await this._rollbackTransaction();
-
       throw error(Errors.Forbidden, "User isn't invited to quest", {});
     }
+
+    return this;
   }
 
-  async questsResponseMustHaveStatus(status: QuestsResponseStatus) {
+  public questsResponseMustHaveStatus(status: QuestsResponseStatus): QuestsResponseHelper {
     if (this.questsResponse.status !== status) {
-      await this._rollbackTransaction();
-
       throw error(Errors.Forbidden, "Quest response status doesn't match", {
         mustHave: status,
         current: this.questsResponse.status,
       });
     }
+
+    return this;
   }
 
-  async questsResponseMustHaveType(type: QuestsResponseType) {
-    if (this.questsResponse.type !== type) {
-      await this._rollbackTransaction();
+  public checkActiveResponse(): QuestsResponseHelper {
+    if (this.questsResponse.type === QuestsResponseType.Response) {
+      return this.questsResponseMustHaveStatus(QuestsResponseStatus.Open);
+    } else if (this.questsResponse.type === QuestsResponseType.Invite) {
+      return this.questsResponseMustHaveStatus(QuestsResponseStatus.Accepted);
+    }
+  }
 
+  public questsResponseMustHaveType(type: QuestsResponseType): QuestsResponseHelper {
+    if (this.questsResponse.type !== type) {
       throw error(Errors.Forbidden, "Quest response type doesn't match", {
         mustHave: type,
         current: this.questsResponse.type,
       });
     }
+
+    return this;
   }
 }
 
-export class QuestsResponseController extends CheckList {
-  public readonly questsResponse: QuestsResponse;
+export class QuestsResponseController extends QuestsResponseHelper {
 
-  protected _transaction: Transaction;
-
-  constructor(questsResponse: QuestsResponse, transaction?: Transaction) {
+  constructor(
+    public questsResponse: QuestsResponse
+  ) {
     super();
 
-    this.questsResponse = questsResponse;
-
-    if (transaction) {
-      this.setTransaction(transaction);
+    if (!questsResponse) {
+      throw error(Errors.NotFound, "QuestsResponse not found", {});
     }
   }
 
-  protected _rollbackTransaction(): Promise<void> {
-    if (this._transaction) return this._transaction.rollback();
-  }
-
-  public setTransaction(transaction: Transaction) {
-    this._transaction = transaction;
-  }
-}
-
-export class QuestsResponseControllerFactory {
-  public static async makeControllerByModel(questsResponse: QuestsResponse, transaction?: Transaction): Promise<QuestsResponseController> {
-    if (!questsResponse) {
+  async closeOtherResponsesToQuest(quest: Quest, transaction?: Transaction) {
+    try {
+      await QuestsResponse.update({
+        status: QuestsResponseStatus.Closed
+      }, {
+      where: {
+        id: { [Op.ne]: this.questsResponse.id },
+        questId: quest.id,
+      }, transaction });
+    } catch (e) {
       if (transaction) {
         await transaction.rollback();
       }
-
-      throw error(Errors.NotFound, "QuestsResponse not found", {});
+      throw e;
     }
+  }
 
-    return new QuestsResponseController(questsResponse, transaction);
+  static async closeAllResponsesOnQuest(quest: Quest, transaction?: Transaction) {
+    try {
+      await QuestsResponse.update({ status: QuestsResponseStatus.Closed }, {
+        where: { questId: quest.id }, transaction });
+    } catch (e) {
+      if (transaction) {
+        await transaction.rollback();
+      }
+      throw e;
+    }
+  }
+
+  static async reopenQuestResponses(quest: Quest, rejectedWorker: User, transaction?: Transaction) {
+    try {
+      await QuestsResponse.update({
+        status: QuestsResponseStatus.Open,
+      },{
+        where: {
+          questId: quest.id,
+          workerId: { [Op.ne]: rejectedWorker.id }
+        }, transaction,
+      });
+      await QuestsResponse.update({
+        status: QuestsResponseStatus.Rejected,
+        previousStatus: QuestsResponseStatus.Rejected,
+      }, {
+        where: {
+          questId: quest.id,
+          workerId: rejectedWorker.id
+        }, transaction,
+      });
+    } catch (e) {
+      if (transaction) {
+        await transaction.rollback();
+      }
+      throw e;
+    }
   }
 }

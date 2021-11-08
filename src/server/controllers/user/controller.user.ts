@@ -1,7 +1,7 @@
-import {Transaction} from "sequelize";
+import { Op, Transaction } from "sequelize";
 import {error} from "../../utils";
 import {Errors} from '../../utils/errors';
-import {getMedia} from "../../utils/medias";
+import config from "../../config/config";
 import {keysToRecords} from "../../utils/filters";
 import {totpValidate} from "@workquest/database-models/lib/utils";
 import {
@@ -10,138 +10,214 @@ import {
   UserStatus,
   RatingStatistic,
   defaultUserSettings,
-  UserSpecializationFilter,
+  UserSpecializationFilter, Session
 } from "@workquest/database-models/lib/models";
 
-abstract class CheckList {
-  public readonly abstract user: User;
+abstract class UserHelper {
+  public abstract user: User
 
-  protected abstract _rollbackTransaction();
-
-  public async userMustHaveRole(role: UserRole): Promise<void | never> {
-    if (this.user.role !== role) {
-      await this._rollbackTransaction();
-
-      throw error(Errors.InvalidRole, "User isn't match role", {
-        current: this.user.role, mustHave: role,
-      });
-    }
-  }
-
-  public async userNeedsSetRole(): Promise<void | never> {
-    if (this.user.status !== UserStatus.NeedSetRole) {
-      await this._rollbackTransaction();
-
-      throw error(Errors.InvalidPayload, "User don't need to set role", {
-        role: this.user.role,
-      });
-    }
-  }
-
-  public async checkPassword(password): Promise<void | never> {
-    if (!(await this.user.passwordCompare(password))) {
-      await this._rollbackTransaction();
-
-      throw error(Errors.Forbidden, 'User not found or password does not match', {});
-    }
-  }
-
-  public async userMustHaveVerificationPhone(): Promise<void | never> {
-    if (!this.user.tempPhone) {
-      await this._rollbackTransaction();
-
-      throw error(Errors.InvalidPayload, 'User does not have verification phone', {});
-    }
-  }
-
-  public async userMustHaveActiveStatusTOTP(activeStatus: boolean): Promise<void | never> {
-    if (this.user.settings.security.TOTP.active !== activeStatus) {
-      await this._rollbackTransaction();
-
-      throw error(Errors.InvalidActiveStatusTOTP,
-        `Active status TOTP is not ${activeStatus ? "enable" : "disable"}`, {});
-    }
-  }
-
-  public async checkPhoneConfirmationCode(code) {
-    if (this.user.settings.phoneConfirm !== code) {
-      await this._rollbackTransaction();
-
-      throw error(Errors.Forbidden, 'Confirmation code is not correct', {});
-    }
-  }
-
-  public async checkTotpConfirmationCode(code): Promise<void | never> {
-    if (!totpValidate(code, this.user.settings.security.TOTP.secret)) {
-      await this._rollbackTransaction();
-
-      throw error(Errors.InvalidPayload, "TOTP is invalid", [{ field: "totp", reason: "invalid" }]);
-    }
-  }
-
-  public async checkActivationCodeTotp(code) {
-    if (this.user.settings.security.TOTP.confirmCode !== code) {
-      this._rollbackTransaction();
-
-      throw error(Errors.InvalidPayload, "Confirmation code is not correct", [{
-        field: "confirmCode",
-        reason: "invalid"
-      }]);
-    }
-  }
-
-  public async checkUserAlreadyConfirmed() {
-    if (!this.user.settings.emailConfirm) {
-      this._rollbackTransaction();
-
-      throw error(Errors.UserAlreadyConfirmed, "User already confirmed", {});
-    }
-  }
-
-  public async checkUserConfirmationCode(confirmCode) {
-    if (this.user.settings.emailConfirm.toLowerCase() !== confirmCode.toLowerCase()) {
-      this._rollbackTransaction();
-
-      throw error(Errors.InvalidPayload, "Invalid confirmation code", [{ field: "confirmCode", reason: "invalid" }]);
-    }
-  }
-}
-
-export class UserController extends CheckList {
-  public readonly user: User;
-
-  protected _transaction: Transaction;
-
-  constructor(user: User, transaction?: Transaction) {
-    super();
-
-    this.user = user;
-
-    if (transaction) {
-      this.setTransaction(transaction);
-    }
-  }
-
-  protected _rollbackTransaction(): Promise<void> {
-    if (this._transaction) return this._transaction.rollback();
-  }
-
-  public setTransaction(transaction: Transaction) {
-    this._transaction = transaction;
-  }
-
-  public static async setUserSpecializations(user: User, keys: string[], transaction: Transaction = null) {
+  public async setUserSpecializations(keys: string[], transaction?: Transaction) {
     await UserSpecializationFilter.destroy({
-      where: { userId: user.id }, transaction,
+      where: { userId: this.user.id }, transaction,
     });
 
     if (keys.length <= 0) {
       return;
     }
 
-    const userSpecializations = keysToRecords(keys, 'userId', user.id);
+    const userSpecializations = keysToRecords(keys, 'userId', this.user.id);
 
     await UserSpecializationFilter.bulkCreate(userSpecializations, { transaction });
+  }
+
+  /** Checks list */
+  public checkNotSeeYourself(userId: string) {
+    if (this.user.id === userId) {
+      throw error(Errors.Forbidden, 'You can\'t see your profile (use "get me")', {});
+    }
+
+    return this;
+  }
+
+  public static async checkEmail(email: string) {
+    const emailUsed = await User.findOne({ where: { email: { [Op.iLike]: email } } });
+
+    if (emailUsed) {
+      throw error(Errors.InvalidPayload, "Email used", [{ field: "email", reason: "used" }]);
+    }
+  }
+
+  public userMustHaveRole(role: UserRole): UserHelper {
+    if (this.user.role !== role) {
+      throw error(Errors.InvalidRole, "User isn't match role", {
+        current: this.user.role, mustHave: role,
+      });
+    }
+
+    return this;
+  }
+
+  public userNeedsSetRole(): UserHelper {
+    if (this.user.status !== UserStatus.NeedSetRole) {
+      throw error(Errors.InvalidPayload, "User don't need to set role", {
+        role: this.user.role,
+      });
+    }
+
+    return this;
+  }
+
+  public async checkPassword(password): Promise<UserHelper> {
+    if (!(await this.user.passwordCompare(password))) {
+      throw error(Errors.Forbidden, 'User not found or password does not match', {});
+    }
+
+    return this;
+  }
+
+  public userMustHaveVerificationPhone(): UserHelper {
+    if (!this.user.tempPhone) {
+      throw error(Errors.InvalidPayload, 'User does not have verification phone', {});
+    }
+
+    return this;
+  }
+
+  public userMustHaveActiveStatusTOTP(activeStatus: boolean): UserHelper {
+    if (this.user.settings.security.TOTP.active !== activeStatus) {
+      throw error(Errors.InvalidActiveStatusTOTP,
+        `Active status TOTP is not ${activeStatus ? "enable" : "disable"}`, {});
+    }
+
+    return this;
+  }
+
+  public checkPhoneConfirmationCode(code): UserHelper {
+    if (this.user.settings.phoneConfirm !== code) {
+      throw error(Errors.Forbidden, 'Confirmation code is not correct', {});
+    }
+
+    return this;
+  }
+
+  public checkTotpConfirmationCode(code): UserHelper {
+    if (!totpValidate(code, this.user.settings.security.TOTP.secret)) {
+      throw error(Errors.InvalidPayload, "TOTP is invalid", [{ field: "totp", reason: "invalid" }]);
+    }
+
+    return this;
+  }
+
+  public checkActivationCodeTotp(code): UserHelper {
+    if (this.user.settings.security.TOTP.confirmCode !== code) {
+      throw error(Errors.InvalidPayload, "Confirmation code is not correct", [{
+        field: "confirmCode",
+        reason: "invalid"
+      }]);
+    }
+
+    return this;
+  }
+
+  public checkUserAlreadyConfirmed(): UserHelper {
+    if (!this.user.settings.emailConfirm) {
+      throw error(Errors.UserAlreadyConfirmed, "User already confirmed", {});
+    }
+
+    return this;
+  }
+
+  public checkUserConfirmationCode(confirmCode): UserHelper {
+    if (this.user.settings.emailConfirm.toLowerCase() !== confirmCode.toLowerCase()) {
+      throw error(Errors.InvalidPayload, "Invalid confirmation code", [{ field: "confirmCode", reason: "invalid" }]);
+    }
+
+    return this;
+  }
+}
+
+export class UserController extends UserHelper {
+
+  constructor(
+    public user: User
+  ) {
+    super();
+
+    if (!user) {
+      throw error(Errors.NotFound, "User not found", {});
+    }
+  }
+
+  public async setRole(role: UserRole, transaction?: Transaction) {
+    try {
+      this.user = await this.user.update({
+        status: UserStatus.Confirmed, role,
+        additionalInfo: UserController.getDefaultAdditionalInfo(role),
+      });
+    } catch (e) {
+      if (transaction) {
+        await transaction.rollback();
+      }
+      throw e;
+    }
+  }
+
+  public async setUnverifiedPhoneNumber(phoneNumber: string, confirmCode: number, transaction?: Transaction) {
+    try {
+      await this.user.update({
+        tempPhone: phoneNumber,
+        'settings.phoneConfirm': confirmCode,
+      }, { transaction });
+    } catch (e) {
+      if (transaction) {
+        await transaction.rollback();
+      }
+      throw e;
+    }
+  }
+
+  public async confirmPhoneNumber(transaction?: Transaction) {
+    try {
+      this.user = await this.user.update({
+        phone: this.user.tempPhone,
+        tempPhone: null,
+        'settings.phoneConfirm': null,
+      });
+    } catch (e) {
+      if (transaction) {
+        await transaction.rollback();
+      }
+      throw e;
+    }
+  }
+
+  public async changePassword(newPassword: String, transaction?: Transaction) {
+    try {
+      this.user = await this.user.update({
+        password: newPassword
+      }, { transaction });
+    } catch (e) {
+      if (transaction) {
+        await transaction.rollback();
+      }
+      throw e;
+    }
+  }
+
+  public async logoutAllSessions(transaction?: Transaction) {
+    try {
+      await Session.update({ invalidating: true }, {
+        where: {
+          userId: this.user.id,
+          createdAt: { [Op.gte]: Date.now() - config.auth.jwt.refresh.lifetime * 1000 },
+        }, transaction,
+      });
+    } catch (e) {
+      if (transaction) {
+        await transaction.rollback();
+      }
+      throw e;
+    }
   }
 
   public static getDefaultAdditionalInfo(role: UserRole) {
@@ -212,19 +288,5 @@ export class UserController extends CheckList {
     await RatingStatistic.create({ userId: user.id });
 
     return user;
-  }
-}
-
-export class UserControllerFactory {
-  public static async makeControllerByModel(user: User, transaction?: Transaction): Promise<UserController> {
-    if (!user) {
-      if (transaction) {
-        await transaction.rollback();
-      }
-
-      throw error(Errors.NotFound, "User not found", {});
-    }
-
-    return new UserController(user, transaction);
   }
 }

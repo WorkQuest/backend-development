@@ -1,27 +1,32 @@
 import * as Lab from '@hapi/lab';
-import { expect } from '@hapi/code';
-import { init } from '../src/server';
-import { Errors } from '../src/server/utils/errors';
+import {expect} from '@hapi/code';
+import {init} from '../src/server';
+import {Errors} from '../src/server/utils/errors';
+import {QuestEmployment, QuestWorkPlace} from "@workquest/database-models/src/models/quest/Quest";
 import {
   Quest,
-  QuestPriority,
+  AdType,
   QuestStatus,
+  QuestPriority,
   QuestsResponse,
-  QuestsResponseStatus,
-  QuestsResponseType, AdType
+  QuestsResponseType,
+  QuestsResponseStatus, User
 } from "@workquest/database-models/lib/models";
 import {
+  makeQuest,
   makeWorker,
   makeEmployer,
   makeAccessToken,
-  makeQuest
 } from './index';
-import { QuestEmployment, QuestWorkPlace } from "@workquest/database-models/src/models/quest/Quest";
 
-let server = null;
-const { it, suite,
-  before, after
+const {
+  it,
+  after,
+  suite,
+  before,
 } = exports.lab = Lab.script();
+
+let server;
 
 async function postRequestOnCreateQuest(accessToken: string) {
   return await server.inject({
@@ -1129,7 +1134,7 @@ async function Should_InvalidStatus_When_EmployerRejectCompletedWorkAndQuestNotS
   await assignedWorker.destroy();
 }
 
-suite('Testing API Quest:', () => {
+suite('Testing flow quests:', () => {
   before(async () => {
     server = await init();
   });
@@ -1138,6 +1143,7 @@ suite('Testing API Quest:', () => {
     await server.stop();
   });
 
+  /**
   it('Create (without media)', async () => {
     await Should_InvalidRole_When_WorkerWantsToCreateQuest();
     await Should_Ok_When_EmployerWantsToCreateQuest();
@@ -1186,16 +1192,18 @@ suite('Testing API Quest:', () => {
     await Should_Ok_When_EmployerStartedQuestAndWorkerAcceptInvite();
     await Should_Forbidden_When_EmployerStartedQuestAndWorkerNotResponseOnInvite();
   });
+  **/
   it('Reject Work', async () => {
-    await Should_InvalidStatus_When_WorkerRejectWorkAndQuestNotStatusOnWaitWorker(QuestStatus.Active);
-    await Should_InvalidStatus_When_WorkerRejectWorkAndQuestNotStatusOnWaitWorker(QuestStatus.Closed);
-    await Should_InvalidStatus_When_WorkerRejectWorkAndQuestNotStatusOnWaitWorker(QuestStatus.Dispute);
-    await Should_InvalidStatus_When_WorkerRejectWorkAndQuestNotStatusOnWaitWorker(QuestStatus.Created);
-    await Should_InvalidStatus_When_WorkerRejectWorkAndQuestNotStatusOnWaitWorker(QuestStatus.WaitConfirm);
+    // await Should_InvalidStatus_When_WorkerRejectWorkAndQuestNotStatusOnWaitWorker(QuestStatus.Active);
+    // await Should_InvalidStatus_When_WorkerRejectWorkAndQuestNotStatusOnWaitWorker(QuestStatus.Closed);
+    // await Should_InvalidStatus_When_WorkerRejectWorkAndQuestNotStatusOnWaitWorker(QuestStatus.Dispute);
+    // await Should_InvalidStatus_When_WorkerRejectWorkAndQuestNotStatusOnWaitWorker(QuestStatus.Created);
+    // await Should_InvalidStatus_When_WorkerRejectWorkAndQuestNotStatusOnWaitWorker(QuestStatus.WaitConfirm);
 
-    await Should_Forbidden_When_WorkerRejectWorkAndWorkerNotAssignedOnWork();
+    // await Should_Forbidden_When_WorkerRejectWorkAndWorkerNotAssignedOnWork();
     await Should_Ok_When_WorkerRejectWorkAndQuestStatusWaitWorker();
   });
+  /**
   it('Accept Work', async () => {
     await Should_InvalidStatus_When_WorkerAcceptWorkAndQuestNotStatusOnWaitWorker(QuestStatus.Active);
     await Should_InvalidStatus_When_WorkerAcceptWorkAndQuestNotStatusOnWaitWorker(QuestStatus.Closed);
@@ -1216,6 +1224,7 @@ suite('Testing API Quest:', () => {
     await Should_Forbidden_When_WorkerCompletedWorkAndWorkerNotAssignedOnWork();
     await Should_Ok_When_WorkerCompletedWorkAndQuestStatusActive();
   });
+  **/
   /**
   it('Accept completed work', async () => {
     await Should_InvalidStatus_When_EmployerAcceptCompletedWorkAndQuestNotStatusOnWaitConfirm(QuestStatus.WaitWorker);

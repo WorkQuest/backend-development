@@ -1,20 +1,5 @@
 import * as Joi from "joi";
-import {
-  acceptCompletedWorkOnQuest,
-  acceptWorkOnQuest,
-  closeQuest,
-  completeWorkOnQuest,
-  createQuest,
-  deleteQuest,
-  editQuest,
-  getQuests,
-  rejectCompletedWorkOnQuest,
-  rejectWorkOnQuest,
-  setStar,
-  startQuest,
-  removeStar,
-  getQuest,
-} from '../../api/quest';
+import * as questHandlers from '../../api/quest';
 import {
   outputOkSchema,
   idSchema,
@@ -30,7 +15,6 @@ import {
   questSchema,
   questTitleSchema,
   questQuerySchema,
-  questsSchema,
   questsForGetWithCountSchema,
   questLocationPlaceNameSchema,
   questEmploymentSchema,
@@ -40,7 +24,7 @@ import {
 export default [{
   method: "GET",
   path: "/v1/quest/{questId}",
-  handler: getQuest,
+  handler: questHandlers.getQuest,
   options: {
     id: "v1.getQuest",
     tags: ["api", "quest"],
@@ -57,7 +41,7 @@ export default [{
 }, {
   method: "POST",
   path: "/v1/quest/create",
-  handler: createQuest,
+  handler: questHandlers.createQuest,
   options: {
     id: "v1.quest.create",
     tags: ["api", "quest"],
@@ -85,7 +69,7 @@ export default [{
 }, {
   method: "DELETE",
   path: "/v1/quest/{questId}",
-  handler: deleteQuest,
+  handler: questHandlers.deleteQuest,
   options: {
     id: "v1.quest.deleteQuest",
     tags: ["api", "quest"],
@@ -102,7 +86,7 @@ export default [{
 }, {
   method: "PUT",
   path: "/v1/quest/{questId}",
-  handler: editQuest,
+  handler: questHandlers.editQuest,
   options: {
     id: "v1.quest.editQuest",
     tags: ["api", "quest"],
@@ -112,18 +96,18 @@ export default [{
         questId: idSchema.required(),
       }).label("EditQuestParams"),
       payload: Joi.object({
-        category: questCategorySchema,
-        workplace: questWorkPlaceSchema,
-        employment: questEmploymentSchema,
-        priority: questPrioritySchema,
-        location: locationSchema,
-        locationPlaceName: questLocationPlaceNameSchema,
-        title: questTitleSchema,
-        description: questDescriptionSchema,
-        price: questPriceSchema,
-        adType: questAdTypeSchema,
-        medias: idsSchema.unique().default([]),
-        specializationKeys: specializationKeysSchema.unique(),
+        category: questCategorySchema.required(),
+        workplace: questWorkPlaceSchema.required(),
+        employment: questEmploymentSchema.required(),
+        priority: questPrioritySchema.required(),
+        location: locationSchema.required(),
+        locationPlaceName: questLocationPlaceNameSchema.required(),
+        title: questTitleSchema.required(),
+        description: questDescriptionSchema.required(),
+        price: questPriceSchema.required(),
+        adType: questAdTypeSchema.required(),
+        medias: idsSchema.unique().required(),
+        specializationKeys: specializationKeysSchema.unique().required(),
       }).label("EditQuestPayload"),
     },
     response: {
@@ -133,7 +117,7 @@ export default [{
 }, {
   method: "GET",
   path: "/v1/quests",
-  handler: getQuests,
+  handler: questHandlers.getQuests,
   options: {
     id: "v1.getQuests",
     tags: ["api", "quest"],
@@ -148,7 +132,7 @@ export default [{
 }, {
   method: "GET",
   path: "/v1/employer/{userId}/quests",
-  handler: getQuests,
+  handler: questHandlers.getQuests,
   options: {
     id: "v1.employer.quests",
     tags: ["api", "quest"],
@@ -166,7 +150,7 @@ export default [{
 }, {
   method: "POST",
   path: "/v1/quest/{questId}/start",
-  handler: startQuest,
+  handler: questHandlers.startQuest,
   options: {
     id: "v1.quest.startQuest",
     tags: ["api", "quest"],
@@ -186,7 +170,7 @@ export default [{
 }, {
   method: "POST",
   path: "/v1/quest/{questId}/close",
-  handler: closeQuest,
+  handler: questHandlers.closeQuest,
   options: {
     id: "v1.quest.closeQuest",
     tags: ["api", "quest"],
@@ -203,7 +187,7 @@ export default [{
 }, {
   method: "POST",
   path: "/v1/quest/{questId}/reject-work",
-  handler: rejectWorkOnQuest,
+  handler: questHandlers.rejectWorkOnQuest,
   options: {
     id: "v1.quest.rejectWork",
     tags: ["api", "quest"],
@@ -220,7 +204,7 @@ export default [{
 }, {
   method: "POST",
   path: "/v1/quest/{questId}/accept-work",
-  handler: acceptWorkOnQuest,
+  handler: questHandlers.acceptWorkOnQuest,
   options: {
     id: "v1.quest.acceptWork",
     tags: ["api", "quest"],
@@ -237,7 +221,7 @@ export default [{
 }, {
   method: "POST",
   path: "/v1/quest/{questId}/complete-work",
-  handler: completeWorkOnQuest,
+  handler: questHandlers.completeWorkOnQuest,
   options: {
     id: "v1.quest.completeWork",
     tags: ["api", "quest"],
@@ -254,7 +238,7 @@ export default [{
 }, {
   method: "POST",
   path: "/v1/quest/{questId}/accept-completed-work",
-  handler: acceptCompletedWorkOnQuest,
+  handler: questHandlers.acceptCompletedWorkOnQuest,
   options: {
     id: "v1.quest.acceptCompletedWork",
     tags: ["api", "quest"],
@@ -271,7 +255,7 @@ export default [{
 }, {
   method: "POST",
   path: "/v1/quest/{questId}/reject-completed-work",
-  handler: rejectCompletedWorkOnQuest,
+  handler: questHandlers.rejectCompletedWorkOnQuest,
   options: {
     id: "v1.quest.rejectCompletedWork",
     tags: ["api", "quest"],
@@ -288,7 +272,7 @@ export default [{
 }, {
   method: "POST",
   path: '/v1/quest/{questId}/star',
-  handler: setStar,
+  handler: questHandlers.setStar,
   options: {
     id: 'v1.quest.star.setStar',
     tags: ["api", "quest"],
@@ -305,7 +289,7 @@ export default [{
 }, {
   method: "DELETE",
   path: '/v1/quest/{questId}/star',
-  handler: removeStar,
+  handler: questHandlers.removeStar,
   options: {
     id: 'v1.quest.star.takeAwayStar',
     tags: ["api", "quest"],

@@ -1,6 +1,5 @@
 import {error, output} from "../utils";
 import {Errors} from "../utils/errors";
-import {getMedias} from "../utils/medias";
 import {
   Discussion,
   DiscussionLike,
@@ -8,6 +7,7 @@ import {
   DiscussionCommentLike,
   User
 } from "@workquest/database-models/lib/models";
+import { MediaController } from "../controllers/controller.media";
 
 export async function getDiscussions(r) {
   const { count, rows } = await Discussion.findAndCountAll({
@@ -54,7 +54,7 @@ export async function getRootComments(r) {
 }
 
 export async function createDiscussion(r) {
-  const medias = await getMedias(r.payload.medias);
+  const medias = await MediaController.getMedias(r.payload.medias);
   const transaction = await r.server.app.db.transaction();
 
   const discussion = await Discussion.create({
@@ -71,7 +71,7 @@ export async function createDiscussion(r) {
 }
 
 export async function sendComment(r) {
-  const medias = await getMedias(r.payload.medias);
+  const medias = await MediaController.getMedias(r.payload.medias);
 
   const discussion = await Discussion.findAll({
     where: { id: r.params.discussionId }

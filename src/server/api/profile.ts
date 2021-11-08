@@ -1,10 +1,10 @@
-import { literal, Op } from "sequelize";
-import { Errors } from "../utils/errors";
-import { addSendSmsJob } from '../jobs/sendSms';
-import { error, getRandomCodeNumber, output } from '../utils';
-import { UserController, UserControllerFactory } from "../controllers/user/controller.user";
-import { splitSpecialisationAndIndustry } from "../utils/filters";
-import { transformToGeoPostGIS } from "../utils/postGIS";
+import {literal, Op} from "sequelize";
+import {Errors} from "../utils/errors";
+import {addSendSmsJob} from '../jobs/sendSms';
+import {error, getRandomCodeNumber, output} from '../utils';
+import {UserController} from "../controllers/user/controller.user";
+import {splitSpecialisationAndIndustry} from "../utils/filters";
+import {transformToGeoPostGIS} from "../utils/postGIS";
 import {
   User,
   Session,
@@ -13,6 +13,7 @@ import {
   UserSpecializationFilter,
 } from "@workquest/database-models/lib/models";
 import config from "../config/config";
+import { MediaController } from "../controllers/controller.media";
 
 export const searchFields = [
   "firstName",
@@ -28,12 +29,10 @@ export async function getMe(r) {
 }
 
 export async function getUser(r) {
-  if (r.auth.credentials.id === r.params.userId) {
-    return error(Errors.Forbidden, 'You can\'t see your profile (use "get me")', {});
-  }
+  const userController = new UserController(await User.findByPk(r.params.userId));
 
-  const user = await User.findByPk(r.params.userId);
-  const userController = await UserControllerFactory.makeControllerByModel(user);
+  userController.
+    checkNotSeeYourself(r.params.userId)
 
   return output(userController.user);
 }
@@ -106,11 +105,7 @@ export async function setRole(r) {
 
   await userController.userNeedsSetRole();
 
-  await user.update({
-    role: r.payload.role,
-    status: UserStatus.Confirmed,
-    additionalInfo: UserController.getDefaultAdditionalInfo(r.payload.role),
-  });
+  await userController.setRole(r.payload.role);
 
   return output();
 }
@@ -122,8 +117,12 @@ export function editProfile(userRole: UserRole) {
 
     await userController.userMustHaveRole(userRole);
 
-    const avatarId = r.payload.avatarId ? (await getMedia(r.payload)).id : null;
+    const avatarId = r.payload.avatarId ? (await MediaController.getMedia(r.payload)).id : null;
     const transaction = await r.server.app.db.transaction();
+
+    if (userRole === UserRole.Worker) {
+      await userController.setUserSpecializations(r.payload.specializationKeys, transaction);
+    }
 
     await user.update({
       avatarId: avatarId,
@@ -133,10 +132,6 @@ export function editProfile(userRole: UserRole) {
       additionalInfo: r.payload.additionalInfo,
       locationPostGIS: r.payload.location ? transformToGeoPostGIS(r.payload.location) : null,
     }, transaction);
-
-    if (userRole === UserRole.Worker) {
-      await UserController.setUserSpecializations(user, r.payload.specializationKeys, transaction);
-    }
 
     await transaction.commit();
 
@@ -151,21 +146,14 @@ export async function changePassword(r) {
     where: { id: r.auth.credentials.id }
   });
 
-  const transaction = await r.server.app.db.transaction();
-  const userController = new UserController(user, transaction);
+  const userController = new UserController(user);
 
   await userController.checkPassword(r.payload.oldPassword);
 
-  await user.update({ password: r.payload.newPassword }, { transaction });
+  const transaction = await r.server.app.db.transaction();
 
-  await Session.update({ invalidating: true }, {
-    where: {
-      userId: r.auth.credentials.id,
-      createdAt: {
-        [Op.gte]: Date.now() - config.auth.jwt.refresh.lifetime * 1000
-      }
-    }, transaction,
-  });
+  await userController.changePassword(r.payload.newPassword, transaction);
+  await userController.logoutAllSessions(transaction);
 
   await transaction.commit();
 
@@ -180,27 +168,22 @@ export async function confirmPhoneNumber(r) {
   await userController.userMustHaveVerificationPhone();
   await userController.checkPhoneConfirmationCode(r.payload.confirmCode);
 
-  await user.update({
-    phone: user.tempPhone,
-    tempPhone: null,
-    'settings.phoneConfirm': null,
-  });
+  await userController.confirmPhoneNumber();
 
   return output();
 }
 
 export async function sendCodeOnPhoneNumber(r) {
-  const user = await User.scope("withPassword").findByPk(r.auth.credentials.id);
+  const userWithPassword = await User.scope("withPassword").findByPk(r.auth.credentials.id);
   const confirmCode = getRandomCodeNumber();
+
+  const userController = new UserController(userWithPassword);
+
+  await userController.setUnverifiedPhoneNumber(r.payload.phoneNumber, confirmCode);
 
   await addSendSmsJob({
     toPhoneNumber: r.payload.phoneNumber,
     message: 'Code to confirm your phone number on WorkQuest: ' + confirmCode,
-  });
-
-  await user.update({
-    tempPhone: r.payload.phoneNumber,
-    'settings.phoneConfirm': confirmCode,
   });
 
   return output();

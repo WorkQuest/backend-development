@@ -1,6 +1,6 @@
 import {output} from '../utils';
 import {addUpdateReviewStatisticsJob} from '../jobs/updateReviewStatistics';
-import {QuestControllerFactory} from "../controllers/quest/controller.quest";
+import {QuestController} from "../controllers/quest/controller.quest"
 import {publishQuestNotifications, QuestNotificationActions} from "../websocket/websocket.quest";
 import {
   User,
@@ -13,11 +13,11 @@ import {
 export async function sendReview(r) {
   const fromUser: User = r.auth.credentials;
 
-  const quest = await Quest.findByPk(r.payload.questId);
-  const questController = await QuestControllerFactory.makeControllerByModel(quest);
+  const questController = new QuestController(await Quest.findByPk(r.payload.questId));
 
-  await questController.questMustHaveStatus(QuestStatus.Done);
-  await questController.userMustBelongToQuest(fromUser.id);
+  questController
+    .questMustHaveStatus(QuestStatus.Done)
+    .userMustBelongToQuest(fromUser.id)
 
   const toUser: User = fromUser.role === UserRole.Worker ? questController.quest.user : questController.quest.assignedWorker;
 

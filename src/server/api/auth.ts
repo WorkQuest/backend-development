@@ -4,10 +4,10 @@ import * as querystring from "querystring";
 import Handlebars = require("handlebars");
 import { Op } from "sequelize";
 import config from "../config/config";
-import { Errors } from "../utils/errors";
-import { addSendEmailJob } from "../jobs/sendEmail";
-import { generateJwt } from "../utils/auth";
-import { UserController, UserControllerFactory } from "../controllers/user/controller.user";
+import {Errors} from "../utils/errors";
+import {addSendEmailJob} from "../jobs/sendEmail";
+import {generateJwt} from "../utils/auth";
+import {UserController} from "../controllers/user/controller.user";
 import {
 	error,
 	output,
@@ -29,9 +29,7 @@ const confirmTemplate = Handlebars.compile(fs.readFileSync(confirmTemplatePath, 
 }));
 
 export async function register(r) {
-	const emailUsed = await User.findOne({ where: { email: { [Op.iLike]: r.payload.email } } });
-
-	if (emailUsed) return error(Errors.InvalidPayload, "Email used", [{ field: "email", reason: "used" }]);
+	await UserController.checkEmail(r.payload.email);
 
 	const emailConfirmCode = getRandomHexToken().substring(0, 6).toUpperCase();
 	const emailConfirmLink = `${config.baseUrl}/confirm?token=${emailConfirmCode}`;
@@ -131,12 +129,13 @@ export async function login(r) {
 	const user = await User.scope("withPassword").findOne({
 		where: { email: { [Op.iLike]: r.payload.email }	}
 	});
-	const userController = await UserControllerFactory.makeControllerByModel(user);
+	const userController = new UserController(user);
 
-	await userController.checkPassword(r.payload.password);
+	await userController.checkPassword(r.payload.password)
 
 	if (userController.user.isTOTPEnabled()) {
-		await userController.checkTotpConfirmationCode(r.payload.totp);
+		userController
+			.checkTotpConfirmationCode(r.payload.totp)
 	}
 
 	const session = await Session.create({

@@ -1,59 +1,84 @@
-import {Portfolio} from "@workquest/database-models/lib/models";
+import { Media, Portfolio } from "@workquest/database-models/lib/models";
 import {Transaction} from "sequelize";
 import {Errors} from "../../utils/errors";
 import {error} from "../../utils";
 
-abstract class CheckList {
-  public readonly abstract portfolio: Portfolio;
+export interface PortfolioDTO {
+  id?: string;
+  userId: string;
+  title: string;
+  description: string;
+}
 
-  protected abstract _rollbackTransaction();
+abstract class PortfolioHelper {
+  public abstract portfolio: Portfolio;
 
-  mustBeCaseCreator(userId: String) {
+  mustBeCaseCreator(userId: String): PortfolioHelper {
     if (this.portfolio.userId !== userId) {
-      this._rollbackTransaction();
-
       throw error(Errors.Forbidden, "User is not portfolio creator", {
         current: this.portfolio.userId,
         mustHave: userId
       });
     }
+
+    return this;
   }
 }
 
-export class PortfolioController extends CheckList {
-  public readonly portfolio: Portfolio;
+export class PortfolioController extends PortfolioHelper {
 
-  protected _transaction: Transaction;
-
-  constructor(portfolio: Portfolio, transaction?: Transaction) {
+  constructor(
+    public portfolio: Portfolio
+  ) {
     super();
 
-    this.portfolio = portfolio;
-
-    if (transaction) {
-      this.setTransaction(transaction);
+    if (!portfolio) {
+      throw error(Errors.NotFound, "Portfolio not found", {});
     }
   }
 
-  protected _rollbackTransaction(): Promise<void> {
-    if (this._transaction) return this._transaction.rollback();
+  public async setMedias(medias: Media[], transaction?: Transaction) {
+    try {
+      await this.portfolio.$set('medias', medias, { transaction });
+    } catch (e) {
+      if (transaction) {
+        await transaction.rollback();
+        throw e;
+      }
+    }
   }
 
-  public setTransaction(transaction: Transaction) {
-    this._transaction = transaction;
-  }
-}
-
-export class PortfolioControllerFactory {
-  public static async makeControllerByModel(portfolio: Portfolio, transaction?: Transaction): Promise<PortfolioController> {
-    if (!portfolio) {
+  public async update(portfolioDto: PortfolioDTO, transaction?: Transaction) {
+    try {
+      this.portfolio = await this.portfolio.update(portfolioDto, { transaction });
+    } catch (e) {
       if (transaction) {
         await transaction.rollback();
       }
-
-      throw error(Errors.NotFound, "Portfolio not found", {});
+      throw e;
     }
+  }
 
-    return new PortfolioController(portfolio, transaction);
+  public async destroy(transaction?: Transaction) {
+    try {
+      await this.portfolio.destroy({ transaction });
+    } catch (e) {
+      if (transaction) {
+        await transaction.rollback();
+      }
+    }
+  }
+
+  static async new(portfolioDto: PortfolioDTO, transaction?: Transaction): Promise<PortfolioController> {
+    try {
+      const portfolio = await Portfolio.create(portfolioDto, { transaction });
+
+      return new PortfolioController(portfolio);
+    } catch (e) {
+      if (transaction) {
+        await transaction.rollback();
+      }
+      throw e;
+    }
   }
 }

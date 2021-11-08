@@ -1,14 +1,14 @@
 import {error, output} from "../utils";
-import {getMedias} from "../utils/medias";
 import {Errors} from "../utils/errors";
 import {Op} from "sequelize";
 import {incrementUnreadCountMessageOfMembersJob} from "../jobs/incrementUnreadCountMessageOfMembers";
 import {resetUnreadCountMessagesOfMemberJob} from "../jobs/resetUnreadCountMessagesOfMember";
 import {setMessageAsReadJob} from "../jobs/setMessageAsRead";
 import {updateCountUnreadMessagesJob} from "../jobs/updateCountUnreadMessages";
-import {ChatController, ChatControllerFactory} from "../controllers/chat/controller.chat";
-import {MessageControllerFactory} from "../controllers/chat/controller.message";
-import { ChatNotificationActions, publishChatNotifications } from "../websocket/websocket.chat";
+import {ChatController} from "../controllers/chat/controller.chat";
+import {MessageController} from "../controllers/chat/controller.message";
+import {ChatNotificationActions, publishChatNotifications} from "../websocket/websocket.chat";
+import {MediaController} from "../controllers/controller.media";
 import {
   Chat,
   ChatMember,
@@ -22,6 +22,7 @@ import {
   StarredChat,
   User,
 } from "@workquest/database-models/lib/models";
+
 
 export async function getUserChats(r) {
   const include = [{
@@ -49,7 +50,7 @@ export async function getUserChats(r) {
 
 export async function getChatMessages(r) {
   const chat = await Chat.findByPk(r.params.chatId);
-  const chatController = await ChatControllerFactory.makeControllerByModel(chat)
+  const chatController = new ChatController(chat);
 
   await chatController.chatMustHaveMember(r.auth.credentials.id);
 
@@ -77,7 +78,7 @@ export async function getUserChat(r) {
       required: false,
     }
   });
-  const chatController = await ChatControllerFactory.makeControllerByModel(chat)
+  const chatController = new ChatController(chat)
 
   await chatController.chatMustHaveMember(r.auth.credentials.id);
 
@@ -111,7 +112,7 @@ export async function listOfUsersByChats(r) {
 
 export async function getChatMembers(r) {
   const chat = await Chat.findByPk(r.params.chatId);
-  const chatController = await ChatControllerFactory.makeControllerByModel(chat)
+  const chatController = new ChatController(chat);
 
   await chatController.chatMustHaveMember(r.auth.credentials.id);
 
@@ -199,7 +200,7 @@ export async function sendMessageToUser(r) {
 
   await User.userMustExist(r.params.userId);
 
-  const medias = await getMedias(r.payload.medias);
+  const medias = await MediaController.getMedias(r.payload.medias);
   const transaction = await r.server.app.db.transaction();
 
   const message = await Message.build({
@@ -290,9 +291,9 @@ export async function sendMessageToUser(r) {
 }
 
 export async function sendMessageToChat(r) {
-  const medias = await getMedias(r.payload.medias);
+  const medias = await MediaController.getMedias(r.payload.medias);
   const chat = await Chat.findByPk(r.params.chatId);
-  const chatController = await ChatControllerFactory.makeControllerByModel(chat)
+  const chatController = new ChatController(chat);
 
   await chatController.chatMustHaveMember(r.auth.credentials.id);
 
@@ -351,10 +352,11 @@ export async function addUserInGroupChat(r) {
   await User.userMustExist(r.params.userId);
 
   const groupChat = await Chat.findByPk(r.params.chatId);
-  const chatController = await ChatControllerFactory.makeControllerByModel(groupChat);
+  const chatController = new ChatController(groupChat);
 
-  await chatController.chatMustHaveType(ChatType.group);
-  await chatController.chatMustHaveOwner(r.auth.credentials.id);
+  chatController
+    .chatMustHaveType(ChatType.group)
+    .chatMustHaveOwner(r.auth.credentials.id)
 
   const message = Message.build({
     senderUserId: r.auth.credentials.id,
@@ -421,10 +423,12 @@ export async function removeUserInGroupChat(r) {
   await User.userMustExist(r.params.userId);
 
   const groupChat = await Chat.findByPk(r.params.chatId);
-  const chatController = await ChatControllerFactory.makeControllerByModel(groupChat);
+  const chatController = new ChatController(groupChat);
 
-  await chatController.chatMustHaveType(ChatType.group);
-  await chatController.chatMustHaveOwner(r.auth.credentials.id);
+  chatController
+    .chatMustHaveType(ChatType.group)
+    .chatMustHaveOwner(r.auth.credentials.id)
+
   await chatController.chatMustHaveMember(r.params.userId);
 
   const transaction = await r.server.app.db.transaction();
@@ -484,7 +488,7 @@ export async function removeUserInGroupChat(r) {
 
 export async function leaveFromGroupChat(r) {
   const groupChat = await Chat.findByPk(r.params.chatId);
-  const chatController = await ChatControllerFactory.makeControllerByModel(groupChat);
+  const chatController = new ChatController(groupChat);
 
   await chatController.chatMustHaveType(ChatType.group);
   await chatController.chatMustHaveMember(r.auth.credentials.id);
@@ -540,7 +544,7 @@ export async function leaveFromGroupChat(r) {
 
 export async function setMessagesAsRead(r) {
   const chat = await Chat.findByPk(r.params.chatId);
-  const chatController = await ChatControllerFactory.makeControllerByModel(chat);
+  const chatController = new ChatController(chat);
 
   await chatController.chatMustHaveMember(r.auth.credentials.id);
 
@@ -605,8 +609,8 @@ export async function markMessageStar(r) {
   const chat = await Chat.findByPk(r.params.chatId);
   const message = await Message.findByPk(r.params.messageId);
 
-  const chatController = await ChatControllerFactory.makeControllerByModel(chat);
-  const messageController = await MessageControllerFactory.makeControllerByModel(message);
+  const chatController = new ChatController(chat);
+  const messageController = new MessageController(message);
 
   await chatController.chatMustHaveMember(r.auth.credentials.id);
 
@@ -637,7 +641,7 @@ export async function removeStarFromMessage(r) {
 
 export async function markChatStar(r) {
   const chat = await Chat.findByPk(r.params.chatId);
-  const chatController = await ChatControllerFactory.makeControllerByModel(chat);
+  const chatController = new ChatController(chat);
 
   await chatController.chatMustHaveMember(r.auth.credentials.id);
 

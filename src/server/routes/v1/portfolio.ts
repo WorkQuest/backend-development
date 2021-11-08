@@ -8,7 +8,7 @@ import {
   portfolioSchema,
   portfolioTitleSchema,
   portfoliosSchema,
-  idsSchema,
+  idsSchema, offsetSchema, limitSchema
 } from "@workquest/database-models/lib/schemes";
 
 export default [{
@@ -39,6 +39,10 @@ export default [{
     tags: ["api", "portfolio"],
     description: "Get all cases for user",
     validate: {
+      query: Joi.object({
+        offset: offsetSchema,
+        limit: limitSchema
+      }).label("GetCasesQuery"),
       params: Joi.object({
         userId: idSchema.required(),
       }).label('GetCasesParams')

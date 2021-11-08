@@ -1,136 +1,211 @@
 import {error} from "../../utils";
 import {Transaction} from "sequelize";
-import {UserController} from "../user/controller.user";
 import {Errors} from "../../utils/errors";
 import {keysToRecords} from "../../utils/filters";
-import {getMedias} from "../../utils/medias";
-import { transformToGeoPostGIS } from "../../utils/postGIS";
 import {
   User,
   Quest,
-  UserRole,
   QuestStatus,
-  QuestSpecializationFilter, Media
+  QuestSpecializationFilter,
+  QuestsResponse, StarredQuests,
 } from "@workquest/database-models/lib/models";
+import { removeStar } from "../../api/quest";
 
-abstract class CheckList {
-  public readonly abstract quest: Quest;
+abstract class QuestHelper {
+  public abstract quest: Quest;
 
-  protected abstract _rollbackTransaction();
+  public setStar(user: User) {
+    return StarredQuests.findOrCreate({
+      where: { userId: user.id, questId: this.quest.id },
+      defaults: { userId: user.id, questId: this.quest.id },
+    });
+  }
 
-  public async employerMustBeQuestCreator(userId: String): Promise<void | never> {
+  public removeStar(user: User) {
+    return StarredQuests.destroy({
+      where: { userId: user.id, questId: this.quest.id },
+    });
+  }
+
+  public async setMedias(medias, transaction?: Transaction) {
+    try {
+      await this.quest.$set('medias', medias, { transaction });
+    } catch (e) {
+      if (transaction) {
+        await transaction.rollback();
+      }
+
+      throw e;
+    }
+  }
+
+  public async setQuestSpecializations(keys: string[], isCreatedNow = false, transaction?: Transaction) {
+    const questSpecializations = keysToRecords(keys, 'questId', this.quest.id);
+
+    try {
+      if (!isCreatedNow) {
+        await QuestSpecializationFilter.destroy({ where: { questId: this.quest.id }, transaction });
+      }
+
+      await QuestSpecializationFilter.bulkCreate(questSpecializations, { transaction });
+    } catch (e) {
+      if (transaction) {
+        await transaction.rollback();
+      }
+      throw e;
+    }
+  }
+
+  /** Checks list */
+  public employerMustBeQuestCreator(userId: String): QuestHelper {
     if (this.quest.userId !== userId) {
-      await this._rollbackTransaction();
-
       throw error(Errors.Forbidden, "User is not quest creator", {
         current: this.quest.userId,
         mustHave: userId,
       });
     }
+
+    return this;
   }
 
-  public async questMustHaveStatus(...statuses: QuestStatus[]): Promise<void | never> {
+  public questMustHaveStatus(...statuses: QuestStatus[]): QuestHelper {
     if (!statuses.includes(this.quest.status)) {
-      await this._rollbackTransaction();
-
       throw error(Errors.InvalidStatus, "Quest status doesn't match", {
         current: this.quest.status,
         mustHave: statuses,
       });
     }
+
+    return this;
   }
 
-  public async workerMustBeAppointedOnQuest(workerId: string) {
+  public workerMustBeAppointedOnQuest(workerId: string): QuestHelper {
     if (this.quest.assignedWorkerId !== workerId) {
-      await this._rollbackTransaction();
-
       throw error(Errors.Forbidden, "Worker is not appointed on quest", {
         current: this.quest.userId,
         mustHave: workerId,
       });
     }
+
+    return this;
   }
 
-  public async userMustBelongToQuest(userId: string) {
+  public userMustBelongToQuest(userId: string): QuestHelper {
     if (userId !== this.quest.userId && userId !== this.quest.assignedWorkerId) {
-      await this._rollbackTransaction();
-
       throw error(Errors.Forbidden, "User does not belong to quest", {});
     }
+
+    return this;
   }
 }
 
-export class QuestController extends CheckList {
-  public readonly quest: Quest;
-
-  protected _transaction: Transaction;
-
-  constructor(quest: Quest, transaction?: Transaction) {
+export class QuestController extends QuestHelper {
+  constructor(
+    public quest: Quest,
+  ) {
     super();
 
-    this.quest = quest;
-
-    if (transaction) {
-      this.setTransaction(transaction);
-    }
-  }
-
-  protected _rollbackTransaction(): Promise<void> {
-    if (this._transaction) return this._transaction.rollback();
-  }
-
-  public setTransaction(transaction: Transaction) {
-    this._transaction = transaction;
-  }
-
-  public static async setMedias(quest: Quest, medias: Media[], transaction: Transaction = null) {
-    const mediasIds = medias.map(media => media.id);
-
-    await quest.$set('medias', mediasIds, { transaction });
-  }
-
-  public static async setQuestSpecializations(quest: Quest, keys: string[], isCreatedNow: boolean = false, transaction: Transaction = null) {
-    const questSpecializations = keysToRecords(keys, 'questId', quest.id);
-
-    if (isCreatedNow) {
-      await QuestSpecializationFilter.destroy({ where: { questId: quest.id }, transaction });
-    }
-
-    await QuestSpecializationFilter.bulkCreate(questSpecializations, { transaction });
-  }
-
-  static async answerWorkOnQuest(questId: string, worker: User, acceptWork: boolean): Promise<QuestController> {
-    const userController = new UserController(worker);
-    const questController = await QuestControllerFactory.makeControllerByModel(await Quest.findByPk(questId));
-
-    await userController.userMustHaveRole(UserRole.Worker);
-    await questController.questMustHaveStatus(QuestStatus.WaitWorker);
-    await questController.workerMustBeAppointedOnQuest(worker.id);
-
-    if (acceptWork) {
-      await questController.quest.update({ status: QuestStatus.Active });
-      questController.quest.status = QuestStatus.Active;
-    } else {
-      questController.quest.status = QuestStatus.Created;
-      questController.quest.assignedWorkerId = null;
-    }
-
-    await questController.quest.save();
-
-    return questController;
-  }
-}
-
-export class QuestControllerFactory {
-  public static async makeControllerByModel(quest: Quest, transaction?: Transaction): Promise<QuestController> {
     if (!quest) {
+      throw error(Errors.NotFound, "Quest not found", {});
+    }
+  }
+
+  public async start(assignedWorker: User, transaction?: Transaction) {
+    try {
+      this.quest = await this.quest.update({
+        assignedWorkerId: assignedWorker.id,
+        status: QuestStatus.WaitWorker,
+      }, { transaction });
+    } catch (e) {
       if (transaction) {
         await transaction.rollback();
       }
-
-      throw error(Errors.NotFound, "Quest not found", {});
+      throw e;
     }
+  }
 
-    return new QuestController(quest, transaction);
+  public async close(transaction?: Transaction) {
+    try {
+      this.quest = await this.quest.update({
+        status: QuestStatus.Closed,
+      }, { transaction });
+    } catch (e) {
+      if (transaction) {
+        await transaction.rollback();
+      }
+      throw e;
+    }
+  }
+
+  public async completeWork(transaction?: Transaction) {
+    try {
+      this.quest = await this.quest.update({
+        status: QuestStatus.WaitConfirm,
+      }, { transaction });
+    } catch (e) {
+      if (transaction) {
+        await transaction.rollback();
+      }
+      throw e;
+    }
+  }
+
+  public async approveCompletedWork(transaction?: Transaction) {
+    try {
+      this.quest = await this.quest.update({
+        status: QuestStatus.Done,
+      }, { transaction });
+    } catch (e) {
+      if (transaction) {
+        await transaction.rollback();
+      }
+      throw e;
+    }
+  }
+
+  public async rejectCompletedWork(transaction?: Transaction) {
+    try {
+      this.quest = await this.quest.update({
+        status: QuestStatus.Dispute
+      }, { transaction });
+    } catch (e) {
+      if (transaction) {
+        await transaction.rollback();
+      }
+      throw e;
+    }
+  }
+
+  async answerWorkOnQuest(worker: User, acceptWork: boolean, transaction: Transaction) {
+    try {
+      if (acceptWork) {
+        this.quest = await this.quest.update({
+          status: QuestStatus.Active,
+        }, { transaction });
+      } else {
+        this.quest = await this.quest.update({
+          status: QuestStatus.Created,
+          assignedWorkerId: null,
+        }, { transaction });
+      }
+    } catch (e) {
+      if (transaction) {
+        await transaction.rollback();
+      }
+      throw e;
+    }
+  }
+
+  public async destroy(transaction?: Transaction) {
+    try {
+      await QuestSpecializationFilter.destroy({ where: { questId: this.quest.id }, transaction });
+      await QuestsResponse.destroy({ where: { questId: this.quest.id }, transaction })
+      await this.quest.destroy({ force: true, transaction });
+    } catch (e) {
+      if (transaction) {
+        await transaction.rollback();
+      }
+      throw e;
+    }
   }
 }
