@@ -23,7 +23,6 @@ import {
   User,
 } from "@workquest/database-models/lib/models";
 
-
 export async function getUserChats(r) {
   const include = [{
     model: ChatMember,

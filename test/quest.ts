@@ -18,6 +18,7 @@ import {
   makeEmployer,
   makeAccessToken,
 } from './index';
+import { transformToGeoPostGIS } from "../src/server/utils/postGIS";
 
 const {
   it,
@@ -176,11 +177,18 @@ async function Should_Ok_When_EmployerWantsToEditQuestAtStatusCreated() {
     title: 'Test2',
     description: 'Test2',
     price: '10000',
+    workplace: QuestWorkPlace.Distant,
+    employment: QuestEmployment.FixedTerm,
     locationPlaceName: 'Tomsk 1',
     priority: QuestPriority.Low,
     location: { longitude: -69.0364, latitude: 40.8951 },
+    adType: AdType.Paid,
   };
-  const { result } = await postRequestOnEditQuest(employerAccessToken, quest, editedQuestData);
+  const { result } = await postRequestOnEditQuest(employerAccessToken, quest, {
+    ...editedQuestData,
+    specializationKeys: [],
+    medias: []
+  });
 
   expect(result.ok).to.true();
   expect(editedQuestData).to.equal(result.result.dataValues, {
@@ -204,11 +212,18 @@ async function Should_Forbidden_When_OtherUserWantsToEditQuestAtStatusCreated() 
     title: 'Test2',
     description: 'Test2',
     price: '10000',
+    workplace: QuestWorkPlace.Distant,
+    employment: QuestEmployment.FixedTerm,
     locationPlaceName: 'Tomsk 1',
     priority: QuestPriority.Low,
     location: { longitude: -69.0364, latitude: 40.8951 },
+    adType: AdType.Paid,
   };
-  const { result } = await postRequestOnEditQuest(workerAccessToken, quest, editedQuestData);
+  const { result } = await postRequestOnEditQuest(workerAccessToken, quest, {
+    ...editedQuestData,
+    specializationKeys: [],
+    medias: []
+  });
 
   expect(result.ok).to.false();
   expect(result.code).to.equal(Errors.Forbidden);
@@ -228,14 +243,39 @@ async function Should_InvalidStatus_When_EmployerEditQuestAndQuestNotStatusOnCre
   const employer = await makeEmployer();
   const employerAccessToken = await makeAccessToken(employer);
   const quest = await makeQuest(employer, null, status);
-  const description = Math.random().toString(36).substring(7);
-  const { result } = await postRequestOnEditQuest(employerAccessToken, quest, { description });
+
+  const questEditPayload = {
+    category: 'It2',
+    workplace: QuestWorkPlace.Distant,
+    employment: QuestEmployment.FixedTerm,
+    locationPlaceName: 'Tomsk2',
+    priority: QuestPriority.AllPriority,
+    location: { longitude: -77.0364, latitude: 36.8951 },
+    title: 'Test2',
+    description: 'Test3',
+    adType: AdType.Paid,
+    price: '100',
+    specializationKeys: [],
+    medias: []
+  }
+
+  const { result } = await postRequestOnEditQuest(employerAccessToken, quest, questEditPayload);
 
   const questAfter = await Quest.findByPk(quest.id);
 
   expect(result.ok).to.false();
   expect(result.code).to.equal(Errors.InvalidStatus);
-  expect(questAfter.description).to.not.equal(description);
+
+  expect(questAfter.category).to.not.equal(questEditPayload.category);
+  expect(questAfter.workplace).to.not.equal(questEditPayload.workplace);
+  expect(questAfter.employment).to.not.equal(questEditPayload.employment);
+  expect(questAfter.locationPlaceName).to.not.equal(questEditPayload.locationPlaceName);
+  expect(questAfter.priority).to.not.equal(questEditPayload.priority);
+  expect(questAfter.location).to.not.equal(questEditPayload.location);
+  expect(questAfter.title).to.not.equal(questEditPayload.title);
+  expect(questAfter.description).to.not.equal(questEditPayload.description);
+  expect(questAfter.adType).to.not.equal(questEditPayload.adType);
+  expect(questAfter.price).to.not.equal(questEditPayload.price);
 
   await questAfter.destroy();
   await employer.ratingStatistic.destroy();
@@ -1143,7 +1183,6 @@ suite('Testing flow quests:', () => {
     await server.stop();
   });
 
-  /**
   it('Create (without media)', async () => {
     await Should_InvalidRole_When_WorkerWantsToCreateQuest();
     await Should_Ok_When_EmployerWantsToCreateQuest();
@@ -1192,18 +1231,16 @@ suite('Testing flow quests:', () => {
     await Should_Ok_When_EmployerStartedQuestAndWorkerAcceptInvite();
     await Should_Forbidden_When_EmployerStartedQuestAndWorkerNotResponseOnInvite();
   });
-  **/
   it('Reject Work', async () => {
-    // await Should_InvalidStatus_When_WorkerRejectWorkAndQuestNotStatusOnWaitWorker(QuestStatus.Active);
-    // await Should_InvalidStatus_When_WorkerRejectWorkAndQuestNotStatusOnWaitWorker(QuestStatus.Closed);
-    // await Should_InvalidStatus_When_WorkerRejectWorkAndQuestNotStatusOnWaitWorker(QuestStatus.Dispute);
-    // await Should_InvalidStatus_When_WorkerRejectWorkAndQuestNotStatusOnWaitWorker(QuestStatus.Created);
-    // await Should_InvalidStatus_When_WorkerRejectWorkAndQuestNotStatusOnWaitWorker(QuestStatus.WaitConfirm);
+    await Should_InvalidStatus_When_WorkerRejectWorkAndQuestNotStatusOnWaitWorker(QuestStatus.Active);
+    await Should_InvalidStatus_When_WorkerRejectWorkAndQuestNotStatusOnWaitWorker(QuestStatus.Closed);
+    await Should_InvalidStatus_When_WorkerRejectWorkAndQuestNotStatusOnWaitWorker(QuestStatus.Dispute);
+    await Should_InvalidStatus_When_WorkerRejectWorkAndQuestNotStatusOnWaitWorker(QuestStatus.Created);
+    await Should_InvalidStatus_When_WorkerRejectWorkAndQuestNotStatusOnWaitWorker(QuestStatus.WaitConfirm);
 
-    // await Should_Forbidden_When_WorkerRejectWorkAndWorkerNotAssignedOnWork();
+    await Should_Forbidden_When_WorkerRejectWorkAndWorkerNotAssignedOnWork();
     await Should_Ok_When_WorkerRejectWorkAndQuestStatusWaitWorker();
   });
-  /**
   it('Accept Work', async () => {
     await Should_InvalidStatus_When_WorkerAcceptWorkAndQuestNotStatusOnWaitWorker(QuestStatus.Active);
     await Should_InvalidStatus_When_WorkerAcceptWorkAndQuestNotStatusOnWaitWorker(QuestStatus.Closed);
@@ -1224,8 +1261,6 @@ suite('Testing flow quests:', () => {
     await Should_Forbidden_When_WorkerCompletedWorkAndWorkerNotAssignedOnWork();
     await Should_Ok_When_WorkerCompletedWorkAndQuestStatusActive();
   });
-  **/
-  /**
   it('Accept completed work', async () => {
     await Should_InvalidStatus_When_EmployerAcceptCompletedWorkAndQuestNotStatusOnWaitConfirm(QuestStatus.WaitWorker);
     await Should_InvalidStatus_When_EmployerAcceptCompletedWorkAndQuestNotStatusOnWaitConfirm(QuestStatus.Closed);
@@ -1246,5 +1281,4 @@ suite('Testing flow quests:', () => {
     await Should_Forbidden_When_EmployerRejectCompletedWorkAndEmployerNotQuestCreator();
     await Should_Ok_When_EmployerRejectCompletedWorkAndQuestStatusWaitConfirm();
   });
- **/
 });

@@ -1,13 +1,13 @@
 import {error, output} from "../utils";
 import {Errors} from "../utils/errors";
+import {MediaController} from "../controllers/controller.media";
 import {
+  User,
   Discussion,
   DiscussionLike,
   DiscussionComment,
   DiscussionCommentLike,
-  User
 } from "@workquest/database-models/lib/models";
-import { MediaController } from "../controllers/controller.media";
 
 export async function getDiscussions(r) {
   const { count, rows } = await Discussion.findAndCountAll({

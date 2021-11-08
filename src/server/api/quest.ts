@@ -16,7 +16,6 @@ import {
   StarredQuests,
   QuestsResponse,
   QuestsResponseType,
-  QuestsResponseStatus,
   QuestSpecializationFilter,
 } from "@workquest/database-models/lib/models";
 
@@ -119,7 +118,7 @@ export async function editQuest(r) {
 
   await transaction.commit();
 
-  return output(questController.quest.id);
+  return output(questController.quest);
 }
 
 export async function deleteQuest(r) {

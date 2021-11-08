@@ -1,19 +1,16 @@
 import {literal, Op} from "sequelize";
-import {Errors} from "../utils/errors";
 import {addSendSmsJob} from '../jobs/sendSms';
-import {error, getRandomCodeNumber, output} from '../utils';
+import {getRandomCodeNumber, output} from '../utils';
 import {UserController} from "../controllers/user/controller.user";
 import {splitSpecialisationAndIndustry} from "../utils/filters";
 import {transformToGeoPostGIS} from "../utils/postGIS";
+import {MediaController} from "../controllers/controller.media";
 import {
   User,
-  Session,
   UserRole,
-  UserStatus,
   UserSpecializationFilter,
 } from "@workquest/database-models/lib/models";
-import config from "../config/config";
-import { MediaController } from "../controllers/controller.media";
+
 
 export const searchFields = [
   "firstName",

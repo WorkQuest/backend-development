@@ -30,6 +30,92 @@ abstract class UserHelper {
     await UserSpecializationFilter.bulkCreate(userSpecializations, { transaction });
   }
 
+  public async logoutAllSessions(transaction?: Transaction) {
+    try {
+      await Session.update({ invalidating: true }, {
+        where: {
+          userId: this.user.id,
+          createdAt: { [Op.gte]: Date.now() - config.auth.jwt.refresh.lifetime * 1000 },
+        }, transaction,
+      });
+    } catch (e) {
+      if (transaction) {
+        await transaction.rollback();
+      }
+      throw e;
+    }
+  }
+
+  public static getDefaultAdditionalInfo(role: UserRole) {
+    let additionalInfo: object = {
+      description: null,
+      secondMobileNumber: null,
+      address: null,
+      socialNetwork: {
+        instagram: null,
+        twitter: null,
+        linkedin: null,
+        facebook: null
+      }
+    };
+
+    if (role === UserRole.Worker) {
+      additionalInfo = {
+        ...additionalInfo,
+        skills: [],
+        educations: [],
+        workExperiences: []
+      };
+    } else if (role === UserRole.Employer) {
+      additionalInfo = {
+        ...additionalInfo,
+        company: null,
+        CEO: null,
+        website: null
+      };
+    }
+
+    return additionalInfo;
+  }
+
+  public static async getUserByNetworkProfile(network: string, profile): Promise<User> {
+    const foundUserBySocialId = await User.findWithSocialId(network, profile.id);
+
+    if (foundUserBySocialId) {
+      return foundUserBySocialId;
+    }
+
+    const foundUserByEmail = await User.findWithEmail(profile.email);
+
+    const socialInfo = {
+      id: profile.id,
+      email: profile.email,
+      last_name: profile.name.last,
+      first_name: profile.name.first,
+    };
+
+    if (foundUserByEmail) {
+      await foundUserByEmail.update({ [`settings.social.${network}`]: socialInfo });
+
+      return foundUserByEmail;
+    }
+
+    const user = await User.create({
+      password: null,
+      firstName: profile.name.first,
+      lastName: profile.name.last,
+      status: UserStatus.NeedSetRole,
+      email: profile.email.toLowerCase(),
+      settings: Object.assign({}, defaultUserSettings, {
+        social: { [network]: socialInfo }
+      })
+    });
+
+    await RatingStatistic.create({ userId: user.id });
+
+    return user;
+  }
+
   /** Checks list */
   public checkNotSeeYourself(userId: string) {
     if (this.user.id === userId) {
@@ -202,91 +288,5 @@ export class UserController extends UserHelper {
       }
       throw e;
     }
-  }
-
-  public async logoutAllSessions(transaction?: Transaction) {
-    try {
-      await Session.update({ invalidating: true }, {
-        where: {
-          userId: this.user.id,
-          createdAt: { [Op.gte]: Date.now() - config.auth.jwt.refresh.lifetime * 1000 },
-        }, transaction,
-      });
-    } catch (e) {
-      if (transaction) {
-        await transaction.rollback();
-      }
-      throw e;
-    }
-  }
-
-  public static getDefaultAdditionalInfo(role: UserRole) {
-    let additionalInfo: object = {
-      description: null,
-      secondMobileNumber: null,
-      address: null,
-      socialNetwork: {
-        instagram: null,
-        twitter: null,
-        linkedin: null,
-        facebook: null
-      }
-    };
-
-    if (role === UserRole.Worker) {
-      additionalInfo = {
-        ...additionalInfo,
-        skills: [],
-        educations: [],
-        workExperiences: []
-      };
-    } else if (role === UserRole.Employer) {
-      additionalInfo = {
-        ...additionalInfo,
-        company: null,
-        CEO: null,
-        website: null
-      };
-    }
-
-    return additionalInfo;
-  }
-
-  public static async getUserByNetworkProfile(network: string, profile): Promise<User> {
-    const foundUserBySocialId = await User.findWithSocialId(network, profile.id);
-
-    if (foundUserBySocialId) {
-      return foundUserBySocialId;
-    }
-
-    const foundUserByEmail = await User.findWithEmail(profile.email);
-
-    const socialInfo = {
-      id: profile.id,
-      email: profile.email,
-      last_name: profile.name.last,
-      first_name: profile.name.first,
-    };
-
-    if (foundUserByEmail) {
-      await foundUserByEmail.update({ [`settings.social.${network}`]: socialInfo });
-
-      return foundUserByEmail;
-    }
-
-    const user = await User.create({
-      password: null,
-      firstName: profile.name.first,
-      lastName: profile.name.last,
-      status: UserStatus.NeedSetRole,
-      email: profile.email.toLowerCase(),
-      settings: Object.assign({}, defaultUserSettings, {
-        social: { [network]: socialInfo }
-      })
-    });
-
-    await RatingStatistic.create({ userId: user.id });
-
-    return user;
   }
 }

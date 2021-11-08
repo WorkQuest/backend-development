@@ -1,19 +1,19 @@
+import { Op } from 'sequelize'
 import {error, output} from "../utils";
 import {Errors} from "../utils/errors";
+import {publishQuestNotifications, QuestNotificationActions} from "../websocket/websocket.quest";
+import {QuestsResponseController } from "../controllers/quest/controller.questsResponse";
 import {QuestController} from "../controllers/quest/controller.quest";
 import {UserController}  from "../controllers/user/controller.user";
 import {
-  Quest,
-  QuestsResponse,
-  QuestsResponseStatus,
-  QuestsResponseType,
-  QuestStatus,
   User,
-  UserRole
+  Quest,
+  UserRole,
+  QuestStatus,
+  QuestsResponse,
+  QuestsResponseType,
+  QuestsResponseStatus,
 } from "@workquest/database-models/lib/models";
-import { publishQuestNotifications, QuestNotificationActions } from "../websocket/websocket.quest";
-import { Op } from 'sequelize'
-import { QuestsResponseController } from "../controllers/quest/controller.questsResponse";
 
 export async function responseOnQuest(r) {
   const worker: User = r.auth.credentials;

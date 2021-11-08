@@ -208,4 +208,8 @@ export class QuestController extends QuestHelper {
       throw e;
     }
   }
+
+  public static get(id) {
+
+  }
 }

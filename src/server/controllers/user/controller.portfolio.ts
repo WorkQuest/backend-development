@@ -13,6 +13,17 @@ export interface PortfolioDTO {
 abstract class PortfolioHelper {
   public abstract portfolio: Portfolio;
 
+  public async setMedias(medias: Media[], transaction?: Transaction) {
+    try {
+      await this.portfolio.$set('medias', medias, { transaction });
+    } catch (e) {
+      if (transaction) {
+        await transaction.rollback();
+        throw e;
+      }
+    }
+  }
+
   mustBeCaseCreator(userId: String): PortfolioHelper {
     if (this.portfolio.userId !== userId) {
       throw error(Errors.Forbidden, "User is not portfolio creator", {
@@ -34,17 +45,6 @@ export class PortfolioController extends PortfolioHelper {
 
     if (!portfolio) {
       throw error(Errors.NotFound, "Portfolio not found", {});
-    }
-  }
-
-  public async setMedias(medias: Media[], transaction?: Transaction) {
-    try {
-      await this.portfolio.$set('medias', medias, { transaction });
-    } catch (e) {
-      if (transaction) {
-        await transaction.rollback();
-        throw e;
-      }
     }
   }
 
