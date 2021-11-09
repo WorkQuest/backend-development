@@ -125,7 +125,7 @@ export class QuestController extends CheckList {
   public async setQuestSpecializations(keys: string[], isCreatedNow: boolean = false) {
     const questSpecializations = keysToRecords(keys, 'questId', this._questId);
 
-    if (isCreatedNow) {
+    if (!isCreatedNow) {
       await QuestSpecializationFilter.destroy({ where: { questId: this._questId }, transaction: this._transaction });
     }
 
