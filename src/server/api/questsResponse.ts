@@ -92,6 +92,7 @@ export async function responseOnQuest(r) {
     questId: quest.id,
     responseId: response.id,
     chatId: chat.id,
+    isActive: true,
   }, { transaction });
 
   await transaction.commit();
@@ -173,6 +174,7 @@ export async function inviteOnQuest(r) {
     questId: quest.id,
     responseId: response.id,
     chatId: chat.id,
+    isActive: true,
   }, { transaction });
 
   await transaction.commit();

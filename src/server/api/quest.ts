@@ -238,6 +238,10 @@ export async function acceptWorkOnQuest(r) {
 
   await QuestController.answerWorkOnQuest(r.params.questId, worker, true);
 
+  const questsResponse = await QuestsResponse.findOne({ where: { questId: r.params.questId, workerId: worker.id } });
+
+  await QuestChat.update({isActive: false}, { where: {responseId: { [Op.not]: questsResponse.id }, questId: questsResponse.questId } });
+
   return output();
 }
 

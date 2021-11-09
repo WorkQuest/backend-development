@@ -42,7 +42,7 @@ module.exports = {
       },
       isActive: {
         type: Sequelize.DataTypes.BOOLEAN,
-        defaultValue: true,
+        defaultValue: false,
       },
       createdAt: {
         type: Sequelize.DataTypes.DATE
