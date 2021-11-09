@@ -9,7 +9,15 @@ import {
   QuestStatus,
   QuestsResponse,
   QuestsResponseStatus,
-  QuestsResponseType, QuestChat, Chat, ChatType, Message, MessageType, SenderMessageStatus
+  QuestsResponseType,
+  QuestChat,
+  Chat,
+  ChatType,
+  Message,
+  MessageType,
+  ChatMember,
+  InfoMessage,
+  MessageAction
 } from "@workquest/database-models/lib/models";
 
 export async function responseOnQuest(r) {
@@ -40,17 +48,53 @@ export async function responseOnQuest(r) {
     message: r.payload.message,
     status: QuestsResponseStatus.Open,
     type: QuestsResponseType.Response,
+  }, { transaction });
+
+  const chat = await Chat.build({
+    type: ChatType.quest,
+  },  transaction );
+
+  const message = await Message.build({
+    senderUserId: r.auth.credentials.id,
+    chatId: chat.id,
+    type: MessageType.info,
   }, transaction);
 
-  const chat = await Chat.create({
-    type: ChatType.quest,
-  }, transaction);
+  const infoMessage = await InfoMessage.build({
+    messageId: message.id,
+    messageAction: MessageAction.questChatCreate,
+  });
+
+  await Promise.all([
+    message.save({ transaction }),
+    infoMessage.save({ transaction }),
+  ]);
+
+  await ChatMember.bulkCreate([{
+    unreadCountMessages: 0, /** Because created */
+    chatId: chat.id,
+    userId: r.auth.credentials.id,
+    lastReadMessageId: message.id, /** Because created,  */
+    lastReadMessageNumber: message.number,
+  }, {
+    unreadCountMessages: 1, /** Because created */
+    chatId: chat.id,
+    userId: quest.userId,
+    lastReadMessageId: null, /** Because created */
+    lastReadMessageNumber: null,
+  }], { transaction });
+
+  chat.lastMessageId = message.id;
+  chat.lastMessageDate = message.createdAt;
+  await chat.save({transaction});
 
   await QuestChat.create({
     questId: quest.id,
     responseId: response.id,
     chatId: chat.id,
-  }, transaction);
+  }, { transaction });
+
+  await transaction.commit();
 
   return output();
 }
