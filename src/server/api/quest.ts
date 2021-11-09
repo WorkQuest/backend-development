@@ -15,7 +15,7 @@ import {
   QuestsResponse,
   QuestsResponseType,
   QuestsResponseStatus,
-  QuestSpecializationFilter,
+  QuestSpecializationFilter, QuestChat
 } from "@workquest/database-models/lib/models";
 
 export const searchFields = [
@@ -225,6 +225,10 @@ export async function rejectWorkOnQuest(r) {
   const worker: User = r.auth.credentials;
 
   await QuestController.answerWorkOnQuest(r.params.questId, worker, false);
+
+  const response = await QuestsResponse.findOne({ where: { workerId: worker.id, questId: r.params.questId} });
+
+  await QuestChat.update({ isActive: false }, { where: { responseId: response.id } });
 
   return output();
 }
