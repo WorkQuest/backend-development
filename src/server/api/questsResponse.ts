@@ -58,6 +58,7 @@ export async function responseOnQuest(r) {
     senderUserId: worker.id,
     chatId: chat.id,
     type: MessageType.info,
+    number: 1, /** Because create */
     createdAt: Date.now(),
   }, transaction);
 
@@ -67,6 +68,7 @@ export async function responseOnQuest(r) {
   const infoMessage = InfoMessage.build({
     messageId: message.id,
     messageAction: MessageAction.questChatCreate,
+    userId: r.auth.credentials.id,
   });
 
    const questChat = QuestChat.build({
@@ -145,6 +147,7 @@ export async function inviteOnQuest(r) {
     senderUserId: employer.id,
     chatId: chat.id,
     type: MessageType.info,
+    number: 1, /** Because create */
     createdAt: Date.now(),
   }, transaction);
 
@@ -154,6 +157,7 @@ export async function inviteOnQuest(r) {
   const infoMessage = InfoMessage.build({
     messageId: message.id,
     messageAction: MessageAction.questChatCreate,
+    userId: r.auth.credentials.id,
   });
 
   const members = ChatMember.bulkBuild([{
@@ -161,7 +165,7 @@ export async function inviteOnQuest(r) {
     chatId: chat.id,
     userId: r.auth.credentials.id,
     lastReadMessageId: message.id, /** Because created,  */
-    lastReadMessageNumber: message.number,
+    lastReadMessageNumber: 1
   }, {
     unreadCountMessages: 1, /** Because created */
     chatId: chat.id,

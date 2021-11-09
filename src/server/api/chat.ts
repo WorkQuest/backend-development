@@ -148,6 +148,7 @@ export async function createGroupChat(r) {
     senderUserId: r.auth.credentials.id,
     chatId: groupChat.id,
     type: MessageType.info,
+    number: 1, /** Because created */
   });
 
   const infoMessage = await InfoMessage.build({
@@ -229,6 +230,20 @@ export async function sendMessageToUser(r) {
     }, transaction,
   });
 
+  const lastMessage = await Message.findOne({
+    order: [ ['createdAt', 'ASC'] ],
+    where: {
+      chatId: chat.id
+    }
+  });
+
+  if(!lastMessage) {
+    message.number = 1;
+  }
+  else {
+    message.number = lastMessage.number + 1;
+  }
+
   message.chatId = chat.id;
 
   await message.save({ transaction });
@@ -296,12 +311,15 @@ export async function sendMessageToChat(r) {
 
   const transaction = await r.server.app.db.transaction();
 
+  const lastMessage = await Message.findOne({ order: [ ['createdAt', 'ASC'] ], where: { chatId: chat.id } });
+
   const message = await Message.create({
     senderUserId: r.auth.credentials.id,
     chatId: chat.id,
     type: MessageType.message,
     text: r.payload.text,
     senderStatus: SenderMessageStatus.unread,
+    number: lastMessage.number + 1,
   }, { transaction });
 
   await message.$set('medias', medias, { transaction });
