@@ -1,7 +1,7 @@
 import {error} from "../../utils";
 import {Transaction} from "sequelize";
 import {Errors} from "../../utils/errors";
-import {keysToRecords} from "../../utils/filters";
+import {SkillsFiltersController} from "../controller.skillsFilters";
 import {
   User,
   Quest,
@@ -9,7 +9,6 @@ import {
   QuestSpecializationFilter,
   QuestsResponse, StarredQuests,
 } from "@workquest/database-models/lib/models";
-import { removeStar } from "../../api/quest";
 
 abstract class QuestHelper {
   public abstract quest: Quest;
@@ -40,12 +39,16 @@ abstract class QuestHelper {
   }
 
   public async setQuestSpecializations(keys: string[], isCreatedNow = false, transaction?: Transaction) {
-    const questSpecializations = keysToRecords(keys, 'questId', this.quest.id);
-
     try {
       if (!isCreatedNow) {
         await QuestSpecializationFilter.destroy({ where: { questId: this.quest.id }, transaction });
       }
+      if (keys.length <= 0) {
+        return;
+      }
+
+      const skillsFiltersController = await SkillsFiltersController.getInstance();
+      const questSpecializations = await skillsFiltersController.keysToRecords(keys, 'questId', this.quest.id);
 
       await QuestSpecializationFilter.bulkCreate(questSpecializations, { transaction });
     } catch (e) {

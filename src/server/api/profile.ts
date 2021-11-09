@@ -2,15 +2,14 @@ import {literal, Op} from "sequelize";
 import {addSendSmsJob} from '../jobs/sendSms';
 import {getRandomCodeNumber, output} from '../utils';
 import {UserController} from "../controllers/user/controller.user";
-import {splitSpecialisationAndIndustry} from "../utils/filters";
 import {transformToGeoPostGIS} from "../utils/postGIS";
 import {MediaController} from "../controllers/controller.media";
+import {SkillsFiltersController} from "../controllers/controller.skillsFilters";
 import {
   User,
   UserRole,
   UserSpecializationFilter,
 } from "@workquest/database-models/lib/models";
-
 
 export const searchFields = [
   "firstName",
@@ -53,7 +52,7 @@ export function getUsers(role: UserRole) {
       );
     }
     if (r.query.specialization && role === UserRole.Worker) {
-      const { industryKeys, specializationKeys } = splitSpecialisationAndIndustry(r.query.specialization);
+      const { industryKeys, specializationKeys } = SkillsFiltersController.splitSpecialisationAndIndustry(r.query.specialization);
 
       include.push({
         model: UserSpecializationFilter,

@@ -4,7 +4,6 @@ import {UserController} from "../controllers/user/controller.user";
 import {QuestController} from "../controllers/quest/controller.quest";
 import {transformToGeoPostGIS} from "../utils/postGIS";
 import {error, output} from "../utils";
-import {splitSpecialisationAndIndustry} from "../utils/filters";
 import {publishQuestNotifications, QuestNotificationActions} from "../websocket/websocket.quest";
 import {QuestsResponseController} from "../controllers/quest/controller.questsResponse";
 import {MediaController} from "../controllers/controller.media";
@@ -18,6 +17,7 @@ import {
   QuestsResponseType,
   QuestSpecializationFilter,
 } from "@workquest/database-models/lib/models";
+import { SkillsFiltersController } from "../controllers/controller.skillsFilters";
 
 export const searchFields = [
   "title",
@@ -337,7 +337,7 @@ export async function getQuests(r) {
     }));
   }
   if (r.query.specializations) {
-    const { specializationKeys, industryKeys } = splitSpecialisationAndIndustry(r.query.specializations);
+    const { specializationKeys, industryKeys } = SkillsFiltersController.splitSpecialisationAndIndustry(r.query.specializations);
 
     include.push({
       model: QuestSpecializationFilter,

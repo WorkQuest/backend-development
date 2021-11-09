@@ -2,8 +2,8 @@ import { Op, Transaction } from "sequelize";
 import {error} from "../../utils";
 import {Errors} from '../../utils/errors';
 import config from "../../config/config";
-import {keysToRecords} from "../../utils/filters";
 import {totpValidate} from "@workquest/database-models/lib/utils";
+import {SkillsFiltersController} from "../controller.skillsFilters";
 import {
   User,
   UserRole,
@@ -17,17 +17,25 @@ abstract class UserHelper {
   public abstract user: User
 
   public async setUserSpecializations(keys: string[], transaction?: Transaction) {
-    await UserSpecializationFilter.destroy({
-      where: { userId: this.user.id }, transaction,
-    });
+    try {
+      await UserSpecializationFilter.destroy({
+        where: { userId: this.user.id }, transaction,
+      });
 
-    if (keys.length <= 0) {
-      return;
+      if (keys.length <= 0) {
+        return;
+      }
+
+      const skillsFiltersController = await SkillsFiltersController.getInstance();
+      const userSpecializations = skillsFiltersController.keysToRecords(keys, 'userId', this.user.id);
+
+      await UserSpecializationFilter.bulkCreate(userSpecializations, { transaction });
+    } catch (e) {
+      if (transaction) {
+        await transaction.rollback();
+        throw e;
+      }
     }
-
-    const userSpecializations = keysToRecords(keys, 'userId', this.user.id);
-
-    await UserSpecializationFilter.bulkCreate(userSpecializations, { transaction });
   }
 
   public async logoutAllSessions(transaction?: Transaction) {
