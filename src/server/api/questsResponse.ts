@@ -236,6 +236,8 @@ export async function rejectInviteOnQuest(r) {
     return error(Errors.NotFound, "Quests response not found", {});
   }
 
+  await QuestChat.update({ isActive: false }, { where: {responseId: r.params.responseId } });
+
   questsResponse.mustBeInvitedToQuest(worker.id);
   questsResponse.mustHaveType(QuestsResponseType.Invite);
   questsResponse.mustHaveStatus(QuestsResponseStatus.Open);
@@ -262,6 +264,8 @@ export async function rejectResponseOnQuest(r) {
   questsResponse.mustHaveStatus(QuestsResponseStatus.Open);
 
   await questsResponse.update({ status: QuestsResponseStatus.Rejected });
+
+  await QuestChat.update({ isActive: false }, { where: {responseId: r.params.responseId } });
 
   return output();
 }
