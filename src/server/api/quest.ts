@@ -15,7 +15,7 @@ import {
   QuestsResponse,
   QuestsResponseType,
   QuestsResponseStatus,
-  QuestSpecializationFilter, QuestChat
+  QuestSpecializationFilter, QuestChat, QuestChatStatuses
 } from "@workquest/database-models/lib/models";
 
 export const searchFields = [
@@ -228,7 +228,7 @@ export async function rejectWorkOnQuest(r) {
 
   const response = await QuestsResponse.findOne({ where: { workerId: worker.id, questId: r.params.questId} });
 
-  await QuestChat.update({ isActive: false }, { where: { responseId: response.id } });
+  await QuestChat.update({ status: QuestChatStatuses.Close }, { where: { responseId: response.id } });
 
   return output();
 }
@@ -238,9 +238,7 @@ export async function acceptWorkOnQuest(r) {
 
   await QuestController.answerWorkOnQuest(r.params.questId, worker, true);
 
-  const questsResponse = await QuestsResponse.findOne({ where: { questId: r.params.questId, workerId: worker.id } });
-
-  await QuestChat.update({isActive: false}, { where: {responseId: { [Op.not]: questsResponse.id }, questId: questsResponse.questId } });
+  await QuestChat.update({status: QuestChatStatuses.Close}, { where: {workerId: { [Op.not]: r.auth.credentials.id }, questId: r.params.questId } });
 
   return output();
 }
