@@ -61,6 +61,7 @@ export async function getChatMessages(r) {
       where: { userId: r.auth.credentials.id },
       required: r.query.starred,
     }],
+    distinct: true,
     limit: r.query.limit,
     offset: r.query.offset,
     order: [ ['createdAt', r.query.sort.createdAt] ],
