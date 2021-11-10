@@ -209,14 +209,16 @@ export async function startQuest(r) {
 
   await quest.update({ assignedWorkerId: assignedWorker.id, status: QuestStatus.WaitWorker },
     { transaction });
-
+  await QuestChat.update({ status: QuestChatStatuses.Close }, {
+    where: { questId: quest.id, workerId: { [Op.ne]: assignedWorker.id } }, transaction,
+  });
   await QuestsResponse.update({ status: QuestsResponseStatus.Closed }, {
     where: {
       questId: quest.id,
       id: { [Op.ne]: questResponse.id }
   }, transaction });
 
-  await transaction.commit()
+  await transaction.commit();
 
   return output();
 }
@@ -226,10 +228,6 @@ export async function rejectWorkOnQuest(r) {
 
   await QuestController.answerWorkOnQuest(r.params.questId, worker, false);
 
-  const response = await QuestsResponse.findOne({ where: { workerId: worker.id, questId: r.params.questId} });
-
-  await QuestChat.update({ status: QuestChatStatuses.Close }, { where: { responseId: response.id } });
-
   return output();
 }
 
@@ -237,8 +235,6 @@ export async function acceptWorkOnQuest(r) {
   const worker: User = r.auth.credentials;
 
   await QuestController.answerWorkOnQuest(r.params.questId, worker, true);
-
-  await QuestChat.update({status: QuestChatStatuses.Close}, { where: {workerId: { [Op.not]: r.auth.credentials.id }, questId: r.params.questId } });
 
   return output();
 }
