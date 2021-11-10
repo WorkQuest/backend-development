@@ -68,7 +68,7 @@ export async function getChatMessages(r) {
     order: [ ['createdAt', r.query.sort.createdAt] ],
   });
 
-  return output({ count, messages: rows });
+  return output({ count, messages: rows, chat });
 }
 
 export async function getUserChat(r) {

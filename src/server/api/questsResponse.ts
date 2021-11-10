@@ -55,23 +55,28 @@ export async function responseOnQuest(r) {
   const chat = Chat.build({
     type: ChatType.quest,
   });
-  const message = Message.build({
+
+  const firstInfoMessage = Message.build({
     senderUserId: worker.id,
     chatId: chat.id,
     type: MessageType.info,
-    text: r.payload.message,
     number: 1, /** Because create */
     createdAt: Date.now(),
   });
-
-  chat.lastMessageId = message.id;
-  chat.lastMessageDate = message.createdAt;
-
   const infoMessage = InfoMessage.build({
-    messageId: message.id,
+    messageId: firstInfoMessage.id,
     userId: null,
     messageAction: MessageAction.workerResponseOnQuest,
   });
+  const responseWorkerMessage = Message.build({
+    senderUserId: worker.id,
+    chatId: chat.id,
+    text: r.payload.message,
+    type: MessageType.message,
+    number: 2, /** Because create */
+    createdAt: Date.now(),
+  });
+
   const questChat = QuestChat.build({
     employerId: quest.userId ,
     workerId: worker.id,
@@ -83,8 +88,8 @@ export async function responseOnQuest(r) {
     unreadCountMessages: 0, /** Because created */
     chatId: chat.id,
     userId: r.auth.credentials.id,
-    lastReadMessageId: message.id, /** Because created,  */
-    lastReadMessageNumber: message.number,
+    lastReadMessageId: firstInfoMessage.id, /** Because created,  */
+    lastReadMessageNumber: firstInfoMessage.number,
   }, {
     unreadCountMessages: 1, /** Because created */
     chatId: chat.id,
@@ -93,11 +98,15 @@ export async function responseOnQuest(r) {
     lastReadMessageNumber: null,
   }]);
 
+  chat.lastMessageId = responseWorkerMessage.id;
+  chat.lastMessageDate = responseWorkerMessage.createdAt;
+
   await Promise.all([
     response.save({ transaction }),
     chat.save({ transaction }),
-    message.save({ transaction }),
+    firstInfoMessage.save({ transaction }),
     infoMessage.save({ transaction }),
+    responseWorkerMessage.save({ transaction }),
     members.map(member => member.save({ transaction })),
     questChat.save({ transaction }),
   ]);
@@ -138,30 +147,35 @@ export async function inviteOnQuest(r) {
     status: QuestsResponseStatus.Open,
     type: QuestsResponseType.Invite,
   });
+
   const chat = Chat.build({ type: ChatType.quest });
-  const message = Message.build({
+
+  const firstInfoMessage = Message.build({
     senderUserId: employer.id,
     chatId: chat.id,
-    text: r.payload.message,
     type: MessageType.info,
     number: 1, /** Because create */
     createdAt: Date.now(),
   });
-
-  chat.lastMessageId = message.id;
-  chat.lastMessageDate = message.createdAt;
-
   const infoMessage = InfoMessage.build({
-    messageId: message.id,
+    messageId: firstInfoMessage.id,
     userId: invitedWorker.id,
     messageAction: MessageAction.employerInviteOnQuest,
+  });
+  const inviteEmployerMessage = Message.build({
+    senderUserId: employer.id,
+    chatId: chat.id,
+    text: r.payload.message,
+    type: MessageType.message,
+    number: 2, /** Because create */
+    createdAt: Date.now(),
   });
 
   const members = ChatMember.bulkBuild([{
     unreadCountMessages: 0, /** Because created */
     chatId: chat.id,
     userId: r.auth.credentials.id,
-    lastReadMessageId: message.id, /** Because created,  */
+    lastReadMessageId: firstInfoMessage.id, /** Because created,  */
     lastReadMessageNumber: 1
   }, {
     unreadCountMessages: 1, /** Because created */
@@ -170,7 +184,6 @@ export async function inviteOnQuest(r) {
     lastReadMessageId: null, /** Because created */
     lastReadMessageNumber: null,
   }]);
-
   const questChat = QuestChat.build({
     employerId: quest.userId ,
     workerId: invitedWorker.id,
@@ -179,11 +192,16 @@ export async function inviteOnQuest(r) {
     chatId: chat.id,
   });
 
+  chat.lastMessageId = inviteEmployerMessage.id;
+  chat.lastMessageDate = inviteEmployerMessage.createdAt;
+
+
   await Promise.all([
     response.save({ transaction }),
     chat.save({ transaction }),
-    message.save({ transaction }),
+    firstInfoMessage.save({ transaction }),
     infoMessage.save({ transaction }),
+    inviteEmployerMessage.save({ transaction }),
     members.map( member => member.save({ transaction }) ),
     questChat.save({ transaction }),
   ]);
