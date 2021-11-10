@@ -21,8 +21,8 @@ import {
   StarredMessage,
   StarredChat,
   User,
+  QuestChatStatuses,
 } from "@workquest/database-models/lib/models";
-import { QuestChatStatuses } from "@workquest/database-models/src/models/chats/QuestChat";
 
 export async function getUserChats(r) {
   const include = [{
