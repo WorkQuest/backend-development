@@ -172,7 +172,7 @@ export async function createGroupChat(r) {
       chatId: groupChat.id,
       unreadCountMessages: (userId === r.auth.credentials.id ? 0 : 1),
       lastReadMessageId: (userId === r.auth.credentials.id ? message.id : null),
-      lastReadMessageDate: (userId === r.auth.credentials.id ? message.createdAt : null),
+      lastReadMessageNumber: (userId === r.auth.credentials.id ? message.number : null),
     }
   });
 
@@ -206,6 +206,7 @@ export async function sendMessageToUser(r) {
     type: MessageType.message,
     senderStatus: SenderMessageStatus.unread,
     text: r.payload.text,
+    createdAt: Date.now(),
   });
 
   const [chat, isChatCreated] = await Chat.findOrCreate({
@@ -231,7 +232,7 @@ export async function sendMessageToUser(r) {
   });
 
   const lastMessage = await Message.findOne({
-    order: [ ['createdAt', 'ASC'] ],
+    order: [ ['createdAt', 'DESC'] ],
     where: { chatId: chat.id }
   });
 
@@ -304,8 +305,8 @@ export async function sendMessageToChat(r) {
   const transaction = await r.server.app.db.transaction();
 
   const lastMessage = await Message.findOne({
-    order: [ ['createdAt', 'ASC'] ],
-    where: { chatId: chat.id },
+    order: [ ['createdAt', 'DESC'] ],
+    where: { chatId: chat.id }
   });
 
   const message = await Message.create({
