@@ -4,7 +4,7 @@ import {
   emptyOkSchema,
   idSchema,
   questsResponseMessageSchema,
-  questsResponsesWithCountSchema,
+  questsResponsesWithCountSchema, chatSchema
 } from "@workquest/database-models/lib/schemes";
 import {
   acceptInviteOnQuest,
@@ -33,7 +33,7 @@ export default [{
       }).label('QuestResponsePayload'),
     },
     response: {
-      schema: emptyOkSchema
+      schema: outputOkSchema(chatSchema).label('ResponseOnQuestResponse'),
     },
   },
 }, {
@@ -54,7 +54,7 @@ export default [{
       }).label('QuestInvitePayload'),
     },
     response: {
-      schema: emptyOkSchema
+      schema: outputOkSchema(chatSchema).label('InviteOnQuestResponse'),
     },
   },
 }, {
