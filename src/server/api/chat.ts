@@ -232,19 +232,11 @@ export async function sendMessageToUser(r) {
 
   const lastMessage = await Message.findOne({
     order: [ ['createdAt', 'ASC'] ],
-    where: {
-      chatId: chat.id
-    }
+    where: { chatId: chat.id }
   });
 
-  if(!lastMessage) {
-    message.number = 1;
-  }
-  else {
-    message.number = lastMessage.number + 1;
-  }
-
   message.chatId = chat.id;
+  message.number = lastMessage ? message.number = lastMessage.number + 1 : message.number = 1;
 
   await message.save({ transaction });
   await message.$set('medias', medias, { transaction });
@@ -311,7 +303,10 @@ export async function sendMessageToChat(r) {
 
   const transaction = await r.server.app.db.transaction();
 
-  const lastMessage = await Message.findOne({ order: [ ['createdAt', 'ASC'] ], where: { chatId: chat.id } });
+  const lastMessage = await Message.findOne({
+    order: [ ['createdAt', 'ASC'] ],
+    where: { chatId: chat.id },
+  });
 
   const message = await Message.create({
     senderUserId: r.auth.credentials.id,
