@@ -59,6 +59,7 @@ export async function responseOnQuest(r) {
     senderUserId: worker.id,
     chatId: chat.id,
     type: MessageType.info,
+    text: r.payload.message,
     number: 1, /** Because create */
     createdAt: Date.now(),
   });
@@ -141,6 +142,7 @@ export async function inviteOnQuest(r) {
   const message = Message.build({
     senderUserId: employer.id,
     chatId: chat.id,
+    text: r.payload.message,
     type: MessageType.info,
     number: 1, /** Because create */
     createdAt: Date.now(),
