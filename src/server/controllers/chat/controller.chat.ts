@@ -3,6 +3,7 @@ import { Transaction } from "sequelize";
 import { error } from "../../utils";
 import { Errors } from "../../utils/errors";
 import { Includeable, IncludeOptions } from "sequelize/types/lib/model";
+import { QuestChatStatuses } from "@workquest/database-models/src/models/chats/QuestChat";
 
 abstract class CheckList {
   protected abstract _chat: Chat;
@@ -54,6 +55,17 @@ abstract class CheckList {
       await this._rollbackTransaction();
 
       throw error(Errors.Forbidden, "User is not a owner in this chat", {});
+    }
+  }
+
+  async questChatMastHaveStatus(status: QuestChatStatuses) {
+    if (this._chat.questChat.status !== status) {
+      await this._rollbackTransaction();
+
+      throw error(Errors.Forbidden, "Quest chat type does not match", {
+        mastHave: status,
+        current: this._chat.questChat.status
+      });
     }
   }
 }

@@ -22,6 +22,7 @@ import {
   StarredChat,
   User,
 } from "@workquest/database-models/lib/models";
+import { QuestChatStatuses } from "@workquest/database-models/src/models/chats/QuestChat";
 
 export async function getUserChats(r) {
   const include = [{
@@ -302,6 +303,7 @@ export async function sendMessageToChat(r) {
   const chat = await chatController.findModel();
 
   await chatController.chatMustHaveMember(r.auth.credentials.id);
+  await chatController.questChatMastHaveStatus(QuestChatStatuses.Open);
 
   const transaction = await r.server.app.db.transaction();
 
