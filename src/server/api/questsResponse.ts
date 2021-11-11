@@ -20,6 +20,7 @@ import {
   MessageAction,
   QuestChatStatuses,
 } from "@workquest/database-models/lib/models";
+import { ChatNotificationActions, publishChatNotifications } from "../websocket/websocket.chat";
 
 export async function responseOnQuest(r) {
   const worker: User = r.auth.credentials;
@@ -65,7 +66,7 @@ export async function responseOnQuest(r) {
   });
   const infoMessage = InfoMessage.build({
     messageId: firstInfoMessage.id,
-    userId: null,
+    userId: quest.user,
     messageAction: MessageAction.workerResponseOnQuest,
   });
   const responseWorkerMessage = Message.build({
@@ -112,6 +113,12 @@ export async function responseOnQuest(r) {
   ]);
 
   await transaction.commit();
+
+  await publishChatNotifications(r.server, {
+    action: ChatNotificationActions.newMessage,
+    recipients: [quest.userId],
+    data: await Message.findByPk(firstInfoMessage.id),
+  });
 
   return output(chat);
 }
@@ -195,7 +202,6 @@ export async function inviteOnQuest(r) {
   chat.lastMessageId = inviteEmployerMessage.id;
   chat.lastMessageDate = inviteEmployerMessage.createdAt;
 
-
   await Promise.all([
     response.save({ transaction }),
     chat.save({ transaction }),
@@ -207,6 +213,12 @@ export async function inviteOnQuest(r) {
   ]);
 
   await transaction.commit();
+
+  await publishChatNotifications(r.server, {
+    action: ChatNotificationActions.newMessage,
+    recipients: [quest.userId],
+    data: await Message.findByPk(firstInfoMessage.id),
+  });
 
   return output({ chat });
 }

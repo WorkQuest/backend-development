@@ -1,8 +1,10 @@
 export const enum ChatNotificationActions {
+  /** Group chat */
   groupChatCreate = 'groupChatCreate',
   groupChatAddUser = 'groupChatAddUser',
   groupChatDeleteUser = 'groupChatDeleteUser',
   groupChatLeaveUser = 'groupChatLeaveUser',
+  /** */
   messageReadByRecipient = 'messageReadByRecipient',
   newMessage = 'newMessage',
 }
