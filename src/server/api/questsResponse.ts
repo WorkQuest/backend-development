@@ -266,6 +266,8 @@ export async function responsesToQuestsForUser(r) {
   const { rows, count } = await QuestsResponse.findAndCountAll({
     where: { workerId: worker.id },
     include: { model: Quest, as: 'quest' }
+      //    limit: r.query.limit, TODO
+    //     offset: r.query.offset,
   });
 
   return output({ count, responses: rows });
