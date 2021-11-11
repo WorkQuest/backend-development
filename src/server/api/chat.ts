@@ -21,6 +21,7 @@ import {
   StarredMessage,
   StarredChat,
   User,
+  QuestChatStatuses,
 } from "@workquest/database-models/lib/models";
 import { UserController } from "../controllers/user/controller.user";
 
@@ -68,7 +69,7 @@ export async function getChatMessages(r) {
     order: [ ['createdAt', r.query.sort.createdAt] ],
   });
 
-  return output({ count, messages: rows });
+  return output({ count, messages: rows, chat });
 }
 
 export async function getUserChat(r) {
@@ -152,6 +153,7 @@ export async function createGroupChat(r) {
     senderUserId: r.auth.credentials.id,
     chatId: groupChat.id,
     type: MessageType.info,
+    number: 1, /** Because created */
   });
 
   const infoMessage = await InfoMessage.build({
@@ -175,7 +177,7 @@ export async function createGroupChat(r) {
       chatId: groupChat.id,
       unreadCountMessages: (userId === r.auth.credentials.id ? 0 : 1),
       lastReadMessageId: (userId === r.auth.credentials.id ? message.id : null),
-      lastReadMessageDate: (userId === r.auth.credentials.id ? message.createdAt : null),
+      lastReadMessageNumber: (userId === r.auth.credentials.id ? message.number : null),
     }
   });
 
@@ -209,6 +211,7 @@ export async function sendMessageToUser(r) {
     type: MessageType.message,
     senderStatus: SenderMessageStatus.unread,
     text: r.payload.text,
+    createdAt: Date.now(),
   });
 
   const [chat, isChatCreated] = await Chat.findOrCreate({
@@ -233,7 +236,13 @@ export async function sendMessageToUser(r) {
     }, transaction,
   });
 
+  const lastMessage = await Message.findOne({
+    order: [ ['createdAt', 'DESC'] ],
+    where: { chatId: chat.id }
+  });
+
   message.chatId = chat.id;
+  message.number = lastMessage ? message.number = lastMessage.number + 1 : message.number = 1;
 
   await message.save({ transaction });
   await message.$set('medias', medias, { transaction });
@@ -297,8 +306,14 @@ export async function sendMessageToChat(r) {
   const chatController = new ChatController(chat);
 
   await chatController.chatMustHaveMember(r.auth.credentials.id);
+  await chatController.questChatMastHaveStatus(QuestChatStatuses.Open);
 
   const transaction = await r.server.app.db.transaction();
+
+  const lastMessage = await Message.findOne({
+    order: [ ['createdAt', 'DESC'] ],
+    where: { chatId: chat.id }
+  });
 
   const message = await Message.create({
     senderUserId: r.auth.credentials.id,
@@ -306,6 +321,7 @@ export async function sendMessageToChat(r) {
     type: MessageType.message,
     text: r.payload.text,
     senderStatus: SenderMessageStatus.unread,
+    number: lastMessage.number + 1,
   }, { transaction });
 
   await message.$set('medias', medias, { transaction });

@@ -7,17 +7,20 @@ import {error, output} from "../utils";
 import {publishQuestNotifications, QuestNotificationActions} from "../websocket/websocket.quest";
 import {QuestsResponseController} from "../controllers/quest/controller.questsResponse";
 import {MediaController} from "../controllers/controller.media";
+import { SkillsFiltersController } from "../controllers/controller.skillsFilters";
 import {
   User,
   Quest,
   UserRole,
+  QuestChat,
   QuestStatus,
   StarredQuests,
   QuestsResponse,
+  QuestChatStatuses,
   QuestsResponseType,
+  QuestsResponseStatus,
   QuestSpecializationFilter,
 } from "@workquest/database-models/lib/models";
-import { SkillsFiltersController } from "../controllers/controller.skillsFilters";
 
 export const searchFields = [
   "title",
@@ -180,6 +183,10 @@ export async function startQuest(r) {
 
   await questController.start(assignedWorkerController.user, transaction);
   await questsResponseController.closeOtherResponsesToQuest(questController.quest, transaction);
+
+  await QuestChat.update({ status: QuestChatStatuses.Close }, {
+    where: { questId: quest.id, workerId: { [Op.ne]: assignedWorker.id } }, transaction,
+  });
 
   await transaction.commit();
 

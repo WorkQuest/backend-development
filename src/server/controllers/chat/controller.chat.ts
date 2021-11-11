@@ -1,4 +1,4 @@
-import { Chat, ChatMember, ChatType } from "@workquest/database-models/lib/models";
+import { Chat, ChatMember, ChatType, QuestChatStatuses } from "@workquest/database-models/lib/models";
 import { error } from "../../utils";
 import { Errors } from "../../utils/errors";
 
@@ -28,6 +28,18 @@ abstract class ChatHelper {
 
     return this;
   }
+
+  public questChatMastHaveStatus(status: QuestChatStatuses) {
+    if (this.chat.questChat.status !== status) {
+      throw error(Errors.Forbidden, "Quest chat type does not match", {
+        mastHave: status,
+        current: this._chat.questChat.status
+      });
+    }
+
+    return this;
+  }
+}
 
   public chatMustHaveOwner(userId: String) {
     if (this.chat.ownerUserId !== userId) {
