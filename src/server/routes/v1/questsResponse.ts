@@ -4,7 +4,7 @@ import {
   emptyOkSchema,
   idSchema,
   questsResponseMessageSchema,
-  questsResponsesWithCountSchema, chatSchema
+  questsResponsesWithCountSchema, chatSchema, offsetSchema, limitSchema
 } from "@workquest/database-models/lib/schemes";
 import {
   acceptInviteOnQuest,
@@ -66,12 +66,16 @@ export default [{
     tags: ["api", "questResponse"],
     description: "Get responses to quest",
     validate: {
+      query: Joi.object({
+        offset: offsetSchema,
+        limit: limitSchema,
+      }).label('ResponsesToQuestQuery'),
       params: Joi.object({
         questId: idSchema.required(),
       }).label("ResponsesToQuestParams")
     },
     response: {
-      schema: outputOkSchema(questsResponsesWithCountSchema).label("ResponsesToQuestWithCountResponse")
+      schema: outputOkSchema(questsResponsesWithCountSchema).label("ResponsesToQuestResponse")
     },
   }
 }, {
@@ -82,8 +86,14 @@ export default [{
     id: "v1.quest.responses.my",
     tags: ["api", "questResponse"],
     description: "Get responses to quest for authorized user",
+    validate: {
+      query: Joi.object({
+        offset: offsetSchema,
+        limit: limitSchema,
+      }).label('ResponsesToQuestsQuery'),
+    },
     response: {
-      schema: outputOkSchema(questsResponsesWithCountSchema).label("UserResponsesToQuestsWithCountResponse")
+      schema: outputOkSchema(questsResponsesWithCountSchema).label("ResponsesToQuestsResponse")
     },
   },
 }, {
