@@ -66,7 +66,7 @@ export async function responseOnQuest(r) {
   });
   const infoMessage = InfoMessage.build({
     messageId: firstInfoMessage.id,
-    userId: quest.user,
+    userId: quest.userId,
     messageAction: MessageAction.workerResponseOnQuest,
   });
   const responseWorkerMessage = Message.build({
