@@ -75,7 +75,7 @@ export async function responseOnQuest(r) {
     text: r.payload.message,
     type: MessageType.message,
     number: 2, /** Because create */
-    createdAt: Date.now(),
+    createdAt: Date.now() + 100,
   });
 
   const questChat = QuestChat.build({
@@ -175,7 +175,7 @@ export async function inviteOnQuest(r) {
     text: r.payload.message,
     type: MessageType.message,
     number: 2, /** Because create */
-    createdAt: Date.now(),
+    createdAt: Date.now() + 100,
   });
 
   const members = ChatMember.bulkBuild([{
