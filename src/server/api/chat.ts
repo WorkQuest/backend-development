@@ -85,23 +85,40 @@ export async function getUserChat(r) {
 }
 
 export async function listOfUsersByChats(r) {
-  const { count, rows } = await User.scope('shortWithAdditionalInfo').findAndCountAll({
-    include: {
-      model: ChatMember.unscoped(),
-      as: 'chatMember',
-      attributes: [],
-      where: { userId: { [Op.ne]: r.auth.credentials.id } },
+  const include = [{
+    model: ChatMember.unscoped(),
+    as: 'chatMember',
+    attributes: [],
+    where: { userId: { [Op.ne]: r.auth.credentials.id } },
+    include: [{
+      model: Chat.unscoped(),
+      as: 'chat',
+      where: { type: [ChatType.private, ChatType.quest] },
       include: [{
-        model: Chat.unscoped(),
-        as: 'chat',
-        where: { type: [ChatType.private, ChatType.quest] },
-        include: [{
-          model: ChatMember.unscoped(),
-          as: 'meMember',
-          where: { userId: r.auth.credentials.id },
-        }]
-      }],
-    },
+        model: ChatMember.unscoped(),
+        as: 'meMember',
+        where: { userId: r.auth.credentials.id },
+      }]
+    }],
+  }] as any[];
+
+  if (r.query.chatIdExclude) {
+    include.push({
+      model: Chat.unscoped(),
+      as: 'chatOfUser',
+      attributes: [],
+      where: { id: r.query.chatIdExclude },
+      include: [{
+        attributes: [],
+        model: User.unscoped(),
+        as: 'userMembers',
+        where: { userId: { [Op.ne]: '$"User"."id"$' } },
+      }]
+    });
+  }
+
+  const { count, rows } = await User.scope('shortWithAdditionalInfo').findAndCountAll({
+    include,
     limit: r.query.limit,
     offset: r.query.offset,
   });
