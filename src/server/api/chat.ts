@@ -1,14 +1,14 @@
-import {error, output} from "../utils";
-import {getMedias} from "../utils/medias";
-import {Errors} from "../utils/errors";
-import {Op} from "sequelize";
-import {incrementUnreadCountMessageOfMembersJob} from "../jobs/incrementUnreadCountMessageOfMembers";
-import {resetUnreadCountMessagesOfMemberJob} from "../jobs/resetUnreadCountMessagesOfMember";
-import {setMessageAsReadJob} from "../jobs/setMessageAsRead";
-import {updateCountUnreadMessagesJob} from "../jobs/updateCountUnreadMessages";
-import {ChatController} from "../controllers/chat/controller.chat";
-import {MessageController} from "../controllers/chat/controller.message";
-import {ChatNotificationActions, publishChatNotifications} from "../websocket/websocket.chat";
+import { error, output } from "../utils";
+import { getMedias } from "../utils/medias";
+import { Errors } from "../utils/errors";
+import { Op } from "sequelize";
+import { incrementUnreadCountMessageOfMembersJob } from "../jobs/incrementUnreadCountMessageOfMembers";
+import { resetUnreadCountMessagesOfMemberJob } from "../jobs/resetUnreadCountMessagesOfMember";
+import { setMessageAsReadJob } from "../jobs/setMessageAsRead";
+import { updateCountUnreadMessagesJob } from "../jobs/updateCountUnreadMessages";
+import { ChatController } from "../controllers/chat/controller.chat";
+import { MessageController } from "../controllers/chat/controller.message";
+import { ChatNotificationActions, publishChatNotifications } from "../websocket/websocket.chat";
 import {
   Chat,
   ChatMember,
@@ -17,11 +17,11 @@ import {
   Message,
   MessageAction,
   MessageType,
-  SenderMessageStatus,
-  StarredMessage,
-  StarredChat,
-  User,
   QuestChatStatuses,
+  SenderMessageStatus,
+  StarredChat,
+  StarredMessage,
+  User
 } from "@workquest/database-models/lib/models";
 
 export async function getUserChats(r) {
@@ -102,20 +102,20 @@ export async function listOfUsersByChats(r) {
     }],
   }] as any[];
 
-  if (r.query.chatIdExclude) {
-    include.push({
-      model: Chat.unscoped(),
-      as: 'chatOfUser',
-      attributes: [],
-      where: { id: r.query.chatIdExclude },
-      include: [{
-        attributes: [],
-        model: User.unscoped(),
-        as: 'userMembers',
-        where: { userId: { [Op.ne]: '$"User"."id"$' } },
-      }]
-    });
-  }
+  // if (r.query.chatIdExclude) {
+  //   include.push({
+  //     model: Chat.unscoped(),
+  //     as: 'chatOfUser',
+  //     attributes: [],
+  //     where: { id: r.query.chatIdExclude },
+  //     include: [{
+  //       attributes: [],
+  //       model: User.unscoped(),
+  //       as: 'userMembers',
+  //       where: { userId: { [Op.ne]: '$"User"."id"$' } },
+  //     }]
+  //   });
+  // }
 
   const { count, rows } = await User.scope('shortWithAdditionalInfo').findAndCountAll({
     include,
@@ -320,7 +320,10 @@ export async function sendMessageToChat(r) {
   const chat = await chatController.findModel();
 
   await chatController.chatMustHaveMember(r.auth.credentials.id);
-  await chatController.questChatMastHaveStatus(QuestChatStatuses.Open);
+
+  if (chat.type === ChatType.quest){
+    await chatController.questChatMastHaveStatus(QuestChatStatuses.Open);
+  }
 
   const transaction = await r.server.app.db.transaction();
 
