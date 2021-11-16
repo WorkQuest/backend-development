@@ -50,27 +50,20 @@ export async function createDispute(r) {
 }
 
 export async function getDisputeInfo(r) {
-  const dispute = await QuestDispute.findByPk(r.params.disputeId)
+  const dispute = await QuestDispute.findByPk(r.params.disputeId, {
+    include: {
+      model: Quest,
+      as: 'quest'
+    }
+  });
 
   if(!dispute) {
     return error(Errors.NotFound, 'Dispute is not found', {});
   }
 
-  const quest = await Quest.findOne({
-    where: {
-      id: dispute.questId,
-    }
-  })
-
-  if(!quest) {
-    return error(Errors.NotFound, 'Quest is not found', {});
-  }
-
-  if(quest.userId !== r.auth.credentials.id && quest.assignedWorkerId !== r.auth.credentials.id) {
+  if(dispute.quest.userId !== r.auth.credentials.id && dispute.quest.assignedWorkerId !== r.auth.credentials.id) {
     return error(Errors.InvalidRole, "Only employer or worker can take info about dispute", {});
   }
-
-
 
   return output(dispute);
 }
