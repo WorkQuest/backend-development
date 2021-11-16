@@ -1,25 +1,15 @@
-import { error, output } from "../utils";
-import { Errors } from "../utils/errors";
-import { Op } from "sequelize";
-import { incrementUnreadCountMessageOfMembersJob } from "../jobs/incrementUnreadCountMessageOfMembers";
-import { resetUnreadCountMessagesOfMemberJob } from "../jobs/resetUnreadCountMessagesOfMember";
-import { setMessageAsReadJob } from "../jobs/setMessageAsRead";
-import { updateCountUnreadMessagesJob } from "../jobs/updateCountUnreadMessages";
-import { ChatController } from "../controllers/chat/controller.chat";
-import { MessageController } from "../controllers/chat/controller.message";
-import { ChatNotificationActions, publishChatNotifications } from "../websocket/websocket.chat";
-import { MediaController } from "../controllers/controller.media";
-import { error, output } from "../utils";
-import { getMedias } from "../utils/medias";
-import { Errors } from "../utils/errors";
-import { Op } from "sequelize";
-import { incrementUnreadCountMessageOfMembersJob } from "../jobs/incrementUnreadCountMessageOfMembers";
-import { resetUnreadCountMessagesOfMemberJob } from "../jobs/resetUnreadCountMessagesOfMember";
-import { setMessageAsReadJob } from "../jobs/setMessageAsRead";
-import { updateCountUnreadMessagesJob } from "../jobs/updateCountUnreadMessages";
-import { ChatController } from "../controllers/chat/controller.chat";
-import { MessageController } from "../controllers/chat/controller.message";
-import { ChatNotificationActions, publishChatNotifications } from "../websocket/websocket.chat";
+import {Op} from "sequelize";
+import {error, output} from "../utils";
+import {Errors} from "../utils/errors";
+import {setMessageAsReadJob} from "../jobs/setMessageAsRead";
+import {updateCountUnreadMessagesJob} from "../jobs/updateCountUnreadMessages";
+import {resetUnreadCountMessagesOfMemberJob} from "../jobs/resetUnreadCountMessagesOfMember";
+import {incrementUnreadCountMessageOfMembersJob} from "../jobs/incrementUnreadCountMessageOfMembers";
+import {ChatController} from "../controllers/chat/controller.chat";
+import {ChatNotificationActions, publishChatNotifications} from "../websocket/websocket.chat";
+import {MediaController} from "../controllers/controller.media";
+import {MessageController} from "../controllers/chat/controller.message";
+import {UserController} from "../controllers/user/controller.user";
 import {
   Chat,
   ChatMember,
@@ -34,7 +24,6 @@ import {
   StarredMessage,
   User
 } from "@workquest/database-models/lib/models";
-import { UserController } from "../controllers/user/controller.user";
 
 export async function getUserChats(r) {
   const include = [{
