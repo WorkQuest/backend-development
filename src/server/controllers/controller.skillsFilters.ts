@@ -14,18 +14,32 @@ export type ModelRecord = {
 }
 
 abstract class SkillsFiltersHelper {
-  protected abstract specializationFilters: SpecializationFilter[];
 
-  protected mapSpecializations: MapSpecialization | MapIndustryAndSpecialization;
+  protected mapSpecializations: MapIndustry | MapIndustryAndSpecialization;
+  protected mapSpecializationsForGet: { [industry: string]: { id: number, skills: MapSpecialization } }
 
-  protected constructor() {
+  public get mapIndustryAndSpecialization() { return this.mapSpecializationsForGet }
+
+  protected constructor(
+    protected specializationFilters: SpecializationFilter[]
+  ) {
     this.initMap();
   }
 
   private initMap() {
     this.specializationFilters.forEach(s => {
+      if (!this.mapSpecializations[s.industryKey]) {
+        this.mapSpecializations[s.industryKey] = { };
+      }
+
       this.mapSpecializations[s.industryKey][s.key] = s.specialization;
       this.mapSpecializations[`${s.industryKey}.${s.key}`] = s.specialization;
+
+      if (!this.mapSpecializationsForGet[s.industryKey]) {
+        this.mapSpecializationsForGet[s.industryFilter.industry] = { id: s.industryKey, skills: { } }
+      }
+
+      this.mapSpecializationsForGet[s.industryFilter.industry]['skills'][s.specialization] = s.key;
     });
   }
 
@@ -81,16 +95,15 @@ abstract class SkillsFiltersHelper {
 export class SkillsFiltersController extends SkillsFiltersHelper {
   private static instance: SkillsFiltersController;
 
-  protected specializationFilters: SpecializationFilter[];
-
-  private constructor() {
-    super();
+  private constructor(
+    protected specializationFilters: SpecializationFilter[]
+  ) {
+    super(specializationFilters);
   }
 
   public static async getInstance(): Promise<SkillsFiltersController> {
-    if (SkillsFiltersController.instance) {
-      SkillsFiltersController.instance = new SkillsFiltersController();
-      SkillsFiltersController.instance.specializationFilters = await SpecializationFilter.findAll();
+    if (!SkillsFiltersController.instance) {
+      SkillsFiltersController.instance = new SkillsFiltersController(await SpecializationFilter.findAll());
     }
 
     return SkillsFiltersController.instance;

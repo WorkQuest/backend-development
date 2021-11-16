@@ -14,6 +14,7 @@ import bridge from "./bridge";
 import liquidityPoolWETH from "./liquidityPool(wqt-weth)";
 import liquidityPoolWBNB from "./liquidityPool(wqt-wbnb)";
 import discussion from "./discussion";
+import skillFilters from "./skillFilters";
 
 export default [
   ...liquidityPoolWETH,
@@ -32,4 +33,5 @@ export default [
   ...chat,
   ...bridge,
   ...discussion,
+  ...skillFilters,
 ];

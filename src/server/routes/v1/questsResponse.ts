@@ -18,7 +18,7 @@ export default [{
   options: {
     auth: 'jwt-access',
     id: "v1.quest.response",
-    tags: ["api", "Quest-Response"],
+    tags: ["api", "quest-response"],
     description: "Respond on quest",
     validate: {
       params: Joi.object({
@@ -39,7 +39,7 @@ export default [{
   options: {
     auth: 'jwt-access',
     id: "v1.quest.invite",
-    tags: ["api", "Quest-Response"],
+    tags: ["api", "quest-response"],
     description: "Invite on quest",
     validate: {
       params: Joi.object({
@@ -61,7 +61,7 @@ export default [{
   options: {
     auth: 'jwt-access',
     id: "v1.quest.responses",
-    tags: ["api", "Quest-Response"],
+    tags: ["api", "quest-response"],
     description: "Get responses to quest",
     validate: {
       query: Joi.object({
@@ -83,7 +83,7 @@ export default [{
   options: {
     auth: 'jwt-access',
     id: "v1.quest.responses.my",
-    tags: ["api", "Quest-Response"],
+    tags: ["api", "quest-response"],
     description: "Get responses to quest for authorized user",
     validate: {
       query: Joi.object({
@@ -102,7 +102,7 @@ export default [{
   options: {
     auth: 'jwt-access',
     id: "v1.quest.response.accept",
-    tags: ["api", "Quest-Response"],
+    tags: ["api", "quest-response"],
     description: "Accept quest invitation",
     validate: {
       params: Joi.object({
@@ -120,7 +120,7 @@ export default [{
   options: {
     auth: 'jwt-access',
     id: "v1.quest.response.reject",
-    tags: ["api", "Quest-Response"],
+    tags: ["api", "quest-response"],
     description: "Reject quest invitation",
     validate: {
       params: Joi.object({
@@ -138,7 +138,7 @@ export default [{
   options: {
     auth: 'jwt-access',
     id: "v1.quest.response.rejectResponseOnQuest",
-    tags: ["api", "Quest-Response"],
+    tags: ["api", "quest-response"],
     description: "Reject the answer to the quest",
     validate: {
       params: Joi.object({

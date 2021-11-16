@@ -185,7 +185,7 @@ export async function startQuest(r) {
   await questsResponseController.closeOtherResponsesToQuest(questController.quest, transaction);
 
   await QuestChat.update({ status: QuestChatStatuses.Close }, {
-    where: { questId: quest.id, workerId: { [Op.ne]: assignedWorker.id } }, transaction,
+    where: { questId: questController.quest.id, workerId: { [Op.ne]: assignedWorkerController.user.id } }, transaction,
   });
 
   await transaction.commit();

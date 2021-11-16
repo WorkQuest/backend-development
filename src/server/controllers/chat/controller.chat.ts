@@ -21,7 +21,7 @@ abstract class ChatHelper {
     }
   }
 
-  public chatMustHaveType(type: ChatType) {
+  public chatMustHaveType(type: ChatType): this {
     if (this.chat.type !== type) {
       throw error(Errors.InvalidType, "Type does not match", {});
     }
@@ -29,19 +29,18 @@ abstract class ChatHelper {
     return this;
   }
 
-  public questChatMastHaveStatus(status: QuestChatStatuses) {
+  public questChatMastHaveStatus(status: QuestChatStatuses): this {
     if (this.chat.questChat.status !== status) {
       throw error(Errors.Forbidden, "Quest chat type does not match", {
         mastHave: status,
-        current: this._chat.questChat.status
+        current: this.chat.questChat.status
       });
     }
 
     return this;
   }
-}
 
-  public chatMustHaveOwner(userId: String) {
+  public chatMustHaveOwner(userId: String): this {
     if (this.chat.ownerUserId !== userId) {
       throw error(Errors.Forbidden, "User is not a owner in this chat", {});
     }
