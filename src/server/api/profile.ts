@@ -28,7 +28,7 @@ export async function getUser(r) {
   const userController = new UserController(await User.findByPk(r.params.userId));
 
   userController.
-    checkNotSeeYourself(r.params.userId)
+    checkNotSeeYourself(r.auth.credentials.id)
 
   return output(userController.user);
 }
