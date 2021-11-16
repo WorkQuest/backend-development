@@ -91,7 +91,7 @@ export function getUsers(role: UserRole) {
       }
     });
 
-    return output({count, users: rows});
+    return output({ count, users: rows });
   }
 }
 
