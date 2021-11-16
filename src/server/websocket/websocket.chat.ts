@@ -7,6 +7,7 @@ export const enum ChatNotificationActions {
   /** */
   messageReadByRecipient = 'messageReadByRecipient',
   newMessage = 'newMessage',
+
 }
 
 const chatSubscriptionFilter = async function (path, notification, options): Promise<boolean> {
