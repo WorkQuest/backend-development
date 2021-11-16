@@ -97,7 +97,7 @@ export async function listOfUsersByChats(r) {
       include: [{
         model: Chat.unscoped(),
         as: 'chat',
-        where: { type: ChatType.private },
+        where: { type: [ChatType.private, ChatType.quest] },
         include: [{
           model: ChatMember.unscoped(),
           as: 'meMember',

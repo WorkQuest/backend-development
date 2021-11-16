@@ -23,6 +23,7 @@ import {
   QuestsResponseType,
   QuestsResponseStatus,
 } from "@workquest/database-models/lib/models";
+import { ChatNotificationActions, publishChatNotifications } from "../websocket/websocket.chat";
 
 export async function responseOnQuest(r) {
   let questResponse: QuestsResponse;
@@ -75,7 +76,7 @@ export async function responseOnQuest(r) {
   });
   const infoMessage = InfoMessage.build({
     messageId: firstInfoMessage.id,
-    userId: null,
+    userId: quest.userId,
     messageAction: MessageAction.workerResponseOnQuest,
   });
   const responseWorkerMessage = Message.build({
@@ -84,7 +85,7 @@ export async function responseOnQuest(r) {
     text: r.payload.message,
     type: MessageType.message,
     number: 2, /** Because create */
-    createdAt: Date.now(),
+    createdAt: Date.now() + 100,
   });
   const questChat = QuestChat.build({
     employerId: quest.userId ,
@@ -121,10 +122,10 @@ export async function responseOnQuest(r) {
 
   await transaction.commit();
 
-  await publishQuestNotifications(r.server, {
-    data: questResponse,
+  await publishChatNotifications(r.server, {
+    action: ChatNotificationActions.newMessage,
     recipients: [quest.userId],
-    action: QuestNotificationActions.workerRespondedToQuest,
+    data: await Message.findByPk(firstInfoMessage.id),
   });
 
   return output(chat);
@@ -194,7 +195,7 @@ export async function inviteOnQuest(r) {
     text: r.payload.message,
     type: MessageType.message,
     number: 2, /** Because create */
-    createdAt: Date.now(),
+    createdAt: Date.now() + 100,
   });
   const members = ChatMember.bulkBuild([{
     unreadCountMessages: 0, /** Because created */
@@ -231,10 +232,10 @@ export async function inviteOnQuest(r) {
 
   await transaction.commit();
 
-  await publishQuestNotifications(r.server, {
-    data: questResponse,
-    recipients: [invitedWorker.id],
-    action: QuestNotificationActions.employerInvitedWorkerToQuest,
+  await publishChatNotifications(r.server, {
+    action: ChatNotificationActions.newMessage,
+    recipients: [quest.userId],
+    data: await Message.findByPk(firstInfoMessage.id),
   });
 
   return output({ chat });
@@ -265,9 +266,9 @@ export async function responsesToQuestsForUser(r) {
 
   const { rows, count } = await QuestsResponse.findAndCountAll({
     where: { workerId: worker.id },
-    include: { model: Quest, as: 'quest' }
-      //    limit: r.query.limit, TODO
-    //     offset: r.query.offset,
+    include: { model: Quest, as: 'quest' },
+    limit: r.query.limit,
+    offset: r.query.offset,
   });
 
   return output({ count, responses: rows });
