@@ -1,28 +1,24 @@
 import * as Joi from "joi";
+import * as handlers from "../../api/questsResponse";
 import {
-  outputOkSchema,
-  emptyOkSchema,
   idSchema,
+  chatSchema,
+  offsetSchema,
+  limitSchema,
+  emptyOkSchema,
+  outputOkSchema,
   questsResponseMessageSchema,
   questsResponsesWithCountSchema,
 } from "@workquest/database-models/lib/schemes";
-import {
-  acceptInviteOnQuest,
-  userResponsesToQuest,
-  responsesToQuestsForUser,
-  inviteOnQuest,
-  responseOnQuest,
-  rejectInviteOnQuest,
-  rejectResponseOnQuest,
-} from "../../api/questsResponse";
 
 export default [{
   method: "POST",
   path: "/v1/quest/{questId}/response",
-  handler: responseOnQuest,
+  handler: handlers.responseOnQuest,
   options: {
+    auth: 'jwt-access',
     id: "v1.quest.response",
-    tags: ["api", "questResponse"],
+    tags: ["api", "quest-response"],
     description: "Respond on quest",
     validate: {
       params: Joi.object({
@@ -33,16 +29,17 @@ export default [{
       }).label('QuestResponsePayload'),
     },
     response: {
-      schema: emptyOkSchema
+      schema: outputOkSchema(chatSchema).label('ResponseOnQuestResponse'),
     },
   },
 }, {
   method: "POST",
   path: "/v1/quest/{questId}/invite",
-  handler: inviteOnQuest,
+  handler: handlers.inviteOnQuest,
   options: {
+    auth: 'jwt-access',
     id: "v1.quest.invite",
-    tags: ["api", "questResponse"],
+    tags: ["api", "quest-response"],
     description: "Invite on quest",
     validate: {
       params: Joi.object({
@@ -54,45 +51,58 @@ export default [{
       }).label('QuestInvitePayload'),
     },
     response: {
-      schema: emptyOkSchema
+      schema: outputOkSchema(chatSchema).label('InviteOnQuestResponse'),
     },
   },
 }, {
   method: "GET",
   path: "/v1/quest/{questId}/responses",
-  handler: userResponsesToQuest,
+  handler: handlers.userResponsesToQuest,
   options: {
+    auth: 'jwt-access',
     id: "v1.quest.responses",
-    tags: ["api", "questResponse"],
+    tags: ["api", "quest-response"],
     description: "Get responses to quest",
     validate: {
+      query: Joi.object({
+        offset: offsetSchema,
+        limit: limitSchema,
+      }).label('ResponsesToQuestQuery'),
       params: Joi.object({
         questId: idSchema.required(),
-      }).label("ResponsesToQuestParams")
+      }).label("ResponsesToQuestParams"),
     },
     response: {
-      schema: outputOkSchema(questsResponsesWithCountSchema).label("ResponsesToQuestWithCountResponse")
+      schema: outputOkSchema(questsResponsesWithCountSchema).label("ResponsesToQuestResponse")
     },
   }
 }, {
   method: "GET",
   path: "/v1/quest/responses/my",
-  handler: responsesToQuestsForUser,
+  handler: handlers.responsesToQuestsForUser,
   options: {
+    auth: 'jwt-access',
     id: "v1.quest.responses.my",
-    tags: ["api", "questResponse"],
+    tags: ["api", "quest-response"],
     description: "Get responses to quest for authorized user",
+    validate: {
+      query: Joi.object({
+        offset: offsetSchema,
+        limit: limitSchema,
+      }).label('ResponsesToQuestsQuery'),
+    },
     response: {
-      schema: outputOkSchema(questsResponsesWithCountSchema).label("UserResponsesToQuestsWithCountResponse")
+      schema: outputOkSchema(questsResponsesWithCountSchema).label("ResponsesToQuestsResponse")
     },
   },
 }, {
   method: "POST",
   path: "/v1/quest/response/{responseId}/accept",
-  handler: acceptInviteOnQuest,
+  handler: handlers.acceptInviteOnQuest,
   options: {
+    auth: 'jwt-access',
     id: "v1.quest.response.accept",
-    tags: ["api", "questResponse"],
+    tags: ["api", "quest-response"],
     description: "Accept quest invitation",
     validate: {
       params: Joi.object({
@@ -106,10 +116,11 @@ export default [{
 }, {
   method: "POST",
   path: "/v1/quest/response/{responseId}/reject",
-  handler: rejectInviteOnQuest,
+  handler: handlers.rejectInviteOnQuest,
   options: {
+    auth: 'jwt-access',
     id: "v1.quest.response.reject",
-    tags: ["api", "questResponse"],
+    tags: ["api", "quest-response"],
     description: "Reject quest invitation",
     validate: {
       params: Joi.object({
@@ -123,10 +134,11 @@ export default [{
 }, {
   method: "POST",
   path: "/v1/quest/employer/{responseId}/reject",
-  handler: rejectResponseOnQuest,
+  handler: handlers.rejectResponseOnQuest,
   options: {
+    auth: 'jwt-access',
     id: "v1.quest.response.rejectResponseOnQuest",
-    tags: ["api", "questResponse"],
+    tags: ["api", "quest-response"],
     description: "Reject the answer to the quest",
     validate: {
       params: Joi.object({

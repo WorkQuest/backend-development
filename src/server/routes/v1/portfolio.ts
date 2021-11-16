@@ -1,14 +1,16 @@
 import * as Joi from "joi";
 import { addCase, deleteCase, editCase, getCases } from "../../api/portfolio";
 import {
-  outputOkSchema,
-  emptyOkSchema,
   idSchema,
-  portfolioDescriptionSchema,
-  portfolioSchema,
-  portfolioTitleSchema,
-  portfoliosSchema,
   idsSchema,
+  limitSchema,
+  offsetSchema,
+  emptyOkSchema,
+  outputOkSchema,
+  portfolioSchema,
+  portfoliosSchema,
+  portfolioTitleSchema,
+  portfolioDescriptionSchema,
 } from "@workquest/database-models/lib/schemes";
 
 export default [{
@@ -16,6 +18,7 @@ export default [{
   path: "/v1/portfolio/add-case",
   handler: addCase,
   options: {
+    auth: 'jwt-access',
     id: "v1.portfolio.addCase",
     tags: ["api", "portfolio"],
     description: "Add case",
@@ -35,10 +38,15 @@ export default [{
   path: "/v1/user/{userId}/portfolio/cases",
   handler: getCases,
   options: {
+    auth: 'jwt-access',
     id: "v1.portfolio.getCases",
     tags: ["api", "portfolio"],
     description: "Get all cases for user",
     validate: {
+      query: Joi.object({
+        offset: offsetSchema,
+        limit: limitSchema
+      }).label("GetCasesQuery"),
       params: Joi.object({
         userId: idSchema.required(),
       }).label('GetCasesParams')
@@ -52,6 +60,7 @@ export default [{
   path: "/v1/portfolio/{portfolioId}",
   handler: editCase,
   options: {
+    auth: 'jwt-access',
     id: "v1.portfolio.editCase",
     tags: ["api", "portfolio"],
     description: "Edit case",
@@ -62,7 +71,7 @@ export default [{
       payload: Joi.object({
         title: portfolioTitleSchema,
         description: portfolioDescriptionSchema,
-        medias: idsSchema.unique(),
+        medias: idsSchema.unique().default([]),
       }).label('EditCasePayload')
     },
     response: {
@@ -74,6 +83,7 @@ export default [{
   path: "/v1/portfolio/{portfolioId}",
   handler: deleteCase,
   options: {
+    auth: 'jwt-access',
     id: "v1.portfolio.deleteCase",
     tags: ["api", "portfolio"],
     description: "Delete case",

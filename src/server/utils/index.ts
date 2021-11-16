@@ -4,6 +4,8 @@ import * as crypto from "crypto";
 import config from "../config/config";
 var geoip = require('geoip-lite');
 
+const geoip = require('geoip-lite');
+
 export function getUUID(): string {
   return uuidv4();
 }
@@ -35,11 +37,27 @@ export function getDevice(request): string {
   return request.headers['user-agent'];
 }
 
-export function output(res?: object | null): object {
+export function getGeo(request): { country: string, city: string } {
+  const ip = getRealIp(request);
+  const geo = geoip.lookup(ip);
+
   return {
-    ok: true,
-    result: res
-  };
+    country: geo ? geo.country : null,
+    city: geo ? geo.city : null,
+  }
+}
+
+export function getDevice(request): string {
+  return request.headers['user-agent'];
+}
+
+export function output(result?: any | null): { ok: boolean, result: any | null } {
+  return { ok: true, result };
+}
+
+export interface OutputInterface {
+  ok: boolean,
+  result?: object
 }
 
 export function error(code: number, msg: string, data: object): Boom {
@@ -49,7 +67,7 @@ export function error(code: number, msg: string, data: object): Boom {
       data,
       api: true
     },
-    statusCode: Math.floor(code / 1000)
+    statusCode: Math.floor(code / 1000),
   });
 }
 
@@ -61,7 +79,8 @@ export function responseHandler(r, h) {
       code: Math.floor(r.response.output.statusCode * 1000),
       data: {},
       msg: r.response.message
-    }).code(r.response.output.statusCode)
+    }).code(r.response.output.statusCode);
+
     return h.continue;
   }
   // Handle custom api error
@@ -72,6 +91,7 @@ export function responseHandler(r, h) {
       data: r.response.data.data,
       msg: r.response.output.payload.message
     }).code(Math.floor(r.response.data.code / 1000));
+
     return h.continue;
   }
   // Handle non api errors with data
@@ -81,12 +101,12 @@ export function responseHandler(r, h) {
       code: Math.floor(r.response.output.statusCode * 1000),
       data: r.response.data,
       msg: r.response.message
-    }).code(r.response.output.statusCode)
+    }).code(r.response.output.statusCode);
+
     return h.continue;
   }
 
   return h.continue;
-
 }
 
 export function getRandomHexToken(): string {

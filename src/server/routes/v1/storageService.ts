@@ -11,6 +11,7 @@ export default [{
   path: "/v1/storage/get-upload-link",
   handler: getUploadLink,
   options: {
+    auth: 'jwt-access',
     id: "v1.storage.getUploadLink",
     tags: ["api", "storage"],
     description: "Upload file in storage",

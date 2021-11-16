@@ -41,6 +41,7 @@ function createSignature(config) {
   const signature = crypto.createHmac('sha256', serverConfig.sumsub.secretKey);
   signature.update(ts + config.method.toUpperCase() + config.url);
 
+  // @ts-ignore
   if (config.data instanceof FormData) {
     signature.update (config.data.getBuffer());
   } else if (config.data) {

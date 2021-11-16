@@ -7,6 +7,18 @@
       "script": "./build/main.js",
       "autorestart": true,
       "listen_timeout": 15000,
+      "node_args": ["--inspect=7171"],
+      "env": {
+        "ENV": "prod"
+      }
+    },
+    {
+      "name": "{{ PM2_BRIDGE_SERVICE_NAME }}",
+      "exec_mode": "fork",
+      "instances": "1",
+      "script": "./build/bridge/index.js",
+      "autorestart": true,
+      "listen_timeout": 15000,
       "env": {
         "ENV": "prod"
       }

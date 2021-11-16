@@ -1,26 +1,33 @@
 import * as Lab from '@hapi/lab';
-import { expect } from '@hapi/code';
-import { init } from '../src/server';
-import { Errors } from '../src/server/utils/errors';
+import {expect} from '@hapi/code';
+import {init} from '../src/server';
+import {Errors} from '../src/server/utils/errors';
+import {QuestEmployment, QuestWorkPlace} from "@workquest/database-models/src/models/quest/Quest";
 import {
   Quest,
-  QuestPriority,
+  AdType,
   QuestStatus,
+  QuestPriority,
   QuestsResponse,
-  QuestsResponseStatus,
-  QuestsResponseType
+  QuestsResponseType,
+  QuestsResponseStatus, User
 } from "@workquest/database-models/lib/models";
 import {
+  makeQuest,
   makeWorker,
   makeEmployer,
   makeAccessToken,
-  makeQuest
 } from './index';
+import { transformToGeoPostGIS } from "../src/server/utils/postGIS";
 
-let server = null;
-const { it, suite,
-  before, after
+const {
+  it,
+  after,
+  suite,
+  before,
 } = exports.lab = Lab.script();
+
+let server;
 
 async function postRequestOnCreateQuest(accessToken: string) {
   return await server.inject({
@@ -33,10 +40,15 @@ async function postRequestOnCreateQuest(accessToken: string) {
         longitude: -77.0364,
         latitude: 38.8951,
       },
+      locationPlaceName: 'Tomsk',
       title: 'Test',
       description: 'Test',
       price: '1000',
       medias: [],
+      workplace: QuestWorkPlace.Both,
+      employment: QuestEmployment.FullTime,
+      adType: AdType.Free,
+      specializationKeys: [],
     },
     headers: {
       authorization: 'Bearer ' + accessToken
@@ -165,10 +177,18 @@ async function Should_Ok_When_EmployerWantsToEditQuestAtStatusCreated() {
     title: 'Test2',
     description: 'Test2',
     price: '10000',
+    workplace: QuestWorkPlace.Distant,
+    employment: QuestEmployment.FixedTerm,
+    locationPlaceName: 'Tomsk 1',
     priority: QuestPriority.Low,
     location: { longitude: -69.0364, latitude: 40.8951 },
+    adType: AdType.Paid,
   };
-  const { result } = await postRequestOnEditQuest(employerAccessToken, quest, editedQuestData);
+  const { result } = await postRequestOnEditQuest(employerAccessToken, quest, {
+    ...editedQuestData,
+    specializationKeys: [],
+    medias: []
+  });
 
   expect(result.ok).to.true();
   expect(editedQuestData).to.equal(result.result.dataValues, {
@@ -192,10 +212,18 @@ async function Should_Forbidden_When_OtherUserWantsToEditQuestAtStatusCreated() 
     title: 'Test2',
     description: 'Test2',
     price: '10000',
+    workplace: QuestWorkPlace.Distant,
+    employment: QuestEmployment.FixedTerm,
+    locationPlaceName: 'Tomsk 1',
     priority: QuestPriority.Low,
     location: { longitude: -69.0364, latitude: 40.8951 },
+    adType: AdType.Paid,
   };
-  const { result } = await postRequestOnEditQuest(workerAccessToken, quest, editedQuestData);
+  const { result } = await postRequestOnEditQuest(workerAccessToken, quest, {
+    ...editedQuestData,
+    specializationKeys: [],
+    medias: []
+  });
 
   expect(result.ok).to.false();
   expect(result.code).to.equal(Errors.Forbidden);
@@ -215,14 +243,39 @@ async function Should_InvalidStatus_When_EmployerEditQuestAndQuestNotStatusOnCre
   const employer = await makeEmployer();
   const employerAccessToken = await makeAccessToken(employer);
   const quest = await makeQuest(employer, null, status);
-  const description = Math.random().toString(36).substring(7);
-  const { result } = await postRequestOnEditQuest(employerAccessToken, quest, { description });
+
+  const questEditPayload = {
+    category: 'It2',
+    workplace: QuestWorkPlace.Distant,
+    employment: QuestEmployment.FixedTerm,
+    locationPlaceName: 'Tomsk2',
+    priority: QuestPriority.AllPriority,
+    location: { longitude: -77.0364, latitude: 36.8951 },
+    title: 'Test2',
+    description: 'Test3',
+    adType: AdType.Paid,
+    price: '100',
+    specializationKeys: [],
+    medias: []
+  }
+
+  const { result } = await postRequestOnEditQuest(employerAccessToken, quest, questEditPayload);
 
   const questAfter = await Quest.findByPk(quest.id);
 
   expect(result.ok).to.false();
   expect(result.code).to.equal(Errors.InvalidStatus);
-  expect(questAfter.description).to.not.equal(description);
+
+  expect(questAfter.category).to.not.equal(questEditPayload.category);
+  expect(questAfter.workplace).to.not.equal(questEditPayload.workplace);
+  expect(questAfter.employment).to.not.equal(questEditPayload.employment);
+  expect(questAfter.locationPlaceName).to.not.equal(questEditPayload.locationPlaceName);
+  expect(questAfter.priority).to.not.equal(questEditPayload.priority);
+  expect(questAfter.location).to.not.equal(questEditPayload.location);
+  expect(questAfter.title).to.not.equal(questEditPayload.title);
+  expect(questAfter.description).to.not.equal(questEditPayload.description);
+  expect(questAfter.adType).to.not.equal(questEditPayload.adType);
+  expect(questAfter.price).to.not.equal(questEditPayload.price);
 
   await questAfter.destroy();
   await employer.ratingStatistic.destroy();
@@ -1121,8 +1174,7 @@ async function Should_InvalidStatus_When_EmployerRejectCompletedWorkAndQuestNotS
   await assignedWorker.destroy();
 }
 
-suite('Testing API Quest:', () => {
-
+suite('Testing flow quests:', () => {
   before(async () => {
     server = await init();
   });

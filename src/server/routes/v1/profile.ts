@@ -1,34 +1,138 @@
 import * as Joi from "joi";
 import {
+  getMe,
+  getUser,
+  setRole,
+  getUsers,
+  editProfile,
   changePassword,
   confirmPhoneNumber,
-  editProfile,
-  getMe,
   sendCodeOnPhoneNumber,
-  setRole
-} from '../../api/profile';
+} from "../../api/profile";
 import {
-  outputOkSchema,
-  emptyOkSchema,
   idSchema,
-  userAdditionalInfoEmployerSchema,
-  userAdditionalInfoWorkerSchema,
-  userFirstNameSchema,
+  userSchema,
+  emptyOkSchema,
+  outputOkSchema,
+  locationSchema,
+  userRoleSchema,
+  userQuerySchema,
+  userWorkersSchema,
+  mobilePhoneSchema,
   userLastNameSchema,
   userPasswordSchema,
-  userRoleSchema,
-  userSchema,
-  skillFiltersSchema,
+  userEmployersSchema,
+  userFirstNameSchema,
+  specializationKeysSchema,
+  userAdditionalInfoWorkerSchema,
+  userAdditionalInfoEmployerSchema,
 } from "@workquest/database-models/lib/schemes";
+import { UserRole } from "@workquest/database-models/lib/models";
 
 export default [{
   method: "GET",
   path: "/v1/profile/me",
   handler: getMe,
   options: {
+    auth: 'jwt-access',
     id: "v1.profile.getMe",
     tags: ["api", "profile"],
     description: "Get info about current user",
+    response: {
+      schema: outputOkSchema(userSchema).label("UserResponse")
+    }
+  }
+}, {
+  method: "GET",
+  path: "/v1/profile/{userId}",
+  handler: getUser,
+  options: {
+    auth: 'jwt-access',
+    id: "v1.profile.getUser",
+    tags: ["api", "profile"],
+    description: "Get profile user",
+    validate: {
+      params: Joi.object({
+        userId: idSchema.required(),
+      }).label("GetUserParams"),
+    },
+    response: {
+      schema: outputOkSchema(userSchema).label("GetUserResponse")
+    }
+  }
+}, {
+  method: "GET",
+  path: "/v1/profile/employers",
+  handler: getUsers(UserRole.Employer),
+  options: {
+    auth: 'jwt-access',
+    id: "v1.profile.getEmployers",
+    tags: ["api", "profile"],
+    description: "Get employers",
+    validate: {
+      query: userQuerySchema,
+    },
+    response: {
+      schema: outputOkSchema(userEmployersSchema).label("GetEmployersResponse")
+    },
+  }
+}, {
+  method: "GET",
+  path: "/v1/profile/workers",
+  handler: getUsers(UserRole.Worker),
+  options: {
+    auth: 'jwt-access',
+    id: "v1.profile.getWorkers",
+    tags: ["api", "profile"],
+    description: "Get workers",
+    validate: {
+      query: userQuerySchema,
+    },
+    response: {
+      schema: outputOkSchema(userWorkersSchema).label("GetWorkersResponse")
+    },
+  }
+}, {
+  method: "PUT",
+  path: "/v1/employer/profile/edit",
+  handler: editProfile(UserRole.Employer),
+  options: {
+    auth: 'jwt-access',
+    id: "v1.profile.editEmployer",
+    tags: ["api", "profile"],
+    description: "Edit employer profile information",
+    validate: {
+      payload: Joi.object({
+        avatarId: idSchema.allow(null).required(),
+        firstName: userFirstNameSchema.required(),
+        lastName: userLastNameSchema.required(),
+        location: locationSchema.allow(null).required(),
+        additionalInfo: userAdditionalInfoEmployerSchema.required(),
+      }).label("EditEmployerProfilePayload")
+    },
+    response: {
+      schema: outputOkSchema(userSchema).label("EditEmployerResponse")
+    }
+  }
+}, {
+  method: "PUT",
+  path: "/v1/worker/profile/edit",
+  handler: editProfile(UserRole.Worker),
+  options: {
+    auth: 'jwt-access',
+    id: "v1.profile.editWorker",
+    tags: ["api", "profile"],
+    description: "Edit worker profile",
+    validate: {
+      payload: Joi.object({
+        avatarId: idSchema.allow(null).required(),
+        firstName: userFirstNameSchema.required(),
+        lastName: userLastNameSchema.required(),
+        location: locationSchema.allow(null).required(),
+        additionalInfo: userAdditionalInfoWorkerSchema.required(),
+        specializationKeys: specializationKeysSchema.allow(null).required().unique(),
+      }).label("EditWorkerProfilePayload")
+    },
     response: {
       schema: outputOkSchema(userSchema).label("UserResponse")
     }
@@ -38,6 +142,7 @@ export default [{
   path: "/v1/profile/set-role",
   handler: setRole,
   options: {
+    auth: 'jwt-access',
     id: "v1.profile.setRole",
     tags: ["api", "profile"],
     description: "Set role user (Only for need set role)",
@@ -52,33 +157,10 @@ export default [{
   }
 }, {
   method: "PUT",
-  path: "/v1/profile/edit",
-  handler: editProfile,
-  options: {
-    id: "v1.profile.edit",
-    tags: ["api", "profile"],
-    description: "Edit profile information",
-    validate: {
-      payload: Joi.object({
-        avatarId: idSchema.allow(null).required(),
-        firstName: userFirstNameSchema.required(),
-        lastName: userLastNameSchema.required(),
-        skillFilters: skillFiltersSchema,
-        additionalInfo: Joi.alternatives(
-          userAdditionalInfoEmployerSchema.options({ presence: "required" }),
-          userAdditionalInfoWorkerSchema.options({ presence: "required" })
-        ).required()
-      }).label("EditProfilePayload")
-    },
-    response: {
-      schema: outputOkSchema(userSchema).label("UserResponse")
-    }
-  }
-}, {
-  method: "PUT",
   path: "/v1/profile/change-password",
   handler: changePassword,
   options: {
+    auth: 'jwt-access',
     id: "v1.profile.changePassword",
     tags: ["api", "profile"],
     description: "Change user password",
@@ -97,6 +179,7 @@ export default [{
   path: "/v1/profile/phone/confirm",
   handler: confirmPhoneNumber,
   options: {
+    auth: 'jwt-access',
     id: "v1.profile.phone.confirm",
     tags: ["api", "profile"],
     description: "Confirm phone number",
@@ -114,12 +197,13 @@ export default [{
   path: "/v1/profile/phone/send-code",
   handler: sendCodeOnPhoneNumber,
   options: {
+    auth: 'jwt-access',
     id: "v1.profile.phone.sendCode",
     tags: ["api", "profile"],
     description: "Send code for confirm phone number",
     validate: {
       payload: Joi.object({
-        phoneNumber: Joi.string().required().label('PhoneNumber'),
+        phoneNumber: mobilePhoneSchema.required(),
       }).label('PhoneSendCodePayload')
     },
     response: {

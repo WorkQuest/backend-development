@@ -1,10 +1,12 @@
 {
   "name": "work-quest-backend",
-  "version": "1.0.6",
+  "version": "1.0.10",
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "nodemon -e ts  --exec \"npm run compile\"",
+    "start": "nodemon -e ts --exec \"npm run compile\"",
+    "bridge:start": "nodemon -e ts --exec \"npm run bridge:compile\"",
+    "bridge:compile": "tsc && node ./build/bridge/index.js",
     "compile": "tsc && node ./build/main.js",
     "build": "tsc",
     "test": "lab --sourcemaps --transform node_modules/lab-transform-typescript -v --leaks"
@@ -13,6 +15,14 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@pancakeswap/sdk": "^2.4.0",
+    "@uniswap/sdk": "^3.0.3",
+    "@uniswap/v2-core": "^1.0.1",
+    "@ethersproject/address": "^5.4.0",
+    "@ethersproject/contracts": "^5.4.1",
+    "@ethersproject/providers": "^5.4.5",
+    "@ethersproject/solidity": "^5.4.0",
+    "web3": "^1.5.3",
     "@hapi/basic": "^5.1.1",
     "@hapi/bell": "^12.2.0",
     "@hapi/boom": "^9.1.0",
@@ -25,7 +35,7 @@
     "@types/dotenv": "^6.1.1",
     "@types/joi": "^14.3.4",
     "@types/validator": "^13.1.0",
-    "@workquest/database-models": "git+https://github.com/WorkQuest/database-models.git#7d7ebb1c54dcda7a820bc2548cc8e8fef7e58d24",
+    "@workquest/database-models": "git+https://github.com/WorkQuest/database-models.git#36d2f2854d42b287b3d4bc7975db4a53463b417f",
     "aws-sdk": "^2.918.0",
     "axios": "^0.21.1",
     "bcrypt": "^5.0.0",
@@ -34,7 +44,6 @@
     "filepaths": "^0.3.0",
     "form-data": "^4.0.0",
     "geoip-lite": "^1.4.2",
-    "graphile-scheduler": "^0.8.0",
     "graphile-worker": "^0.6.0",
     "handlebars": "^4.7.7",
     "hapi-auth-bearer-token": "^6.1.6",
@@ -45,11 +54,11 @@
     "joi": "^17.4.0",
     "jsonwebtoken": "^8.5.1",
     "lab-transform-typescript": "^3.0.1",
+    "node-fetch": "^3.0.0",
     "nodemailer": "^6.5.0",
     "nodemon": "^2.0.12",
     "npm": "^7.14.0",
     "pg": "^8.3.0",
-    "pino": "^6.13.0",
     "qs": "^6.9.6",
     "reflect-metadata": "^0.1.13",
     "sequelize": "6.6.2",
@@ -76,6 +85,7 @@
     "eslint-plugin-prettier": "^3.1.1",
     "eslint-plugin-promise": "^4.2.1",
     "eslint-plugin-react": "^7.16.0",
-    "eslint-plugin-standard": "^4.0.1"
+    "eslint-plugin-standard": "^4.0.1",
+    "pino": "^6.13.2"
   }
 }

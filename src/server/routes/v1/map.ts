@@ -16,6 +16,7 @@ export default [{
   path: "/v1/quests/map/points",
   handler: mapPoints,
   options: {
+    auth: 'jwt-access',
     id: "v1.map.points",
     tags: ["api", "map"],
     description: "Get points in map",
@@ -37,6 +38,7 @@ export default [{
   path: "/v1/quests/map/list-points",
   handler: listMapPoints,
   options: {
+    auth: 'jwt-access',
     id: "v1.map.points.list",
     tags: ["api", "map"],
     description: "Get list points in map (Old - use get quests)",
@@ -51,7 +53,7 @@ export default [{
       }).label('ListPointsQuery'),
     },
     response: {
-      schema: outputOkSchema(questsSchema).label('QuestsResponse'),
+      schema: outputOkSchema(questsSchema).label('ListPointsResponse'),
     }
   }
 }];

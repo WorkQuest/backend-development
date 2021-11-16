@@ -1,12 +1,12 @@
+import { col, fn } from 'sequelize';
 import { addJob } from "../utils/scheduler";
 import {
   RatingStatistic,
   Review,
 } from "@workquest/database-models/lib/models";
-import { col, fn } from 'sequelize';
 
 export interface StatisticPayload {
-  ratingStatisticId: string,
+  userId: string,
 }
 
 export async function addUpdateReviewStatisticsJob(payload: StatisticPayload) {
@@ -14,12 +14,15 @@ export async function addUpdateReviewStatisticsJob(payload: StatisticPayload) {
 }
 
 export default async function(payload: StatisticPayload) {
-  const  [ ratingStatistic ] = await RatingStatistic.findOrCreate( { where: { ratingStatisticId: payload.ratingStatisticId } });
+  const [ratingStatistic, ] = await RatingStatistic.findOrCreate( { where: { userId: payload.userId } });
+
   const reviewCountPromise = Review.count({ where: { toUserId: ratingStatistic.userId } });
+
   const averageMarkResultPromise = Review.findOne({
-      attributes: [[fn('AVG', col('mark')), 'avgMark']],
-      where: { toUserId: ratingStatistic.userId   }
+    attributes: [[fn('AVG', col('mark')), 'avgMark']],
+    where: { toUserId: ratingStatistic.userId   }
   });
+
   const [reviewCount, averageMarkResult] = await Promise.all([reviewCountPromise, averageMarkResultPromise]);
 
   await ratingStatistic.update({
