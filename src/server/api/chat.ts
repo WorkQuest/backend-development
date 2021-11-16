@@ -1,14 +1,14 @@
-import {error, output} from "../utils";
-import {Errors} from "../utils/errors";
-import {Op} from "sequelize";
-import {incrementUnreadCountMessageOfMembersJob} from "../jobs/incrementUnreadCountMessageOfMembers";
-import {resetUnreadCountMessagesOfMemberJob} from "../jobs/resetUnreadCountMessagesOfMember";
-import {setMessageAsReadJob} from "../jobs/setMessageAsRead";
-import {updateCountUnreadMessagesJob} from "../jobs/updateCountUnreadMessages";
-import {ChatController} from "../controllers/chat/controller.chat";
-import {MessageController} from "../controllers/chat/controller.message";
-import {ChatNotificationActions, publishChatNotifications} from "../websocket/websocket.chat";
-import {MediaController} from "../controllers/controller.media";
+import { error, output } from "../utils";
+import { Errors } from "../utils/errors";
+import { Op } from "sequelize";
+import { incrementUnreadCountMessageOfMembersJob } from "../jobs/incrementUnreadCountMessageOfMembers";
+import { resetUnreadCountMessagesOfMemberJob } from "../jobs/resetUnreadCountMessagesOfMember";
+import { setMessageAsReadJob } from "../jobs/setMessageAsRead";
+import { updateCountUnreadMessagesJob } from "../jobs/updateCountUnreadMessages";
+import { ChatController } from "../controllers/chat/controller.chat";
+import { MessageController } from "../controllers/chat/controller.message";
+import { ChatNotificationActions, publishChatNotifications } from "../websocket/websocket.chat";
+import { MediaController } from "../controllers/controller.media";
 import {
   Chat,
   ChatMember,
@@ -17,11 +17,11 @@ import {
   Message,
   MessageAction,
   MessageType,
-  SenderMessageStatus,
-  StarredMessage,
-  StarredChat,
-  User,
   QuestChatStatuses,
+  SenderMessageStatus,
+  StarredChat,
+  StarredMessage,
+  User
 } from "@workquest/database-models/lib/models";
 import { UserController } from "../controllers/user/controller.user";
 
@@ -306,7 +306,10 @@ export async function sendMessageToChat(r) {
   const chatController = new ChatController(chat);
 
   await chatController.chatMustHaveMember(r.auth.credentials.id);
-  await chatController.questChatMastHaveStatus(QuestChatStatuses.Open);
+
+  if (chat.type === ChatType.quest) {
+    chatController.questChatMastHaveStatus(QuestChatStatuses.Open);
+  }
 
   const transaction = await r.server.app.db.transaction();
 

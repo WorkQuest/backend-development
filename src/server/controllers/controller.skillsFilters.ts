@@ -23,6 +23,9 @@ abstract class SkillsFiltersHelper {
   protected constructor(
     protected specializationFilters: SpecializationFilter[]
   ) {
+    this.mapSpecializations = {};
+    this.mapSpecializationsForGet = {};
+
     this.initMap();
   }
 

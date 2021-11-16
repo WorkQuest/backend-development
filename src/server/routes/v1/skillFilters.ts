@@ -1,11 +1,6 @@
 import * as Joi from "joi";
 import * as handlers from "../../api/skillFilters";
-import {
-  limitSchema,
-  offsetSchema,
-  outputOkSchema,
-  // filterSchema
-} from "@workquest/database-models/lib/schemes";
+import { outputOkSchema } from "@workquest/database-models/lib/schemes";
 
 export default [{
   method: "GET",
@@ -15,9 +10,11 @@ export default [{
     id: "v1.getSkillFilters",
     tags: ["api", "skill-filters"],
     description: "Get all filters",
-    auth: false,
-    // response: {
-    //   schema: outputOkSchema(filterSchema).label("GetFiltersResponse")
-    // }
+    auth: 'jwt-access',
+    response: {
+      schema: outputOkSchema(
+        Joi.object().example({ 'IT': { id: 1, skills: { "it": 100 } } })
+      ).label("GetFiltersResponse")
+    }
   }
 }];
