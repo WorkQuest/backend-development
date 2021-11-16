@@ -4,7 +4,7 @@ import { outputOkSchema } from "@workquest/database-models/lib/schemes";
 
 export default [{
   method: "GET",
-  path: "/v1/skillFilters",
+  path: "/v1/skill-filters",
   handler: handlers.getFilters,
   options: {
     id: "v1.getSkillFilters",
