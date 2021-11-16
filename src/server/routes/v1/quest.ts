@@ -1,5 +1,5 @@
 import * as Joi from "joi";
-import * as questHandlers from '../../api/quest';
+import * as handlers from '../../api/quest';
 import {
   outputOkSchema,
   idSchema,
@@ -24,7 +24,7 @@ import {
 export default [{
   method: "GET",
   path: "/v1/quest/{questId}",
-  handler: questHandlers.getQuest,
+  handler: handlers.getQuest,
   options: {
     auth: 'jwt-access',
     id: "v1.getQuest",
@@ -42,7 +42,7 @@ export default [{
 }, {
   method: "POST",
   path: "/v1/quest/create",
-  handler: questHandlers.createQuest,
+  handler: handlers.createQuest,
   options: {
     auth: 'jwt-access',
     id: "v1.quest.create",
@@ -71,7 +71,7 @@ export default [{
 }, {
   method: "DELETE",
   path: "/v1/quest/{questId}",
-  handler: questHandlers.deleteQuest,
+  handler: handlers.deleteQuest,
   options: {
     auth: 'jwt-access',
     id: "v1.quest.deleteQuest",
@@ -89,7 +89,7 @@ export default [{
 }, {
   method: "PUT",
   path: "/v1/quest/{questId}",
-  handler: questHandlers.editQuest,
+  handler: handlers.editQuest,
   options: {
     auth: 'jwt-access',
     id: "v1.quest.editQuest",
@@ -121,7 +121,7 @@ export default [{
 }, {
   method: "GET",
   path: "/v1/quests",
-  handler: questHandlers.getQuests,
+  handler: handlers.getQuests,
   options: {
     auth: 'jwt-access',
     id: "v1.getQuests",
@@ -137,7 +137,7 @@ export default [{
 }, {
   method: "GET",
   path: "/v1/employer/{userId}/quests",
-  handler: questHandlers.getQuests,
+  handler: handlers.getQuests,
   options: {
     auth: 'jwt-access',
     id: "v1.employer.quests",
@@ -156,7 +156,7 @@ export default [{
 }, {
   method: "POST",
   path: "/v1/quest/{questId}/start",
-  handler: questHandlers.startQuest,
+  handler: handlers.startQuest,
   options: {
     auth: 'jwt-access',
     id: "v1.quest.startQuest",
@@ -177,7 +177,7 @@ export default [{
 }, {
   method: "POST",
   path: "/v1/quest/{questId}/close",
-  handler: questHandlers.closeQuest,
+  handler: handlers.closeQuest,
   options: {
     auth: 'jwt-access',
     id: "v1.quest.closeQuest",
@@ -195,7 +195,7 @@ export default [{
 }, {
   method: "POST",
   path: "/v1/quest/{questId}/reject-work",
-  handler: questHandlers.rejectWorkOnQuest,
+  handler: handlers.rejectWorkOnQuest,
   options: {
     auth: 'jwt-access',
     id: "v1.quest.rejectWork",
@@ -213,7 +213,7 @@ export default [{
 }, {
   method: "POST",
   path: "/v1/quest/{questId}/accept-work",
-  handler: questHandlers.acceptWorkOnQuest,
+  handler: handlers.acceptWorkOnQuest,
   options: {
     auth: 'jwt-access',
     id: "v1.quest.acceptWork",
@@ -231,7 +231,7 @@ export default [{
 }, {
   method: "POST",
   path: "/v1/quest/{questId}/complete-work",
-  handler: questHandlers.completeWorkOnQuest,
+  handler: handlers.completeWorkOnQuest,
   options: {
     auth: 'jwt-access',
     id: "v1.quest.completeWork",
@@ -249,7 +249,7 @@ export default [{
 }, {
   method: "POST",
   path: "/v1/quest/{questId}/accept-completed-work",
-  handler: questHandlers.acceptCompletedWorkOnQuest,
+  handler: handlers.acceptCompletedWorkOnQuest,
   options: {
     auth: 'jwt-access',
     id: "v1.quest.acceptCompletedWork",
@@ -267,7 +267,7 @@ export default [{
 }, {
   method: "POST",
   path: "/v1/quest/{questId}/reject-completed-work",
-  handler: questHandlers.rejectCompletedWorkOnQuest,
+  handler: handlers.rejectCompletedWorkOnQuest,
   options: {
     auth: 'jwt-access',
     id: "v1.quest.rejectCompletedWork",
@@ -285,7 +285,7 @@ export default [{
 }, {
   method: "POST",
   path: '/v1/quest/{questId}/star',
-  handler: questHandlers.setStar,
+  handler: handlers.setStar,
   options: {
     auth: 'jwt-access',
     id: 'v1.quest.star.setStar',
@@ -303,7 +303,7 @@ export default [{
 }, {
   method: "DELETE",
   path: '/v1/quest/{questId}/star',
-  handler: questHandlers.removeStar,
+  handler: handlers.removeStar,
   options: {
     auth: 'jwt-access',
     id: 'v1.quest.star.takeAwayStar',
