@@ -49,7 +49,6 @@ export async function createDispute(r) {
   return output(await QuestDispute.findByPk(newDispute.id));
 }
 
-
 export async function getDisputeInfo(r) {
   const dispute = await QuestDispute.findByPk(r.params.disputeId)
 
@@ -70,6 +69,8 @@ export async function getDisputeInfo(r) {
   if(quest.userId !== r.auth.credentials.id && quest.assignedWorkerId !== r.auth.credentials.id) {
     return error(Errors.InvalidRole, "Only employer or worker can take info about dispute", {});
   }
+
+
 
   return output(dispute);
 }

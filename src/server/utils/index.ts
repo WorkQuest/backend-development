@@ -2,8 +2,6 @@ import { v4 as uuidv4 } from "uuid";
 import { Boom } from "@hapi/boom";
 import * as crypto from "crypto";
 import config from "../config/config";
-var geoip = require('geoip-lite');
-
 const geoip = require('geoip-lite');
 
 export function getUUID(): string {
@@ -31,20 +29,6 @@ export function getGeo(request) {
     city: geo.city
   }
   return place
-}
-
-export function getDevice(request): string {
-  return request.headers['user-agent'];
-}
-
-export function getGeo(request): { country: string, city: string } {
-  const ip = getRealIp(request);
-  const geo = geoip.lookup(ip);
-
-  return {
-    country: geo ? geo.country : null,
-    city: geo ? geo.city : null,
-  }
 }
 
 export function getDevice(request): string {

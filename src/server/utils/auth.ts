@@ -33,7 +33,7 @@ export function tokenValidate(tokenType: 'access' | 'refresh', allowedUnconfirme
     const data = await decodeJwt(token, config.auth.jwt[tokenType].secret);
 
     const session = await Session.findByPk(data.id, {
-      include: [{model: User, as: 'user'}]
+      include: [{ model: User, as: 'user' }]
     });
 
     if (!session) {
@@ -45,16 +45,16 @@ export function tokenValidate(tokenType: 'access' | 'refresh', allowedUnconfirme
     if (!session.user) {
       throw error(Errors.NotFound, 'User not found', {});
     }
-    if (session.user.status === UserStatus.Unconfirmed && !allowedUnconfirmedRoutes.includes(r.route.path)) {
 
-    if (user.status === UserStatus.Blocked) {
+    if (session.user.status === UserStatus.Blocked) {
       throw error(Errors.InvalidStatus, 'User is blocked', {});
     }
 
-    if (user.status === UserStatus.Unconfirmed && !allowedUnconfirmedRoutes.includes(r.route.path)) {
+    if (session.user.status === UserStatus.Unconfirmed && !allowedUnconfirmedRoutes.includes(r.route.path)) {
       throw error(Errors.UnconfirmedUser, 'Unconfirmed user', {});
     }
 
     return { isValid: true, credentials: session.user, artifacts: { token, type: tokenType, sessionId: session.id } };
+
   }
 }
