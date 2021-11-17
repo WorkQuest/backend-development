@@ -470,6 +470,11 @@ export async function removeUserInGroupChat(r) {
 
   const transaction = await r.server.app.db.transaction();
 
+  const lastMessage = await Message.findOne({
+    order: [ ['createdAt', 'DESC'] ],
+    where: { chatId: groupChat.id }
+  });
+
   await ChatMember.destroy({
     where: {
       chatId: groupChat.id,
@@ -481,6 +486,7 @@ export async function removeUserInGroupChat(r) {
     senderUserId: r.auth.credentials.id,
     chatId: groupChat.id,
     type: MessageType.info,
+    number: lastMessage.number + 1
   }, { transaction });
 
   await InfoMessage.create({
