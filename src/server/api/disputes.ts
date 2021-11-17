@@ -7,19 +7,23 @@ import { Op } from "sequelize";
 
 //TODO test!!!
 export async function createDispute(r) {
+  const dispute = await QuestDispute.findOne({
+    where: {
+      questId: r.params.questId
+    }
+  });
+
+  if(dispute) {
+    return error(Errors.AlreadyExists,'Dispute for this quest already exists',{})
+  }
+
   const quest = await Quest.findByPk(r.params.questId);
   if(!quest) {
     return error(Errors.NotFound, 'Quest is not found', {});
   }
 
-  const dispute = await QuestDispute.findOne({
-    where: {
-      questId: r.params.questId
-    }
-  })
-
-  if(dispute) {
-    return error(Errors.AlreadyExists,'Dispute for this quest already exists',{})
+  if(quest.userId !== r.auth.credentials.id && quest.assignedWorkerId !== r.auth.credentials.id) {
+    return error(Errors.InvalidRole, "Only employer or worker can open dispute", {});
   }
 
   let dayInMilliseconds = 86400000
@@ -29,9 +33,6 @@ export async function createDispute(r) {
     return error(Errors.InvalidDate, 'Can open dispute after 24 hours after creating quest', {});
   }
 
-  if(quest.userId !== r.auth.credentials.id && quest.assignedWorkerId !== r.auth.credentials.id) {
-    return error(Errors.InvalidRole, "Only employer or worker can open dispute", {});
-  }
   const opponentUserId = quest.userId === r.auth.credentials.id ? quest.assignedWorkerId : quest.userId;
 
   if(r.payload.reason === DisputeReason.poorlyDoneJob) {
@@ -46,6 +47,7 @@ export async function createDispute(r) {
     reason: r.payload.reason,
     problem: r.payload.problem,
   });
+
   return output(await QuestDispute.findByPk(newDispute.id));
 }
 
@@ -76,10 +78,6 @@ export async function getDisputes(r) {
     limit: r.query.limit,
     offset: r.query.offset,
   })
-
-  if(!disputes) {
-    return error(Errors.NotFound, "Disputes are not found", {});
-  }
 
   return output({ count: disputes.count, data: disputes.rows });
 }
