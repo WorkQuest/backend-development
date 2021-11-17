@@ -98,7 +98,7 @@ export default [{
     tags: ["api", "chat"],
     validate: {
       query: Joi.object({
-        chatIdExclude: idSchema,
+        excludeMembersChatId: idSchema,
         offset: offsetSchema,
         limit: limitSchema,
       }).label('GetUsersByChatsQuery'),

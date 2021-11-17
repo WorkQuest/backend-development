@@ -10,6 +10,7 @@ import {ChatNotificationActions, publishChatNotifications} from "../websocket/we
 import {MediaController} from "../controllers/controller.media";
 import {MessageController} from "../controllers/chat/controller.message";
 import {UserController} from "../controllers/user/controller.user";
+import {listOfUsersByChatsCountQuery, listOfUsersByChatsQuery } from "../queries";
 import {
   Chat,
   ChatMember,
@@ -88,45 +89,31 @@ export async function getUserChat(r) {
 }
 
 export async function listOfUsersByChats(r) {
-  const include = [{
-    model: ChatMember.unscoped(),
-    as: 'chatMember',
-    attributes: [],
-    where: { userId: { [Op.ne]: r.auth.credentials.id } },
-    include: [{
-      model: Chat.unscoped(),
-      as: 'chat',
-      where: { type: [ChatType.private, ChatType.quest] },
-      include: [{
-        model: ChatMember.unscoped(),
-        as: 'meMember',
-        where: { userId: r.auth.credentials.id },
-      }]
-    }],
-  }] as any[];
+  const options = {
+    replacements: {
+      currentUserId: r.auth.credentials.id,
+      limitValue: r.query.limit,
+      offsetValue: r.query.offset,
+      excludeUsersFromChatId: r.query.excludeMembersChatId || '',
+    }
+  }
 
-  // if (r.query.chatIdExclude) {
-  //   include.push({
-  //     model: Chat.unscoped(),
-  //     as: 'chatOfUser',
-  //     attributes: [],
-  //     where: { id: r.query.chatIdExclude },
-  //     include: [{
-  //       attributes: [],
-  //       model: User.unscoped(),
-  //       as: 'userMembers',
-  //       where: { userId: { [Op.ne]: '$"User"."id"$' } },
-  //     }]
-  //   });
-  // }
+  const [countResults, ] = await r.server.app.db.query(listOfUsersByChatsCountQuery, options);
+  const [userResults, ] = await r.server.app.db.query(listOfUsersByChatsQuery, options);
 
-  const { count, rows } = await User.scope('shortWithAdditionalInfo').findAndCountAll({
-    include,
-    limit: r.query.limit,
-    offset: r.query.offset,
-  });
+  const users = userResults.map(result => ({
+    firstName: result.firstName,
+    lastName: result.lastName,
+    additionalInfo: result.additionalInfo,
+    avatarId: result.avatarId,
+    avatar: {
+      id: result["avatar.id"],
+      url: result["avatar.url"],
+      contentType: result["avatar.contentType"],
+    }
+  }));
 
-  return output({ count, users: rows });
+  return output({ count: countResults[0].count, users });
 }
 
 export async function getChatMembers(r) {
@@ -386,6 +373,7 @@ export async function sendMessageToChat(r) {
 }
 
 export async function addUserInGroupChat(r) {
+  // await UserController.usersMustExist(r.params.userIds);
   await User.userMustExist(r.params.userId);
 
   const groupChat = await Chat.findByPk(r.params.chatId);
@@ -395,17 +383,26 @@ export async function addUserInGroupChat(r) {
     .chatMustHaveType(ChatType.group)
     .chatMustHaveOwner(r.auth.credentials.id)
 
+  const isMemberAlreadyExists = await ChatMember.unscoped().findOne({
+    where: { userId: r.params.userId, chatId: groupChat.id }
+  });
+
+  if (isMemberAlreadyExists) {
+    return error(Errors.AlreadyExists, 'User already exists', { });
+  }
+
   const message = Message.build({
     senderUserId: r.auth.credentials.id,
     chatId: groupChat.id,
     type: MessageType.info,
+    number: chatController.chat.lastMessage.number + 1,
   });
 
   const chatMember = ChatMember.build({
     chatId: groupChat.id,
     userId: r.params.userId,
     unreadCountMessages: 1, /** Because info message */
-    lastReadMessageId: groupChat.lastMessage, /** Because new member */
+    lastReadMessageId: groupChat.lastMessage.id, /** Because new member */
   });
 
   const infoMessage = InfoMessage.build({
