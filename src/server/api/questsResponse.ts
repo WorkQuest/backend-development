@@ -250,6 +250,11 @@ export async function userResponsesToQuest(r) {
   await questController.employerMustBeQuestCreator(employer.id);
 
   const { rows, count } = await QuestsResponse.findAndCountAll({
+    include: [{
+      model: QuestChat.unscoped(),
+      attributes: ["id"],
+      as: 'questChat'
+    }],
     where: { questId: questController.quest.id },
     limit: r.query.limit,
     offset: r.query.offset,
