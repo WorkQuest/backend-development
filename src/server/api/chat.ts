@@ -594,6 +594,7 @@ export async function setMessagesAsRead(r) {
   const otherSenders = await Message.unscoped().findAll({
     attributes: ["senderUserId"],
     where: {
+      chatId: chatController.chat.id,
       senderUserId: { [Op.ne]: r.auth.credentials.id },
       senderStatus: SenderMessageStatus.unread,
       number: { [Op.gte]: message.number },
