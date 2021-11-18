@@ -18,14 +18,18 @@ export const searchFields = [
 
 export async function getMe(r) {
   const user = await User.findByPk(r.auth.credentials.id, {
-    attributes: { include: ['tempPhone'] }
+    attributes: { include: ['tempPhone'] },
+    include: [{
+      model: UserSpecializationFilter,
+      as: 'userSpecializations'
+    }]
   });
 
   return output(user);
 }
 
 export async function getUser(r) {
-  const userController = new UserController(await User.findByPk(r.params.userId));
+  const userController = new UserController(await User.findByPk(r.params.userId, {include:[{model: UserSpecializationFilter, as: 'userSpecializations'}]}));
 
   userController.
     checkNotSeeYourself(r.auth.credentials.id)
