@@ -6,6 +6,7 @@ import {
   Review,
   UserRole,
   StatusKYC,
+  QuestStatus,
   RatingStatus,
   RatingStatistic,
 } from "@workquest/database-models/lib/models";
@@ -18,34 +19,42 @@ export async function addUpdateReviewStatisticsJob(payload: StatisticPayload) {
   return addJob("updateReviewStatistics", payload);
 }
 
-function checkObjectFields(obj: object): boolean {
-  for(let value of Object.values(obj)) {
-    if(value){
-      return true
-    }
-  }
-  return false
+type ConditionsType = {
+  completedQuests: number,
+  averageMark: number,
+  socialNetworks: number,
 }
 
-function checkData(questCounter: number, userPhone: string, userKYC: StatusKYC): boolean {
-  const minQuestsForVerifiedLevel = 10;
-  return ((questCounter >= minQuestsForVerifiedLevel) && userPhone && (userKYC === StatusKYC.Confirmed));
-}
+function ratingStatus(user: User, completedQuestsCount: number, averageMark: number) {
+  const check = function(conditions: ConditionsType): boolean {
+    const socialNetworks = Object.values(user["additionalInfo.socialNetwork"])
+      .filter(network => network !== null)
+      .length;
 
-function setRatingStatus(questCounter: number, userPhone: string, userKYC: StatusKYC, userAdditionalInfo: object): { isStatus: boolean, status?: string} {
-  if (checkData(questCounter, userPhone, userKYC)) {
-    for(let value of Object.values(userAdditionalInfo)) {
-      if(!value || (Array.isArray(value) && !value.length) ||
-        (typeof value === "object" && !Array.isArray(value) && !checkObjectFields(value))) {
-        return { isStatus: false }
-      }
-    }
-    const status = questCounter < 20 ? RatingStatus.verify :
-      (questCounter < 30 ? RatingStatus.reliable : RatingStatus.topRanked);
-    return { isStatus: true, status: status }
-  }else {
-    return { isStatus: false }
+    return completedQuestsCount >= conditions.completedQuests
+      && averageMark >= conditions.averageMark
+      && socialNetworks >= conditions.socialNetworks;
   }
+
+  const topRankedConditions: ConditionsType = { completedQuests: 30, averageMark: 4.5, socialNetworks: 3 };
+  const reliableConditions: ConditionsType = { completedQuests: 20, averageMark: 4, socialNetworks: 2 };
+  const verifiedConditions: ConditionsType = { completedQuests: 10, averageMark: 3.5, socialNetworks: 1 };
+
+  if (user.statusKYC !== StatusKYC.Confirmed) {
+    return RatingStatus.noStatus;
+  }
+  if (check(verifiedConditions) && !user.phone) {
+    return RatingStatus.verified;
+  }
+
+  if (check(topRankedConditions)) {
+    return RatingStatus.topRanked;
+  }
+  if (check(reliableConditions)) {
+    return RatingStatus.reliable;
+  }
+
+  return RatingStatus.noStatus;
 }
 
 export default async function(payload: StatisticPayload) {
@@ -68,6 +77,7 @@ export default async function(payload: StatisticPayload) {
     where: {
       ...(user.role === UserRole.Employer && { userId: user.id }),
       ...(user.role === UserRole.Worker && { assignedWorkerId: user.id }),
+      status: QuestStatus.Done,
     }
   });
 
@@ -82,12 +92,4 @@ export default async function(payload: StatisticPayload) {
     reviewCount,
     // status
   });
-
-  // const countStatus = setRatingStatus(quests, ratingStatistic.user.phone, ratingStatistic.user.statusKYC, ratingStatistic.user.additionalInfo)
-  //
-  // await ratingStatistic.update({
-  //   averageMark: averageMarkResult.getDataValue('avgMark'),
-  //   reviewCount,
-  //   status: countStatus.isStatus ? countStatus.status : null
-  // });
 }
