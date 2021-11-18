@@ -25,7 +25,10 @@ type ConditionsType = {
   socialNetworks: number,
 }
 
-function ratingStatus(user: User, completedQuestsCount: number, averageMark: number) {
+/**
+ *
+ */
+function ratingStatus(user: User, completedQuestsCount: number, averageMark: number): RatingStatus {
   const check = function(conditions: ConditionsType): boolean {
     const socialNetworks = Object.values(user["additionalInfo.socialNetwork"])
       .filter(network => network !== null)
@@ -53,19 +56,20 @@ function ratingStatus(user: User, completedQuestsCount: number, averageMark: num
   if (check(reliableConditions)) {
     return RatingStatus.reliable;
   }
+  if (check(verifiedConditions)) {
+    return RatingStatus.verified;
+  }
 
   return RatingStatus.noStatus;
 }
 
 export default async function(payload: StatisticPayload) {
   const [ratingStatistic, ] = await RatingStatistic.findOrCreate({
-    include: [{
-      model: User,
-      as: 'user'
-    }],
+    include: { model: User, as: 'user' },
     where: { userId: payload.userId },
     defaults: { userId: payload.userId },
   });
+
   const user: User = ratingStatistic.user;
 
   const reviewCountPromise = Review.count({ where: { toUserId: user.id } });
@@ -87,9 +91,11 @@ export default async function(payload: StatisticPayload) {
     averageMarkResultPromise,
   ]);
 
+  const status = ratingStatus(user, completedQuestsCount, averageMarkResult.getDataValue('avgMark'));
+
   await ratingStatistic.update({
-    averageMark: averageMarkResult.getDataValue('avgMark'),
+    status,
     reviewCount,
-    // status
+    averageMark: averageMarkResult.getDataValue('avgMark'),
   });
 }
