@@ -1,11 +1,14 @@
 import { col, fn } from 'sequelize';
 import { addJob } from "../utils/scheduler";
 import {
-  RatingStatistic,
+  User,
+  Quest,
   Review,
+  UserRole,
+  StatusKYC,
+  RatingStatus,
+  RatingStatistic,
 } from "@workquest/database-models/lib/models";
-import { Quest, RatingStatistic, Review, StatusKYC, User, UserRole, RatingStatus } from "@workquest/database-models/lib/models";
-import { col, fn } from "sequelize";
 
 export interface StatisticPayload {
   userId: string,
@@ -30,7 +33,7 @@ function checkData(questCounter: number, userPhone: string, userKYC: StatusKYC):
 }
 
 function setRatingStatus(questCounter: number, userPhone: string, userKYC: StatusKYC, userAdditionalInfo: object): { isStatus: boolean, status?: string} {
-  if(checkData(questCounter, userPhone, userKYC)) {
+  if (checkData(questCounter, userPhone, userKYC)) {
     for(let value of Object.values(userAdditionalInfo)) {
       if(!value || (Array.isArray(value) && !value.length) ||
         (typeof value === "object" && !Array.isArray(value) && !checkObjectFields(value))) {
@@ -46,48 +49,45 @@ function setRatingStatus(questCounter: number, userPhone: string, userKYC: Statu
 }
 
 export default async function(payload: StatisticPayload) {
-  const [ratingStatistic, ] = await RatingStatistic.findOrCreate( { where: { userId: payload.userId } });
-
-  const [ratingStatistic] = await RatingStatistic.findOrCreate({
+  const [ratingStatistic, ] = await RatingStatistic.findOrCreate({
     include: [{
       model: User,
       as: 'user'
     }],
-    where: {
-      userId: payload.userId
-    }
+    where: { userId: payload.userId },
+    defaults: { userId: payload.userId },
   });
+  const user: User = ratingStatistic.user;
 
-  const reviewCountPromise = Review.count({ where: { toUserId: ratingStatistic.userId } });
-
+  const reviewCountPromise = Review.count({ where: { toUserId: user.id } });
   const averageMarkResultPromise = Review.findOne({
     attributes: [[fn('AVG', col('mark')), 'avgMark']],
     where: { toUserId: ratingStatistic.userId }
   });
+  const completedQuestsCountPromise = Quest.count({
+    where: {
+      ...(user.role === UserRole.Employer && { userId: user.id }),
+      ...(user.role === UserRole.Worker && { assignedWorkerId: user.id }),
+    }
+  });
 
-  const [reviewCount, averageMarkResult] = await Promise.all([reviewCountPromise, averageMarkResultPromise]);
-
-  let quests = 0;
-
-  if (ratingStatistic.user.role === UserRole.Employer) {
-    quests = await Quest.count({
-      where: {
-        userId: ratingStatistic.user.id,
-      }
-    });
-  } else {
-    quests = await Quest.count({
-      where: {
-        assignedWorkerId: ratingStatistic.user.id,
-      }
-    });
-  }
-
-  const countStatus = setRatingStatus(quests, ratingStatistic.user.phone, ratingStatistic.user.statusKYC, ratingStatistic.user.additionalInfo)
+  const [reviewCount, completedQuestsCount, averageMarkResult] = await Promise.all([
+    reviewCountPromise,
+    completedQuestsCountPromise,
+    averageMarkResultPromise,
+  ]);
 
   await ratingStatistic.update({
     averageMark: averageMarkResult.getDataValue('avgMark'),
     reviewCount,
-    status: countStatus.isStatus ? countStatus.status : null
+    // status
   });
+
+  // const countStatus = setRatingStatus(quests, ratingStatistic.user.phone, ratingStatistic.user.statusKYC, ratingStatistic.user.additionalInfo)
+  //
+  // await ratingStatistic.update({
+  //   averageMark: averageMarkResult.getDataValue('avgMark'),
+  //   reviewCount,
+  //   status: countStatus.isStatus ? countStatus.status : null
+  // });
 }
