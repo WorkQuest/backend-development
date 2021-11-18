@@ -9,8 +9,9 @@ const options = {
   },
   reconnect: {
     auto: true,
-    delay: 1000, // ms
-    onTimeout: false
+    delay: 10000, // ms
+    onTimeout: false,
+    maxAttempts: 10,
   }
 };
 
