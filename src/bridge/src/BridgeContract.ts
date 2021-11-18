@@ -1,4 +1,3 @@
-import Web3 from "web3";
 import { Contract, EventData, PastEventOptions } from "web3-eth-contract";
 import { BridgeProvider } from "./BridgeProvider";
 

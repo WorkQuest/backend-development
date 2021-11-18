@@ -1,7 +1,7 @@
 import Web3 from "web3";
 import { Sign } from "web3-core";
 import { Contract } from "web3-eth-contract";
-import config from "../../server/config/config";
+import configBridge from "../config/config.bridge";
 
 export class BridgeProvider {
   private readonly _web3: Web3;
@@ -32,7 +32,7 @@ export class BridgeProvider {
   }
 
   public async sing(fields: any[]): Promise<Sign> {
-    return this._web3.eth.accounts.sign(Web3.utils.soliditySha3(...fields), config.bridge.privateKey);
+    return this._web3.eth.accounts.sign(Web3.utils.soliditySha3(...fields), configBridge.privateKey);
   }
 
   public makeContract(abi: any[], address: string): Contract {

@@ -1,9 +1,10 @@
-import { error, output } from '../utils';
-import { Errors } from '../utils/errors';
-import { addUpdateReviewStatisticsJob } from '../jobs/updateReviewStatistics';
-import { QuestController } from "../controllers/quest";
+import {output} from '../utils';
+import {addUpdateReviewStatisticsJob} from '../jobs/updateReviewStatistics';
+import {QuestController} from "../controllers/quest/controller.quest"
+import {publishQuestNotifications, QuestNotificationActions} from "../websocket/websocket.quest";
 import {
   User,
+  Quest,
   Review,
   UserRole,
   QuestStatus,
@@ -11,21 +12,19 @@ import {
 
 export async function sendReview(r) {
   const fromUser: User = r.auth.credentials;
-  const questController = new QuestController(r.payload.questId);
-  const quest = await questController.findModel();
 
-  await questController.questMustHaveStatus(QuestStatus.Done);
+  const questController = new QuestController(await Quest.findByPk(r.payload.questId));
 
-  if (fromUser.id !== quest.userId && fromUser.id !== quest.assignedWorkerId) {
-    return error(Errors.Forbidden, "User does not belong to quest", {});
-  }
+  questController
+    .questMustHaveStatus(QuestStatus.Done)
+    .userMustBelongToQuest(fromUser.id)
 
-  const toUser: User = fromUser.role === UserRole.Worker ? quest.user : quest.assignedWorker;
+  const toUser: User = fromUser.role === UserRole.Worker ? questController.quest.user : questController.quest.assignedWorker;
 
   const review = await Review.create({
     toUserId: toUser.id,
     fromUserId: fromUser.id,
-    questId: quest.id,
+    questId: questController.quest.id,
     message: r.payload.message,
     mark: r.payload.mark,
   });
@@ -34,13 +33,28 @@ export async function sendReview(r) {
     userId: toUser.id,
   });
 
+  await publishQuestNotifications(r.server, {
+    data: review,
+    recipients: [toUser.id],
+    action: QuestNotificationActions.userLeftReviewAboutQuest,
+  });
+
   return output(review);
 }
 
 export async function getReviewsOfUser(r) {
-  const reviews = await Review.findAll({
-    where: { toUserId: r.params.userId }
+  const { count, rows } = await Review.findAndCountAll({
+    include: [{
+      model: User.scope('short'),
+      as: 'fromUser'
+    }, {
+      model: Quest, // TODO добавить short scope
+      as: 'quest',
+    }],
+    where: { toUserId: r.params.userId },
+    limit: r.query.limit,
+    offset: r.query.offset,
   });
 
-  return output(reviews);
+  return output({count, reviews: rows});
 }

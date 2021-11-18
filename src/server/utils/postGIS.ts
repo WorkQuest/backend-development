@@ -1,4 +1,4 @@
-import { LocationPostGISType, LocationType } from "@workquest/database-models/src/models/types";
+import { LocationPostGISType, LocationType } from "@workquest/database-models/lib/models";
 
 export function transformToGeoPostGIS(location: LocationType): LocationPostGISType {
   const coordinates: [number, number] = [location.longitude, location.latitude];

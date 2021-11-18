@@ -1,52 +1,36 @@
-import * as Joi from "joi";
-import { literal, Op } from "sequelize";
-import { error, getRandomCodeNumber, handleValidationError, output } from '../utils';
-import { isMediaExists } from "../utils/storageService";
-import { Errors } from "../utils/errors";
-import { addSendSmsJob } from '../jobs/sendSms';
+import {literal, Op} from "sequelize";
+import {addSendSmsJob} from '../jobs/sendSms';
+import {getRandomCodeNumber, output} from '../utils';
+import {UserController} from "../controllers/user/controller.user";
+import {transformToGeoPostGIS} from "../utils/postGIS";
+import {MediaController} from "../controllers/controller.media";
+import {SkillsFiltersController} from "../controllers/controller.skillsFilters";
 import {
   User,
-  Media,
   UserRole,
-  UserStatus,
   UserSpecializationFilter,
 } from "@workquest/database-models/lib/models";
-import {
-  userAdditionalInfoEmployerSchema,
-  userAdditionalInfoWorkerSchema,
-} from "@workquest/database-models/lib/schemes";
-import { UserController } from "../controllers/user";
-import { splitSpecialisationAndIndustry } from "../utils/filters";
-import { transformToGeoPostGIS } from "../utils/postGIS";
 
 export const searchFields = [
   "firstName",
   "lastName",
 ];
 
-// TODO удалить
-function getAdditionalInfoSchema(role: UserRole): Joi.Schema {
-  if (role === UserRole.Employer)
-    return userAdditionalInfoEmployerSchema;
-  else
-    return userAdditionalInfoWorkerSchema;
-}
-
 export async function getMe(r) {
-  return output(
-    await User.findByPk(r.auth.credentials.id, { attributes: { include: ['tempPhone'] }})
-  );
+  const user = await User.findByPk(r.auth.credentials.id, {
+    attributes: { include: ['tempPhone'] }
+  });
+
+  return output(user);
 }
 
 export async function getUser(r) {
-  if (r.auth.credentials.id === r.params.userId) {
-    return error(Errors.Forbidden, 'You can\'t see your profile (use "get me")', {});
-  }
+  const userController = new UserController(await User.findByPk(r.params.userId));
 
-  const userController = new UserController(r.params.userId);
-  const user = await userController.findModel();
+  userController.
+    checkNotSeeYourself(r.auth.credentials.id)
 
-  return output(user);
+  return output(userController.user);
 }
 
 export function getUsers(role: UserRole) {
@@ -68,7 +52,7 @@ export function getUsers(role: UserRole) {
       );
     }
     if (r.query.specialization && role === UserRole.Worker) {
-      const { industryKeys, specializationKeys } = splitSpecialisationAndIndustry(r.query.specialization);
+      const { industryKeys, specializationKeys } = SkillsFiltersController.splitSpecialisationAndIndustry(r.query.specialization);
 
       include.push({
         model: UserSpecializationFilter,
@@ -107,87 +91,43 @@ export function getUsers(role: UserRole) {
       }
     });
 
-    return output({count, users: rows});
+    return output({ count, users: rows });
   }
 }
 
 export async function setRole(r) {
   const user: User = r.auth.credentials;
-  const userController = new UserController(user.id, user);
+  const userController = new UserController(user);
 
   await userController.userNeedsSetRole();
 
-  await user.update({
-    role: r.payload.role,
-    status: UserStatus.Confirmed,
-    additionalInfo: UserController.getDefaultAdditionalInfo(r.payload.role),
-  });
+  await userController.setRole(r.payload.role);
 
   return output();
-}
-
-// TODO удалить
-export async function editProfiles(r) {
-  const user = r.auth.credentials;
-  const additionalInfoSchema = getAdditionalInfoSchema(user.role);
-  const validateAdditionalInfo = additionalInfoSchema.validate(r.payload.additionalInfo);
-
-  if (validateAdditionalInfo.error) {
-    return await handleValidationError(r, null, validateAdditionalInfo.error);
-  }
-  if (r.payload.avatarId) {
-    const media = await Media.findByPk(r.payload.avatarId);
-
-    if (!media) {
-      return error(Errors.NotFound, 'Media is not found', {
-        avatarId: r.payload.avatarId
-      });
-    }
-    if (!await isMediaExists(media)) {
-      return error(Errors.NotFound, 'Media is not exists', {
-        avatarId: r.payload.avatarId
-      });
-    }
-  }
-
-  const transaction = await r.server.app.db.transaction();
-  const userFieldsUpdate = {
-    ...r.payload,
-    // locationPostGIS: r.payload.location ? transformToGeoPostGIS(r.payload.location) : null,
-  };
-
-  await user.update(userFieldsUpdate, { transaction });
-
-  await transaction.commit();
-
-  return output(
-    await User.findByPk(user.id)
-  );
 }
 
 export function editProfile(userRole: UserRole) {
   return async function(r) {
     const user: User = r.auth.credentials;
-    const userController = new UserController(user.id, user);
+    const userController = new UserController(user);
 
     await userController.userMustHaveRole(userRole);
 
+    const avatarId = r.payload.avatarId ? (await MediaController.getMedia(r.payload)).id : null;
     const transaction = await r.server.app.db.transaction();
 
-    userController.setTransaction(transaction);
-    await userController.setAvatar(r.payload.avatarId);
+    if (userRole === UserRole.Worker) {
+      await userController.setUserSpecializations(r.payload.specializationKeys, transaction);
+    }
 
     await user.update({
+      avatarId: avatarId,
       lastName: r.payload.lastName,
       location: r.payload.location,
       firstName: r.payload.firstName,
       additionalInfo: r.payload.additionalInfo,
       locationPostGIS: r.payload.location ? transformToGeoPostGIS(r.payload.location) : null,
     }, transaction);
-
-    if (userRole === UserRole.Worker) {
-      await userController.setUserSpecializations(r.payload.specializationKeys);
-    }
 
     await transaction.commit();
 
@@ -201,42 +141,45 @@ export async function changePassword(r) {
   const user = await User.scope("withPassword").findOne({
     where: { id: r.auth.credentials.id }
   });
-  const userController = new UserController(user.id, user);
+
+  const userController = new UserController(user);
 
   await userController.checkPassword(r.payload.oldPassword);
-  await user.update({ password: r.payload.newPassword });
+
+  const transaction = await r.server.app.db.transaction();
+
+  await userController.changePassword(r.payload.newPassword, transaction);
+  await userController.logoutAllSessions(transaction);
+
+  await transaction.commit();
 
   return output();
 }
 
 export async function confirmPhoneNumber(r) {
   const user = await User.scope("withPassword").findByPk(r.auth.credentials.id);
-  const userController = new UserController(user.id, user);
+
+  const userController = new UserController(user);
 
   await userController.userMustHaveVerificationPhone();
   await userController.checkPhoneConfirmationCode(r.payload.confirmCode);
 
-  await user.update({
-    phone: user.tempPhone,
-    tempPhone: null,
-    'settings.phoneConfirm': null,
-  });
+  await userController.confirmPhoneNumber();
 
   return output();
 }
 
 export async function sendCodeOnPhoneNumber(r) {
-  const user = await User.scope("withPassword").findByPk(r.auth.credentials.id);
+  const userWithPassword = await User.scope("withPassword").findByPk(r.auth.credentials.id);
   const confirmCode = getRandomCodeNumber();
+
+  const userController = new UserController(userWithPassword);
+
+  await userController.setUnverifiedPhoneNumber(r.payload.phoneNumber, confirmCode);
 
   await addSendSmsJob({
     toPhoneNumber: r.payload.phoneNumber,
     message: 'Code to confirm your phone number on WorkQuest: ' + confirmCode,
-  });
-
-  await user.update({
-    tempPhone: r.payload.phoneNumber,
-    'settings.phoneConfirm': confirmCode,
   });
 
   return output();

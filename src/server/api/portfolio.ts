@@ -1,77 +1,71 @@
-import { error, output } from '../utils';
-import { Errors } from '../utils/errors';
-import { getMedias } from '../utils/medias';
+import {output } from '../utils';
+import {MediaController} from "../controllers/controller.media";
+import {UserController} from "../controllers/user/controller.user";
+import {PortfolioController} from "../controllers/user/controller.portfolio";
 import {
-  Portfolio,
   User,
   UserRole,
+  Portfolio,
 } from "@workquest/database-models/lib/models";
 
 export async function addCase(r) {
-  r.auth.credentials.mustHaveRole(UserRole.Worker);
+  const medias = await MediaController.getMedias(r.payload.medias);
+  const userController = new UserController(r.auth.credentials);
 
-  const medias = await getMedias(r.payload.medias);
+  await userController
+    .userMustHaveRole(UserRole.Worker)
+
   const transaction = await r.server.app.db.transaction();
-  const portfolio = await Portfolio.create({
-    userId: r.auth.credentials.id,
+
+  const portfolioController = await PortfolioController.new({
+    userId: userController.user.id,
     title: r.payload.title,
     description: r.payload.description
-  }, { transaction });
+  }, transaction);
 
-  await portfolio.$set('medias', medias, { transaction });
+  await portfolioController.setMedias(medias, transaction);
 
   await transaction.commit();
 
-  return output(portfolio);
+  return output(portfolioController.portfolio);
 }
 
 export async function getCases(r) {
-  const worker = await User.findByPk(r.params.userId);
+  const workerController = new UserController(await User.findByPk(r.params.userId));
 
-  if (!worker) {
-    error(Errors.NotFound, "Worker not found", {});
-  }
-
-  const cases = await Portfolio.findAll({
-    where: {
-      userId: worker.id
-    }
+  const { count, rows } = await Portfolio.findAndCountAll({
+    where: { userId: workerController.user.id },
+    limit: r.query.limit,
+    offset: r.query.offset,
   });
 
-  return output(cases);
+  return output({count, cases: rows});
 }
 
 export async function deleteCase(r) {
-  const portfolio = await Portfolio.findByPk(r.params.portfolioId);
+  const portfolioController = new PortfolioController(await Portfolio.findByPk(r.params.portfolioId));
 
-  if (!portfolio) {
-    error(Errors.NotFound, "Portfolio not found", {});
-  }
+  portfolioController
+    .mustBeCaseCreator(r.auth.credentials.id)
 
-  portfolio.mustBeCaseCreator(r.auth.credentials.id);
-
-  await portfolio.destroy();
+  await portfolioController.destroy();
 
   return output();
 }
 
 export async function editCase(r) {
-  const transaction = await r.server.app.db.transaction();
+  const medias = await MediaController.getMedias(r.payload.medias);
+
   const portfolio = await Portfolio.findByPk(r.params.portfolioId);
+  const portfolioController = new PortfolioController(portfolio);
 
-  if (!portfolio) {
-    error(Errors.NotFound, "Portfolio not found", {});
-  }
+  portfolioController
+    .mustBeCaseCreator(r.auth.credentials.id)
 
-  portfolio.mustBeCaseCreator(r.auth.credentials.id);
+  const transaction = await r.server.app.db.transaction();
 
-  if (r.payload.medias) {
-    const medias = await getMedias(r.payload.medias);
-
-    await portfolio.$set('medias', medias, { transaction });
-  }
-
-  await portfolio.update(r.payload, { transaction });
+  await portfolioController.update(r.payload, transaction);
+  await portfolioController.setMedias(medias, transaction);
 
   await transaction.commit();
 

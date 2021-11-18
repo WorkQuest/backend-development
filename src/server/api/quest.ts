@@ -1,18 +1,22 @@
-import { Op, literal } from 'sequelize';
-import { Errors } from '../utils/errors';
-import { UserController } from "../controllers/user";
-import { QuestController } from "../controllers/quest";
-import { transformToGeoPostGIS } from "../utils/postGIS";
-import { error, handleValidationError, output } from "../utils";
-import { splitSpecialisationAndIndustry } from "../utils/filters";
-import { locationForValidateSchema } from "@workquest/database-models/lib/schemes";
+import {Op, literal} from 'sequelize';
+import {Errors} from '../utils/errors';
+import {UserController} from "../controllers/user/controller.user";
+import {QuestController} from "../controllers/quest/controller.quest";
+import {transformToGeoPostGIS} from "../utils/postGIS";
+import {error, output} from "../utils";
+import {publishQuestNotifications, QuestNotificationActions} from "../websocket/websocket.quest";
+import {QuestsResponseController} from "../controllers/quest/controller.questsResponse";
+import {MediaController} from "../controllers/controller.media";
+import { SkillsFiltersController } from "../controllers/controller.skillsFilters";
 import {
   User,
   Quest,
   UserRole,
+  QuestChat,
   QuestStatus,
   StarredQuests,
   QuestsResponse,
+  QuestChatStatuses,
   QuestsResponseType,
   QuestsResponseStatus,
   QuestSpecializationFilter,
@@ -40,7 +44,7 @@ export async function getQuest(r) {
   });
 
   if (!quest) {
-    return error(Errors.NotFound, "Quest not found", {});
+    return error(Errors.NotFound, "Quest not found", { questId: r.params.questId });
   }
 
   return output(quest);
@@ -48,10 +52,12 @@ export async function getQuest(r) {
 
 export async function createQuest(r) {
   const employer: User = r.auth.credentials;
-  const userController = new UserController(employer.id, employer);
+  const userController = new UserController(employer);
 
-  await userController.userMustHaveRole(UserRole.Employer);
+  await userController
+    .userMustHaveRole(UserRole.Employer)
 
+  const medias = await MediaController.getMedias(r.payload.medias);
   const transaction = await r.server.app.db.transaction();
 
   const quest = await Quest.create({
@@ -71,10 +77,10 @@ export async function createQuest(r) {
     locationPostGIS: transformToGeoPostGIS(r.payload.location),
   }, { transaction });
 
-  const questController = new QuestController(quest.id, quest, transaction);
+  const questController = new QuestController(quest);
 
-  await questController.setMedias(r.payload.medias);
-  await questController.setQuestSpecializations(r.payload.specializationKeys, true);
+  await questController.setMedias(medias, transaction);
+  await questController.setQuestSpecializations(r.payload.specializationKeys, true, transaction);
 
   await transaction.commit();
 
@@ -84,74 +90,52 @@ export async function createQuest(r) {
 }
 
 export async function editQuest(r) {
-  if (r.payload.location || r.payload.locationPlaceName) {
-    const locationValidate = locationForValidateSchema.validate(r.payload);
-
-    if (locationValidate.error) {
-      return handleValidationError(r, null, locationValidate.error);
-    }
-  }
-
   const employer: User = r.auth.credentials;
 
-  const questValues = {
-    ...(r.payload.price && { price: r.payload.price }),
-    ...(r.payload.title && { title: r.payload.title }),
-    ...(r.payload.adType && { adType: r.payload.adType }),
-    ...(r.payload.priority && { priority: r.payload.priority }),
-    ...(r.payload.category && { category: r.payload.category }),
-    ...(r.payload.workplace && { workplace: r.payload.workplace }),
-    ...(r.payload.employment && { employment: r.payload.employment }),
-    ...(r.payload.description && { description: r.payload.description }),
-    ...(r.payload.location && {
-      location: r.payload.location,
-      locationPlaceName: r.payload.locationPlaceName,
-      locationPostGIS: transformToGeoPostGIS(r.payload.location),
-    }),
-  };
+  const questController = new QuestController(await Quest.findByPk(r.params.questId));
 
-  const questController = new QuestController(r.params.questId);
-  const quest = await questController.findModel();
+  const medias = await MediaController.getMedias(r.payload.medias);
 
-  await questController.employerMustBeQuestCreator(employer.id);
-  await questController.questMustHaveStatus(QuestStatus.Created);
+  questController
+    .employerMustBeQuestCreator(employer.id)
+    .questMustHaveStatus(QuestStatus.Created)
 
   const transaction = await r.server.app.db.transaction();
 
-  questController.setTransaction(transaction);
+  await questController.setMedias(medias, transaction);
+  await questController.setQuestSpecializations(r.payload.specializationKeys, false, transaction);
 
-  if (r.payload.medias) {
-    await questController.setMedias(r.payload.medias);
-  }
-  if (r.payload.specializationKeys) {
-    await questController.setQuestSpecializations(r.payload.specializationKeys);
-  }
-
-  await questController.updateFieldLocationPostGIS();
-
-  await quest.update(questValues, { transaction });
+  questController.quest = await questController.quest.update({
+    price: r.payload.price,
+    title: r.payload.title,
+    adType: r.payload.adType,
+    priority: r.payload.priority,
+    category: r.payload.category,
+    workplace: r.payload.workplace,
+    employment: r.payload.employment,
+    description: r.payload.description,
+    location: r.payload.location,
+    locationPlaceName: r.payload.locationPlaceName,
+    locationPostGIS: transformToGeoPostGIS(r.payload.location),
+  }, { transaction });
 
   await transaction.commit();
 
-  return output(
-    await Quest.findByPk(quest.id)
-  );
+  return output(questController.quest);
 }
 
 export async function deleteQuest(r) {
   const employer: User = r.auth.credentials;
-  const questController = new QuestController(r.params.questId);
-  const quest = await questController.findModel();
+
+  const questController = new QuestController(await Quest.findByPk(r.params.questId));
+
+  questController
+    .employerMustBeQuestCreator(employer.id)
+    .questMustHaveStatus(QuestStatus.Created, QuestStatus.Closed)
+
   const transaction = await r.server.app.db.transaction();
 
-  questController.setTransaction(transaction);
-
-  await questController.employerMustBeQuestCreator(employer.id);
-  await questController.questMustHaveStatus(QuestStatus.Created, QuestStatus.Closed)
-
-  await QuestSpecializationFilter.destroy({ where: { questId: quest.id }, transaction });
-  await QuestsResponse.destroy({ where: { questId: quest.id }, transaction })
-  await quest.destroy({ force: true, transaction });
+  await questController.destroy(transaction);
 
   await transaction.commit();
 
@@ -160,17 +144,18 @@ export async function deleteQuest(r) {
 
 export async function closeQuest(r) {
   const employer: User = r.auth.credentials;
-  const questController = new QuestController(r.params.questId);
-  const quest = await questController.findModel();
+
+  const questController = new QuestController(await Quest.findByPk(r.params.questId));
+
+  await questController
+    .employerMustBeQuestCreator(employer.id)
+    .questMustHaveStatus(QuestStatus.Created, QuestStatus.WaitConfirm)
+
   const transaction = await r.server.app.db.transaction();
 
-  await questController.employerMustBeQuestCreator(employer.id);
-  await questController.questMustHaveStatus(QuestStatus.Created, QuestStatus.WaitConfirm);
+  await questController.close(transaction);
 
-  await quest.update({ status: QuestStatus.Closed }, { transaction });
-
-  await QuestsResponse.update({ status: QuestsResponseStatus.Closed }, {
-    where: { questId: quest.id }, transaction });
+  await QuestsResponseController.closeAllResponsesOnQuest(questController.quest, transaction);
 
   await transaction.commit();
 
@@ -179,99 +164,158 @@ export async function closeQuest(r) {
 
 export async function startQuest(r) {
   const employer: User = r.auth.credentials;
-  const questController = new QuestController(r.params.questId);
-  const userController = new UserController(r.payload.assignedWorkerId);
-  const quest = await questController.findModel();
-  const assignedWorker = await userController.findModel();
+
+  const questController = new QuestController(await Quest.findByPk(r.params.questId));
+  const assignedWorkerController = new UserController(await User.findByPk(r.payload.assignedWorkerId));
+
+  await questController
+    .employerMustBeQuestCreator(employer.id)
+    .questMustHaveStatus(QuestStatus.Created)
+
+  const questsResponseController = new QuestsResponseController(await QuestsResponse.findOne({
+    where: { workerId: assignedWorkerController.user.id, questId: questController.quest.id },
+  }));
+
+  questsResponseController
+    .checkActiveResponse()
+
   const transaction = await r.server.app.db.transaction();
 
-  questController.setTransaction(transaction);
-  userController.setTransaction(transaction);
+  await questController.start(assignedWorkerController.user, transaction);
+  await questsResponseController.closeOtherResponsesToQuest(questController.quest, transaction);
 
-  await questController.employerMustBeQuestCreator(employer.id);
-  await questController.questMustHaveStatus(QuestStatus.Created);
-
-  const questResponse = await QuestsResponse.findOne({
-    where: { workerId: assignedWorker.id }
+  await QuestChat.update({ status: QuestChatStatuses.Close }, {
+    where: { questId: questController.quest.id, workerId: { [Op.ne]: assignedWorkerController.user.id } }, transaction,
   });
 
-  // TODO в контроллер
-  if (!questResponse) {
-    await transaction.rollback();
+  await transaction.commit();
 
-    return error(Errors.NotFound, "Assigned user did not respond on quest", {});
-  }
-  if (questResponse.type === QuestsResponseType.Response) {
-    questResponse.mustHaveStatus(QuestsResponseStatus.Open);
-  } else if (questResponse.type === QuestsResponseType.Invite) {
-    questResponse.mustHaveStatus(QuestsResponseStatus.Accepted);
-  }
-
-  await quest.update({ assignedWorkerId: assignedWorker.id, status: QuestStatus.WaitWorker },
-    { transaction });
-
-  await QuestsResponse.update({ status: QuestsResponseStatus.Closed }, {
-    where: {
-      questId: quest.id,
-      id: { [Op.ne]: questResponse.id }
-  }, transaction });
-
-  await transaction.commit()
+  await publishQuestNotifications(r.server, {
+    data: questController.quest,
+    recipients: [assignedWorkerController.user.id],
+    action: QuestNotificationActions.questStarted,
+  });
 
   return output();
 }
 
 export async function rejectWorkOnQuest(r) {
   const worker: User = r.auth.credentials;
+  const workerController = new UserController(worker);
 
-  await QuestController.answerWorkOnQuest(r.params.questId, worker, false);
+  const questController = new QuestController(await Quest.findByPk(r.params.questId));
+
+  workerController.
+    userMustHaveRole(UserRole.Worker)
+
+  questController
+    .questMustHaveStatus(QuestStatus.WaitWorker)
+    .workerMustBeAppointedOnQuest(worker.id)
+
+  const transaction = await r.server.app.db.transaction();
+
+  await questController.answerWorkOnQuest(worker, false, transaction);
+  await QuestsResponseController.reopenQuestResponses(questController.quest, worker, transaction);
+
+  await transaction.commit();
+
+  await publishQuestNotifications(r.server, {
+    recipients: [questController.quest.userId],
+    action: QuestNotificationActions.workerRejectedQuest,
+    data: questController.quest,
+  });
 
   return output();
 }
 
 export async function acceptWorkOnQuest(r) {
   const worker: User = r.auth.credentials;
+  const workerController = new UserController(worker);
 
-  await QuestController.answerWorkOnQuest(r.params.questId, worker, true);
+  const questController = new QuestController(await Quest.findByPk(r.params.questId));
+
+  workerController.
+  userMustHaveRole(UserRole.Worker)
+
+  questController
+    .questMustHaveStatus(QuestStatus.WaitWorker)
+    .workerMustBeAppointedOnQuest(worker.id)
+
+  const transaction = await r.server.app.db.transaction();
+
+  // TODO Quest Responses?
+  await questController.answerWorkOnQuest(worker, true, transaction);
+
+  await transaction.commit();
+
+  await publishQuestNotifications(r.server, {
+    data: questController.quest,
+    recipients: [questController.quest.userId],
+    action: QuestNotificationActions.workerAcceptedQuest,
+  });
 
   return output();
 }
 
 export async function completeWorkOnQuest(r) {
   const worker: User = r.auth.credentials;
-  const questController = new QuestController(r.params.questId);
-  const quest = await questController.findModel();
 
-  await questController.questMustHaveStatus(QuestStatus.Active);
-  await questController.workerMustBeAppointedOnQuest(worker.id);
+  const quest: Quest = await Quest.findByPk(r.params.questId);
+  const questController = new QuestController(quest);
 
-  await quest.update({ status: QuestStatus.WaitConfirm });
+  questController
+    .questMustHaveStatus(QuestStatus.Active)
+    .workerMustBeAppointedOnQuest(worker.id)
+
+  await questController.completeWork();
+
+  await publishQuestNotifications(r.server, {
+    data: questController.quest,
+    recipients: [questController.quest.userId],
+    action: QuestNotificationActions.workerCompletedQuest,
+  });
 
   return output();
 }
 
 export async function acceptCompletedWorkOnQuest(r) {
   const employer: User = r.auth.credentials;
-  const questController = new QuestController(r.params.questId);
-  const quest = await questController.findModel();
 
-  await questController.employerMustBeQuestCreator(employer.id);
-  await questController.questMustHaveStatus(QuestStatus.WaitConfirm);
+  const quest = await Quest.findByPk(r.params.questId);
+  const questController = new QuestController(quest);
 
-  await quest.update({ status: QuestStatus.Done });
+  questController
+    .employerMustBeQuestCreator(employer.id)
+    .questMustHaveStatus(QuestStatus.WaitConfirm)
+
+  await questController.approveCompletedWork();
+
+  await publishQuestNotifications(r.server, {
+    data: quest,
+    recipients: [quest.assignedWorkerId],
+    action: QuestNotificationActions.employerAcceptedCompletedQuest,
+  });
 
   return output();
 }
 
 export async function rejectCompletedWorkOnQuest(r) {
   const employer: User = r.auth.credentials;
-  const questController = new QuestController(r.params.questId);
-  const quest = await questController.findModel();
 
-  await questController.employerMustBeQuestCreator(employer.id);
-  await questController.questMustHaveStatus(QuestStatus.WaitConfirm);
+  const quest = await Quest.findByPk(r.params.questId);
+  const questController = new QuestController(quest);
 
-  await quest.update({ status: QuestStatus.Dispute });
+  questController
+    .employerMustBeQuestCreator(employer.id)
+    .questMustHaveStatus(QuestStatus.WaitConfirm)
+
+  await questController.rejectCompletedWork();
+
+  await publishQuestNotifications(r.server, {
+    data: quest,
+    recipients: [quest.assignedWorkerId],
+    action: QuestNotificationActions.employerRejectedCompletedQuest,
+  });
 
   return output();
 }
@@ -283,15 +327,15 @@ export async function getQuests(r) {
   const order = [];
   const include = [];
   const where = {
+    ...(r.query.statuses && { status: { [Op.in]: r.query.statuses } }),
+    ...(r.query.adType && { adType: r.query.adType }),
+    ...(r.query.filter && { filter: r.params.filter }),
     ...(r.params.userId && { userId: r.params.userId }),
     ...(r.query.performing && { assignedWorkerId: r.auth.credentials.id }),
-    ...(r.query.priority && { priority: r.query.priority }),
-    ...(r.query.status && { status: r.query.status }),
-    ...(r.query.adType && { adType: r.query.adType }),
     ...(r.query.north && r.query.south && { [Op.and]: entersAreaLiteral }),
-    ...(r.query.filter && { filter: r.params.filter }),
-    ...(r.query.workplace && { workplace: r.params.workplace }),
-    ...(r.query.employment && { employment: r.params.employment }),
+    ...(r.query.priorities && { priority: {[Op.in]: r.query.priorities } }),
+    ...(r.query.workplaces && { workplace: { [Op.in]: r.query.workplaces } }),
+    ...(r.query.employments && { employment: { [Op.in]: r.query.employments } }),
   };
 
   if (r.query.q) {
@@ -299,21 +343,8 @@ export async function getQuests(r) {
       [field]: { [Op.iLike]: `%${r.query.q}%` }
     }));
   }
-  if (r.query.invited) {
-    include.push({
-      model: QuestsResponse,
-      as: 'responses',
-      attributes: [],
-      where: {
-        [Op.and]: [
-          { workerId: r.auth.credentials.id },
-          { type: QuestsResponseType.Invite },
-        ]
-      }
-    });
-  }
-  if (r.query.specialization) {
-    const { specializationKeys, industryKeys } = splitSpecialisationAndIndustry(r.query.specialization);
+  if (r.query.specializations) {
+    const { specializationKeys, industryKeys } = SkillsFiltersController.splitSpecialisationAndIndustry(r.query.specializations);
 
     include.push({
       model: QuestSpecializationFilter,
@@ -333,17 +364,38 @@ export async function getQuests(r) {
   }
 
   include.push({
-    model: StarredQuests,
+    model: StarredQuests.unscoped(),
     as: "star",
     where: { userId: r.auth.credentials.id },
     required: r.query.starred,
+  }, {
+    model: QuestsResponse.unscoped(),
+    as: 'invited',
+    required: r.query.invited,
+    where: {
+      [Op.and]: [
+        { workerId: r.auth.credentials.id },
+        { type: QuestsResponseType.Invite },
+      ]
+    }
+  }, {
+    model: QuestsResponse.unscoped(),
+    as: "responded",
+    required: r.query.responded,
+    where: {
+      [Op.and]: [
+        { workerId: r.auth.credentials.id },
+        { type: QuestsResponseType.Response },
+      ]
+    },
   });
-  include.push({
-    model: QuestsResponse,
-    as: "response",
-    where: { workerId: r.auth.credentials.id },
-    required: false
-  });
+
+  // {
+  //   model: QuestsResponse,
+  //     as: 'responses',
+  //   required: false,
+  //   where: { '$"Quest"."userId"$': r.auth.credentials.id },
+  // }
 
   for (const [key, value] of Object.entries(r.query.sort)) {
     order.push([key, value]);
@@ -367,56 +419,20 @@ export async function getQuests(r) {
   return output({ count, quests: rows });
 }
 
-// TODO Удалить?
-export async function getMyStarredQuests(r) {
-  return output(
-    await StarredQuests.findAll({
-      where: { userId: r.auth.credentials.id },
-      attributes: [],
-      include: {
-        model: Quest
-      }
-    })
-  )
-}
-
 export async function setStar(r) {
-  const questController = new QuestController(r.params.questId);
+  const user: User = r.auth.credentials;
+  const questController = new QuestController(await Quest.findByPk(r.params.questId));
 
-  await questController.findModel();
-
-  const starred = await StarredQuests.findOne({
-    where: {
-      userId: r.auth.credentials.id,
-      questId: r.params.questId,
-    }
-  });
-
-  if (starred) {
-    return error(Errors.Forbidden, 'Quest has already been added to favorites', {});
-  }
-
-  await StarredQuests.create({
-    userId: r.auth.credentials.id,
-    questId: r.params.questId,
-  });
+  await questController.setStar(user);
 
   return output();
 }
 
 export async function removeStar(r) {
-  const starredQuest = await StarredQuests.findOne({
-    where: {
-      userId: r.auth.credentials.id,
-      questId: r.params.questId,
-    }
-  });
+  const user: User = r.auth.credentials;
+  const questController = new QuestController(await Quest.findByPk(r.params.questId));
 
-  if (!starredQuest) {
-    return error(Errors.Forbidden, 'Quest or quest with star not fount', {});
-  }
-
-  await starredQuest.destroy();
+  await questController.removeStar(user);
 
   return output();
 }

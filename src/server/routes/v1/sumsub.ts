@@ -11,6 +11,7 @@ export default [{
   path: "/v1/sumsub/create-access-token",
   handler: createAccessToken,
   options: {
+    auth: 'jwt-access',
     id: "v1.sumsub.createAccessToken",
     tags: ["api", "sumsub"],
     description: "Create access token in SumSub",

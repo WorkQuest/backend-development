@@ -5,7 +5,6 @@ import {
   setRole,
   getUsers,
   editProfile,
-  editProfiles,
   changePassword,
   confirmPhoneNumber,
   sendCodeOnPhoneNumber,
@@ -35,6 +34,7 @@ export default [{
   path: "/v1/profile/me",
   handler: getMe,
   options: {
+    auth: 'jwt-access',
     id: "v1.profile.getMe",
     tags: ["api", "profile"],
     description: "Get info about current user",
@@ -47,6 +47,7 @@ export default [{
   path: "/v1/profile/{userId}",
   handler: getUser,
   options: {
+    auth: 'jwt-access',
     id: "v1.profile.getUser",
     tags: ["api", "profile"],
     description: "Get profile user",
@@ -64,6 +65,7 @@ export default [{
   path: "/v1/profile/employers",
   handler: getUsers(UserRole.Employer),
   options: {
+    auth: 'jwt-access',
     id: "v1.profile.getEmployers",
     tags: ["api", "profile"],
     description: "Get employers",
@@ -79,6 +81,7 @@ export default [{
   path: "/v1/profile/workers",
   handler: getUsers(UserRole.Worker),
   options: {
+    auth: 'jwt-access',
     id: "v1.profile.getWorkers",
     tags: ["api", "profile"],
     description: "Get workers",
@@ -91,34 +94,10 @@ export default [{
   }
 }, {
   method: "PUT",
-  path: "/v1/profile/edit",
-  handler: editProfiles, // TODO Удалить
-  options: {
-    id: "v1.profile.edit",
-    tags: ["api", "profile"],
-    description: "Edit profile information",
-    validate: {
-      payload: Joi.object({
-        avatarId: idSchema.allow(null).required(),
-        firstName: userFirstNameSchema.required(),
-        lastName: userLastNameSchema.required(),
-        location: locationSchema.allow(null).required(),
-        specializationKeys: specializationKeysSchema.allow(null).required(),
-        additionalInfo: Joi.alternatives(
-          userAdditionalInfoEmployerSchema.options({ presence: "required" }),
-          userAdditionalInfoWorkerSchema.options({ presence: "required" })
-        ).required(),
-      }).label("EditProfilePayload")
-    },
-    response: {
-      schema: outputOkSchema(userSchema).label("UserResponse")
-    }
-  }
-}, {
-  method: "PUT",
   path: "/v1/employer/profile/edit",
   handler: editProfile(UserRole.Employer),
   options: {
+    auth: 'jwt-access',
     id: "v1.profile.editEmployer",
     tags: ["api", "profile"],
     description: "Edit employer profile information",
@@ -140,6 +119,7 @@ export default [{
   path: "/v1/worker/profile/edit",
   handler: editProfile(UserRole.Worker),
   options: {
+    auth: 'jwt-access',
     id: "v1.profile.editWorker",
     tags: ["api", "profile"],
     description: "Edit worker profile",
@@ -162,6 +142,7 @@ export default [{
   path: "/v1/profile/set-role",
   handler: setRole,
   options: {
+    auth: 'jwt-access',
     id: "v1.profile.setRole",
     tags: ["api", "profile"],
     description: "Set role user (Only for need set role)",
@@ -179,6 +160,7 @@ export default [{
   path: "/v1/profile/change-password",
   handler: changePassword,
   options: {
+    auth: 'jwt-access',
     id: "v1.profile.changePassword",
     tags: ["api", "profile"],
     description: "Change user password",
@@ -197,6 +179,7 @@ export default [{
   path: "/v1/profile/phone/confirm",
   handler: confirmPhoneNumber,
   options: {
+    auth: 'jwt-access',
     id: "v1.profile.phone.confirm",
     tags: ["api", "profile"],
     description: "Confirm phone number",
@@ -214,6 +197,7 @@ export default [{
   path: "/v1/profile/phone/send-code",
   handler: sendCodeOnPhoneNumber,
   options: {
+    auth: 'jwt-access',
     id: "v1.profile.phone.sendCode",
     tags: ["api", "profile"],
     description: "Send code for confirm phone number",

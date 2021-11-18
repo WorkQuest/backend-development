@@ -1,11 +1,13 @@
 import * as Joi from "joi";
 import {
-  outputOkSchema,
   idSchema,
+  limitSchema,
+  offsetSchema,
+  reviewSchema,
+  outputOkSchema,
   reviewMarkSchema,
   reviewMessageSchema,
-  reviewSchema,
-  reviewsSchema,
+  outputPaginationSchema,
 } from "@workquest/database-models/lib/schemes";
 import { sendReview, getReviewsOfUser } from '../../api/review';
 
@@ -14,6 +16,7 @@ export default [{
   path: "/v1/review/send",
   handler: sendReview,
   options: {
+    auth: 'jwt-access',
     id: "v1.review.send",
     tags: ["api", "review"],
     description: "Send review for user",
@@ -33,16 +36,21 @@ export default [{
   path: "/v1/user/{userId}/reviews",
   handler: getReviewsOfUser,
   options: {
+    auth: 'jwt-access',
     id: "v1.user.reviews",
     tags: ["api", "review"],
     description: "Get all reviews about user",
     validate: {
       params: Joi.object({
-        userId: idSchema.required()
-      }).label('ParamsReviews')
+        userId: idSchema.required(),
+      }).label('ReviewsParams'),
+      query: Joi.object({
+        offset: offsetSchema,
+        limit: limitSchema,
+      }).label("ReviewsQuery"),
     },
     response: {
-      schema: outputOkSchema(reviewsSchema).label('ReviewsResponse')
+      schema: outputPaginationSchema('reviews', reviewSchema).label('ReviewsResponse')
     }
   }
 }];

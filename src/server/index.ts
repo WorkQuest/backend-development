@@ -11,10 +11,10 @@ import * as Bell from "@hapi/bell";
 import * as Qs from "qs";
 import routes from "./routes";
 import config from "./config/config";
+import initWebSocketService from "./websocket/index";
 import SwaggerOptions from "./config/swagger";
 import { initDatabase } from "@workquest/database-models/lib/models";
 import { handleValidationError, responseHandler } from "./utils";
-import { chatNotificationsFilter } from "./utils/chatSubscription";
 import { tokenValidate } from "./utils/auth";
 import { pinoConfig } from "./config/pino";
 import { run } from "graphile-worker";
@@ -86,7 +86,7 @@ const init = async () => {
     { plugin: HapiSwagger, options: SwaggerOptions }
   ]);
 
-  server.app.db = await initDatabase(config.dbLink, true, true);
+  server.app.db = await initDatabase(config.dbLink, false, true);
 
   server.app.scheduler = await run({
     connectionString: config.dbLink,
@@ -95,15 +95,12 @@ const init = async () => {
     taskDirectory: `${__dirname}/jobs` // Папка с исполняемыми тасками.
   });
 
-  server.subscription('/notifications/chat', {
-    filter: chatNotificationsFilter
-  });
-
   /** JWT Auth */
   server.auth.strategy('jwt-access', 'bearer-access-token', {
     validate: tokenValidate('access', [
       "/api/v1/auth/confirm-email",
       "/api/v1/profile/set-role",
+      "/api/v1/auth/logout"
     ]),
   });
   server.auth.strategy('jwt-refresh', 'bearer-access-token', {
@@ -113,6 +110,7 @@ const init = async () => {
   });
   server.auth.default('jwt-access');
 
+  initWebSocketService(server);
   initAuthStrategiesOfSocialNetworks(server);
 
   server.route(routes);

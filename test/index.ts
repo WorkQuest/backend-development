@@ -13,7 +13,8 @@ import { transformToGeoPostGIS } from "../src/server/utils/postGIS";
 
 export async function makeAccessToken(user: User): Promise<string> {
   const session = await Session.create({
-    userId: user.id
+    userId: user.id,
+    invalidating: false,
   });
 
   const { access } = generateJwt({ id: session.id });
