@@ -172,18 +172,20 @@ export default [{
   }
 }, {
   method: "POST",
-  path: "/v1/user/me/chat/group/{chatId}/add/{userId}",
+  path: "/v1/user/me/chat/group/{chatId}/add",
   handler: handlers.addUserInGroupChat,
   options: {
     auth: 'jwt-access',
     id: "v1.chat.group.addUser",
-    description: "Add user in group chat",
+    description: "Add user in group chat. For one or more users",
     tags: ["api", "chat"],
     validate: {
       params: Joi.object({
         chatId: idSchema.required(),
-        userId: idSchema.required(),
-      }).label('AddUserInGroupChatParams')
+      }).label('AddUserInGroupChatParams'),
+      payload: Joi.object({
+        memberUserIds: idsSchema.required().unique(),
+      }).label('AddUserInGroupChatPayload'),
     },
     response: {
       schema: outputOkSchema(messageSchema).label('AddUserInGroupChatResponse')
