@@ -113,7 +113,7 @@ export async function listOfUsersByChats(r) {
     }
   }));
 
-  return output({ count: countResults[0].count, users });
+  return output({ count: parseInt(countResults[0].count), users });
 }
 
 export async function getChatMembers(r) {
