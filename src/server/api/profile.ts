@@ -71,6 +71,8 @@ export function getUsers(role: UserRole) {
           where: { specializationKey: { [Op.in]: specializationKeys } },
         });
       }
+
+      include.push(...includeSpecializations);
     }
 
     for (const [key, value] of Object.entries(r.query.sort)) {
