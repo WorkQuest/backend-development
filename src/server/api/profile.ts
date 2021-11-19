@@ -42,6 +42,7 @@ export function getUsers(role: UserRole) {
 
     const order = [];
     const include = [];
+    let distinctCol: '"User"."id"' | 'id' = '"User"."id"';
 
     const where = {
       ...(r.query.north && r.query.south && { [Op.and]: entersAreaLiteral }), role,
@@ -70,6 +71,8 @@ export function getUsers(role: UserRole) {
           where: { specializationKey: { [Op.in]: specializationKeys } },
         });
       }
+
+      distinctCol = 'id';
     }
 
     if(r.query.wage.length) {
@@ -89,7 +92,7 @@ export function getUsers(role: UserRole) {
 
     const { count, rows } = await User.findAndCountAll({
       distinct: true,
-      col: 'id',
+      col: distinctCol, // so..., else not working
       limit: r.query.limit,
       offset: r.query.offset,
       include, order, where,
