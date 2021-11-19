@@ -11,6 +11,31 @@ import {
   RatingStatistic,
 } from "@workquest/database-models/lib/models";
 
+/**
+ * 1 уровень Verified.
+ *   Выполнить не менее 10 квестов.
+ *   Каждый выполненный квест оценен не менее, чем на 3,5 балла.
+ *   Средняя оценка у пользователя не менее, чем 3,5.
+ *   Прохождение KYC (верифицированный аккаунт).
+ *   Заполнение соцсетей (добавлено 1 соцсеть).
+ *
+ *  2 уровень Reliable.
+ *    Выполнить не менее 20 квестов.
+ *    Каждый выполненный квест оценен не менее, чем на 4 балла.
+ *    Средняя оценка не менее 4.
+ *    Прохождение KYC (верифицированный аккаунт).
+ *    Верификация номера телефона.
+ *    Заполнение соцсетей (добавлено 2 соцсети).
+ *
+ *  3 уровень Top Ranked.
+ *    Выполнить не менее 30 квестов. Каждый выполненный квест не менее, чем на 4,5 балла.
+ *    Средняя оценка не менее 4,5
+ *    Прохождение KYC (верифицированный аккаунт).
+ *    Верификация номера телефона.
+ *    Заполнение соцсетей (добавлено 3 соцсети).
+ *    Заполнение Employment information
+ */
+
 export interface StatisticPayload {
   userId: string,
 }
@@ -19,44 +44,52 @@ export async function addUpdateReviewStatisticsJob(payload: StatisticPayload) {
   return addJob("updateReviewStatistics", payload);
 }
 
-type ConditionsType = {
+type RatingConditions = {
   completedQuests: number,
   averageMark: number,
   socialNetworks: number,
 }
 
-/**
- *
- */
-function ratingStatus(user: User, completedQuestsCount: number, averageMark: number): RatingStatus {
-  const check = function(conditions: ConditionsType): boolean {
-    const socialNetworks = Object.values(user["additionalInfo.socialNetwork"])
+const RatingConditions = class {
+  constructor(
+    public readonly user: User,
+    public readonly completedQuestsCount: number,
+    public readonly averageMark: number,
+  ) {
+  }
+
+  public check(conditions: RatingConditions): boolean {
+    const socialNetworks = Object.values(this.user["additionalInfo.socialNetwork"])
       .filter(network => network !== null)
       .length;
 
-    return completedQuestsCount >= conditions.completedQuests
-      && averageMark >= conditions.averageMark
+    return this.completedQuestsCount >= conditions.completedQuests
+      && this.averageMark >= conditions.averageMark
       && socialNetworks >= conditions.socialNetworks;
   }
+}
 
-  const topRankedConditions: ConditionsType = { completedQuests: 30, averageMark: 4.5, socialNetworks: 3 };
-  const reliableConditions: ConditionsType = { completedQuests: 20, averageMark: 4, socialNetworks: 2 };
-  const verifiedConditions: ConditionsType = { completedQuests: 10, averageMark: 3.5, socialNetworks: 1 };
+function ratingStatus(user: User, completedQuestsCount: number, averageMark: number): RatingStatus {
+  const thisUser = new RatingConditions(user, completedQuestsCount, averageMark);
+
+  const topRankedConditions: RatingConditions = { completedQuests: 30, averageMark: 4.5, socialNetworks: 3 };
+  const reliableConditions: RatingConditions = { completedQuests: 20, averageMark: 4, socialNetworks: 2 };
+  const verifiedConditions: RatingConditions = { completedQuests: 10, averageMark: 3.5, socialNetworks: 1 };
 
   if (user.statusKYC !== StatusKYC.Confirmed) {
     return RatingStatus.noStatus;
   }
-  if (check(verifiedConditions) && !user.phone) {
+  if (thisUser.check(verifiedConditions) && !user.phone) {
     return RatingStatus.verified;
   }
 
-  if (check(topRankedConditions)) {
+  if (thisUser.check(topRankedConditions)) {
     return RatingStatus.topRanked;
   }
-  if (check(reliableConditions)) {
+  if (thisUser.check(reliableConditions)) {
     return RatingStatus.reliable;
   }
-  if (check(verifiedConditions)) {
+  if (thisUser.check(verifiedConditions)) {
     return RatingStatus.verified;
   }
 
