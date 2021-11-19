@@ -9,6 +9,7 @@ import {
   User,
   UserRole,
   UserSpecializationFilter,
+  Quest
 } from "@workquest/database-models/lib/models";
 
 export const searchFields = [
@@ -71,6 +72,17 @@ export function getUsers(role: UserRole) {
       }
     }
 
+    if(r.query.wage.length) {
+      const a = await Quest.findAndCountAll({
+        where: {
+          price: {
+            [Op.between]: r.query.wage
+          }
+        }
+      })
+      console.log(a);
+    }
+
     for (const [key, value] of Object.entries(r.query.sort)) {
       order.push([key, value]);
     }
@@ -113,7 +125,7 @@ export function editProfile(userRole: UserRole) {
 
     await userController.userMustHaveRole(userRole);
 
-    const avatarId = r.payload.avatarId ? (await MediaController.getMedia(r.payload)).id : null;
+    const avatarId = r.payload.avatarId ? (await MediaController.getMedia(r.payload.avatarId)).id : null;
     const transaction = await r.server.app.db.transaction();
 
     if (userRole === UserRole.Worker) {
