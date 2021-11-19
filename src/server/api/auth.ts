@@ -105,8 +105,9 @@ export async function confirmEmail(r) {
 	const user = await User.scope("withPassword").findByPk(r.auth.credentials.id);
 	const userController = new UserController(user);
 
-	await userController.checkUserAlreadyConfirmed();
-	await userController.checkUserConfirmationCode(r.payload.confirmCode);
+	await userController
+		.checkUserAlreadyConfirmed()
+		.checkUserConfirmationCode(r.payload.confirmCode)
 
 	if (r.payload.role) {
 		await user.update({
@@ -131,7 +132,8 @@ export async function login(r) {
 	});
 	const userController = new UserController(user);
 
-	await userController.checkPassword(r.payload.password)
+	await userController
+		.checkPassword(r.payload.password)
 
 	if (userController.user.isTOTPEnabled()) {
 		userController
