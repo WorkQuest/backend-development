@@ -421,12 +421,12 @@ export async function addUsersInGroupChat(r) {
       lastReadMessageId: groupChat.lastMessage.id, /** Because new member */
     }
   });
-  const chatMembers = await ChatMember.bulkCreate(members, { transaction });
+  await ChatMember.bulkCreate(members, { transaction });
 
   const [messagesResult, ] = await Promise.all([
     messages.map(_ => _.save({ transaction })),
     infoMessages.map(_ => _.save({ transaction })),
-  ])
+  ]);
 
   await groupChat.update({
     lastMessageId: lastMessage.id,
