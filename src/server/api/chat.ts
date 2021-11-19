@@ -410,7 +410,7 @@ export async function addUsersInGroupChat(r) {
       type: MessageType.info,
       senderUserId: r.auth.credentials.id,
       number: messageNumber,
-      createdAt: Date.now() + i * 100, // TODO посмотри чтобы было по порядку
+      createdAt: Date.now() + i * 100,
     });
     const infoMessage = InfoMessage.build({
       userId: userId,
