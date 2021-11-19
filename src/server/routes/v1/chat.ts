@@ -188,7 +188,7 @@ export default [{
       }).label('AddUserInGroupChatPayload'),
     },
     response: {
-      schema: emptyOkSchema
+      schema: outputOkSchema(messageSchema).label('AddUserInGroupChatResponse')
     }
   }
 }, {

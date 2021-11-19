@@ -424,7 +424,7 @@ export async function addUsersInGroupChat(r) {
   });
   await ChatMember.bulkCreate(members, { transaction });
 
-  const messagesResult = await Promise.all(messages.map(_ => _.save({ transaction })));
+  let messagesResult = await Promise.all(messages.map(_ => _.save({ transaction })));
   const infoMessagesResult = await Promise.all(infoMessages.map(_ => _.save({ transaction })));
 
   await groupChat.update({
@@ -449,21 +449,23 @@ export async function addUsersInGroupChat(r) {
   const membersInChat = await ChatMember.scope('userIdsOnly').findAll({
     where: { chatId: groupChat.id, userId: { [Op.ne]: r.auth.credentials.id } }
   });
+  messagesResult = messagesResult.map(message => {
+    const keysMessage: { [key: string]: any } = message.toJSON();
+
+    keysMessage.infoMessage =
+      infoMessagesResult.find(_ => _.messageId === message.id).toJSON();
+
+    return keysMessage;
+  }) as Message[];
+
 
   await publishChatNotifications(r.server, {
     action: ChatNotificationActions.groupChatAddUser,
     recipients: membersInChat.map(member => member.userId),
-    data: messagesResult.map(message => {
-      const keysMessage: { [key: string]: any } = message.toJSON();
-
-      keysMessage.infoMessage =
-        infoMessagesResult.find(_ => _.messageId === message.id).toJSON();
-
-      return keysMessage;
-    }),
+    data: messagesResult,
   });
 
-  return output();
+  return output(messagesResult);
 }
 
 export async function removeUserInGroupChat(r) {
