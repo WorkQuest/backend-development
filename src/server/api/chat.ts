@@ -102,6 +102,7 @@ export async function listOfUsersByChats(r) {
   const [userResults, ] = await r.server.app.db.query(listOfUsersByChatsQuery, options);
 
   const users = userResults.map(result => ({
+    id: result.id,
     firstName: result.firstName,
     lastName: result.lastName,
     additionalInfo: result.additionalInfo,
