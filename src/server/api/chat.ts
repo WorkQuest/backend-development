@@ -385,39 +385,48 @@ export async function sendMessageToChat(r) {
   return output(result);
 }
 
-export async function addUserInGroupChat(r) {
+export async function addUsersInGroupChat(r) {
+  const userIds: string[] = r.payload.userIds;
+
+  await UserController.usersMustExist(userIds);
+
   const groupChat = await Chat.findByPk(r.params.chatId);
   const chatController = new ChatController(groupChat);
 
-  chatController
+  await chatController
     .chatMustHaveType(ChatType.group)
     .chatMustHaveOwner(r.auth.credentials.id)
+    .usersNotExistInGroupChat(userIds)
 
-  const memberUserIds: string[] = r.payload.memberUserIds;
-  await UserController.usersMustExist(memberUserIds);
+  const messages: Message[] = [];
+  const infoMessages: InfoMessage[] = [];
 
-  const lastMessage = await Message.findOne({
-    order: [ ['createdAt', 'DESC'] ],
-    where: { chatId: groupChat.id }
-  });
+  for (let i = 0; i <= userIds.length; i++) {
+    const userId = userIds[i];
+    const messageNumber = groupChat.lastMessage.number + i + 1;
 
-  const messages = [];
-
-  for(let i in memberUserIds) {
-    let messageNumber: number = +i + 1
-    messages[i] = {
-      senderUserId: r.auth.credentials.id,
+    const message = Message.build({
       chatId: groupChat.id,
       type: MessageType.info,
-      number: groupChat.lastMessage.number + messageNumber
-    }
+      senderUserId: r.auth.credentials.id,
+      number: messageNumber,
+      createdAt: Date.now() + i * 100, // TODO посмотри чтобы было по порядку
+    });
+    const infoMessage = InfoMessage.build({
+      userId: userId,
+      messageId: message.id,
+      messageAction: MessageAction.groupChatAddUser,
+
+    });
+
+    messages.push(message);
+    infoMessages.push(infoMessage);
   }
 
+  const lastMessage = messages[messages.length - 1];
   const transaction = await r.server.app.db.transaction();
 
-  const messagesToChat = await Message.bulkCreate(messages, { transaction });
-
-  const members = memberUserIds.map(userId => {
+  const members = userIds.map(userId => {
     return {
       chatId: groupChat.id,
       userId: userId,
@@ -425,35 +434,25 @@ export async function addUserInGroupChat(r) {
       lastReadMessageId: groupChat.lastMessage.id, /** Because new member */
     }
   });
-
   const chatMembers = await ChatMember.bulkCreate(members, { transaction });
 
-  const infoMessages = [];
-
-  for (let i in memberUserIds) {
-    infoMessages[i] = {
-      messageId: messagesToChat[i].id,
-      userId: memberUserIds[i],
-      messageAction: MessageAction.groupChatAddUser,
-    }
-  }
-
-  const infoMessage = await InfoMessage.bulkCreate(infoMessages, { transaction })
-
-  const index = messagesToChat.length - 1
+  const [messagesResult, ] = await Promise.all([
+    messages.map(_ => _.save({ transaction })),
+    infoMessages.map(_ => _.save({ transaction })),
+  ])
 
   await groupChat.update({
-    lastMessageId: messagesToChat[index].id,
-    lastMessageDate: messagesToChat[index].createdAt,
+    lastMessageId: lastMessage.id,
+    lastMessageDate: lastMessage.createdAt,
   }, { transaction });
 
   await transaction.commit();
 
   await resetUnreadCountMessagesOfMemberJob({
     chatId: groupChat.id,
-    lastReadMessageId: messagesToChat[index].id,
+    lastReadMessageId: lastMessage.id,
     userId: r.auth.credentials.id,
-    lastReadMessageNumber: messagesToChat[index].number,
+    lastReadMessageNumber: lastMessage.number,
   });
 
   await incrementUnreadCountMessageOfMembersJob({
@@ -465,15 +464,13 @@ export async function addUserInGroupChat(r) {
     where: { chatId: groupChat.id, userId: { [Op.ne]: r.auth.credentials.id } }
   });
 
-  const result = await Message.findByPk(messagesToChat[index].id);
-
   await publishChatNotifications(r.server, {
     action: ChatNotificationActions.groupChatAddUser,
     recipients: membersInChat.map(member => member.userId),
-    data: result,
+    data: messagesResult,
   });
 
-  return output(result);
+  return output();
 }
 
 export async function removeUserInGroupChat(r) {
