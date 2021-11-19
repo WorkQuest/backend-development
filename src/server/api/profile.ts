@@ -46,6 +46,7 @@ export function getUsers(role: UserRole) {
 
     const where = {
       ...(r.query.north && r.query.south && { [Op.and]: entersAreaLiteral }), role,
+      ...(r.query.wage && {additionalInfo: {wage: {[Op.between]: r.query.wage}}})
     };
 
     if (r.query.q) {
@@ -73,17 +74,6 @@ export function getUsers(role: UserRole) {
       }
 
       distinctCol = 'id';
-    }
-
-    if(r.query.wage.length) {
-      const a = await Quest.findAndCountAll({
-        where: {
-          price: {
-            [Op.between]: r.query.wage
-          }
-        }
-      })
-      console.log(a);
     }
 
     for (const [key, value] of Object.entries(r.query.sort)) {
