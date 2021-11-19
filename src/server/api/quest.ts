@@ -331,6 +331,7 @@ export async function getQuests(r) {
     ...(r.query.adType && { adType: r.query.adType }),
     ...(r.query.filter && { filter: r.params.filter }),
     ...(r.params.userId && { userId: r.params.userId }),
+    ...(r.params.workerId && { assignedWorkerId: r.params.workerId }),
     ...(r.query.performing && { assignedWorkerId: r.auth.credentials.id }),
     ...(r.query.north && r.query.south && { [Op.and]: entersAreaLiteral }),
     ...(r.query.priorities && { priority: {[Op.in]: r.query.priorities } }),
