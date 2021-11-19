@@ -133,8 +133,8 @@ abstract class UserHelper {
     return this;
   }
 
-  public static async usersMustExist(userIds: string[]) {
-   const users = await User.findAll({
+  public static async usersMustExist(userIds: string[], scope: "defaultScope" | "short" | "shortWithAdditionalInfo" = "defaultScope"): Promise<User[]> {
+   const users = await User.scope(scope).findAll({
       where: { id: userIds }
    });
 
@@ -145,6 +145,8 @@ abstract class UserHelper {
 
       throw error(Errors.NotFound, 'Users is not found', { notFoundIds });
     }
+
+    return users;
   }
 
   public static async checkEmail(email: string) {

@@ -375,8 +375,7 @@ export async function sendMessageToChat(r) {
 
 export async function addUsersInGroupChat(r) {
   const userIds: string[] = r.payload.userIds;
-
-  await UserController.usersMustExist(userIds);
+  const users = await UserController.usersMustExist(userIds, 'shortWithAdditionalInfo');
 
   const groupChat = await Chat.findByPk(r.params.chatId);
   const chatController = new ChatController(groupChat);
@@ -389,7 +388,7 @@ export async function addUsersInGroupChat(r) {
   const messages: Message[] = [];
   const infoMessages: InfoMessage[] = [];
 
-  for (let i = 0; i <= userIds.length; i++) {
+  for (let i = 0; i < userIds.length; i++) {
     const userId = userIds[i];
     const messageNumber = groupChat.lastMessage.number + i + 1;
 
@@ -404,7 +403,6 @@ export async function addUsersInGroupChat(r) {
       userId: userId,
       messageId: message.id,
       messageAction: MessageAction.groupChatAddUser,
-
     });
 
     messages.push(message);
@@ -451,13 +449,14 @@ export async function addUsersInGroupChat(r) {
   });
   messagesResult = messagesResult.map(message => {
     const keysMessage: { [key: string]: any } = message.toJSON();
+    const keysInfoMessage = infoMessagesResult.find(_ => _.messageId === message.id).toJSON() as InfoMessage;
 
-    keysMessage.infoMessage =
-      infoMessagesResult.find(_ => _.messageId === message.id).toJSON();
+    keysInfoMessage.user = users.find(_ => _.id === keysInfoMessage.userId).toJSON() as User;
+
+    keysMessage.infoMessage = keysInfoMessage;
 
     return keysMessage;
   }) as Message[];
-
 
   await publishChatNotifications(r.server, {
     action: ChatNotificationActions.groupChatAddUser,
