@@ -116,7 +116,7 @@ export function editProfile(userRole: UserRole) {
 
     await userController.userMustHaveRole(userRole);
 
-    const avatarId = r.payload.avatarId ? (await MediaController.getMedia(r.payload)).id : null;
+    const avatarId = r.payload.avatarId ? (await MediaController.getMedia(r.payload.avatarId)).id : null;
     const transaction = await r.server.app.db.transaction();
 
     if (userRole === UserRole.Worker) {
