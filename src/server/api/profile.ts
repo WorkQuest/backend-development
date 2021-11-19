@@ -42,6 +42,8 @@ export function getUsers(role: UserRole) {
     const order = [];
     const include = [];
 
+    const includeSpecializations = [];
+
     const where = {
       ...(r.query.north && r.query.south && { [Op.and]: entersAreaLiteral }), role,
     };
@@ -54,7 +56,7 @@ export function getUsers(role: UserRole) {
     if (r.query.specialization && role === UserRole.Worker) {
       const { industryKeys, specializationKeys } = SkillsFiltersController.splitSpecialisationAndIndustry(r.query.specialization);
 
-      include.push({
+      includeSpecializations.push({
         model: UserSpecializationFilter,
         as: 'userIndustryForFiltering',
         attributes: [],
@@ -62,7 +64,7 @@ export function getUsers(role: UserRole) {
       })
 
       if (specializationKeys.length > 0) {
-        include.push({
+        includeSpecializations.push({
           model: UserSpecializationFilter,
           as: 'userSpecializationForFiltering',
           attributes: [],
@@ -77,7 +79,7 @@ export function getUsers(role: UserRole) {
 
     const { count, rows } = await User.findAndCountAll({
       distinct: true,
-      col: 'id',
+      col: includeSpecializations.length === 0 ? '"User"."id"' : 'id', // so..., else not working
       limit: r.query.limit,
       offset: r.query.offset,
       include, order, where,
