@@ -77,7 +77,7 @@ export function getUsers(role: UserRole) {
 
     const { count, rows } = await User.findAndCountAll({
       distinct: true,
-      col: '"User"."id"',
+      col: 'id',
       limit: r.query.limit,
       offset: r.query.offset,
       include, order, where,
