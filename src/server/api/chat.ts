@@ -424,9 +424,9 @@ export async function addUsersInGroupChat(r) {
   await ChatMember.bulkCreate(members, { transaction });
 
   const [messagesResult, ] = await Promise.all([
-    messages.map(_ => _.save({ transaction })),
-    infoMessages.map(_ => _.save({ transaction })),
-  ]);
+    ...messages.map(_ => _.save({ transaction })),
+    ...infoMessages.map(_ => _.save({ transaction })),
+  ] as any[]);
 
   await groupChat.update({
     lastMessageId: lastMessage.id,
@@ -474,11 +474,6 @@ export async function removeUserInGroupChat(r) {
 
   const transaction = await r.server.app.db.transaction();
 
-  const lastMessage = await Message.findOne({
-    order: [ ['createdAt', 'DESC'] ],
-    where: { chatId: groupChat.id }
-  });
-
   await ChatMember.destroy({
     where: {
       chatId: groupChat.id,
@@ -490,7 +485,7 @@ export async function removeUserInGroupChat(r) {
     senderUserId: r.auth.credentials.id,
     chatId: groupChat.id,
     type: MessageType.info,
-    number: lastMessage.number + 1
+    number: groupChat.lastMessage.number + 1
   }, { transaction });
 
   await InfoMessage.create({
