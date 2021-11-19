@@ -116,9 +116,9 @@ export async function responseOnQuest(r) {
     firstInfoMessage.save({ transaction }),
     infoMessage.save({ transaction }),
     responseWorkerMessage.save({ transaction }),
-    members.map(member => member.save({ transaction })),
     questChat.save({ transaction }),
-  ]);
+    ...members.map(member => member.save({ transaction })),
+  ] as Promise<any>[]);
 
   await transaction.commit();
 
@@ -226,9 +226,9 @@ export async function inviteOnQuest(r) {
     firstInfoMessage.save({ transaction }),
     infoMessage.save({ transaction }),
     inviteEmployerMessage.save({ transaction }),
-    members.map( member => member.save({ transaction }) ),
     questChat.save({ transaction }),
-  ]);
+    ...members.map( member => member.save({ transaction }) ),
+  ] as Promise<any>[]);
 
   await transaction.commit();
 

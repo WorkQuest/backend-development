@@ -423,10 +423,8 @@ export async function addUsersInGroupChat(r) {
   });
   await ChatMember.bulkCreate(members, { transaction });
 
-  const [messagesResult, ] = await Promise.all([
-    ...messages.map(_ => _.save({ transaction })),
-    ...infoMessages.map(_ => _.save({ transaction })),
-  ] as any[]);
+  const messagesResult = await Promise.all(messages.map(_ => _.save({ transaction })));
+  const infoMessagesResult = await Promise.all(infoMessages.map(_ => _.save({ transaction })));
 
   await groupChat.update({
     lastMessageId: lastMessage.id,
@@ -454,7 +452,14 @@ export async function addUsersInGroupChat(r) {
   await publishChatNotifications(r.server, {
     action: ChatNotificationActions.groupChatAddUser,
     recipients: membersInChat.map(member => member.userId),
-    data: messagesResult,
+    data: messagesResult.map(message => {
+      const keysMessage: { [key: string]: any } = message.toJSON();
+
+      keysMessage.infoMessage =
+        infoMessagesResult.find(_ => _.messageId === message.id).toJSON();
+
+      return keysMessage;
+    }),
   });
 
   return output();
