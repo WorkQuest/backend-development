@@ -5,7 +5,7 @@ import {
   offsetSchema,
   outputOkSchema
 } from "@workquest/database-models/lib/schemes";
-import { apyAllPairs } from "../../../dailyLiquidity/src/averageDailyLiquidity";
+import { apyAllPairs } from "../api/averageDailyLiquidity";
 
 export default [{
   method: 'GET',

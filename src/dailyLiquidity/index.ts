@@ -1,6 +1,7 @@
 import * as path from "path";
 import * as fs from "fs";
 import Web3 from "web3";
+/*
 import configBridge from "../bridge/config/config.bridge";
 import configDatabase from "./config/config.database";
 import {BridgeContract} from "./src/BridgeContract";
@@ -94,6 +95,7 @@ export async function init() {
   ]);
 }
 
-init().catch(error => { /** TODO */ });
+init().catch(error => { /!** TODO *!/ });
 
 
+*/
