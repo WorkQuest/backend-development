@@ -337,7 +337,7 @@ export async function getQuests(r) {
     ...(r.query.priorities && { priority: {[Op.in]: r.query.priorities } }),
     ...(r.query.workplaces && { workplace: { [Op.in]: r.query.workplaces } }),
     ...(r.query.employments && { employment: { [Op.in]: r.query.employments } }),
-    ...(r.query.price && {price: {[Op.between]: [r.query.price.from, r.query.price.to]}}),
+    ...(r.query.priceBetween && {price: {[Op.between]: [r.query.priceBetween.from, r.query.priceBetween.to]}}),
   };
 
   if (r.query.q) {
