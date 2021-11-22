@@ -15,6 +15,7 @@ import liquidityPoolWETH from "./liquidityPool(wqt-weth)";
 import liquidityPoolWBNB from "./liquidityPool(wqt-wbnb)";
 import discussion from "./discussion";
 import skillFilters from "./skillFilters";
+import averageDailyLiquidity from "./averageDailyLiquidity";
 
 export default [
   ...liquidityPoolWETH,
@@ -34,4 +35,5 @@ export default [
   ...bridge,
   ...discussion,
   ...skillFilters,
+  ...averageDailyLiquidity,
 ];
