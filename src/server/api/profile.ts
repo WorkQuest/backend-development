@@ -45,6 +45,7 @@ export function getUsers(role: UserRole) {
 
     const where = {
       ...(r.query.north && r.query.south && { [Op.and]: entersAreaLiteral }), role,
+      ...r.query.workplace && {workplace: {[Op.iLike]: r.query.workplace}}
     };
 
     if (r.query.q) {

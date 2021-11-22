@@ -26,7 +26,7 @@ import {
   userFirstNameSchema,
   specializationKeysSchema,
   userAdditionalInfoWorkerSchema,
-  userAdditionalInfoEmployerSchema,
+  userAdditionalInfoEmployerSchema, userWorkPlaceSchema
 } from "@workquest/database-models/lib/schemes";
 import { UserRole } from "@workquest/database-models/lib/models";
 
@@ -132,6 +132,7 @@ export default [{
         location: locationSchema.allow(null).required(),
         additionalInfo: userAdditionalInfoWorkerSchema.required(),
         specializationKeys: specializationKeysSchema.allow(null).required().unique(),
+        workplace: userWorkPlaceSchema.required(),
       }).label("EditWorkerProfilePayload")
     },
     response: {
