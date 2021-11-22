@@ -9,6 +9,7 @@ import {
   User,
   UserRole,
   UserSpecializationFilter,
+  Quest
 } from "@workquest/database-models/lib/models";
 
 export const searchFields = [
@@ -45,6 +46,7 @@ export function getUsers(role: UserRole) {
 
     const where = {
       ...(r.query.north && r.query.south && { [Op.and]: entersAreaLiteral }), role,
+      ...(role === UserRole.Worker && r.query.betweenWagePerHour && { wagePerHour: { [Op.between]: [r.query.betweenWagePerHour.from, r.query.betweenWagePerHour.to]} }),
     };
 
     if (r.query.q) {
@@ -130,6 +132,7 @@ export function editProfile(userRole: UserRole) {
       firstName: r.payload.firstName,
       additionalInfo: r.payload.additionalInfo,
       locationPostGIS: r.payload.location ? transformToGeoPostGIS(r.payload.location) : null,
+      wagePerHour: userRole === UserRole.Worker ? r.payload.wagePerHour : null,
     }, transaction);
 
     await transaction.commit();
