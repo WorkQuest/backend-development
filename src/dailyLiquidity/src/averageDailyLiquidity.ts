@@ -359,8 +359,8 @@ export async function apyAllPairs() {
 
   try {
     await tradeContract.getPastEvents('Sync', {
-      fromBlock:  12684433,//12180208,
-      toBlock: 12694692,
+      fromBlock:  12845607,//12180208,
+      toBlock: 12852314,
 
     }, function (error, events) {
       eventsSync.push(events)
