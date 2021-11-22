@@ -131,6 +131,7 @@ export function editProfile(userRole: UserRole) {
       firstName: r.payload.firstName,
       additionalInfo: r.payload.additionalInfo,
       locationPostGIS: r.payload.location ? transformToGeoPostGIS(r.payload.location) : null,
+      workplace: r.payload.workplace
     }, transaction);
 
     await transaction.commit();
