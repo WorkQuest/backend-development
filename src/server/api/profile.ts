@@ -46,7 +46,7 @@ export function getUsers(role: UserRole) {
 
     const where = {
       ...(r.query.north && r.query.south && { [Op.and]: entersAreaLiteral }), role,
-      ...(r.query.wage && {additionalInfo: {wage: {[Op.between]: [r.query.wage.from, r.query.wage.to]}}})
+      ...(r.query.wage && { wagePerHour: {[Op.between]: [r.query.wage.from, r.query.wage.to]} })
     };
 
     if (r.query.q) {
