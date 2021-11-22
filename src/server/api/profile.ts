@@ -9,7 +9,7 @@ import {
   User,
   UserRole,
   UserSpecializationFilter,
-  Quest
+  Quest, RatingStatistic
 } from "@workquest/database-models/lib/models";
 
 export const searchFields = [
@@ -46,7 +46,7 @@ export function getUsers(role: UserRole) {
 
     const where = {
       ...(r.query.north && r.query.south && { [Op.and]: entersAreaLiteral }), role,
-      ...(role === UserRole.Worker && r.query.betweenWagePerHour && { wagePerHour: { [Op.between]: [r.query.betweenWagePerHour.from, r.query.betweenWagePerHour.to]} }),
+      ...(role === UserRole.Worker && r.query.betweenWagePerHour && { wagePerHour: { [Op.between]: [r.query.betweenWagePerHour.from, r.query.betweenWagePerHour.to] } }),
     };
 
     if (r.query.q) {
@@ -72,6 +72,19 @@ export function getUsers(role: UserRole) {
           where: { specializationKey: { [Op.in]: specializationKeys } },
         });
       }
+
+      distinctCol = 'id';
+    }
+
+    if(r.query.ratingStatus) {
+      include.push({
+        model: RatingStatistic,
+        as: 'ratingStatistic',
+        where: {
+          status: r.query.ratingStatus
+        },
+        required: true
+      });
 
       distinctCol = 'id';
     }
