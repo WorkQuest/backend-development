@@ -16,7 +16,8 @@ import {
   outputOkSchema,
   locationSchema,
   userRoleSchema,
-  userQuerySchema,
+  employerQuerySchema,
+  workerQuerySchema,
   userWorkersSchema,
   mobilePhoneSchema,
   userLastNameSchema,
@@ -70,7 +71,7 @@ export default [{
     tags: ["api", "profile"],
     description: "Get employers",
     validate: {
-      query: userQuerySchema,
+      query: employerQuerySchema,
     },
     response: {
       schema: outputOkSchema(userEmployersSchema).label("GetEmployersResponse")
@@ -86,7 +87,7 @@ export default [{
     tags: ["api", "profile"],
     description: "Get workers",
     validate: {
-      query: userQuerySchema,
+      query: workerQuerySchema,
     },
     response: {
       schema: outputOkSchema(userWorkersSchema).label("GetWorkersResponse")

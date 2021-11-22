@@ -35,7 +35,7 @@ async function postRequestOnCreateQuest(accessToken: string) {
     url: '/api/v1/quest/create',
     payload: {
       category: 'Test',
-      priority: QuestPriority.Normal,
+      priority: QuestPriority.ShortTerm,
       location: {
         longitude: -77.0364,
         latitude: 38.8951,
@@ -180,7 +180,7 @@ async function Should_Ok_When_EmployerWantsToEditQuestAtStatusCreated() {
     workplace: QuestWorkPlace.Distant,
     employment: QuestEmployment.FixedTerm,
     locationPlaceName: 'Tomsk 1',
-    priority: QuestPriority.Low,
+    priority: QuestPriority.FixedDelivery,
     location: { longitude: -69.0364, latitude: 40.8951 },
     adType: AdType.Paid,
   };
@@ -215,7 +215,7 @@ async function Should_Forbidden_When_OtherUserWantsToEditQuestAtStatusCreated() 
     workplace: QuestWorkPlace.Distant,
     employment: QuestEmployment.FixedTerm,
     locationPlaceName: 'Tomsk 1',
-    priority: QuestPriority.Low,
+    priority: QuestPriority.FixedDelivery,
     location: { longitude: -69.0364, latitude: 40.8951 },
     adType: AdType.Paid,
   };
