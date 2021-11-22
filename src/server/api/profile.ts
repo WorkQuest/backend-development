@@ -9,6 +9,7 @@ import {
   User,
   UserRole,
   UserSpecializationFilter,
+  Quest
 } from "@workquest/database-models/lib/models";
 
 export const searchFields = [
@@ -41,9 +42,11 @@ export function getUsers(role: UserRole) {
 
     const order = [];
     const include = [];
+    let distinctCol: '"User"."id"' | 'id' = '"User"."id"';
 
     const where = {
       ...(r.query.north && r.query.south && { [Op.and]: entersAreaLiteral }), role,
+      ...(role === UserRole.Worker && r.query.betweenWagePerHour && { wagePerHour: { [Op.between]: [r.query.betweenWagePerHour.from, r.query.betweenWagePerHour.to]} }),
     };
 
     if (r.query.q) {
@@ -69,6 +72,8 @@ export function getUsers(role: UserRole) {
           where: { specializationKey: { [Op.in]: specializationKeys } },
         });
       }
+
+      distinctCol = 'id';
     }
 
     for (const [key, value] of Object.entries(r.query.sort)) {
@@ -77,7 +82,7 @@ export function getUsers(role: UserRole) {
 
     const { count, rows } = await User.findAndCountAll({
       distinct: true,
-      col: '"User"."id"',
+      col: distinctCol, // so..., else not working
       limit: r.query.limit,
       offset: r.query.offset,
       include, order, where,
@@ -113,7 +118,7 @@ export function editProfile(userRole: UserRole) {
 
     await userController.userMustHaveRole(userRole);
 
-    const avatarId = r.payload.avatarId ? (await MediaController.getMedia(r.payload)).id : null;
+    const avatarId = r.payload.avatarId ? (await MediaController.getMedia(r.payload.avatarId)).id : null;
     const transaction = await r.server.app.db.transaction();
 
     if (userRole === UserRole.Worker) {
@@ -127,6 +132,7 @@ export function editProfile(userRole: UserRole) {
       firstName: r.payload.firstName,
       additionalInfo: r.payload.additionalInfo,
       locationPostGIS: r.payload.location ? transformToGeoPostGIS(r.payload.location) : null,
+      wagePerHour: userRole === UserRole.Worker ? r.payload.wagePerHour : null,
     }, transaction);
 
     await transaction.commit();
