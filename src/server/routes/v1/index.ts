@@ -10,8 +10,15 @@ import restorePassword from './restorePassword';
 import portfolio from './portfolio';
 import totp from './totp';
 import chat from "./chat";
+import bridge from "./bridge";
+import liquidityPoolWETH from "./liquidityPool(wqt-weth)";
+import liquidityPoolWBNB from "./liquidityPool(wqt-wbnb)";
+import discussion from "./discussion";
+import skillFilters from "./skillFilters";
 
 export default [
+  ...liquidityPoolWETH,
+  ...liquidityPoolWBNB,
   ...profile,
   ...auth,
   ...map,
@@ -24,4 +31,7 @@ export default [
   ...portfolio,
   ...totp,
   ...chat,
+  ...bridge,
+  ...discussion,
+  ...skillFilters,
 ];

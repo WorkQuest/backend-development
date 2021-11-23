@@ -1,108 +1,163 @@
-import * as Joi from "joi";
-import { error, getRandomCodeNumber, handleValidationError, output } from '../utils';
-import { isMediaExists } from "../utils/storageService";
-import { Errors } from "../utils/errors";
-import { addSendSmsJob } from '../jobs/sendSms';
+import {literal, Op} from "sequelize";
+import {addSendSmsJob} from '../jobs/sendSms';
+import {getRandomCodeNumber, output} from '../utils';
+import {UserController} from "../controllers/user/controller.user";
+import {transformToGeoPostGIS} from "../utils/postGIS";
+import {MediaController} from "../controllers/controller.media";
+import {SkillsFiltersController} from "../controllers/controller.skillsFilters";
 import {
-  getDefaultAdditionalInfo,
   User,
   UserRole,
-  UserStatus,
-  Media, SkillFilter
+  UserSpecializationFilter,
+  Quest
 } from "@workquest/database-models/lib/models";
-import {
-  userAdditionalInfoEmployerSchema,
-  userAdditionalInfoWorkerSchema,
-} from "@workquest/database-models/lib/schemes";
 
-function getAdditionalInfoSchema(role: UserRole): Joi.Schema {
-  if (role === UserRole.Employer)
-    return userAdditionalInfoEmployerSchema;
-  else
-    return userAdditionalInfoWorkerSchema;
-}
+export const searchFields = [
+  "firstName",
+  "lastName",
+];
 
 export async function getMe(r) {
-  return output(await User.findByPk(r.auth.credentials.id, {
-    attributes: {
-      include: ['tempPhone']
+  const user = await User.findByPk(r.auth.credentials.id, {
+    attributes: { include: ['tempPhone'] }
+  });
+
+  return output(user);
+}
+
+export async function getUser(r) {
+  const userController = new UserController(await User.findByPk(r.params.userId));
+
+  userController.
+    checkNotSeeYourself(r.auth.credentials.id)
+
+  return output(userController.user);
+}
+
+export function getUsers(role: UserRole) {
+  return async function(r) {
+    const entersAreaLiteral = literal(
+      'st_within("User"."locationPostGIS", st_makeenvelope(:northLng, :northLat, :southLng, :southLat, 4326))'
+    );
+
+    const order = [];
+    const include = [];
+    let distinctCol: '"User"."id"' | 'id' = '"User"."id"';
+
+    const where = {
+      ...(r.query.north && r.query.south && { [Op.and]: entersAreaLiteral }), role,
+      ...(role === UserRole.Worker && r.query.betweenWagePerHour && { wagePerHour: { [Op.between]: [r.query.betweenWagePerHour.from, r.query.betweenWagePerHour.to]} }),
+    };
+
+    if (r.query.q) {
+      where[Op.or] = searchFields.map(
+        field => ({ [field]: { [Op.iLike]: `%${r.query.q}%` }})
+      );
     }
-  }));
+    if (r.query.specialization && role === UserRole.Worker) {
+      const { industryKeys, specializationKeys } = SkillsFiltersController.splitSpecialisationAndIndustry(r.query.specialization);
+
+      include.push({
+        model: UserSpecializationFilter,
+        as: 'userIndustryForFiltering',
+        attributes: [],
+        where: { industryKey: { [Op.in]: industryKeys } },
+      })
+
+      if (specializationKeys.length > 0) {
+        include.push({
+          model: UserSpecializationFilter,
+          as: 'userSpecializationForFiltering',
+          attributes: [],
+          where: { specializationKey: { [Op.in]: specializationKeys } },
+        });
+      }
+
+      distinctCol = 'id';
+    }
+
+    for (const [key, value] of Object.entries(r.query.sort)) {
+      order.push([key, value]);
+    }
+
+    const { count, rows } = await User.findAndCountAll({
+      distinct: true,
+      col: distinctCol, // so..., else not working
+      limit: r.query.limit,
+      offset: r.query.offset,
+      include, order, where,
+      replacements: {
+        ...(r.query.north && r.query.south && {
+          northLng: r.query.north.longitude,
+          northLat: r.query.north.latitude,
+          southLng: r.query.south.longitude,
+          southLat: r.query.south.latitude,
+        })
+      }
+    });
+
+    return output({ count, users: rows });
+  }
 }
 
 export async function setRole(r) {
-  const user = await User.findByPk(r.auth.credentials.id);
+  const user: User = r.auth.credentials;
+  const userController = new UserController(user);
 
-  if (user.status !== UserStatus.NeedSetRole) {
-    return error(Errors.InvalidPayload, "User don't need to set role", {});
-  }
+  await userController.userNeedsSetRole();
 
-  await user.update({
-    status: UserStatus.Confirmed,
-    role: r.payload.role,
-    additionalInfo: getDefaultAdditionalInfo(r.payload.role)
-  });
+  await userController.setRole(r.payload.role);
 
   return output();
 }
 
-export async function editProfile(r) {
-  const user = r.auth.credentials;
-  const additionalInfoSchema = getAdditionalInfoSchema(user.role);
-  const validateAdditionalInfo = additionalInfoSchema.validate(r.payload.additionalInfo);
+export function editProfile(userRole: UserRole) {
+  return async function(r) {
+    const user: User = r.auth.credentials;
+    const userController = new UserController(user);
 
-  if (validateAdditionalInfo.error) {
-    return await handleValidationError(r, null, validateAdditionalInfo.error);
-  }
-  if (r.payload.avatarId) {
-    const media = await Media.findByPk(r.payload.avatarId);
+    await userController.userMustHaveRole(userRole);
 
-    if (!media) {
-      return error(Errors.NotFound, 'Media is not found', {
-        avatarId: r.payload.avatarId
-      });
+    const avatarId = r.payload.avatarId ? (await MediaController.getMedia(r.payload.avatarId)).id : null;
+    const transaction = await r.server.app.db.transaction();
+
+    if (userRole === UserRole.Worker) {
+      await userController.setUserSpecializations(r.payload.specializationKeys, transaction);
     }
-    if (!await isMediaExists(media)) {
-      return error(Errors.NotFound, 'Media is not exists', {
-        avatarId: r.payload.avatarId
-      });
-    }
+
+    await user.update({
+      avatarId: avatarId,
+      lastName: r.payload.lastName,
+      location: r.payload.location,
+      firstName: r.payload.firstName,
+      additionalInfo: r.payload.additionalInfo,
+      locationPostGIS: r.payload.location ? transformToGeoPostGIS(r.payload.location) : null,
+      wagePerHour: userRole === UserRole.Worker ? r.payload.wagePerHour : null,
+    }, transaction);
+
+    await transaction.commit();
+
+    return output(
+      await User.findByPk(r.auth.credentials.id)
+    );
   }
-
-  const transaction = await r.server.app.db.transaction();
-
-  if (r.payload.skillFilters) {
-    const userSkillFilters = r.payload.skillFilters.map(v => {
-      return { ...v, userId: user.id };
-    });
-
-    await SkillFilter.destroy({ where: { userId: user.id }, transaction });
-    await SkillFilter.bulkCreate(userSkillFilters, { transaction });
-  }
-
-  await user.update(r.payload, { transaction });
-
-  await transaction.commit();
-
-  return output(
-    await User.findByPk(user.id)
-  );
 }
 
 export async function changePassword(r) {
   const user = await User.scope("withPassword").findOne({
-    where: {
-      id: r.auth.credentials.id
-    }
+    where: { id: r.auth.credentials.id }
   });
 
-  if (!(await user.passwordCompare(r.payload.oldPassword))) {
-    return error(Errors.Forbidden, 'Old password does not match with current', {});
-  }
+  const userController = new UserController(user);
 
-  await user.update({
-    password: r.payload.newPassword
-  });
+  await userController.checkPassword(r.payload.oldPassword);
+
+  const transaction = await r.server.app.db.transaction();
+
+  await userController.changePassword(r.payload.newPassword, transaction);
+  await userController.logoutAllSessions(transaction);
+
+  await transaction.commit();
 
   return output();
 }
@@ -110,34 +165,27 @@ export async function changePassword(r) {
 export async function confirmPhoneNumber(r) {
   const user = await User.scope("withPassword").findByPk(r.auth.credentials.id);
 
-  if (!user.tempPhone) {
-    return error(Errors.InvalidPayload, 'User does not have verification phone', {});
-  }
-  if (user.settings.phoneConfirm !== r.payload.confirmCode) {
-    return error(Errors.Forbidden, 'Confirmation code is not correct', {});
-  }
+  const userController = new UserController(user);
 
-  await user.update({
-    phone: user.tempPhone,
-    tempPhone: null,
-    'settings.phoneConfirm': null,
-  });
+  await userController.userMustHaveVerificationPhone();
+  await userController.checkPhoneConfirmationCode(r.payload.confirmCode);
+
+  await userController.confirmPhoneNumber();
 
   return output();
 }
 
 export async function sendCodeOnPhoneNumber(r) {
-  const user = await User.scope("withPassword").findByPk(r.auth.credentials.id);
+  const userWithPassword = await User.scope("withPassword").findByPk(r.auth.credentials.id);
   const confirmCode = getRandomCodeNumber();
+
+  const userController = new UserController(userWithPassword);
+
+  await userController.setUnverifiedPhoneNumber(r.payload.phoneNumber, confirmCode);
 
   await addSendSmsJob({
     toPhoneNumber: r.payload.phoneNumber,
     message: 'Code to confirm your phone number on WorkQuest: ' + confirmCode,
-  });
-
-  await user.update({
-    tempPhone: r.payload.phoneNumber,
-    'settings.phoneConfirm': confirmCode
   });
 
   return output();
