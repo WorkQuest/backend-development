@@ -20,9 +20,11 @@ module.exports = {
       },
       completed: {
         type: Sequelize.DataTypes.INTEGER,
+        defayltValue: 0,
       },
       opened: {
         type: Sequelize.DataTypes.INTEGER,
+        defayltValue: 0,
       },
       createdAt: {
         type: Sequelize.DataTypes.DATE

@@ -17,12 +17,11 @@ import {
 	getRealIp,
 } from "../utils";
 import {
-	getDefaultAdditionalInfo,
 	User,
 	Session,
 	UserStatus,
 	RatingStatistic,
-	QuestsStatistic
+	QuestsStatistic,
 	defaultUserSettings,
 } from "@workquest/database-models/lib/models";
 
@@ -55,6 +54,7 @@ export async function register(r) {
 			emailConfirm: emailConfirmCode
 		}
 	});
+
 	await QuestsStatistic.create({userId: user.id});
 
 	const session = await Session.create({
@@ -100,6 +100,8 @@ export function getLoginViaSocialNetworkHandler(returnType: "token" | "redirect"
 			const qs = querystring.stringify(result);
 			return h.redirect(config.baseUrl + "/sign-in?" + qs);
 		}
+
+		await QuestsStatistic.create({userId: user.id});
 
 		return output(result);
 	};

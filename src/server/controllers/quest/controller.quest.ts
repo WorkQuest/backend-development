@@ -9,6 +9,7 @@ import {
   QuestSpecializationFilter,
   QuestsResponse, StarredQuests,
 } from "@workquest/database-models/lib/models";
+import { updateQuestsStatisticJob } from "../../jobs/updateQuestsStatistic";
 
 abstract class QuestHelper {
   public abstract quest: Quest;
