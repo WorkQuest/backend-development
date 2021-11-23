@@ -131,11 +131,9 @@ const init = async () => {
     options: config.cors,
   });
 
-  await apyAllPairs();
-
   try {
     await server.start();
-
+    await apyAllPairs(); /////
     server.log('info', `Server running at: ${server.info.uri}`);
   } catch (err) {
     server.log('error', JSON.stringify(err));
