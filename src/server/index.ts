@@ -18,6 +18,7 @@ import { handleValidationError, responseHandler } from "./utils";
 import { tokenValidate } from "./utils/auth";
 import { pinoConfig } from "./config/pino";
 import { run } from "graphile-worker";
+import { apyAllPairs } from "../dailyLiquidity/src/api/averageDailyLiquidity";
 
 const HapiSwagger = require("hapi-swagger");
 const Package = require("../../package.json");
@@ -129,6 +130,8 @@ const init = async () => {
     plugin: HapiCors,
     options: config.cors,
   });
+
+  await apyAllPairs();
 
   try {
     await server.start();

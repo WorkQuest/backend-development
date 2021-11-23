@@ -359,21 +359,21 @@ export async function apyAllPairs() {
 
   try {
     await tradeContract.getPastEvents('Sync', {
-      fromBlock:  12845607,//12180208,
-      toBlock: 12852314,
+      fromBlock:  12684433,//12180208,
+      toBlock: 12694692,
 
     }, function (error, events) {
       eventsSync.push(events)
-    });
+    })
     for (let i = 0; i < eventsSync[0].length; i++) {
       const token0 = Number(new BigNumber(eventsSync[0][i].returnValues.reserve0).shiftedBy(-18))
       const token1 = Number(new BigNumber(eventsSync[0][i].returnValues.reserve1).shiftedBy(-18))
       await web3.eth.getBlock(eventsSync[0][i].blockNumber,
         function (error, events) {
           methodGetBlock.push(events)
-        });
+        })
       const timestamp = Number(methodGetBlock[i].timestamp)
-      console.log(token0, token1, timestamp)
+      // console.log(token0, token1, timestamp)
       const priceInfoWQT = await axios.get(`https://api.coingecko.com/api/v3/coins/work-quest/market_chart/range?vs_currency=usd&from=${timestamp - 1800}&to=${timestamp + 1800}`, {
         timeout: 10000
       });
