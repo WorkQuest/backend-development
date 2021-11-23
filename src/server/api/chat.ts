@@ -10,6 +10,7 @@ import {ChatNotificationActions, publishChatNotifications} from "../websocket/we
 import {MediaController} from "../controllers/controller.media";
 import {MessageController} from "../controllers/chat/controller.message";
 import {UserController} from "../controllers/user/controller.user";
+import {listOfUsersByChatsCountQuery, listOfUsersByChatsQuery } from "../queries";
 import {
   Chat,
   ChatMember,
@@ -88,45 +89,32 @@ export async function getUserChat(r) {
 }
 
 export async function listOfUsersByChats(r) {
-  const include = [{
-    model: ChatMember.unscoped(),
-    as: 'chatMember',
-    attributes: [],
-    where: { userId: { [Op.ne]: r.auth.credentials.id } },
-    include: [{
-      model: Chat.unscoped(),
-      as: 'chat',
-      where: { type: [ChatType.private, ChatType.quest] },
-      include: [{
-        model: ChatMember.unscoped(),
-        as: 'meMember',
-        where: { userId: r.auth.credentials.id },
-      }]
-    }],
-  }] as any[];
+  const options = {
+    replacements: {
+      currentUserId: r.auth.credentials.id,
+      limitValue: r.query.limit,
+      offsetValue: r.query.offset,
+      excludeUsersFromChatId: r.query.excludeMembersChatId || '',
+    }
+  }
 
-  // if (r.query.chatIdExclude) {
-  //   include.push({
-  //     model: Chat.unscoped(),
-  //     as: 'chatOfUser',
-  //     attributes: [],
-  //     where: { id: r.query.chatIdExclude },
-  //     include: [{
-  //       attributes: [],
-  //       model: User.unscoped(),
-  //       as: 'userMembers',
-  //       where: { userId: { [Op.ne]: '$"User"."id"$' } },
-  //     }]
-  //   });
-  // }
+  const [countResults, ] = await r.server.app.db.query(listOfUsersByChatsCountQuery, options);
+  const [userResults, ] = await r.server.app.db.query(listOfUsersByChatsQuery, options);
 
-  const { count, rows } = await User.scope('shortWithAdditionalInfo').findAndCountAll({
-    include,
-    limit: r.query.limit,
-    offset: r.query.offset,
-  });
+  const users = userResults.map(result => ({
+    id: result.id,
+    firstName: result.firstName,
+    lastName: result.lastName,
+    additionalInfo: result.additionalInfo,
+    avatarId: result.avatarId,
+    avatar: {
+      id: result["avatar.id"],
+      url: result["avatar.url"],
+      contentType: result["avatar.contentType"],
+    }
+  }));
 
-  return output({ count, users: rows });
+  return output({ count: parseInt(countResults[0].count), users });
 }
 
 export async function getChatMembers(r) {
@@ -385,55 +373,70 @@ export async function sendMessageToChat(r) {
   return output(result);
 }
 
-export async function addUserInGroupChat(r) {
-  await User.userMustExist(r.params.userId);
+export async function addUsersInGroupChat(r) {
+  const userIds: string[] = r.payload.userIds;
+  const users = await UserController.usersMustExist(userIds, 'shortWithAdditionalInfo');
 
   const groupChat = await Chat.findByPk(r.params.chatId);
   const chatController = new ChatController(groupChat);
 
-  chatController
+  await chatController
     .chatMustHaveType(ChatType.group)
     .chatMustHaveOwner(r.auth.credentials.id)
+    .usersNotExistInGroupChat(userIds)
 
-  const message = Message.build({
-    senderUserId: r.auth.credentials.id,
-    chatId: groupChat.id,
-    type: MessageType.info,
-  });
+  const messages: Message[] = [];
+  const infoMessages: InfoMessage[] = [];
 
-  const chatMember = ChatMember.build({
-    chatId: groupChat.id,
-    userId: r.params.userId,
-    unreadCountMessages: 1, /** Because info message */
-    lastReadMessageId: groupChat.lastMessage, /** Because new member */
-  });
+  for (let i = 0; i < userIds.length; i++) {
+    const userId = userIds[i];
+    const messageNumber = groupChat.lastMessage.number + i + 1;
 
-  const infoMessage = InfoMessage.build({
-    messageId: message.id,
-    userId: r.params.userId,
-    messageAction: MessageAction.groupChatAddUser,
-  });
+    const message = Message.build({
+      chatId: groupChat.id,
+      type: MessageType.info,
+      senderUserId: r.auth.credentials.id,
+      number: messageNumber,
+      createdAt: Date.now() + i * 100,
+    });
+    const infoMessage = InfoMessage.build({
+      userId: userId,
+      messageId: message.id,
+      messageAction: MessageAction.groupChatAddUser,
+    });
 
+    messages.push(message);
+    infoMessages.push(infoMessage);
+  }
+
+  const lastMessage = messages[messages.length - 1];
   const transaction = await r.server.app.db.transaction();
 
-  await Promise.all([
-    message.save({ transaction }),
-    chatMember.save({ transaction }),
-    infoMessage.save({ transaction }),
-  ]);
+  const members = userIds.map(userId => {
+    return {
+      chatId: groupChat.id,
+      userId: userId,
+      unreadCountMessages: 1, /** Because info message */
+      lastReadMessageId: groupChat.lastMessage.id, /** Because new member */
+    }
+  });
+  await ChatMember.bulkCreate(members, { transaction });
+
+  let messagesResult = await Promise.all(messages.map(_ => _.save({ transaction })));
+  const infoMessagesResult = await Promise.all(infoMessages.map(_ => _.save({ transaction })));
 
   await groupChat.update({
-    lastMessageId: message.id,
-    lastMessageDate: message.createdAt,
+    lastMessageId: lastMessage.id,
+    lastMessageDate: lastMessage.createdAt,
   }, { transaction });
 
   await transaction.commit();
 
   await resetUnreadCountMessagesOfMemberJob({
     chatId: groupChat.id,
-    lastReadMessageId: message.id,
+    lastReadMessageId: lastMessage.id,
     userId: r.auth.credentials.id,
-    lastReadMessageNumber: message.number,
+    lastReadMessageNumber: lastMessage.number,
   });
 
   await incrementUnreadCountMessageOfMembersJob({
@@ -441,19 +444,27 @@ export async function addUserInGroupChat(r) {
     notifierUserId: r.auth.credentials.id,
   });
 
-  const members = await ChatMember.scope('userIdsOnly').findAll({
+  const membersInChat = await ChatMember.scope('userIdsOnly').findAll({
     where: { chatId: groupChat.id, userId: { [Op.ne]: r.auth.credentials.id } }
   });
+  messagesResult = messagesResult.map(message => {
+    const keysMessage: { [key: string]: any } = message.toJSON();
+    const keysInfoMessage = infoMessagesResult.find(_ => _.messageId === message.id).toJSON() as InfoMessage;
 
-  const result = await Message.findByPk(message.id);
+    keysInfoMessage.user = users.find(_ => _.id === keysInfoMessage.userId).toJSON() as User;
+
+    keysMessage.infoMessage = keysInfoMessage;
+
+    return keysMessage;
+  }) as Message[];
 
   await publishChatNotifications(r.server, {
     action: ChatNotificationActions.groupChatAddUser,
-    recipients: members.map(member => member.userId),
-    data: result,
+    recipients: membersInChat.map(member => member.userId),
+    data: messagesResult,
   });
 
-  return output(result);
+  return output(messagesResult);
 }
 
 export async function removeUserInGroupChat(r) {
@@ -481,6 +492,7 @@ export async function removeUserInGroupChat(r) {
     senderUserId: r.auth.credentials.id,
     chatId: groupChat.id,
     type: MessageType.info,
+    number: groupChat.lastMessage.number + 1
   }, { transaction });
 
   await InfoMessage.create({
@@ -594,6 +606,7 @@ export async function setMessagesAsRead(r) {
   const otherSenders = await Message.unscoped().findAll({
     attributes: ["senderUserId"],
     where: {
+      chatId: chatController.chat.id,
       senderUserId: { [Op.ne]: r.auth.credentials.id },
       senderStatus: SenderMessageStatus.unread,
       number: { [Op.gte]: message.number },

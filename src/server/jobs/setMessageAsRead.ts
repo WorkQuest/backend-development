@@ -19,7 +19,7 @@ export default async function setMessageAsRead(payload: MessageAsReadPayload) {
     where: {
       chatId: payload.chatId,
       senderStatus: SenderMessageStatus.unread,
-      senderUserId: {[Op.ne]: payload.senderId},
+      senderUserId: { [Op.ne]: payload.senderId },
       number: { [Op.lte]: payload.lastUnreadMessage.number },
     }
   });

@@ -154,6 +154,25 @@ export default [{
     },
   }
 }, {
+  method: "GET",
+  path: "/v1/worker/{workerId}/quests",
+  handler: handlers.getQuests,
+  options: {
+    auth: 'jwt-access',
+    id: "v1.worker.quests",
+    tags: ["api", "quest"],
+    description: "Get quests for a given user",
+    validate: {
+      params: Joi.object({
+        workerId: idSchema.required(),
+      }).label("WorkerGetQuestsParams"),
+      query: questQuerySchema
+    },
+    response: {
+      schema: outputOkSchema(questsForGetWithCountSchema).label("WorkerGetQuestsResponse")
+    },
+  }
+}, {
   method: "POST",
   path: "/v1/quest/{questId}/start",
   handler: handlers.startQuest,

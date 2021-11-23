@@ -38,7 +38,7 @@ abstract class SkillsFiltersHelper {
       this.mapSpecializations[s.industryKey][s.key] = s.specialization;
       this.mapSpecializations[`${s.industryKey}.${s.key}`] = s.specialization;
 
-      if (!this.mapSpecializationsForGet[s.industryKey]) {
+      if (!this.mapSpecializationsForGet[s.industryFilter.industry]) {
         this.mapSpecializationsForGet[s.industryFilter.industry] = { id: s.industryKey, skills: { } }
       }
 
