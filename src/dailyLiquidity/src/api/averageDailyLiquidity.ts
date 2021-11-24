@@ -15,30 +15,31 @@ export async function apyAllPairs() {
   const web3 = new Web3(provider);
   const tradeContract = new web3.eth.Contract(abiBNB, contractBNB);
 
-  const eventsSync = []
-  const methodGetBlock = []
+  let eventsSync = []
+  let methodGetBlock = []
 
   const firstBlock = 11335760;
-  const toBlock = 12892357;
-
+  let toBlock = 11335760;
   try {
+    toBlock = toBlock + 6000;
     await tradeContract.getPastEvents('Sync', {
-      fromBlock:  firstBlock,//12180208,
+      fromBlock:  firstBlock,
       toBlock: toBlock,
-
     }, function (error, events) {
-      eventsSync.push(events)
+      eventsSync = events;
       //console.log(events);
+      //console.log(events[events.length-1]);
+
     })
-    for (let i = 0; i < eventsSync[0].length; i++) {
-      const token0 = Number(new BigNumber(eventsSync[0][i].returnValues.reserve0).shiftedBy(-18))
-      const token1 = Number(new BigNumber(eventsSync[0][i].returnValues.reserve1).shiftedBy(-18))
-      await web3.eth.getBlock(eventsSync[0][i].blockNumber,
+    for (let i = 0; i < eventsSync.length; i++) {
+      const token0 = Number(new BigNumber(eventsSync[i].returnValues.reserve0).shiftedBy(-18))
+      const token1 = Number(new BigNumber(eventsSync[i].returnValues.reserve1).shiftedBy(-18))
+      await web3.eth.getBlock(eventsSync[i].blockNumber,
         function (error, events) {
           methodGetBlock.push(events)
-          //console.log(events);
         })
       const timestamp = Number(methodGetBlock[i].timestamp)
+
       console.log(token0, token1, timestamp)
       const priceInfoWQT = await axios.get(`https://api.coingecko.com/api/v3/coins/work-quest/market_chart/range?vs_currency=usd&from=${timestamp - 1800}&to=${timestamp + 1800}`, {
         timeout: 10000
