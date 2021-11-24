@@ -557,6 +557,7 @@ export async function leaveFromGroupChat(r) {
     senderUserId: r.auth.credentials.id,
     chatId: groupChat.id,
     type: MessageType.info,
+    number: groupChat.lastMessage.number + 1,
   }, { transaction });
 
   await InfoMessage.create({
