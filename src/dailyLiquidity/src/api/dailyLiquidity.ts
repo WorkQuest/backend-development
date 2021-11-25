@@ -24,9 +24,12 @@ export async function apyAllPairs() {
   let toBlock = firstBlock + blockStep;
 
 
+  const unixTime = Date.now() - 25200000 //our timezone - 7 hours
+  const previousDayStart = unixTime - 86400000; //start of unix day
+  const previousDayEnd = previousDayStart - 43200000; //end of unix day
+
   //while(toBlock < Date.now() + blockStep) {
-    try {
-      await tradeContract.getPastEvents('Sync', {
+    try {await tradeContract.getPastEvents('Sync', {
         fromBlock:  firstBlock,
         toBlock: toBlock,
       }, function (error, events) {

@@ -1,4 +1,4 @@
-import averageDailyLiquidity from "./dailyLiquidity";
+import averageDailyLiquidity from "../../../dailyLiquidity/src/routes/averageDailyLiquidity";
 
 export default [
   ...averageDailyLiquidity,

@@ -19,6 +19,7 @@ import { tokenValidate } from "./utils/auth";
 import { pinoConfig } from "./config/pino";
 import { run } from "graphile-worker";
 import { apyAllPairs } from "../dailyLiquidity/src/api/dailyLiquidity";
+import { cleanPoolDataJob } from "./jobs/cleanPoolData"
 
 const HapiSwagger = require("hapi-swagger");
 const Package = require("../../package.json");
