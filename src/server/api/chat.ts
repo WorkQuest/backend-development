@@ -562,6 +562,7 @@ export async function leaveFromGroupChat(r) {
 
   await InfoMessage.create({
     messageId: message.id,
+    // userId: r.auth.credentials.id,
     messageAction: MessageAction.groupChatLeaveUser,
   }, { transaction });
 
@@ -642,6 +643,7 @@ export async function setMessagesAsRead(r) {
 
 export async function getUserStarredMessages(r) {
   const { count, rows } = await Message.findAndCountAll({
+    distinct: true,
     include: [{
       model: StarredMessage,
       as: "star",
