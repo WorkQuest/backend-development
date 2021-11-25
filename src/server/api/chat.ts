@@ -644,6 +644,8 @@ export async function setMessagesAsRead(r) {
 export async function getUserStarredMessages(r) {
   const { count, rows } = await Message.findAndCountAll({
     distinct: true,
+    limit: r.query.limit,
+    offset: r.query.offset,
     include: [{
       model: StarredMessage,
       as: "star",
