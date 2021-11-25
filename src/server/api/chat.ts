@@ -599,7 +599,7 @@ export async function setMessagesAsRead(r) {
 
   await chatController.chatMustHaveMember(r.auth.credentials.id);
 
-  const message = await Message.unscoped().findByPk(r.payload.messageId);
+  const message = await Message.findByPk(r.payload.messageId);
 
   if (!message) {
     return error(Errors.NotFound, "Message is not found", {});
