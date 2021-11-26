@@ -177,7 +177,7 @@ export default [{
         discussionId: idSchema.required(),
       }).label('SendCommentParams'),
       payload: Joi.object({
-        rootCommentId: idSchema.default(null),
+        rootCommentId: idSchema.allow(null).default(null),
         text: discussionCommentTextSchema.required(),
         medias: idsSchema.required().unique().label("MediaIds"),
       }).label("SendCommentPayload")

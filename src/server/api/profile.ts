@@ -11,6 +11,7 @@ import {
   RatingStatistic,
   UserSpecializationFilter,
 } from "@workquest/database-models/lib/models";
+import { addUpdateReviewStatisticsJob } from "../jobs/updateReviewStatistics";
 
 export const searchFields = [
   "firstName",
@@ -146,6 +147,10 @@ export function editProfile(userRole: UserRole) {
     }, transaction);
 
     await transaction.commit();
+
+    await addUpdateReviewStatisticsJob({
+      userId: user.id,
+    });
 
     return output(
       await User.findByPk(r.auth.credentials.id)

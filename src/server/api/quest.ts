@@ -8,6 +8,7 @@ import { publishQuestNotifications, QuestNotificationActions } from "../websocke
 import { QuestsResponseController } from "../controllers/quest/controller.questsResponse";
 import { MediaController } from "../controllers/controller.media";
 import { SkillsFiltersController } from "../controllers/controller.skillsFilters";
+import { addUpdateReviewStatisticsJob } from "../jobs/updateReviewStatistics";
 import {
   Chat,
   Quest,
@@ -306,6 +307,13 @@ export async function acceptCompletedWorkOnQuest(r) {
     .questMustHaveStatus(QuestStatus.WaitConfirm)
 
   await questController.approveCompletedWork();
+
+  await addUpdateReviewStatisticsJob({
+    userId: quest.userId,
+  });
+  await addUpdateReviewStatisticsJob({
+    userId: quest.assignedWorkerId,
+  });
 
   await publishQuestNotifications(r.server, {
     data: quest,
