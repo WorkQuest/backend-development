@@ -168,7 +168,7 @@ export async function closeQuest(r) {
 
   await questController
     .employerMustBeQuestCreator(employer.id)
-    .questMustHaveStatus(QuestStatus.Created, QuestStatus.WaitConfirm)
+    .questMustHaveStatus(QuestStatus.Created)
 
   const transaction = await r.server.app.db.transaction();
 

@@ -1,49 +1,72 @@
 import { addJob } from "../utils/scheduler";
-import { Quest, QuestsStatistic, QuestStatus, UserRole } from "@workquest/database-models/lib/models";
+import {
+  Quest,
+  UserRole,
+  QuestStatus,
+  QuestsStatistic,
+  activeFlowStatuses,
+} from "@workquest/database-models/lib/models";
 
 export interface Data {
   userId: string,
   role: UserRole,
 }
 
+type Statistic = {
+  opened: number;
+  completed: number;
+}
+
 export async function updateQuestsStatisticJob(payload: Data) {
   return addJob("updateQuestsStatistic", payload);
 }
 
-export default async function updateQuestsStatistic(payload: Data) {
-  let completedQuests, openedQuests;
-  const questStatistic = await QuestsStatistic.findOne({ where: {userId: payload.userId} });
-  if(payload.role === UserRole.Employer) {
-    completedQuests = await Quest.count({
-      where: {
-        userId: payload.userId,
-        status: QuestStatus.Done
-      }
-    });
-    openedQuests = await Quest.count({
-      where: {
-        userId: payload.userId,
-        status: QuestStatus.Active
-      }
-    });
-  } else {
-    completedQuests = await Quest.count({
-      where: {
-        assignedWorkerId: payload.userId,
-        status: QuestStatus.Done
-      }
-    });
-    openedQuests = await Quest.count({
-      where: {
-        assignedWorkerId: payload.userId,
-        status: QuestStatus.Active
-      }
-    });
-  }
+async function getWorkerQuestStatistic(workerId: string): Promise<Statistic> {
+  const completedQuestsPromises = Quest.count({
+    where: {
+      assignedWorkerId: workerId,
+      status: activeFlowStatuses,
+    }
+  });
+  const openedQuestsPromises = Quest.count({
+    where: {
+      assignedWorkerId: workerId,
+      status: QuestStatus.Active,
+    }
+  });
 
-  completedQuests = completedQuests + questStatistic.completed;
-  openedQuests = openedQuests + questStatistic.opened;
+  const [opened, completed] = await Promise.all([
+    completedQuestsPromises, openedQuestsPromises,
+  ]);
 
-  await QuestsStatistic.update({ completed: completedQuests, opened: openedQuests }, { where: {userId: payload.userId} });
+  return { opened, completed }
 }
-4
+
+async function getEmployerQuestStatistic(employerId: string): Promise<Statistic> {
+  const completedQuestsPromises = Quest.count({
+    where: {
+      userId: employerId,
+      status: QuestStatus.Done,
+    }
+  });
+  const openedQuestsPromises = Quest.count({
+    where: {
+      userId: employerId,
+      status: activeFlowStatuses,
+    }
+  });
+
+  const [opened, completed] = await Promise.all([
+    completedQuestsPromises, openedQuestsPromises,
+  ]);
+
+  return { opened, completed }
+}
+
+export default async function updateQuestsStatistic(payload: Data) {
+  const statistic = payload.role === UserRole.Worker ?
+    await getWorkerQuestStatistic(payload.userId) : await getEmployerQuestStatistic(payload.userId);
+
+  await QuestsStatistic.update(statistic, { where: { userId: payload.userId } });
+}
+
