@@ -8,8 +8,8 @@ import {SkillsFiltersController} from "../controllers/controller.skillsFilters";
 import {
   User,
   UserRole,
+  RatingStatistic,
   UserSpecializationFilter,
-  Quest, RatingStatistic
 } from "@workquest/database-models/lib/models";
 
 export const searchFields = [
@@ -75,8 +75,7 @@ export function getUsers(role: UserRole) {
 
       distinctCol = 'id';
     }
-
-    if(r.query.ratingStatus) {
+    if (r.query.ratingStatus) {
       include.push({
         model: RatingStatistic,
         as: 'ratingStatistic',
