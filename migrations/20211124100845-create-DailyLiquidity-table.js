@@ -8,7 +8,7 @@ module.exports = {
         primaryKey: true
       },
       timestamp: {
-        type: Sequelize.DataTypes.STRING
+        type: Sequelize.DataTypes.DECIMAL
       },
       blockNumber: {
         type: Sequelize.DataTypes.STRING
