@@ -79,10 +79,8 @@ export function getUsers(role: UserRole) {
       include.push({
         model: RatingStatistic,
         as: 'ratingStatistic',
-        where: {
-          status: r.query.ratingStatus
-        },
-        required: true
+        required: true,
+        where: { status: r.query.ratingStatus },
       });
 
       distinctCol = 'id';
