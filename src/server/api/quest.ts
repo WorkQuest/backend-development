@@ -8,7 +8,9 @@ import { publishQuestNotifications, QuestNotificationActions } from "../websocke
 import { QuestsResponseController } from "../controllers/quest/controller.questsResponse";
 import { MediaController } from "../controllers/controller.media";
 import { SkillsFiltersController } from "../controllers/controller.skillsFilters";
+import { addUpdateReviewStatisticsJob } from "../jobs/updateReviewStatistics";
 import {
+  Chat,
   Quest,
   QuestChat,
   QuestChatStatuses,
@@ -28,6 +30,10 @@ export const searchFields = [
 ];
 
 export async function getQuest(r) {
+  const user: User = r.auth.credentials;
+
+  let chat: Chat;
+
   const quest = await Quest.findOne({
     where: { id: r.params.questId },
     include: [{
@@ -47,7 +53,20 @@ export async function getQuest(r) {
     return error(Errors.NotFound, "Quest not found", { questId: r.params.questId });
   }
 
-  return output(quest);
+  if (user.role === UserRole.Worker) {
+    chat = await Chat.findOne({
+      include: {
+        model: QuestChat,
+        as: 'questChat',
+        where: {
+          workerId: user.id,
+          questId: quest.id,
+        }
+      }
+    });
+  }
+
+  return output({ quest, chat });
 }
 
 export async function createQuest(r) {
@@ -298,6 +317,13 @@ export async function acceptCompletedWorkOnQuest(r) {
     .questMustHaveStatus(QuestStatus.WaitConfirm)
 
   await questController.approveCompletedWork();
+
+  await addUpdateReviewStatisticsJob({
+    userId: quest.userId,
+  });
+  await addUpdateReviewStatisticsJob({
+    userId: quest.assignedWorkerId,
+  });
 
   await publishQuestNotifications(r.server, {
     data: quest,

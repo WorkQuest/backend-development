@@ -9,6 +9,18 @@ import {
   DiscussionCommentLike,
 } from "@workquest/database-models/lib/models";
 
+export async function getDiscussion(r) {
+  const discussion = await Discussion.findOne({
+    where: { id: r.params.discussionId },
+  });
+
+  if (!discussion) {
+    return error(Errors.NotFound, "Discussion not found", { discussionId: r.params.discussionId });
+  }
+
+  return output(discussion);
+}
+
 export async function getDiscussions(r) {
   const { count, rows } = await Discussion.findAndCountAll({
     order: [ ['createdAt', 'DESC'] ],

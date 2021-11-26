@@ -19,6 +19,7 @@ import {
   questLocationPlaceNameSchema,
   questEmploymentSchema,
   specializationKeysSchema,
+  chatForGetSchema,
 } from "@workquest/database-models/lib/schemes";
 
 export default [{
@@ -36,7 +37,12 @@ export default [{
       }).label('GetQuestParams')
     },
     response: {
-      schema: outputOkSchema(questSchema).label("GetQuestResponse"),
+      schema: outputOkSchema(
+        Joi.object({
+          quest: questSchema,
+          chat: chatForGetSchema,
+        }).label('QuestWithChat')
+      ).label("GetQuestResponse"),
     }
   }
 }, {
