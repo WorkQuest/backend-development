@@ -1,24 +1,25 @@
-import {Op, literal} from 'sequelize';
-import {Errors} from '../utils/errors';
-import {UserController} from "../controllers/user/controller.user";
-import {QuestController} from "../controllers/quest/controller.quest";
-import {transformToGeoPostGIS} from "../utils/postGIS";
-import {error, output} from "../utils";
-import {publishQuestNotifications, QuestNotificationActions} from "../websocket/websocket.quest";
-import {QuestsResponseController} from "../controllers/quest/controller.questsResponse";
-import {MediaController} from "../controllers/controller.media";
+import { literal, Op } from "sequelize";
+import { Errors } from "../utils/errors";
+import { UserController } from "../controllers/user/controller.user";
+import { QuestController } from "../controllers/quest/controller.quest";
+import { transformToGeoPostGIS } from "../utils/postGIS";
+import { error, output } from "../utils";
+import { publishQuestNotifications, QuestNotificationActions } from "../websocket/websocket.quest";
+import { QuestsResponseController } from "../controllers/quest/controller.questsResponse";
+import { MediaController } from "../controllers/controller.media";
 import { SkillsFiltersController } from "../controllers/controller.skillsFilters";
 import {
-  User,
+  Chat,
   Quest,
-  UserRole,
   QuestChat,
+  QuestChatStatuses,
+  QuestSpecializationFilter,
+  QuestsResponse,
+  QuestsResponseType,
   QuestStatus,
   StarredQuests,
-  QuestsResponse,
-  QuestChatStatuses,
-  QuestsResponseType,
-  QuestSpecializationFilter,
+  User,
+  UserRole
 } from "@workquest/database-models/lib/models";
 
 export const searchFields = [
@@ -27,6 +28,10 @@ export const searchFields = [
 ];
 
 export async function getQuest(r) {
+  const user: User = r.auth.credentials;
+
+  let chat: Chat;
+
   const quest = await Quest.findOne({
     where: { id: r.params.questId },
     include: [{
@@ -46,7 +51,20 @@ export async function getQuest(r) {
     return error(Errors.NotFound, "Quest not found", { questId: r.params.questId });
   }
 
-  return output(quest);
+  if (user.role === UserRole.Worker) {
+    chat = await Chat.findOne({
+      include: {
+        model: QuestChat,
+        as: 'questChat',
+        where: {
+          workerId: user.id,
+          questId: quest.id,
+        }
+      }
+    });
+  }
+
+  return output({ quest, chat });
 }
 
 export async function createQuest(r) {

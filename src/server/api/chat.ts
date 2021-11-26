@@ -51,7 +51,14 @@ export async function getUserChats(r) {
 }
 
 export async function getChatMessages(r) {
-  const chat = await Chat.findByPk(r.params.chatId);
+  const chat = await Chat.findByPk(r.params.chatId, {
+    include: {
+      model: ChatMember,
+      where: { userId: r.auth.credentials.id },
+      required: false,
+      as: 'meMember',
+    }
+  });
   const chatController = new ChatController(chat);
 
   await chatController.chatMustHaveMember(r.auth.credentials.id);
@@ -557,10 +564,12 @@ export async function leaveFromGroupChat(r) {
     senderUserId: r.auth.credentials.id,
     chatId: groupChat.id,
     type: MessageType.info,
+    number: groupChat.lastMessage.number + 1,
   }, { transaction });
 
   await InfoMessage.create({
     messageId: message.id,
+    // userId: r.auth.credentials.id,
     messageAction: MessageAction.groupChatLeaveUser,
   }, { transaction });
 
@@ -597,7 +606,7 @@ export async function setMessagesAsRead(r) {
 
   await chatController.chatMustHaveMember(r.auth.credentials.id);
 
-  const message = await Message.unscoped().findByPk(r.payload.messageId);
+  const message = await Message.findByPk(r.payload.messageId);
 
   if (!message) {
     return error(Errors.NotFound, "Message is not found", {});
@@ -641,6 +650,9 @@ export async function setMessagesAsRead(r) {
 
 export async function getUserStarredMessages(r) {
   const { count, rows } = await Message.findAndCountAll({
+    distinct: true,
+    limit: r.query.limit,
+    offset: r.query.offset,
     include: [{
       model: StarredMessage,
       as: "star",
