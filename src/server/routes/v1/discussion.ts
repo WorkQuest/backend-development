@@ -215,7 +215,7 @@ export default [{
     description: "Remove like in discussion",
     validate: {
       params: Joi.object({
-        postId: idSchema.required(),
+        discussionId: idSchema.required(),
       }).label("DiscussionLikeParams"),
     },
     response: {
