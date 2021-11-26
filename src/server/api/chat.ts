@@ -51,7 +51,14 @@ export async function getUserChats(r) {
 }
 
 export async function getChatMessages(r) {
-  const chat = await Chat.findByPk(r.params.chatId);
+  const chat = await Chat.findByPk(r.params.chatId, {
+    include: {
+      model: ChatMember,
+      where: { userId: r.auth.credentials.id },
+      required: false,
+      as: 'meMember',
+    }
+  });
   const chatController = new ChatController(chat);
 
   await chatController.chatMustHaveMember(r.auth.credentials.id);
