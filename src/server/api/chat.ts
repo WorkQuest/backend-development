@@ -213,7 +213,7 @@ export async function sendMessageToUser(r) {
     return error(Errors.InvalidPayload, "You can't send a message to yourself", {});
   }
 
-  await User.userMustExist(r.params.userId);
+  await UserController.userMustExist(r.params.userId);
 
   const medias = await MediaController.getMedias(r.payload.medias);
   const transaction = await r.server.app.db.transaction();
@@ -475,7 +475,7 @@ export async function addUsersInGroupChat(r) {
 }
 
 export async function removeUserInGroupChat(r) {
-  await User.userMustExist(r.params.userId);
+  await UserController.userMustExist(r.params.userId);
 
   const groupChat = await Chat.findByPk(r.params.chatId);
   const chatController = new ChatController(groupChat);
