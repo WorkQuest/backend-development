@@ -39,7 +39,7 @@ export async function getSubComments(r) {
   }
 
   const { count, rows } = await DiscussionComment.findAndCountAll({
-    where: { rootCommentId: r.query.commentId },
+    where: { rootCommentId: rootComment.id },
     order: [ ['createdAt', 'DESC'] ],
     limit: r.query.limit,
     offset: r.query.offset,
