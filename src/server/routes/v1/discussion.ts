@@ -1,17 +1,5 @@
 import * as Joi from "joi";
-import {
-  sendComment,
-  getDiscussions,
-  putCommentLike,
-  getSubComments,
-  getRootComments,
-  createDiscussion,
-  removeCommentLike,
-  putDiscussionLike,
-  removeDiscussionLike,
-  getCommentUsersLikes,
-  getDiscussionUsersLikes,
-} from "../../api/discussion";
+import * as handlers from "../../api/discussion";
 import {
   idSchema,
   idsSchema,
@@ -33,7 +21,7 @@ import {
 export default [{
   method: "GET",
   path: "/v1/discussions",
-  handler: getDiscussions,
+  handler: handlers.getDiscussions,
   options: {
     auth: 'jwt-access',
     id: "v1.getDiscussions",
@@ -51,8 +39,26 @@ export default [{
   }
 }, {
   method: "GET",
+  path: "/v1/discussion/{discussionId}",
+  handler: handlers.getDiscussion,
+  options: {
+    auth: 'jwt-access',
+    id: "v1.getDiscussion",
+    tags: ["api", "discussion"],
+    description: "Get discussion",
+    validate: {
+      params: Joi.object({
+        discussionId: idSchema.required(),
+      }).label('GetDiscussionParams')
+    },
+    response: {
+      schema: outputOkSchema(discussionSchema).label("GetDiscussionResponse")
+    }
+  }
+}, {
+  method: "GET",
   path: "/v1/discussion/comment/{commentId}/sub-comments",
-  handler: getSubComments,
+  handler: handlers.getSubComments,
   options: {
     auth: 'jwt-access',
     id: "v1.getSubComments",
@@ -74,7 +80,7 @@ export default [{
 }, {
   method: "GET",
   path: "/v1/discussion/{discussionId}/usersLikes",
-  handler: getDiscussionUsersLikes,
+  handler: handlers.getDiscussionUsersLikes,
   options: {
     auth: 'jwt-access',
     id: "v1.discussion.getUsersLikes",
@@ -96,7 +102,7 @@ export default [{
 }, {
   method: "GET",
   path: "/v1/discussion/comment/{commentId}/usersLikes",
-  handler: getCommentUsersLikes,
+  handler: handlers.getCommentUsersLikes,
   options: {
     auth: 'jwt-access',
     id: "v1.discussion.comment.getUsersLikes",
@@ -118,7 +124,7 @@ export default [{
 }, {
   method: "GET",
   path: "/v1/discussion/{discussionId}/root-comments",
-  handler: getRootComments,
+  handler: handlers.getRootComments,
   options: {
     auth: 'jwt-access',
     id: "v1.discussion.getRootComments",
@@ -140,7 +146,7 @@ export default [{
 }, {
   method: "POST",
   path: "/v1/discussion/create",
-  handler: createDiscussion,
+  handler: handlers.createDiscussion,
   options: {
     auth: 'jwt-access',
     id: "v1.createDiscussion",
@@ -160,7 +166,7 @@ export default [{
 }, {
   method: "POST",
   path: "/v1/discussion/{discussionId}/comment/send",
-  handler: sendComment,
+  handler: handlers.sendComment,
   options: {
     auth: 'jwt-access',
     id: "v1.discussion.sendComment",
@@ -183,7 +189,7 @@ export default [{
 }, {
   method: "POST",
   path: "/v1/discussion/{discussionId}/like",
-  handler: putDiscussionLike,
+  handler: handlers.putDiscussionLike,
   options: {
     auth: 'jwt-access',
     id: "v1.discussion.putLike",
@@ -201,7 +207,7 @@ export default [{
 }, {
   method: "DELETE",
   path: "/v1/discussion/{discussionId}/like",
-  handler: removeDiscussionLike,
+  handler: handlers.removeDiscussionLike,
   options: {
     auth: 'jwt-access',
     id: "v1.discussion.removeLike",
@@ -219,7 +225,7 @@ export default [{
 }, {
   method: "POST",
   path: "/v1/discussion/comment/{commentId}/like",
-  handler: putCommentLike,
+  handler: handlers.putCommentLike,
   options: {
     auth: 'jwt-access',
     id: "v1.discussion.comment.putLike",
@@ -237,7 +243,7 @@ export default [{
 }, {
   method: "DELETE",
   path: "/v1/discussion/comment/{commentId}/like",
-  handler: removeCommentLike,
+  handler: handlers.removeCommentLike,
   options: {
     auth: 'jwt-access',
     id: "v1.discussion.comment.removeLike",
