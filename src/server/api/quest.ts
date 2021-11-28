@@ -18,7 +18,6 @@ import {
   QuestsResponse,
   QuestChatStatuses,
   QuestsResponseType,
-  QuestsResponseStatus,
   QuestSpecializationFilter,
 } from "@workquest/database-models/lib/models";
 

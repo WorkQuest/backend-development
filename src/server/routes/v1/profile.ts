@@ -1,4 +1,5 @@
 import * as Joi from "joi";
+import { UserRole } from "@workquest/database-models/lib/models";
 import {
   getMe,
   getUser,
@@ -16,6 +17,7 @@ import {
   outputOkSchema,
   locationSchema,
   userRoleSchema,
+  workPlaceSchema,
   employerQuerySchema,
   workerQuerySchema,
   userWorkersSchema,
@@ -24,11 +26,11 @@ import {
   userPasswordSchema,
   userEmployersSchema,
   userFirstNameSchema,
+  workerWagePerHourSchema,
   specializationKeysSchema,
   userAdditionalInfoWorkerSchema,
-  userAdditionalInfoEmployerSchema, userWorkPlaceSchema
+  userAdditionalInfoEmployerSchema,
 } from "@workquest/database-models/lib/schemes";
-import { UserRole } from "@workquest/database-models/lib/models";
 
 export default [{
   method: "GET",
@@ -129,10 +131,11 @@ export default [{
         avatarId: idSchema.allow(null).required(),
         firstName: userFirstNameSchema.required(),
         lastName: userLastNameSchema.required(),
+        workplace: workPlaceSchema.allow(null).required(),
+        wagePerHour: workerWagePerHourSchema.allow(null).required(),
         location: locationSchema.allow(null).required(),
         additionalInfo: userAdditionalInfoWorkerSchema.required(),
         specializationKeys: specializationKeysSchema.allow(null).required().unique(),
-        workplace: userWorkPlaceSchema.required(),
       }).label("EditWorkerProfilePayload")
     },
     response: {

@@ -45,7 +45,10 @@ export function getUsers(role: UserRole) {
 
     const where = {
       ...(r.query.north && r.query.south && { [Op.and]: entersAreaLiteral }), role,
-      ...r.query.workplace && {workplace: {[Op.iLike]: r.query.workplace}}
+      ...(r.query.workplace && { workplace: r.query.workplace }),
+      ...(r.query.betweenWagePerHour && { wagePerHour: {
+          [Op.between]: [r.query.betweenWagePerHour.from, r.query.betweenWagePerHour.to]
+      } }),
     };
 
     if (r.query.q) {
@@ -129,9 +132,10 @@ export function editProfile(userRole: UserRole) {
       lastName: r.payload.lastName,
       location: r.payload.location,
       firstName: r.payload.firstName,
+      workplace: r.payload.workplace || null,
+      wagePerHour: r.payload.wagePerHour || null,
       additionalInfo: r.payload.additionalInfo,
       locationPostGIS: r.payload.location ? transformToGeoPostGIS(r.payload.location) : null,
-      workplace: r.payload.workplace
     }, transaction);
 
     await transaction.commit();
