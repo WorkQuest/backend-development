@@ -55,7 +55,7 @@ export async function register(r) {
 		}
 	});
 
-	await QuestsStatistic.create({userId: user.id});
+	await QuestsStatistic.create({ userId: user.id });
 
 	const session = await Session.create({
 		userId: user.id,
@@ -101,7 +101,7 @@ export function getLoginViaSocialNetworkHandler(returnType: "token" | "redirect"
 			return h.redirect(config.baseUrl + "/sign-in?" + qs);
 		}
 
-		await QuestsStatistic.create({userId: user.id});
+		await QuestsStatistic.create({ userId: user.id });
 
 		return output(result);
 	};

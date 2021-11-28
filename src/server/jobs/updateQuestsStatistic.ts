@@ -8,8 +8,8 @@ import {
 } from "@workquest/database-models/lib/models";
 
 export interface Data {
-  userId: string,
-  role: UserRole,
+  userId: string;
+  role: UserRole;
 }
 
 type Statistic = {
@@ -64,9 +64,14 @@ async function getEmployerQuestStatistic(employerId: string): Promise<Statistic>
 }
 
 export default async function updateQuestsStatistic(payload: Data) {
+  const [questsStatistic, ] = await QuestsStatistic.findOrCreate({
+    where: { where: { userId: payload.userId } },
+    defaults: { userId: payload.userId },
+  });
+
   const statistic = payload.role === UserRole.Worker ?
     await getWorkerQuestStatistic(payload.userId) : await getEmployerQuestStatistic(payload.userId);
 
-  await QuestsStatistic.update(statistic, { where: { userId: payload.userId } });
+  await questsStatistic.update(statistic);
 }
 
