@@ -9,8 +9,6 @@ import {
   locationSchema,
   userRoleSchema,
   workPlaceSchema,
-  employerQuerySchema,
-  workerQuerySchema,
   userWorkersSchema,
   mobilePhoneSchema,
   workerQuerySchema,
@@ -128,7 +126,6 @@ export default [{
         wagePerHour: workerWagePerHourSchema.allow(null).required(),
         location: locationSchema.allow(null).required(),
         additionalInfo: userAdditionalInfoWorkerSchema.required(),
-        wagePerHour: workerWagePerHourSchema.allow(null).required(),
         specializationKeys: specializationKeysSchema.allow(null).required().unique(),
       }).label("EditWorkerProfilePayload")
     },
