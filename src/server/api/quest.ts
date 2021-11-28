@@ -103,6 +103,11 @@ export async function createQuest(r) {
 
   await transaction.commit();
 
+  await updateQuestsStatisticJob({
+    userId: employer.id,
+    role: UserRole.Employer,
+  });
+
   return output(
     await Quest.findByPk(quest.id)
   )
@@ -177,6 +182,11 @@ export async function closeQuest(r) {
   await QuestsResponseController.closeAllResponsesOnQuest(questController.quest, transaction);
 
   await transaction.commit();
+
+  await updateQuestsStatisticJob({
+    userId: employer.id,
+    role: UserRole.Employer,
+  });
 
   return output();
 }
@@ -254,7 +264,7 @@ export async function acceptWorkOnQuest(r) {
   const questController = new QuestController(await Quest.findByPk(r.params.questId));
 
   workerController.
-  userMustHaveRole(UserRole.Worker)
+    userMustHaveRole(UserRole.Worker)
 
   questController
     .questMustHaveStatus(QuestStatus.WaitWorker)
@@ -269,11 +279,7 @@ export async function acceptWorkOnQuest(r) {
 
   await updateQuestsStatisticJob({
     userId: worker.id,
-    role: worker.role
-  });
-  await updateQuestsStatisticJob({
-    userId: questController.quest.userId,
-    role: UserRole.Employer // questController.quest.user.role === undefined!!!
+    role: UserRole.Worker,
   });
 
   await publishQuestNotifications(r.server, {
@@ -318,6 +324,12 @@ export async function acceptCompletedWorkOnQuest(r) {
 
   await questController.approveCompletedWork();
 
+  await publishQuestNotifications(r.server, {
+    data: quest,
+    recipients: [quest.assignedWorkerId],
+    action: QuestNotificationActions.employerAcceptedCompletedQuest,
+  });
+
   await addUpdateReviewStatisticsJob({
     userId: quest.userId,
   });
@@ -325,20 +337,13 @@ export async function acceptCompletedWorkOnQuest(r) {
     userId: quest.assignedWorkerId,
   });
 
-  await publishQuestNotifications(r.server, {
-    data: quest,
-    recipients: [quest.assignedWorkerId],
-    action: QuestNotificationActions.employerAcceptedCompletedQuest,
-  });
-
   await updateQuestsStatisticJob({
     userId: quest.assignedWorkerId,
     role: UserRole.Worker,
   });
-
   await updateQuestsStatisticJob({
     userId: employer.id,
-    role: employer.role,
+    role: UserRole.Employer,
   });
 
   return output();
