@@ -19,6 +19,7 @@ import {
   questLocationPlaceNameSchema,
   questEmploymentSchema,
   specializationKeysSchema,
+  chatForGetSchema,
 } from "@workquest/database-models/lib/schemes";
 
 export default [{
@@ -36,7 +37,12 @@ export default [{
       }).label('GetQuestParams')
     },
     response: {
-      schema: outputOkSchema(questSchema).label("GetQuestResponse"),
+      schema: outputOkSchema(
+        Joi.object({
+          quest: questSchema,
+          chat: chatForGetSchema,
+        }).label('QuestWithChat')
+      ).label("GetQuestResponse"),
     }
   }
 }, {
@@ -151,6 +157,25 @@ export default [{
     },
     response: {
       schema: outputOkSchema(questsForGetWithCountSchema).label("EmployerGetQuestsResponse")
+    },
+  }
+}, {
+  method: "GET",
+  path: "/v1/worker/{workerId}/quests",
+  handler: handlers.getQuests,
+  options: {
+    auth: 'jwt-access',
+    id: "v1.worker.quests",
+    tags: ["api", "quest"],
+    description: "Get quests for a given user",
+    validate: {
+      params: Joi.object({
+        workerId: idSchema.required(),
+      }).label("WorkerGetQuestsParams"),
+      query: questQuerySchema
+    },
+    response: {
+      schema: outputOkSchema(questsForGetWithCountSchema).label("WorkerGetQuestsResponse")
     },
   }
 }, {

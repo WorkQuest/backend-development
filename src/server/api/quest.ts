@@ -1,24 +1,26 @@
-import {Op, literal} from 'sequelize';
-import {Errors} from '../utils/errors';
-import {UserController} from "../controllers/user/controller.user";
-import {QuestController} from "../controllers/quest/controller.quest";
-import {transformToGeoPostGIS} from "../utils/postGIS";
-import {error, output} from "../utils";
-import {publishQuestNotifications, QuestNotificationActions} from "../websocket/websocket.quest";
-import {QuestsResponseController} from "../controllers/quest/controller.questsResponse";
-import {MediaController} from "../controllers/controller.media";
+import { literal, Op } from "sequelize";
+import { Errors } from "../utils/errors";
+import { UserController } from "../controllers/user/controller.user";
+import { QuestController } from "../controllers/quest/controller.quest";
+import { transformToGeoPostGIS } from "../utils/postGIS";
+import { error, output } from "../utils";
+import { publishQuestNotifications, QuestNotificationActions } from "../websocket/websocket.quest";
+import { QuestsResponseController } from "../controllers/quest/controller.questsResponse";
+import { MediaController } from "../controllers/controller.media";
 import { SkillsFiltersController } from "../controllers/controller.skillsFilters";
+import { addUpdateReviewStatisticsJob } from "../jobs/updateReviewStatistics";
 import {
-  User,
+  Chat,
   Quest,
-  UserRole,
   QuestChat,
-  QuestStatus,
-  StarredQuests,
-  QuestsResponse,
   QuestChatStatuses,
   QuestsResponseType,
   QuestSpecializationFilter,
+  QuestsResponse,
+  QuestStatus,
+  StarredQuests,
+  User,
+  UserRole
 } from "@workquest/database-models/lib/models";
 
 export const searchFields = [
@@ -27,6 +29,10 @@ export const searchFields = [
 ];
 
 export async function getQuest(r) {
+  const user: User = r.auth.credentials;
+
+  let chat: Chat;
+
   const quest = await Quest.findOne({
     where: { id: r.params.questId },
     include: [{
@@ -46,7 +52,20 @@ export async function getQuest(r) {
     return error(Errors.NotFound, "Quest not found", { questId: r.params.questId });
   }
 
-  return output(quest);
+  if (user.role === UserRole.Worker) {
+    chat = await Chat.findOne({
+      include: {
+        model: QuestChat,
+        as: 'questChat',
+        where: {
+          workerId: user.id,
+          questId: quest.id,
+        }
+      }
+    });
+  }
+
+  return output({ quest, chat });
 }
 
 export async function createQuest(r) {
@@ -289,6 +308,13 @@ export async function acceptCompletedWorkOnQuest(r) {
 
   await questController.approveCompletedWork();
 
+  await addUpdateReviewStatisticsJob({
+    userId: quest.userId,
+  });
+  await addUpdateReviewStatisticsJob({
+    userId: quest.assignedWorkerId,
+  });
+
   await publishQuestNotifications(r.server, {
     data: quest,
     recipients: [quest.assignedWorkerId],
@@ -330,11 +356,13 @@ export async function getQuests(r) {
     ...(r.query.adType && { adType: r.query.adType }),
     ...(r.query.filter && { filter: r.params.filter }),
     ...(r.params.userId && { userId: r.params.userId }),
+    ...(r.params.workerId && { assignedWorkerId: r.params.workerId }),
     ...(r.query.performing && { assignedWorkerId: r.auth.credentials.id }),
     ...(r.query.north && r.query.south && { [Op.and]: entersAreaLiteral }),
     ...(r.query.priorities && { priority: {[Op.in]: r.query.priorities } }),
     ...(r.query.workplaces && { workplace: { [Op.in]: r.query.workplaces } }),
     ...(r.query.employments && { employment: { [Op.in]: r.query.employments } }),
+    ...(r.query.priceBetween && { price: { [Op.between]: [r.query.priceBetween.from, r.query.priceBetween.to] } }),
   };
 
   if (r.query.q) {

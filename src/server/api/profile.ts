@@ -8,8 +8,10 @@ import {SkillsFiltersController} from "../controllers/controller.skillsFilters";
 import {
   User,
   UserRole,
+  RatingStatistic,
   UserSpecializationFilter,
 } from "@workquest/database-models/lib/models";
+import { addUpdateReviewStatisticsJob } from "../jobs/updateReviewStatistics";
 
 export const searchFields = [
   "firstName",
@@ -77,6 +79,16 @@ export function getUsers(role: UserRole) {
 
       distinctCol = 'id';
     }
+    if (r.query.ratingStatus) {
+      include.push({
+        model: RatingStatistic,
+        as: 'ratingStatistic',
+        required: true,
+        where: { status: r.query.ratingStatus },
+      });
+
+      distinctCol = 'id';
+    }
 
     for (const [key, value] of Object.entries(r.query.sort)) {
       order.push([key, value]);
@@ -139,6 +151,10 @@ export function editProfile(userRole: UserRole) {
     }, transaction);
 
     await transaction.commit();
+
+    await addUpdateReviewStatisticsJob({
+      userId: user.id,
+    });
 
     return output(
       await User.findByPk(r.auth.credentials.id)
