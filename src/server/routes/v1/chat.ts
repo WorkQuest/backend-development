@@ -113,7 +113,7 @@ export default [{
     validate: {
       payload: Joi.object({
         name: chatNameSchema.required(),
-        memberUserIds: idsSchema.required().min(2).unique(),
+        memberUserIds: idsSchema.required().min(1).unique(),
       }).label('CreateGroupChatPayload')
     },
     response: {

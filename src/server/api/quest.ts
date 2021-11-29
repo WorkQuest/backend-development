@@ -14,9 +14,9 @@ import {
   Quest,
   QuestChat,
   QuestChatStatuses,
+  QuestsResponseType,
   QuestSpecializationFilter,
   QuestsResponse,
-  QuestsResponseType,
   QuestStatus,
   StarredQuests,
   User,
@@ -31,8 +31,6 @@ export const searchFields = [
 
 export async function getQuest(r) {
   const user: User = r.auth.credentials;
-
-  let chat: Chat;
 
   const quest = await Quest.findOne({
     where: { id: r.params.questId },
@@ -53,20 +51,7 @@ export async function getQuest(r) {
     return error(Errors.NotFound, "Quest not found", { questId: r.params.questId });
   }
 
-  if (user.role === UserRole.Worker) {
-    chat = await Chat.findOne({
-      include: {
-        model: QuestChat,
-        as: 'questChat',
-        where: {
-          workerId: user.id,
-          questId: quest.id,
-        }
-      }
-    });
-  }
-
-  return output({ quest, chat });
+  return output(quest);
 }
 
 export async function createQuest(r) {
