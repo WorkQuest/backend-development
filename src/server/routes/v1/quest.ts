@@ -37,12 +37,7 @@ export default [{
       }).label('GetQuestParams')
     },
     response: {
-      schema: outputOkSchema(
-        Joi.object({
-          quest: questSchema,
-          chat: chatForGetSchema,
-        }).label('QuestWithChat')
-      ).label("GetQuestResponse"),
+      schema: outputOkSchema(questSchema).label("GetQuestResponse"),
     }
   }
 }, {
