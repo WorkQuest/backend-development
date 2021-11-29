@@ -20,7 +20,7 @@ import {
   workerWagePerHourSchema,
   specializationKeysSchema,
   userAdditionalInfoWorkerSchema,
-  userAdditionalInfoEmployerSchema,
+  userAdditionalInfoEmployerSchema, prioritySchema
 } from "@workquest/database-models/lib/schemes";
 
 export default [{
@@ -123,6 +123,7 @@ export default [{
         firstName: userFirstNameSchema.required(),
         lastName: userLastNameSchema.required(),
         workplace: workPlaceSchema.allow(null).required(),
+        priority: prioritySchema.required(),
         wagePerHour: workerWagePerHourSchema.allow(null).required(),
         location: locationSchema.allow(null).required(),
         additionalInfo: userAdditionalInfoWorkerSchema.required(),
