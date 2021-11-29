@@ -119,14 +119,14 @@ export default [{
     description: "Edit worker profile",
     validate: {
       payload: Joi.object({
-        avatarId: idSchema.allow(null).required(),
-        firstName: userFirstNameSchema.required(),
         lastName: userLastNameSchema.required(),
-        workplace: workPlaceSchema.allow(null).required(),
-        priority: prioritySchema.required(),
-        wagePerHour: workerWagePerHourSchema.allow(null).required(),
+        firstName: userFirstNameSchema.required(),
+        avatarId: idSchema.allow(null).required(),
+        priority: prioritySchema.allow(null).required(),
         location: locationSchema.allow(null).required(),
+        workplace: workPlaceSchema.allow(null).required(),
         additionalInfo: userAdditionalInfoWorkerSchema.required(),
+        wagePerHour: workerWagePerHourSchema.allow(null).required(),
         specializationKeys: specializationKeysSchema.allow(null).required().unique(),
       }).label("EditWorkerProfilePayload")
     },
