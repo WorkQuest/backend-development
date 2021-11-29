@@ -133,6 +133,12 @@ abstract class UserHelper {
     return this;
   }
 
+  public static async userMustExist(userId: string) {
+    if (!await User.findByPk(userId)) {
+      throw error(Errors.NotFound, "User does not exist", { userId });
+    }
+  }
+
   public static async usersMustExist(userIds: string[], scope: "defaultScope" | "short" | "shortWithAdditionalInfo" = "defaultScope"): Promise<User[]> {
    const users = await User.scope(scope).findAll({
       where: { id: userIds }
