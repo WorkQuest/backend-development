@@ -145,9 +145,9 @@ export function editProfile(userRole: UserRole) {
       lastName: r.payload.lastName,
       location: r.payload.location,
       firstName: r.payload.firstName,
+      priority: r.payload.priority || null,
       workplace: r.payload.workplace || null,
       wagePerHour: r.payload.wagePerHour || null,
-      priority: r.payload.priority,
       additionalInfo: r.payload.additionalInfo,
       locationPostGIS: r.payload.location ? transformToGeoPostGIS(r.payload.location) : null,
     }, transaction);
