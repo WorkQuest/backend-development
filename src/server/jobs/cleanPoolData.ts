@@ -16,7 +16,7 @@ export default async function cleanPoolData(payload: UnreadMessageIncrementPaylo
 
 
   const fromTime = new Date().setUTCHours(0, 0, 0)
-  const toTime = new Date().setUTCHours(23, 59, 0)
+  const toTime = new Date().setUTCHours(23, 59, 0,0)
 //clear
   const events = await DailyLiquidity.findAll({
     where: {
