@@ -22,6 +22,7 @@ import {
   User,
   UserRole
 } from "@workquest/database-models/lib/models";
+import { updateQuestsStatisticJob } from "../jobs/updateQuestsStatistic";
 
 export const searchFields = [
   "title",
@@ -102,6 +103,11 @@ export async function createQuest(r) {
 
   await transaction.commit();
 
+  await updateQuestsStatisticJob({
+    userId: employer.id,
+    role: UserRole.Employer,
+  });
+
   return output(
     await Quest.findByPk(quest.id)
   )
@@ -167,7 +173,7 @@ export async function closeQuest(r) {
 
   await questController
     .employerMustBeQuestCreator(employer.id)
-    .questMustHaveStatus(QuestStatus.Created, QuestStatus.WaitConfirm)
+    .questMustHaveStatus(QuestStatus.Created)
 
   const transaction = await r.server.app.db.transaction();
 
@@ -176,6 +182,11 @@ export async function closeQuest(r) {
   await QuestsResponseController.closeAllResponsesOnQuest(questController.quest, transaction);
 
   await transaction.commit();
+
+  await updateQuestsStatisticJob({
+    userId: employer.id,
+    role: UserRole.Employer,
+  });
 
   return output();
 }
@@ -253,7 +264,7 @@ export async function acceptWorkOnQuest(r) {
   const questController = new QuestController(await Quest.findByPk(r.params.questId));
 
   workerController.
-  userMustHaveRole(UserRole.Worker)
+    userMustHaveRole(UserRole.Worker)
 
   questController
     .questMustHaveStatus(QuestStatus.WaitWorker)
@@ -265,6 +276,11 @@ export async function acceptWorkOnQuest(r) {
   await questController.answerWorkOnQuest(worker, true, transaction);
 
   await transaction.commit();
+
+  await updateQuestsStatisticJob({
+    userId: worker.id,
+    role: UserRole.Worker,
+  });
 
   await publishQuestNotifications(r.server, {
     data: questController.quest,
@@ -308,6 +324,12 @@ export async function acceptCompletedWorkOnQuest(r) {
 
   await questController.approveCompletedWork();
 
+  await publishQuestNotifications(r.server, {
+    data: quest,
+    recipients: [quest.assignedWorkerId],
+    action: QuestNotificationActions.employerAcceptedCompletedQuest,
+  });
+
   await addUpdateReviewStatisticsJob({
     userId: quest.userId,
   });
@@ -315,10 +337,13 @@ export async function acceptCompletedWorkOnQuest(r) {
     userId: quest.assignedWorkerId,
   });
 
-  await publishQuestNotifications(r.server, {
-    data: quest,
-    recipients: [quest.assignedWorkerId],
-    action: QuestNotificationActions.employerAcceptedCompletedQuest,
+  await updateQuestsStatisticJob({
+    userId: quest.assignedWorkerId,
+    role: UserRole.Worker,
+  });
+  await updateQuestsStatisticJob({
+    userId: employer.id,
+    role: UserRole.Employer,
   });
 
   return output();

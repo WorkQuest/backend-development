@@ -6,8 +6,9 @@ import {
   User,
   Quest,
   QuestStatus,
+  StarredQuests,
+  QuestsResponse,
   QuestSpecializationFilter,
-  QuestsResponse, StarredQuests,
 } from "@workquest/database-models/lib/models";
 
 abstract class QuestHelper {
