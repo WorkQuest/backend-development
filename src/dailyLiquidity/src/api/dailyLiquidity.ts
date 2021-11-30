@@ -13,7 +13,7 @@ const abiFilePath = path.join(__dirname,'../../../../src/dailyLiquidity/abi/dail
 const abiBNB: any[] = JSON.parse(fs.readFileSync(abiFilePath).toString()).abi
 const contractBNB = '0x3ea2de549ae9dcb7992f91227e8d6629a22c3b40'
 
-
+//при запуске сервера эта функция вызывается, чтобы посчитать ликвидность в первый раз
 export async function apyAllPairs() {
   const provider = new Web3.providers.WebsocketProvider(providerBNB);
   const web3 = new Web3(provider);
@@ -41,8 +41,6 @@ export async function apyAllPairs() {
 
     let startOfTheDay = await dater.getEvery('days', startDayFromDate.toUTCString(), startDayToDate.toUTCString());
     let endOfTheDay = await dater.getEvery('days', endDayFromDate.toUTCString(), endDayToDate.toUTCString(), 1, false);
-    console.log(startOfTheDay);
-    console.log(endOfTheDay);
     let startDayBlock: number;
     let endDayBlock: number;
     let step = 5000;
@@ -55,7 +53,6 @@ export async function apyAllPairs() {
           toBlock: blockNumber,
         }, function(error, event) {
           eventsSync.push(event)
-
         });
         for(let i = 0; i < eventsSync[0].length; i++) {
           const token0 = Number(new BigNumber(eventsSync[0][i].returnValues.reserve0).shiftedBy(-18));
@@ -74,7 +71,7 @@ export async function apyAllPairs() {
         }
         eventsSync.slice(0,eventsSync.length);
       }
-      const dailyInfo = await DailyLiquidity.findAndCountAll({
+      const dailyInfo = await DailyLiquidity.findAll({
         where: {
           timestamp: {
             [Op.between]: [startOfTheDay[index].timestamp, endOfTheDay[index].timestamp]
@@ -83,33 +80,23 @@ export async function apyAllPairs() {
         order: [["timestamp", "DESC"]]
       });
 
-      for (let i = 1; i < dailyInfo.count - 1; i ++) {
-        await dailyInfo.rows[i].destroy()
+      for (let i = 0; i < dailyInfo.length - 1; i ++) {
+        await dailyInfo[i].destroy()
       }
 
-      const priceInfoWQTStartDay = await axios.get(`https://api.coingecko.com/api/v3/coins/work-quest/market_chart/range?vs_currency=usd&from=${Number(dailyInfo.rows[0].timestamp) - 1800}&to=${Number(dailyInfo.rows[0].timestamp) + 1800}`, {
+      const priceInfoWQTStartDay = await axios.get(`https://api.coingecko.com/api/v3/coins/work-quest/market_chart/range?vs_currency=usd&from=${Number(dailyInfo[0].timestamp) - 1800}&to=${Number(dailyInfo[0].timestamp) + 1800}`, {
         timeout: 10000
       });
-      const priceInfoBNBStartDay = await axios.get(`https://api.coingecko.com/api/v3/coins/binancecoin/market_chart/range?vs_currency=usd&from=${Number(dailyInfo.rows[0].timestamp) - 1800}&to=${Number(dailyInfo.rows[0].timestamp) + 1800}`, {
+      const priceInfoBNBStartDay = await axios.get(`https://api.coingecko.com/api/v3/coins/binancecoin/market_chart/range?vs_currency=usd&from=${Number(dailyInfo[0].timestamp) - 1800}&to=${Number(dailyInfo[0].timestamp) + 1800}`, {
         timeout: 10000
       });
-      await dailyInfo.rows[0].update({
+      const poolToken = Number((Number(dailyInfo[0].bnbPool) * priceInfoBNBStartDay.data.prices[0][1])) + Number((Number(dailyInfo[0].wqtPool) * priceInfoWQTStartDay.data.prices[0][1]));
+
+      await dailyInfo[0].update({
         usdPriceWQT: priceInfoWQTStartDay.data.prices[0][1],
         usdPriceBNB: priceInfoBNBStartDay.data.prices[0][1],
+        liquidityPoolUSD: poolToken
       });
-
-      const priceInfoWQTEndDay = await axios.get(`https://api.coingecko.com/api/v3/coins/work-quest/market_chart/range?vs_currency=usd&from=${Number(dailyInfo.rows[1].timestamp) - 1800}&to=${Number(dailyInfo.rows[1].timestamp) + 1800}`, {
-        timeout: 10000
-      });
-      const priceInfoBNBEndDay = await axios.get(`https://api.coingecko.com/api/v3/coins/binancecoin/market_chart/range?vs_currency=usd&from=${Number(dailyInfo.rows[1].timestamp) - 1800}&to=${Number(dailyInfo.rows[1].timestamp) + 1800}`, {
-        timeout: 10000
-      });
-      await dailyInfo.rows[0].update({
-        usdPriceWQT: priceInfoWQTEndDay.data.prices[0][1],
-        usdPriceBNB: priceInfoBNBEndDay.data.prices[0][1],
-      });
-
-      //прайс?
     }
   }
 }
