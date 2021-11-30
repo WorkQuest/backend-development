@@ -114,16 +114,6 @@ export default async function cleanPoolData(payload: UnreadMessageIncrementPaylo
 
   await destroyLiquidity.destroy();
 
-  const fromTime = new Date().setUTCHours(0, 0, 0)
-  const toTime = new Date().setUTCHours(23, 59, 0,0)
-  const events = await DailyLiquidity.findAll({
-    where: {
-      timestamp: {
-        [Op.between]: [1637791484, 1637802789]
-      }
-    }
-  });
-
   const netStartDate = new Date(new Date().setUTCHours(0, 0, 0, 0)).toUTCString() //без обёртки в new Date() время будет в Unix - шедулер не заупстится
   await addJob('cleanPoolData', {  }, { 'run_at': netStartDate})
 }
