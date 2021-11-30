@@ -9,7 +9,8 @@ import * as path from "path";
 import * as fs from "fs";
 const EthDater = require('ethereum-block-by-date');
 const providerBNB = 'wss://speedy-nodes-nyc.moralis.io/99c238c237fa12068a89c5c6/bsc/mainnet/ws'
-const abiFilePath = path.join(__dirname,'../../../../src/dailyLiquidity/abi/dailyLiquidityAbi.json');
+const abiFilePath = path.join(__dirname,'../../../src/dailyLiquidity/abi/dailyLiquidityAbi.json');
+console.log(abiFilePath);
 const abiBNB: any[] = JSON.parse(fs.readFileSync(abiFilePath).toString()).abi
 const contractBNB = '0x3ea2de549ae9dcb7992f91227e8d6629a22c3b40'
 
