@@ -100,3 +100,7 @@ export async function apyAllPairs() {
     }
   }
 }
+
+export async function getLiquidity(r) {
+  return(await DailyLiquidity.findAll({limit: r.query.limit, offset: r.query.offset}));
+}

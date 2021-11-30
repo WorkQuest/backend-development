@@ -5,15 +5,17 @@ import {
   offsetSchema,
   outputOkSchema
 } from "@workquest/database-models/lib/schemes";
-import { apyAllPairs } from "../api/dailyLiquidity";
+import { apyAllPairs, getLiquidity } from "../api/dailyLiquidity";
+import { dailyLiquiditySchema } from "@workquest/database-models/lib/schemes/dailyLiquidity";
 
 export default [{
   method: 'GET',
-  path: '/v1/liquidity',
-  handler: apyAllPairs,
+  path: '/v1/liquidity/wqt-bnb',
+  handler: getLiquidity,
   options: {
     auth: false,
     id: 'v1.daily.liquidity',
+    description: "Get liquidity per 10 days",
     tags: ['api', 'liquidity'],
     validate: {
       query: Joi.object({
@@ -22,7 +24,7 @@ export default [{
       }).label('GetDailyLiquidity'),
     },
     response: {
-      schema: emptyOkSchema
+      schema: outputOkSchema(dailyLiquiditySchema).label('DailyLiquidityResponse')
     },
   }
 }];
