@@ -6,11 +6,18 @@ import {
   Discussion,
   DiscussionLike,
   DiscussionComment,
-  DiscussionCommentLike, StarredDiscussion
+  DiscussionCommentLike,
+  StarredDiscussion
 } from "@workquest/database-models/lib/models";
 
 export async function getDiscussion(r) {
   const discussion = await Discussion.findOne({
+    include: [{
+      model: DiscussionLike,
+      as: 'likes',
+      where: {userId: r.auth.credentials.id},
+      required: false
+    }],
     where: { id: r.params.discussionId },
   });
 
@@ -23,6 +30,12 @@ export async function getDiscussion(r) {
 
 export async function getDiscussions(r) {
   const { count, rows } = await Discussion.findAndCountAll({
+    include: [{
+      model: DiscussionLike,
+      as: 'likes',
+      where: {userId: r.auth.credentials.id},
+      required: false
+    }],
     order: [ ['createdAt', 'DESC'] ],
     limit: r.query.limit,
     offset: r.query.offset,
@@ -39,6 +52,12 @@ export async function getSubComments(r) {
   }
 
   const { count, rows } = await DiscussionComment.findAndCountAll({
+    include: [{
+      model: DiscussionCommentLike,
+      as: 'commentLikes',
+      where: {userId: r.auth.credentials.id},
+      required: false
+    }],
     where: { rootCommentId: rootComment.id },
     order: [ ['createdAt', 'DESC'] ],
     limit: r.query.limit,
@@ -56,6 +75,12 @@ export async function getRootComments(r) {
   }
 
   const { count, rows } = await DiscussionComment.findAndCountAll({
+    include: [{
+      model: DiscussionCommentLike,
+      as: 'commentLikes',
+      where: {userId: r.auth.credentials.id},
+      required: false
+    }],
     where: { rootCommentId: null, discussionId: r.params.discussionId },
     order: [ ['createdAt', 'DESC'] ],
     limit: r.query.limit,
@@ -176,12 +201,14 @@ export async function putCommentLike(r) {
 
   const transaction = await r.server.app.db.transaction();
 
-  await comment.increment('amountLikes', { transaction });
-
-  await DiscussionCommentLike.findOrCreate({
+  const [like, isCreated] = await DiscussionCommentLike.findOrCreate({
     where: { userId: r.auth.credentials.id, commentId: r.params.commentId },
     defaults: { userId: r.auth.credentials.id, commentId: r.params.commentId },
   });
+
+  if(isCreated) {
+    await comment.increment('amountLikes', { transaction });
+  }
 
   await transaction.commit();
 
