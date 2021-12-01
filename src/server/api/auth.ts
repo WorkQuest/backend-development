@@ -11,16 +11,15 @@ import {UserController} from "../controllers/user/controller.user";
 import {
 	error,
 	output,
-	getDevice,
 	getGeo,
-	getRandomHexToken,
 	getRealIp,
+	getDevice,
+	getRandomHexToken,
 } from "../utils";
 import {
 	User,
 	Session,
 	UserStatus,
-	RatingStatistic,
 	QuestsStatistic,
 	defaultUserSettings,
 } from "@workquest/database-models/lib/models";
