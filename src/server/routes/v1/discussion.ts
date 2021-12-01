@@ -258,5 +258,60 @@ export default [{
       schema: emptyOkSchema
     }
   }
-}];
+}, {
+  method: "GET",
+  path: "/v1/discussion/star",
+  handler: handlers.getStarredDiscussions,
+  options: {
+    auth: 'jwt-access',
+    id: "v1.discussion.getStarred",
+    tags: ["api", "discussion"],
+    description: "Get starred discussions",
+    validate: {
+      query: Joi.object({
+        limit: limitSchema,
+        offset: offsetSchema,
+      }).label('GetStarredDiscussionsQuery')
+    },
+    response: {
+      schema: outputPaginationSchema('discussions', discussionSchema).label('GetStarredDiscussionSchema'),
+    }
+  }
+}, {
+  method: "POST",
+  path: "/v1/discussion/{discussionId}/star",
+  handler: handlers.markDiscussionStar,
+  options: {
+    auth: 'jwt-access',
+    id: "v1.discussion.setStar",
+    tags: ["api", "discussion"],
+    description: "Set star on discussion",
+    validate: {
+      params: Joi.object({
+        discussionId: idSchema.required(),
+      }).label("DiscussionSetStarParams"),
+    },
+    response: {
+      schema: emptyOkSchema
+    }
+  }
+}, {
+  method: "DELETE",
+  path: "/v1/discussion/{discussionId}/star",
+  handler: handlers.removeDiscussionStar,
+  options: {
+    auth: 'jwt-access',
+    id: "v1.discussion.removeStar",
+    tags: ["api", "discussion"],
+    description: "Remove star from discussion",
+    validate: {
+      params: Joi.object({
+        discussionId: idSchema.required(),
+      }).label("DiscussionRemoveStarParams"),
+    },
+    response: {
+      schema: emptyOkSchema
+    }
+  }
+},];
 

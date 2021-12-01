@@ -6,7 +6,7 @@ import {
   Discussion,
   DiscussionLike,
   DiscussionComment,
-  DiscussionCommentLike,
+  DiscussionCommentLike, StarredDiscussion
 } from "@workquest/database-models/lib/models";
 
 export async function getDiscussion(r) {
@@ -234,4 +234,49 @@ export async function getCommentUsersLikes(r) {
   });
 
   return output({count, users: rows});
+}
+
+export async function markDiscussionStar(r) {
+  const discussion = await Discussion.findByPk(r.params.discussionId);
+
+  if (!discussion) {
+    return error(Errors.NotFound, 'Discussion is not found', {});
+  }
+
+  const [star, isCreated] = await StarredDiscussion.findOrCreate({
+    where: {discussionId: r.params.discussionId, userId: r.auth.credentials.id},
+    defaults: {
+      userId: r.auth.credentials.id,
+      discussionId: r.params.discussionId
+    },
+  });
+
+  if(!isCreated) {
+    return error(Errors.AlreadyExists, 'You already set star on this discussion', {});
+  }
+
+  return output();
+}
+
+export async function removeDiscussionStar(r) {
+  const starredDiscussion = await StarredDiscussion.findOne({
+    where: {
+      discussionId: r.params.discussionId,
+      userId: r.auth.credentials.id,
+    }
+  });
+
+  if (!starredDiscussion) {
+    return error(Errors.NotFound, 'THis discussion has no star', {});
+  }
+
+  await starredDiscussion.destroy();
+
+  return output();
+}
+
+export async function getStarredDiscussions(r) {
+  const discussions = await StarredDiscussion.findAndCountAll({ where: {userId: r.auth.credentials.id }});
+
+  return output({discussions: discussions.rows, count: discussions.count});
 }
