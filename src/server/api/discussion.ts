@@ -132,14 +132,15 @@ export async function putDiscussionLike(r) {
 
   const transaction = await r.server.app.db.transaction();
 
-  await DiscussionLike.findOrCreate({
+  const [like, isCreated] = await DiscussionLike.findOrCreate({
     where: { userId: r.auth.credentials.id, discussionId: r.params.discussionId },
     defaults: { userId: r.auth.credentials.id, discussionId: r.params.discussionId },
     transaction,
   });
 
-  await discussion.increment('amountLikes', { transaction });
-
+  if(isCreated) {
+    await discussion.increment('amountLikes', { transaction });
+  }
   await transaction.commit();
 
   return output();
