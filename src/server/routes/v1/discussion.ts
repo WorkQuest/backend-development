@@ -15,7 +15,7 @@ import {
   discussionCommentSchema,
   discussionCommentsSchema,
   discussionDescriptionSchema,
-  discussionCommentTextSchema,
+  discussionCommentTextSchema, searchSchema
 } from "@workquest/database-models/lib/schemes";
 
 export default [{
@@ -29,6 +29,7 @@ export default [{
     description: "Get discussions",
     validate: {
       query: Joi.object({
+        search: searchSchema,
         limit: limitSchema,
         offset: offsetSchema,
       }).label("GetDiscussionsQuery")
