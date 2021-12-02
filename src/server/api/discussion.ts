@@ -50,13 +50,10 @@ export async function getDiscussions(r) {
       as: "author",
       required: true,
     });
-
     where[Op.or] = searchField.map(field => ({
       [Op.or]: [{[field]: { [Op.iLike]: `%${r.query.search}%` }}]
     }));
-
     where[Op.or].push(literal(`"author"."firstName" iLike '${r.query.search}' OR "author"."lastName" iLike '${r.query.search}'`))
-
   }
   console.log(where);
 
