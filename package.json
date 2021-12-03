@@ -7,6 +7,8 @@
     "start": "nodemon -e ts --exec \"npm run compile\"",
     "bridge:start": "nodemon -e ts --exec \"npm run bridge:compile\"",
     "bridge:compile": "tsc && node ./build/bridge/index.js",
+    "dailyLiquidity:start": "nodemon -e ts --exec \"npm run dailyliquidity:compile\"",
+    "dailyliquidity:compile": "tsc && node ./build/dailyLiquidity/index.js",
     "compile": "tsc && node ./build/main.js",
     "build": "tsc",
     "test": "lab --sourcemaps --transform node_modules/lab-transform-typescript -v --leaks"

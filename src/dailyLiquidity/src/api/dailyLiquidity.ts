@@ -4,7 +4,6 @@ import * as path from "path";
 import * as fs from "fs";
 import { DailyLiquidity } from "@workquest/database-models/lib/models";
 import {Op} from "sequelize"
-import { from } from "form-data";
 const EthDater = require('ethereum-block-by-date');
 const Web3 = require('web3');
 
