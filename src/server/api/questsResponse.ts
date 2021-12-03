@@ -2,6 +2,7 @@ import { Op } from 'sequelize'
 import {error, output} from "../utils";
 import {Errors} from "../utils/errors";
 import {publishQuestNotifications, QuestNotificationActions} from "../websocket/websocket.quest";
+import { ChatNotificationActions, publishChatNotifications } from "../websocket/websocket.chat";
 import {QuestsResponseController} from "../controllers/quest/controller.questsResponse";
 import {QuestController} from "../controllers/quest/controller.quest";
 import {UserController}  from "../controllers/user/controller.user";
@@ -23,7 +24,6 @@ import {
   QuestsResponseType,
   QuestsResponseStatus,
 } from "@workquest/database-models/lib/models";
-import { ChatNotificationActions, publishChatNotifications } from "../websocket/websocket.chat";
 
 export async function responseOnQuest(r) {
   let questResponse: QuestsResponse;

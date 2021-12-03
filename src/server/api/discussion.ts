@@ -9,6 +9,18 @@ import {
   DiscussionCommentLike,
 } from "@workquest/database-models/lib/models";
 
+export async function getDiscussion(r) {
+  const discussion = await Discussion.findOne({
+    where: { id: r.params.discussionId },
+  });
+
+  if (!discussion) {
+    return error(Errors.NotFound, "Discussion not found", { discussionId: r.params.discussionId });
+  }
+
+  return output(discussion);
+}
+
 export async function getDiscussions(r) {
   const { count, rows } = await Discussion.findAndCountAll({
     order: [ ['createdAt', 'DESC'] ],
@@ -27,7 +39,7 @@ export async function getSubComments(r) {
   }
 
   const { count, rows } = await DiscussionComment.findAndCountAll({
-    where: { rootCommentId: r.query.commentId },
+    where: { rootCommentId: rootComment.id },
     order: [ ['createdAt', 'DESC'] ],
     limit: r.query.limit,
     offset: r.query.offset,
@@ -73,7 +85,7 @@ export async function createDiscussion(r) {
 export async function sendComment(r) {
   const medias = await MediaController.getMedias(r.payload.medias);
 
-  const discussion = await Discussion.findAll({
+  const discussion = await Discussion.findOne({
     where: { id: r.params.discussionId }
   });
 
@@ -93,6 +105,8 @@ export async function sendComment(r) {
     }
 
     await rootComment.increment('amountSubComments', { transaction });
+  } else {
+    await discussion.increment('amountComments', { transaction });
   }
 
   const comment = await DiscussionComment.create({

@@ -1,5 +1,6 @@
 import * as Joi from "joi";
 import * as handlers from "../../api/profile";
+import { UserRole } from "@workquest/database-models/lib/models";
 import {
   idSchema,
   userSchema,
@@ -7,6 +8,7 @@ import {
   outputOkSchema,
   locationSchema,
   userRoleSchema,
+  workPlaceSchema,
   userWorkersSchema,
   mobilePhoneSchema,
   workerQuerySchema,
@@ -18,9 +20,8 @@ import {
   workerWagePerHourSchema,
   specializationKeysSchema,
   userAdditionalInfoWorkerSchema,
-  userAdditionalInfoEmployerSchema,
+  userAdditionalInfoEmployerSchema, prioritySchema
 } from "@workquest/database-models/lib/schemes";
-import { UserRole } from "@workquest/database-models/lib/models";
 
 export default [{
   method: "GET",
@@ -118,10 +119,12 @@ export default [{
     description: "Edit worker profile",
     validate: {
       payload: Joi.object({
-        avatarId: idSchema.allow(null).required(),
-        firstName: userFirstNameSchema.required(),
         lastName: userLastNameSchema.required(),
+        firstName: userFirstNameSchema.required(),
+        avatarId: idSchema.allow(null).required(),
+        priority: prioritySchema.allow(null).required(),
         location: locationSchema.allow(null).required(),
+        workplace: workPlaceSchema.allow(null).required(),
         additionalInfo: userAdditionalInfoWorkerSchema.required(),
         wagePerHour: workerWagePerHourSchema.allow(null).required(),
         specializationKeys: specializationKeysSchema.allow(null).required().unique(),

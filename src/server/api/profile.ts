@@ -8,9 +8,10 @@ import {SkillsFiltersController} from "../controllers/controller.skillsFilters";
 import {
   User,
   UserRole,
+  RatingStatistic,
   UserSpecializationFilter,
-  Quest
 } from "@workquest/database-models/lib/models";
+import { addUpdateReviewStatisticsJob } from "../jobs/updateReviewStatistics";
 
 export const searchFields = [
   "firstName",
@@ -46,7 +47,11 @@ export function getUsers(role: UserRole) {
 
     const where = {
       ...(r.query.north && r.query.south && { [Op.and]: entersAreaLiteral }), role,
-      ...(role === UserRole.Worker && r.query.betweenWagePerHour && { wagePerHour: { [Op.between]: [r.query.betweenWagePerHour.from, r.query.betweenWagePerHour.to]} }),
+      ...(r.query.workplace && { workplace: r.query.workplace }),
+      ...(r.query.priority && {priority: r.query.priority}),
+      ...(r.query.betweenWagePerHour && { wagePerHour: {
+          [Op.between]: [r.query.betweenWagePerHour.from, r.query.betweenWagePerHour.to]
+      } }),
     };
 
     if (r.query.q) {
@@ -72,6 +77,16 @@ export function getUsers(role: UserRole) {
           where: { specializationKey: { [Op.in]: specializationKeys } },
         });
       }
+
+      distinctCol = 'id';
+    }
+    if (r.query.ratingStatus) {
+      include.push({
+        model: RatingStatistic,
+        as: 'ratingStatistic',
+        required: true,
+        where: { status: r.query.ratingStatus },
+      });
 
       distinctCol = 'id';
     }
@@ -130,12 +145,18 @@ export function editProfile(userRole: UserRole) {
       lastName: r.payload.lastName,
       location: r.payload.location,
       firstName: r.payload.firstName,
+      priority: r.payload.priority || null,
+      workplace: r.payload.workplace || null,
+      wagePerHour: r.payload.wagePerHour || null,
       additionalInfo: r.payload.additionalInfo,
       locationPostGIS: r.payload.location ? transformToGeoPostGIS(r.payload.location) : null,
-      wagePerHour: userRole === UserRole.Worker ? r.payload.wagePerHour : null,
     }, transaction);
 
     await transaction.commit();
+
+    await addUpdateReviewStatisticsJob({
+      userId: user.id,
+    });
 
     return output(
       await User.findByPk(r.auth.credentials.id)

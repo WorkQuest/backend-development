@@ -11,6 +11,7 @@ import {
   messageSchema,
   outputOkSchema,
   chatNameSchema,
+  chatQuerySchema,
   chatForGetSchema,
   messageTextSchema,
   sortDirectionSchema,
@@ -30,14 +31,7 @@ export default [{
     tags: ["api", "chat"],
     description: "Get all chats",
     validate: {
-      query: Joi.object({
-        starred: Joi.boolean().default(false),
-        offset: offsetSchema,
-        limit: limitSchema,
-        sort: Joi.object({
-          lastMessageDate: sortDirectionSchema.default('DESC'),
-        }).default({ lastMessageDate: 'DESC' }).label('SortChats'),
-      }).label('GetChatsQuery')
+      query: chatQuerySchema,
     },
     response: {
       schema: outputOkSchema(chatsForGetWithCountSchema).label('GetChatsResponse'),
@@ -119,7 +113,7 @@ export default [{
     validate: {
       payload: Joi.object({
         name: chatNameSchema.required(),
-        memberUserIds: idsSchema.required().min(2).unique(),
+        memberUserIds: idsSchema.required().min(1).unique(),
       }).label('CreateGroupChatPayload')
     },
     response: {

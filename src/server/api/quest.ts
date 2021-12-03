@@ -1,25 +1,28 @@
-import {Op, literal} from 'sequelize';
-import {Errors} from '../utils/errors';
-import {UserController} from "../controllers/user/controller.user";
-import {QuestController} from "../controllers/quest/controller.quest";
-import {transformToGeoPostGIS} from "../utils/postGIS";
-import {error, output} from "../utils";
-import {publishQuestNotifications, QuestNotificationActions} from "../websocket/websocket.quest";
-import {QuestsResponseController} from "../controllers/quest/controller.questsResponse";
-import {MediaController} from "../controllers/controller.media";
+import { literal, Op } from "sequelize";
+import { Errors } from "../utils/errors";
+import { UserController } from "../controllers/user/controller.user";
+import { QuestController } from "../controllers/quest/controller.quest";
+import { transformToGeoPostGIS } from "../utils/postGIS";
+import { error, output } from "../utils";
+import { publishQuestNotifications, QuestNotificationActions } from "../websocket/websocket.quest";
+import { QuestsResponseController } from "../controllers/quest/controller.questsResponse";
+import { MediaController } from "../controllers/controller.media";
 import { SkillsFiltersController } from "../controllers/controller.skillsFilters";
+import { addUpdateReviewStatisticsJob } from "../jobs/updateReviewStatistics";
 import {
-  User,
+  Chat,
   Quest,
-  UserRole,
   QuestChat,
-  QuestStatus,
-  StarredQuests,
-  QuestsResponse,
   QuestChatStatuses,
   QuestsResponseType,
   QuestSpecializationFilter,
+  QuestsResponse,
+  QuestStatus,
+  StarredQuests,
+  User,
+  UserRole
 } from "@workquest/database-models/lib/models";
+import { updateQuestsStatisticJob } from "../jobs/updateQuestsStatistic";
 
 export const searchFields = [
   "title",
@@ -27,6 +30,8 @@ export const searchFields = [
 ];
 
 export async function getQuest(r) {
+  const user: User = r.auth.credentials;
+
   const quest = await Quest.findOne({
     where: { id: r.params.questId },
     include: [{
@@ -82,6 +87,11 @@ export async function createQuest(r) {
   await questController.setQuestSpecializations(r.payload.specializationKeys, true, transaction);
 
   await transaction.commit();
+
+  await updateQuestsStatisticJob({
+    userId: employer.id,
+    role: UserRole.Employer,
+  });
 
   return output(
     await Quest.findByPk(quest.id)
@@ -148,7 +158,7 @@ export async function closeQuest(r) {
 
   await questController
     .employerMustBeQuestCreator(employer.id)
-    .questMustHaveStatus(QuestStatus.Created, QuestStatus.WaitConfirm)
+    .questMustHaveStatus(QuestStatus.Created)
 
   const transaction = await r.server.app.db.transaction();
 
@@ -157,6 +167,11 @@ export async function closeQuest(r) {
   await QuestsResponseController.closeAllResponsesOnQuest(questController.quest, transaction);
 
   await transaction.commit();
+
+  await updateQuestsStatisticJob({
+    userId: employer.id,
+    role: UserRole.Employer,
+  });
 
   return output();
 }
@@ -234,7 +249,7 @@ export async function acceptWorkOnQuest(r) {
   const questController = new QuestController(await Quest.findByPk(r.params.questId));
 
   workerController.
-  userMustHaveRole(UserRole.Worker)
+    userMustHaveRole(UserRole.Worker)
 
   questController
     .questMustHaveStatus(QuestStatus.WaitWorker)
@@ -246,6 +261,11 @@ export async function acceptWorkOnQuest(r) {
   await questController.answerWorkOnQuest(worker, true, transaction);
 
   await transaction.commit();
+
+  await updateQuestsStatisticJob({
+    userId: worker.id,
+    role: UserRole.Worker,
+  });
 
   await publishQuestNotifications(r.server, {
     data: questController.quest,
@@ -293,6 +313,22 @@ export async function acceptCompletedWorkOnQuest(r) {
     data: quest,
     recipients: [quest.assignedWorkerId],
     action: QuestNotificationActions.employerAcceptedCompletedQuest,
+  });
+
+  await addUpdateReviewStatisticsJob({
+    userId: quest.userId,
+  });
+  await addUpdateReviewStatisticsJob({
+    userId: quest.assignedWorkerId,
+  });
+
+  await updateQuestsStatisticJob({
+    userId: quest.assignedWorkerId,
+    role: UserRole.Worker,
+  });
+  await updateQuestsStatisticJob({
+    userId: employer.id,
+    role: UserRole.Employer,
   });
 
   return output();
