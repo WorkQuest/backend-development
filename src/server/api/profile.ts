@@ -211,3 +211,10 @@ export async function sendCodeOnPhoneNumber(r) {
 
   return output();
 }
+
+export async function getInvestors(r) {
+  const investors = await User.scope('dao').findAndCountAll({
+    limit: r.q
+  });
+
+}

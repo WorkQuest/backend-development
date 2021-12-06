@@ -7,6 +7,7 @@ import {
   ProposalStatus
 } from "@workquest/database-models/lib/models";
 
+//TODO: improve userId to address of user's waller
 export async function createProposal(r) {
   await MediaController.getMedias(r.payload.medias);
 
