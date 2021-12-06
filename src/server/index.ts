@@ -18,7 +18,7 @@ import { handleValidationError, responseHandler } from "./utils";
 import { tokenValidate } from "./utils/auth";
 import { pinoConfig } from "./config/pino";
 import { run } from "graphile-worker";
-import { apyAllPairs } from "../dailyLiquidity/src/api/dailyLiquidity";
+import { startDailyLiquidity } from "../dailyLiquidity/src/api/dailyLiquidity";
 
 const HapiSwagger = require("hapi-swagger");
 const Package = require("../../package.json");
@@ -133,7 +133,7 @@ const init = async () => {
 
   try {
     await server.start();
-    await apyAllPairs(); /////
+    await startDailyLiquidity(); /////
     server.log('info', `Server running at: ${server.info.uri}`);
   } catch (err) {
     server.log('error', JSON.stringify(err));
