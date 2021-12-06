@@ -213,8 +213,12 @@ export async function sendCodeOnPhoneNumber(r) {
 }
 
 export async function getInvestors(r) {
-  const investors = await User.scope('dao').findAndCountAll({
-    limit: r.q
+  const users = await User.findAndCountAll({
+    distinct: true,
+    col: '"User"."id"',
+    limit: r.query.limit,
+    offset: r.query.offset,
   });
 
+  return output({count: users.count, users: users.rows});
 }
