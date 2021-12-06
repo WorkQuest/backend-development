@@ -1,3 +1,4 @@
+import { Op } from "sequelize";
 import { error, output } from "../utils";
 import { Errors } from "../utils/errors";
 import { MediaController } from "../controllers/controller.media";
@@ -9,20 +10,27 @@ import {
   DiscussionCommentLike,
   StarredDiscussion
 } from "@workquest/database-models/lib/models";
-import { Op, literal } from "sequelize";
 
-export const searchField = [
-  "title",
-  "description",
+const searchFields = [
+  'title',
+  'description',
+  '"author"."lastName"',
+  '"author"."firstName"',
 ];
 
 export async function getDiscussion(r) {
   const discussion = await Discussion.findOne({
     include: [{
       model: DiscussionLike,
-      as: "likes",
+      as: "liked",
       where: { userId: r.auth.credentials.id },
-      required: false
+    }, {
+      model: StarredDiscussion,
+      as: 'star',
+      where: { userId: r.auth.credentials.id },
+    }, {
+      model: User,
+      as: "author",
     }],
     where: { id: r.params.discussionId }
   });
@@ -39,26 +47,25 @@ export async function getDiscussions(r) {
 
   const include = [{
     model: DiscussionLike,
-    as: "likes",
+    as: "liked",
     where: { userId: r.auth.credentials.id },
-    required: false
-  }] as any[];
+  }, {
+    model: StarredDiscussion,
+    as: 'star',
+    where: { userId: r.auth.credentials.id },
+  }, {
+    model: User,
+    as: "author",
+  }];
 
-  if (r.query.search) {
-      include.push({
-      model: User,
-      as: "author",
-      required: true,
-    });
-    where[Op.or] = searchField.map(field => ({
-      [Op.or]: [{[field]: { [Op.iLike]: `%${r.query.search}%` }}]
+  if (r.query.q) {
+    where[Op.or] = searchFields.map(field => ({
+      [field]: { [Op.iLike]: `%${r.query.q}%` }
     }));
-    where[Op.or].push(literal(`"author"."firstName" iLike '${r.query.search}' OR "author"."lastName" iLike '${r.query.search}'`))
   }
-  console.log(where);
 
   const { count, rows } = await Discussion.findAndCountAll({
-    subQuery:false,
+    subQuery: false,
     include, where,
     order: [["createdAt", "DESC"]],
     limit: r.query.limit,
@@ -282,7 +289,7 @@ export async function getCommentUsersLikes(r) {
       where: { commentId: r.params.commentId }
     }],
     limit: r.query.limit,
-    offset: r.query.offset
+    offset: r.query.offset,
   });
 
   return output({ count, users: rows });
@@ -314,21 +321,15 @@ export async function removeDiscussionStar(r) {
   const starredDiscussion = await StarredDiscussion.findOne({
     where: {
       discussionId: r.params.discussionId,
-      userId: r.auth.credentials.id
+      userId: r.auth.credentials.id,
     }
   });
 
   if (!starredDiscussion) {
-    return error(Errors.NotFound, "THis discussion has no star", {});
+    return error(Errors.NotFound, "This discussion has no star", {});
   }
 
   await starredDiscussion.destroy();
 
   return output();
-}
-
-export async function getStarredDiscussions(r) {
-  const discussions = await StarredDiscussion.findAndCountAll({ where: { userId: r.auth.credentials.id } });
-
-  return output({ discussions: discussions.rows, count: discussions.count });
 }

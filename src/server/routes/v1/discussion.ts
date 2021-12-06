@@ -4,18 +4,19 @@ import {
   idSchema,
   idsSchema,
   limitSchema,
+  searchSchema,
   offsetSchema,
   emptyOkSchema,
   outputOkSchema,
   userShortSchema,
   discussionSchema,
-  discussionsSchema,
   discussionTitleSchema,
   outputPaginationSchema,
   discussionCommentSchema,
+  discussionsForGetSchema,
   discussionCommentsSchema,
   discussionDescriptionSchema,
-  discussionCommentTextSchema, searchSchema
+  discussionCommentTextSchema,
 } from "@workquest/database-models/lib/schemes";
 
 export default [{
@@ -29,13 +30,13 @@ export default [{
     description: "Get discussions",
     validate: {
       query: Joi.object({
-        search: searchSchema,
+        q: searchSchema,
         limit: limitSchema,
         offset: offsetSchema,
       }).label("GetDiscussionsQuery")
     },
     response: {
-      schema: outputOkSchema(discussionsSchema).label("GetDiscussionsResponse")
+      schema: outputOkSchema(discussionsForGetSchema).label("GetDiscussionsResponse")
     }
   }
 }, {
@@ -257,25 +258,6 @@ export default [{
     },
     response: {
       schema: emptyOkSchema
-    }
-  }
-}, {
-  method: "GET",
-  path: "/v1/discussion/star",
-  handler: handlers.getStarredDiscussions,
-  options: {
-    auth: 'jwt-access',
-    id: "v1.discussion.getStarred",
-    tags: ["api", "discussion"],
-    description: "Get starred discussions",
-    validate: {
-      query: Joi.object({
-        limit: limitSchema,
-        offset: offsetSchema,
-      }).label('GetStarredDiscussionsQuery')
-    },
-    response: {
-      schema: outputPaginationSchema('discussions', discussionSchema).label('GetStarredDiscussionSchema'),
     }
   }
 }, {
