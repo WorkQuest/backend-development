@@ -18,6 +18,7 @@ import { handleValidationError, responseHandler } from "./utils";
 import { tokenValidate } from "./utils/auth";
 import { pinoConfig } from "./config/pino";
 import { run } from "graphile-worker";
+import * as grScheduler from "graphile-scheduler";
 import { startDailyLiquidity } from "../dailyLiquidity/src/api/dailyLiquidity";
 
 const HapiSwagger = require("hapi-swagger");
@@ -96,6 +97,18 @@ const init = async () => {
     taskDirectory: `${__dirname}/jobs` // Папка с исполняемыми тасками.
   });
 
+  server.app.grScheduler = await grScheduler.run({
+    connectionString: config.dbLink,
+    schedules: [
+      {
+        name: "dailyLiquidity",
+        pattern: "0 0 * * *",
+        timeZone: "Africa/Abidjan", //unix
+        task: startDailyLiquidity,
+      },
+    ],
+  });
+
   /** JWT Auth */
   server.auth.strategy('jwt-access', 'bearer-access-token', {
     validate: tokenValidate('access', [
@@ -133,7 +146,7 @@ const init = async () => {
 
   try {
     await server.start();
-    await startDailyLiquidity(); /////
+   // await startDailyLiquidity(); /////
     server.log('info', `Server running at: ${server.info.uri}`);
   } catch (err) {
     server.log('error', JSON.stringify(err));

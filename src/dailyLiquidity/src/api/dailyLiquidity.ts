@@ -6,7 +6,6 @@ import { DailyLiquidity } from "@workquest/database-models/lib/models";
 import {Op} from "sequelize"
 const EthDater = require('ethereum-block-by-date');
 const Web3 = require('web3');
-const cron = require('node-cron');
 
 const providerBNB = 'wss://speedy-nodes-nyc.moralis.io/99c238c237fa12068a89c5c6/bsc/mainnet/ws'
 const abiFilePath = path.join(__dirname,'../../../../src/dailyLiquidity/abi/dailyLiquidityAbi.json');
@@ -191,16 +190,13 @@ export async function startDailyLiquidity() {
   let lastRecord = await DailyLiquidity.findOne({
     order: [["createdAt", "DESC"]]
   });
+  console.log("HERE");
 
-/*  if(!lastRecord) {
+  if(!lastRecord) {
     await firstStart();
   } else {
     await startPerDay();
-  }*/
-
-  cron.schedule('* * * * *', () => {
-    console.log('Run dailyLiquidity');
-  });
+  }
 }
 
 export async function getLiquidity(r) {
