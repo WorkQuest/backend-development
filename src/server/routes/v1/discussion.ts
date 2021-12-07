@@ -33,6 +33,7 @@ export default [{
         q: searchSchema,
         limit: limitSchema,
         offset: offsetSchema,
+        starred: Joi.boolean().default(false),
       }).label("GetDiscussionsQuery")
     },
     response: {
@@ -296,5 +297,5 @@ export default [{
       schema: emptyOkSchema
     }
   }
-},];
+}];
 

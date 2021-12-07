@@ -43,7 +43,7 @@ export async function getDiscussion(r) {
 }
 
 export async function getDiscussions(r) {
-  const where = {};
+  const where = { };
 
   const include = [{
     model: DiscussionLike,
@@ -53,6 +53,7 @@ export async function getDiscussions(r) {
     model: StarredDiscussion,
     as: 'star',
     where: { userId: r.auth.credentials.id },
+    required: r.query.starred,
   }, {
     model: User,
     as: "author",
