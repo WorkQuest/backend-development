@@ -5,6 +5,7 @@ import {SkillsFiltersController} from "../controller.skillsFilters";
 import {
   User,
   Quest,
+  QuestChat,
   QuestStatus,
   StarredQuests,
   QuestsResponse,
@@ -202,6 +203,7 @@ export class QuestController extends QuestHelper {
 
   public async destroy(transaction?: Transaction) {
     try {
+      await QuestChat.destroy({ where: { questId: this.quest.id }, transaction });
       await QuestSpecializationFilter.destroy({ where: { questId: this.quest.id }, transaction });
       await QuestsResponse.destroy({ where: { questId: this.quest.id }, transaction })
       await this.quest.destroy({ force: true, transaction });
