@@ -15,7 +15,17 @@ export async function init() {
   const abiFilePath = path.join(__dirname, '/abi/dailyLiquidityAbi.json');
   const abi: any[] = JSON.parse(fs.readFileSync(abiFilePath).toString()).abi;
   const provider = config.bscNetwork.provider;
-  const web3 = new Web3(new Web3.providers.WebsocketProvider(provider));
+  const web3 = new Web3(new Web3.providers.WebsocketProvider(provider, {
+    clientConfig: {
+      keepalive: true,
+      keepaliveInterval: 60000 // ms
+    },
+    reconnect: {
+      auto: true,
+      delay: 1000, // ms
+      onTimeout: false
+    }
+  }));
   const contract = config.bscNetwork.contract;
   const tradeContract = new web3.eth.Contract(abi, contract);
   const helper = new Web3ProviderHelper(web3);

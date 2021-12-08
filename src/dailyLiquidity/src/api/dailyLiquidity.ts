@@ -1,17 +1,10 @@
 import BigNumber from "bignumber.js";
 import axios from "axios";
-import * as path from "path";
-import * as fs from "fs";
 import { DailyLiquidity } from "@workquest/database-models/lib/models";
 import {Op} from "sequelize"
 import EthDater from 'ethereum-block-by-date';
-import Web3 from "web3";
-import config from "../../config/config.dailyLiquidity"
-
-const providerBNB = config.bscNetwork.provider
-const contractBNB = config.bscNetwork.contract
-const abiFilePath = path.join(__dirname,'../../../../src/dailyLiquidity/abi/dailyLiquidityAbi.json');
-const abiBNB: any[] = JSON.parse(fs.readFileSync(abiFilePath).toString()).abi
+import configDailyLiquidity from "../../config/config.dailyLiquidity";
+import serverConfig from "../../../server/config/config";
 
 export class Web3ProviderHelper {
   public readonly dater;
@@ -58,7 +51,14 @@ export class Web3ProviderHelper {
 export class CoinGeckoProvider {
   private readonly api;
   constructor() {
-    this.api = 'https://api.coingecko.com/api/v3/coins/'
+    this.api = axios.create({
+      baseURL: configDailyLiquidity.coinGecko.baseURL,
+      headers: {
+        "Accept": "application/json",
+        'Content-Type': 'application/json',
+        'X-App-Token': serverConfig.sumsub.appToken,
+      }
+    });
   }
   async countUSD(timestamp: number, coin: 'wqt' | 'bnb') {
     try {
@@ -87,6 +87,10 @@ export class ControllerDailyLiquidity {
   }
 
   public async firstStart() {
+    const pool = await DailyLiquidity.findAll();
+    if(pool) {
+      return;
+    }
     const eventsSync = [];
     const methodGetBlock = [];
     const result = await this.web3ProviderHelper.getDailyBlocks(true)
@@ -107,7 +111,7 @@ export class ControllerDailyLiquidity {
         }, function(error, event) {
           eventsSync.push(event)
         });
-        for(let i = 0; i < eventsSync[0].length; i++) {
+        for (let i = 0; i < eventsSync[0].length; i++) {
           console.log("events between blocks cycle", eventsSync[0][i]);
           const token0 = Number(new BigNumber(eventsSync[0][i].returnValues.reserve0).shiftedBy(-18));
           const token1 = Number(new BigNumber(eventsSync[0][i].returnValues.reserve1).shiftedBy(-18));
@@ -169,7 +173,7 @@ export class ControllerDailyLiquidity {
         }, function(error, event) {
           eventsSync.push(event)
         });
-        for(let i = 0; i < eventsSync[0].length; i++) {
+        for (let i = 0; i < eventsSync[0].length; i++) {
           const token0 = Number(new BigNumber(eventsSync[0][i].returnValues.reserve0).shiftedBy(-18));
           const token1 = Number(new BigNumber(eventsSync[0][i].returnValues.reserve1).shiftedBy(-18));
           await this.web3ProviderHelper.web3.getBlock(eventsSync[0][i].blockNumber,
@@ -217,8 +221,6 @@ export class ControllerDailyLiquidity {
     });
 
     await destroyLiquidity.destroy();
-
-    return true;
   }
 }
 
