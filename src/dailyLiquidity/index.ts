@@ -5,6 +5,7 @@ import Web3 from "web3";
 
 import config from "../dailyLiquidity/config/config.dailyLiquidity";
 import { ControllerDailyLiquidity, Web3ProviderHelper } from "./src/api/dailyLiquidity";
+import cron from 'node-cron';
 
 export async function init() {
   console.log('Start to grab daily liquidity');
@@ -21,6 +22,9 @@ export async function init() {
   const poolController = new ControllerDailyLiquidity(helper, tradeContract);
   await poolController.firstStart();
 
+  cron.schedule('* 0 0 * * *', async () => {
+    await poolController.startPerDay();
+  });
 }
 
 init().catch(console.log);

@@ -149,7 +149,7 @@ export class ControllerDailyLiquidity {
     }
   }
 
-  public async startPerDay(providerBNB: string, contractBNB: string) {
+  public async startPerDay() {
     const eventsSync = [];
     const methodGetBlock = [];
 
