@@ -66,6 +66,7 @@ export async function getDiscussions(r) {
   }
 
   const { count, rows } = await Discussion.findAndCountAll({
+    distinct: true,
     subQuery: false,
     include, where,
     order: [["createdAt", "DESC"]],
