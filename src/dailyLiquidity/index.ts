@@ -1,41 +1,29 @@
-
+import { initDatabase } from "@workquest/database-models/lib/models";
 import * as path from "path";
 import * as fs from "fs";
 import Web3 from "web3";
 
-//import configBridge from "../bridge/config/config.bridge";
-//import configDatabase from "./config/config.database";
-//import {BridgeContract} from "./src/BridgeContract";
-//import {BridgeBscListener} from "../dailyLiquidity/src/";
-import { initDatabase } from "@workquest/database-models/lib/models";
-import configDatabase from "../bridge/config/config.database";
-//import {BridgeProvider} from "./src/BridgeProvider";
-//import { BridgeParserBlockInfo, BlockchainNetworks, initDatabase } from '@workquest/database-models/lib/models';
+import config from "../dailyLiquidity/config/config.dailyLiquidity";
+import { ControllerDailyLiquidity, Web3ProviderHelper } from "./src/api/dailyLiquidity";
 
-//const abiFilePath = path.join(__dirname, '/abi/liquidityMiningAbi.json');
-const abi: any[] = JSON.parse(fs.readFileSync(abiFilePath).toString()).abi;
-
-//const parseEthEventsFromHeight = configBridge.debug ? configBridge.rinkebyTestNetwork.parseEventsFromHeight : configBridge.ethereumMainNetwork.parseEventsFromHeight;
-//const contractEthAddress = configBridge.debug ? configBridge.rinkebyTestNetwork.contract : configBridge.ethereumMainNetwork.contract;
-//const urlEthProvider = configBridge.debug ? configBridge.rinkebyTestNetwork.webSocketProvider : configBridge.ethereumMainNetwork.webSocketProvider;
-
-//const parseBscEventsFromHeight = configBridge.debug ? configBridge.bscTestNetwork.parseEventsFromHeight : configBridge.bscMainNetwork.parseEventsFromHeight;
-//const contractBscAddress = configBridge.debug ? configBridge.bscTestNetwork.contract : configBridge.bscMainNetwork.contract;
-//const urlBscProvider = configBridge.debug ? configBridge.bscTestNetwork.webSocketProvider : configBridge.bscMainNetwork.webSocketProvider;*!/
-const providerBNB = 'wss://speedy-nodes-nyc.moralis.io/99c238c237fa12068a89c5c6/bsc/mainnet/ws'
-
-/**TODO*/
-const contractBNB = '0x3ea2de549ae9dcb7992f91227e8d6629a22c3b40'
-const provider = new Web3.providers.WebsocketProvider(providerBNB);
-const tradeContract = new web3.eth.Contract(abiBNB, contractBNB);
 export async function init() {
   console.log('Start to grab daily liquidity');
 
-  await initDatabase(configDatabase.dbLink, true, true);
+  await initDatabase(config.dbLink, true, true);
+
+  const abiFilePath = path.join(__dirname, '/abi/dailyLiquidityAbi.json');
+  const abi: any[] = JSON.parse(fs.readFileSync(abiFilePath).toString()).abi;
+  const provider = config.bscNetwork.provider;
+  const web3 = new Web3(provider);
+  const contract = config.bscNetwork.contract;
+  const tradeContract = new web3.eth.Contract(abi, contract);
+  const helper = new Web3ProviderHelper(web3);
+  const poolController = new ControllerDailyLiquidity(helper, tradeContract);
+  await poolController.firstStart();
 
 }
 
-init().catch(error => { /!** TODO *!/ });
+init().catch(console.log);
 
 
 
