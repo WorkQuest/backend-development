@@ -49,6 +49,7 @@ export async function getDiscussions(r) {
     model: DiscussionLike,
     as: "liked",
     where: { userId: r.auth.credentials.id },
+    required: false,
   }, {
     model: StarredDiscussion,
     as: 'star',
