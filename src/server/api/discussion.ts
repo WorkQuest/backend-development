@@ -24,12 +24,14 @@ export async function getDiscussion(r) {
       model: DiscussionLike,
       as: "liked",
       where: { userId: r.auth.credentials.id },
+      required: false
     }, {
       model: StarredDiscussion,
       as: 'star',
       where: { userId: r.auth.credentials.id },
+      required: false
     }, {
-      model: User,
+      model: User.scope('short'),
       as: "author",
     }],
     where: { id: r.params.discussionId }
