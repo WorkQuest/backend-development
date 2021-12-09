@@ -13,17 +13,33 @@ export async function init() {
 
   await initDatabase(config.dbLink, true, true);
 
+  const http_options = {
+    keepAlive: true,
+    timeout: 20000, // milliseconds,
+    withCredentials: false,
+  };
+
+  const ws_options = {
+    reconnect: {
+      auto: true,
+      delay: 10000, // ms
+      onTimeout: false
+    }
+  }
+
   const abiFilePath = path.join(__dirname, '/abi/dailyLiquidityAbi.json');
   const abi: any[] = JSON.parse(fs.readFileSync(abiFilePath).toString()).abi;
-  const httpProvider = config.bscNetwork.httpsProvider;
-  const wsProvider = config.bscNetwork.wsProvider;
-  const web3 = new Web3(new Web3.providers.WebsocketProvider(wsProvider));
-  //const web3 = new Web3(new Web3.providers.HttpProvider(httpProvider));
+  const http_provider = config.bscNetwork.httpsProvider;
+  const ws_provider = config.bscNetwork.wsProvider;
+  const web3 = new Web3(new Web3.providers.WebsocketProvider(ws_provider, ws_options));
+  //const web3 = new Web3(new Web3.providers.HttpProvider(http_provider, http_options));
   const contract = config.bscNetwork.contract;
   const tradeContract = new web3.eth.Contract(abi, contract);
   const helper = new Web3ProviderHelper(web3);
-  const poolController = new ControllerDailyLiquidity(helper, tradeContract);
-  await poolController.firstStart();
+  const period = 10;
+  const poolController = new ControllerDailyLiquidity(helper, tradeContract, period);
+  //await poolController.firstStart();
+  await poolController.startPerDay();
 
   cron.schedule('0 0 0 * * *', async () => { //every day at 12 AM
     await poolController.startPerDay();
