@@ -18,8 +18,8 @@ export class Web3ProviderHelper {
   public async getDailyBlocks(firstStart: boolean) {
     try {
       const result = [];
-      const lastBlock = await this.web3.eth.getBlockNumber(console.log);
-      let lastBlockTimestamp = Number((await this.web3.eth.getBlock(lastBlock)).timestamp + "000")
+      const lastBlock = await this.web3.eth.getBlockNumber();
+      let lastBlockTimestamp = Number( (await this.web3.eth.getBlock(lastBlock)).timestamp + "000");
       let lastBlockTimestampUTC = new Date(lastBlockTimestamp)
       if(firstStart) {
         //получаем начало дня, до которого нужно будет считать
@@ -51,23 +51,22 @@ export class Web3ProviderHelper {
 export class CoinGeckoProvider {
   private readonly api;
   constructor() {
-    this.api = axios.create({
+    this.api =axios.create({
       baseURL: configDailyLiquidity.coinGecko.baseURL,
       headers: {
         "Accept": "application/json",
         'Content-Type': 'application/json',
-        'X-App-Token': serverConfig.sumsub.appToken,
       }
     });
   }
   async countUSD(timestamp: number, coin: 'wqt' | 'bnb') {
     try {
       if (coin === 'wqt') {
-        return await axios.get(`${this.api}` + `work-quest/market_chart/range?vs_currency=usd&from=${timestamp - 1800}&to=${timestamp + 1800}`, {
+        return await this.api.get(`work-quest/market_chart/range?vs_currency=usd&from=${timestamp - 1800}&to=${timestamp + 1800}`, {
           timeout: 10000
         });
       } else {
-        return await axios.get(`${this.api}` + `binancecoin/market_chart/range?vs_currency=usd&from=${timestamp - 1800}&to=${timestamp + 1800}`, {
+        return await this.api.get(`binancecoin/market_chart/range?vs_currency=usd&from=${timestamp - 1800}&to=${timestamp + 1800}`, {
           timeout: 10000
         });
       }
@@ -87,10 +86,11 @@ export class ControllerDailyLiquidity {
   }
 
   public async firstStart() {
-    const pool = await DailyLiquidity.findAll();
+/*    const pool = await DailyLiquidity.findAll();
     if(pool) {
       return;
-    }
+    }*/
+    //TODO: protection for provider: make reconnect if connection is broke
     const eventsSync = [];
     const methodGetBlock = [];
     const result = await this.web3ProviderHelper.getDailyBlocks(true)
@@ -98,21 +98,23 @@ export class ControllerDailyLiquidity {
     const endOfTheDay = result[1]
     let startDayBlock: number;
     let endDayBlock: number;
-    let step = 5000;
+    let step = 6000;
     for (let index: number = 0; index < startOfTheDay.length; index ++) {
       console.log("start and end day array index:", index);
       startDayBlock = Number(startOfTheDay[index].block);
       endDayBlock = Number(endOfTheDay[index].block);
       for (let blockNumber = startDayBlock+step; blockNumber <= endDayBlock; blockNumber += step) {
-        console.log("daily blocks cycle", blockNumber);
+        console.log(startDayBlock, blockNumber);
         await this.dailyLiquidityContract.getPastEvents('Sync', {
           fromBlock: startDayBlock,
           toBlock: blockNumber,
         }, function(error, event) {
+          console.log(error);
+          console.log(event);
           eventsSync.push(event)
         });
         for (let i = 0; i < eventsSync[0].length; i++) {
-          console.log("events between blocks cycle", eventsSync[0][i]);
+
           const token0 = Number(new BigNumber(eventsSync[0][i].returnValues.reserve0).shiftedBy(-18));
           const token1 = Number(new BigNumber(eventsSync[0][i].returnValues.reserve1).shiftedBy(-18));
           await this.web3ProviderHelper.web3.eth.getBlock(eventsSync[0][i].blockNumber,
@@ -129,6 +131,7 @@ export class ControllerDailyLiquidity {
         }
         eventsSync.length = 0;
         startDayBlock = blockNumber;
+
       }
       const dailyInfo = await DailyLiquidity.findAll({
         where: {
@@ -139,13 +142,15 @@ export class ControllerDailyLiquidity {
         order: [["timestamp", "DESC"]]
       });
 
-      for (let i = 0; i < dailyInfo.length - 1; i ++) {
+      for (let i = 1; i < dailyInfo.length; i ++) {
         await dailyInfo[i].destroy()
       }
-      const priceInfoWQTStartDay = await this.coinGeckoProvider.countUSD(Number(dailyInfo[0].timestamp), "wqt");
-      const priceInfoBNBStartDay = await this.coinGeckoProvider.countUSD(Number(dailyInfo[0].timestamp), "bnb");
-      const poolToken = Number((Number(dailyInfo[0].bnbPool) * priceInfoBNBStartDay.data.prices[0][1])) + Number((Number(dailyInfo[0].wqtPool) * priceInfoWQTStartDay.data.prices[0][1]));
-      await dailyInfo[0].update({
+
+      const dailyInfoIndex = 0;
+      const priceInfoWQTStartDay = await this.coinGeckoProvider.countUSD(Number(dailyInfo[dailyInfoIndex].timestamp), "wqt");
+      const priceInfoBNBStartDay = await this.coinGeckoProvider.countUSD(Number(dailyInfo[dailyInfoIndex].timestamp), "bnb");
+      const poolToken = Number((Number(dailyInfo[dailyInfoIndex].bnbPool) * priceInfoBNBStartDay.data.prices[0][1])) + Number((Number(dailyInfo[dailyInfoIndex].wqtPool) * priceInfoWQTStartDay.data.prices[0][1]));
+      await dailyInfo[dailyInfoIndex].update({
         usdPriceWQT: priceInfoWQTStartDay.data.prices[0][1],
         usdPriceBNB: priceInfoBNBStartDay.data.prices[0][1],
         liquidityPoolUSD: poolToken
