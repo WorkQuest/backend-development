@@ -19,18 +19,13 @@ export async function init() {
   const wsProvider = config.bscNetwork.wsProvider;
   const web3 = new Web3(new Web3.providers.WebsocketProvider(wsProvider));
   //const web3 = new Web3(new Web3.providers.HttpProvider(httpProvider));
-/*  let a = await web3.eth.getBlockNumber();
-  let b = await web3.eth.getBlock(a);
-  console.log((await web3.eth.getBlock(a)).timestamp);
-  console.log(b);*/
-  //console.log(b.timestamp);
   const contract = config.bscNetwork.contract;
   const tradeContract = new web3.eth.Contract(abi, contract);
   const helper = new Web3ProviderHelper(web3);
   const poolController = new ControllerDailyLiquidity(helper, tradeContract);
   await poolController.firstStart();
 
-  cron.schedule('* * 0 * * *', async () => {
+  cron.schedule('0 0 0 * * *', async () => { //every day at 12 AM
     await poolController.startPerDay();
   });
 }

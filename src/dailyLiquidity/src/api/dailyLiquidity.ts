@@ -4,7 +4,6 @@ import { DailyLiquidity } from "@workquest/database-models/lib/models";
 import {Op} from "sequelize"
 import EthDater from 'ethereum-block-by-date';
 import configDailyLiquidity from "../../config/config.dailyLiquidity";
-import serverConfig from "../../../server/config/config";
 
 export class Web3ProviderHelper {
   public readonly dater;
