@@ -14,8 +14,6 @@ import {
 const searchFields = [
   'title',
   'description',
-  '"author"."lastName"',
-  '"author"."firstName"',
 ];
 
 export async function getDiscussion(r) {
@@ -62,15 +60,14 @@ export async function getDiscussions(r) {
     as: "author",
   }];
 
-  // if (r.query.q) {
-  //   where[Op.or] = searchFields.map(field => ({
-  //     [field]: { [Op.iLike]: `%${r.query.q}%` }
-  //   }));
-  // }
+  if (r.query.q) {
+    where[Op.or] = searchFields.map(field => ({
+      [field]: { [Op.iLike]: `%${r.query.q}%` }
+    }));
+  }
 
   const { count, rows } = await Discussion.findAndCountAll({
     distinct: true,
-    // subQuery: false,
     include, where,
     order: [["createdAt", "DESC"]],
     limit: r.query.limit,
