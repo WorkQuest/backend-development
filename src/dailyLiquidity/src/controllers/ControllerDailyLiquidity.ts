@@ -65,28 +65,7 @@ export class ControllerDailyLiquidity {
     return result;
   }
 
-  private async cleanData(firstBlockTimestamp: number) {
-    const dates = this.getTimestampDates(firstBlockTimestamp);
-    //оставляем только последнюю запись за 10 дней
-    for (let i = 0; i < this.period; i++) {
-      const dailyInfo = await DailyLiquidity.findAll({
-        where: {
-          timestamp: {
-            [Op.between]: [dates[0][i], dates[1][i]]
-          }
-        },
-        order: [["timestamp", "DESC"]]
-      });
-      await DailyLiquidity.destroy({
-        where: {
-          [Op.and]: [{
-            id: { [Op.ne]: dailyInfo[0].id },
-            timestamp: { [Op.between]: [dates[0][i], dates[1][i]] }
-          }]
-        }
-      });
-    }
-
+  private async countPool() {
     const endOfEachDays = await DailyLiquidity.findAll();
     for (let i = 0; i < endOfEachDays.length; i++) {
       const priceInfoWQTStartDay = await this.coinGeckoProvider.coinPriceInUSD(Number(endOfEachDays[i].timestamp), Coins.WQT);
@@ -118,6 +97,22 @@ export class ControllerDailyLiquidity {
     return allData;
   }
 
+  static async cleanData(blockInfos: blockInfo[]) {
+    const blockByDays = new Map();
+    for (let i = 0; i < blockInfos.length; i ++) {
+      const day = Math.trunc(blockInfos[i].timestamp/86400)
+      if (!blockByDays.has(day)) {
+        blockByDays.set(day, []);
+      }
+      blockByDays.get(day).push(blockInfos[i]);
+    }
+    for (let day of blockByDays) {
+      const index = day[1].length - 1
+      const lastBlockInTheDay = day[1][index]
+      await DailyLiquidity.create(lastBlockInTheDay);
+    }
+  }
+
   public async firstStart() {
     let lastBlockTimestamp = Number( (await this.web3ProviderHelper.web3.eth.getBlock('latest')).timestamp + "000");
     let lastBlockTimestampUTC = new Date(lastBlockTimestamp);
@@ -127,8 +122,8 @@ export class ControllerDailyLiquidity {
     const result = await this.web3ProviderHelper.getDailyBlocks(startDayFromDate, endDayToDate);
     const dates = await this.parseLastEvents(result)
     const blockInfos = await this.processEvents(dates);
-    await DailyLiquidity.bulkCreate(blockInfos);
-    await this.cleanData(blockInfos[0].timestamp);
+    await ControllerDailyLiquidity.cleanData(blockInfos);
+    await this.countPool();
   }
 
   public async startPerDay() {
@@ -140,19 +135,14 @@ export class ControllerDailyLiquidity {
     const result = await this.web3ProviderHelper.getDailyBlocks(startDayFromDate, endDayToDate);
     const dates = await this.parseLastEvents(result)
     const blockInfos = await this.processEvents(dates);
-    const dailyInfo = await DailyLiquidity.bulkCreate(blockInfos);
-    await DailyLiquidity.destroy({
-      where: {
-        [Op.and]: [{
-          id: { [Op.ne]: dailyInfo[dailyInfo.length-1].id },
-          timestamp: { [Op.between]: [result[0].timestamp, result[1].timestamp] }
-        }]
-      }
-    });
-    const priceInfoWQTStartDay = await this.coinGeckoProvider.coinPriceInUSD(Number(dailyInfo[dailyInfo.length-1].timestamp), Coins.WQT);
-    const priceInfoBNBStartDay = await this.coinGeckoProvider.coinPriceInUSD(Number(dailyInfo[dailyInfo.length-1].timestamp), Coins.BNB);
-    const poolToken = Number((Number(dailyInfo[0].bnbPool) * priceInfoBNBStartDay)) + Number((Number(dailyInfo[dailyInfo.length-1].wqtPool) * priceInfoWQTStartDay));
-    await dailyInfo[dailyInfo.length-1].update({
+    await ControllerDailyLiquidity.cleanData(blockInfos);
+    const dailyInfo = await DailyLiquidity.findOne({
+      order: [['createdAt', 'DESC']]
+    })
+    const priceInfoWQTStartDay = await this.coinGeckoProvider.coinPriceInUSD(Number(dailyInfo.timestamp), Coins.WQT);
+    const priceInfoBNBStartDay = await this.coinGeckoProvider.coinPriceInUSD(Number(dailyInfo.timestamp), Coins.BNB);
+    const poolToken = Number((Number(dailyInfo.bnbPool) * priceInfoBNBStartDay)) + Number((Number(dailyInfo.wqtPool) * priceInfoWQTStartDay));
+    await dailyInfo.update({
       usdPriceWQT: priceInfoWQTStartDay,
       usdPriceBNB: priceInfoBNBStartDay,
       liquidityPoolUSD: poolToken

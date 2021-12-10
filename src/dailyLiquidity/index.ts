@@ -39,12 +39,13 @@ export async function init() {
   const helper = new Web3Helper(web3);
   const periodForFirstStart = 10;
   const poolController = new ControllerDailyLiquidity(helper, tradeContract, periodForFirstStart);
-  await poolController.firstStart();
+  //await poolController.firstStart();
+  await poolController.startPerDay();
 
 
-    cron.schedule('0 0 * * *', async () => { //every day at 12 AM
-      await poolController.startPerDay();
-    });
+  cron.schedule('0 0 * * *', async () => { //every day at 12 AM
+    await poolController.startPerDay();
+  });
 }
 
 init().catch(console.log);
