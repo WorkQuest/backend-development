@@ -3,6 +3,9 @@ import * as path from "path";
 import * as fs from "fs";
 import Web3 from "web3";
 
+import config from "../dailyLiquidity/config/config.dailyLiquidity";
+import { ControllerDailyLiquidity} from "./src/controllers/ControllerDailyLiquidity";
+import {Web3Helper} from "./src/providers/Web3Helper";
 import configDatabase from "./config/config.database";
 import configLiquidity from "./config/config.liquidity";
 
@@ -29,22 +32,23 @@ export async function init() {
     }
   }
 
-  // const abiFilePath = path.join(__dirname, '/abi/dailyLiquidityAbi.json');
-  // const abi: any[] = JSON.parse(fs.readFileSync(abiFilePath).toString()).abi;
-  // const http_provider = config.bscNetwork.httpsProvider;
-  // const ws_provider = config.bscNetwork.wsProvider;
-  // const web3 = new Web3(new Web3.providers.WebsocketProvider(ws_provider, ws_options));
-  // //const web3 = new Web3(new Web3.providers.HttpProvider(http_provider, http_options));
-  // const contract = config.bscNetwork.contract;
-  // const tradeContract = new web3.eth.Contract(abi, contract);
-  // const helper = new Web3ProviderHelper(web3);
-  // const period = 10;
-  // const poolController = new ControllerDailyLiquidity(helper, tradeContract, period);
-  // await poolController.firstStart();
-  //
-  // cron.schedule('0 0 * * *', async () => { //every day at 12 AM
-  //   await poolController.startPerDay();
-  // });
+  const abiFilePath = path.join(__dirname, '/abi/dailyLiquidityAbi.json');
+  const abi: any[] = JSON.parse(fs.readFileSync(abiFilePath).toString()).abi;
+  const http_provider = config.bscNetwork.httpsProvider;
+  const ws_provider = config.bscNetwork.wsProvider;
+  const web3 = new Web3(new Web3.providers.WebsocketProvider(ws_provider, ws_options));
+  //const web3 = new Web3(new Web3.providers.HttpProvider(http_provider, http_options));
+  const contract = config.bscNetwork.contract;
+  const tradeContract = new web3.eth.Contract(abi, contract);
+  const helper = new Web3Helper(web3);
+  const periodForFirstStart = 10;
+  const poolController = new ControllerDailyLiquidity(helper, tradeContract, periodForFirstStart);
+  await poolController.firstStart();
+
+
+    cron.schedule('0 0 * * *', async () => { //every day at 12 AM
+      await poolController.startPerDay();
+    });
 }
 
 init().catch(console.log);

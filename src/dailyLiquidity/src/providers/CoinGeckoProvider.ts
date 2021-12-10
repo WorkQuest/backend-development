@@ -14,14 +14,12 @@ export class CoinGeckoProvider {
     });
   }
 
-  async countUSD(timestamp: number, coin: Coins): Promise<number> {
+  async coinPriceInUSD(timestamp: number, coin: Coins): Promise<number> {
     try {
-      // TODO что он возвращает почему countUSD?
       const result = await this.api.get(`coins/${coin}/market_chart/range?vs_currency=usd&from=${timestamp - 1800}&to=${timestamp + 1800}`, {
         timeout: 10000
       });
-
-      return result.data.prices;
+      return result.data.prices[0][1];
     } catch (error) {
       console.log(error);
     }
