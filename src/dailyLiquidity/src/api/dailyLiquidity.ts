@@ -116,8 +116,6 @@ export class ControllerDailyLiquidity {
     let blockNumber = firstBlock + step;
     //собираем все блоки за 10 дней
     while (blockNumber <= lastBlock) {
-      console.log(blockNumber);
-      console.log(firstBlock, blockNumber);
       await this.dailyLiquidityContract.getPastEvents('Sync', {
         fromBlock: firstBlock,
         toBlock: blockNumber,
@@ -154,7 +152,6 @@ export class ControllerDailyLiquidity {
       }
     }
     await DailyLiquidity.bulkCreate(allData);
-    console.log("hi")
 
     //переведём начало и конец каждого из 10 дней в timestamp и соберём в массив
     const dates = this.getTimestampDates(result[0].timestamp);
@@ -203,8 +200,6 @@ export class ControllerDailyLiquidity {
     let blockNumber = firstBlock + step;
     //собираем все блоки за 10 дней
     while (blockNumber <= lastBlock) {
-      console.log(blockNumber);
-      console.log(firstBlock, blockNumber);
       await this.dailyLiquidityContract.getPastEvents('Sync', {
         fromBlock: firstBlock,
         toBlock: blockNumber,
@@ -227,7 +222,6 @@ export class ControllerDailyLiquidity {
           wqtPool: token1,
         }
         allData.push(data);
-        console.log(data);
       }
       methodGetBlock.length = 0;
       eventsSync.length = 0;
@@ -241,7 +235,6 @@ export class ControllerDailyLiquidity {
       }
     }
     const dailyInfo = await DailyLiquidity.bulkCreate(allData);
-    console.log("hi")
 
     //удаляем запись, которая была 10 дней назад
     await DailyLiquidity.destroy({
