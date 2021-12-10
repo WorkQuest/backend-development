@@ -155,7 +155,6 @@ export class ControllerDailyLiquidity {
 
     //переведём начало и конец каждого из 10 дней в timestamp и соберём в массив
     const dates = this.getTimestampDates(result[0].timestamp);
-    console.log(dates);
     //оставляем только последнюю запись за 10 дней
     for (let i = 0; i < this.period; i++) {
       const dailyInfo = await DailyLiquidity.findAll({
