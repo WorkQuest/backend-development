@@ -243,15 +243,7 @@ export class ControllerDailyLiquidity {
     const dailyInfo = await DailyLiquidity.bulkCreate(allData);
     console.log("hi")
 
-    //оставляем только последнюю запись за день
-/*    const dailyInfo = await DailyLiquidity.findAll({
-      where: {
-        timestamp: {
-          [Op.between]: [result[0].timestamp, result[1].timestamp]
-        }
-      },
-      order: [["timestamp", "DESC"]]
-    });*/
+    //удаляем запись, которая была 10 дней назад
     await DailyLiquidity.destroy({
       where: {
         [Op.and]: [{
@@ -268,11 +260,6 @@ export class ControllerDailyLiquidity {
       usdPriceBNB: priceInfoBNBStartDay.data.prices[0][1],
       liquidityPoolUSD: poolToken
     });
-    // const destroyLiquidity = await DailyLiquidity.findOne({
-    //   order: [["timestamp", "ASC"]]
-    // });
-
-    //await destroyLiquidity.destroy();
   }
 }
 
