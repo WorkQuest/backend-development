@@ -40,7 +40,7 @@ export async function init() {
   const poolController = new ControllerDailyLiquidity(helper, tradeContract, period);
   await poolController.firstStart();
 
-  cron.schedule('0 0 0 * * *', async () => { //every day at 12 AM
+  cron.schedule('0 0 * * *', async () => { //every day at 12 AM
     await poolController.startPerDay();
   });
 }

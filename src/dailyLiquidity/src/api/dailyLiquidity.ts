@@ -101,10 +101,10 @@ export class ControllerDailyLiquidity {
   }
 
   public async firstStart() {
-    /*    const pool = await DailyLiquidity.findAll();
-        if(pool) {
-          return;
-        }*/
+    const pool = await DailyLiquidity.findAll();
+    if(pool) {
+      return;
+    }
     //TODO: protection for provider: make reconnect if connection is broke
     const eventsSync = [];
     const methodGetBlock = [];
