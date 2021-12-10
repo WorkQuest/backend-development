@@ -72,5 +72,5 @@ export default [{
       schema: emptyOkSchema
     }
   }
-},];
+}];
 
