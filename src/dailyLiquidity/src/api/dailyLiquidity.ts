@@ -3,7 +3,7 @@ import axios from "axios";
 import { DailyLiquidity } from "@workquest/database-models/lib/models";
 import {Op} from "sequelize"
 import EthDater from 'ethereum-block-by-date';
-import configDailyLiquidity from "../../config/config.dailyLiquidity";
+import configDailyLiquidity from "../../config/config.liquidity";
 
 export class Web3ProviderHelper {
   public readonly dater;
@@ -46,13 +46,13 @@ export class Web3ProviderHelper {
 export class CoinGeckoProvider {
   private readonly api;
   constructor() {
-    this.api =axios.create({
-      baseURL: configDailyLiquidity.coinGecko.baseURL,
-      headers: {
-        "Accept": "application/json",
-        'Content-Type': 'application/json',
-      }
-    });
+    // this.api = axios.create({
+    //   baseURL: configDailyLiquidity.coinGecko.baseURL,
+    //   headers: {
+    //     "Accept": "application/json",
+    //     'Content-Type': 'application/json',
+    //   }
+    // });
   }
   async countUSD(timestamp: number, coin: 'wqt' | 'bnb') {
     try {

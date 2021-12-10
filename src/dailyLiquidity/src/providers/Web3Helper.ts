@@ -13,6 +13,7 @@ export class Web3Helper {
     const latestBlockNumber = latestBlock.number;
 
     if (firstBlockNumber === latestBlockNumber) return pre;
+    if (post !== 'latest' && Math.abs(pre - post) === 1) return pre;
 
     const firstBlockTimestamp = parseInt(firstBlock.timestamp as string);
     const latestBlockTimestamp = parseInt(latestBlock.timestamp as string);

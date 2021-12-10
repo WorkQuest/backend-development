@@ -36,7 +36,7 @@
     "@types/validator": "^13.1.0",
     "@uniswap/sdk": "^3.0.3",
     "@uniswap/v2-core": "^1.0.1",
-    "@workquest/database-models": "git+https://github.com/WorkQuest/database-models.git#ee170ad1617611dee2cd160e0c6716d8ec1087a8",
+    "@workquest/database-models": "git+https://github.com/WorkQuest/database-models.git#b31eb792336c1da9e328502c5fc7275c244e1e05",
     "aws-sdk": "^2.918.0",
     "axios": "^0.21.1",
     "bcrypt": "^5.0.0",
