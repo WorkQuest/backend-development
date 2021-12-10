@@ -4,7 +4,8 @@ import * as fs from "fs";
 import Web3 from "web3";
 
 import config from "../dailyLiquidity/config/config.dailyLiquidity";
-import { ControllerDailyLiquidity, Web3ProviderHelper } from "./src/api/dailyLiquidity";
+import { ControllerDailyLiquidity} from "./src/controllers/ControllerDailyLiquidity";
+import {Web3Helper} from "./src/providers/Web3Helper";
 import cron from 'node-cron';
 const https = require('https')
 
@@ -35,14 +36,15 @@ export async function init() {
   //const web3 = new Web3(new Web3.providers.HttpProvider(http_provider, http_options));
   const contract = config.bscNetwork.contract;
   const tradeContract = new web3.eth.Contract(abi, contract);
-  const helper = new Web3ProviderHelper(web3);
-  const period = 10;
-  const poolController = new ControllerDailyLiquidity(helper, tradeContract, period);
+  const helper = new Web3Helper(web3);
+  const periodForFirstStart = 10;
+  const poolController = new ControllerDailyLiquidity(helper, tradeContract, periodForFirstStart);
   await poolController.firstStart();
 
-  cron.schedule('0 0 * * *', async () => { //every day at 12 AM
-    await poolController.startPerDay();
-  });
+
+    cron.schedule('0 0 * * *', async () => { //every day at 12 AM
+      await poolController.startPerDay();
+    });
 }
 
 init().catch(console.log);

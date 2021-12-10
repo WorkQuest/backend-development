@@ -1,11 +1,22 @@
 import Web3 from "web3";
+import EthDater from "ethereum-block-by-date";
+
+export type blockData = {
+  date: Date,
+  block: number,
+  timestamp: number,
+}
 
 export class Web3Helper {
+  public readonly dater;
   constructor(
-    public readonly web3: Web3
-  ) { }
+    public readonly web3: any
+  ) {
+    this.web3 = web3;
+    this.dater = new EthDater(web3);
+  }
 
-  public async estimateBlockHeightByTimestamp(timestamp: number, pre: number = 1, post: number | 'latest' = 'latest'): Promise<number> {
+/*  public async estimateBlockHeightByTimestamp(timestamp: number, pre: number = 1, post: number | 'latest' = 'latest'): Promise<number> {
     const firstBlock = await this.web3.eth.getBlock(pre);
     const latestBlock = await this.web3.eth.getBlock(post);
 
@@ -37,5 +48,21 @@ export class Web3Helper {
       Math.trunc(expectedA - r),
       Math.trunc(expectedA + r)
     );
+  }*/
+
+  public async getDailyBlocks(startDayFromDate, endDayToDate): Promise<Array<blockData>> {
+    try {
+      const result = [];
+      //получаем начало дня, до которого нужно будет считать
+      const startOfTheDay = await this.dater.getDate(startDayFromDate, true)
+      const endOfTheDay = await this.dater.getDate(endDayToDate, false)
+      //для запуска один раз в день
+        //endDayToDate = new Date(new Date(new Date().setDate(lastBlockTimestampUTC.getDate())).setHours(6,59,59,999));
+      result.push(startOfTheDay);
+      result.push(endOfTheDay);
+      return result;
+    } catch (error) {
+      console.log(error);
+    }
   }
 }
