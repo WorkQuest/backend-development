@@ -14,14 +14,11 @@ export class CoinGeckoProvider {
     });
   }
 
-  async coinPriceInUSD(timestamp: number, coin: Coins): Promise<number> {
-    try {
-      const result = await this.api.get(`coins/${coin}/market_chart/range?vs_currency=usd&from=${timestamp - 1800}&to=${timestamp + 1800}`, {
-        timeout: 10000
-      });
-      return result.data.prices[0][1];
-    } catch (error) {
-      console.log(error);
-    }
+  async coinPriceInUSD(timestamp: number | string, coin: Coins): Promise<number> {
+    const result = await this.api.get(`coins/${coin}/market_chart/range?vs_currency=usd&from=${parseInt(timestamp as string) - 1800}&to=${parseInt(timestamp as string) + 1800}`, {
+      timeout: 10000
+    });
+
+    return parseInt(result.data.prices[0][1]);
   }
 }
