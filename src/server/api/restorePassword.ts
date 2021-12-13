@@ -20,7 +20,7 @@ export async function sendCodeForRestorePassword(r) {
     const emailRestorePasswordCode = getRandomHexToken();
     const emailRestorePasswordLink = `${config.baseUrl}/restore?token=${emailRestorePasswordCode}`;
 
-    const emailHtml = confirmTemplate({ confirmLink: emailRestorePasswordLink });
+    const emailHtml = confirmTemplate({ confirmLink: emailRestorePasswordLink, confirmCode: emailRestorePasswordCode });
     await addSendEmailJob({
       email: r.payload.email,
       subject: "Work Quest | Reset password confirmation",
