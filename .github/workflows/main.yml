@@ -142,14 +142,15 @@ jobs:
 
             BRIDGE_CONTRACT_PRIVAT_KEY=${{ secrets.PROD_BRIDGE_CONTRACT_PRIVAT_KEY }} \
 
-            CONTRACT_LIQUIDITY_MINING_WEBSOCKET_PROVIDER=${{ secrets.PROD_CONTRACT_LIQUIDITY_MINING_WEBSOCKET_PROVIDER }} \
-            CONTRACT_LIQUIDITY_MINING_ADDRESS=${{ secrets.PROD_CONTRACT_LIQUIDITY_MINING_ADDRESS }} \
+            DAILY_LIQUIDITY_CONTRACT_ADDRESS=${{ secrets.PROD_DAILY_LIQUIDITY_CONTRACT_ADDRESS }} \
+            DAILY_LIQUIDITY_WEBSOCKET_PROVIDER=${{ secrets.PROD_DAILY_LIQUIDITY_WEBSOCKET_PROVIDER }} \
 
             DEBUG=${{ secrets.PROD_DEBUG }} \
             BASE_URL=${{ secrets.PROD_BASE_URL }} \
             backend_bin=${{ secrets.backend_bin }} \
             PM2_SERVICE_NAME=${{ secrets.PM2_SERVICE_NAME }} \
             PM2_BRIDGE_SERVICE_NAME=${{ secrets.PROD_PM2_BRIDGE_SERVICE_NAME }} \
+            PM2_LIQUIDITY_SERVICE_NAME=${{ secrets.PROD_PM2_LIQUIDITY_SERVICE_NAME }} \
             SRC_DIR=${{ github.workspace }}/" backend-update.yml;
 
   deploy-dev:
@@ -270,12 +271,13 @@ jobs:
 
             BRIDGE_CONTRACT_PRIVAT_KEY=${{ secrets.DEV_BRIDGE_CONTRACT_PRIVAT_KEY }} \
 
-            CONTRACT_LIQUIDITY_MINING_WEBSOCKET_PROVIDER=${{ secrets.DEV_CONTRACT_LIQUIDITY_MINING_WEBSOCKET_PROVIDER }} \
-            CONTRACT_LIQUIDITY_MINING_ADDRESS=${{ secrets.DEV_CONTRACT_LIQUIDITY_MINING_ADDRESS }} \
+            DAILY_LIQUIDITY_CONTRACT_ADDRESS=${{ secrets.DEV_DAILY_LIQUIDITY_CONTRACT_ADDRESS }} \
+            DAILY_LIQUIDITY_WEBSOCKET_PROVIDER=${{ secrets.DEV_DAILY_LIQUIDITY_WEBSOCKET_PROVIDER }} \
 
             DEBUG=${{ secrets.DEV_DEBUG }} \
             BASE_URL=${{ secrets.DEV_BASE_URL }} \
             backend_bin=${{ secrets.backend_bin }} \
             PM2_SERVICE_NAME=${{ secrets.PM2_SERVICE_NAME }} \
             PM2_BRIDGE_SERVICE_NAME=${{ secrets.DEV_PM2_BRIDGE_SERVICE_NAME }} \
+            PM2_LIQUIDITY_SERVICE_NAME=${{ secrets.DEV_PM2_LIQUIDITY_SERVICE_NAME }} \
             SRC_DIR=${{ github.workspace }}/" backend-update.yml;

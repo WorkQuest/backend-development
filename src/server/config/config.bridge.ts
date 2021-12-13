@@ -1,6 +1,6 @@
 import {config} from "dotenv";
 
-config();
+config({ path: __dirname +  '/../../../.env.bridge'});
 
 export default {
   debug: process.env.BRIDGE_DEBUG === "true",

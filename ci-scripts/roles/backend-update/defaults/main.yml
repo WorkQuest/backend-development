@@ -3,3 +3,9 @@
 backend_bin_mode: '0640'
 backend_env: .env
 backend_db_config_json: db-config.json
+
+# defaults file for bridge-update
+bridge_env: .env.bridge
+
+# defaults file for liquidity-update
+liquidity_env: .env.liquidity
