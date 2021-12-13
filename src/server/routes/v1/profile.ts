@@ -20,7 +20,7 @@ import {
   workerWagePerHourSchema,
   specializationKeysSchema,
   userAdditionalInfoWorkerSchema,
-  userAdditionalInfoEmployerSchema, prioritySchema
+  userAdditionalInfoEmployerSchema, prioritySchema, limitSchema, offsetSchema, outputPaginationSchema
 } from "@workquest/database-models/lib/schemes";
 
 export default [{
@@ -84,6 +84,25 @@ export default [{
     },
     response: {
       schema: outputOkSchema(userWorkersSchema).label("GetWorkersResponse")
+    },
+  }
+}, {
+  method: "GET",
+  path: "/v1/profile/users",
+  handler: handlers.getInvestors,
+  options: {
+    auth: 'jwt-access',
+    id: "v1.profile.getUsers",
+    tags: ["api", "profile"],
+    description: "Get users",
+    validate: {
+      query: Joi.object({
+        limit: limitSchema,
+        offset: offsetSchema,
+      }),
+    },
+    response: {
+      schema: outputPaginationSchema('users', userSchema).label("GetWorkersResponse")
     },
   }
 }, {
