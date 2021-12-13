@@ -1,4 +1,4 @@
-import * as Joi from 'joi';
+import * as Joi from "joi";
 //import * as handlers from "../../api/proposal";
 import {
   idSchema,
@@ -17,8 +17,8 @@ import {
 import { createProposal, getHistoryProposals, getProposal, getProposals } from '../../api/proposal';
 
 export default [{
-  method: 'GET',
-  path: '/v1/proposals',
+  method: "GET",
+  path: "/v1/proposals",
   handler: getProposals,
   options: {
     auth: 'jwt-access',

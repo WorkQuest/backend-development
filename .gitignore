@@ -20,6 +20,7 @@ npm-debug.log
 
 # local env variables
 .env
+.env.liquidity
 
 # build directory
 build/
