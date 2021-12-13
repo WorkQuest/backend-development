@@ -112,7 +112,7 @@ export class ControllerDailyLiquidity {
     const blockRangeTo = await this.web3ProviderHelper.getBlockByDate(blockRangeToDate);
 
     const events = await this.parseEvents('Sync', {
-      step: 2000,
+      step: 4000,
       blockTo: blockRangeTo.block,
       blockFrom: blockRangeFrom.block
     });
