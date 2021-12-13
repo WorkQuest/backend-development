@@ -4,15 +4,16 @@ import {
   idSchema,
   idsSchema,
   limitSchema,
+  searchSchema,
   offsetSchema,
   emptyOkSchema,
   outputOkSchema,
   userShortSchema,
   discussionSchema,
-  discussionsSchema,
   discussionTitleSchema,
   outputPaginationSchema,
   discussionCommentSchema,
+  discussionsForGetSchema,
   discussionCommentsSchema,
   discussionDescriptionSchema,
   discussionCommentTextSchema,
@@ -29,12 +30,14 @@ export default [{
     description: "Get discussions",
     validate: {
       query: Joi.object({
+        q: searchSchema,
         limit: limitSchema,
         offset: offsetSchema,
+        starred: Joi.boolean().default(false),
       }).label("GetDiscussionsQuery")
     },
     response: {
-      schema: outputOkSchema(discussionsSchema).label("GetDiscussionsResponse")
+      schema: outputOkSchema(discussionsForGetSchema).label("GetDiscussionsResponse")
     }
   }
 }, {
@@ -253,6 +256,42 @@ export default [{
       params: Joi.object({
         commentId: idSchema.required(),
       }).label("RemoveCommentLikeParams"),
+    },
+    response: {
+      schema: emptyOkSchema
+    }
+  }
+}, {
+  method: "POST",
+  path: "/v1/discussion/{discussionId}/star",
+  handler: handlers.markDiscussionStar,
+  options: {
+    auth: 'jwt-access',
+    id: "v1.discussion.setStar",
+    tags: ["api", "discussion"],
+    description: "Set star on discussion",
+    validate: {
+      params: Joi.object({
+        discussionId: idSchema.required(),
+      }).label("DiscussionSetStarParams"),
+    },
+    response: {
+      schema: emptyOkSchema
+    }
+  }
+}, {
+  method: "DELETE",
+  path: "/v1/discussion/{discussionId}/star",
+  handler: handlers.removeDiscussionStar,
+  options: {
+    auth: 'jwt-access',
+    id: "v1.discussion.removeStar",
+    tags: ["api", "discussion"],
+    description: "Remove star from discussion",
+    validate: {
+      params: Joi.object({
+        discussionId: idSchema.required(),
+      }).label("DiscussionRemoveStarParams"),
     },
     response: {
       schema: emptyOkSchema
