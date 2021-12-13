@@ -11,7 +11,6 @@ import * as Bell from "@hapi/bell";
 import * as Qs from "qs";
 import routes from "./routes";
 import config from "./config/config";
-import config1 from "../dailyLiquidity/config/config.liquidity"
 import initWebSocketService from "./websocket/index";
 import SwaggerOptions from "./config/swagger";
 import { initDatabase } from "@workquest/database-models/lib/models";
@@ -19,7 +18,6 @@ import { handleValidationError, responseHandler } from "./utils";
 import { tokenValidate } from "./utils/auth";
 import { pinoConfig } from "./config/pino";
 import { run } from "graphile-worker";
-import * as grScheduler from "graphile-scheduler";
 
 const HapiSwagger = require("hapi-swagger");
 const Package = require("../../package.json");

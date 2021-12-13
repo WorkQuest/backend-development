@@ -6,7 +6,6 @@ import { output } from "../utils";
 import { ChainId, Token, TokenAmount, Pair } from "@pancakeswap/sdk";
 import { PancakeSwapApi } from "../controllers/controller.pancakeSwap";
 import { CoingeckoApi } from "../controllers/controller.coingecko";
-import { ChatNotificationActions, publishChatNotifications } from "../websocket/websocket.chat";
 import { DailyLiquidity } from "@workquest/database-models/lib/models";
 
 const Web3 = require('web3');
