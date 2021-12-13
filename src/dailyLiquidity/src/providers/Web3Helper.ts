@@ -55,17 +55,4 @@ export class Web3Helper {
     // @ts-ignore
     return this.dater.getDate(date, after);
   }
-
-  public async getDailyBlocks(startDayFromDate, endDayToDate): Promise<BlockData[]> {
-
-      const result = [];
-      //получаем начало дня, до которого нужно будет считать
-      const startOfTheDay = await this.dater.getDate(startDayFromDate, true)
-      const endOfTheDay = await this.dater.getDate(endDayToDate, false)
-      //для запуска один раз в день
-        //endDayToDate = new Date(new Date(new Date().setDate(lastBlockTimestampUTC.getDate())).setHours(6,59,59,999));
-      result.push(startOfTheDay);
-      result.push(endOfTheDay);
-      return result;
-  }
 }

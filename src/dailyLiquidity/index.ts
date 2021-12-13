@@ -13,7 +13,7 @@ const abiFilePath = path.join(__dirname, '/abi/dailyLiquidityAbi.json');
 const abi: any[] = JSON.parse(fs.readFileSync(abiFilePath).toString()).abi;
 
 export async function init() {
-  await initDatabase(configDatabase.dbLink, true, true);
+  await initDatabase(configDatabase.dbLink, true, false);
 
   const websocketProvider = new Web3.providers.WebsocketProvider(configLiquidity.wsProvider, {
     reconnect: {
@@ -41,7 +41,7 @@ export async function init() {
   });
 }
 
-init().catch(console.log);
+init().catch(console.error);
 
 
 

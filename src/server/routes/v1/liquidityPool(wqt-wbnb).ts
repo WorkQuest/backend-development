@@ -5,10 +5,9 @@ import {
   offsetSchema,
   swapWQTSchema,
   outputOkSchema,
-  tokensDayWQTSchema,
+  dailyLiquiditySchema,
   contractAmountSchema,
 } from '@workquest/database-models/lib/schemes';
-import { dailyLiquiditySchema } from "@workquest/database-models/lib/schemes/dailyLiquidity";
 
 export default [{
   method: "GET",

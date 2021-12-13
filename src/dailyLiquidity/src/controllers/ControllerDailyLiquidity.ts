@@ -9,14 +9,14 @@ export type Event = {
 }
 
 export type SyncEvent = Event & {
-  bnbPool: number;
-  wqtPool: number;
+  bnbPool: string;
+  wqtPool: string;
 }
 
 export type Liquidity = SyncEvent & {
-  usdPriceBNB: number;
-  usdPriceWQT: number;
-  liquidityPoolUSD: number;
+  usdPriceBNB: string;
+  usdPriceWQT: string;
+  liquidityPoolUSD: string;
 }
 
 export class ControllerDailyLiquidity {
@@ -54,27 +54,37 @@ export class ControllerDailyLiquidity {
   }
 
   private async processSyncEvent(event: EventData): Promise<SyncEvent> {
-    const reserve0 = new BigNumber(event.returnValues.reserve0);
-    const reserve1 = new BigNumber(event.returnValues.reserve1);
     const blockInfo = await this.web3ProviderHelper.web3.eth.getBlock(event.blockNumber);
 
     return {
       timestamp: blockInfo.timestamp,
       blockNumber: event.blockNumber,
-      bnbPool: reserve0.shiftedBy(-18).toNumber(),
-      wqtPool: reserve1.shiftedBy(-18).toNumber(),
+      bnbPool: event.returnValues.reserve0,
+      wqtPool: event.returnValues.reserve1,
     }
   }
 
   private async makeLiquidityBySyncEvent(syncEvent: SyncEvent): Promise<Liquidity> {
     const priceInfoWQTStartDay = await this.coinGeckoProvider.coinPriceInUSD(syncEvent.timestamp, Coins.WQT);
     const priceInfoBNBStartDay = await this.coinGeckoProvider.coinPriceInUSD(syncEvent.timestamp, Coins.BNB);
-    const poolToken = syncEvent.bnbPool * priceInfoBNBStartDay + syncEvent.wqtPool * priceInfoWQTStartDay;
+
+    const bnbPool = new BigNumber(syncEvent.bnbPool).shiftedBy(-18);
+    const wqtPool = new BigNumber(syncEvent.wqtPool).shiftedBy(-18);
+
+    const usdOfBnb = bnbPool.multipliedBy(priceInfoBNBStartDay);
+    const usdOfWqt = wqtPool.multipliedBy(priceInfoWQTStartDay);
+
+    const poolToken = usdOfBnb
+        .plus(usdOfWqt)
+        .toString()
 
     return {
-      ...syncEvent,
-      usdPriceWQT: priceInfoWQTStartDay,
-      usdPriceBNB: priceInfoBNBStartDay,
+      timestamp: syncEvent.timestamp,
+      blockNumber: syncEvent.blockNumber,
+      bnbPool: bnbPool.toString(),
+      wqtPool: wqtPool.toString(),
+      usdPriceWQT: priceInfoWQTStartDay.toString(),
+      usdPriceBNB: priceInfoBNBStartDay.toString(),
       liquidityPoolUSD: poolToken
     }
   }

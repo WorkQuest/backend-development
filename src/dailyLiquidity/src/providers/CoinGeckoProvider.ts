@@ -19,6 +19,6 @@ export class CoinGeckoProvider {
       timeout: 10000
     });
 
-    return Number(result.data.prices[0][1]);
+    return result.data.prices[0][1];
   }
 }
