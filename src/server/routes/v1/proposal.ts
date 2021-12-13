@@ -6,8 +6,8 @@ import {
   limitSchema,
   offsetSchema,
   outputOkSchema,
-  discussionCommentsSchema,
-} from "@workquest/database-models/lib/schemes";
+  discussionCommentsSchema, emptyOkSchema
+} from '@workquest/database-models/lib/schemes';
 import {
   proposalStatus,
   proposalSchema,
@@ -67,13 +67,11 @@ export default [{
      payload: Joi.object({
        title: proposalTitleSchema.required(),
        description: proposalDescriptionSchema.required(),
-       status: proposalStatus.required(),
-       txHash: proposalTxHashSchema.required(),
        medias: idsSchema.required().unique(),
      }).label('CreateProposalPayload'),
     },
     response: {
-      schema: outputOkSchema(discussionCommentsSchema).label("GetSubCommentsResponse")
+      schema: emptyOkSchema
     }
   }
 },];
