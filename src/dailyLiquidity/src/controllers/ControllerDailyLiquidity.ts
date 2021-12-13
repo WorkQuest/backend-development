@@ -45,8 +45,7 @@ export class ControllerDailyLiquidity {
 
       from = to + 1;
       to += range.step;
-
-      if (to > from) {
+      if (to > range.blockTo) {
         to = range.blockTo;
       }
     }
@@ -62,8 +61,8 @@ export class ControllerDailyLiquidity {
     return {
       timestamp: blockInfo.timestamp,
       blockNumber: event.blockNumber,
-      bnbPool: reserve0.shiftedBy(-18).decimalPlaces(0).toNumber(),
-      wqtPool: reserve1.shiftedBy(-18).decimalPlaces(0).toNumber(),
+      bnbPool: reserve0.shiftedBy(-18).toNumber(),
+      wqtPool: reserve1.shiftedBy(-18).toNumber(),
     }
   }
 
@@ -81,19 +80,19 @@ export class ControllerDailyLiquidity {
   }
 
   private processSyncEvents(events: EventData[]): Promise<SyncEvent[]> {
-    return Promise.all(events.map(this.processSyncEvent));
+    return Promise.all(events.map((event) => { return this.processSyncEvent(event) }));
   }
 
   private async makeLiquidityBySyncEvents(syncEvents: SyncEvent[]): Promise<Liquidity[]> {
-    return Promise.all(syncEvents.map(this.makeLiquidityBySyncEvent));
+    return Promise.all(syncEvents.map((syncEvent) => { return this.makeLiquidityBySyncEvent(syncEvent) } ));
   }
 
   public async collectLiquidityData(periodInDays: number): Promise<Liquidity[]> {
     const lastBlock = await this.web3ProviderHelper.web3.eth.getBlock('latest');
 
-    const lastTimestampInMs = parseInt(lastBlock.timestamp) * 100;
+    const lastTimestampInMs = parseInt(lastBlock.timestamp) * 1000;
 
-    const blockRangeFromDate = new Date(lastTimestampInMs - 86400 * periodInDays);
+    const blockRangeFromDate = new Date(lastTimestampInMs - 86400000 * periodInDays);
     const blockRangeToDate = new Date(lastTimestampInMs);
 
     blockRangeFromDate.setHours(7,0,0,0);
@@ -104,8 +103,8 @@ export class ControllerDailyLiquidity {
 
     const events = await this.parseEvents('Sync', {
       step: 2000,
-      blockTo: blockRangeTo,
-      blockFrom: blockRangeFrom
+      blockTo: blockRangeTo.block,
+      blockFrom: blockRangeFrom.block
     });
     const syncEvents = ControllerDailyLiquidity.getFirstDayEvents(
       await this.processSyncEvents(events)

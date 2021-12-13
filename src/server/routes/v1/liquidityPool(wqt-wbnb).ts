@@ -8,6 +8,7 @@ import {
   tokensDayWQTSchema,
   contractAmountSchema,
 } from '@workquest/database-models/lib/schemes';
+import { dailyLiquiditySchema } from "@workquest/database-models/lib/schemes/dailyLiquidity";
 
 export default [{
   method: "GET",
@@ -82,7 +83,7 @@ export default [{
       }).label("GetTokenDayDataQuery")
     },
     response: {
-      schema: outputOkSchema(tokensDayWQTSchema).label("GetTokenDayDataResponse")
+      schema: outputOkSchema(dailyLiquiditySchema).label("GetTokenDayDataResponse")
     }
   }
 }, {

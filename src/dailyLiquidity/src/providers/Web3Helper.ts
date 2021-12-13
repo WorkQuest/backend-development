@@ -1,7 +1,7 @@
 import Web3 from "web3";
 import EthDater from "ethereum-block-by-date";
 
-export type blockData = {
+export type BlockData = {
   date: Date,
   block: number,
   timestamp: number,
@@ -51,12 +51,12 @@ export class Web3Helper {
     );
   }*/
 
-  public async getBlockByDate(date: Date, after: boolean = false) {
+  public async getBlockByDate(date: Date, after: boolean = false): Promise<BlockData> {
     // @ts-ignore
     return this.dater.getDate(date, after);
   }
 
-  public async getDailyBlocks(startDayFromDate, endDayToDate): Promise<blockData[]> {
+  public async getDailyBlocks(startDayFromDate, endDayToDate): Promise<BlockData[]> {
 
       const result = [];
       //получаем начало дня, до которого нужно будет считать
