@@ -99,7 +99,7 @@ export default [{
       query: Joi.object({
         limit: limitSchema,
         offset: offsetSchema,
-      }),
+      }).label('GetUsersQuery'),
     },
     response: {
       schema: outputPaginationSchema('users', userSchema).label("GetWorkersResponse")
