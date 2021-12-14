@@ -103,7 +103,7 @@ export class ControllerDailyLiquidity {
     const lastTimestampInMs = parseInt(lastBlock.timestamp) * 1000;
 
     const blockRangeFromDate = new Date(lastTimestampInMs - 86400000 * periodInDays);
-    const blockRangeToDate = new Date(lastTimestampInMs);
+    const blockRangeToDate = new Date(lastTimestampInMs); //не нужно отнимать день, потому что работаем по юниксу
 
     blockRangeFromDate.setHours(7,0,0,0);
     blockRangeToDate.setHours(6,59,59,999);
@@ -135,6 +135,9 @@ export class ControllerDailyLiquidity {
         .get(daySinceUnixEpoch)
         .push(event)
     }
+    console.log(Array
+      .from(dayTimestampsMap.values())
+      .map(_ => _.reduce((a, b) => a.timestamp < b.timestamp ? a : b )));
 
     return Array
       .from(dayTimestampsMap.values())

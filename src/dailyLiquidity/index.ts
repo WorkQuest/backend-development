@@ -30,7 +30,7 @@ export async function init() {
   const poolController = new ControllerDailyLiquidity(web3Helper, dailyLiquidityContract);
 
   await DailyLiquidity.bulkCreate(
-    await poolController.collectLiquidityData(10)
+    await poolController.collectLiquidityData(1)
   );
 
   /** Every day at 12 AM */
