@@ -65,7 +65,7 @@ async function getEmployerQuestStatistic(employerId: string): Promise<Statistic>
 
 export default async function updateQuestsStatistic(payload: Data) {
   const [questsStatistic, ] = await QuestsStatistic.findOrCreate({
-    where: { where: { userId: payload.userId } },
+    where:  { userId: payload.userId },
     defaults: { userId: payload.userId },
   });
 

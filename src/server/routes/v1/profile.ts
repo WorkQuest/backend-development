@@ -4,9 +4,12 @@ import { UserRole } from "@workquest/database-models/lib/models";
 import {
   idSchema,
   userSchema,
+  limitSchema,
+  offsetSchema,
   emptyOkSchema,
   outputOkSchema,
   locationSchema,
+  prioritySchema,
   userRoleSchema,
   workPlaceSchema,
   userWorkersSchema,
@@ -17,10 +20,11 @@ import {
   employerQuerySchema,
   userEmployersSchema,
   userFirstNameSchema,
+  outputPaginationSchema,
   workerWagePerHourSchema,
   specializationKeysSchema,
   userAdditionalInfoWorkerSchema,
-  userAdditionalInfoEmployerSchema, prioritySchema
+  userAdditionalInfoEmployerSchema,
 } from "@workquest/database-models/lib/schemes";
 
 export default [{
@@ -84,6 +88,25 @@ export default [{
     },
     response: {
       schema: outputOkSchema(userWorkersSchema).label("GetWorkersResponse")
+    },
+  }
+}, {
+  method: "GET",
+  path: "/v1/profile/users",
+  handler: handlers.getAllUsers,
+  options: {
+    auth: 'jwt-access',
+    id: "v1.profile.getAllUsers",
+    tags: ["api", "profile"],
+    description: "Get all users (workers and employers)",
+    validate: {
+      query: Joi.object({
+        limit: limitSchema,
+        offset: offsetSchema,
+      }).label('GetAllUsersQuery'),
+    },
+    response: {
+      schema: outputPaginationSchema('users', userSchema).label("GetAllUsersResponse")
     },
   }
 }, {
