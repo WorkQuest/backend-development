@@ -18,7 +18,7 @@ export async function init() {
   const websocketProvider = new Web3.providers.WebsocketProvider(configLiquidity.wsProvider, {
     reconnect: {
       auto: true,
-      delay: 10000, // ms
+      delay: 10000,
       onTimeout: false
     }
   });
@@ -29,9 +29,13 @@ export async function init() {
 
   const poolController = new ControllerDailyLiquidity(web3Helper, dailyLiquidityContract);
 
-  await DailyLiquidity.bulkCreate(
-    await poolController.collectLiquidityData(10)
-  );
+  const liquidityDataPerPeriod = await poolController.collectLiquidityData(10);
+
+  for (const liquidity of liquidityDataPerPeriod) {
+    await DailyLiquidity.findOrCreate({
+      where: { date: liquidity.date }, defaults: liquidity,
+    });
+  }
 
   /** Every day at 12 AM */
   cron.schedule('0 0 * * *', async () => {
