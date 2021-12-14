@@ -18,7 +18,7 @@ export async function init() {
   const websocketProvider = new Web3.providers.WebsocketProvider(configLiquidity.wsProvider, {
     reconnect: {
       auto: true,
-      delay: 10000, // ms
+      delay: 10000,
       onTimeout: false
     }
   });
