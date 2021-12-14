@@ -116,14 +116,14 @@ export class ControllerDailyLiquidity {
       blockTo: blockRangeTo.block,
       blockFrom: blockRangeFrom.block
     });
-    const syncEvents = ControllerDailyLiquidity.getFirstDayEvents(
+    const syncEvents = ControllerDailyLiquidity.getLastDayEvents(
       await this.processSyncEvents(events)
     ) as SyncEvent[];
 
     return this.makeLiquidityBySyncEvents(syncEvents);
   }
 
-  public static getFirstDayEvents(events: Event[]): Event[] {
+  public static getLastDayEvents(events: Event[]): Event[] {
     const dayTimestampsMap: Map<number, Event[]> = new Map();
 
     for (const event of events) {
@@ -135,12 +135,9 @@ export class ControllerDailyLiquidity {
         .get(daySinceUnixEpoch)
         .push(event)
     }
-    console.log(Array
-      .from(dayTimestampsMap.values())
-      .map(_ => _.reduce((a, b) => a.timestamp < b.timestamp ? a : b )));
 
     return Array
       .from(dayTimestampsMap.values())
-      .map(_ => _.reduce((a, b) => a.timestamp < b.timestamp ? a : b ))
+      .map(_ => _.reduce((a, b) => a.timestamp > b.timestamp ? a : b ))
   }
 }

@@ -29,9 +29,16 @@ export async function init() {
 
   const poolController = new ControllerDailyLiquidity(web3Helper, dailyLiquidityContract);
 
-  await DailyLiquidity.bulkCreate(
-    await poolController.collectLiquidityData(1)
-  );
+  const liquidityDataPerPeriod = await poolController.collectLiquidityData(10);
+
+  for (let eventNum = 0; eventNum < liquidityDataPerPeriod.length; eventNum ++) {
+    await DailyLiquidity.findOrCreate({
+      where: {
+        timestamp: liquidityDataPerPeriod[eventNum].timestamp
+      },
+      defaults: liquidityDataPerPeriod[eventNum]
+    });
+  }
 
   /** Every day at 12 AM */
   cron.schedule('0 0 * * *', async () => {
