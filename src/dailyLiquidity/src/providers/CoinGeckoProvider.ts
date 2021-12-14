@@ -15,7 +15,7 @@ export class CoinGeckoProvider {
   }
 
   async coinPriceInUSD(timestamp: number | string, coin: Coins): Promise<number> {
-    const result = await this.api.get(`coins/${coin}/market_chart/range?vs_currency=usd&from=${parseInt(timestamp as string) - 1800}&to=${parseInt(timestamp as string) + 1800}`, {
+    const result = await this.api.get(`coins/${coin}/market_chart/range?vs_currency=usd&from=${parseInt(timestamp as string) - 1800 - 60}&to=${parseInt(timestamp as string) + 1800 + 60}`, {
       timeout: 10000
     });
 
