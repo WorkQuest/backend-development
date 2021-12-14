@@ -5,9 +5,11 @@
   "main": "index.js",
   "scripts": {
     "start": "nodemon -e ts --exec \"npm run compile\"",
+    "compile": "tsc && node ./build/main.js",
     "bridge:start": "nodemon -e ts --exec \"npm run bridge:compile\"",
     "bridge:compile": "tsc && node ./build/bridge/index.js",
-    "compile": "tsc && node ./build/main.js",
+    "proposal:start": "nodemon -e ts --exec \"npm run proposal:compile\"",
+    "proposal:compile": "tsc && node ./build/proposals/index.js",
     "build": "tsc",
     "test": "lab --sourcemaps --transform node_modules/lab-transform-typescript -v --leaks"
   },
@@ -35,7 +37,7 @@
     "@types/dotenv": "^6.1.1",
     "@types/joi": "^14.3.4",
     "@types/validator": "^13.1.0",
-    "@workquest/database-models": "git+https://github.com/WorkQuest/database-models.git#ca87f63d942e81846058b87809a25e4a3fdb6e34",
+    "@workquest/database-models": "git+https://github.com/WorkQuest/database-models.git#129f240803252475c1bbb423dab93f04b3ea103c",
     "aws-sdk": "^2.918.0",
     "axios": "^0.21.1",
     "bcrypt": "^5.0.0",
@@ -86,6 +88,7 @@
     "eslint-plugin-promise": "^4.2.1",
     "eslint-plugin-react": "^7.16.0",
     "eslint-plugin-standard": "^4.0.1",
-    "pino": "^6.13.2"
+    "pino": "^6.13.2",
+    "sequelize-cli": "^6.3.0"
   }
 }

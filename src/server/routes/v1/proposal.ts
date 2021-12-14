@@ -6,16 +6,15 @@ import {
   limitSchema,
   offsetSchema,
   outputOkSchema,
-  discussionCommentsSchema, emptyOkSchema
+  emptyOkSchema
 } from '@workquest/database-models/lib/schemes';
 import {
-  proposalStatus,
-  proposalSchema,
-  proposalTitleSchema,
-  proposalTxHashSchema,
+  allProposalsSchema,
   proposalDescriptionSchema,
-} from "@workquest/database-models/lib/schemes/proposal";
-import { createProposal, getProposal, getProposals } from "../../api/proposal";
+  proposalSchema,
+  proposalTitleSchema
+} from '@workquest/database-models/lib/schemes/proposal';
+import { createProposal, getHistoryProposals, getProposal, getProposals } from '../../api/proposal';
 
 export default [{
   method: "GET",
@@ -72,6 +71,25 @@ export default [{
     },
     response: {
       schema: emptyOkSchema
+    }
+  }
+}, {
+  method: 'GET',
+  path: '/v1/history/proposals',
+  handler: getHistoryProposals,
+  options: {
+    auth: 'jwt-access',
+    id: 'v1.getHistoryProposals',
+    tags: ['api', 'proposal'],
+    description: 'Get all events ProposalCreated',
+    validate: {
+      query: Joi.object({
+        limit: limitSchema,
+        offset: offsetSchema
+      }).label('GetHistoryProposals')
+    },
+    response: {
+      schema: outputOkSchema(allProposalsSchema).label('GetHistoryProposalsResponse')
     }
   }
 }];
