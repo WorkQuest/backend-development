@@ -9,9 +9,11 @@ import {
   discussionCommentsSchema, emptyOkSchema
 } from '@workquest/database-models/lib/schemes';
 import {
+  proposalStatus,
+  proposalSchema,
+  proposalTitleSchema,
+  proposalTxHashSchema,
   proposalDescriptionSchema,
-  proposalSchema, proposalStatus,
-  proposalTitleSchema, proposalTxHashSchema
 } from "@workquest/database-models/lib/schemes/proposal";
 import { createProposal, getProposal, getProposals } from "../../api/proposal";
 
