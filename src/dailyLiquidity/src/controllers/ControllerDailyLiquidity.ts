@@ -36,6 +36,7 @@ export class ControllerDailyLiquidity {
     let to = range.blockFrom + range.step;
 
     while (to < range.blockTo) {
+      console.log("from block: ", from, " to block: ", to);
       const eventsData = await this.dailyLiquidityContract.getPastEvents(event, {
         fromBlock: from,
         toBlock: to,
