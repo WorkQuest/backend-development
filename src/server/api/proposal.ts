@@ -46,6 +46,7 @@ export async function getHistoryProposals(r) {
     limit: r.query.limit,
     offset: r.query.offset
   });
+
   return ({ count, proposal: rows });
 }
 

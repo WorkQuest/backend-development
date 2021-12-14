@@ -14,12 +14,12 @@ import {
   proposalSchema,
   proposalTitleSchema
 } from '@workquest/database-models/lib/schemes/proposal';
-import { createProposal, getHistoryProposals, getProposal, getProposals } from '../../api/proposal';
+import * as handlers from '../../api/proposal';
 
 export default [{
   method: "GET",
   path: "/v1/proposals",
-  handler: getProposals,
+  handler: handlers.getProposals,
   options: {
     auth: 'jwt-access',
     id: "v1.getProposals",
@@ -38,7 +38,7 @@ export default [{
 }, {
   method: "GET",
   path: "/v1/proposal/{proposalId}",
-  handler: getProposal,
+  handler: handlers.getProposal,
   options: {
     auth: 'jwt-access',
     id: "v1.getProposal",
@@ -56,7 +56,7 @@ export default [{
 }, {
   method: "POST",
   path: "/v1/proposal/create",
-  handler: createProposal,
+  handler: handlers.createProposal,
   options: {
     auth: 'jwt-access',
     id: "v1.createProposal",
@@ -76,7 +76,7 @@ export default [{
 }, {
   method: 'GET',
   path: '/v1/history/proposals',
-  handler: getHistoryProposals,
+  handler: handlers.getHistoryProposals,
   options: {
     auth: 'jwt-access',
     id: 'v1.getHistoryProposals',
