@@ -35,6 +35,17 @@ export async function getUser(r) {
   return output(userController.user);
 }
 
+export async function getAllUsers(r) {
+  const { count, rows } = await User.findAndCountAll({
+    distinct: true,
+    col: '"User"."id"',
+    limit: r.query.limit,
+    offset: r.query.offset,
+  });
+
+  return output({ count, users: rows });
+}
+
 export function getUsers(role: UserRole) {
   return async function(r) {
     const entersAreaLiteral = literal(
@@ -210,15 +221,4 @@ export async function sendCodeOnPhoneNumber(r) {
   });
 
   return output();
-}
-
-export async function getAllUsers(r) {
-  const users = await User.findAndCountAll({
-    distinct: true,
-    col: '"User"."id"',
-    limit: r.query.limit,
-    offset: r.query.offset,
-  });
-
-  return output({count: users.count, users: users.rows});
 }
