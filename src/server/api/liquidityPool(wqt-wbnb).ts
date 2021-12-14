@@ -81,6 +81,7 @@ export async function getTokenDayData(r) {
   const {count, rows} = await DailyLiquidity.findAndCountAll({
     limit: r.query.limit,
     offset: r.query.offset,
+    order: ["date", "ASC"],
   });
 
   return output({count, infoPer10Days: rows});
