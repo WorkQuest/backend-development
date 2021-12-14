@@ -22,6 +22,7 @@ import {
   userAdditionalInfoWorkerSchema,
   userAdditionalInfoEmployerSchema, prioritySchema, limitSchema, offsetSchema, outputPaginationSchema
 } from "@workquest/database-models/lib/schemes";
+import { getAllUsers } from "../../api/profile";
 
 export default [{
   method: "GET",
@@ -89,7 +90,7 @@ export default [{
 }, {
   method: "GET",
   path: "/v1/profile/users",
-  handler: handlers.getInvestors,
+  handler: handlers.getAllUsers,
   options: {
     auth: 'jwt-access',
     id: "v1.profile.getUsers",

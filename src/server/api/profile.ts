@@ -212,7 +212,7 @@ export async function sendCodeOnPhoneNumber(r) {
   return output();
 }
 
-export async function getInvestors(r) {
+export async function getAllUsers(r) {
   const users = await User.findAndCountAll({
     distinct: true,
     col: '"User"."id"',
