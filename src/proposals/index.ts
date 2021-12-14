@@ -7,14 +7,15 @@ import { ProposalContract } from './src/ProposalContract';
 import { ProposalEthListener } from './src/ProviderListener';
 import { ProposalProvider } from './src/ProposalProvider';
 import {
-  BlockchainNetworks,
   initDatabase,
+  BlockchainNetworks,
   ProposalParseBlock
 } from '@workquest/database-models/lib/models';
 
 const abiFilePath = path.join(__dirname, '../../src/proposals/abi/WQDAOVoting.json');
 const abi: any[] = JSON.parse(fs.readFileSync(abiFilePath).toString()).abi;
 
+// TODO Only test network
 const parseEthEventsFromHeight = configProposal.rinkebyTestNetwork.parseEventsFrom;
 const contractEthAddress = configProposal.rinkebyTestNetwork.contract;
 const urlEthProvider = configProposal.rinkebyTestNetwork.webSocketProvider;
@@ -36,7 +37,7 @@ export async function init() {
     }
   }));
 
-  const [proposalInfo] = await ProposalParseBlock.findOrCreate({
+  const [proposalInfo, ] = await ProposalParseBlock.findOrCreate({
     where: { network: BlockchainNetworks.ethMainNetwork },
     defaults: {
       network: BlockchainNetworks.ethMainNetwork,
@@ -59,5 +60,4 @@ export async function init() {
   await proposalEthListener.start();
 }
 
-init().catch(error => { /** TODO */
-});
+init().catch(console.error);

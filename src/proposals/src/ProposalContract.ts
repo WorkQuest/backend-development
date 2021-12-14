@@ -71,12 +71,13 @@ export class ProposalContract {
 
   private _eventListenerInit(fromBlock: number) {
     this._contract.events.allEvents({ fromBlock })
-      .on('error', (err) => {
-        console.error(err);
-      })
+      .on('error', console.error)
       .on('data', (data: ProposalEventData) => this._onEventData(data));
   }
 
+  public signCallbackOnEvent(callBack: onEventCallBack) {
+    this._onEventCallBacks.push(callBack);
+  }
 
   public async startListener() {
     const fromBlock = await this._provider.getBlockNumber();
