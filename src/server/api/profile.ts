@@ -36,7 +36,16 @@ export async function getUser(r) {
 }
 
 export async function getAllUsers(r) {
+  const where = {};
+
+  if (r.query.q) {
+    where[Op.or] = searchFields.map(
+      field => ({ [field]: { [Op.iLike]: `%${r.query.q}%` }})
+    );
+  }
+
   const { count, rows } = await User.findAndCountAll({
+    where,
     distinct: true,
     col: '"User"."id"',
     limit: r.query.limit,
