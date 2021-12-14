@@ -4,7 +4,7 @@ import { CoinGeckoProvider, Coins } from "../providers/CoinGeckoProvider";
 import BigNumber from "bignumber.js";
 
 export type Event = {
-  timestamp: string | number;
+  date: string | number;
   blockNumber: string | number;
 }
 
@@ -16,7 +16,7 @@ export type SyncEvent = Event & {
 export type Liquidity = SyncEvent & {
   usdPriceBNB: string;
   usdPriceWQT: string;
-  liquidityPoolUSD: string;
+  reserveUSD: string;
 }
 
 export class ControllerDailyLiquidity {
@@ -58,7 +58,7 @@ export class ControllerDailyLiquidity {
     const blockInfo = await this.web3ProviderHelper.web3.eth.getBlock(event.blockNumber);
 
     return {
-      timestamp: blockInfo.timestamp,
+      date: blockInfo.timestamp,
       blockNumber: event.blockNumber,
       bnbPool: event.returnValues.reserve0,
       wqtPool: event.returnValues.reserve1,
@@ -66,8 +66,8 @@ export class ControllerDailyLiquidity {
   }
 
   private async makeLiquidityBySyncEvent(syncEvent: SyncEvent): Promise<Liquidity> {
-    const priceInfoWQTStartDay = await this.coinGeckoProvider.coinPriceInUSD(syncEvent.timestamp, Coins.WQT);
-    const priceInfoBNBStartDay = await this.coinGeckoProvider.coinPriceInUSD(syncEvent.timestamp, Coins.BNB);
+    const priceInfoWQTStartDay = await this.coinGeckoProvider.coinPriceInUSD(syncEvent.date, Coins.WQT);
+    const priceInfoBNBStartDay = await this.coinGeckoProvider.coinPriceInUSD(syncEvent.date, Coins.BNB);
 
     const bnbPool = new BigNumber(syncEvent.bnbPool).shiftedBy(-18);
     const wqtPool = new BigNumber(syncEvent.wqtPool).shiftedBy(-18);
@@ -80,13 +80,13 @@ export class ControllerDailyLiquidity {
         .toString()
 
     return {
-      timestamp: syncEvent.timestamp,
+      date: syncEvent.date,
       blockNumber: syncEvent.blockNumber,
       bnbPool: bnbPool.toString(),
       wqtPool: wqtPool.toString(),
       usdPriceWQT: priceInfoWQTStartDay.toString(),
       usdPriceBNB: priceInfoBNBStartDay.toString(),
-      liquidityPoolUSD: poolToken
+      reserveUSD: poolToken
     }
   }
 
@@ -128,7 +128,7 @@ export class ControllerDailyLiquidity {
     const dayTimestampsMap: Map<number, Event[]> = new Map();
 
     for (const event of events) {
-      const daySinceUnixEpoch = Math.trunc(parseInt(event.timestamp as string) / 86400);
+      const daySinceUnixEpoch = Math.trunc(parseInt(event.date as string) / 86400);
 
       if (!dayTimestampsMap.has(daySinceUnixEpoch)) dayTimestampsMap.set(daySinceUnixEpoch, []);
 
@@ -139,6 +139,6 @@ export class ControllerDailyLiquidity {
 
     return Array
       .from(dayTimestampsMap.values())
-      .map(_ => _.reduce((a, b) => a.timestamp > b.timestamp ? a : b ))
+      .map(_ => _.reduce((a, b) => a.date > b.date ? a : b ))
   }
 }

@@ -29,12 +29,12 @@ export async function init() {
 
   const poolController = new ControllerDailyLiquidity(web3Helper, dailyLiquidityContract);
 
-  const liquidityDataPerPeriod = await poolController.collectLiquidityData(10);
+  const liquidityDataPerPeriod = await poolController.collectLiquidityData(2);
 
   for (let eventNum = 0; eventNum < liquidityDataPerPeriod.length; eventNum ++) {
     await DailyLiquidity.findOrCreate({
       where: {
-        timestamp: liquidityDataPerPeriod[eventNum].timestamp
+         date: liquidityDataPerPeriod[eventNum].date
       },
       defaults: liquidityDataPerPeriod[eventNum]
     });
