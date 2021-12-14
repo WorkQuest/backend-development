@@ -6,7 +6,7 @@ import { output } from "../utils";
 import { ChainId, Token, TokenAmount, Pair } from "@pancakeswap/sdk";
 import { PancakeSwapApi } from "../controllers/controller.pancakeSwap";
 import { CoingeckoApi } from "../controllers/controller.coingecko";
-import { ChatNotificationActions, publishChatNotifications } from "../websocket/websocket.chat";
+import { DailyLiquidity } from "@workquest/database-models/lib/models";
 
 const Web3 = require('web3');
 
@@ -78,12 +78,12 @@ export async function getBurns(r) {
 }
 
 export async function getTokenDayData(r) {
-  const pairDayData = await pancakeSwapApi.getTokenDayData({
+  const {count, rows} = await DailyLiquidity.findAndCountAll({
     limit: r.query.limit,
     offset: r.query.offset,
   });
 
-  return output(pairDayData);
+  return output({count, infoPer10Days: rows});
 }
 
 export async function getDistribution(r) {

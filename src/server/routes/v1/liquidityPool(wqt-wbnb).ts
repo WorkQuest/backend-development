@@ -5,7 +5,7 @@ import {
   offsetSchema,
   swapWQTSchema,
   outputOkSchema,
-  tokensDayWQTSchema,
+  dailyLiquiditySchema,
   contractAmountSchema,
 } from '@workquest/database-models/lib/schemes';
 
@@ -82,7 +82,7 @@ export default [{
       }).label("GetTokenDayDataQuery")
     },
     response: {
-      schema: outputOkSchema(tokensDayWQTSchema).label("GetTokenDayDataResponse")
+      schema: outputOkSchema(dailyLiquiditySchema).label("GetTokenDayDataResponse")
     }
   }
 }, {
