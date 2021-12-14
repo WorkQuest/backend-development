@@ -24,7 +24,7 @@ import {
   workerWagePerHourSchema,
   specializationKeysSchema,
   userAdditionalInfoWorkerSchema,
-  userAdditionalInfoEmployerSchema,
+  userAdditionalInfoEmployerSchema, searchSchema
 } from "@workquest/database-models/lib/schemes";
 
 export default [{
@@ -101,6 +101,7 @@ export default [{
     description: "Get all users (workers and employers)",
     validate: {
       query: Joi.object({
+        q: searchSchema,
         limit: limitSchema,
         offset: offsetSchema,
       }).label('GetAllUsersQuery'),
