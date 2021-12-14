@@ -1,5 +1,11 @@
 import { ProposalContract, ProposalEventType } from './ProposalContract';
-import { BlockchainNetworks, ProposalCreatedEvents, ProposalParseBlock } from '@workquest/database-models/lib/models';
+import {
+  BlockchainNetworks,
+  Proposal,
+  ProposalCreatedEvents,
+  ProposalParseBlock,
+  ProposalStatus
+} from '@workquest/database-models/lib/models';
 
 export enum TrackedEvents {
   ProposalCreated = 'ProposalCreated'
@@ -45,7 +51,7 @@ export class ProposalEthListener extends ProviderListener {
 
   protected async _parseProposalCreatedEvent(event: ProposalEventType): Promise<void> {
     try {
-      await ProposalCreatedEvents.findOrCreate({
+      const [proposalEvent, isCreated] = await ProposalCreatedEvents.findOrCreate({
         where: {
           transactionHash: event.transactionHash,
           blockNumber: event.blockNumber
@@ -62,9 +68,19 @@ export class ProposalEthListener extends ProviderListener {
           event: TrackedEvents.ProposalCreated
         }
       });
+      if (isCreated) {
+        await Proposal.update({
+          status: ProposalStatus.Accepted,
+          txHash: proposalEvent.transactionHash
+        }, {
+          where: {
+            walletId: proposalEvent.proposer,
+            description: proposalEvent.description
+          }
+        });
+      }
     } catch (err) {
       console.log(err);
     }
-    return;
   }
 }

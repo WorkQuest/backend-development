@@ -5,7 +5,7 @@ import {
   ProposalStatus
 } from '@workquest/database-models/lib/models';
 
-//TODO: improve userId to address of user's waller
+//TODO: improve userId to address of user's wallet
 export async function createProposal(r) {
   const medias = await MediaController.getMedias(r.payload.medias);
 
@@ -13,6 +13,7 @@ export async function createProposal(r) {
 
   const proposal = await Proposal.create({
     userId: r.auth.credentials.id,
+    walletId: r.payload.walletId,
     title: r.payload.title,
     description: r.payload.description,
     status: ProposalStatus.Pending
