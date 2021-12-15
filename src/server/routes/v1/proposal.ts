@@ -1,24 +1,22 @@
-import * as Joi from "joi";
-//import * as handlers from "../../api/proposal";
+import * as Joi from 'joi';
 import {
   idSchema,
   idsSchema,
-  limitSchema,
+  limitSchema, nonceIdSchema,
   offsetSchema,
   outputOkSchema,
-  emptyOkSchema
+  proposerIdWalletSchema
 } from '@workquest/database-models/lib/schemes';
 import {
-  allProposalsSchema,
   proposalDescriptionSchema,
   proposalSchema,
   proposalTitleSchema
 } from '@workquest/database-models/lib/schemes/proposal';
-import { createProposal, getHistoryProposals, getProposal, getProposals } from '../../api/proposal';
+import { createProposal, getProposal, getProposals } from '../../api/proposal';
 
 export default [{
-  method: "GET",
-  path: "/v1/proposals",
+  method: 'GET',
+  path: '/v1/proposals',
   handler: getProposals,
   options: {
     auth: 'jwt-access',
@@ -64,32 +62,14 @@ export default [{
     description: 'Create proposal',
     validate: {
       payload: Joi.object({
+        proposer: proposerIdWalletSchema.required(),
         title: proposalTitleSchema.required(),
         description: proposalDescriptionSchema.required(),
         medias: idsSchema.required().unique()
       }).label('CreateProposalPayload')
     },
     response: {
-      schema: emptyOkSchema
-    }
-  }
-}, {
-  method: 'GET',
-  path: '/v1/history/proposals',
-  handler: getHistoryProposals,
-  options: {
-    auth: 'jwt-access',
-    id: 'v1.getHistoryProposals',
-    tags: ['api', 'proposal'],
-    description: 'Get all events ProposalCreated',
-    validate: {
-      query: Joi.object({
-        limit: limitSchema,
-        offset: offsetSchema
-      }).label('GetHistoryProposals')
-    },
-    response: {
-      schema: outputOkSchema(allProposalsSchema).label('GetHistoryProposalsResponse')
+      schema: outputOkSchema(proposalSchema).label('CreateProposalResponse')
     }
   }
 }];

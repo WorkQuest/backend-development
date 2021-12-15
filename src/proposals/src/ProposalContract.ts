@@ -3,6 +3,8 @@ import { ProposalProvider } from './ProposalProvider';
 
 export interface ProposalEventData extends EventData {
   blockNumber: number;
+  timestamp: string;
+  nonce: string;
   transactionHash: string;
   transId: string;
   proposer: string;
@@ -14,6 +16,8 @@ export interface ProposalEventData extends EventData {
 
 export type ProposalEventType = {
   blockNumber: number;
+  timestamp: string;
+  nonce: string;
   transactionHash: string;
   transId: string;
   proposer: string;
@@ -44,6 +48,8 @@ export class ProposalContract {
   private static async _parseEventData(eventData: ProposalEventData): Promise<ProposalEventType> {
     const event: ProposalEventType = {
       blockNumber: eventData.blockNumber,
+      timestamp: eventData.returnValues.timestamp,
+      nonce: eventData.returnValues.nonce,
       transactionHash: eventData.transactionHash,
       transId: eventData.returnValues.id,
       proposer: eventData.returnValues.proposer,

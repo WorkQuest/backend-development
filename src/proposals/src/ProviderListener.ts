@@ -54,12 +54,13 @@ export class ProposalEthListener extends ProviderListener {
       const [proposalEvent, isCreated] = await ProposalCreatedEvents.findOrCreate({
         where: {
           transactionHash: event.transactionHash,
-          blockNumber: event.blockNumber
+          timestamp: event.timestamp
         },
         defaults: {
-          blockNumber: event.blockNumber,
+          timestamp: event.timestamp,
+          nonce: event.nonce,
           transactionHash: event.transactionHash,
-          transId: event.transId,
+          proposalId: event.transId,
           proposer: event.proposer,
           description: event.description,
           votingPeriod: event.votingPeriod,
@@ -70,12 +71,16 @@ export class ProposalEthListener extends ProviderListener {
       });
       if (isCreated) {
         await Proposal.update({
-          status: ProposalStatus.Accepted,
-          txHash: proposalEvent.transactionHash
+          status: ProposalStatus.Active,
+          txHash: proposalEvent.transactionHash,
+          votingPeriod: proposalEvent.votingPeriod,
+          minimumQuorum: proposalEvent.minimumQuorum,
+          timestamp: proposalEvent.timestamp,
+          proposalId: proposalEvent.proposalId
         }, {
           where: {
-            walletId: proposalEvent.proposer,
-            description: proposalEvent.description
+            proposer: proposalEvent.proposer,
+            nonce: proposalEvent.nonce
           }
         });
       }
@@ -83,4 +88,5 @@ export class ProposalEthListener extends ProviderListener {
       console.log(err);
     }
   }
+
 }
