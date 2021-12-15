@@ -39,9 +39,12 @@ export async function init() {
 
   /** Every day at 12 AM */
   cron.schedule('0 0 * * *', async () => {
-    await DailyLiquidity.bulkCreate(
-      await poolController.collectLiquidityData(1)
-    );
+    const liquidityDataPerOneDay = await poolController.collectLiquidityData(1);
+    for (const liquidity of liquidityDataPerOneDay) {
+      await DailyLiquidity.findOrCreate({
+        where: { date: liquidity.date }, defaults: liquidity,
+      });
+    }
   });
 }
 
