@@ -39,7 +39,7 @@ export async function register(r) {
 	await addSendEmailJob({
 		email: r.payload.email,
 		subject: "Work Quest | Confirmation code",
-		text: `Your confirmation code is ${emailConfirmCode}. Follow this link ${config.baseUrl}/confirm?token=${emailConfirmCode}`,
+		text: `Your confirmation code is ${emailConfirmCode}. Follow this link https://${r.headers["host"]}/confirm?token=${emailConfirmCode}`,
 		html: emailHtml,
 	});
 
