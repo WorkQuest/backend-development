@@ -22,6 +22,7 @@ npm-debug.log
 .env
 .env.bridge
 .env.liquidity
+.env.proposal
 
 # build directory
 build/

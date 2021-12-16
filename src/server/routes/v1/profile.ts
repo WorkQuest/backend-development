@@ -6,6 +6,7 @@ import {
   userSchema,
   limitSchema,
   offsetSchema,
+  searchSchema,
   emptyOkSchema,
   outputOkSchema,
   locationSchema,
@@ -24,7 +25,7 @@ import {
   workerWagePerHourSchema,
   specializationKeysSchema,
   userAdditionalInfoWorkerSchema,
-  userAdditionalInfoEmployerSchema, searchSchema
+  userAdditionalInfoEmployerSchema,
 } from "@workquest/database-models/lib/schemes";
 
 export default [{

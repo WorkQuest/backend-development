@@ -33,6 +33,17 @@
       "env": {
         "ENV": "prod"
       }
+    },
+    {
+      "name": "{{ PM2_PROPOSAL_SERVICE_NAME }}",
+      "exec_mode": "fork",
+      "instances": "1",
+      "script": "./build/proposal/index.js",
+      "autorestart": true,
+      "listen_timeout": 15000,
+      "env": {
+        "ENV": "prod"
+      }
     }
   ]
 }
