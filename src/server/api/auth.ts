@@ -33,7 +33,7 @@ export async function register(r) {
 	await UserController.checkEmail(r.payload.email);
 
 	const emailConfirmCode = getRandomHexToken().substring(0, 6).toUpperCase();
-	const emailConfirmLink = `${config.baseUrl}/confirm?token=${emailConfirmCode}`;
+	const emailConfirmLink = `${ r.headers["host"] }/confirm?token=${emailConfirmCode}`;
 	const emailHtml = confirmTemplate({ confirmLink: emailConfirmLink, confirmCode: emailConfirmCode });
 
 	await addSendEmailJob({
