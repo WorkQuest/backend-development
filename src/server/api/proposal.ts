@@ -1,9 +1,11 @@
 import { error, output } from '../utils';
 import { MediaController } from '../controllers/controller.media';
-import {
-  Proposal, ProposalStatus, VoteCastEvents
-} from '@workquest/database-models/lib/models';
 import { Errors } from '../utils/errors';
+import {
+  Proposal,
+  ProposalStatus,
+  ProposalVoteCastEvent,
+} from '@workquest/database-models/lib/models';
 
 //TODO: improve userId to address of user's wallet
 export async function createProposal(r) {
@@ -49,7 +51,7 @@ export async function getProposal(r) {
     where: { proposalId: r.params.proposalId }
   });
 
-  const { count, rows } = await VoteCastEvents.findAndCountAll({
+  const { count, rows } = await ProposalVoteCastEvent.findAndCountAll({
     where: { proposalId: r.params.proposalId }
   });
 

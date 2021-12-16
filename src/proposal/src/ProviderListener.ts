@@ -1,10 +1,12 @@
 import { ProposalContract, ProposalEventType } from './ProposalContract';
 import {
-  BlockchainNetworks,
   Proposal,
-  ProposalCreatedEvents,
+  ProposalStatus,
   ProposalParseBlock,
-  ProposalStatus, VoteCastEvents, VoteCastEventType, ProposalExecuted, ProposalExecutedEventType
+  BlockchainNetworks,
+  ProposalCreatedEvent,
+  ProposalVoteCastEvent,
+  ProposalExecutedEvent,
 } from '@workquest/database-models/lib/models';
 
 export enum TrackedEvents {
@@ -59,7 +61,7 @@ export class ProposalEthListener extends ProviderListener {
 
   protected async _parseProposalCreatedEvent(event: ProposalEventType): Promise<void> {
     try {
-      const [proposalEvent, isCreated] = await ProposalCreatedEvents.findOrCreate({
+      const [proposalEvent, isCreated] = await ProposalCreatedEvent.findOrCreate({
         where: {
           transactionHash: event.transactionHash,
           timestamp: event.timestamp
@@ -74,7 +76,6 @@ export class ProposalEthListener extends ProviderListener {
           votingPeriod: event.votingPeriod,
           minimumQuorum: event.minimumQuorum,
           network: BlockchainNetworks.rinkebyTestNetwork, // TODO
-          event: TrackedEvents.ProposalCreated
         }
       });
       if (isCreated) {
@@ -99,7 +100,7 @@ export class ProposalEthListener extends ProviderListener {
 
   protected async _parseVoteCastEvent(event: ProposalEventType): Promise<void> {
     try {
-      const VoteCastEvent = await VoteCastEvents.findOrCreate({
+      const VoteCastEvent = await ProposalVoteCastEvent.findOrCreate({
         where: {
           transactionHash: event.transactionHash,
           timestamp: event.timestamp
@@ -112,7 +113,6 @@ export class ProposalEthListener extends ProviderListener {
           votes: event.votes,
           timestamp: event.timestamp,
           network: BlockchainNetworks.rinkebyTestNetwork, // TODO
-          event: VoteCastEventType.VoteCast
         }
       });
     } catch (err) {
@@ -122,7 +122,7 @@ export class ProposalEthListener extends ProviderListener {
 
   protected async _parseProposalExecutedEvent(event: ProposalEventType): Promise<void> {
     try {
-      const [ProposalExecutives, isCreated] = await ProposalExecuted.findOrCreate({
+      const [ProposalExecutives, isCreated] = await ProposalExecutedEvent.findOrCreate({
         where: {
           transactionHash: event.transactionHash,
           proposalId: event.transId
@@ -133,7 +133,6 @@ export class ProposalEthListener extends ProviderListener {
           succeeded: event.succeded,
           defeated: event.defeated,
           network: BlockchainNetworks.rinkebyTestNetwork, // TODO
-          event: ProposalExecutedEventType.ProposalExecuted
         }
       });
       if (isCreated) {

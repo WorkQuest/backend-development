@@ -37,13 +37,13 @@ export default [
     }
   }, {
     method: 'GET',
-    path: '/v1/proposals',
+    path: '/v1/proposal',
     handler: getProposals,
     options: {
       auth: 'jwt-access',
       id: 'v1.getProposals',
       tags: ['api', 'proposal'],
-      description: 'Get proposals',
+      description: 'Get proposal',
       validate: {
         query: Joi.object({
           limit: limitSchema,

@@ -154,6 +154,7 @@ jobs:
             PM2_SERVICE_NAME=${{ secrets.PM2_SERVICE_NAME }} \
             PM2_BRIDGE_SERVICE_NAME=${{ secrets.PROD_PM2_BRIDGE_SERVICE_NAME }} \
             PM2_LIQUIDITY_SERVICE_NAME=${{ secrets.PROD_PM2_LIQUIDITY_SERVICE_NAME }} \
+            PM2_PROPOSAL_SERVICE_NAME=${{ secrets.PROD_PM2_PROPOSAL_SERVICE_NAME }} \
             SRC_DIR=${{ github.workspace }}/" backend-update.yml;
 
   deploy-dev:
@@ -280,10 +281,16 @@ jobs:
             DAILY_LIQUIDITY_CONTRACT_ADDRESS=${{ secrets.DEV_DAILY_LIQUIDITY_CONTRACT_ADDRESS }} \
             DAILY_LIQUIDITY_WEBSOCKET_PROVIDER=${{ secrets.DEV_DAILY_LIQUIDITY_WEBSOCKET_PROVIDER }} \
 
+            PROPOSAL_DEBUG=${{ secrets.DEV_PROPOSAL_DEBUG }} \
+            PROPOSAL_RINKEBY_PARSE_EVENTS_FROM_HEIGHT=${{ secrets.DEV_PROPOSAL_RINKEBY_PARSE_EVENTS_FROM_HEIGHT }} \
+            PROPOSAL_RINKEBY_CONTRACT=${{ secrets.DEV_PROPOSAL_RINKEBY_CONTRACT }} \
+            PROPOSAL_RINKEBY_WEBSOCKET_PROVIDER=${{ secrets.DEV_PROPOSAL_RINKEBY_WEBSOCKET_PROVIDER }} \
+
             DEBUG=${{ secrets.DEV_DEBUG }} \
             BASE_URL=${{ secrets.DEV_BASE_URL }} \
             backend_bin=${{ secrets.backend_bin }} \
             PM2_SERVICE_NAME=${{ secrets.PM2_SERVICE_NAME }} \
             PM2_BRIDGE_SERVICE_NAME=${{ secrets.DEV_PM2_BRIDGE_SERVICE_NAME }} \
             PM2_LIQUIDITY_SERVICE_NAME=${{ secrets.DEV_PM2_LIQUIDITY_SERVICE_NAME }} \
+            PM2_PROPOSAL_SERVICE_NAME=${{ secrets.DEV_PM2_PROPOSAL_SERVICE_NAME }} \
             SRC_DIR=${{ github.workspace }}/" backend-update.yml;

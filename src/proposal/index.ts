@@ -12,7 +12,7 @@ import {
   ProposalParseBlock
 } from '@workquest/database-models/lib/models';
 
-const abiFilePath = path.join(__dirname, '../../src/proposals/abi/WQDAOVoting.json');
+const abiFilePath = path.join(__dirname, '../../src/proposal/abi/WQDAOVoting.json');
 const abi: any[] = JSON.parse(fs.readFileSync(abiFilePath).toString()).abi;
 
 // TODO Only test network
