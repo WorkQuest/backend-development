@@ -1,9 +1,9 @@
 import { error, output } from '../utils';
 import { MediaController } from '../controllers/controller.media';
 import {
-  Proposal, ProposalStatus
+  Proposal, ProposalStatus, VoteCastEvents
 } from '@workquest/database-models/lib/models';
-import { Op } from 'sequelize';
+import { Errors } from '../utils/errors';
 
 //TODO: improve userId to address of user's wallet
 export async function createProposal(r) {
@@ -31,15 +31,12 @@ export async function createProposal(r) {
     nonce: proposal.nonce,
     title: proposal.title,
     description: proposal.description,
-    status: proposal.status,
+    status: proposal.status
   });
 }
 
 export async function getProposals(r) {
   const { count, rows } = await Proposal.findAndCountAll({
-    where: {
-      status: { [Op.ne]: 0 }
-    },
     limit: r.query.limit,
     offset: r.query.offset
   });
@@ -48,9 +45,22 @@ export async function getProposals(r) {
 }
 
 export async function getProposal(r) {
-  const proposal = await Proposal.findByPk(r.params.proposalId);
+  const proposal = await Proposal.findOne({
+    where: { proposalId: r.params.proposalId }
+  });
 
-  return (proposal);
+  const { count, rows } = await VoteCastEvents.findAndCountAll({
+    where: { proposalId: r.params.proposalId }
+  });
+
+  if (!proposal) {
+    return error(Errors.NotFound, 'Proposal does not exist', {});
+  }
+
+  return output({
+    proposal,
+    vote: { count, voting: rows }
+  });
 }
 
 

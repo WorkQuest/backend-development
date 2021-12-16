@@ -4,11 +4,13 @@ import {
   Proposal,
   ProposalCreatedEvents,
   ProposalParseBlock,
-  ProposalStatus
+  ProposalStatus, VoteCastEvents, VoteCastEventType, ProposalExecuted, ProposalExecutedEventType
 } from '@workquest/database-models/lib/models';
 
 export enum TrackedEvents {
-  ProposalCreated = 'ProposalCreated'
+  ProposalCreated = 'ProposalCreated',
+  VoteCast = 'VoteCast',
+  ProposalExecuted = 'ProposalExecuted'
 }
 
 abstract class ProviderListener {
@@ -21,6 +23,8 @@ abstract class ProviderListener {
   }
 
   protected abstract _parseProposalCreatedEvent(data: any): Promise<void>;
+  protected abstract _parseVoteCastEvent(data: any): Promise<void>;
+  protected abstract _parseProposalExecutedEvent(data: any): Promise<void>;
 
   public async parseProposalCreated() {
     for await (const events of this._contract.preParsingEvents()) {
@@ -31,6 +35,10 @@ abstract class ProviderListener {
   protected async _onEvent(event: ProposalEventType): Promise<void> {
     if (event.event === TrackedEvents.ProposalCreated) {
       await this._parseProposalCreatedEvent(event);
+    } else if (event.event === TrackedEvents.VoteCast) {
+      await this._parseVoteCastEvent(event);
+    } else if (event.event === TrackedEvents.ProposalExecuted) {
+      await this._parseProposalExecutedEvent(event);
     }
 
     this._parserBlockInfo.lastParsedBlock = event.blockNumber;
@@ -65,7 +73,7 @@ export class ProposalEthListener extends ProviderListener {
           description: event.description,
           votingPeriod: event.votingPeriod,
           minimumQuorum: event.minimumQuorum,
-          network: BlockchainNetworks.ethMainNetwork, // TODO
+          network: BlockchainNetworks.rinkebyTestNetwork, // TODO
           event: TrackedEvents.ProposalCreated
         }
       });
@@ -89,4 +97,66 @@ export class ProposalEthListener extends ProviderListener {
     }
   }
 
+  protected async _parseVoteCastEvent(event: ProposalEventType): Promise<void> {
+    try {
+      const VoteCastEvent = await VoteCastEvents.findOrCreate({
+        where: {
+          transactionHash: event.transactionHash,
+          timestamp: event.timestamp
+        },
+        defaults: {
+          transactionHash: event.transactionHash,
+          voter: event.voter,
+          proposalId: event.proposalId,
+          support: event.support,
+          votes: event.votes,
+          timestamp: event.timestamp,
+          network: BlockchainNetworks.rinkebyTestNetwork, // TODO
+          event: VoteCastEventType.VoteCast
+        }
+      });
+    } catch (err) {
+      console.log(err);
+    }
+  }
+
+  protected async _parseProposalExecutedEvent(event: ProposalEventType): Promise<void> {
+    try {
+      const [ProposalExecutives, isCreated] = await ProposalExecuted.findOrCreate({
+        where: {
+          transactionHash: event.transactionHash,
+          proposalId: event.transId
+        },
+        defaults: {
+          transactionHash: event.transactionHash,
+          proposalId: event.transId,
+          succeeded: event.succeded,
+          defeated: event.defeated,
+          network: BlockchainNetworks.rinkebyTestNetwork, // TODO
+          event: ProposalExecutedEventType.ProposalExecuted
+        }
+      });
+      if (isCreated) {
+        if (ProposalExecutives.succeeded === true) {
+          await Proposal.update({
+            status: ProposalStatus.Accepted,
+          }, {
+            where: {
+              proposalId: ProposalExecutives.proposalId
+            }
+          });
+        } else if (ProposalExecutives.defeated === true) {
+          await Proposal.update({
+            status: ProposalStatus.Rejected,
+          }, {
+            where: {
+              proposalId: ProposalExecutives.proposalId
+            }
+          });
+        }
+      }
+    } catch (err) {
+      console.log(err);
+    }
+  }
 }

@@ -25,6 +25,12 @@ export type ProposalEventType = {
   votingPeriod: string;
   minimumQuorum: string;
   event: string;
+  voter: string;
+  proposalId: string;
+  support: boolean;
+  votes: string;
+  succeded: boolean;
+  defeated: boolean;
 }
 
 export type onEventCallBack = {
@@ -56,7 +62,13 @@ export class ProposalContract {
       description: eventData.returnValues.description,
       votingPeriod: eventData.returnValues.votingPeriod,
       minimumQuorum: eventData.returnValues.minimumQuorum,
-      event: eventData.event
+      event: eventData.event,
+      voter: eventData.returnValues.voter,
+      proposalId: eventData.returnValues.proposalId,
+      support: eventData.returnValues.support,
+      votes: eventData.returnValues.votes,
+      succeded: eventData.returnValues.succeded,
+      defeated: eventData.returnValues.defeated,
     };
     return event;
   }
