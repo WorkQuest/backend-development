@@ -35,6 +35,26 @@ export async function getUser(r) {
   return output(userController.user);
 }
 
+export async function getAllUsers(r) {
+  const where = {};
+
+  if (r.query.q) {
+    where[Op.or] = searchFields.map(
+      field => ({ [field]: { [Op.iLike]: `%${r.query.q}%` }})
+    );
+  }
+
+  const { count, rows } = await User.findAndCountAll({
+    where,
+    distinct: true,
+    col: '"User"."id"',
+    limit: r.query.limit,
+    offset: r.query.offset,
+  });
+
+  return output({ count, users: rows });
+}
+
 export function getUsers(role: UserRole) {
   return async function(r) {
     const entersAreaLiteral = literal(

@@ -25,17 +25,17 @@ async function getWorkerQuestStatistic(workerId: string): Promise<Statistic> {
   const completedQuestsPromises = Quest.count({
     where: {
       assignedWorkerId: workerId,
-      status: activeFlowStatuses,
+      status: QuestStatus.Done,
     }
   });
   const openedQuestsPromises = Quest.count({
     where: {
       assignedWorkerId: workerId,
-      status: QuestStatus.Active,
+      status: activeFlowStatuses,
     }
   });
 
-  const [opened, completed] = await Promise.all([
+  const [completed, opened] = await Promise.all([
     completedQuestsPromises, openedQuestsPromises,
   ]);
 
@@ -56,7 +56,7 @@ async function getEmployerQuestStatistic(employerId: string): Promise<Statistic>
     }
   });
 
-  const [opened, completed] = await Promise.all([
+  const [completed, opened] = await Promise.all([
     completedQuestsPromises, openedQuestsPromises,
   ]);
 
@@ -65,7 +65,7 @@ async function getEmployerQuestStatistic(employerId: string): Promise<Statistic>
 
 export default async function updateQuestsStatistic(payload: Data) {
   const [questsStatistic, ] = await QuestsStatistic.findOrCreate({
-    where: { where: { userId: payload.userId } },
+    where:  { userId: payload.userId },
     defaults: { userId: payload.userId },
   });
 

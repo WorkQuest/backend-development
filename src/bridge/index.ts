@@ -22,7 +22,7 @@ const urlBscProvider = configBridge.debug ? configBridge.bscTestNetwork.webSocke
 export async function init() {
   console.log('Start bridge'); // TODO add pino
 
-  await initDatabase(configDatabase.dbLink, false, true);
+  await initDatabase(configDatabase.dbLink, false, false);
 
   const web3Eth = new Web3(new Web3.providers.WebsocketProvider(urlEthProvider, {
     clientConfig: {
@@ -94,6 +94,6 @@ export async function init() {
   ]);
 }
 
-init().catch(error => { /** TODO */ });
+init().catch(console.error);
 
 
