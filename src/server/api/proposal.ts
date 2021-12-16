@@ -1,19 +1,20 @@
-import { output } from '../utils';
+import { error, output } from '../utils';
 import { MediaController } from '../controllers/controller.media';
 import {
-  Proposal, ProposalCreatedEvents,
-  ProposalStatus
+  Proposal, ProposalStatus, VoteCastEvents
 } from '@workquest/database-models/lib/models';
+import { Errors } from '../utils/errors';
 
 //TODO: improve userId to address of user's wallet
 export async function createProposal(r) {
+
   const medias = await MediaController.getMedias(r.payload.medias);
 
   const transaction = await r.server.app.db.transaction();
 
   const proposal = await Proposal.create({
     userId: r.auth.credentials.id,
-    walletId: r.payload.walletId,
+    proposer: r.payload.proposer,
     title: r.payload.title,
     description: r.payload.description,
     status: ProposalStatus.Pending
@@ -23,7 +24,15 @@ export async function createProposal(r) {
 
   transaction.commit();
 
-  return output(proposal);
+  return output({
+    id: proposal.id,
+    userId: proposal.userId,
+    proposer: proposal.proposer,
+    nonce: proposal.nonce,
+    title: proposal.title,
+    description: proposal.description,
+    status: proposal.status
+  });
 }
 
 export async function getProposals(r) {
@@ -36,18 +45,22 @@ export async function getProposals(r) {
 }
 
 export async function getProposal(r) {
-  const proposal = await Proposal.findByPk(r.params.proposalId);
-
-  return (proposal);
-}
-
-export async function getHistoryProposals(r) {
-  const { count, rows } = await ProposalCreatedEvents.findAndCountAll({
-    limit: r.query.limit,
-    offset: r.query.offset
+  const proposal = await Proposal.findOne({
+    where: { proposalId: r.params.proposalId }
   });
 
-  return ({ count, proposal: rows });
+  const { count, rows } = await VoteCastEvents.findAndCountAll({
+    where: { proposalId: r.params.proposalId }
+  });
+
+  if (!proposal) {
+    return error(Errors.NotFound, 'Proposal does not exist', {});
+  }
+
+  return output({
+    proposal,
+    vote: { count, voting: rows }
+  });
 }
 
 
