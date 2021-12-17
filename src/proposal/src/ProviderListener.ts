@@ -35,6 +35,8 @@ abstract class ProviderListener {
   }
 
   protected async _onEvent(event: ProposalEventType): Promise<void> {
+    console.log("New event: type ", event.event, " tx hash ", event.transactionHash);
+
     if (event.event === TrackedEvents.ProposalCreated) {
       await this._parseProposalCreatedEvent(event);
     } else if (event.event === TrackedEvents.VoteCast) {

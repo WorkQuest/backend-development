@@ -55,13 +55,8 @@ export async function init() {
   const proposalEthContract = new ProposalContract(proposalEthProvider, contractEthAddress, abi);
   const proposalEthListener = new ProposalEthListener(proposalEthContract, proposalInfo);
 
-  await Promise.all([
-    proposalEthListener.parseProposalCreated()
-  ]);
-
-  await Promise.all([
-    proposalEthListener.start()
-  ]);
+  await proposalEthListener.parseProposalCreated();
+  await proposalEthListener.start();
 }
 
 init().catch(console.error);
