@@ -73,13 +73,14 @@ export class ProposalEthListener extends ProviderListener {
           nonce: event.nonce,
           transactionHash: event.transactionHash,
           proposalId: event.transId,
-          proposer: event.proposer,
+          proposer: event.proposer.toLowerCase(),
           description: event.description,
           votingPeriod: event.votingPeriod,
           minimumQuorum: event.minimumQuorum,
           network: BlockchainNetworks.rinkebyTestNetwork, // TODO
         }
       });
+
       if (isCreated) {
         await Proposal.update({
           status: ProposalStatus.Active,
@@ -90,7 +91,7 @@ export class ProposalEthListener extends ProviderListener {
           proposalId: proposalEvent.proposalId
         }, {
           where: {
-            proposer: proposalEvent.proposer,
+            proposer: proposalEvent.proposer.toLowerCase(),
             nonce: proposalEvent.nonce
           }
         });
@@ -109,7 +110,7 @@ export class ProposalEthListener extends ProviderListener {
         },
         defaults: {
           transactionHash: event.transactionHash,
-          voter: event.voter,
+          voter: event.voter.toLowerCase(),
           proposalId: event.proposalId,
           support: event.support,
           votes: event.votes,
