@@ -2,6 +2,7 @@ import * as Joi from "joi";
 import * as handlers from "../../api/questsResponse";
 import {
   idSchema,
+  idsSchema,
   chatSchema,
   offsetSchema,
   limitSchema,
@@ -26,6 +27,7 @@ export default [{
       }).label("QuestResponseParams"),
       payload: Joi.object({
         message: questsResponseMessageSchema,
+        medias: idsSchema.required().unique(),
       }).label('QuestResponsePayload'),
     },
     response: {
