@@ -1,4 +1,4 @@
-import { Op } from 'sequelize'
+import { Op } from "sequelize";
 import {error, output} from "../utils";
 import {Errors} from "../utils/errors";
 import {publishQuestNotifications, QuestNotificationActions} from "../websocket/websocket.quest";
@@ -24,6 +24,7 @@ import {
   QuestsResponseType,
   QuestsResponseStatus,
 } from "@workquest/database-models/lib/models";
+import { MediaController } from "../controllers/controller.media";
 
 export async function responseOnQuest(r) {
   let questResponse: QuestsResponse;
@@ -57,13 +58,20 @@ export async function responseOnQuest(r) {
 
   const transaction = await r.server.app.db.transaction();
 
+  const medias = await MediaController.getMedias(r.payload.medias);
+
   questResponse = await QuestsResponse.create({
     workerId: worker.id,
     questId: quest.id,
     message: r.payload.message,
+    medias: r.payload.medias,
     status: QuestsResponseStatus.Open,
     type: QuestsResponseType.Response,
   }, { transaction });
+
+  const questResponseController = new QuestsResponseController(questResponse);
+
+  await questResponseController.setMedias(medias, transaction);
 
   // TODO вынести в контроллер создание квест-чата
   const chat = Chat.build({ type: ChatType.quest });
@@ -250,11 +258,11 @@ export async function userResponsesToQuest(r) {
   await questController.employerMustBeQuestCreator(employer.id);
 
   const { rows, count } = await QuestsResponse.findAndCountAll({
-    include: [{
+    include: {
       model: QuestChat.unscoped(),
-      attributes: ["id"],
+      attributes: ["chatId"],
       as: 'questChat'
-    }],
+    },
     where: { questId: questController.quest.id },
     limit: r.query.limit,
     offset: r.query.offset,
@@ -271,7 +279,14 @@ export async function responsesToQuestsForUser(r) {
 
   const { rows, count } = await QuestsResponse.findAndCountAll({
     where: { workerId: worker.id },
-    include: { model: Quest, as: 'quest' },
+    include: [{
+      model: Quest,
+      as: 'quest',
+    }, {
+      model: QuestChat.unscoped(),
+      attributes: ["chatId"],
+      as: 'questChat'
+    }],
     limit: r.query.limit,
     offset: r.query.offset,
   });
