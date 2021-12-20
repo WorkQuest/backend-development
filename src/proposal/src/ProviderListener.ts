@@ -22,6 +22,8 @@ abstract class ProviderListener {
   protected constructor(contract: ProposalContract, parserBlockInfo: ProposalParseBlock) {
     this._contract = contract;
     this._parserBlockInfo = parserBlockInfo;
+
+    this._contract.signCallbackOnEvent(this._onEvent);
   }
 
   protected abstract _parseProposalCreatedEvent(data: any): Promise<void>;
@@ -54,7 +56,6 @@ abstract class ProviderListener {
     return this._contract.startListener();
   }
 }
-
 
 export class ProposalEthListener extends ProviderListener {
   constructor(contract: ProposalContract, parserBlockInfo: ProposalParseBlock) {

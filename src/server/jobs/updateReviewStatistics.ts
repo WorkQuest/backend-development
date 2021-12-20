@@ -59,7 +59,7 @@ const RatingConditions = class {
   }
 
   public check(conditions: RatingConditions): boolean {
-    const socialNetworks = Object.values(this.user["additionalInfo.socialNetwork"])
+    const socialNetworks = Object.values(this.user["additionalInfo"]["socialNetwork"])
       .filter(network => network !== null)
       .length;
 
