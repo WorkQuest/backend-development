@@ -8,7 +8,7 @@ import {
   emptyOkSchema,
   outputOkSchema,
   questsResponseMessageSchema,
-  questsResponsesWithCountSchema,
+  questsResponsesWithCountSchema, idsSchema
 } from "@workquest/database-models/lib/schemes";
 
 export default [{
@@ -26,6 +26,7 @@ export default [{
       }).label("QuestResponseParams"),
       payload: Joi.object({
         message: questsResponseMessageSchema,
+        medias: idsSchema.required().unique(),
       }).label('QuestResponsePayload'),
     },
     response: {

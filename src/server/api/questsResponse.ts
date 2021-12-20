@@ -21,9 +21,11 @@ import {
   MessageAction,
   QuestsResponse,
   QuestChatStatuses,
+  QuestResponseMedia,
   QuestsResponseType,
   QuestsResponseStatus,
 } from "@workquest/database-models/lib/models";
+import { MediaController } from "../controllers/controller.media";
 
 export async function responseOnQuest(r) {
   let questResponse: QuestsResponse;
@@ -57,13 +59,20 @@ export async function responseOnQuest(r) {
 
   const transaction = await r.server.app.db.transaction();
 
+  const medias = await MediaController.getMedias(r.payload.medias);
+
   questResponse = await QuestsResponse.create({
     workerId: worker.id,
     questId: quest.id,
     message: r.payload.message,
+    medias: r.payload.medias,
     status: QuestsResponseStatus.Open,
     type: QuestsResponseType.Response,
   }, { transaction });
+
+  const questResponseController = new QuestsResponseController(questResponse);
+
+  await questResponseController.setMedias(medias, transaction);
 
   // TODO вынести в контроллер создание квест-чата
   const chat = Chat.build({ type: ChatType.quest });
@@ -254,6 +263,10 @@ export async function userResponsesToQuest(r) {
       model: QuestChat.unscoped(),
       attributes: ["id"],
       as: 'questChat'
+    }, {
+      model: QuestResponseMedia,
+      as: 'medias',
+      required: false,
     }],
     where: { questId: questController.quest.id },
     limit: r.query.limit,
@@ -271,7 +284,13 @@ export async function responsesToQuestsForUser(r) {
 
   const { rows, count } = await QuestsResponse.findAndCountAll({
     where: { workerId: worker.id },
-    include: { model: Quest, as: 'quest' },
+    include: [{
+      model: Quest, as: 'quest',
+    }, {
+        model: QuestResponseMedia,
+        as: 'medias',
+        required: false,
+    }],
     limit: r.query.limit,
     offset: r.query.offset,
   });
