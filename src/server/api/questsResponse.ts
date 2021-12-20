@@ -1,4 +1,4 @@
-import { Op } from 'sequelize'
+import { Op } from "sequelize";
 import {error, output} from "../utils";
 import {Errors} from "../utils/errors";
 import {publishQuestNotifications, QuestNotificationActions} from "../websocket/websocket.quest";
@@ -260,7 +260,7 @@ export async function userResponsesToQuest(r) {
   const { rows, count } = await QuestsResponse.findAndCountAll({
     include: {
       model: QuestChat.unscoped(),
-      attributes: ["id"],
+      attributes: ["chatId"],
       as: 'questChat'
     },
     where: { questId: questController.quest.id },
@@ -279,7 +279,14 @@ export async function responsesToQuestsForUser(r) {
 
   const { rows, count } = await QuestsResponse.findAndCountAll({
     where: { workerId: worker.id },
-    include: { model: Quest, as: 'quest' },
+    include: [{
+      model: Quest,
+      as: 'quest',
+    }, {
+      model: QuestChat.unscoped(),
+      attributes: ["chatId"],
+      as: 'questChat'
+    }],
     limit: r.query.limit,
     offset: r.query.offset,
   });
