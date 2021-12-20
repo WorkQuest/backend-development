@@ -21,7 +21,6 @@ import {
   MessageAction,
   QuestsResponse,
   QuestChatStatuses,
-  QuestResponseMedia,
   QuestsResponseType,
   QuestsResponseStatus,
 } from "@workquest/database-models/lib/models";
