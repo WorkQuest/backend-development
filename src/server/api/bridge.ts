@@ -1,11 +1,15 @@
+import Web3 from "web3";
+import configBridge from "../config/config.bridge";
 import { output } from "../utils";
-import { metaMaskKey, wsProviders } from "../config/constant";
 import {
   SwapEvents,
   BridgeSwapTokenEvent,
 } from "@workquest/database-models/lib/models";
 
-const web3 = new (require("web3"))(wsProviders.bsc);
+const linkWsProvider = configBridge.debug ?
+  configBridge.bscTestNetwork.webSocketProvider : configBridge.bscMainNetwork.webSocketProvider;
+
+const web3 = new Web3(new Web3.providers.WebsocketProvider(linkWsProvider));
 
 export async function getRecipientSwaps(r) {
   const recipient = r.params.recipient.toLowerCase();
@@ -39,7 +43,7 @@ export async function getRecipientSwaps(r) {
       swapEvent.chainTo,
       swapEvent.symbol,
     );
-    const sing = await web3.eth.accounts.sign(data, metaMaskKey);
+    const sing = await web3.eth.accounts.sign(data, configBridge.privateKey);
     const redeemedRowIndex = redeemedEvents.findIndex((row) => row.messageHash === swapEvent.messageHash);
 
     swaps.push({

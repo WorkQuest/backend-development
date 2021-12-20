@@ -6,14 +6,15 @@ import {
   Quest,
   QuestPriority,
   QuestStatus,
-  RatingStatistic
+  RatingStatistic, QuestEmployment, QuestWorkPlace
 } from "@workquest/database-models/lib/models";
 import { generateJwt } from '../src/server/utils/auth';
-import { transformToGeoPostGIS } from '@workquest/database-models/lib/utils/quest';
+import { transformToGeoPostGIS } from "../src/server/utils/postGIS";
 
 export async function makeAccessToken(user: User): Promise<string> {
   const session = await Session.create({
-    userId: user.id
+    userId: user.id,
+    invalidating: false,
   });
 
   const { access } = generateJwt({ id: session.id });
@@ -72,7 +73,10 @@ export async function makeQuest(employer: User, assignedWorker: User, status: Qu
     assignedWorkerId: assignedWorker ? assignedWorker.id : null,
     status: status,
     category: 'It',
-    priority: QuestPriority.Normal,
+    workplace: QuestWorkPlace.Both,
+    employment: QuestEmployment.FullTime,
+    locationPlaceName: 'Tomsk',
+    priority: QuestPriority.ShortTerm,
     location: { longitude: -75.0364, latitude: 33.8951 },
     locationPostGIS: transformToGeoPostGIS({
       longitude: -75.0364, latitude: 33.8951

@@ -1,5 +1,5 @@
 import * as Joi from "joi";
-import { confirmEmail, getLoginViaSocialNetworkHandler, login, refreshTokens, register } from "../../api/auth";
+import { confirmEmail, getLoginViaSocialNetworkHandler, login, logout, refreshTokens, register } from "../../api/auth";
 import {
   outputOkSchema,
   userEmailSchema,
@@ -205,6 +205,19 @@ export default [{
     description: "Refresh auth tokens",
     response: {
       schema: outputOkSchema(tokensWithStatus).label("TokensWithStatusResponse")
+    }
+  }
+}, {
+  method: "POST",
+  path: "/v1/auth/logout",
+  handler: logout,
+  options: {
+    auth: 'jwt-access',
+    id: "v1.auth.logout",
+    tags: ["api", "auth"],
+    description: "Logout",
+    response: {
+      schema: emptyOkSchema
     }
   }
 }];

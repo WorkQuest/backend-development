@@ -1,6 +1,10 @@
 import Joi = require("joi");
 import { getRecipientSwaps } from "../../api/bridge";
-import { idSchema, limitSchema, offsetSchema, outputOkSchema } from "@workquest/database-models/lib/schemes";
+import {
+  limitSchema,
+  offsetSchema,
+  outputOkSchema,
+} from "@workquest/database-models/lib/schemes";
 
 // TODO: перенести в data-base-models
 const swapSchema = Joi.object({
@@ -26,7 +30,7 @@ export default [{
   handler: getRecipientSwaps,
   options: {
     auth: false,
-    id: 'v1.bridge.take',
+    id: 'v1.bridge.getRecipientSwaps',
     tags: ['api', 'bridge'],
     validate: {
       params: Joi.object({

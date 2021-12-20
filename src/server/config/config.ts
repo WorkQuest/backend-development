@@ -19,6 +19,7 @@ export default {
     }
   },
   server: {
+    local: process.env.LOCAL ? process.env.LOCAL === "true" : false,
     port: process.env.SERVER_PORT ? Number(process.env.SERVER_PORT) : 3000,
     host: process.env.SERVER_HOST ? process.env.SERVER_HOST : "localhost",
     shutdownTimeout: process.env.SERVER_SHUTDOWN_TIMEOUT ? Number(process.env.SERVER_SHUTDOWN_TIMEOUT) : 15000
@@ -115,10 +116,9 @@ export default {
     },
   },
   contracts: {
-    wqtBridgeRinkeby: process.env.WQT_BRIDGE_CONTRACT_RINKEBY,
-    wqtBridgeBsctestnet: process.env.WQT_BRIDGE_CONTRACT_BSCTESTNET,
-    wqtProviderRinkeby:process.env.WQT_PROVIDER_RINKEBY,
-    wqtProviderBsctestnet: process.env.WQT_PROVIDER_BSCTESTNET,
-    wqtPrivateKey: process.env.WQT_PRIVATE_KEY,
+    liquidityMining: {
+      webSocketProvider: process.env.CONTRACT_LIQUIDITY_MINING_WEBSOCKET_PROVIDER,
+      contract: process.env.CONTRACT_LIQUIDITY_MINING_ADDRESS,
+    }
   }
 };

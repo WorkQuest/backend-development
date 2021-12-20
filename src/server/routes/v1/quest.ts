@@ -1,48 +1,33 @@
 import * as Joi from "joi";
-import {
-  acceptCompletedWorkOnQuest,
-  acceptWorkOnQuest,
-  closeQuest,
-  completeWorkOnQuest,
-  createQuest,
-  deleteQuest,
-  editQuest,
-  getMyStarredQuests,
-  getQuests,
-  rejectCompletedWorkOnQuest,
-  rejectWorkOnQuest,
-  setStar,
-  startQuest,
-  removeStar,
-  getQuest,
-} from '../../api/quest';
+import * as handlers from '../../api/quest';
 import {
   outputOkSchema,
   idSchema,
   idsSchema,
   emptyOkSchema,
   locationSchema,
-  questWorkPlaceSchema,
+  workPlaceSchema,
   questAdTypeSchema,
   questCategorySchema,
   questDescriptionSchema,
   questPriceSchema,
-  questPrioritySchema,
+  prioritySchema,
   questSchema,
   questTitleSchema,
-  questsQuerySchema,
-  questsSchema,
+  questQuerySchema,
   questsForGetWithCountSchema,
   questLocationPlaceNameSchema,
-  skillFilterSchema,
   questEmploymentSchema,
+  specializationKeysSchema,
+  chatForGetSchema,
 } from "@workquest/database-models/lib/schemes";
 
 export default [{
   method: "GET",
   path: "/v1/quest/{questId}",
-  handler: getQuest,
+  handler: handlers.getQuest,
   options: {
+    auth: 'jwt-access',
     id: "v1.getQuest",
     tags: ["api", "quest"],
     description: "Get quest",
@@ -58,25 +43,26 @@ export default [{
 }, {
   method: "POST",
   path: "/v1/quest/create",
-  handler: createQuest,
+  handler: handlers.createQuest,
   options: {
+    auth: 'jwt-access',
     id: "v1.quest.create",
     tags: ["api", "quest"],
     description: "Register new quest",
     validate: {
       payload: Joi.object({
         category: questCategorySchema.required(),
-        workplace: questWorkPlaceSchema.required(),
+        workplace: workPlaceSchema.required(),
         employment: questEmploymentSchema.required(),
-        priority: questPrioritySchema.required(),
+        priority: prioritySchema.required(),
         locationPlaceName: questLocationPlaceNameSchema.required(),
         location: locationSchema.required(),
         title: questTitleSchema.required(),
         description: questDescriptionSchema.required(),
         price: questPriceSchema.required(),
         medias: idsSchema.required().unique(),
-        adType: questAdTypeSchema, // TODO как появится flow добавить required()
-        skillFilters: skillFilterSchema.required(),
+        adType: questAdTypeSchema.required(),
+        specializationKeys: specializationKeysSchema.required().unique(),
       }).label("CreateQuestPayload")
     },
     response: {
@@ -86,8 +72,9 @@ export default [{
 }, {
   method: "DELETE",
   path: "/v1/quest/{questId}",
-  handler: deleteQuest,
+  handler: handlers.deleteQuest,
   options: {
+    auth: 'jwt-access',
     id: "v1.quest.deleteQuest",
     tags: ["api", "quest"],
     description: "Delete quest (only status: Created and Closed)",
@@ -103,8 +90,9 @@ export default [{
 }, {
   method: "PUT",
   path: "/v1/quest/{questId}",
-  handler: editQuest,
+  handler: handlers.editQuest,
   options: {
+    auth: 'jwt-access',
     id: "v1.quest.editQuest",
     tags: ["api", "quest"],
     description: "Edit quest",
@@ -113,18 +101,18 @@ export default [{
         questId: idSchema.required(),
       }).label("EditQuestParams"),
       payload: Joi.object({
-        category: questCategorySchema,
-        workplace: questWorkPlaceSchema,
-        employment: questEmploymentSchema,
-        priority: questPrioritySchema,
-        location: locationSchema,
-        locationPlaceName: questLocationPlaceNameSchema,
-        title: questTitleSchema,
-        description: questDescriptionSchema,
-        price: questPriceSchema,
-        adType: questAdTypeSchema,
-        skillFilters: skillFilterSchema,
-        medias: idsSchema.unique(),
+        category: questCategorySchema.required(),
+        workplace: workPlaceSchema.required(),
+        employment: questEmploymentSchema.required(),
+        priority: prioritySchema.required(),
+        location: locationSchema.required(),
+        locationPlaceName: questLocationPlaceNameSchema.required(),
+        title: questTitleSchema.required(),
+        description: questDescriptionSchema.required(),
+        price: questPriceSchema.required(),
+        adType: questAdTypeSchema.required(),
+        medias: idsSchema.unique().required(),
+        specializationKeys: specializationKeysSchema.unique().required(),
       }).label("EditQuestPayload"),
     },
     response: {
@@ -134,13 +122,14 @@ export default [{
 }, {
   method: "GET",
   path: "/v1/quests",
-  handler: getQuests,
+  handler: handlers.getQuests,
   options: {
+    auth: 'jwt-access',
     id: "v1.getQuests",
     tags: ["api", "quest"],
     description: "Get quests",
     validate: {
-      query: questsQuerySchema
+      query: questQuerySchema
     },
     response: {
       schema: outputOkSchema(questsForGetWithCountSchema).label("GetQuestsResponse")
@@ -149,8 +138,9 @@ export default [{
 }, {
   method: "GET",
   path: "/v1/employer/{userId}/quests",
-  handler: getQuests,
+  handler: handlers.getQuests,
   options: {
+    auth: 'jwt-access',
     id: "v1.employer.quests",
     tags: ["api", "quest"],
     description: "Get quests for a given user",
@@ -158,17 +148,37 @@ export default [{
       params: Joi.object({
         userId: idSchema.required(),
       }).label("EmployerGetQuestsParams"),
-      query: questsQuerySchema
+      query: questQuerySchema
     },
     response: {
       schema: outputOkSchema(questsForGetWithCountSchema).label("EmployerGetQuestsResponse")
     },
   }
 }, {
+  method: "GET",
+  path: "/v1/worker/{workerId}/quests",
+  handler: handlers.getQuests,
+  options: {
+    auth: 'jwt-access',
+    id: "v1.worker.quests",
+    tags: ["api", "quest"],
+    description: "Get quests for a given user",
+    validate: {
+      params: Joi.object({
+        workerId: idSchema.required(),
+      }).label("WorkerGetQuestsParams"),
+      query: questQuerySchema
+    },
+    response: {
+      schema: outputOkSchema(questsForGetWithCountSchema).label("WorkerGetQuestsResponse")
+    },
+  }
+}, {
   method: "POST",
   path: "/v1/quest/{questId}/start",
-  handler: startQuest,
+  handler: handlers.startQuest,
   options: {
+    auth: 'jwt-access',
     id: "v1.quest.startQuest",
     tags: ["api", "quest"],
     description: "Start quest",
@@ -187,8 +197,9 @@ export default [{
 }, {
   method: "POST",
   path: "/v1/quest/{questId}/close",
-  handler: closeQuest,
+  handler: handlers.closeQuest,
   options: {
+    auth: 'jwt-access',
     id: "v1.quest.closeQuest",
     tags: ["api", "quest"],
     description: "Close quest",
@@ -204,8 +215,9 @@ export default [{
 }, {
   method: "POST",
   path: "/v1/quest/{questId}/reject-work",
-  handler: rejectWorkOnQuest,
+  handler: handlers.rejectWorkOnQuest,
   options: {
+    auth: 'jwt-access',
     id: "v1.quest.rejectWork",
     tags: ["api", "quest"],
     description: "Reject work on quest",
@@ -221,8 +233,9 @@ export default [{
 }, {
   method: "POST",
   path: "/v1/quest/{questId}/accept-work",
-  handler: acceptWorkOnQuest,
+  handler: handlers.acceptWorkOnQuest,
   options: {
+    auth: 'jwt-access',
     id: "v1.quest.acceptWork",
     tags: ["api", "quest"],
     description: "Accept work on quest",
@@ -238,8 +251,9 @@ export default [{
 }, {
   method: "POST",
   path: "/v1/quest/{questId}/complete-work",
-  handler: completeWorkOnQuest,
+  handler: handlers.completeWorkOnQuest,
   options: {
+    auth: 'jwt-access',
     id: "v1.quest.completeWork",
     tags: ["api", "quest"],
     description: "Complete work on quest",
@@ -255,8 +269,9 @@ export default [{
 }, {
   method: "POST",
   path: "/v1/quest/{questId}/accept-completed-work",
-  handler: acceptCompletedWorkOnQuest,
+  handler: handlers.acceptCompletedWorkOnQuest,
   options: {
+    auth: 'jwt-access',
     id: "v1.quest.acceptCompletedWork",
     tags: ["api", "quest"],
     description: "Accept completed work on quest",
@@ -272,8 +287,9 @@ export default [{
 }, {
   method: "POST",
   path: "/v1/quest/{questId}/reject-completed-work",
-  handler: rejectCompletedWorkOnQuest,
+  handler: handlers.rejectCompletedWorkOnQuest,
   options: {
+    auth: 'jwt-access',
     id: "v1.quest.rejectCompletedWork",
     tags: ["api", "quest"],
     description: "Reject completed work on quest",
@@ -287,22 +303,11 @@ export default [{
     },
   }
 }, {
-  method: "GET", // TODO тут count добавить
-  path: '/v1/quests/starred',
-  handler: getMyStarredQuests,
-  options: {
-    id: 'v1.quest.starred',
-    tags: ["api", "quest"],
-    description: 'Get starred quests',
-    response: {
-      schema: outputOkSchema(questsSchema).label("GetMyStarredQuestsResponse")
-    },
-  },
-}, {
   method: "POST",
   path: '/v1/quest/{questId}/star',
-  handler: setStar,
+  handler: handlers.setStar,
   options: {
+    auth: 'jwt-access',
     id: 'v1.quest.star.setStar',
     tags: ["api", "quest"],
     description: 'Set star on quest',
@@ -318,8 +323,9 @@ export default [{
 }, {
   method: "DELETE",
   path: '/v1/quest/{questId}/star',
-  handler: removeStar,
+  handler: handlers.removeStar,
   options: {
+    auth: 'jwt-access',
     id: 'v1.quest.star.takeAwayStar',
     tags: ["api", "quest"],
     description: 'Take away star on quest',
