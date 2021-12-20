@@ -7,6 +7,7 @@ import {
   ProposalCreatedEvent,
   ProposalVoteCastEvent,
   ProposalExecutedEvent,
+  Discussion
 } from '@workquest/database-models/lib/models';
 
 export enum TrackedEvents {
@@ -25,7 +26,9 @@ abstract class ProviderListener {
   }
 
   protected abstract _parseProposalCreatedEvent(data: any): Promise<void>;
+
   protected abstract _parseVoteCastEvent(data: any): Promise<void>;
+
   protected abstract _parseProposalExecutedEvent(data: any): Promise<void>;
 
   public async parseProposalCreated() {
@@ -35,7 +38,7 @@ abstract class ProviderListener {
   }
 
   protected async _onEvent(event: ProposalEventType): Promise<void> {
-    console.log("New event: type ", event.event, " tx hash ", event.transactionHash);
+    console.log('New event: type ', event.event, ' tx hash ', event.transactionHash);
 
     if (event.event === TrackedEvents.ProposalCreated) {
       await this._parseProposalCreatedEvent(event);
@@ -77,10 +80,9 @@ export class ProposalEthListener extends ProviderListener {
           description: event.description,
           votingPeriod: event.votingPeriod,
           minimumQuorum: event.minimumQuorum,
-          network: BlockchainNetworks.rinkebyTestNetwork, // TODO
+          network: BlockchainNetworks.rinkebyTestNetwork // TODO
         }
       });
-
       if (isCreated) {
         await Proposal.update({
           status: ProposalStatus.Active,
@@ -95,6 +97,20 @@ export class ProposalEthListener extends ProviderListener {
             nonce: proposalEvent.nonce
           }
         });
+        const proposal = await Proposal.findOne({
+          where: {
+            proposer: proposalEvent.proposer.toLowerCase(),
+            nonce: proposalEvent.nonce
+          }
+        });
+        if (!!proposal) {
+          console.log(proposal);
+          await Discussion.create({
+            authorId: proposal.userId,
+            title: proposal.title,
+            description: proposal.description
+          });
+        }
       }
     } catch (err) {
       console.log(err);
@@ -115,7 +131,7 @@ export class ProposalEthListener extends ProviderListener {
           support: event.support,
           votes: event.votes,
           timestamp: event.timestamp,
-          network: BlockchainNetworks.rinkebyTestNetwork, // TODO
+          network: BlockchainNetworks.rinkebyTestNetwork // TODO
         }
       });
     } catch (err) {
@@ -135,13 +151,13 @@ export class ProposalEthListener extends ProviderListener {
           proposalId: event.transId,
           succeeded: event.succeded,
           defeated: event.defeated,
-          network: BlockchainNetworks.rinkebyTestNetwork, // TODO
+          network: BlockchainNetworks.rinkebyTestNetwork // TODO
         }
       });
       if (isCreated) {
         if (ProposalExecutives.succeeded === true) {
           await Proposal.update({
-            status: ProposalStatus.Accepted,
+            status: ProposalStatus.Accepted
           }, {
             where: {
               proposalId: ProposalExecutives.proposalId
@@ -149,7 +165,7 @@ export class ProposalEthListener extends ProviderListener {
           });
         } else if (ProposalExecutives.defeated === true) {
           await Proposal.update({
-            status: ProposalStatus.Rejected,
+            status: ProposalStatus.Rejected
           }, {
             where: {
               proposalId: ProposalExecutives.proposalId

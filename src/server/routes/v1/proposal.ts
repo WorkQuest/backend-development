@@ -1,17 +1,17 @@
 import * as Joi from 'joi';
 import {
-  idsSchema,
+  idsSchema, isActiveSchema,
   limitSchema,
   offsetSchema,
-  outputOkSchema, proposalNumberSchema,
-  proposerIdWalletSchema
+  outputOkSchema, proposalNumberSchema, proposalStatus,
+  proposerIdWalletSchema, searchSchema, sortDirectionSchema
 } from '@workquest/database-models/lib/schemes';
 import {
   proposalDescriptionSchema,
   proposalSchema,
   proposalTitleSchema
 } from '@workquest/database-models/lib/schemes/proposal';
-import { createProposal, getProposal, getProposals } from '../../api/proposal';
+import { createProposal, getProposal, getProposals, getVotingsProposal } from '../../api/proposal';
 
 export default [
   {
@@ -46,8 +46,11 @@ export default [
       description: 'Get proposal',
       validate: {
         query: Joi.object({
+          q: searchSchema,
           limit: limitSchema,
-          offset: offsetSchema
+          offset: offsetSchema,
+          createdAt: sortDirectionSchema.default('DESC'),
+          status: proposalStatus
         }).label('GetProposalsQuery')
       },
       response: {
@@ -70,6 +73,30 @@ export default [
       },
       response: {
         schema: outputOkSchema(proposalSchema).label('GetProposalResponse')
+      }
+    }
+  }, {
+    method: 'GET',
+    path: '/v1/votings/{proposalId}',
+    handler: getVotingsProposal,
+    options: {
+      auth: 'jwt-access',
+      id: 'v1.getVotingsProposal',
+      tags: ['api', 'proposal'],
+      description: 'Get voting in proposal',
+      validate: {
+        params: Joi.object({
+          proposalId: proposalNumberSchema.required()
+        }).label('GetProposalParams'),
+        query: Joi.object({
+          limit: limitSchema,
+          offset: offsetSchema,
+          createdAt: sortDirectionSchema.default('DESC'),
+          support: isActiveSchema
+        }).label('GetVotingsQuery')
+      },
+      response: {
+        schema: outputOkSchema(proposalSchema).label('GetVotingsProposalResponse')
       }
     }
   }];
