@@ -259,15 +259,11 @@ export async function userResponsesToQuest(r) {
   await questController.employerMustBeQuestCreator(employer.id);
 
   const { rows, count } = await QuestsResponse.findAndCountAll({
-    include: [{
+    include: {
       model: QuestChat.unscoped(),
       attributes: ["id"],
       as: 'questChat'
-    }, {
-      model: QuestResponseMedia,
-      as: 'medias',
-      required: false,
-    }],
+    },
     where: { questId: questController.quest.id },
     limit: r.query.limit,
     offset: r.query.offset,
@@ -284,13 +280,7 @@ export async function responsesToQuestsForUser(r) {
 
   const { rows, count } = await QuestsResponse.findAndCountAll({
     where: { workerId: worker.id },
-    include: [{
-      model: Quest, as: 'quest',
-    }, {
-        model: QuestResponseMedia,
-        as: 'medias',
-        required: false,
-    }],
+    include: { model: Quest, as: 'quest' },
     limit: r.query.limit,
     offset: r.query.offset,
   });

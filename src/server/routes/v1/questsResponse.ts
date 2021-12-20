@@ -2,13 +2,14 @@ import * as Joi from "joi";
 import * as handlers from "../../api/questsResponse";
 import {
   idSchema,
+  idsSchema,
   chatSchema,
   offsetSchema,
   limitSchema,
   emptyOkSchema,
   outputOkSchema,
   questsResponseMessageSchema,
-  questsResponsesWithCountSchema, idsSchema
+  questsResponsesWithCountSchema,
 } from "@workquest/database-models/lib/schemes";
 
 export default [{
