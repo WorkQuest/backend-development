@@ -4,8 +4,18 @@ import { Errors } from '../utils/errors';
 import {
   Proposal,
   ProposalStatus,
-  ProposalVoteCastEvent,
+  ProposalVoteCastEvent
 } from '@workquest/database-models/lib/models';
+import { Op } from 'sequelize';
+
+
+const searchFields = [
+  'title',
+  'description'
+];
+const searchFieldNumber = [
+  'proposalId'
+];
 
 //TODO: improve userId to address of user's wallet
 export async function createProposal(r) {
@@ -24,7 +34,7 @@ export async function createProposal(r) {
 
   await proposal.$set('medias', medias, { transaction });
 
-  transaction.commit();
+  await transaction.commit();
 
   return output({
     id: proposal.id,
@@ -38,20 +48,37 @@ export async function createProposal(r) {
 }
 
 export async function getProposals(r) {
+  const where = {
+    ...(r.query.status && { status: r.query.status })
+  };
+
+  if (r.query.q) {
+    if (isNaN(Number(r.query.q))) {
+      where[Op.or] = searchFields.map(field => ({
+        [field]: { [Op.iLike]: `%${r.query.q}%` }
+      }));
+    }
+    if (!isNaN(Number(r.query.q))) {
+      where[Op.or] = searchFieldNumber.map(field => ({
+        [field]: { [Op.eq]: Number(r.query.q) }
+      }));
+    }
+  }
+
   const { count, rows } = await Proposal.findAndCountAll({
+    where,
     limit: r.query.limit,
-    offset: r.query.offset
+    offset: r.query.offset,
+    order: [['createdAt', r.query.createdAt]]
   });
 
   return ({ count, proposal: rows });
 }
 
-export async function getProposal(r) {
-  const proposal = await Proposal.findOne({
-    where: { proposalId: r.params.proposalId }
-  });
 
-  const { count, rows } = await ProposalVoteCastEvent.findAndCountAll({
+export async function getProposal(r) {
+
+  const proposal = await Proposal.findOne({
     where: { proposalId: r.params.proposalId }
   });
 
@@ -59,10 +86,25 @@ export async function getProposal(r) {
     return error(Errors.NotFound, 'Proposal does not exist', {});
   }
 
-  return output({
-    proposal,
-    vote: { count, voting: rows }
-  });
+  return output(proposal);
 }
 
+export async function getVotingsProposal(r) {
+  const where = {
+    ...(r.query.support !== undefined && { support: r.query.support }),
+    ...(r.params.proposalId && { proposalId: r.params.proposalId })
+  };
+  const { count, rows } = await ProposalVoteCastEvent.findAndCountAll({
+    limit: r.query.limit,
+    offset: r.query.offset,
+    order: [['createdAt', r.query.createdAt]],
+    where
+  });
+
+  if (!rows) {
+    return error(Errors.NotFound, 'Proposal does not exist', {});
+  }
+
+  return ({ count, voting: rows });
+}
 
