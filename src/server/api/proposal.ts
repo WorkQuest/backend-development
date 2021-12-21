@@ -34,7 +34,7 @@ export async function createProposal(r) {
 
   await proposal.$set('medias', medias, { transaction });
 
-  transaction.commit();
+  await transaction.commit();
 
   return output({
     id: proposal.id,

@@ -39,9 +39,8 @@ abstract class ProviderListener {
     }
   }
 
-  protected async _onEvent(event: ProposalEventType): Promise<void> {
+  protected _onEvent = async (event: ProposalEventType): Promise<void> => {
     console.log('New event: type ', event.event, ' tx hash ', event.transactionHash);
-
     if (event.event === TrackedEvents.ProposalCreated) {
       await this._parseProposalCreatedEvent(event);
     } else if (event.event === TrackedEvents.VoteCast) {
@@ -49,11 +48,10 @@ abstract class ProviderListener {
     } else if (event.event === TrackedEvents.ProposalExecuted) {
       await this._parseProposalExecutedEvent(event);
     }
-
     this._parserBlockInfo.lastParsedBlock = event.blockNumber;
 
     await this._parserBlockInfo.save();
-  }
+  };
 
   start(): Promise<void> {
     return this._contract.startListener();
@@ -63,9 +61,11 @@ abstract class ProviderListener {
 export class ProposalEthListener extends ProviderListener {
   constructor(contract: ProposalContract, parserBlockInfo: ProposalParseBlock) {
     super(contract, parserBlockInfo);
+    console.log();
   }
 
   protected async _parseProposalCreatedEvent(event: ProposalEventType): Promise<void> {
+
     try {
       const [proposalEvent, isCreated] = await ProposalCreatedEvent.findOrCreate({
         where: {
