@@ -11,7 +11,10 @@ import { SkillsFiltersController } from "../controllers/controller.skillsFilters
 import { addUpdateReviewStatisticsJob } from "../jobs/updateReviewStatistics";
 import {
   Chat,
+  User,
   Quest,
+  Review,
+  UserRole,
   QuestChat,
   QuestChatStatuses,
   QuestsResponseType,
@@ -19,8 +22,7 @@ import {
   QuestsResponse,
   QuestStatus,
   StarredQuests,
-  User,
-  UserRole
+
 } from "@workquest/database-models/lib/models";
 import { updateQuestsStatisticJob } from "../jobs/updateQuestsStatistic";
 
@@ -401,6 +403,11 @@ export async function getQuests(r) {
   }
 
   include.push({
+    model: Review.unscoped(),
+    as: "review",
+    where: { fromUserId: r.auth.credentials.id },
+    required: false
+  }, {
     model: StarredQuests.unscoped(),
     as: "star",
     where: { userId: r.auth.credentials.id },

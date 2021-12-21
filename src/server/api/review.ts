@@ -1,4 +1,4 @@
-import {output} from '../utils';
+import { error, output } from "../utils";
 import {addUpdateReviewStatisticsJob} from '../jobs/updateReviewStatistics';
 import {QuestController} from "../controllers/quest/controller.quest"
 import {publishQuestNotifications, QuestNotificationActions} from "../websocket/websocket.quest";
@@ -9,9 +9,18 @@ import {
   UserRole,
   QuestStatus,
 } from "@workquest/database-models/lib/models";
+import { Errors } from "../utils/errors";
 
 export async function sendReview(r) {
   const fromUser: User = r.auth.credentials;
+
+  const alreadyReview = await Review.findOne({
+    where: {fromUserId: fromUser.id}
+  });
+
+  if(alreadyReview) {
+    return error(Errors.AlreadyExists, "You already valued this quest", {});
+  }
 
   const questController = new QuestController(await Quest.findByPk(r.payload.questId));
 
