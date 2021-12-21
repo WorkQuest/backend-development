@@ -52,15 +52,17 @@ export async function getProposals(r) {
     ...(r.query.status && { status: r.query.status })
   };
 
-  if (isNaN(Number(r.query.q))) {
-    where[Op.or] = searchFields.map(field => ({
-      [field]: { [Op.iLike]: `%${r.query.q}%` }
-    }));
-  }
-  if (!isNaN(Number(r.query.q))) {
-    where[Op.or] = searchFieldNumber.map(field => ({
-      [field]: { [Op.eq]: Number(r.query.q) }
-    }));
+  if (r.query.q) {
+    if (isNaN(Number(r.query.q))) {
+      where[Op.or] = searchFields.map(field => ({
+        [field]: { [Op.iLike]: `%${r.query.q}%` }
+      }));
+    }
+    if (!isNaN(Number(r.query.q))) {
+      where[Op.or] = searchFieldNumber.map(field => ({
+        [field]: { [Op.eq]: Number(r.query.q) }
+      }));
+    }
   }
 
   const { count, rows } = await Proposal.findAndCountAll({

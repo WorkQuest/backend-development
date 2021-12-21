@@ -22,13 +22,13 @@ export async function updateQuestsStatisticJob(payload: Data) {
 }
 
 async function getWorkerQuestStatistic(workerId: string): Promise<Statistic> {
-  const completedQuestsPromises = Quest.count({
+  const completedQuestsPromises = Quest.unscoped().count({
     where: {
       assignedWorkerId: workerId,
       status: QuestStatus.Done,
     }
   });
-  const openedQuestsPromises = Quest.count({
+  const openedQuestsPromises = Quest.unscoped().count({
     where: {
       assignedWorkerId: workerId,
       status: activeFlowStatuses,
@@ -43,13 +43,13 @@ async function getWorkerQuestStatistic(workerId: string): Promise<Statistic> {
 }
 
 async function getEmployerQuestStatistic(employerId: string): Promise<Statistic> {
-  const completedQuestsPromises = Quest.count({
+  const completedQuestsPromises = Quest.unscoped().count({
     where: {
       userId: employerId,
       status: QuestStatus.Done,
     }
   });
-  const openedQuestsPromises = Quest.count({
+  const openedQuestsPromises = Quest.unscoped().count({
     where: {
       userId: employerId,
       status: activeFlowStatuses,
