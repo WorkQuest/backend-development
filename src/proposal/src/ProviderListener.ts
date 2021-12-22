@@ -97,6 +97,8 @@ export class ProposalEthListener extends ProviderListener {
           description: proposal.description
         });
 
+        await discussion.$set("medias", proposal.medias);
+
         await proposal.update({
           discussionId: discussion.id,
           status: ProposalStatus.Active,
