@@ -29,52 +29,56 @@ const confirmTemplate = Handlebars.compile(fs.readFileSync(confirmTemplatePath, 
 	encoding: "utf-8"
 }));
 
-export async function register(r) {
-	try {
-		await UserController.checkEmail(r.payload.email);
+export function register(host: 'dao'|'main') {
+	return async function(r) {
+		try {
+			await UserController.checkEmail(r.payload.email);
 
-		const emailConfirmCode = getRandomHexToken().substring(0, 6).toUpperCase();
-		const emailConfirmLink = `${config.baseUrl}/confirm?token=${emailConfirmCode}`;
-		const emailHtml = confirmTemplate({ confirmLink: emailConfirmLink, confirmCode: emailConfirmCode });
 
-		await addSendEmailJob({
-			email: r.payload.email,
-			subject: "Work Quest | Confirmation code",
-			text: `Your confirmation code is ${emailConfirmCode}. Follow this link ${config.baseUrl}/confirm?token=${emailConfirmCode}`,
-			html: emailHtml,
-		});
+			const emailConfirmCode = getRandomHexToken().substring(0, 6).toUpperCase();
+			const emailConfirmLink = host === 'main' ? `${config.baseUrl}/confirm?token=${emailConfirmCode}` : `${config.baseUrlDao}/confirm?token=${emailConfirmCode}`;
+			const emailHtml = confirmTemplate({ confirmLink: emailConfirmLink, confirmCode: emailConfirmCode });
 
-		const user = await User.create({
-			email: r.payload.email.toLowerCase(),
-			password: r.payload.password,
-			firstName: r.payload.firstName,
-			lastName: r.payload.lastName,
-			settings: {
-				...defaultUserSettings,
-				emailConfirm: emailConfirmCode
-			}
-		});
+			await addSendEmailJob({
+				email: r.payload.email,
+				subject: "Work Quest | Confirmation code",
+				text: `Your confirmation code is ${emailConfirmCode}. Follow this link ${config.baseUrl}/confirm?token=${emailConfirmCode}`,
+				html: emailHtml,
+			});
 
-		await QuestsStatistic.create({ userId: user.id });
+			const user = await User.create({
+				email: r.payload.email.toLowerCase(),
+				password: r.payload.password,
+				firstName: r.payload.firstName,
+				lastName: r.payload.lastName,
+				settings: {
+					...defaultUserSettings,
+					emailConfirm: emailConfirmCode
+				}
+			});
 
-		const session = await Session.create({
-			userId: user.id,
-			invalidating: false,
-			place: getGeo(r),
-			ip: getRealIp(r),
-			device: getDevice(r),
-		});
+			await QuestsStatistic.create({ userId: user.id });
 
-		const result = {
-			...generateJwt({ id: session.id }),
-			userStatus: user.status,
-		};
+			const session = await Session.create({
+				userId: user.id,
+				invalidating: false,
+				place: getGeo(r),
+				ip: getRealIp(r),
+				device: getDevice(r),
+			});
 
-		return output(result);
-	} catch (e) {
-		console.error(e);
+			const result = {
+				...generateJwt({ id: session.id }),
+				userStatus: user.status,
+			};
+
+			return output(result);
+		} catch (e) {
+			console.error(e);
+		}
 	}
 }
+
 
 export function getLoginViaSocialNetworkHandler(returnType: "token" | "redirect") {
 	return async function loginThroughSocialNetwork(r, h) {

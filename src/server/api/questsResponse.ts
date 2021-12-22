@@ -64,7 +64,6 @@ export async function responseOnQuest(r) {
     workerId: worker.id,
     questId: quest.id,
     message: r.payload.message,
-    medias: r.payload.medias,
     status: QuestsResponseStatus.Open,
     type: QuestsResponseType.Response,
   }, { transaction });
@@ -127,6 +126,8 @@ export async function responseOnQuest(r) {
     questChat.save({ transaction }),
     ...members.map(member => member.save({ transaction })),
   ] as Promise<any>[]);
+
+  await responseWorkerMessage.$set('medias', medias, { transaction });
 
   await transaction.commit();
 
