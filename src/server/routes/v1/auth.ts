@@ -17,12 +17,33 @@ import {
 export default [{
   method: "POST",
   path: "/v1/auth/register",
-  handler: register,
+  handler: register('main'),
   options: {
     auth: false,
     id: "v1.auth.register",
     tags: ["api", "auth"],
     description: "Register new user",
+    validate: {
+      payload: Joi.object({
+        firstName: userFirstNameSchema.required(),
+        lastName: userLastNameSchema.required(),
+        email: userEmailSchema.required(),
+        password: userPasswordSchema.required()
+      }).label("AuthRegisterPayload")
+    },
+    response: {
+      schema: outputOkSchema(tokensWithStatus).label("TokensWithStatusResponse")
+    }
+  }
+}, {
+  method: "POST",
+  path: "/v1/auth/dao/register",
+  handler: register('dao'),
+  options: {
+    auth: false,
+    id: "v1.auth.register.dao",
+    tags: ["api", "auth"],
+    description: "Register new user on dao",
     validate: {
       payload: Joi.object({
         firstName: userFirstNameSchema.required(),
