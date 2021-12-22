@@ -49,7 +49,7 @@ export async function createProposal(r) {
 
 export async function getProposals(r) {
   const where = {
-    ...(r.query.status && { status: r.query.status })
+    ...(r.query.status !== null && { status: r.query.status })
   };
 
   if (r.query.q) {
