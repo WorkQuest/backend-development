@@ -95,6 +95,9 @@ export async function responseOnQuest(r) {
     number: 2, /** Because create */
     createdAt: Date.now() + 100,
   });
+
+  await responseWorkerMessage.$set('medias', medias, { transaction });
+
   const questChat = QuestChat.build({
     employerId: quest.userId ,
     workerId: worker.id,
