@@ -7,8 +7,8 @@ import {
   ProposalCreatedEvent,
   ProposalVoteCastEvent,
   ProposalExecutedEvent,
-  Discussion
-} from '@workquest/database-models/lib/models';
+  Discussion, DiscussionMedia
+} from "@workquest/database-models/lib/models";
 
 export enum TrackedEvents {
   ProposalCreated = 'ProposalCreated',
@@ -96,6 +96,8 @@ export class ProposalEthListener extends ProviderListener {
           title: proposal.title,
           description: proposal.description
         });
+
+        await discussion.$set("medias", proposal.medias);
 
         await proposal.update({
           discussionId: discussion.id,
