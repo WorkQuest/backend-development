@@ -4,6 +4,7 @@ config();
 
 export default {
   baseUrl: process.env.BASE_URL,
+  baseUrlDao: process.env.BASE_URL_DAO,
   debug: process.env.DEBUG === "true",
   dbLink: process.env.DB_LINK,
   auth: {
