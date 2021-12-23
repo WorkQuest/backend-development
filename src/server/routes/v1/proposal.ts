@@ -50,7 +50,7 @@ export default [
           limit: limitSchema,
           offset: offsetSchema,
           createdAt: sortDirectionSchema.default('DESC'),
-          status: proposalStatus
+          status: proposalStatus.default(null),
         }).label('GetProposalsQuery')
       },
       response: {

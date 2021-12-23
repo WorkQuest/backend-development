@@ -85,33 +85,29 @@ export class ProposalEthListener extends ProviderListener {
         }
       });
       if (isCreated) {
-        await Proposal.update({
-          status: ProposalStatus.Active,
-          txHash: proposalEvent.transactionHash,
-          votingPeriod: proposalEvent.votingPeriod,
-          minimumQuorum: proposalEvent.minimumQuorum,
-          timestamp: proposalEvent.timestamp,
-          proposalId: proposalEvent.proposalId
-        }, {
-          where: {
-            proposer: proposalEvent.proposer.toLowerCase(),
-            nonce: proposalEvent.nonce
-          }
-        });
         const proposal = await Proposal.findOne({
           where: {
             proposer: proposalEvent.proposer.toLowerCase(),
             nonce: proposalEvent.nonce
           }
         });
-        if (!!proposal) {
-          console.log(proposal);
-          await Discussion.create({
-            authorId: proposal.userId,
-            title: proposal.title,
-            description: proposal.description
-          });
-        }
+        const discussion = await Discussion.create({
+          authorId: proposal.userId,
+          title: proposal.title,
+          description: proposal.description
+        });
+
+        await discussion.$set("medias", proposal.medias);
+
+        await proposal.update({
+          discussionId: discussion.id,
+          status: ProposalStatus.Active,
+          txHash: proposalEvent.transactionHash,
+          votingPeriod: proposalEvent.votingPeriod,
+          minimumQuorum: proposalEvent.minimumQuorum,
+          timestamp: proposalEvent.timestamp,
+          proposalId: proposalEvent.proposalId
+        });
       }
     } catch (err) {
       console.log(err);

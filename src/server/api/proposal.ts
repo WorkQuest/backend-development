@@ -49,7 +49,7 @@ export async function createProposal(r) {
 
 export async function getProposals(r) {
   const where = {
-    ...(r.query.status && { status: r.query.status })
+    ...(r.query.status !== null && { status: r.query.status })
   };
 
   if (r.query.q) {
@@ -67,6 +67,7 @@ export async function getProposals(r) {
 
   const { count, rows } = await Proposal.findAndCountAll({
     where,
+    // distinct: true,
     limit: r.query.limit,
     offset: r.query.offset,
     order: [['createdAt', r.query.createdAt]]
