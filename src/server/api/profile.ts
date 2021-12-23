@@ -9,7 +9,7 @@ import {
   User,
   UserRole,
   RatingStatistic,
-  UserSpecializationFilter,
+  UserSpecializationFilter, ChatMember, ChatsStatistic, QuestsStatistic
 } from "@workquest/database-models/lib/models";
 import { addUpdateReviewStatisticsJob } from "../jobs/updateReviewStatistics";
 
@@ -241,4 +241,31 @@ export async function getInvestors(r) {
   });
 
   return output({count: users.count, users: users.rows});
+}
+
+export async function getUserStatistics(r) {
+  const userStatistics = {};
+  const chatsStatisticInfo = await ChatsStatistic.findOne({
+    where: {
+      userId: r.auth.credentials.id
+    }
+  });
+
+  const questsStatisticInfo = await QuestsStatistic.findOne({
+    where: {
+      userId: r.auth.credentials.id
+    }
+  });
+
+  const ratingStatisticInfo = await RatingStatistic.findOne({
+    where: {
+      userId: r.auth.credentials.id
+    }
+  });
+
+  userStatistics['chatsStatistic'] = chatsStatisticInfo;
+  userStatistics['questsStatistic'] = questsStatisticInfo;
+  userStatistics['ratingStatistic'] = ratingStatisticInfo;
+
+  return output(userStatistics);
 }

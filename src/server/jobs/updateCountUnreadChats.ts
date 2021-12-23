@@ -18,6 +18,6 @@ export default async function updateCountUnreadMessages(payload: UserUnreadChats
     },
   });
 
-  await ChatsStatistic.update({ unreadMessages: unreadChatsCounter }, { where: { userId: payload.userId } });
+  await ChatsStatistic.update({ unreadChats: unreadChatsCounter }, { where: { userId: payload.userId } });
 }
 

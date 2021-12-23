@@ -21,12 +21,14 @@ import {
   employerQuerySchema,
   userEmployersSchema,
   userFirstNameSchema,
+  userStatisticsSchema,
   outputPaginationSchema,
   workerWagePerHourSchema,
   specializationKeysSchema,
   userAdditionalInfoWorkerSchema,
   userAdditionalInfoEmployerSchema,
 } from "@workquest/database-models/lib/schemes";
+import { getUserStatistics } from "../../api/profile";
 
 export default [{
   method: "GET",
@@ -230,6 +232,19 @@ export default [{
     },
     response: {
       schema: emptyOkSchema
+    }
+  }
+}, {
+  method: "GET",
+  path: "/v1/profile/statistic/me",
+  handler: handlers.getUserStatistics,
+  options: {
+    auth: 'jwt-access',
+    id: "v1.profile.getUserStatistic",
+    tags: ["api", "profile"],
+    description: "Get statistic about currentUser",
+    response: {
+      schema: outputOkSchema(userStatisticsSchema).label("UserResponse")
     }
   }
 }];
