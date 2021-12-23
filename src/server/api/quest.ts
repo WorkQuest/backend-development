@@ -9,6 +9,7 @@ import { QuestsResponseController } from "../controllers/quest/controller.quests
 import { MediaController } from "../controllers/controller.media";
 import { SkillsFiltersController } from "../controllers/controller.skillsFilters";
 import { addUpdateReviewStatisticsJob } from "../jobs/updateReviewStatistics";
+import { updateQuestsStatisticJob } from "../jobs/updateQuestsStatistic";
 import {
   Chat,
   User,
@@ -16,15 +17,13 @@ import {
   Review,
   UserRole,
   QuestChat,
+  QuestStatus,
+  StarredQuests,
+  QuestsResponse,
   QuestChatStatuses,
   QuestsResponseType,
   QuestSpecializationFilter,
-  QuestsResponse,
-  QuestStatus,
-  StarredQuests,
-
 } from "@workquest/database-models/lib/models";
-import { updateQuestsStatisticJob } from "../jobs/updateQuestsStatistic";
 
 export const searchFields = [
   "title",
@@ -404,9 +403,9 @@ export async function getQuests(r) {
 
   include.push({
     model: Review.unscoped(),
-    as: "review",
+    as: "yourReview",
     where: { fromUserId: r.auth.credentials.id },
-    required: false
+    required: false,
   }, {
     model: StarredQuests.unscoped(),
     as: "star",
