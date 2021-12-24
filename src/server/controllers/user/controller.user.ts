@@ -254,10 +254,18 @@ abstract class UserHelper {
   }
 
   public static async createRatings(userId) {
-    await RatingStatistic.create({ userId: userId });
-    await ChatsStatistic.create({ userId: userId });
-    await QuestsStatistic.create({ userId: userId });
-
+    await RatingStatistic.findOrCreate({
+      where: { userId: userId },
+      defaults: { userId: userId }
+    });
+    await ChatsStatistic.findOrCreate({
+      where: { userId: userId },
+      defaults: { userId: userId }
+    });
+    await QuestsStatistic.findOrCreate({
+      where: { userId: userId },
+      defaults: { userId: userId }
+    });
   }
 }
 
