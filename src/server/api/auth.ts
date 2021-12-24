@@ -44,38 +44,35 @@ export function register(host: 'dao'|'main') {
 			html: emailHtml,
 		});
 
-		let user: User;
-		try {
-			await User.create({
-				email: r.payload.email.toLowerCase(),
-				password: r.payload.password,
-				firstName: r.payload.firstName,
-				lastName: r.payload.lastName,
-				settings: {
-					...defaultUserSettings,
-					emailConfirm: emailConfirmCode
-				}
-			});
-		} catch (err) {
-			console.log(err);
-		}
+		const user = await User.create({
+			email: r.payload.email.toLowerCase(),
+			password: r.payload.password,
+			firstName: r.payload.firstName,
+			lastName: r.payload.lastName,
+			settings: {
+				...defaultUserSettings,
+				emailConfirm: emailConfirmCode
+			}
+		}).catch(err => console.log(err));
 
-		await QuestsStatistic.create({ userId: user.id });
+		return output({})
 
-		const session = await Session.create({
-			userId: user.id,
-			invalidating: false,
-			place: getGeo(r),
-			ip: getRealIp(r),
-			device: getDevice(r),
-		});
-
-		const result = {
-			...generateJwt({ id: session.id }),
-			userStatus: user.status,
-		};
-
-		return output(result);
+		// await QuestsStatistic.create({ userId: user.id });
+		//
+		// const session = await Session.create({
+		// 	userId: user.id,
+		// 	invalidating: false,
+		// 	place: getGeo(r),
+		// 	ip: getRealIp(r),
+		// 	device: getDevice(r),
+		// });
+		//
+		// const result = {
+		// 	...generateJwt({ id: session.id }),
+		// 	userStatus: user.status,
+		// };
+		//
+		// return output(result);
 	}
 }
 
