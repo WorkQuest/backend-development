@@ -10,7 +10,7 @@ import {
   UserStatus,
   RatingStatistic,
   defaultUserSettings,
-  UserSpecializationFilter, Session
+  UserSpecializationFilter, Session, ChatsStatistic, QuestsStatistic
 } from "@workquest/database-models/lib/models";
 
 abstract class UserHelper {
@@ -120,6 +120,8 @@ abstract class UserHelper {
     });
 
     await RatingStatistic.create({ userId: user.id });
+    await ChatsStatistic.create({ userId: user.id });
+    await QuestsStatistic.create({ userId: user.id });
 
     return user;
   }
@@ -249,6 +251,13 @@ abstract class UserHelper {
     }
 
     return this;
+  }
+
+  public static async createRatings(userId) {
+    await RatingStatistic.create({ userId: userId });
+    await ChatsStatistic.create({ userId: userId });
+    await QuestsStatistic.create({ userId: userId });
+
   }
 }
 

@@ -5,6 +5,7 @@ import {setMessageAsReadJob} from "../jobs/setMessageAsRead";
 import {updateCountUnreadMessagesJob} from "../jobs/updateCountUnreadMessages";
 import {resetUnreadCountMessagesOfMemberJob} from "../jobs/resetUnreadCountMessagesOfMember";
 import {incrementUnreadCountMessageOfMembersJob} from "../jobs/incrementUnreadCountMessageOfMembers";
+import {updateCountUnreadChatsJob} from "../jobs/updateCountUnreadChats";
 import {ChatController} from "../controllers/chat/controller.chat";
 import {ChatNotificationActions, publishChatNotifications} from "../websocket/websocket.chat";
 import {MediaController} from "../controllers/controller.media";
@@ -199,6 +200,8 @@ export async function createGroupChat(r) {
 
   const result = await Chat.findByPk(groupChat.id);
 
+  await updateCountUnreadChatsJob({userId: memberUserIds});
+
   await publishChatNotifications(r.server, {
     recipients: memberUserIds.filter(userId => userId !== r.auth.credentials.id),
     action: ChatNotificationActions.groupChatCreate,
@@ -302,6 +305,10 @@ export async function sendMessageToUser(r) {
   });
 
   const result = await Message.findByPk(message.id);
+
+  const userIds:string[] = [r.auth.credentials.id, r.params.userId];
+
+  await updateCountUnreadChatsJob({userId: userIds});
 
   await publishChatNotifications(r.server, {
     action: ChatNotificationActions.newMessage,
