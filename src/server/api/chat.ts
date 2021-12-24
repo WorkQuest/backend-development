@@ -307,6 +307,7 @@ export async function sendMessageToUser(r) {
   const result = await Message.findByPk(message.id);
 
   const userIds:string[] = [r.auth.credentials.id, r.params.userId];
+  await updateCountUnreadChatsJob({userIds: userIds});
 
   await publishChatNotifications(r.server, {
     action: ChatNotificationActions.newMessage,
@@ -375,6 +376,11 @@ export async function sendMessageToChat(r) {
   });
 
   const result = await Message.findByPk(message.id);
+
+  const userIds = [];
+  members.map(member => { userIds.push(member.userId) });
+
+  await updateCountUnreadChatsJob({userIds: [r.auth.credentials.id, ...userIds]});
 
   await publishChatNotifications(r.server, {
     action: ChatNotificationActions.newMessage,
@@ -470,6 +476,11 @@ export async function addUsersInGroupChat(r) {
     return keysMessage;
   }) as Message[];
 
+  const setUserIds = [];
+  membersInChat.map(member => { setUserIds.push(member.userId) });
+
+  await updateCountUnreadChatsJob({userIds: [r.auth.credentials.id, ...setUserIds]});
+
   await publishChatNotifications(r.server, {
     action: ChatNotificationActions.groupChatAddUser,
     recipients: membersInChat.map(member => member.userId),
@@ -538,6 +549,11 @@ export async function removeUserInGroupChat(r) {
 
   const result = await Message.findByPk(message.id);
 
+  const userIds = [];
+  members.map(member => { userIds.push(member.userId) });
+
+  await updateCountUnreadChatsJob({userIds: [r.auth.credentials.id, ...userIds]});
+
   await publishChatNotifications(r.server, {
     action: ChatNotificationActions.groupChatDeleteUser,
     recipients: members.map(member => member.userId),
@@ -596,6 +612,11 @@ export async function leaveFromGroupChat(r) {
 
   const result = await Message.findByPk(message.id);
 
+  const userIds = [];
+  members.map(member => { userIds.push(member.userId) });
+
+  await updateCountUnreadChatsJob({userIds: [r.auth.credentials.id, ...userIds]});
+
   await publishChatNotifications(r.server, {
     action: ChatNotificationActions.groupChatLeaveUser,
     recipients: members.map(member => member.userId),
@@ -643,6 +664,9 @@ export async function setMessagesAsRead(r) {
     chatId: r.params.chatId,
     senderId: r.auth.credentials.id
   });
+
+  await updateCountUnreadChatsJob({userIds: [r.auth.credentials.id]});
+
 
   await publishChatNotifications(r.server, {
     action: ChatNotificationActions.messageReadByRecipient,
