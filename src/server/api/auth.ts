@@ -53,26 +53,24 @@ export function register(host: 'dao'|'main') {
 				...defaultUserSettings,
 				emailConfirm: emailConfirmCode
 			}
-		}).catch(err => console.log(err));
+		});
 
-		return output({})
+		await QuestsStatistic.create({ userId: user.id });
 
-		// await QuestsStatistic.create({ userId: user.id });
-		//
-		// const session = await Session.create({
-		// 	userId: user.id,
-		// 	invalidating: false,
-		// 	place: getGeo(r),
-		// 	ip: getRealIp(r),
-		// 	device: getDevice(r),
-		// });
-		//
-		// const result = {
-		// 	...generateJwt({ id: session.id }),
-		// 	userStatus: user.status,
-		// };
-		//
-		// return output(result);
+		const session = await Session.create({
+			userId: user.id,
+			invalidating: false,
+			place: getGeo(r),
+			ip: getRealIp(r),
+			device: getDevice(r),
+		});
+
+		const result = {
+			...generateJwt({ id: session.id }),
+			userStatus: user.status,
+		};
+
+		return output(result);
 	}
 }
 
