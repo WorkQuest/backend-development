@@ -200,7 +200,7 @@ export async function createGroupChat(r) {
 
   const result = await Chat.findByPk(groupChat.id);
 
-  await updateCountUnreadChatsJob({userId: memberUserIds});
+  await updateCountUnreadChatsJob({userIds: memberUserIds});
 
   await publishChatNotifications(r.server, {
     recipients: memberUserIds.filter(userId => userId !== r.auth.credentials.id),
@@ -307,8 +307,6 @@ export async function sendMessageToUser(r) {
   const result = await Message.findByPk(message.id);
 
   const userIds:string[] = [r.auth.credentials.id, r.params.userId];
-
-  await updateCountUnreadChatsJob({userId: userIds});
 
   await publishChatNotifications(r.server, {
     action: ChatNotificationActions.newMessage,

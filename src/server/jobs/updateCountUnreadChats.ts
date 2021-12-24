@@ -3,7 +3,7 @@ import { ChatMember, ChatsStatistic } from "@workquest/database-models/lib/model
 import { Op } from "sequelize";
 
 export type UserUnreadChatsPayload = {
-  userId: string[],
+  userIds: string[],
 }
 
 export async function updateCountUnreadChatsJob(payload: UserUnreadChatsPayload) {
@@ -11,13 +11,16 @@ export async function updateCountUnreadChatsJob(payload: UserUnreadChatsPayload)
 }
 
 export default async function updateCountUnreadChats(payload: UserUnreadChatsPayload) {
-  const unreadChatsCounter = await ChatMember.unscoped().count({
-    where: {
-      userId: payload.userId,
-      unreadCountMessages: { [Op.ne]: 0 },
-    },
+
+  payload.userIds.map( async (userId) => {
+    const unreadChatsCounter = await ChatMember.unscoped().count({
+      where: {
+        userId: userId,
+        unreadCountMessages: { [Op.ne]: 0 },
+      },
+    });
+    await ChatsStatistic.update({ unreadChats: unreadChatsCounter }, { where: { userId: userId } });
   });
 
-  await ChatsStatistic.update({ unreadChats: unreadChatsCounter }, { where: { userId: payload.userId } });
 }
 
