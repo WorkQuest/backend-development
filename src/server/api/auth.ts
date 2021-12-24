@@ -44,16 +44,21 @@ export function register(host: 'dao'|'main') {
 			html: emailHtml,
 		});
 
-		const user = await User.create({
-			email: r.payload.email.toLowerCase(),
-			password: r.payload.password,
-			firstName: r.payload.firstName,
-			lastName: r.payload.lastName,
-			settings: {
-				...defaultUserSettings,
-				emailConfirm: emailConfirmCode
-			}
-		});
+		let user: User;
+		try {
+			await User.create({
+				email: r.payload.email.toLowerCase(),
+				password: r.payload.password,
+				firstName: r.payload.firstName,
+				lastName: r.payload.lastName,
+				settings: {
+					...defaultUserSettings,
+					emailConfirm: emailConfirmCode
+				}
+			});
+		} catch (err) {
+			console.log(err);
+		}
 
 		await QuestsStatistic.create({ userId: user.id });
 
