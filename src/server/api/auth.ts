@@ -8,6 +8,8 @@ import {Errors} from "../utils/errors";
 import {addSendEmailJob} from "../jobs/sendEmail";
 import {generateJwt} from "../utils/auth";
 import {UserController} from "../controllers/user/controller.user";
+import converter from 'bech32-converting';
+import { Wallet } from "@workquest/database-models/lib/models/wallet/Wallet";
 import {
 	error,
 	output,
@@ -136,7 +138,12 @@ export async function confirmEmail(r) {
 
 export async function login(r) {
 	const user = await User.scope("withPassword").findOne({
-		where: { email: { [Op.iLike]: r.payload.email }	}
+		where: { email: { [Op.iLike]: r.payload.email }	},
+		include: [{
+			model: Wallet,
+			as: 'wallet',
+			required: false
+		}]
 	});
 	const userController = new UserController(user);
 
@@ -159,6 +166,9 @@ export async function login(r) {
 	const result = {
 		...generateJwt({ id: session.id }),
 		userStatus: user.status,
+		address: user.wallet ?
+			user.wallet.address :
+			null
 	};
 
 	return output(result);
@@ -190,4 +200,73 @@ export async function logout(r) {
 	});
 
 	return output();
+}
+
+export async function registerWallet(r) {
+	const { id } = r.auth.credentials;
+	const { publicKey, address } = r.payload;
+
+	const [_, isCreated] = await Wallet.findOrCreate({
+		where: {
+			[Op.or]: {
+				userId: id,
+				publicKey,
+				address
+			}
+		},
+		defaults: {
+			userId: id,
+			publicKey,
+			address
+		}
+	});
+
+	if (!isCreated) {
+		return error(Errors.AlreadyExists, 'Wallet already exists', {});
+	}
+
+	const bech32Address = converter('eth').toBech32(address);
+
+	return output({
+		address,
+		bech32Address
+	});
+}
+
+export async function loginWallet(r) {
+	const { signature, publicKey } = r.payload;
+
+	const wallet = await Wallet.findOne({
+		where: { publicKey },
+		include: [{
+			model: User,
+			as: 'user'
+		}]
+	});
+
+	if (!wallet) {
+		return error(Errors.NotFound, 'Wallet not found', { field: ['publicKey'] });
+	}
+
+	const decryptedSignAddress = r.server.app.web3.eth.accounts.recover(wallet.publicKey, signature);
+
+	if (wallet.address !== decryptedSignAddress) {
+		return error(Errors.NotFound, 'Wallet not found', {})
+	}
+
+	const session = await Session.create({
+		userId: wallet.user.id,
+		invalidating: false,
+		place: getGeo(r),
+		ip: getRealIp(r),
+		device: getDevice(r),
+	});
+
+	const result = {
+		...generateJwt({ id: session.id }),
+		userStatus: wallet.user.status,
+		address: wallet.address
+	};
+
+	return output(result);
 }
