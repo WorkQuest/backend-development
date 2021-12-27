@@ -45,6 +45,10 @@ export async function getQuest(r) {
       as: "response",
       where: { workerId: r.auth.credentials.id },
       required: false
+    }, {
+      model: QuestChat.scope('chatOnly'),
+      as: 'chat',
+      required: false,
     }]
   });
 
