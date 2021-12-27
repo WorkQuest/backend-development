@@ -222,7 +222,7 @@ export async function registerWallet(r) {
 	});
 
 	if (!isCreated) {
-		return error(Errors.AlreadyExists, 'Wallet already exists', {});
+		return error(Errors.WalletExists, 'Wallet already exists', {});
 	}
 
 	const bech32Address = converter('eth').toBech32(address);
