@@ -14,6 +14,9 @@ import {
   userFirstNameSchema,
   userLastNameSchema,
   userPasswordSchema,
+  walletAddressSchema,
+  walletPublicKeySchema,
+  walletSignatureSchema,
   userRoleSchema,
   userStatusSchema,
   emptyOkSchema,
@@ -21,11 +24,6 @@ import {
   tokensWithStatus,
   totpSchema,
 } from "@workquest/database-models/lib/schemes";
-import {
-  walletAddressSchema,
-  walletPublicKeySchema,
-  walletSignatureSchema
-} from "@workquest/database-models/lib/schemes/wallet";
 
 export default [{
   method: "POST",

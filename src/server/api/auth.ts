@@ -9,7 +9,7 @@ import {addSendEmailJob} from "../jobs/sendEmail";
 import {generateJwt} from "../utils/auth";
 import {UserController} from "../controllers/user/controller.user";
 import converter from 'bech32-converting';
-import { Wallet } from "@workquest/database-models/lib/models/wallet/Wallet";
+import { Wallet } from "@workquest/database-models/lib/models";
 import {
 	error,
 	output,
