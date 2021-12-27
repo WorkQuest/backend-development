@@ -25,7 +25,7 @@ import {
   workerWagePerHourSchema,
   specializationKeysSchema,
   userAdditionalInfoWorkerSchema,
-  userAdditionalInfoEmployerSchema,
+  userAdditionalInfoEmployerSchema, userPhoneSchema
 } from "@workquest/database-models/lib/schemes";
 
 export default [{
@@ -125,6 +125,7 @@ export default [{
         avatarId: idSchema.allow(null).required(),
         firstName: userFirstNameSchema.required(),
         lastName: userLastNameSchema.required(),
+        phone: userPhoneSchema.allow(null).required(),
         location: locationSchema.allow(null).required(),
         additionalInfo: userAdditionalInfoEmployerSchema.required(),
       }).label("EditEmployerProfilePayload")
@@ -147,6 +148,7 @@ export default [{
         lastName: userLastNameSchema.required(),
         firstName: userFirstNameSchema.required(),
         avatarId: idSchema.allow(null).required(),
+        phone: userPhoneSchema.allow(null).required(),
         priority: prioritySchema.allow(null).required(),
         location: locationSchema.allow(null).required(),
         workplace: workPlaceSchema.allow(null).required(),

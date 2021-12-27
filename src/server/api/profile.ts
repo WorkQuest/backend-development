@@ -164,6 +164,7 @@ export function editProfile(userRole: UserRole) {
       avatarId: avatarId,
       lastName: r.payload.lastName,
       location: r.payload.location,
+      phone: r.payload.phone,
       firstName: r.payload.firstName,
       priority: r.payload.priority || null,
       workplace: r.payload.workplace || null,
