@@ -134,7 +134,7 @@ export default [{
         userId: idSchema.required(),
       }).label('SendMessageToUserParams'),
       payload: Joi.object({
-        text: messageTextSchema.default(''),
+        text: messageTextSchema.allow('').default(''),
         medias: idsSchema.required().unique(),
       }).label('SendMessageToUserPayload')
     },
@@ -156,7 +156,7 @@ export default [{
         chatId: idSchema.required(),
       }).label('SendMessageToChatParams'),
       payload: Joi.object({
-        text: messageTextSchema.default(''),
+        text: messageTextSchema.allow('').default(''),
         medias: idsSchema.required().unique(),
       }).label('SendMessageToChatPayload'),
     },
