@@ -101,7 +101,8 @@ const init = async () => {
     validate: tokenValidate('access', [
       "/api/v1/auth/confirm-email",
       "/api/v1/profile/set-role",
-      "/api/v1/auth/logout"
+      "/api/v1/auth/logout",
+      "/api/v1/auth/register/wallet"
     ]),
   });
   server.auth.strategy('jwt-refresh', 'bearer-access-token', {
