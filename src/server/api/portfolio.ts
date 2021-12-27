@@ -37,6 +37,7 @@ export async function getCases(r) {
     where: { userId: workerController.user.id },
     limit: r.query.limit,
     offset: r.query.offset,
+    order: [ [ 'createdAt', 'DESC' ] ],
   });
 
   return output({count, cases: rows});
