@@ -11,16 +11,15 @@ export async function updateCountUnreadChatsJob(payload: UserUnreadChatsPayload)
 }
 
 export default async function updateCountUnreadChats(payload: UserUnreadChatsPayload) {
-
-  payload.userIds.map( async (userId) => {
+  for (const id of payload.userIds) {
     const unreadChatsCounter = await ChatMember.unscoped().count({
       where: {
-        userId: userId,
+        userId: id,
         unreadCountMessages: { [Op.ne]: 0 },
       },
     });
-    await ChatsStatistic.update({ unreadChats: unreadChatsCounter }, { where: { userId: userId } });
-  });
 
+    await ChatsStatistic.update({ unreadChats: unreadChatsCounter }, { where: { userId: id } });
+  }
 }
 

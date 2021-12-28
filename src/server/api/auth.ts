@@ -72,7 +72,6 @@ export function register(host: 'dao'|'main') {
 	}
 }
 
-
 export function getLoginViaSocialNetworkHandler(returnType: "token" | "redirect") {
 	return async function loginThroughSocialNetwork(r, h) {
 		const profile = r.auth.credentials.profile;
@@ -112,7 +111,7 @@ export async function confirmEmail(r) {
 		.checkUserAlreadyConfirmed()
 		.checkUserConfirmationCode(r.payload.confirmCode)
 
-	await UserController.createRatings(user.id);
+	await UserController.createStatistics(user.id);
 
 	if (r.payload.role) {
 		await user.update({

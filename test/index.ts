@@ -1,12 +1,14 @@
 import {
   User,
-  UserRole,
-  UserStatus,
-  Session,
   Quest,
-  QuestPriority,
+  Session,
+  UserRole,
+  Priority,
+  WorkPlace,
+  UserStatus,
   QuestStatus,
-  RatingStatistic, QuestEmployment, QuestWorkPlace
+  RatingStatistic,
+  QuestEmployment,
 } from "@workquest/database-models/lib/models";
 import { generateJwt } from '../src/server/utils/auth';
 import { transformToGeoPostGIS } from "../src/server/utils/postGIS";
@@ -32,6 +34,7 @@ export async function makeUser(role: UserRole, additionalInfo: object): Promise<
       emailConfirm: null,
     }
   });
+
   await RatingStatistic.create({ userId: user.id });
 
   return await User.findByPk(user.id);
@@ -73,10 +76,10 @@ export async function makeQuest(employer: User, assignedWorker: User, status: Qu
     assignedWorkerId: assignedWorker ? assignedWorker.id : null,
     status: status,
     category: 'It',
-    workplace: QuestWorkPlace.Both,
+    workplace: WorkPlace.Both,
     employment: QuestEmployment.FullTime,
     locationPlaceName: 'Tomsk',
-    priority: QuestPriority.ShortTerm,
+    priority: Priority.ShortTerm,
     location: { longitude: -75.0364, latitude: 33.8951 },
     locationPostGIS: transformToGeoPostGIS({
       longitude: -75.0364, latitude: 33.8951
