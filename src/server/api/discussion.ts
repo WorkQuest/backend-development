@@ -153,6 +153,7 @@ export async function sendComment(r) {
 
   const transaction = await r.server.app.db.transaction();
 
+  let level = 0;
   if (r.payload.rootCommentId) { // TODO в джобу
     const rootComment = await DiscussionComment.findByPk(r.payload.rootCommentId);
 
@@ -163,6 +164,7 @@ export async function sendComment(r) {
     }
 
     await rootComment.increment("amountSubComments", { transaction });
+    level = rootComment.level + 1
   } else {
     await discussion.increment("amountComments", { transaction });
   }
@@ -171,7 +173,8 @@ export async function sendComment(r) {
     authorId: r.auth.credentials.id,
     discussionId: r.params.discussionId,
     rootCommentId: r.payload.rootCommentId,
-    text: r.payload.text
+    text: r.payload.text,
+    level: level,
   }, { transaction });
 
   await comment.$set("medias", medias, { transaction });

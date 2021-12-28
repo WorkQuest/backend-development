@@ -2,6 +2,7 @@ import { EventData } from "web3-eth-contract";
 import { Web3Helper } from "../providers/Web3Helper";
 import { CoinGeckoProvider, Coins } from "../providers/CoinGeckoProvider";
 import BigNumber from "bignumber.js";
+const logger = require('pino')();
 
 export type Event = {
   date: string | number;
@@ -36,7 +37,7 @@ export class ControllerDailyLiquidity {
     let to = range.blockFrom + range.step;
 
     while (to < range.blockTo) {
-      console.log("from block: ", from, " to block: ", to);
+      logger.info('from block: ', from, ' to block: ', to)
       const eventsData = await this.dailyLiquidityContract.getPastEvents(event, {
         fromBlock: from,
         toBlock: to,
