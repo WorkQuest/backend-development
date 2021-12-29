@@ -26,7 +26,7 @@ export default [{
         questId: idSchema.required(),
       }).label("QuestResponseParams"),
       payload: Joi.object({
-        message: questsResponseMessageSchema,
+        message: questsResponseMessageSchema.allow(''),
         medias: idsSchema.required().unique(),
       }).label('QuestResponsePayload'),
     },
@@ -49,7 +49,7 @@ export default [{
       }).label("QuestInviteParams"),
       payload: Joi.object({
         invitedUserId: idSchema.required(),
-        message: questsResponseMessageSchema,
+        message: questsResponseMessageSchema.allow(''),
       }).label('QuestInvitePayload'),
     },
     response: {
