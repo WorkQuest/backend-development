@@ -2,13 +2,13 @@
 
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    return queryInterface.addColumn('DiscussionComments', 'level', {
+    return queryInterface.addColumn('Users', 'priority', {
       type: Sequelize.DataTypes.INTEGER,
       defaultValue: 0
     });
   },
   
   down: async (queryInterface, Sequelize) => {
-    return queryInterface.removeColumn('DiscussionComments', 'level')
+    return queryInterface.removeColumn('Users', 'priority')
   }
 };
