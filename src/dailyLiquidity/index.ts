@@ -29,7 +29,7 @@ export async function init() {
 
   const poolController = new ControllerDailyLiquidity(web3Helper, dailyLiquidityContract);
 
-  const liquidityDataPerPeriod = await poolController.collectLiquidityData(1);
+  const liquidityDataPerPeriod = await poolController.collectLiquidityData(10);
 
   for (const liquidity of liquidityDataPerPeriod) {
     await DailyLiquidity.findOrCreate({
