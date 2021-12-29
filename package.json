@@ -19,14 +19,10 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@pancakeswap/sdk": "^2.4.0",
-    "@uniswap/sdk": "^3.0.3",
-    "@uniswap/v2-core": "^1.0.1",
     "@ethersproject/address": "^5.4.0",
     "@ethersproject/contracts": "^5.4.1",
     "@ethersproject/providers": "^5.4.5",
     "@ethersproject/solidity": "^5.4.0",
-    "web3": "^1.5.3",
     "@hapi/basic": "^5.1.1",
     "@hapi/bell": "^12.2.0",
     "@hapi/boom": "^9.1.0",
@@ -35,10 +31,13 @@
     "@hapi/inert": "^6.0.1",
     "@hapi/nes": "^12.0.3",
     "@hapi/vision": "^6.0.0",
+    "@pancakeswap/sdk": "^2.4.0",
     "@types/bluebird": "^3.5.32",
     "@types/dotenv": "^6.1.1",
     "@types/joi": "^14.3.4",
     "@types/validator": "^13.1.0",
+    "@uniswap/sdk": "^3.0.3",
+    "@uniswap/v2-core": "^1.0.1",
     "@workquest/database-models": "git+https://github.com/WorkQuest/database-models.git#00ef5178400ceb477fcfabb60767bbcfc4cb3d7c",
     "aws-sdk": "^2.918.0",
     "axios": "^0.21.1",
@@ -67,6 +66,8 @@
     "nodemon": "^2.0.12",
     "npm": "^7.14.0",
     "pg": "^8.3.0",
+    "pino-pretty": "^7.3.0",
+    "pino": "7.6.2",
     "qs": "^6.9.6",
     "reflect-metadata": "^0.1.13",
     "sequelize": "6.6.2",
@@ -74,7 +75,8 @@
     "speakeasy": "^2.0.0",
     "twilio": "^3.66.0",
     "typescript": "^4.1.5",
-    "uuid": "^8.2.0"
+    "uuid": "^8.2.0",
+    "web3": "^1.5.3"
   },
   "devDependencies": {
     "@hapi/code": "^8.0.3",
@@ -93,7 +95,6 @@
     "eslint-plugin-prettier": "^3.1.1",
     "eslint-plugin-promise": "^4.2.1",
     "eslint-plugin-react": "^7.16.0",
-    "eslint-plugin-standard": "^4.0.1",
-    "pino": "^6.13.2"
+    "eslint-plugin-standard": "^4.0.1"
   }
 }

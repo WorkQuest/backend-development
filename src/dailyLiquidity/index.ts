@@ -3,16 +3,18 @@ import * as fs from "fs";
 import * as path from "path";
 import cron from 'node-cron';
 import { Web3Helper } from "./src/providers/Web3Helper";
-import { DailyLiquidity } from "@workquest/database-models/lib/models";
+import { DailyLiquidity, initDatabase } from "@workquest/database-models/lib/models";
 import { ControllerDailyLiquidity} from "./src/controllers/ControllerDailyLiquidity";
-import { initDatabase } from "@workquest/database-models/lib/models";
 import configDatabase from "./config/config.database";
 import configLiquidity from "./config/config.liquidity";
-
+import { logger } from "./utils/logger"
 const abiFilePath = path.join(__dirname, '/abi/dailyLiquidityAbi.json');
 const abi: any[] = JSON.parse(fs.readFileSync(abiFilePath).toString()).abi;
+import { pinoConfig } from "../server/config/pino";
+
 
 export async function init() {
+  logger.info('DailyLiquidity start');
   await initDatabase(configDatabase.dbLink, true, true);
 
   const websocketProvider = new Web3.providers.WebsocketProvider(configLiquidity.wsProvider, {

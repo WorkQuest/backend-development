@@ -2,6 +2,7 @@ import { EventData } from "web3-eth-contract";
 import { Web3Helper } from "../providers/Web3Helper";
 import { CoinGeckoProvider, Coins } from "../providers/CoinGeckoProvider";
 import BigNumber from "bignumber.js";
+import { logger } from "../../utils/logger";
 
 export type Event = {
   date: string | number;
