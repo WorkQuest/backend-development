@@ -248,7 +248,7 @@ export async function loginWallet(r) {
 		return error(Errors.NotFound, 'Wallet not found', { field: ['address'] });
 	}
 
-	const decryptedSignAddress = r.server.app.web3.eth.accounts.recover(wallet.address, signature);
+	const decryptedSignAddress = r.server.app.web3.eth.accounts.recover(wallet.address, '0x' + signature);
 
 	if (wallet.address !== decryptedSignAddress) {
 		return error(Errors.NotFound, 'Wallet not found', {})
