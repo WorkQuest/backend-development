@@ -157,7 +157,7 @@ export default [{
     description: "Create discussion",
     validate: {
       payload: Joi.object({
-        title: discussionTitleSchema.min(1).max(15).required(), // TODO min и max
+        title: discussionTitleSchema.min(1).max(78).required(), // TODO min и max
         description: discussionDescriptionSchema.required(),
         medias: idsSchema.required().unique().label("MediaIds"),
       }).label("CreateDiscussionPayload"),
