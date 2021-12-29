@@ -6,7 +6,7 @@ import {
   logout,
   refreshTokens,
   register,
-  registerWallet
+  registerWallet, validateUserPassword
 } from "../../api/auth";
 import {
   outputOkSchema,
@@ -288,6 +288,27 @@ export default [{
     },
     response: {
       schema: outputOkSchema(tokensWithStatus).label("TokensWithStatusResponse")
+    }
+  }
+}, {
+  method: 'POST',
+  path: '/v1/auth/validate-password',
+  handler: validateUserPassword,
+  options: {
+    auth: 'jwt-access',
+    id: 'v1.auth.validatePassword',
+    tags: ['api', 'auth'],
+    description: 'Validate password',
+    validate: {
+      payload: Joi.object({
+        password: userPasswordSchema.required()
+      }).label('ValidateUserPasswordPayload')
+    },
+    response: {
+      schema: outputOkSchema(Joi.object({
+        isValid: Joi.boolean()
+      }).label('ValidateUserPasswordSchema')
+      ).label('ValidateUserPasswordResponse')
     }
   }
 }];

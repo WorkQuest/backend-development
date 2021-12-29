@@ -9,7 +9,7 @@ import {
   User,
   UserRole,
   RatingStatistic,
-  UserSpecializationFilter,
+  UserSpecializationFilter, Wallet
 } from "@workquest/database-models/lib/models";
 import { addUpdateReviewStatisticsJob } from "../jobs/updateReviewStatistics";
 
@@ -20,7 +20,8 @@ export const searchFields = [
 
 export async function getMe(r) {
   const user = await User.findByPk(r.auth.credentials.id, {
-    attributes: { include: ['tempPhone'] }
+    attributes: { include: ['tempPhone'] },
+    include: [{ model: Wallet, as: 'wallet', attributes: ['address'] }]
   });
 
   return output(user);
