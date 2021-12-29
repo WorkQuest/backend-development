@@ -45,6 +45,10 @@ export async function getQuest(r) {
       as: "response",
       where: { workerId: r.auth.credentials.id },
       required: false
+    }, {
+      model: QuestChat.scope('idsOnly'),
+      as: 'questChat',
+      required: false,
     }]
   });
 
@@ -431,6 +435,10 @@ export async function getQuests(r) {
         { type: QuestsResponseType.Response },
       ]
     },
+  }, {
+    model: QuestChat.scope('idsOnly'),
+    as: 'questChat',
+    required: false,
   });
 
   // {
