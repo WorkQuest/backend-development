@@ -8,15 +8,11 @@ import { ControllerDailyLiquidity} from "./src/controllers/ControllerDailyLiquid
 import { initDatabase } from "@workquest/database-models/lib/models";
 import configDatabase from "./config/config.database";
 import configLiquidity from "./config/config.liquidity";
-const logger = require('pino')()
 
 const abiFilePath = path.join(__dirname, '/abi/dailyLiquidityAbi.json');
 const abi: any[] = JSON.parse(fs.readFileSync(abiFilePath).toString()).abi;
 
 export async function init() {
-  const child = logger.child({ a: 'property' });
-  child.info('hello child!');
-
   await initDatabase(configDatabase.dbLink, true, true);
 
   const websocketProvider = new Web3.providers.WebsocketProvider(configLiquidity.wsProvider, {
