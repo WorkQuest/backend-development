@@ -234,10 +234,10 @@ export async function registerWallet(r) {
 }
 
 export async function loginWallet(r) {
-	const { signature, publicKey } = r.payload;
+	const { signature, address } = r.payload;
 
 	const wallet = await Wallet.findOne({
-		where: { publicKey },
+		where: { address },
 		include: [{
 			model: User,
 			as: 'user'
@@ -245,10 +245,10 @@ export async function loginWallet(r) {
 	});
 
 	if (!wallet) {
-		return error(Errors.NotFound, 'Wallet not found', { field: ['publicKey'] });
+		return error(Errors.NotFound, 'Wallet not found', { field: ['address'] });
 	}
 
-	const decryptedSignAddress = r.server.app.web3.eth.accounts.recover(wallet.publicKey, signature);
+	const decryptedSignAddress = r.server.app.web3.eth.accounts.recover(wallet.address, signature);
 
 	if (wallet.address !== decryptedSignAddress) {
 		return error(Errors.NotFound, 'Wallet not found', {})

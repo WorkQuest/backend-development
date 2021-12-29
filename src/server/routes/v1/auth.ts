@@ -283,7 +283,7 @@ export default [{
     validate: {
       payload: Joi.object({
         signature: walletSignatureSchema.required(),
-        publicKey: walletPublicKeySchema.required()
+        address: walletAddressSchema.required()
       }).label('LoginByWalletPayload')
     },
     response: {
