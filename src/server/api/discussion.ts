@@ -151,6 +151,8 @@ export async function sendComment(r) {
     return error(Errors.NotFound, "Discussion not found", {});
   }
 
+  let commentLevel = 0;
+
   const transaction = await r.server.app.db.transaction();
 
   if (r.payload.rootCommentId) { // TODO в джобу
@@ -163,6 +165,8 @@ export async function sendComment(r) {
     }
 
     await rootComment.increment("amountSubComments", { transaction });
+
+    commentLevel = rootComment.level + 1
   } else {
     await discussion.increment("amountComments", { transaction });
   }
@@ -171,7 +175,8 @@ export async function sendComment(r) {
     authorId: r.auth.credentials.id,
     discussionId: r.params.discussionId,
     rootCommentId: r.payload.rootCommentId,
-    text: r.payload.text
+    text: r.payload.text,
+    level: commentLevel,
   }, { transaction });
 
   await comment.$set("medias", medias, { transaction });
