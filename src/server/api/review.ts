@@ -14,16 +14,6 @@ import {
 export async function sendReview(r) {
   const fromUser: User = r.auth.credentials;
 
-  const alreadyReview = await Review.findOne({
-    where: { fromUserId: fromUser.id }
-  });
-
-  if (alreadyReview) {
-    return error(Errors.AlreadyExists, "You already valued this quest", {
-      yourReviewId: alreadyReview.id,
-    });
-  }
-
   const questController = new QuestController(await Quest.findByPk(r.payload.questId));
 
   questController
@@ -31,6 +21,20 @@ export async function sendReview(r) {
     .userMustBelongToQuest(fromUser.id)
 
   const toUser: User = fromUser.role === UserRole.Worker ? questController.quest.user : questController.quest.assignedWorker;
+
+  const alreadyReview = await Review.findOne({
+    where: {
+      toUserId: toUser.id,
+      fromUserId: fromUser.id,
+      questId: questController.quest.id,
+    }
+  });
+
+  if (alreadyReview) {
+    return error(Errors.AlreadyExists, "You already valued this quest", {
+      yourReviewId: alreadyReview.id,
+    });
+  }
 
   const review = await Review.create({
     toUserId: toUser.id,
