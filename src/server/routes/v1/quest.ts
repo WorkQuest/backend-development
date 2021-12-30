@@ -338,4 +338,22 @@ export default [{
       schema: emptyOkSchema
     },
   }
-}];
+}, {
+  method: "GET",
+  path: "/v1/quest/{workerId}/responded",
+  handler: handlers.getRespondedQuest,
+  options: {
+    auth: 'jwt-access',
+    id: "v1.responded.quests",
+    tags: ["api", "quest"],
+    description: "Get all quests of employer and add response if worker is already responded/invitee",
+    validate: {
+      params: Joi.object({
+        workerId: idSchema.required(),
+      }).label("WorkerGetQuestsParams"),
+    },
+    response: {
+      schema: outputOkSchema(questsForGetWithCountSchema).label("WorkerGetQuestsResponse")
+    },
+  }
+},];

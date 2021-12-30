@@ -487,3 +487,22 @@ export async function removeStar(r) {
 
   return output();
 }
+
+export async function getRespondedQuest(r) {
+  const quests = await Quest.findAndCountAll({
+    where: {
+      userId: r.auth.credentials.id
+    },
+    include: [{
+      model: QuestsResponse,
+      as: 'response',
+      where: {
+        workerId: r.params.workerId,
+        type: {[Op.or]: [QuestsResponseType.Response, QuestsResponseType.Invite]}
+      },
+      required: false,
+    }]
+  });
+  return output({count: quests.count, quests: quests.rows});
+}
+
