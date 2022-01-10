@@ -1,38 +1,37 @@
 import * as Joi from "joi";
-import {
-  getMe,
-  getUser,
-  setRole,
-  getUsers,
-  editProfile,
-  changePassword,
-  confirmPhoneNumber,
-  sendCodeOnPhoneNumber,
-} from "../../api/profile";
+import * as handlers from "../../api/profile";
+import { UserRole } from "@workquest/database-models/lib/models";
 import {
   idSchema,
   userSchema,
+  limitSchema,
+  offsetSchema,
+  searchSchema,
   emptyOkSchema,
   outputOkSchema,
   locationSchema,
+  prioritySchema,
   userRoleSchema,
-  userQuerySchema,
+  workPlaceSchema,
   userWorkersSchema,
   mobilePhoneSchema,
+  workerQuerySchema,
   userLastNameSchema,
   userPasswordSchema,
+  employerQuerySchema,
   userEmployersSchema,
   userFirstNameSchema,
+  outputPaginationSchema,
+  workerWagePerHourSchema,
   specializationKeysSchema,
   userAdditionalInfoWorkerSchema,
   userAdditionalInfoEmployerSchema,
 } from "@workquest/database-models/lib/schemes";
-import { UserRole } from "@workquest/database-models/lib/models";
 
 export default [{
   method: "GET",
   path: "/v1/profile/me",
-  handler: getMe,
+  handler: handlers.getMe,
   options: {
     auth: 'jwt-access',
     id: "v1.profile.getMe",
@@ -45,7 +44,7 @@ export default [{
 }, {
   method: "GET",
   path: "/v1/profile/{userId}",
-  handler: getUser,
+  handler: handlers.getUser,
   options: {
     auth: 'jwt-access',
     id: "v1.profile.getUser",
@@ -63,14 +62,14 @@ export default [{
 }, {
   method: "GET",
   path: "/v1/profile/employers",
-  handler: getUsers(UserRole.Employer),
+  handler: handlers.getUsers(UserRole.Employer),
   options: {
     auth: 'jwt-access',
     id: "v1.profile.getEmployers",
     tags: ["api", "profile"],
     description: "Get employers",
     validate: {
-      query: userQuerySchema,
+      query: employerQuerySchema,
     },
     response: {
       schema: outputOkSchema(userEmployersSchema).label("GetEmployersResponse")
@@ -79,23 +78,43 @@ export default [{
 }, {
   method: "GET",
   path: "/v1/profile/workers",
-  handler: getUsers(UserRole.Worker),
+  handler: handlers.getUsers(UserRole.Worker),
   options: {
     auth: 'jwt-access',
     id: "v1.profile.getWorkers",
     tags: ["api", "profile"],
     description: "Get workers",
     validate: {
-      query: userQuerySchema,
+      query: workerQuerySchema,
     },
     response: {
       schema: outputOkSchema(userWorkersSchema).label("GetWorkersResponse")
     },
   }
 }, {
+  method: "GET",
+  path: "/v1/profile/users",
+  handler: handlers.getAllUsers,
+  options: {
+    auth: 'jwt-access',
+    id: "v1.profile.getAllUsers",
+    tags: ["api", "profile"],
+    description: "Get all users (workers and employers)",
+    validate: {
+      query: Joi.object({
+        q: searchSchema,
+        limit: limitSchema,
+        offset: offsetSchema,
+      }).label('GetAllUsersQuery'),
+    },
+    response: {
+      schema: outputPaginationSchema('users', userSchema).label("GetAllUsersResponse")
+    },
+  }
+}, {
   method: "PUT",
   path: "/v1/employer/profile/edit",
-  handler: editProfile(UserRole.Employer),
+  handler: handlers.editProfile(UserRole.Employer),
   options: {
     auth: 'jwt-access',
     id: "v1.profile.editEmployer",
@@ -117,7 +136,7 @@ export default [{
 }, {
   method: "PUT",
   path: "/v1/worker/profile/edit",
-  handler: editProfile(UserRole.Worker),
+  handler: handlers.editProfile(UserRole.Worker),
   options: {
     auth: 'jwt-access',
     id: "v1.profile.editWorker",
@@ -125,11 +144,14 @@ export default [{
     description: "Edit worker profile",
     validate: {
       payload: Joi.object({
-        avatarId: idSchema.allow(null).required(),
-        firstName: userFirstNameSchema.required(),
         lastName: userLastNameSchema.required(),
+        firstName: userFirstNameSchema.required(),
+        avatarId: idSchema.allow(null).required(),
+        priority: prioritySchema.allow(null).required(),
         location: locationSchema.allow(null).required(),
+        workplace: workPlaceSchema.allow(null).required(),
         additionalInfo: userAdditionalInfoWorkerSchema.required(),
+        wagePerHour: workerWagePerHourSchema.allow(null).required(),
         specializationKeys: specializationKeysSchema.allow(null).required().unique(),
       }).label("EditWorkerProfilePayload")
     },
@@ -140,7 +162,7 @@ export default [{
 }, {
   method: "POST",
   path: "/v1/profile/set-role",
-  handler: setRole,
+  handler: handlers.setRole,
   options: {
     auth: 'jwt-access',
     id: "v1.profile.setRole",
@@ -158,7 +180,7 @@ export default [{
 }, {
   method: "PUT",
   path: "/v1/profile/change-password",
-  handler: changePassword,
+  handler: handlers.changePassword,
   options: {
     auth: 'jwt-access',
     id: "v1.profile.changePassword",
@@ -177,7 +199,7 @@ export default [{
 }, {
   method: "POST",
   path: "/v1/profile/phone/confirm",
-  handler: confirmPhoneNumber,
+  handler: handlers.confirmPhoneNumber,
   options: {
     auth: 'jwt-access',
     id: "v1.profile.phone.confirm",
@@ -195,7 +217,7 @@ export default [{
 }, {
   method: "POST",
   path: "/v1/profile/phone/send-code",
-  handler: sendCodeOnPhoneNumber,
+  handler: handlers.sendCodeOnPhoneNumber,
   options: {
     auth: 'jwt-access',
     id: "v1.profile.phone.sendCode",

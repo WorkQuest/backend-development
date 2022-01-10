@@ -125,7 +125,7 @@ abstract class UserHelper {
   }
 
   /** Checks list */
-  public checkNotSeeYourself(userId: string) {
+  public checkNotSeeYourself(userId: string): this {
     if (this.user.id === userId) {
       throw error(Errors.Forbidden, 'You can\'t see your profile (use "get me")', {});
     }
@@ -133,8 +133,14 @@ abstract class UserHelper {
     return this;
   }
 
-  public static async usersMustExist(userIds: string[]) {
-   const users = await User.findAll({
+  public static async userMustExist(userId: string) {
+    if (!await User.findByPk(userId)) {
+      throw error(Errors.NotFound, "User does not exist", { userId });
+    }
+  }
+
+  public static async usersMustExist(userIds: string[], scope: "defaultScope" | "short" | "shortWithAdditionalInfo" = "defaultScope"): Promise<User[]> {
+   const users = await User.scope(scope).findAll({
       where: { id: userIds }
    });
 
@@ -145,6 +151,8 @@ abstract class UserHelper {
 
       throw error(Errors.NotFound, 'Users is not found', { notFoundIds });
     }
+
+    return users;
   }
 
   public static async checkEmail(email: string) {
@@ -155,7 +163,7 @@ abstract class UserHelper {
     }
   }
 
-  public userMustHaveRole(role: UserRole): UserHelper {
+  public userMustHaveRole(role: UserRole): this {
     if (this.user.role !== role) {
       throw error(Errors.InvalidRole, "User isn't match role", {
         current: this.user.role, mustHave: role,
@@ -165,7 +173,7 @@ abstract class UserHelper {
     return this;
   }
 
-  public userNeedsSetRole(): UserHelper {
+  public userNeedsSetRole(): this {
     if (this.user.status !== UserStatus.NeedSetRole) {
       throw error(Errors.InvalidPayload, "User don't need to set role", {
         role: this.user.role,
@@ -175,7 +183,7 @@ abstract class UserHelper {
     return this;
   }
 
-  public async checkPassword(password): Promise<UserHelper> {
+  public async checkPassword(password): Promise<this> {
     if (!(await this.user.passwordCompare(password))) {
       throw error(Errors.Forbidden, 'User not found or password does not match', {});
     }
@@ -183,7 +191,7 @@ abstract class UserHelper {
     return this;
   }
 
-  public userMustHaveVerificationPhone(): UserHelper {
+  public userMustHaveVerificationPhone(): this {
     if (!this.user.tempPhone) {
       throw error(Errors.InvalidPayload, 'User does not have verification phone', {});
     }
@@ -191,7 +199,7 @@ abstract class UserHelper {
     return this;
   }
 
-  public userMustHaveActiveStatusTOTP(activeStatus: boolean): UserHelper {
+  public userMustHaveActiveStatusTOTP(activeStatus: boolean): this {
     if (this.user.settings.security.TOTP.active !== activeStatus) {
       throw error(Errors.InvalidActiveStatusTOTP,
         `Active status TOTP is not ${activeStatus ? "enable" : "disable"}`, {});
@@ -200,7 +208,7 @@ abstract class UserHelper {
     return this;
   }
 
-  public checkPhoneConfirmationCode(code): UserHelper {
+  public checkPhoneConfirmationCode(code): this {
     if (this.user.settings.phoneConfirm !== code) {
       throw error(Errors.Forbidden, 'Confirmation code is not correct', {});
     }
@@ -208,7 +216,7 @@ abstract class UserHelper {
     return this;
   }
 
-  public checkTotpConfirmationCode(code): UserHelper {
+  public checkTotpConfirmationCode(code): this {
     if (!totpValidate(code, this.user.settings.security.TOTP.secret)) {
       throw error(Errors.InvalidPayload, "TOTP is invalid", [{ field: "totp", reason: "invalid" }]);
     }
@@ -216,7 +224,7 @@ abstract class UserHelper {
     return this;
   }
 
-  public checkActivationCodeTotp(code): UserHelper {
+  public checkActivationCodeTotp(code): this {
     if (this.user.settings.security.TOTP.confirmCode !== code) {
       throw error(Errors.InvalidPayload, "Confirmation code is not correct", [{
         field: "confirmCode",
@@ -227,7 +235,7 @@ abstract class UserHelper {
     return this;
   }
 
-  public checkUserAlreadyConfirmed(): UserHelper {
+  public checkUserAlreadyConfirmed(): this {
     if (!this.user.settings.emailConfirm) {
       throw error(Errors.UserAlreadyConfirmed, "User already confirmed", {});
     }
@@ -235,7 +243,7 @@ abstract class UserHelper {
     return this;
   }
 
-  public checkUserConfirmationCode(confirmCode): UserHelper {
+  public checkUserConfirmationCode(confirmCode): this {
     if (this.user.settings.emailConfirm.toLowerCase() !== confirmCode.toLowerCase()) {
       throw error(Errors.InvalidPayload, "Invalid confirmation code", [{ field: "confirmCode", reason: "invalid" }]);
     }

@@ -2,15 +2,16 @@ import * as Lab from '@hapi/lab';
 import {expect} from '@hapi/code';
 import {init} from '../src/server';
 import {Errors} from '../src/server/utils/errors';
-import {QuestEmployment, QuestWorkPlace} from "@workquest/database-models/src/models/quest/Quest";
 import {
   Quest,
   AdType,
+  Priority,
+  WorkPlace,
   QuestStatus,
-  QuestPriority,
   QuestsResponse,
+  QuestEmployment,
   QuestsResponseType,
-  QuestsResponseStatus, User
+  QuestsResponseStatus,
 } from "@workquest/database-models/lib/models";
 import {
   makeQuest,
@@ -18,7 +19,6 @@ import {
   makeEmployer,
   makeAccessToken,
 } from './index';
-import { transformToGeoPostGIS } from "../src/server/utils/postGIS";
 
 const {
   it,
@@ -35,7 +35,7 @@ async function postRequestOnCreateQuest(accessToken: string) {
     url: '/api/v1/quest/create',
     payload: {
       category: 'Test',
-      priority: QuestPriority.Normal,
+      priority: Priority.ShortTerm,
       location: {
         longitude: -77.0364,
         latitude: 38.8951,
@@ -45,7 +45,7 @@ async function postRequestOnCreateQuest(accessToken: string) {
       description: 'Test',
       price: '1000',
       medias: [],
-      workplace: QuestWorkPlace.Both,
+      workplace: WorkPlace.Both,
       employment: QuestEmployment.FullTime,
       adType: AdType.Free,
       specializationKeys: [],
@@ -177,10 +177,10 @@ async function Should_Ok_When_EmployerWantsToEditQuestAtStatusCreated() {
     title: 'Test2',
     description: 'Test2',
     price: '10000',
-    workplace: QuestWorkPlace.Distant,
+    workplace: WorkPlace.Distant,
     employment: QuestEmployment.FixedTerm,
     locationPlaceName: 'Tomsk 1',
-    priority: QuestPriority.Low,
+    priority: Priority.FixedDelivery,
     location: { longitude: -69.0364, latitude: 40.8951 },
     adType: AdType.Paid,
   };
@@ -212,10 +212,10 @@ async function Should_Forbidden_When_OtherUserWantsToEditQuestAtStatusCreated() 
     title: 'Test2',
     description: 'Test2',
     price: '10000',
-    workplace: QuestWorkPlace.Distant,
+    workplace: WorkPlace.Distant,
     employment: QuestEmployment.FixedTerm,
     locationPlaceName: 'Tomsk 1',
-    priority: QuestPriority.Low,
+    priority: Priority.FixedDelivery,
     location: { longitude: -69.0364, latitude: 40.8951 },
     adType: AdType.Paid,
   };
@@ -246,10 +246,10 @@ async function Should_InvalidStatus_When_EmployerEditQuestAndQuestNotStatusOnCre
 
   const questEditPayload = {
     category: 'It2',
-    workplace: QuestWorkPlace.Distant,
+    workplace: WorkPlace.Distant,
     employment: QuestEmployment.FixedTerm,
     locationPlaceName: 'Tomsk2',
-    priority: QuestPriority.AllPriority,
+    priority: Priority.AllPriority,
     location: { longitude: -77.0364, latitude: 36.8951 },
     title: 'Test2',
     description: 'Test3',

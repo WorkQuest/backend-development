@@ -8,18 +8,21 @@ import {Errors} from "../utils/errors";
 import {addSendEmailJob} from "../jobs/sendEmail";
 import {generateJwt} from "../utils/auth";
 import {UserController} from "../controllers/user/controller.user";
+import converter from 'bech32-converting';
+import { Wallet } from "@workquest/database-models/lib/models";
 import {
 	error,
 	output,
-	getDevice,
 	getGeo,
-	getRandomHexToken,
 	getRealIp,
+	getDevice,
+	getRandomHexToken,
 } from "../utils";
 import {
 	User,
 	Session,
 	UserStatus,
+	QuestsStatistic,
 	defaultUserSettings,
 } from "@workquest/database-models/lib/models";
 
@@ -28,46 +31,51 @@ const confirmTemplate = Handlebars.compile(fs.readFileSync(confirmTemplatePath, 
 	encoding: "utf-8"
 }));
 
-export async function register(r) {
-	await UserController.checkEmail(r.payload.email);
+export function register(host: 'dao'|'main') {
+	return async function(r) {
+		await UserController.checkEmail(r.payload.email);
 
-	const emailConfirmCode = getRandomHexToken().substring(0, 6).toUpperCase();
-	const emailConfirmLink = `${config.baseUrl}/confirm?token=${emailConfirmCode}`;
-	const emailHtml = confirmTemplate({ confirmLink: emailConfirmLink, confirmCode: emailConfirmCode });
+		const emailConfirmCode = getRandomHexToken().substring(0, 6).toUpperCase();
+		const emailConfirmLink = host === 'main' ? `${config.baseUrl}/confirm?token=${emailConfirmCode}` : `${config.baseUrlDao}/confirm?token=${emailConfirmCode}`;
+		const emailHtml = confirmTemplate({ confirmLink: emailConfirmLink, confirmCode: emailConfirmCode });
 
-	await addSendEmailJob({
-		email: r.payload.email,
-		subject: "Work Quest | Confirmation code",
-		text: `Your confirmation code is ${emailConfirmCode}. Follow this link ${config.baseUrl}/confirm?token=${emailConfirmCode}`,
-		html: emailHtml,
-	});
+		await addSendEmailJob({
+			email: r.payload.email,
+			subject: "Work Quest | Confirmation code",
+			text: `Your confirmation code is ${emailConfirmCode}. Follow this link ${config.baseUrl}/confirm?token=${emailConfirmCode}`,
+			html: emailHtml,
+		});
 
-	const user = await User.create({
-		email: r.payload.email.toLowerCase(),
-		password: r.payload.password,
-		firstName: r.payload.firstName,
-		lastName: r.payload.lastName,
-		settings: {
-			...defaultUserSettings,
-			emailConfirm: emailConfirmCode
-		}
-	});
+		const user = await User.create({
+			email: r.payload.email.toLowerCase(),
+			password: r.payload.password,
+			firstName: r.payload.firstName,
+			lastName: r.payload.lastName,
+			settings: {
+				...defaultUserSettings,
+				emailConfirm: emailConfirmCode
+			}
+		});
 
-	const session = await Session.create({
-		userId: user.id,
-		invalidating: false,
-		place: getGeo(r),
-		ip: getRealIp(r),
-		device: getDevice(r),
-	});
+		await QuestsStatistic.create({ userId: user.id });
 
-	const result = {
-		...generateJwt({ id: session.id }),
-		userStatus: user.status,
-	};
+		const session = await Session.create({
+			userId: user.id,
+			invalidating: false,
+			place: getGeo(r),
+			ip: getRealIp(r),
+			device: getDevice(r),
+		});
 
-	return output(result);
+		const result = {
+			...generateJwt({ id: session.id }),
+			userStatus: user.status,
+		};
+
+		return output(result);
+	}
 }
+
 
 export function getLoginViaSocialNetworkHandler(returnType: "token" | "redirect") {
 	return async function loginThroughSocialNetwork(r, h) {
@@ -97,6 +105,8 @@ export function getLoginViaSocialNetworkHandler(returnType: "token" | "redirect"
 			return h.redirect(config.baseUrl + "/sign-in?" + qs);
 		}
 
+		await QuestsStatistic.create({ userId: user.id });
+
 		return output(result);
 	};
 }
@@ -105,8 +115,9 @@ export async function confirmEmail(r) {
 	const user = await User.scope("withPassword").findByPk(r.auth.credentials.id);
 	const userController = new UserController(user);
 
-	await userController.checkUserAlreadyConfirmed();
-	await userController.checkUserConfirmationCode(r.payload.confirmCode);
+	await userController
+		.checkUserAlreadyConfirmed()
+		.checkUserConfirmationCode(r.payload.confirmCode)
 
 	if (r.payload.role) {
 		await user.update({
@@ -127,11 +138,17 @@ export async function confirmEmail(r) {
 
 export async function login(r) {
 	const user = await User.scope("withPassword").findOne({
-		where: { email: { [Op.iLike]: r.payload.email }	}
+		where: { email: { [Op.iLike]: r.payload.email }	},
+		include: [{
+			model: Wallet,
+			as: 'wallet',
+			required: false
+		}]
 	});
 	const userController = new UserController(user);
 
-	await userController.checkPassword(r.payload.password)
+	await userController
+		.checkPassword(r.payload.password)
 
 	if (userController.user.isTOTPEnabled()) {
 		userController
@@ -149,6 +166,9 @@ export async function login(r) {
 	const result = {
 		...generateJwt({ id: session.id }),
 		userStatus: user.status,
+		address: user.wallet ?
+			user.wallet.address :
+			null
 	};
 
 	return output(result);
@@ -180,4 +200,84 @@ export async function logout(r) {
 	});
 
 	return output();
+}
+
+export async function registerWallet(r) {
+	const { id } = r.auth.credentials;
+	const { publicKey, address } = r.payload;
+
+	const [_, isCreated] = await Wallet.findOrCreate({
+		where: {
+			[Op.or]: {
+				userId: id,
+				publicKey: publicKey.toLowerCase(),
+				address: address.toLowerCase()
+			}
+		},
+		defaults: {
+			userId: id,
+			publicKey: publicKey.toLowerCase(),
+			address: address.toLowerCase()
+		}
+	});
+
+	if (!isCreated) {
+		return error(Errors.WalletExists, 'Wallet already exists', {});
+	}
+
+	const bech32Address = converter('eth').toBech32(address);
+
+	return output({
+		address,
+		bech32Address
+	});
+}
+
+export async function loginWallet(r) {
+	const address = r.payload.address.toLowerCase();
+
+	const wallet = await Wallet.findOne({
+		where: { address },
+		include: [{
+			model: User.unscoped(),
+			as: 'user',
+			attributes: ['id', 'status']
+		}]
+	});
+
+	if (!wallet) {
+		return error(Errors.NotFound, 'Wallet not found', { field: ['address'] });
+	}
+
+	const decryptedSignAddress =
+		r.server.app.web3.eth.accounts.recover(address, '0x' + r.payload.signature);
+
+	if (wallet.address.toLowerCase() !== decryptedSignAddress.toLowerCase()) {
+		return error(Errors.NotFound, 'Wallet not found', {})
+	}
+
+	const session = await Session.create({
+		userId: wallet.user.id,
+		invalidating: false,
+		place: getGeo(r),
+		ip: getRealIp(r),
+		device: getDevice(r),
+	});
+
+	const result = {
+		...generateJwt({ id: session.id }),
+		userStatus: wallet.user.status,
+		address: wallet.address
+	};
+
+	return output(result);
+}
+
+export async function validateUserPassword(r) {
+	const user = await User.scope("withPassword")
+		.findByPk(r.auth.credentials.id);
+
+	return output({
+		isValid: await user.passwordCompare(r.payload.password)
+	});
 }

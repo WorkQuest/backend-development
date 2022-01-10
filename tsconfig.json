@@ -17,6 +17,8 @@
     "./src/**/*.ts",
     "./src/bridge/abi/*.json",
     "./src/server/abi/*.json",
+    "./src/proposal/abi/*.json",
+    "./src/dailyLiquidity/abi/*.json",
   ],
   "rootDirs": [
     "src",

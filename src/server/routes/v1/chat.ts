@@ -1,4 +1,5 @@
 import * as Joi from "joi";
+import * as handlers from "../../api/chat";
 import {
   idSchema,
   idsSchema,
@@ -10,6 +11,7 @@ import {
   messageSchema,
   outputOkSchema,
   chatNameSchema,
+  chatQuerySchema,
   chatForGetSchema,
   messageTextSchema,
   sortDirectionSchema,
@@ -18,44 +20,18 @@ import {
   messagesForGetWithCountSchema,
   usersShortWithAdditionalInfoSchema,
 } from "@workquest/database-models/lib/schemes";
-import {
-  getUserChats,
-  createGroupChat,
-  getChatMessages,
-  getUserChat,
-  sendMessageToUser,
-  sendMessageToChat,
-  removeUserInGroupChat,
-  addUserInGroupChat,
-  leaveFromGroupChat,
-  removeStarFromChat,
-  markChatStar,
-  setMessagesAsRead,
-  getUserStarredMessages,
-  removeStarFromMessage,
-  getChatMembers,
-  markMessageStar,
-  listOfUsersByChats,
-} from "../../api/chat";
 
 export default [{
   method: "GET",
   path: "/v1/user/me/chats",
-  handler: getUserChats,
+  handler: handlers.getUserChats,
   options: {
     auth: 'jwt-access',
     id: "v1.me.getChats",
     tags: ["api", "chat"],
     description: "Get all chats",
     validate: {
-      query: Joi.object({
-        starred: Joi.boolean().default(false),
-        offset: offsetSchema,
-        limit: limitSchema,
-        sort: Joi.object({
-          lastMessageDate: sortDirectionSchema.default('DESC'),
-        }).default({ lastMessageDate: 'DESC' }).label('SortChats'),
-      }).label('GetChatsQuery')
+      query: chatQuerySchema,
     },
     response: {
       schema: outputOkSchema(chatsForGetWithCountSchema).label('GetChatsResponse'),
@@ -64,7 +40,7 @@ export default [{
 }, {
   method: "GET",
   path: "/v1/user/me/chat/{chatId}/messages",
-  handler: getChatMessages,
+  handler: handlers.getChatMessages,
   options: {
     auth: 'jwt-access',
     id: "v1.chat.getMessages",
@@ -90,7 +66,7 @@ export default [{
 }, {
   method: "GET",
   path: "/v1/user/me/chat/{chatId}",
-  handler: getUserChat,
+  handler: handlers.getUserChat,
   options: {
     auth: 'jwt-access',
     id: "v1.user.me.getChat",
@@ -108,7 +84,7 @@ export default [{
 }, {
   method: "GET",
   path: "/v1/user/me/chat/members/users-by-chats",
-  handler: listOfUsersByChats,
+  handler: handlers.listOfUsersByChats,
   options: {
     auth: 'jwt-access',
     id: "v1.user.me.chat.members.getUsersByChats",
@@ -116,7 +92,7 @@ export default [{
     tags: ["api", "chat"],
     validate: {
       query: Joi.object({
-        chatIdExclude: idSchema,
+        excludeMembersChatId: idSchema,
         offset: offsetSchema,
         limit: limitSchema,
       }).label('GetUsersByChatsQuery'),
@@ -128,7 +104,7 @@ export default [{
 }, {
   method: "POST",
   path: "/v1/user/me/chat/group/create",
-  handler: createGroupChat,
+  handler: handlers.createGroupChat,
   options: {
     auth: 'jwt-access',
     id: "v1.chat.group.create",
@@ -137,7 +113,7 @@ export default [{
     validate: {
       payload: Joi.object({
         name: chatNameSchema.required(),
-        memberUserIds: idsSchema.required().min(2).unique(),
+        memberUserIds: idsSchema.required().min(1).unique(),
       }).label('CreateGroupChatPayload')
     },
     response: {
@@ -147,7 +123,7 @@ export default [{
 }, {
   method: "POST",
   path: "/v1/user/{userId}/send-message",
-  handler: sendMessageToUser,
+  handler: handlers.sendMessageToUser,
   options: {
     auth: 'jwt-access',
     id: "v1.user.sendMessageToUser",
@@ -158,7 +134,7 @@ export default [{
         userId: idSchema.required(),
       }).label('SendMessageToUserParams'),
       payload: Joi.object({
-        text: messageTextSchema.default(''),
+        text: messageTextSchema.allow('').default(''),
         medias: idsSchema.required().unique(),
       }).label('SendMessageToUserPayload')
     },
@@ -169,7 +145,7 @@ export default [{
 }, {
   method: "POST",
   path: "/v1/chat/{chatId}/send-message",
-  handler: sendMessageToChat,
+  handler: handlers.sendMessageToChat,
   options: {
     auth: 'jwt-access',
     id: "v1.chat.sendMessageToChat",
@@ -180,7 +156,7 @@ export default [{
         chatId: idSchema.required(),
       }).label('SendMessageToChatParams'),
       payload: Joi.object({
-        text: messageTextSchema.default(''),
+        text: messageTextSchema.allow('').default(''),
         medias: idsSchema.required().unique(),
       }).label('SendMessageToChatPayload'),
     },
@@ -190,18 +166,20 @@ export default [{
   }
 }, {
   method: "POST",
-  path: "/v1/user/me/chat/group/{chatId}/add/{userId}",
-  handler: addUserInGroupChat,
+  path: "/v1/user/me/chat/group/{chatId}/add",
+  handler: handlers.addUsersInGroupChat,
   options: {
     auth: 'jwt-access',
-    id: "v1.chat.group.addUser",
-    description: "Add user in group chat",
+    id: "v1.chat.group.addUsers",
+    description: "Add users in group chat. For one or more users",
     tags: ["api", "chat"],
     validate: {
       params: Joi.object({
         chatId: idSchema.required(),
-        userId: idSchema.required(),
-      }).label('AddUserInGroupChatParams')
+      }).label('AddUserInGroupChatParams'),
+      payload: Joi.object({
+        userIds: idsSchema.min(1).unique().required(),
+      }).label('AddUserInGroupChatPayload'),
     },
     response: {
       schema: outputOkSchema(messageSchema).label('AddUserInGroupChatResponse')
@@ -210,7 +188,7 @@ export default [{
 }, {
   method: "DELETE",
   path: "/v1/user/me/chat/group/{chatId}/remove/{userId}",
-  handler: removeUserInGroupChat,
+  handler: handlers.removeUserInGroupChat,
   options: {
     auth: 'jwt-access',
     id: "v1.chat.group.removeUser",
@@ -229,7 +207,7 @@ export default [{
 }, {
   method: "POST",
   path: "/v1/user/me/chat/group/{chatId}/leave",
-  handler: leaveFromGroupChat,
+  handler: handlers.leaveFromGroupChat,
   options: {
     auth: 'jwt-access',
     id: "v1.chat.group.leave",
@@ -247,7 +225,7 @@ export default [{
 }, {
   method: "GET",
   path: "/v1/user/me/chat/group/{chatId}/members",
-  handler: getChatMembers,
+  handler: handlers.getChatMembers,
   options: {
     auth: 'jwt-access',
     id: "v1.chat.group.getMembers",
@@ -269,7 +247,7 @@ export default [{
 }, {
   method: "GET",
   path: "/v1/user/me/chat/messages/star",
-  handler: getUserStarredMessages,
+  handler: handlers.getUserStarredMessages,
   options: {
     auth: 'jwt-access',
     id: "v1.chat.messages.getStarredMessages",
@@ -288,7 +266,7 @@ export default [{
 }, {
   method: "POST",
   path: "/v1/user/me/chat/{chatId}/message/{messageId}/star",
-  handler: markMessageStar,
+  handler: handlers.markMessageStar,
   options: {
     auth: 'jwt-access',
     id: "v1.chat.message.markMessageStar",
@@ -307,7 +285,7 @@ export default [{
 }, {
   method: "DELETE",
   path: "/v1/user/me/chat/message/{messageId}/star",
-  handler: removeStarFromMessage,
+  handler: handlers.removeStarFromMessage,
   options: {
     auth: 'jwt-access',
     id: "v1.chat.message.removeStar",
@@ -325,7 +303,7 @@ export default [{
 }, {
   method: "POST",
   path: "/v1/user/me/chat/{chatId}/star",
-  handler: markChatStar,
+  handler: handlers.markChatStar,
   options: {
     auth: 'jwt-access',
     id: "v1.mark.chat",
@@ -343,7 +321,7 @@ export default [{
 }, {
   method: "DELETE",
   path: "/v1/user/me/chat/{chatId}/star",
-  handler: removeStarFromChat,
+  handler: handlers.removeStarFromChat,
   options: {
     auth: 'jwt-access',
     id: "v1.remove.star.chat",
@@ -361,7 +339,7 @@ export default [{
 }, {
   method: "POST",
   path: "/v1/read/message/{chatId}",
-  handler: setMessagesAsRead,
+  handler: handlers.setMessagesAsRead,
   options: {
     auth: 'jwt-access',
     id: "v1.set.message.read",

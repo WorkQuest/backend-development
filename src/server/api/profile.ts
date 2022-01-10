@@ -8,8 +8,10 @@ import {SkillsFiltersController} from "../controllers/controller.skillsFilters";
 import {
   User,
   UserRole,
-  UserSpecializationFilter,
+  RatingStatistic,
+  UserSpecializationFilter, Wallet
 } from "@workquest/database-models/lib/models";
+import { addUpdateReviewStatisticsJob } from "../jobs/updateReviewStatistics";
 
 export const searchFields = [
   "firstName",
@@ -18,7 +20,8 @@ export const searchFields = [
 
 export async function getMe(r) {
   const user = await User.findByPk(r.auth.credentials.id, {
-    attributes: { include: ['tempPhone'] }
+    attributes: { include: ['tempPhone'] },
+    include: [{ model: Wallet, as: 'wallet', attributes: ['address'] }]
   });
 
   return output(user);
@@ -28,9 +31,29 @@ export async function getUser(r) {
   const userController = new UserController(await User.findByPk(r.params.userId));
 
   userController.
-    checkNotSeeYourself(r.params.userId)
+    checkNotSeeYourself(r.auth.credentials.id)
 
   return output(userController.user);
+}
+
+export async function getAllUsers(r) {
+  const where = {};
+
+  if (r.query.q) {
+    where[Op.or] = searchFields.map(
+      field => ({ [field]: { [Op.iLike]: `%${r.query.q}%` }})
+    );
+  }
+
+  const { count, rows } = await User.findAndCountAll({
+    where,
+    distinct: true,
+    col: '"User"."id"',
+    limit: r.query.limit,
+    offset: r.query.offset,
+  });
+
+  return output({ count, users: rows });
 }
 
 export function getUsers(role: UserRole) {
@@ -41,9 +64,15 @@ export function getUsers(role: UserRole) {
 
     const order = [];
     const include = [];
+    let distinctCol: '"User"."id"' | 'id' = '"User"."id"';
 
     const where = {
       ...(r.query.north && r.query.south && { [Op.and]: entersAreaLiteral }), role,
+      ...(r.query.workplace && { workplace: r.query.workplace }),
+      ...(r.query.priority && {priority: r.query.priority}),
+      ...(r.query.betweenWagePerHour && { wagePerHour: {
+          [Op.between]: [r.query.betweenWagePerHour.from, r.query.betweenWagePerHour.to]
+      } }),
     };
 
     if (r.query.q) {
@@ -69,6 +98,18 @@ export function getUsers(role: UserRole) {
           where: { specializationKey: { [Op.in]: specializationKeys } },
         });
       }
+
+      distinctCol = 'id';
+    }
+    if (r.query.ratingStatus) {
+      include.push({
+        model: RatingStatistic,
+        as: 'ratingStatistic',
+        required: true,
+        where: { status: r.query.ratingStatus },
+      });
+
+      distinctCol = 'id';
     }
 
     for (const [key, value] of Object.entries(r.query.sort)) {
@@ -77,7 +118,7 @@ export function getUsers(role: UserRole) {
 
     const { count, rows } = await User.findAndCountAll({
       distinct: true,
-      col: '"User"."id"',
+      col: distinctCol, // so..., else not working
       limit: r.query.limit,
       offset: r.query.offset,
       include, order, where,
@@ -91,7 +132,7 @@ export function getUsers(role: UserRole) {
       }
     });
 
-    return output({count, users: rows});
+    return output({ count, users: rows });
   }
 }
 
@@ -113,7 +154,7 @@ export function editProfile(userRole: UserRole) {
 
     await userController.userMustHaveRole(userRole);
 
-    const avatarId = r.payload.avatarId ? (await MediaController.getMedia(r.payload)).id : null;
+    const avatarId = r.payload.avatarId ? (await MediaController.getMedia(r.payload.avatarId)).id : null;
     const transaction = await r.server.app.db.transaction();
 
     if (userRole === UserRole.Worker) {
@@ -125,11 +166,18 @@ export function editProfile(userRole: UserRole) {
       lastName: r.payload.lastName,
       location: r.payload.location,
       firstName: r.payload.firstName,
+      priority: r.payload.priority || null,
+      workplace: r.payload.workplace || null,
+      wagePerHour: r.payload.wagePerHour || null,
       additionalInfo: r.payload.additionalInfo,
       locationPostGIS: r.payload.location ? transformToGeoPostGIS(r.payload.location) : null,
     }, transaction);
 
     await transaction.commit();
+
+    await addUpdateReviewStatisticsJob({
+      userId: user.id,
+    });
 
     return output(
       await User.findByPk(r.auth.credentials.id)
@@ -183,4 +231,15 @@ export async function sendCodeOnPhoneNumber(r) {
   });
 
   return output();
+}
+
+export async function getInvestors(r) {
+  const users = await User.findAndCountAll({
+    distinct: true,
+    col: '"User"."id"',
+    limit: r.query.limit,
+    offset: r.query.offset,
+  });
+
+  return output({count: users.count, users: users.rows});
 }
