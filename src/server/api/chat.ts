@@ -13,18 +13,18 @@ import {MessageController} from "../controllers/chat/controller.message";
 import {UserController} from "../controllers/user/controller.user";
 import {listOfUsersByChatsCountQuery, listOfUsersByChatsQuery } from "../queries";
 import {
+  User,
   Chat,
-  ChatMember,
-  ChatType,
-  InfoMessage,
   Message,
-  MessageAction,
+  ChatType,
+  ChatMember,
   MessageType,
+  InfoMessage,
+  StarredChat,
+  MessageAction,
+  StarredMessage,
   QuestChatStatuses,
   SenderMessageStatus,
-  StarredChat,
-  StarredMessage,
-  User
 } from "@workquest/database-models/lib/models";
 
 export async function getUserChats(r) {

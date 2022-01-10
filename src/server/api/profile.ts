@@ -5,13 +5,15 @@ import {UserController} from "../controllers/user/controller.user";
 import {transformToGeoPostGIS} from "../utils/postGIS";
 import {MediaController} from "../controllers/controller.media";
 import {SkillsFiltersController} from "../controllers/controller.skillsFilters";
+import { addUpdateReviewStatisticsJob } from "../jobs/updateReviewStatistics";
 import {
   User,
   UserRole,
+  ChatsStatistic,
   RatingStatistic,
-  UserSpecializationFilter, ChatMember, ChatsStatistic, QuestsStatistic
+  QuestsStatistic,
+  UserSpecializationFilter,
 } from "@workquest/database-models/lib/models";
-import { addUpdateReviewStatisticsJob } from "../jobs/updateReviewStatistics";
 
 export const searchFields = [
   "firstName",
@@ -232,40 +234,18 @@ export async function sendCodeOnPhoneNumber(r) {
   return output();
 }
 
-export async function getInvestors(r) {
-  const users = await User.findAndCountAll({
-    distinct: true,
-    col: '"User"."id"',
-    limit: r.query.limit,
-    offset: r.query.offset,
-  });
-
-  return output({count: users.count, users: users.rows});
-}
-
 export async function getUserStatistics(r) {
-  const userStatistics = {};
-  const chatsStatisticInfo = await ChatsStatistic.findOne({
-    where: {
-      userId: r.auth.credentials.id
-    }
+  const chatsStatistic = await ChatsStatistic.findOne({
+    where: { userId: r.auth.credentials.id }
   });
 
-  const questsStatisticInfo = await QuestsStatistic.findOne({
-    where: {
-      userId: r.auth.credentials.id
-    }
+  const questsStatistic = await QuestsStatistic.findOne({
+    where: { userId: r.auth.credentials.id }
   });
 
-  const ratingStatisticInfo = await RatingStatistic.findOne({
-    where: {
-      userId: r.auth.credentials.id
-    }
+  const ratingStatistic = await RatingStatistic.findOne({
+    where: { userId: r.auth.credentials.id }
   });
 
-  userStatistics['chatsStatistic'] = chatsStatisticInfo;
-  userStatistics['questsStatistic'] = questsStatisticInfo;
-  userStatistics['ratingStatistic'] = ratingStatisticInfo;
-
-  return output(userStatistics);
+  return output({ chatsStatistic, questsStatistic, ratingStatistic });
 }
