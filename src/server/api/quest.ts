@@ -405,6 +405,28 @@ export async function getQuests(r) {
     }
   }
 
+  if (r.auth.credentials.role === UserRole.Worker) {
+    include.push({
+      model: QuestChat.scope('idsOnly'),
+      where: { workerId: r.auth.credentials.id },
+      as: 'questChat',
+      required: false,
+    });
+  }
+
+  if (r.auth.credentials.role === UserRole.Employer) {
+    include.push({
+      model: QuestChat.scope('idsOnly'),
+      as: 'questChat',
+      include: {
+        model: Quest.unscoped(), //TODO: напсоздать scope только с id
+        as: 'quest',
+        required: false
+      },
+      required: false,
+    });
+  }
+
   include.push({
     model: Review.unscoped(),
     as: "yourReview",
