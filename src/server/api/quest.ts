@@ -441,13 +441,6 @@ export async function getQuests(r) {
     required: false,
   });
 
-  // {
-  //   model: QuestsResponse,
-  //     as: 'responses',
-  //   required: false,
-  //   where: { '$"Quest"."userId"$': r.auth.credentials.id },
-  // }
-
   for (const [key, value] of Object.entries(r.query.sort)) {
     order.push([key, value]);
   }
