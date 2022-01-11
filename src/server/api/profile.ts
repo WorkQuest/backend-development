@@ -5,13 +5,13 @@ import {UserController} from "../controllers/user/controller.user";
 import {transformToGeoPostGIS} from "../utils/postGIS";
 import {MediaController} from "../controllers/controller.media";
 import {SkillsFiltersController} from "../controllers/controller.skillsFilters";
+import {addUpdateReviewStatisticsJob} from "../jobs/updateReviewStatistics";
 import {
   User,
   UserRole,
   RatingStatistic,
   UserSpecializationFilter,
 } from "@workquest/database-models/lib/models";
-import { addUpdateReviewStatisticsJob } from "../jobs/updateReviewStatistics";
 
 export const searchFields = [
   "firstName",
@@ -164,7 +164,6 @@ export function editProfile(userRole: UserRole) {
       avatarId: avatarId,
       lastName: r.payload.lastName,
       location: r.payload.location,
-      phone: r.payload.phone,
       firstName: r.payload.firstName,
       priority: r.payload.priority || null,
       workplace: r.payload.workplace || null,
@@ -209,10 +208,10 @@ export async function confirmPhoneNumber(r) {
 
   const userController = new UserController(user);
 
-  await userController.userMustHaveVerificationPhone();
-  await userController.checkPhoneConfirmationCode(r.payload.confirmCode);
-
-  await userController.confirmPhoneNumber();
+  await userController
+    .userMustHaveVerificationPhone()
+    .checkPhoneConfirmationCode(r.payload.confirmCode)
+    .confirmPhoneNumber()
 
   return output();
 }
@@ -226,20 +225,9 @@ export async function sendCodeOnPhoneNumber(r) {
   await userController.setUnverifiedPhoneNumber(r.payload.phoneNumber, confirmCode);
 
   await addSendSmsJob({
-    toPhoneNumber: r.payload.phoneNumber,
+    toPhoneNumber: r.payload.phoneNumber.fullPhone,
     message: 'Code to confirm your phone number on WorkQuest: ' + confirmCode,
   });
 
   return output();
-}
-
-export async function getInvestors(r) {
-  const users = await User.findAndCountAll({
-    distinct: true,
-    col: '"User"."id"',
-    limit: r.query.limit,
-    offset: r.query.offset,
-  });
-
-  return output({count: users.count, users: users.rows});
 }

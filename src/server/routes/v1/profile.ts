@@ -5,6 +5,7 @@ import {
   idSchema,
   userSchema,
   limitSchema,
+  phoneSchema,
   offsetSchema,
   searchSchema,
   emptyOkSchema,
@@ -14,7 +15,6 @@ import {
   userRoleSchema,
   workPlaceSchema,
   userWorkersSchema,
-  mobilePhoneSchema,
   workerQuerySchema,
   userLastNameSchema,
   userPasswordSchema,
@@ -25,7 +25,7 @@ import {
   workerWagePerHourSchema,
   specializationKeysSchema,
   userAdditionalInfoWorkerSchema,
-  userAdditionalInfoEmployerSchema, userPhoneSchema
+  userAdditionalInfoEmployerSchema,
 } from "@workquest/database-models/lib/schemes";
 
 export default [{
@@ -125,7 +125,6 @@ export default [{
         avatarId: idSchema.allow(null).required(),
         firstName: userFirstNameSchema.required(),
         lastName: userLastNameSchema.required(),
-        phone: userPhoneSchema.allow(null).required(),
         location: locationSchema.allow(null).required(),
         additionalInfo: userAdditionalInfoEmployerSchema.required(),
       }).label("EditEmployerProfilePayload")
@@ -148,7 +147,6 @@ export default [{
         lastName: userLastNameSchema.required(),
         firstName: userFirstNameSchema.required(),
         avatarId: idSchema.allow(null).required(),
-        phone: userPhoneSchema.allow(null).required(),
         priority: prioritySchema.allow(null).required(),
         location: locationSchema.allow(null).required(),
         workplace: workPlaceSchema.allow(null).required(),
@@ -227,7 +225,7 @@ export default [{
     description: "Send code for confirm phone number",
     validate: {
       payload: Joi.object({
-        phoneNumber: mobilePhoneSchema.required(),
+        phoneNumber: phoneSchema.required(),
       }).label('PhoneSendCodePayload')
     },
     response: {
