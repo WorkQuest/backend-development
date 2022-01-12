@@ -145,8 +145,8 @@ abstract class UserHelper {
    });
 
     if (users.length !== userIds.length) {
-      const notFoundIds = userIds.filter(id =>
-        users.findIndex(user => id === user.id) === -1
+      const notFoundIds = userIds.filter(userId =>
+        users.findIndex(user => userId === user.id) === -1
       );
 
       throw error(Errors.NotFound, 'Users is not found', { notFoundIds });

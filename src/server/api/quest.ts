@@ -389,23 +389,12 @@ export async function getQuests(r) {
     }));
   }
   if (r.query.specializations) {
-    const { specializationKeys, industryKeys } = SkillsFiltersController.splitSpecialisationAndIndustry(r.query.specializations);
-
     include.push({
       model: QuestSpecializationFilter,
       as: 'questIndustryForFiltering',
       attributes: [],
-      where: { industryKey: { [Op.in]: industryKeys } }
+      where: { path: { [Op.in]: r.query.specializations } }
     });
-
-    if (specializationKeys.length > 0) {
-      include.push({
-        model: QuestSpecializationFilter,
-        as: 'questSpecializationForFiltering',
-        attributes: [],
-        where: { specializationKey: { [Op.in]: specializationKeys } }
-      });
-    }
   }
 
   if (r.auth.credentials.role === UserRole.Worker) {
@@ -475,13 +464,6 @@ export async function getQuests(r) {
     as: 'questChat',
     required: false,
   });
-
-  // {
-  //   model: QuestsResponse,
-  //     as: 'responses',
-  //   required: false,
-  //   where: { '$"Quest"."userId"$': r.auth.credentials.id },
-  // }
 
   for (const [key, value] of Object.entries(r.query.sort)) {
     order.push([key, value]);

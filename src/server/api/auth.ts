@@ -210,14 +210,14 @@ export async function registerWallet(r) {
 		where: {
 			[Op.or]: {
 				userId: id,
-				publicKey,
-				address
+				publicKey: publicKey.toLowerCase(),
+				address: address.toLowerCase()
 			}
 		},
 		defaults: {
 			userId: id,
-			publicKey,
-			address
+			publicKey: publicKey.toLowerCase(),
+			address: address.toLowerCase()
 		}
 	});
 
@@ -234,23 +234,25 @@ export async function registerWallet(r) {
 }
 
 export async function loginWallet(r) {
-	const { signature, publicKey } = r.payload;
+	const address = r.payload.address.toLowerCase();
 
 	const wallet = await Wallet.findOne({
-		where: { publicKey },
+		where: { address },
 		include: [{
-			model: User,
-			as: 'user'
+			model: User.unscoped(),
+			as: 'user',
+			attributes: ['id', 'status']
 		}]
 	});
 
 	if (!wallet) {
-		return error(Errors.NotFound, 'Wallet not found', { field: ['publicKey'] });
+		return error(Errors.NotFound, 'Wallet not found', { field: ['address'] });
 	}
 
-	const decryptedSignAddress = r.server.app.web3.eth.accounts.recover(wallet.publicKey, signature);
+	const decryptedSignAddress =
+		r.server.app.web3.eth.accounts.recover(address, '0x' + r.payload.signature);
 
-	if (wallet.address !== decryptedSignAddress) {
+	if (wallet.address.toLowerCase() !== decryptedSignAddress.toLowerCase()) {
 		return error(Errors.NotFound, 'Wallet not found', {})
 	}
 
@@ -269,4 +271,13 @@ export async function loginWallet(r) {
 	};
 
 	return output(result);
+}
+
+export async function validateUserPassword(r) {
+	const user = await User.scope("withPassword")
+		.findByPk(r.auth.credentials.id);
+
+	return output({
+		isValid: await user.passwordCompare(r.payload.password)
+	});
 }

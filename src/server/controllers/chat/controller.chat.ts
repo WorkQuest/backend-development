@@ -54,8 +54,8 @@ abstract class ChatHelper {
     });
 
     if (members.length !== 0) {
-      const existsIds = userIds.filter(id =>
-        members.findIndex(user => id === user.id) !== -1
+      const existsIds = userIds.filter(userId =>
+        members.findIndex(member => userId === member.userId) !== -1
       );
 
       throw error(Errors.AlreadyExists, 'Users already exists in group chat', { existsIds });
