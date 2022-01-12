@@ -386,25 +386,12 @@ export async function getQuests(r) {
     }));
   }
   if (r.query.specializations) {
-    const { specializationKeys, industryKeys } = SkillsFiltersController.splitSpecialisationAndIndustry(r.query.specializations);
-
     include.push({
       model: QuestSpecializationFilter,
       as: 'questIndustryForFiltering',
       attributes: [],
-      subQuery: false,
-      where: { industryKey: { [Op.in]: industryKeys } }
+      where: { path: { [Op.in]: r.query.specializations } }
     });
-
-    if (specializationKeys.length > 0) {
-      include.push({
-        model: QuestSpecializationFilter,
-        as: 'questSpecializationForFiltering',
-        attributes: [],
-        subQuery: false,
-        where: { specializationKey: { [Op.in]: specializationKeys } }
-      });
-    }
   }
 
   include.push({
