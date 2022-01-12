@@ -473,18 +473,6 @@ export async function getQuests(r) {
     required: false,
   });
 
-  if (r.auth.credentials.role === UserRole.Employer && r.query.respondedEmployerQuest) {
-    include.push({
-      model: QuestsResponse,
-      as: 'response',
-      where: {
-        workerId: r.params.workerId,
-        type: {[Op.or]: [QuestsResponseType.Response, QuestsResponseType.Invite]}
-      },
-      required: false,
-    })
-  }
-
   // {
   //   model: QuestsResponse,
   //     as: 'responses',
