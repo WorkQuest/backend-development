@@ -9,12 +9,13 @@ import {
 } from "@workquest/database-models/lib/schemes";
 import { createDispute, getDisputeInfo, getDisputes, } from "../../api/disputes";
 
- export default[ {
+ export default [{
    method: "POST",
    path: "/v1/dispute/{questId}/create",
    handler: createDispute,
    options: {
      id: "v1.dispute.create",
+     auth: 'jwt-access',
      tags: ["api", "disputes"],
      description: "Create dispute",
      validate: {
@@ -36,6 +37,7 @@ import { createDispute, getDisputeInfo, getDisputes, } from "../../api/disputes"
    handler: getDisputeInfo,
    options: {
      id: "v1.dispute.information",
+     auth: 'jwt-access',
      tags: ["api", "disputes"],
      description: "Get info about dispute",
      validate: {
@@ -53,6 +55,7 @@ import { createDispute, getDisputeInfo, getDisputes, } from "../../api/disputes"
    handler: getDisputes,
    options: {
      id: "v1.disputes.information",
+     auth: 'jwt-access',
      tags: ["api", "disputes"],
      description: "Get info about disputes",
      validate: {
@@ -62,5 +65,5 @@ import { createDispute, getDisputeInfo, getDisputes, } from "../../api/disputes"
        schema: outputPaginationSchema('disputesList', disputeSchema).label('QuestsListResponse')
      }
    }
- },]
+ }]
 
