@@ -364,6 +364,9 @@ export async function getQuests(r) {
   const entersAreaLiteral = literal(
     'st_within("Quest"."locationPostGIS", st_makeenvelope(:northLng, :northLat, :southLng, :southLat, 4326))'
   );
+  const questChatCase = literal(
+    'CASE WHEN "questChat->quest" = NULL THEN NULL ELSE "questChat->quest"."id" END'
+  );
   const order = [];
   const include = [];
   const where = {
@@ -419,10 +422,10 @@ export async function getQuests(r) {
       model: QuestChat.scope('idsOnly'),
       as: 'questChat',
       attributes: {
-        include: [[literal('CASE WHEN "questChat->quest" = NULL THEN NULL ELSE "questChat->quest"."id" END'), 'id']]
+        include: [[questChatCase, 'id']]
       },
       include: {
-        model: Quest.unscoped(), //TODO: напсоздать scope только с id
+        model: Quest.unscoped(),
         as: 'quest',
         attributes: ["id", "status"],
         where: {
