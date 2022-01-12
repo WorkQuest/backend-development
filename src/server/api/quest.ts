@@ -392,6 +392,7 @@ export async function getQuests(r) {
       model: QuestSpecializationFilter,
       as: 'questIndustryForFiltering',
       attributes: [],
+      subQuery: false,
       where: { industryKey: { [Op.in]: industryKeys } }
     });
 
@@ -400,6 +401,7 @@ export async function getQuests(r) {
         model: QuestSpecializationFilter,
         as: 'questSpecializationForFiltering',
         attributes: [],
+        subQuery: false,
         where: { specializationKey: { [Op.in]: specializationKeys } }
       });
     }
