@@ -418,10 +418,20 @@ export async function getQuests(r) {
     include.push({
       model: QuestChat.scope('idsOnly'),
       as: 'questChat',
+      attributes: {
+        include: [[literal('CASE WHEN "questChat->quest" = NULL THEN NULL ELSE "questChat->quest"."id" END'), 'id']]
+      },
       include: {
         model: Quest.unscoped(), //TODO: напсоздать scope только с id
         as: 'quest',
+        attributes: ["id", "status"],
+        where: {
+          status: [QuestStatus.Active, QuestStatus.Dispute, QuestStatus.WaitWorker, QuestStatus.WaitConfirm],
+        },
         required: false
+      },
+      where: {
+        employerId: r.auth.credentials.id,
       },
       required: false,
     });
@@ -462,6 +472,18 @@ export async function getQuests(r) {
     as: 'questChat',
     required: false,
   });
+
+  if (r.auth.credentials.role === UserRole.Employer && r.query.respondedEmployerQuest) {
+    include.push({
+      model: QuestsResponse,
+      as: 'response',
+      where: {
+        workerId: r.params.workerId,
+        type: {[Op.or]: [QuestsResponseType.Response, QuestsResponseType.Invite]}
+      },
+      required: false,
+    })
+  }
 
   // {
   //   model: QuestsResponse,
