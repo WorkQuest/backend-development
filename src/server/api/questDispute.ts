@@ -1,7 +1,7 @@
-import { Op } from "sequelize";
+import {Op} from "sequelize";
 import {error, output} from "../utils";
 import {Errors} from "../utils/errors";
-import { QuestController } from "../controllers/quest/controller.quest";
+import {QuestController} from "../controllers/quest/controller.quest";
 import {
   User,
   Quest,
@@ -12,7 +12,7 @@ import {
 } from "@workquest/database-models/lib/models";
 
 
-export async function createDispute(r) {
+export async function openDispute(r) {
   const user: User = r.auth.credentials;
 
   const isDisputeExists = await QuestDispute.findOne({
@@ -20,16 +20,21 @@ export async function createDispute(r) {
   });
 
   if (isDisputeExists) {
-    return error(Errors.AlreadyExists,'Dispute for this quest already exists',{})
+    return error(Errors.AlreadyExists,'Dispute for this quest already exists',{});
   }
 
   const quest = await Quest.findByPk(r.params.questId);
   const questController = new QuestController(quest);
 
-  if (quest.userId !== r.auth.credentials.id && quest.assignedWorkerId !== r.auth.credentials.id) {
-    return error(Errors.InvalidRole, "Only employer or worker can open dispute", {});
+  // TODO @AwesomeIrina убрал проверку if (dispute.quest.userId !== user.id && dispute.quest.assignedWorkerId !== r.auth.credentials.id)
+  questController
+    .userMustBelongToQuest(user.id)
+
+  if (r.payload.reason === DisputeReason.poorlyDoneJob) {
+    questController.questMustHaveStatus(QuestStatus.WaitConfirm);
   }
 
+  // TODO @AwesomeIrina quest.createdAt.getTime() проверь, я изменил это место
   const dayInMilliseconds = 86400000
   const allowDate = quest.createdAt.getTime() + dayInMilliseconds;
 
@@ -41,39 +46,35 @@ export async function createDispute(r) {
     quest.assignedWorkerId :
     quest.userId;
 
-  if (r.payload.reason === DisputeReason.poorlyDoneJob) {
-    questController.questMustHaveStatus(QuestStatus.WaitConfirm);
-  }
-
+  // TODO @AwesomeIrina Изменил имена в QuestDispute
   const dispute = await QuestDispute.create({
     opponentUserId,
-    openDisputeUserId: user.id,
     questId: quest.id,
+    openDisputeUserId: user.id,
     status: DisputeStatus.pending,
     reason: r.payload.reason,
-    problem: r.payload.problem
+    problemDescription: r.payload.problemDescription,
   });
 
   return output(dispute);
 }
 
-export async function getDisputeInfo(r) {
-  const { id } = r.auth.credentials;
+export async function getDispute(r) {
+  const user: User = r.auth.credentials;
 
-  const dispute = await QuestDispute.findByPk(r.params.disputeId, {
-    include: {
-      model: Quest,
-      as: 'quest'
-    }
-  });
+  // TODO @AwesomeIrina тут инклюд убрал, квест должен по умолчанию цепляться
+  const dispute = await QuestDispute.findByPk(r.params.disputeId);
 
   if (!dispute) {
     return error(Errors.NotFound, 'Dispute is not found', {});
   }
 
-  if (dispute.quest.userId !== r.auth.credentials.id && dispute.quest.assignedWorkerId !== r.auth.credentials.id) {
-    return error(Errors.InvalidRole, "Only employer or worker can take info about dispute", {});
-  }
+  // TODO @AwesomeIrina квест должен подтянуться в контроллер
+  const questController = new QuestController(dispute.quest);
+
+  // TODO @AwesomeIrina убрал проверку if (dispute.quest.userId !== user.id && dispute.quest.assignedWorkerId !== r.auth.credentials.id)
+  questController
+    .userMustBelongToQuest(user.id)
 
   return output(dispute);
 }
@@ -86,9 +87,9 @@ export async function getDisputes(r) {
         { openDisputeUserId: r.auth.credentials.id },
       ]
     },
-    order: [['createdAt', 'DESC']],
     limit: r.query.limit,
     offset: r.query.offset,
+    order: [['createdAt', 'DESC']],
   });
 
   return output({ count: count, disputes: rows });

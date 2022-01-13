@@ -1,16 +1,17 @@
-import { getBurns, getMints, getSwaps, getTokenDayData } from "../../api/liquidityPool(wqt-weth)";
+import * as Joi from "joi";
+import * as handlers from  "../../api/liquidityPool(wqt-weth)";
 import {
+  limitSchema,
+  offsetSchema,
+  swapWQTSchema,
   outputOkSchema,
   tokensDayWQTSchema,
-  swapWQTSchema,
-  offsetSchema, limitSchema
 } from "@workquest/database-models/lib/schemes";
-import * as Joi from "joi";
 
 export default [{
   method: "GET",
   path: "/v1/pool-liquidity/wqt-weth/swaps",
-  handler: getSwaps,
+  handler: handlers.getSwaps,
   options: {
     auth: false,
     id: "v1.liquidity.wqt-weth.getSwaps",
@@ -29,7 +30,7 @@ export default [{
 }, {
   method: "GET",
   path: "/v1/pool-liquidity/wqt-weth/mints",
-  handler: getMints,
+  handler: handlers.getMints,
   options: {
     auth: false,
     id: "v1.liquidity.wqt-weth.getMints",
@@ -37,9 +38,9 @@ export default [{
     description: "Get mints on a pair by fetching Mints events",
     validate: {
       query: Joi.object({
+        limit: limitSchema,
         offset: offsetSchema,
-        limit: limitSchema
-      }).label("GetMintsCounts")
+      }).label("GetMintsWQTQuery")
     },
     response: {
       schema: outputOkSchema(swapWQTSchema).label("GetMintsWQTResponse")
@@ -48,7 +49,7 @@ export default [{
 }, {
   method: "GET",
   path: "/v1/pool-liquidity/wqt-weth/burns",
-  handler: getBurns,
+  handler: handlers.getBurns,
   options: {
     auth: false,
     id: "v1.liquidity.wqt-weth.getSBurns",
@@ -56,9 +57,9 @@ export default [{
     description: "Get burns on a pair by fetching Burns events",
     validate: {
       query: Joi.object({
+        limit: limitSchema,
         offset: offsetSchema,
-        limit: limitSchema
-      }).label("GetBurnsCounts")
+      }).label("GetBurnsWQTQuery")
     },
     response: {
       schema: outputOkSchema(swapWQTSchema).label("GetBurnsWQTResponse")
@@ -67,7 +68,7 @@ export default [{
 }, {
   method: "GET",
   path: "/v1/pool-liquidity/wqt-weth/tokenDay",
-  handler: getTokenDayData,
+  handler: handlers.getTokenDayData,
   options: {
     auth: false,
     id: "v1.liquidity.wqt-weth.getTokenDayData",

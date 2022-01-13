@@ -1,68 +1,73 @@
 import * as Joi from "joi";
+import * as handlers from "../../api/questDispute";
 import {
-  outputOkSchema,
   idSchema,
-  problemDescriptionSchema,
-  disputeSchema,
-  disputesQuerySchema,
-  outputPaginationSchema, disputeReasonSchema
+  limitSchema,
+  offsetSchema,
+  outputOkSchema,
+  questDisputeSchema,
+  questDisputeReasonSchema,
+  questDisputesWithCountSchema,
+  questDisputeProblemDescriptionSchema,
 } from "@workquest/database-models/lib/schemes";
-import { createDispute, getDisputeInfo, getDisputes, } from "../../api/disputes";
 
  export default [{
    method: "POST",
-   path: "/v1/dispute/{questId}/create",
-   handler: createDispute,
+   path: "/v1/quest/{questId}/open-dispute",
+   handler: handlers.openDispute,
    options: {
-     id: "v1.dispute.create",
+     id: "v1.quest.dispute.open",
      auth: 'jwt-access',
-     tags: ["api", "disputes"],
-     description: "Create dispute",
+     tags: ["api", "quest-disputes"],
+     description: "Open dispute on quest",
      validate: {
        params: Joi.object({
          questId: idSchema.required(),
-       }).label("QuestParams"),
+       }).label("OpenQuestDisputeParams"),
        payload: Joi.object({
-         reason: disputeReasonSchema.required(),
-         problem: problemDescriptionSchema.required(),
-       }).label("CreateDisputePayload")
+         reason: questDisputeReasonSchema.required(),
+         problemDescription: questDisputeProblemDescriptionSchema.required(),
+       }).label("OpenQuestDisputePayload")
      },
      response: {
-       schema: outputOkSchema(disputeSchema).label("TokensWithStatusResponse")
+       schema: outputOkSchema(questDisputeSchema).label("OpenQuestDisputeResponse")
      }
    }
  }, {
    method: "GET",
-   path: "/v1/{disputeId}/getDispute",
-   handler: getDisputeInfo,
+   path: "/v1/quest/dispute/{disputeId}",
+   handler: handlers.getDispute,
    options: {
-     id: "v1.dispute.information",
+     id: "v1.quest.getDispute",
      auth: 'jwt-access',
-     tags: ["api", "disputes"],
-     description: "Get info about dispute",
+     tags: ["api", "quest-disputes"],
+     description: "Get quest dispute",
      validate: {
        params: Joi.object({
          disputeId: idSchema.required(),
        }).label("GetDisputeParams"),
      },
      response: {
-       schema: outputOkSchema(disputeSchema).label('DisputeInfoResponse')
+       schema: outputOkSchema(questDisputeSchema).label('GetDisputeResponse')
      }
    }
  }, {
    method: "GET",
-   path: "/v1/disputes",
-   handler: getDisputes,
+   path: "/v1/quest/disputes",
+   handler: handlers.getDisputes,
    options: {
-     id: "v1.disputes.information",
+     id: "v1.quest.getDisputes",
      auth: 'jwt-access',
-     tags: ["api", "disputes"],
-     description: "Get info about disputes",
+     tags: ["api", "quest-disputes"],
+     description: "Get quest disputes",
      validate: {
-       query: disputesQuerySchema.label('QuerySchema')
+       query: Joi.object({
+         offset: offsetSchema,
+         limit: limitSchema
+       }).label("GetDisputesQuery")
      },
      response: {
-       schema: outputPaginationSchema('disputesList', disputeSchema).label('QuestsListResponse')
+       schema: questDisputesWithCountSchema.label('getDisputesResponse')
      }
    }
  }]
