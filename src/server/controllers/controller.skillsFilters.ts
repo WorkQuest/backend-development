@@ -93,6 +93,13 @@ abstract class SkillsFiltersHelper {
 
     return { industryKeys, specializationKeys }
   }
+
+  public static separateKeys(keys: string[]): {paths: string[], singleKeys: string[]} {
+    const paths = keys.filter(key =>  key.indexOf('.') != -1);
+    const singleKeys = keys.filter(key =>  key.indexOf('.') === -1);
+
+    return { paths, singleKeys }
+  }
 }
 
 export class SkillsFiltersController extends SkillsFiltersHelper {

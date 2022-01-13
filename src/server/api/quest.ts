@@ -7,11 +7,9 @@ import { error, output } from "../utils";
 import { publishQuestNotifications, QuestNotificationActions } from "../websocket/websocket.quest";
 import { QuestsResponseController } from "../controllers/quest/controller.questsResponse";
 import { MediaController } from "../controllers/controller.media";
-import { SkillsFiltersController } from "../controllers/controller.skillsFilters";
 import { addUpdateReviewStatisticsJob } from "../jobs/updateReviewStatistics";
 import { updateQuestsStatisticJob } from "../jobs/updateQuestsStatistic";
 import {
-  Chat,
   User,
   Quest,
   Review,
@@ -22,8 +20,8 @@ import {
   QuestsResponse,
   QuestChatStatuses,
   QuestsResponseType,
-  QuestSpecializationFilter,
 } from "@workquest/database-models/lib/models";
+import { SkillsFiltersController } from "../controllers/controller.skillsFilters";
 
 export const searchFields = [
   "title",
@@ -364,9 +362,10 @@ export async function getQuests(r) {
   const entersAreaLiteral = literal(
     'st_within("Quest"."locationPostGIS", st_makeenvelope(:northLng, :northLat, :southLng, :southLat, 4326))'
   );
-  const questChatCase = literal(
+  const questChatLiteral = literal(
     'CASE WHEN "questChat->quest" = NULL THEN NULL ELSE "questChat->quest"."id" END'
   );
+
   const order = [];
   const include = [];
   const where = {
@@ -388,13 +387,16 @@ export async function getQuests(r) {
       [field]: { [Op.iLike]: `%${r.query.q}%` }
     }));
   }
+
   if (r.query.specializations) {
-    include.push({
-      model: QuestSpecializationFilter,
-      as: 'questIndustryForFiltering',
-      attributes: [],
-      where: { path: { [Op.in]: r.query.specializations } }
-    });
+    const {paths, singleKeys} =SkillsFiltersController.separateKeys(r.query.specializations)
+
+    const specialisationLiteral = literal(
+      `1 = (CASE WHEN EXISTS (SELECT * FROM "QuestSpecializationFilters" WHERE "questId" = "Quest"."id" AND "QuestSpecializationFilters"."path" IN ('${paths}')) THEN 1
+      WHEN EXISTS (SELECT * FROM "QuestSpecializationFilters" WHERE "questId" = "Quest"."id" AND "QuestSpecializationFilters"."industryKey" IN ('${singleKeys}')) THEN 1 END)`
+    );
+
+    where[Op.and] = specialisationLiteral;
   }
 
   if (r.auth.credentials.role === UserRole.Worker) {
@@ -411,7 +413,7 @@ export async function getQuests(r) {
       model: QuestChat.scope('idsOnly'),
       as: 'questChat',
       attributes: {
-        include: [[questChatCase, 'id']]
+        include: [[questChatLiteral, 'id']]
       },
       include: {
         model: Quest.unscoped(),
