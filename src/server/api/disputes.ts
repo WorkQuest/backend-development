@@ -1,8 +1,9 @@
-import {Op} from "sequelize";
+import { Op } from "sequelize";
 import {error, output} from "../utils";
 import {Errors} from "../utils/errors";
 import { QuestController } from "../controllers/quest/controller.quest";
 import {
+  User,
   Quest,
   QuestStatus,
   QuestDispute,
@@ -12,6 +13,8 @@ import {
 
 
 export async function createDispute(r) {
+  const user: User = r.auth.credentials;
+
   const isDisputeExists = await QuestDispute.findOne({
     where: { questId: r.params.questId }
   });
@@ -34,25 +37,29 @@ export async function createDispute(r) {
     return error(Errors.InvalidDate, 'Can open dispute after 24 hours after creating quest', {});
   }
 
-  const opponentUserId = quest.userId === r.auth.credentials.id ? quest.assignedWorkerId : quest.userId;
+  const opponentUserId = quest.userId === user.id ?
+    quest.assignedWorkerId :
+    quest.userId;
 
   if (r.payload.reason === DisputeReason.poorlyDoneJob) {
     questController.questMustHaveStatus(QuestStatus.WaitConfirm);
   }
 
   const dispute = await QuestDispute.create({
-    openDisputeUserId: r.auth.credentials.id,
-    opponentUserId: opponentUserId,
+    opponentUserId,
+    openDisputeUserId: user.id,
     questId: quest.id,
     status: DisputeStatus.pending,
     reason: r.payload.reason,
-    problem: r.payload.problem,
+    problem: r.payload.problem
   });
 
   return output(dispute);
 }
 
 export async function getDisputeInfo(r) {
+  const { id } = r.auth.credentials;
+
   const dispute = await QuestDispute.findByPk(r.params.disputeId, {
     include: {
       model: Quest,
@@ -79,9 +86,10 @@ export async function getDisputes(r) {
         { openDisputeUserId: r.auth.credentials.id },
       ]
     },
+    order: [['createdAt', 'DESC']],
     limit: r.query.limit,
     offset: r.query.offset,
-  })
+  });
 
   return output({ count: count, disputes: rows });
 }
