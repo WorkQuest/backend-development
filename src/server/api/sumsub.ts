@@ -68,7 +68,11 @@ export async function createAccessToken(r) {
 
     return output(result.data);
   } catch (err) {
-    return error(Errors.SumSubError, err.response.description, err.response.data);
+    if (err.response && err.response.description && err.response.data) {
+      return error(Errors.SumSubError, err.response.description, err.response.data);
+    }
+
+    return error(Errors.SumSubError, err, {});
   }
 }
 

@@ -94,6 +94,18 @@ export class QuestsResponseController extends QuestsResponseHelper {
     }
   }
 
+  public async setMedias(medias, transaction?: Transaction) {
+    try {
+      await this.questsResponse.$set('medias', medias, { transaction });
+    } catch (e) {
+      if (transaction) {
+        await transaction.rollback();
+      }
+
+      throw e;
+    }
+  }
+
   static async reopenQuestResponses(quest: Quest, rejectedWorker: User, transaction?: Transaction) {
     try {
       await QuestsResponse.update({
@@ -121,3 +133,4 @@ export class QuestsResponseController extends QuestsResponseHelper {
     }
   }
 }
+

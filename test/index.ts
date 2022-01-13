@@ -76,7 +76,7 @@ export async function makeQuest(employer: User, assignedWorker: User, status: Qu
     workplace: QuestWorkPlace.Both,
     employment: QuestEmployment.FullTime,
     locationPlaceName: 'Tomsk',
-    priority: QuestPriority.Normal,
+    priority: QuestPriority.ShortTerm,
     location: { longitude: -75.0364, latitude: 33.8951 },
     locationPostGIS: transformToGeoPostGIS({
       longitude: -75.0364, latitude: 33.8951

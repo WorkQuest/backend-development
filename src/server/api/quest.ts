@@ -1,16 +1,20 @@
-import {Op, literal} from 'sequelize';
-import {Errors} from '../utils/errors';
-import {UserController} from "../controllers/user/controller.user";
-import {QuestController} from "../controllers/quest/controller.quest";
-import {transformToGeoPostGIS} from "../utils/postGIS";
-import {error, output} from "../utils";
-import {publishQuestNotifications, QuestNotificationActions} from "../websocket/websocket.quest";
-import {QuestsResponseController} from "../controllers/quest/controller.questsResponse";
-import {MediaController} from "../controllers/controller.media";
+import { literal, Op } from "sequelize";
+import { Errors } from "../utils/errors";
+import { UserController } from "../controllers/user/controller.user";
+import { QuestController } from "../controllers/quest/controller.quest";
+import { transformToGeoPostGIS } from "../utils/postGIS";
+import { error, output } from "../utils";
+import { publishQuestNotifications, QuestNotificationActions } from "../websocket/websocket.quest";
+import { QuestsResponseController } from "../controllers/quest/controller.questsResponse";
+import { MediaController } from "../controllers/controller.media";
 import { SkillsFiltersController } from "../controllers/controller.skillsFilters";
+import { addUpdateReviewStatisticsJob } from "../jobs/updateReviewStatistics";
+import { updateQuestsStatisticJob } from "../jobs/updateQuestsStatistic";
 import {
+  Chat,
   User,
   Quest,
+  Review,
   UserRole,
   QuestChat,
   QuestStatus,
@@ -18,7 +22,6 @@ import {
   QuestsResponse,
   QuestChatStatuses,
   QuestsResponseType,
-  QuestsResponseStatus,
   QuestSpecializationFilter,
 } from "@workquest/database-models/lib/models";
 
@@ -28,6 +31,8 @@ export const searchFields = [
 ];
 
 export async function getQuest(r) {
+  const user: User = r.auth.credentials;
+
   const quest = await Quest.findOne({
     where: { id: r.params.questId },
     include: [{
@@ -40,6 +45,10 @@ export async function getQuest(r) {
       as: "response",
       where: { workerId: r.auth.credentials.id },
       required: false
+    }, {
+      model: QuestChat.scope('idsOnly'),
+      as: 'questChat',
+      required: false,
     }]
   });
 
@@ -83,6 +92,11 @@ export async function createQuest(r) {
   await questController.setQuestSpecializations(r.payload.specializationKeys, true, transaction);
 
   await transaction.commit();
+
+  await updateQuestsStatisticJob({
+    userId: employer.id,
+    role: UserRole.Employer,
+  });
 
   return output(
     await Quest.findByPk(quest.id)
@@ -149,7 +163,7 @@ export async function closeQuest(r) {
 
   await questController
     .employerMustBeQuestCreator(employer.id)
-    .questMustHaveStatus(QuestStatus.Created, QuestStatus.WaitConfirm)
+    .questMustHaveStatus(QuestStatus.Created)
 
   const transaction = await r.server.app.db.transaction();
 
@@ -158,6 +172,11 @@ export async function closeQuest(r) {
   await QuestsResponseController.closeAllResponsesOnQuest(questController.quest, transaction);
 
   await transaction.commit();
+
+  await updateQuestsStatisticJob({
+    userId: employer.id,
+    role: UserRole.Employer,
+  });
 
   return output();
 }
@@ -235,7 +254,7 @@ export async function acceptWorkOnQuest(r) {
   const questController = new QuestController(await Quest.findByPk(r.params.questId));
 
   workerController.
-  userMustHaveRole(UserRole.Worker)
+    userMustHaveRole(UserRole.Worker)
 
   questController
     .questMustHaveStatus(QuestStatus.WaitWorker)
@@ -247,6 +266,11 @@ export async function acceptWorkOnQuest(r) {
   await questController.answerWorkOnQuest(worker, true, transaction);
 
   await transaction.commit();
+
+  await updateQuestsStatisticJob({
+    userId: worker.id,
+    role: UserRole.Worker,
+  });
 
   await publishQuestNotifications(r.server, {
     data: questController.quest,
@@ -296,6 +320,22 @@ export async function acceptCompletedWorkOnQuest(r) {
     action: QuestNotificationActions.employerAcceptedCompletedQuest,
   });
 
+  await addUpdateReviewStatisticsJob({
+    userId: quest.userId,
+  });
+  await addUpdateReviewStatisticsJob({
+    userId: quest.assignedWorkerId,
+  });
+
+  await updateQuestsStatisticJob({
+    userId: quest.assignedWorkerId,
+    role: UserRole.Worker,
+  });
+  await updateQuestsStatisticJob({
+    userId: employer.id,
+    role: UserRole.Employer,
+  });
+
   return output();
 }
 
@@ -332,11 +372,13 @@ export async function getQuests(r) {
     ...(r.query.adType && { adType: r.query.adType }),
     ...(r.query.filter && { filter: r.params.filter }),
     ...(r.params.userId && { userId: r.params.userId }),
+    ...(r.params.workerId && { assignedWorkerId: r.params.workerId }),
     ...(r.query.performing && { assignedWorkerId: r.auth.credentials.id }),
     ...(r.query.north && r.query.south && { [Op.and]: entersAreaLiteral }),
     ...(r.query.priorities && { priority: {[Op.in]: r.query.priorities } }),
     ...(r.query.workplaces && { workplace: { [Op.in]: r.query.workplaces } }),
     ...(r.query.employments && { employment: { [Op.in]: r.query.employments } }),
+    ...(r.query.priceBetween && { price: { [Op.between]: [r.query.priceBetween.from, r.query.priceBetween.to] } }),
   };
 
   if (r.query.q) {
@@ -345,26 +387,20 @@ export async function getQuests(r) {
     }));
   }
   if (r.query.specializations) {
-    const { specializationKeys, industryKeys } = SkillsFiltersController.splitSpecialisationAndIndustry(r.query.specializations);
-
     include.push({
       model: QuestSpecializationFilter,
       as: 'questIndustryForFiltering',
       attributes: [],
-      where: { industryKey: { [Op.in]: industryKeys } }
+      where: { path: { [Op.in]: r.query.specializations } }
     });
-
-    if (specializationKeys.length > 0) {
-      include.push({
-        model: QuestSpecializationFilter,
-        as: 'questSpecializationForFiltering',
-        attributes: [],
-        where: { specializationKey: { [Op.in]: specializationKeys } }
-      });
-    }
   }
 
   include.push({
+    model: Review.unscoped(),
+    as: "yourReview",
+    where: { fromUserId: r.auth.credentials.id },
+    required: false,
+  }, {
     model: StarredQuests.unscoped(),
     as: "star",
     where: { userId: r.auth.credentials.id },
@@ -389,14 +425,11 @@ export async function getQuests(r) {
         { type: QuestsResponseType.Response },
       ]
     },
+  }, {
+    model: QuestChat.scope('idsOnly'),
+    as: 'questChat',
+    required: false,
   });
-
-  // {
-  //   model: QuestsResponse,
-  //     as: 'responses',
-  //   required: false,
-  //   where: { '$"Quest"."userId"$': r.auth.credentials.id },
-  // }
 
   for (const [key, value] of Object.entries(r.query.sort)) {
     order.push([key, value]);
