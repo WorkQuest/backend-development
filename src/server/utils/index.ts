@@ -22,13 +22,14 @@ export function getGeo(request) {
       city: "localhost"
     }
   }
-  let ip = getRealIp(request);
-  let geo = geoip.lookup(ip);
-  let place = {
+
+  const ip = getRealIp(request);
+  const geo = geoip.lookup(ip);
+
+  return {
     country: geo.country,
     city: geo.city
   }
-  return place
 }
 
 export function getDevice(request): string {

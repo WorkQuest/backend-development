@@ -356,7 +356,6 @@ export async function rejectCompletedWorkOnQuest(r) {
     recipients: [quest.assignedWorkerId],
     action: QuestNotificationActions.employerRejectedCompletedQuest,
   });
-  await quest.update({ status: QuestStatus.Reject });
 
   return output();
 }

@@ -171,7 +171,7 @@ export class QuestController extends QuestHelper {
   public async rejectCompletedWork(transaction?: Transaction) {
     try {
       this.quest = await this.quest.update({
-        status: QuestStatus.Dispute
+        status: QuestStatus.Dispute,
       }, { transaction });
     } catch (e) {
       if (transaction) {

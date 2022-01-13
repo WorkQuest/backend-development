@@ -45,16 +45,10 @@ export function tokenValidate(tokenType: 'access' | 'refresh', allowedUnconfirme
     if (!session.user) {
       throw error(Errors.NotFound, 'User not found', {});
     }
-
-    if (session.user.status === UserStatus.Blocked) {
-      throw error(Errors.InvalidStatus, 'User is blocked', {});
-    }
-
     if (session.user.status === UserStatus.Unconfirmed && !allowedUnconfirmedRoutes.includes(r.route.path)) {
       throw error(Errors.UnconfirmedUser, 'Unconfirmed user', {});
     }
 
     return { isValid: true, credentials: session.user, artifacts: { token, type: tokenType, sessionId: session.id } };
-
   }
 }
