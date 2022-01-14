@@ -95,7 +95,7 @@ export function getUsers(role: UserRole) {
       const {paths, singleKeys} = SkillsFiltersController.separateKeys(r.query.specialization);
 
       let specialisationLiteral;
-
+      let specialisationIndustryKeyLiteral;
       if(paths.length != 0) {
         specialisationLiteral = literal(
           '(1 = (CASE WHEN EXISTS (SELECT * FROM "UserSpecializationFilters" WHERE "userId" = "User"."id" AND "UserSpecializationFilters"."path" IN (:path)) THEN 1 END))'
@@ -104,19 +104,22 @@ export function getUsers(role: UserRole) {
 
       }
 
-      if(singleKeys.length != 0) {
-        const specialisationIndustryKeyLiteral = literal(
-          '(1 = (CASE WHEN EXISTS (SELECT * FROM "UserSpecializationFilters" WHERE "userId" = "User"."id" AND "UserSpecializationFilters"."industryKey" IN (:industryKey)) THEN 1 END))'
-        );
-
+      if (singleKeys.length != 0) {
         if (specialisationLiteral) {
-          specialisationLiteral.concat('OR', specialisationIndustryKeyLiteral);
+          specialisationLiteral = literal(
+            '(1 = (CASE WHEN EXISTS (SELECT * FROM "UserSpecializationFilters" WHERE "userId" = "User"."id" AND "UserSpecializationFilters"."path" IN (:path)) THEN 1 END))' +
+            'OR (1 = (CASE WHEN EXISTS (SELECT * FROM "UserSpecializationFilters" WHERE "userId" = "User"."id" AND "UserSpecializationFilters"."industryKey" IN (:industryKey)) THEN 1 END))'
+          );
+        } else {
+          specialisationIndustryKeyLiteral = literal(
+            '(1 = (CASE WHEN EXISTS (SELECT * FROM "UserSpecializationFilters" WHERE "userId" = "User"."id" AND "UserSpecializationFilters"."industryKey" IN (:industryKey)) THEN 1 END))'
+          );
         }
-
         replacements['industryKey'] = singleKeys;
       }
 
-      where[Op.and].push(specialisationLiteral);
+      (specialisationLiteral&&specialisationIndustryKeyLiteral) ? where[Op.and].push(specialisationLiteral) : (specialisationLiteral ? where[Op.and].push(specialisationLiteral) : where[Op.and].push(specialisationIndustryKeyLiteral));
+
       distinctCol = '"User"."id"';
     }
 
@@ -134,6 +137,7 @@ export function getUsers(role: UserRole) {
     for (const [key, value] of Object.entries(r.query.sort)) {
       order.push([key, value]);
     }
+    console.log(replacements);
 
     const { count, rows } = await User.findAndCountAll({
       distinct: true,
