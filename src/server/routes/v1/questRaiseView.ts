@@ -1,42 +1,28 @@
 import * as Joi from "joi";
-import * as handlers from '../../api/quest';
+import * as handlers from '../../api/questRaiseView';
 import {
   outputOkSchema,
   idSchema,
-  idsSchema,
-  emptyOkSchema,
-  locationSchema,
-  workPlaceSchema,
-  questAdTypeSchema,
-  questCategorySchema,
-  questDescriptionSchema,
-  questPriceSchema,
-  prioritySchema,
-  questSchema,
-  questTitleSchema,
-  questQuerySchema,
-  questsForGetWithCountSchema,
-  questLocationPlaceNameSchema,
-  questEmploymentSchema,
-  specializationKeysSchema,
-  chatForGetSchema, questRaiseViewSchema
+  questRaiseViewSchema, questRaiseDurationSchema, questRaiseTypeScheme
 } from "@workquest/database-models/lib/schemes";
 
 export default [{
   method: "POST",
   path: "/v1/quest/{questId}/create-raiseView",
-  handler: handlers.createQuest,
+  handler: handlers.createRaiseView,
   options: {
     auth: 'jwt-access',
     id: "v1.quest.raiseDispute.create",
     tags: ["api", "quest-raiseView"],
     description: "Create quest raise view",
     validate: {
-      params: {
+      params: Joi.object({
         questId: idSchema.required(),
-      },
+      }).label("QuestRaiseViewParams"),
       payload: Joi.object({
-
+        userId: idSchema.required(),
+        duration: questRaiseDurationSchema.required(),
+        type: questRaiseTypeScheme.required(),
       }).label("QuestRaiseViewPayload")
     },
     response: {

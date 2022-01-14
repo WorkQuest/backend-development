@@ -8,6 +8,7 @@ import {
   QuestRaiseView,
 } from "@workquest/database-models/lib/models";
 
+//TODO: проверка на то, вышел срок подписки или нет
 export async function createRaiseView(r) {
   const employer: User = r.auth.credentials;
   const userController = new UserController(employer);
@@ -27,5 +28,11 @@ export async function createRaiseView(r) {
     type: r.payload.type,
   });
 
-  return output();
+  const questRaiseSchema = await QuestRaiseView.create({
+    questId: r.params.questId,
+    userId: r.auth.credentials.id,
+    duration: r.payload.duration,
+    type: r.payload.type,
+  });
+  return output(questRaiseSchema);
 }
