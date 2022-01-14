@@ -242,9 +242,9 @@ export default [{
     auth: 'jwt-access',
     id: "v1.profile.getUserStatistic",
     tags: ["api", "profile"],
-    description: "Get statistic about currentUser",
+    description: "Get all statistic about current user",
     response: {
-      schema: outputOkSchema(userStatisticsSchema).label("UserResponse")
+      schema: outputOkSchema(userStatisticsSchema).label("GetUserStatisticsResponse")
     }
   }
 }];
