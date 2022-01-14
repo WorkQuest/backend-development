@@ -1,16 +1,15 @@
-import {Op} from "sequelize";
-import {error, output} from "../utils";
-import {Errors} from "../utils/errors";
-import {QuestController} from "../controllers/quest/controller.quest";
+import { Op } from "sequelize";
+import { error, output } from "../utils";
+import { Errors } from "../utils/errors";
+import { QuestController } from "../controllers/quest/controller.quest";
 import {
-  User,
-  Quest,
-  QuestStatus,
-  QuestDispute,
-  DisputeStatus,
   DisputeReason,
+  DisputeStatus,
+  Quest,
+  QuestDispute,
+  QuestStatus,
+  User
 } from "@workquest/database-models/lib/models";
-
 
 export async function openDispute(r) {
   const user: User = r.auth.credentials;
@@ -25,8 +24,8 @@ export async function openDispute(r) {
 
   const quest = await Quest.findByPk(r.params.questId);
   const questController = new QuestController(quest);
+  questController.questMustHaveStatus(QuestStatus.Active, QuestStatus.WaitConfirm);
 
-  // TODO @AwesomeIrina убрал проверку if (dispute.quest.userId !== user.id && dispute.quest.assignedWorkerId !== r.auth.credentials.id)
   questController
     .userMustBelongToQuest(user.id)
 
@@ -34,7 +33,6 @@ export async function openDispute(r) {
     questController.questMustHaveStatus(QuestStatus.WaitConfirm);
   }
 
-  // TODO @AwesomeIrina quest.createdAt.getTime() проверь, я изменил это место
   const dayInMilliseconds = 86400000
   const allowDate = quest.createdAt.getTime() + dayInMilliseconds;
 
@@ -46,7 +44,8 @@ export async function openDispute(r) {
     quest.assignedWorkerId :
     quest.userId;
 
-  // TODO @AwesomeIrina Изменил имена в QuestDispute
+  const transaction = await r.server.app.db.transaction();
+
   const dispute = await QuestDispute.create({
     opponentUserId,
     questId: quest.id,
@@ -54,7 +53,11 @@ export async function openDispute(r) {
     status: DisputeStatus.pending,
     reason: r.payload.reason,
     problemDescription: r.payload.problemDescription,
-  });
+  }, transaction);
+
+  await quest.update({
+    status: QuestStatus.Dispute,
+  },transaction);
 
   return output(dispute);
 }
@@ -62,17 +65,14 @@ export async function openDispute(r) {
 export async function getDispute(r) {
   const user: User = r.auth.credentials;
 
-  // TODO @AwesomeIrina тут инклюд убрал, квест должен по умолчанию цепляться
   const dispute = await QuestDispute.findByPk(r.params.disputeId);
 
   if (!dispute) {
     return error(Errors.NotFound, 'Dispute is not found', {});
   }
 
-  // TODO @AwesomeIrina квест должен подтянуться в контроллер
   const questController = new QuestController(dispute.quest);
 
-  // TODO @AwesomeIrina убрал проверку if (dispute.quest.userId !== user.id && dispute.quest.assignedWorkerId !== r.auth.credentials.id)
   questController
     .userMustBelongToQuest(user.id)
 
