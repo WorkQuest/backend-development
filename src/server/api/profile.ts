@@ -118,7 +118,9 @@ export function getUsers(role: UserRole) {
         replacements['industryKey'] = singleKeys;
       }
 
-      (specialisationLiteral&&specialisationIndustryKeyLiteral) ? where[Op.and].push(specialisationLiteral) : (specialisationLiteral ? where[Op.and].push(specialisationLiteral) : where[Op.and].push(specialisationIndustryKeyLiteral));
+      (specialisationLiteral&&specialisationIndustryKeyLiteral) ?
+        where[Op.and].push(specialisationLiteral) : (specialisationLiteral ?
+          where[Op.and].push(specialisationLiteral) : where[Op.and].push(specialisationIndustryKeyLiteral));
 
       distinctCol = '"User"."id"';
     }

@@ -369,18 +369,28 @@ export async function getQuests(r) {
   const order = [];
   const include = [];
   const where = {
+    [Op.and]: [],
     ...(r.query.statuses && { status: { [Op.in]: r.query.statuses } }),
     ...(r.query.adType && { adType: r.query.adType }),
     ...(r.query.filter && { filter: r.params.filter }),
     ...(r.params.userId && { userId: r.params.userId }),
     ...(r.params.workerId && { assignedWorkerId: r.params.workerId }),
     ...(r.query.performing && { assignedWorkerId: r.auth.credentials.id }),
-    ...(r.query.north && r.query.south && { [Op.and]: entersAreaLiteral }),
     ...(r.query.priorities && { priority: {[Op.in]: r.query.priorities } }),
     ...(r.query.workplaces && { workplace: { [Op.in]: r.query.workplaces } }),
     ...(r.query.employments && { employment: { [Op.in]: r.query.employments } }),
     ...(r.query.priceBetween && { price: { [Op.between]: [r.query.priceBetween.from, r.query.priceBetween.to] } }),
   };
+
+  const replacements = {};
+
+  if (r.query.north && r.query.south) {
+    replacements['northLng'] = r.query.north.longitude;
+    replacements['northLat'] = r.query.north.latitude;
+    replacements['southLng'] = r.query.south.longitude;
+    replacements['southLat'] = r.query.south.latitude;
+    where[Op.and].push(entersAreaLiteral);
+  }
 
   if (r.query.q) {
     where[Op.or] = searchFields.map(field => ({
@@ -389,14 +399,35 @@ export async function getQuests(r) {
   }
 
   if (r.query.specializations) {
-    const {paths, singleKeys} =SkillsFiltersController.separateKeys(r.query.specializations)
+    const {paths, singleKeys} = SkillsFiltersController.separateKeys(r.query.specializations);
 
-    const specialisationLiteral = literal(
-      `1 = (CASE WHEN EXISTS (SELECT * FROM "QuestSpecializationFilters" WHERE "questId" = "Quest"."id" AND "QuestSpecializationFilters"."path" IN ('${paths}')) THEN 1
-      WHEN EXISTS (SELECT * FROM "QuestSpecializationFilters" WHERE "questId" = "Quest"."id" AND "QuestSpecializationFilters"."industryKey" IN ('${singleKeys}')) THEN 1 END)`
-    );
+    let specialisationLiteral;
+    let specialisationIndustryKeyLiteral;
+    if(paths.length != 0) {
+      specialisationLiteral = literal(
+        '(1 = (CASE WHEN EXISTS (SELECT * FROM "QuestSpecializationFilters" WHERE "questId" = "Quest"."id" AND "QuestSpecializationFilters"."path" IN (:path)) THEN 1 END))'
+      );
+      replacements['path'] = paths;
 
-    where[Op.and] = specialisationLiteral;
+    }
+
+    if (singleKeys.length != 0) {
+      if (specialisationLiteral) {
+        specialisationLiteral = literal(
+          '(1 = (CASE WHEN EXISTS (SELECT * FROM "QuestSpecializationFilters" WHERE "questId" = "Quest"."id" AND "QuestSpecializationFilters"."path" IN (:path)) THEN 1 END))' +
+          'OR (1 = (CASE WHEN EXISTS (SELECT * FROM "QuestSpecializationFilters" WHERE "questId" = "Quest"."id" AND "QuestSpecializationFilters"."industryKey" IN (:industryKey)) THEN 1 END))'
+        );
+      } else {
+        specialisationIndustryKeyLiteral = literal(
+          '(1 = (CASE WHEN EXISTS (SELECT * FROM "QuestSpecializationFilters" WHERE "questId" = "Quest"."id" AND "QuestSpecializationFilters"."industryKey" IN (:industryKey)) THEN 1 END))'
+        );
+      }
+      replacements['industryKey'] = singleKeys;
+    }
+
+    (specialisationLiteral&&specialisationIndustryKeyLiteral) ?
+      where[Op.and].push(specialisationLiteral) : (specialisationLiteral ?
+        where[Op.and].push(specialisationLiteral) : where[Op.and].push(specialisationIndustryKeyLiteral));
   }
 
   if (r.auth.credentials.role === UserRole.Worker) {
@@ -476,14 +507,7 @@ export async function getQuests(r) {
     limit: r.query.limit,
     offset: r.query.offset,
     include, order, where,
-    replacements: {
-      ...(r.query.north && r.query.south && {
-        northLng: r.query.north.longitude,
-        northLat: r.query.north.latitude,
-        southLng: r.query.south.longitude,
-        southLat: r.query.south.latitude,
-      })
-    }
+    replacements
   });
 
   return output({ count, quests: rows });
