@@ -7,11 +7,9 @@ import { error, output } from "../utils";
 import { publishQuestNotifications, QuestNotificationActions } from "../websocket/websocket.quest";
 import { QuestsResponseController } from "../controllers/quest/controller.questsResponse";
 import { MediaController } from "../controllers/controller.media";
-import { SkillsFiltersController } from "../controllers/controller.skillsFilters";
 import { addUpdateReviewStatisticsJob } from "../jobs/updateReviewStatistics";
 import { updateQuestsStatisticJob } from "../jobs/updateQuestsStatistic";
 import {
-  Chat,
   User,
   Quest,
   Review,
@@ -22,8 +20,8 @@ import {
   QuestsResponse,
   QuestChatStatuses,
   QuestsResponseType,
-  QuestSpecializationFilter,
 } from "@workquest/database-models/lib/models";
+import { SkillsFiltersController } from "../controllers/controller.skillsFilters";
 
 export const searchFields = [
   "title",
@@ -361,19 +359,36 @@ export async function rejectCompletedWorkOnQuest(r) {
 }
 
 export async function getQuests(r) {
+  const user: User = r.auth.credentials;
+
   const entersAreaLiteral = literal(
     'st_within("Quest"."locationPostGIS", st_makeenvelope(:northLng, :northLat, :southLng, :southLat, 4326))'
   );
+  const questChatLiteral = literal(
+    'CASE WHEN "questChat->quest" = NULL THEN NULL ELSE "questChat->quest"."id" END'
+  );
+  const questSpecializationOnlyPathsLiteral = literal(
+    '(1 = (CASE WHEN EXISTS (SELECT "id" FROM "QuestSpecializationFilters" WHERE "questId" = "Quest"."id" AND "QuestSpecializationFilters"."path" IN (:path)) THEN 1 END))'
+  );
+  const questSpecializationOnlyIndustryKeysLiteral = literal(
+    '(1 = (CASE WHEN EXISTS (SELECT * FROM "QuestSpecializationFilters" WHERE "questId" = "Quest"."id" AND "QuestSpecializationFilters"."industryKey" IN (:industryKey)) THEN 1 END))'
+  );
+  const questSpecializationIndustryKeysAndPathsLiteral = literal(
+    '(1 = (CASE WHEN EXISTS (SELECT * FROM "QuestSpecializationFilters" WHERE "questId" = "Quest"."id" AND "QuestSpecializationFilters"."path" IN (:path)) THEN 1 END))' +
+    'OR (1 = (CASE WHEN EXISTS (SELECT * FROM "QuestSpecializationFilters" WHERE "questId" = "Quest"."id" AND "QuestSpecializationFilters"."industryKey" IN (:industryKey)) THEN 1 END))'
+  );
+
   const order = [];
   const include = [];
+  const replacements = { };
   const where = {
-    ...(r.query.statuses && { status: { [Op.in]: r.query.statuses } }),
+    [Op.and]: [],
     ...(r.query.adType && { adType: r.query.adType }),
     ...(r.query.filter && { filter: r.params.filter }),
     ...(r.params.userId && { userId: r.params.userId }),
     ...(r.params.workerId && { assignedWorkerId: r.params.workerId }),
+    ...(r.query.statuses && { status: { [Op.in]: r.query.statuses } }),
     ...(r.query.performing && { assignedWorkerId: r.auth.credentials.id }),
-    ...(r.query.north && r.query.south && { [Op.and]: entersAreaLiteral }),
     ...(r.query.priorities && { priority: {[Op.in]: r.query.priorities } }),
     ...(r.query.workplaces && { workplace: { [Op.in]: r.query.workplaces } }),
     ...(r.query.employments && { employment: { [Op.in]: r.query.employments } }),
@@ -385,12 +400,62 @@ export async function getQuests(r) {
       [field]: { [Op.iLike]: `%${r.query.q}%` }
     }));
   }
-  if (r.query.specializations) {
+  if (r.query.specializations) { // TODO r.query.specialization on r.query.specialization[s]
+    const { paths, industryKeys } = SkillsFiltersController.splitPathsAndSingleKeysOfIndustry(r.query.specializations);
+
+    if (paths.length !== 0 && industryKeys.length === 0) {
+      replacements['path'] = paths;
+      where[Op.and].push(questSpecializationOnlyPathsLiteral);
+    }
+    if (paths.length === 0 && industryKeys.length !== 0) {
+      replacements['industryKey'] = industryKeys;
+      where[Op.and].push(questSpecializationOnlyIndustryKeysLiteral);
+    }
+    if (paths.length !== 0 && industryKeys.length !== 0) {
+      replacements['path'] = paths;
+      replacements['industryKey'] = industryKeys;
+      where[Op.and].push(questSpecializationIndustryKeysAndPathsLiteral);
+    }
+  }
+  if (r.query.north && r.query.south) {
+    replacements['northLng'] = r.query.north.longitude;
+    replacements['northLat'] = r.query.north.latitude;
+    replacements['southLng'] = r.query.south.longitude;
+    replacements['southLat'] = r.query.south.latitude;
+
+    where[Op.and].push(entersAreaLiteral);
+  }
+  if (user.role === UserRole.Worker) {
     include.push({
-      model: QuestSpecializationFilter,
-      as: 'questIndustryForFiltering',
-      attributes: [],
-      where: { path: { [Op.in]: r.query.specializations } }
+      model: QuestChat.scope('idsOnly'),
+      where: { workerId: user.id },
+      as: 'questChat',
+      required: false,
+    });
+  }
+  if (user.role === UserRole.Employer) {
+    include.push({
+      model: QuestChat.scope('idsOnly'),
+      as: 'questChat',
+      attributes: {
+        include: [[questChatLiteral, 'id']]
+      },
+      include: {
+        model: Quest.unscoped(),
+        as: 'quest',
+        attributes: ["id", "status"],
+        where: {
+          status: [
+            QuestStatus.Active,
+            QuestStatus.Dispute,
+            QuestStatus.WaitWorker,
+            QuestStatus.WaitConfirm,
+          ],
+        },
+        required: false
+      },
+      where: { employerId: user.id },
+      required: false,
     });
   }
 
@@ -439,14 +504,7 @@ export async function getQuests(r) {
     limit: r.query.limit,
     offset: r.query.offset,
     include, order, where,
-    replacements: {
-      ...(r.query.north && r.query.south && {
-        northLng: r.query.north.longitude,
-        northLat: r.query.north.latitude,
-        southLng: r.query.south.longitude,
-        southLat: r.query.south.latitude,
-      })
-    }
+    replacements,
   });
 
   return output({ count, quests: rows });

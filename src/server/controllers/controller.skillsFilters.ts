@@ -93,6 +93,24 @@ abstract class SkillsFiltersHelper {
 
     return { industryKeys, specializationKeys }
   }
+
+  public static splitPathsAndSingleKeysOfIndustry(pathsAndIndustryKeys: string[]): { paths: string[], industryKeys: number[] } {
+    const paths: string[] = [];
+    const industryKeys: number[] = [];
+
+    for (const pathOrIndustryKey of pathsAndIndustryKeys) {
+      const [industryKey, specializationKey] = pathOrIndustryKey.split(/\./) as [string, string | null];
+
+      if (industryKey && specializationKey) {
+        paths.push(pathOrIndustryKey);
+      }
+      if (industryKey && !specializationKey) {
+        industryKeys.push(parseInt(industryKey))
+      }
+    }
+
+    return { paths, industryKeys };
+  }
 }
 
 export class SkillsFiltersController extends SkillsFiltersHelper {
