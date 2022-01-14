@@ -5,7 +5,7 @@ import {UserController} from "../controllers/user/controller.user";
 import {transformToGeoPostGIS} from "../utils/postGIS";
 import {MediaController} from "../controllers/controller.media";
 import {SkillsFiltersController} from "../controllers/controller.skillsFilters";
-import { addUpdateReviewStatisticsJob } from "../jobs/updateReviewStatistics";
+import {addUpdateReviewStatisticsJob} from "../jobs/updateReviewStatistics";
 import {
   User,
   UserRole,

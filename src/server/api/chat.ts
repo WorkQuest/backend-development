@@ -11,7 +11,7 @@ import {ChatNotificationActions, publishChatNotifications} from "../websocket/we
 import {MediaController} from "../controllers/controller.media";
 import {MessageController} from "../controllers/chat/controller.message";
 import {UserController} from "../controllers/user/controller.user";
-import {listOfUsersByChatsCountQuery, listOfUsersByChatsQuery } from "../queries";
+import {listOfUsersByChatsCountQuery, listOfUsersByChatsQuery} from "../queries";
 import {
   User,
   Chat,
