@@ -5,13 +5,16 @@ import {UserController} from "../controllers/user/controller.user";
 import {transformToGeoPostGIS} from "../utils/postGIS";
 import {MediaController} from "../controllers/controller.media";
 import {SkillsFiltersController} from "../controllers/controller.skillsFilters";
+import {addUpdateReviewStatisticsJob} from "../jobs/updateReviewStatistics";
 import {
   User,
+  Wallet,
   UserRole,
+  ChatsStatistic,
   RatingStatistic,
-  UserSpecializationFilter, Wallet
+  QuestsStatistic,
+  UserSpecializationFilter,
 } from "@workquest/database-models/lib/models";
-import { addUpdateReviewStatisticsJob } from "../jobs/updateReviewStatistics";
 
 export const searchFields = [
   "firstName",
@@ -233,13 +236,18 @@ export async function sendCodeOnPhoneNumber(r) {
   return output();
 }
 
-export async function getInvestors(r) {
-  const users = await User.findAndCountAll({
-    distinct: true,
-    col: '"User"."id"',
-    limit: r.query.limit,
-    offset: r.query.offset,
+export async function getUserStatistics(r) {
+  const chatsStatistic = await ChatsStatistic.findOne({
+    where: { userId: r.auth.credentials.id }
   });
 
-  return output({count: users.count, users: users.rows});
+  const questsStatistic = await QuestsStatistic.findOne({
+    where: { userId: r.auth.credentials.id }
+  });
+
+  const ratingStatistic = await RatingStatistic.findOne({
+    where: { userId: r.auth.credentials.id }
+  });
+
+  return output({ chatsStatistic, questsStatistic, ratingStatistic });
 }
