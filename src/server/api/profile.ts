@@ -61,6 +61,16 @@ export function getUsers(role: UserRole) {
     const entersAreaLiteral = literal(
       'st_within("User"."locationPostGIS", st_makeenvelope(:northLng, :northLat, :southLng, :southLat, 4326))'
     );
+    const userSpecializationOnlyPathsLiteral = literal(
+      '(1 = (CASE WHEN EXISTS (SELECT * FROM "UserSpecializationFilters" WHERE "userId" = "User"."id" AND "UserSpecializationFilters"."path" IN (:path)) THEN 1 END))'
+    );
+    const userSpecializationOnlyIndustryKeysLiteral = literal(
+      '(1 = (CASE WHEN EXISTS (SELECT * FROM "UserSpecializationFilters" WHERE "userId" = "User"."id" AND "UserSpecializationFilters"."industryKey" IN (:industryKey)) THEN 1 END))'
+    );
+    const userSpecializationIndustryKeysAndPathsLiteral = literal(
+      '(1 = (CASE WHEN EXISTS (SELECT * FROM "UserSpecializationFilters" WHERE "userId" = "User"."id" AND "UserSpecializationFilters"."path" IN (:path)) THEN 1 END))' +
+      'OR (1 = (CASE WHEN EXISTS (SELECT * FROM "UserSpecializationFilters" WHERE "userId" = "User"."id" AND "UserSpecializationFilters"."industryKey" IN (:industryKey)) THEN 1 END))'
+    );
 
     const order = [];
     const include = [];
@@ -76,51 +86,10 @@ export function getUsers(role: UserRole) {
       } }),
     };
 
-    if (r.query.north && r.query.south) {
-      replacements['northLng'] = r.query.north.longitude;
-      replacements['northLat'] = r.query.north.latitude;
-      replacements['southLng'] = r.query.south.longitude;
-      replacements['southLat'] = r.query.south.latitude;
-
-      where[Op.and].push(entersAreaLiteral);
-    }
     if (r.query.q) {
       where[Op.or] = searchFields.map(
         field => ({ [field]: { [Op.iLike]: `%${r.query.q}%` }})
       );
-    }
-    if (r.query.specializations && role === UserRole.Worker) {
-      const { paths, industryKeys } = SkillsFiltersController.splitPathsAndSingleKeysOfIndustry(r.query.specialization);
-
-      let specialisationLiteral;
-      let specialisationIndustryKeyLiteral;
-      if(paths.length != 0) {
-        specialisationLiteral = literal(
-          '(1 = (CASE WHEN EXISTS (SELECT * FROM "UserSpecializationFilters" WHERE "userId" = "User"."id" AND "UserSpecializationFilters"."path" IN (:path)) THEN 1 END))'
-        );
-        replacements['path'] = paths;
-
-      }
-
-      if (singleKeys.length != 0) {
-        if (specialisationLiteral) {
-          specialisationLiteral = literal(
-            '(1 = (CASE WHEN EXISTS (SELECT * FROM "UserSpecializationFilters" WHERE "userId" = "User"."id" AND "UserSpecializationFilters"."path" IN (:path)) THEN 1 END))' +
-            'OR (1 = (CASE WHEN EXISTS (SELECT * FROM "UserSpecializationFilters" WHERE "userId" = "User"."id" AND "UserSpecializationFilters"."industryKey" IN (:industryKey)) THEN 1 END))'
-          );
-        } else {
-          specialisationIndustryKeyLiteral = literal(
-            '(1 = (CASE WHEN EXISTS (SELECT * FROM "UserSpecializationFilters" WHERE "userId" = "User"."id" AND "UserSpecializationFilters"."industryKey" IN (:industryKey)) THEN 1 END))'
-          );
-        }
-        replacements['industryKey'] = singleKeys;
-      }
-
-      (specialisationLiteral&&specialisationIndustryKeyLiteral) ?
-        where[Op.and].push(specialisationLiteral) : (specialisationLiteral ?
-          where[Op.and].push(specialisationLiteral) : where[Op.and].push(specialisationIndustryKeyLiteral));
-
-      distinctCol = '"User"."id"';
     }
     if (r.query.ratingStatus) {
       include.push({
@@ -131,6 +100,33 @@ export function getUsers(role: UserRole) {
       });
 
       distinctCol = 'id';
+    }
+    if (r.query.north && r.query.south) {
+      replacements['northLng'] = r.query.north.longitude;
+      replacements['northLat'] = r.query.north.latitude;
+      replacements['southLng'] = r.query.south.longitude;
+      replacements['southLat'] = r.query.south.latitude;
+
+      where[Op.and].push(entersAreaLiteral);
+    }
+    if (r.query.specializations && role === UserRole.Worker) {
+      const { paths, industryKeys } = SkillsFiltersController.splitPathsAndSingleKeysOfIndustry(r.query.specializations);
+
+      if (paths.length !== 0 && industryKeys.length === 0) {
+        replacements['path'] = paths;
+        where[Op.and].push(userSpecializationOnlyPathsLiteral);
+      }
+      if (paths.length === 0 && industryKeys.length !== 0) {
+        replacements['industryKey'] = industryKeys;
+        where[Op.and].push(userSpecializationOnlyIndustryKeysLiteral);
+      }
+      if (paths.length !== 0 && industryKeys.length !== 0) {
+        replacements['path'] = paths;
+        replacements['industryKey'] = industryKeys;
+        where[Op.and].push(userSpecializationIndustryKeysAndPathsLiteral);
+      }
+
+      distinctCol = '"User"."id"';
     }
 
     for (const [key, value] of Object.entries(r.query.sort)) {
