@@ -9,7 +9,7 @@ import {
   User,
   UserRole,
   RatingStatistic,
-  UserSpecializationFilter, Wallet
+  Wallet
 } from "@workquest/database-models/lib/models";
 import { addUpdateReviewStatisticsJob } from "../jobs/updateReviewStatistics";
 
@@ -67,7 +67,7 @@ export function getUsers(role: UserRole) {
     let distinctCol: '"User"."id"' | 'id' = '"User"."id"';
 
     const where = {
-      ...(r.query.north && r.query.south && { [Op.and]: entersAreaLiteral }), role,
+      [Op.and]: [], role,
       ...(r.query.workplace && { workplace: r.query.workplace }),
       ...(r.query.priority && {priority: r.query.priority}),
       ...(r.query.betweenWagePerHour && { wagePerHour: {
@@ -75,32 +75,51 @@ export function getUsers(role: UserRole) {
       } }),
     };
 
+    const replacements = {};
+
+    if (r.query.north && r.query.south) {
+      replacements['northLng'] = r.query.north.longitude;
+      replacements['northLat'] = r.query.north.latitude;
+      replacements['southLng'] = r.query.south.longitude;
+      replacements['southLat'] = r.query.south.latitude;
+      where[Op.and].push(entersAreaLiteral);
+    }
+
     if (r.query.q) {
       where[Op.or] = searchFields.map(
         field => ({ [field]: { [Op.iLike]: `%${r.query.q}%` }})
       );
     }
+
     if (r.query.specialization && role === UserRole.Worker) {
-      const { industryKeys, specializationKeys } = SkillsFiltersController.splitSpecialisationAndIndustry(r.query.specialization);
+      const {paths, singleKeys} = SkillsFiltersController.separateKeys(r.query.specialization);
 
-      include.push({
-        model: UserSpecializationFilter,
-        as: 'userIndustryForFiltering',
-        attributes: [],
-        where: { industryKey: { [Op.in]: industryKeys } },
-      })
+      let specialisationLiteral;
 
-      if (specializationKeys.length > 0) {
-        include.push({
-          model: UserSpecializationFilter,
-          as: 'userSpecializationForFiltering',
-          attributes: [],
-          where: { specializationKey: { [Op.in]: specializationKeys } },
-        });
+      if(paths.length != 0) {
+        specialisationLiteral = literal(
+          '(1 = (CASE WHEN EXISTS (SELECT * FROM "UserSpecializationFilters" WHERE "userId" = "User"."id" AND "UserSpecializationFilters"."path" IN (:path)) THEN 1 END))'
+        );
+        replacements['path'] = paths;
+
       }
 
-      distinctCol = 'id';
+      if(singleKeys.length != 0) {
+        const specialisationIndustryKeyLiteral = literal(
+          '(1 = (CASE WHEN EXISTS (SELECT * FROM "UserSpecializationFilters" WHERE "userId" = "User"."id" AND "UserSpecializationFilters"."industryKey" IN (:industryKey)) THEN 1 END))'
+        );
+
+        if (specialisationLiteral) {
+          specialisationLiteral.concat('OR', specialisationIndustryKeyLiteral);
+        }
+
+        replacements['industryKey'] = singleKeys;
+      }
+
+      where[Op.and].push(specialisationLiteral);
+      distinctCol = '"User"."id"';
     }
+
     if (r.query.ratingStatus) {
       include.push({
         model: RatingStatistic,
@@ -122,14 +141,7 @@ export function getUsers(role: UserRole) {
       limit: r.query.limit,
       offset: r.query.offset,
       include, order, where,
-      replacements: {
-        ...(r.query.north && r.query.south && {
-          northLng: r.query.north.longitude,
-          northLat: r.query.north.latitude,
-          southLng: r.query.south.longitude,
-          southLat: r.query.south.latitude,
-        })
-      }
+      replacements
     });
 
     return output({ count, users: rows });

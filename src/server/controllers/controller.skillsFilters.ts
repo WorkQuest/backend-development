@@ -94,9 +94,13 @@ abstract class SkillsFiltersHelper {
     return { industryKeys, specializationKeys }
   }
 
-  public static separateKeys(keys: string[]): {paths: string[], singleKeys: string[]} {
-    const paths = keys.filter(key =>  key.indexOf('.') != -1);
-    const singleKeys = keys.filter(key =>  key.indexOf('.') === -1);
+  public static separateKeys(keys: string[]): {paths: string[], singleKeys: number[]} {
+    let paths: string[] = [];
+    keys.filter(key => { if (key.indexOf('.') != -1) {
+      paths.push(key.replace(/"/g, "'"))}
+    });
+    let singleKeys: number[] = [];
+    keys.filter(key => { if (key.indexOf('.') === -1) singleKeys.push(parseInt(key)) } );
 
     return { paths, singleKeys }
   }
