@@ -53,7 +53,7 @@ import {
    }
  }, {
    method: "GET",
-   path: "/v1/quest/disputes",
+   path: "/v1/user/me/quest/disputes",
    handler: handlers.getDisputes,
    options: {
      id: "v1.quest.getDisputes",
