@@ -8,6 +8,7 @@ import {SkillsFiltersController} from "../controllers/controller.skillsFilters";
 import {addUpdateReviewStatisticsJob} from "../jobs/updateReviewStatistics";
 import {
   User,
+  Wallet,
   UserRole,
   ChatsStatistic,
   RatingStatistic,
@@ -22,7 +23,8 @@ export const searchFields = [
 
 export async function getMe(r) {
   const user = await User.findByPk(r.auth.credentials.id, {
-    attributes: { include: ['tempPhone'] }
+    attributes: { include: ['tempPhone'] },
+    include: [{ model: Wallet, as: 'wallet', attributes: ['address'] }]
   });
 
   return output(user);

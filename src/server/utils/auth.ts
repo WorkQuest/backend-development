@@ -33,7 +33,7 @@ export function tokenValidate(tokenType: 'access' | 'refresh', allowedUnconfirme
     const data = await decodeJwt(token, config.auth.jwt[tokenType].secret);
 
     const session = await Session.findByPk(data.id, {
-      include: [{model: User, as: 'user'}]
+      include: [{ model: User, as: 'user' }]
     });
 
     if (!session) {

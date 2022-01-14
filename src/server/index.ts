@@ -9,6 +9,7 @@ import * as HapiBearer from "hapi-auth-bearer-token";
 import * as HapiPulse from "hapi-pulse";
 import * as Bell from "@hapi/bell";
 import * as Qs from "qs";
+import Web3 from 'web3';
 import routes from "./routes";
 import config from "./config/config";
 import initWebSocketService from "./websocket/index";
@@ -87,7 +88,7 @@ const init = async () => {
   ]);
 
   server.app.db = await initDatabase(config.dbLink, true, true);
-
+  server.app.web3 = new Web3();
   server.app.scheduler = await run({
     connectionString: config.dbLink,
     concurrency: 5,
@@ -100,7 +101,8 @@ const init = async () => {
     validate: tokenValidate('access', [
       "/api/v1/auth/confirm-email",
       "/api/v1/profile/set-role",
-      "/api/v1/auth/logout"
+      "/api/v1/auth/logout",
+      "/api/v1/auth/register/wallet"
     ]),
   });
   server.auth.strategy('jwt-refresh', 'bearer-access-token', {

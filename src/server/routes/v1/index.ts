@@ -9,6 +9,7 @@ import review from './review';
 import restorePassword from './restorePassword';
 import portfolio from './portfolio';
 import totp from './totp';
+import disputes from "./disputes";
 import chat from "./chat";
 import bridge from "./bridge";
 import liquidityPoolWETH from "./liquidityPool(wqt-weth)";
@@ -31,6 +32,7 @@ export default [
   ...restorePassword,
   ...portfolio,
   ...totp,
+  ...disputes,
   ...chat,
   ...bridge,
   ...discussion,

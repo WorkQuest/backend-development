@@ -1,7 +1,8 @@
-import {output} from '../utils';
+import { error, output } from "../utils";
 import {addUpdateReviewStatisticsJob} from '../jobs/updateReviewStatistics';
-import {QuestController} from "../controllers/quest/controller.quest"
 import {publishQuestNotifications, QuestNotificationActions} from "../websocket/websocket.quest";
+import {QuestController} from "../controllers/quest/controller.quest"
+import { Errors } from "../utils/errors";
 import {
   User,
   Quest,
@@ -20,6 +21,20 @@ export async function sendReview(r) {
     .userMustBelongToQuest(fromUser.id)
 
   const toUser: User = fromUser.role === UserRole.Worker ? questController.quest.user : questController.quest.assignedWorker;
+
+  const alreadyReview = await Review.findOne({
+    where: {
+      toUserId: toUser.id,
+      fromUserId: fromUser.id,
+      questId: questController.quest.id,
+    }
+  });
+
+  if (alreadyReview) {
+    return error(Errors.AlreadyExists, "You already valued this quest", {
+      yourReviewId: alreadyReview.id,
+    });
+  }
 
   const review = await Review.create({
     toUserId: toUser.id,
