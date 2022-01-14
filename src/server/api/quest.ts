@@ -400,8 +400,8 @@ export async function getQuests(r) {
       [field]: { [Op.iLike]: `%${r.query.q}%` }
     }));
   }
-  if (r.query.specialization) { // TODO r.query.specialization on r.query.specialization[s]
-    const { paths, industryKeys } = SkillsFiltersController.splitPathsAndSingleKeysOfIndustry(r.query.specialization);
+  if (r.query.specializations) { // TODO r.query.specialization on r.query.specialization[s]
+    const { paths, industryKeys } = SkillsFiltersController.splitPathsAndSingleKeysOfIndustry(r.query.specializations);
 
     if (paths.length !== 0 && industryKeys.length === 0) {
       replacements['path'] = paths;
