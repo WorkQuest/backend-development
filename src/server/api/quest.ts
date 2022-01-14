@@ -359,22 +359,35 @@ export async function rejectCompletedWorkOnQuest(r) {
 }
 
 export async function getQuests(r) {
+  const user: User = r.auth.credentials;
+
   const entersAreaLiteral = literal(
     'st_within("Quest"."locationPostGIS", st_makeenvelope(:northLng, :northLat, :southLng, :southLat, 4326))'
   );
   const questChatLiteral = literal(
     'CASE WHEN "questChat->quest" = NULL THEN NULL ELSE "questChat->quest"."id" END'
   );
+  const questSpecializationOnlyPathsLiteral = literal(
+    '(1 = (CASE WHEN EXISTS (SELECT "id" FROM "QuestSpecializationFilters" WHERE "questId" = "Quest"."id" AND "QuestSpecializationFilters"."path" IN (:path)) THEN 1 END))'
+  );
+  const questSpecializationOnlyIndustryKeysLiteral = literal(
+    '(1 = (CASE WHEN EXISTS (SELECT * FROM "QuestSpecializationFilters" WHERE "questId" = "Quest"."id" AND "QuestSpecializationFilters"."industryKey" IN (:industryKey)) THEN 1 END))'
+  );
+  const questSpecializationIndustryKeysAndPathsLiteral = literal(
+    '(1 = (CASE WHEN EXISTS (SELECT * FROM "QuestSpecializationFilters" WHERE "questId" = "Quest"."id" AND "QuestSpecializationFilters"."path" IN (:path)) THEN 1 END))' +
+    'OR (1 = (CASE WHEN EXISTS (SELECT * FROM "QuestSpecializationFilters" WHERE "questId" = "Quest"."id" AND "QuestSpecializationFilters"."industryKey" IN (:industryKey)) THEN 1 END))'
+  );
 
   const order = [];
   const include = [];
+  const replacements = { };
   const where = {
     [Op.and]: [],
-    ...(r.query.statuses && { status: { [Op.in]: r.query.statuses } }),
     ...(r.query.adType && { adType: r.query.adType }),
     ...(r.query.filter && { filter: r.params.filter }),
     ...(r.params.userId && { userId: r.params.userId }),
     ...(r.params.workerId && { assignedWorkerId: r.params.workerId }),
+    ...(r.query.statuses && { status: { [Op.in]: r.query.statuses } }),
     ...(r.query.performing && { assignedWorkerId: r.auth.credentials.id }),
     ...(r.query.priorities && { priority: {[Op.in]: r.query.priorities } }),
     ...(r.query.workplaces && { workplace: { [Op.in]: r.query.workplaces } }),
@@ -382,64 +395,45 @@ export async function getQuests(r) {
     ...(r.query.priceBetween && { price: { [Op.between]: [r.query.priceBetween.from, r.query.priceBetween.to] } }),
   };
 
-  const replacements = {};
-
-  if (r.query.north && r.query.south) {
-    replacements['northLng'] = r.query.north.longitude;
-    replacements['northLat'] = r.query.north.latitude;
-    replacements['southLng'] = r.query.south.longitude;
-    replacements['southLat'] = r.query.south.latitude;
-    where[Op.and].push(entersAreaLiteral);
-  }
-
   if (r.query.q) {
     where[Op.or] = searchFields.map(field => ({
       [field]: { [Op.iLike]: `%${r.query.q}%` }
     }));
   }
+  if (r.query.north && r.query.south) {
+    replacements['northLng'] = r.query.north.longitude;
+    replacements['northLat'] = r.query.north.latitude;
+    replacements['southLng'] = r.query.south.longitude;
+    replacements['southLat'] = r.query.south.latitude;
 
-  if (r.query.specializations) {
-    const {paths, singleKeys} = SkillsFiltersController.separateKeys(r.query.specializations);
-
-    let specialisationLiteral;
-    let specialisationIndustryKeyLiteral;
-    if(paths.length != 0) {
-      specialisationLiteral = literal(
-        '(1 = (CASE WHEN EXISTS (SELECT * FROM "QuestSpecializationFilters" WHERE "questId" = "Quest"."id" AND "QuestSpecializationFilters"."path" IN (:path)) THEN 1 END))'
-      );
-      replacements['path'] = paths;
-
-    }
-
-    if (singleKeys.length != 0) {
-      if (specialisationLiteral) {
-        specialisationLiteral = literal(
-          '(1 = (CASE WHEN EXISTS (SELECT * FROM "QuestSpecializationFilters" WHERE "questId" = "Quest"."id" AND "QuestSpecializationFilters"."path" IN (:path)) THEN 1 END))' +
-          'OR (1 = (CASE WHEN EXISTS (SELECT * FROM "QuestSpecializationFilters" WHERE "questId" = "Quest"."id" AND "QuestSpecializationFilters"."industryKey" IN (:industryKey)) THEN 1 END))'
-        );
-      } else {
-        specialisationIndustryKeyLiteral = literal(
-          '(1 = (CASE WHEN EXISTS (SELECT * FROM "QuestSpecializationFilters" WHERE "questId" = "Quest"."id" AND "QuestSpecializationFilters"."industryKey" IN (:industryKey)) THEN 1 END))'
-        );
-      }
-      replacements['industryKey'] = singleKeys;
-    }
-
-    (specialisationLiteral&&specialisationIndustryKeyLiteral) ?
-      where[Op.and].push(specialisationLiteral) : (specialisationLiteral ?
-        where[Op.and].push(specialisationLiteral) : where[Op.and].push(specialisationIndustryKeyLiteral));
+    where[Op.and].push(entersAreaLiteral);
   }
+  if (r.query.specializations) {
+    const { paths, industryKeys } = SkillsFiltersController.splitPathsAndSingleKeysOfIndustry(r.query.specializations);
 
-  if (r.auth.credentials.role === UserRole.Worker) {
+    if (paths.length !== 0 && industryKeys.length === 0) {
+      replacements['path'] = paths;
+      where[Op.and].push(questSpecializationOnlyPathsLiteral);
+    }
+    if (paths.length === 0 && industryKeys.length !== 0) {
+      replacements['industryKey'] = industryKeys;
+      where[Op.and].push(questSpecializationOnlyIndustryKeysLiteral);
+    }
+    if (paths.length !== 0 && industryKeys.length !== 0) {
+      replacements['path'] = paths;
+      replacements['industryKey'] = industryKeys;
+      where[Op.and].push(questSpecializationIndustryKeysAndPathsLiteral);
+    }
+  }
+  if (user.role === UserRole.Worker) {
     include.push({
       model: QuestChat.scope('idsOnly'),
-      where: { workerId: r.auth.credentials.id },
+      where: { workerId: user.id },
       as: 'questChat',
       required: false,
     });
   }
-
-  if (r.auth.credentials.role === UserRole.Employer) {
+  if (user.role === UserRole.Employer) {
     include.push({
       model: QuestChat.scope('idsOnly'),
       as: 'questChat',
@@ -451,13 +445,16 @@ export async function getQuests(r) {
         as: 'quest',
         attributes: ["id", "status"],
         where: {
-          status: [QuestStatus.Active, QuestStatus.Dispute, QuestStatus.WaitWorker, QuestStatus.WaitConfirm],
+          status: [
+            QuestStatus.Active,
+            QuestStatus.Dispute,
+            QuestStatus.WaitWorker,
+            QuestStatus.WaitConfirm,
+          ],
         },
         required: false
       },
-      where: {
-        employerId: r.auth.credentials.id,
-      },
+      where: { employerId: user.id },
       required: false,
     });
   }
@@ -507,7 +504,7 @@ export async function getQuests(r) {
     limit: r.query.limit,
     offset: r.query.offset,
     include, order, where,
-    replacements
+    replacements,
   });
 
   return output({ count, quests: rows });

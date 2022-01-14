@@ -64,6 +64,7 @@ export function getUsers(role: UserRole) {
 
     const order = [];
     const include = [];
+    const replacements = { };
     let distinctCol: '"User"."id"' | 'id' = '"User"."id"';
 
     const where = {
@@ -75,24 +76,21 @@ export function getUsers(role: UserRole) {
       } }),
     };
 
-    const replacements = {};
-
     if (r.query.north && r.query.south) {
       replacements['northLng'] = r.query.north.longitude;
       replacements['northLat'] = r.query.north.latitude;
       replacements['southLng'] = r.query.south.longitude;
       replacements['southLat'] = r.query.south.latitude;
+
       where[Op.and].push(entersAreaLiteral);
     }
-
     if (r.query.q) {
       where[Op.or] = searchFields.map(
         field => ({ [field]: { [Op.iLike]: `%${r.query.q}%` }})
       );
     }
-
-    if (r.query.specialization && role === UserRole.Worker) {
-      const {paths, singleKeys} = SkillsFiltersController.separateKeys(r.query.specialization);
+    if (r.query.specializations && role === UserRole.Worker) {
+      const { paths, industryKeys } = SkillsFiltersController.splitPathsAndSingleKeysOfIndustry(r.query.specialization);
 
       let specialisationLiteral;
       let specialisationIndustryKeyLiteral;
@@ -124,7 +122,6 @@ export function getUsers(role: UserRole) {
 
       distinctCol = '"User"."id"';
     }
-
     if (r.query.ratingStatus) {
       include.push({
         model: RatingStatistic,
