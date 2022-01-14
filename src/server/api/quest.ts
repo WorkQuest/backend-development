@@ -400,16 +400,8 @@ export async function getQuests(r) {
       [field]: { [Op.iLike]: `%${r.query.q}%` }
     }));
   }
-  if (r.query.north && r.query.south) {
-    replacements['northLng'] = r.query.north.longitude;
-    replacements['northLat'] = r.query.north.latitude;
-    replacements['southLng'] = r.query.south.longitude;
-    replacements['southLat'] = r.query.south.latitude;
-
-    where[Op.and].push(entersAreaLiteral);
-  }
-  if (r.query.specializations) {
-    const { paths, industryKeys } = SkillsFiltersController.splitPathsAndSingleKeysOfIndustry(r.query.specializations);
+  if (r.query.specialization) { // TODO r.query.specialization on r.query.specialization[s]
+    const { paths, industryKeys } = SkillsFiltersController.splitPathsAndSingleKeysOfIndustry(r.query.specialization);
 
     if (paths.length !== 0 && industryKeys.length === 0) {
       replacements['path'] = paths;
@@ -424,6 +416,14 @@ export async function getQuests(r) {
       replacements['industryKey'] = industryKeys;
       where[Op.and].push(questSpecializationIndustryKeysAndPathsLiteral);
     }
+  }
+  if (r.query.north && r.query.south) {
+    replacements['northLng'] = r.query.north.longitude;
+    replacements['northLat'] = r.query.north.latitude;
+    replacements['southLng'] = r.query.south.longitude;
+    replacements['southLat'] = r.query.south.latitude;
+
+    where[Op.and].push(entersAreaLiteral);
   }
   if (user.role === UserRole.Worker) {
     include.push({
