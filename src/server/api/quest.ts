@@ -64,7 +64,7 @@ export async function createQuest(r) {
   const userController = new UserController(employer);
 
   await userController
-    .userMustHaveRole(UserRole.Employer)
+    .userMustHaveRole(UserRole.Employer);
 
   const medias = await MediaController.getMedias(r.payload.medias);
   const transaction = await r.server.app.db.transaction();
