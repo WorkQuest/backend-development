@@ -215,6 +215,17 @@ export class QuestController extends QuestHelper {
     }
   }
 
+  public async openDispute(transaction?: Transaction) {
+    try {
+      await this.quest.update({ status: QuestStatus.Dispute }, { transaction });
+    } catch (e) {
+      if (transaction) {
+        await transaction.rollback();
+      }
+      throw e;
+    }
+  }
+
   public static get(id) {
 
   }

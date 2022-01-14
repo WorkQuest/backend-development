@@ -1,14 +1,13 @@
-import { Op } from "sequelize";
-import { error, output } from "../utils";
-import { Errors } from "../utils/errors";
-import { QuestController } from "../controllers/quest/controller.quest";
+import {Op} from "sequelize";
+import {error, output} from "../utils";
+import {Errors} from "../utils/errors";
+import {QuestController} from "../controllers/quest/controller.quest";
 import {
-  DisputeReason,
-  DisputeStatus,
+  User,
   Quest,
-  QuestDispute,
   QuestStatus,
-  User
+  QuestDispute,
+  DisputeStatus,
 } from "@workquest/database-models/lib/models";
 
 export async function openDispute(r) {
@@ -24,14 +23,14 @@ export async function openDispute(r) {
 
   const quest = await Quest.findByPk(r.params.questId);
   const questController = new QuestController(quest);
-  questController.questMustHaveStatus(QuestStatus.Active, QuestStatus.WaitConfirm);
 
   questController
     .userMustBelongToQuest(user.id)
+    .questMustHaveStatus(QuestStatus.Active, QuestStatus.WaitConfirm)
 
-  if (r.payload.reason === DisputeReason.poorlyDoneJob) {
-    questController.questMustHaveStatus(QuestStatus.WaitConfirm);
-  }
+  // if (r.payload.reason === DisputeReason.poorlyDoneJob) {
+  //   questController.questMustHaveStatus(QuestStatus.WaitConfirm);
+  // }
 
   const dayInMilliseconds = 86400000
   const allowDate = quest.createdAt.getTime() + dayInMilliseconds;
@@ -41,8 +40,7 @@ export async function openDispute(r) {
   }
 
   const opponentUserId = quest.userId === user.id ?
-    quest.assignedWorkerId :
-    quest.userId;
+    quest.assignedWorkerId : quest.userId;
 
   const transaction = await r.server.app.db.transaction();
 
@@ -51,13 +49,14 @@ export async function openDispute(r) {
     questId: quest.id,
     openDisputeUserId: user.id,
     status: DisputeStatus.pending,
+    openOnQuestStatus: quest.status,
     reason: r.payload.reason,
     problemDescription: r.payload.problemDescription,
-  }, transaction);
+  }, { transaction });
 
-  await quest.update({
-    status: QuestStatus.Dispute,
-  },transaction);
+  await questController.openDispute(transaction);
+
+  await transaction.commit();
 
   return output(dispute);
 }
