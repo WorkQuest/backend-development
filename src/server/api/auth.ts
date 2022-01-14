@@ -57,8 +57,6 @@ export function register(host: 'dao'|'main') {
 			}
 		});
 
-		await QuestsStatistic.create({ userId: user.id });
-
 		const session = await Session.create({
 			userId: user.id,
 			invalidating: false,
@@ -75,7 +73,6 @@ export function register(host: 'dao'|'main') {
 		return output(result);
 	}
 }
-
 
 export function getLoginViaSocialNetworkHandler(returnType: "token" | "redirect") {
 	return async function loginThroughSocialNetwork(r, h) {
@@ -104,9 +101,6 @@ export function getLoginViaSocialNetworkHandler(returnType: "token" | "redirect"
 			const qs = querystring.stringify(result);
 			return h.redirect(config.baseUrl + "/sign-in?" + qs);
 		}
-
-		await QuestsStatistic.create({ userId: user.id });
-
 		return output(result);
 	};
 }
@@ -118,6 +112,8 @@ export async function confirmEmail(r) {
 	await userController
 		.checkUserAlreadyConfirmed()
 		.checkUserConfirmationCode(r.payload.confirmCode)
+
+	await UserController.createStatistics(user.id);
 
 	if (r.payload.role) {
 		await user.update({

@@ -286,24 +286,6 @@ export default [{
   }
 }, {
   method: "POST",
-  path: "/v1/quest/{questId}/reject-completed-work",
-  handler: handlers.rejectCompletedWorkOnQuest,
-  options: {
-    auth: 'jwt-access',
-    id: "v1.quest.rejectCompletedWork",
-    tags: ["api", "quest"],
-    description: "Reject completed work on quest",
-    validate: {
-      params: Joi.object({
-        questId: idSchema.required(),
-      }).label("RejectCompletedWorkParams")
-    },
-    response: {
-      schema: emptyOkSchema
-    },
-  }
-}, {
-  method: "POST",
   path: '/v1/quest/{questId}/star',
   handler: handlers.setStar,
   options: {
