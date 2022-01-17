@@ -226,7 +226,7 @@ export class QuestController extends QuestHelper {
     }
   }
 
-  public static get(id) {
-
+  public async checkQuestRaiseViewS() {
+    
   }
 }
