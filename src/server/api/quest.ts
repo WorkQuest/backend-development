@@ -489,20 +489,17 @@ export async function removeStar(r) {
 }
 
 export async function getRespondedQuest(r) {
-  const quests = await Quest.findAndCountAll({
+  const { count, rows } = await Quest.findAndCountAll({
     where: {
       userId: r.auth.credentials.id
     },
     include: [{
       model: QuestsResponse,
       as: 'response',
-      where: {
-        workerId: r.params.workerId,
-        type: {[Op.or]: [QuestsResponseType.Response, QuestsResponseType.Invite]}
-      },
+      where: { workerId: r.params.workerId },
       required: false,
     }]
   });
-  return output({count: quests.count, quests: quests.rows});
+  return output({count, quests: rows});
 }
 
