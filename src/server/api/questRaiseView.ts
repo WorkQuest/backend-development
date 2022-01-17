@@ -16,10 +16,9 @@ export async function createRaiseView(r) {
   const questController = new QuestController(await Quest.findByPk(r.params.questId));
 
   questController
-    .employerMustBeQuestCreator(employer.id)
+    .employerMustBeQuestCreator(employer.id);
 
-  await userController
-    .userMustHaveRole(UserRole.Employer);
+  await questController.checkQuestRaiseViews();
 
   await QuestRaiseView.create({
     questId: r.params.questId,

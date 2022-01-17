@@ -1,5 +1,5 @@
 import {error} from "../../utils";
-import {Transaction} from "sequelize";
+import {Op, Transaction} from "sequelize";
 import {Errors} from "../../utils/errors";
 import {SkillsFiltersController} from "../controller.skillsFilters";
 import {
@@ -8,7 +8,9 @@ import {
   QuestChat,
   QuestStatus,
   StarredQuests,
+  QuestRaiseView,
   QuestsResponse,
+  QuestRaiseStatus,
   QuestSpecializationFilter,
 } from "@workquest/database-models/lib/models";
 
@@ -98,6 +100,20 @@ abstract class QuestHelper {
   public userMustBelongToQuest(userId: string): QuestHelper {
     if (userId !== this.quest.userId && userId !== this.quest.assignedWorkerId) {
       throw error(Errors.Forbidden, "User does not belong to quest", {});
+    }
+
+    return this;
+  }
+
+  public async checkQuestRaiseViews() {
+    const raiseView = await QuestRaiseView.findOne({
+      where: {
+        [Op.and]: [{ questId: this.quest.id }, { status: {[Op.or]: [QuestRaiseStatus.Paid, QuestRaiseStatus.Unpaid]} }]
+      }
+    });
+
+    if(raiseView) {
+      throw error(Errors.AlreadyExists, "Raise view already exists", {raiseViewId: raiseView.id});
     }
 
     return this;
@@ -224,9 +240,5 @@ export class QuestController extends QuestHelper {
       }
       throw e;
     }
-  }
-
-  public async checkQuestRaiseViewS() {
-    
   }
 }
