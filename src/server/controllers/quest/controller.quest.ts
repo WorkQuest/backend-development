@@ -171,7 +171,7 @@ export class QuestController extends QuestHelper {
   public async rejectCompletedWork(transaction?: Transaction) {
     try {
       this.quest = await this.quest.update({
-        status: QuestStatus.Dispute
+        status: QuestStatus.Dispute,
       }, { transaction });
     } catch (e) {
       if (transaction) {
@@ -207,6 +207,17 @@ export class QuestController extends QuestHelper {
       await QuestSpecializationFilter.destroy({ where: { questId: this.quest.id }, transaction });
       await QuestsResponse.destroy({ where: { questId: this.quest.id }, transaction })
       await this.quest.destroy({ force: true, transaction });
+    } catch (e) {
+      if (transaction) {
+        await transaction.rollback();
+      }
+      throw e;
+    }
+  }
+
+  public async openDispute(transaction?: Transaction) {
+    try {
+      await this.quest.update({ status: QuestStatus.Dispute }, { transaction });
     } catch (e) {
       if (transaction) {
         await transaction.rollback();

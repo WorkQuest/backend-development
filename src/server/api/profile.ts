@@ -8,8 +8,11 @@ import {SkillsFiltersController} from "../controllers/controller.skillsFilters";
 import {addUpdateReviewStatisticsJob} from "../jobs/updateReviewStatistics";
 import {
   User,
+  Wallet,
   UserRole,
+  ChatsStatistic,
   RatingStatistic,
+  QuestsStatistic,
   UserSpecializationFilter,
 } from "@workquest/database-models/lib/models";
 
@@ -20,7 +23,8 @@ export const searchFields = [
 
 export async function getMe(r) {
   const user = await User.findByPk(r.auth.credentials.id, {
-    attributes: { include: ['tempPhone'] }
+    attributes: { include: ['tempPhone'] },
+    include: [{ model: Wallet, as: 'wallet', attributes: ['address'] }]
   });
 
   return output(user);
@@ -60,13 +64,24 @@ export function getUsers(role: UserRole) {
     const entersAreaLiteral = literal(
       'st_within("User"."locationPostGIS", st_makeenvelope(:northLng, :northLat, :southLng, :southLat, 4326))'
     );
+    const userSpecializationOnlyPathsLiteral = literal(
+      '(1 = (CASE WHEN EXISTS (SELECT * FROM "UserSpecializationFilters" WHERE "userId" = "User"."id" AND "UserSpecializationFilters"."path" IN (:path)) THEN 1 END))'
+    );
+    const userSpecializationOnlyIndustryKeysLiteral = literal(
+      '(1 = (CASE WHEN EXISTS (SELECT * FROM "UserSpecializationFilters" WHERE "userId" = "User"."id" AND "UserSpecializationFilters"."industryKey" IN (:industryKey)) THEN 1 END))'
+    );
+    const userSpecializationIndustryKeysAndPathsLiteral = literal(
+      '(1 = (CASE WHEN EXISTS (SELECT * FROM "UserSpecializationFilters" WHERE "userId" = "User"."id" AND "UserSpecializationFilters"."path" IN (:path)) THEN 1 END))' +
+      'OR (1 = (CASE WHEN EXISTS (SELECT * FROM "UserSpecializationFilters" WHERE "userId" = "User"."id" AND "UserSpecializationFilters"."industryKey" IN (:industryKey)) THEN 1 END))'
+    );
 
     const order = [];
     const include = [];
+    const replacements = { };
     let distinctCol: '"User"."id"' | 'id' = '"User"."id"';
 
     const where = {
-      ...(r.query.north && r.query.south && { [Op.and]: entersAreaLiteral }), role,
+      [Op.and]: [], role,
       ...(r.query.workplace && { workplace: r.query.workplace }),
       ...(r.query.priority && {priority: r.query.priority}),
       ...(r.query.betweenWagePerHour && { wagePerHour: {
@@ -79,27 +94,6 @@ export function getUsers(role: UserRole) {
         field => ({ [field]: { [Op.iLike]: `%${r.query.q}%` }})
       );
     }
-    if (r.query.specialization && role === UserRole.Worker) {
-      const { industryKeys, specializationKeys } = SkillsFiltersController.splitSpecialisationAndIndustry(r.query.specialization);
-
-      include.push({
-        model: UserSpecializationFilter,
-        as: 'userIndustryForFiltering',
-        attributes: [],
-        where: { industryKey: { [Op.in]: industryKeys } },
-      })
-
-      if (specializationKeys.length > 0) {
-        include.push({
-          model: UserSpecializationFilter,
-          as: 'userSpecializationForFiltering',
-          attributes: [],
-          where: { specializationKey: { [Op.in]: specializationKeys } },
-        });
-      }
-
-      distinctCol = 'id';
-    }
     if (r.query.ratingStatus) {
       include.push({
         model: RatingStatistic,
@@ -109,6 +103,33 @@ export function getUsers(role: UserRole) {
       });
 
       distinctCol = 'id';
+    }
+    if (r.query.north && r.query.south) {
+      replacements['northLng'] = r.query.north.longitude;
+      replacements['northLat'] = r.query.north.latitude;
+      replacements['southLng'] = r.query.south.longitude;
+      replacements['southLat'] = r.query.south.latitude;
+
+      where[Op.and].push(entersAreaLiteral);
+    }
+    if (r.query.specialization && role === UserRole.Worker) {
+      const { paths, industryKeys } = SkillsFiltersController.splitPathsAndSingleKeysOfIndustry(r.query.specialization);
+
+      if (paths.length !== 0 && industryKeys.length === 0) {
+        replacements['path'] = paths;
+        where[Op.and].push(userSpecializationOnlyPathsLiteral);
+      }
+      if (paths.length === 0 && industryKeys.length !== 0) {
+        replacements['industryKey'] = industryKeys;
+        where[Op.and].push(userSpecializationOnlyIndustryKeysLiteral);
+      }
+      if (paths.length !== 0 && industryKeys.length !== 0) {
+        replacements['path'] = paths;
+        replacements['industryKey'] = industryKeys;
+        where[Op.and].push(userSpecializationIndustryKeysAndPathsLiteral);
+      }
+
+      distinctCol = '"User"."id"';
     }
 
     for (const [key, value] of Object.entries(r.query.sort)) {
@@ -121,14 +142,7 @@ export function getUsers(role: UserRole) {
       limit: r.query.limit,
       offset: r.query.offset,
       include, order, where,
-      replacements: {
-        ...(r.query.north && r.query.south && {
-          northLng: r.query.north.longitude,
-          northLat: r.query.north.latitude,
-          southLng: r.query.south.longitude,
-          southLat: r.query.south.latitude,
-        })
-      }
+      replacements,
     });
 
     return output({ count, users: rows });
@@ -230,4 +244,20 @@ export async function sendCodeOnPhoneNumber(r) {
   });
 
   return output();
+}
+
+export async function getUserStatistics(r) {
+  const chatsStatistic = await ChatsStatistic.findOne({
+    where: { userId: r.auth.credentials.id }
+  });
+
+  const questsStatistic = await QuestsStatistic.findOne({
+    where: { userId: r.auth.credentials.id }
+  });
+
+  const ratingStatistic = await RatingStatistic.findOne({
+    where: { userId: r.auth.credentials.id }
+  });
+
+  return output({ chatsStatistic, questsStatistic, ratingStatistic });
 }
