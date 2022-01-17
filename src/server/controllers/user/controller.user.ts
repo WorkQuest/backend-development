@@ -6,11 +6,14 @@ import {totpValidate} from "@workquest/database-models/lib/utils";
 import {SkillsFiltersController} from "../controller.skillsFilters";
 import {
   User,
+  Session,
   UserRole,
   UserStatus,
+  ChatsStatistic,
+  QuestsStatistic,
   RatingStatistic,
   defaultUserSettings,
-  UserSpecializationFilter, Session
+  UserSpecializationFilter,
 } from "@workquest/database-models/lib/models";
 
 abstract class UserHelper {
@@ -119,7 +122,7 @@ abstract class UserHelper {
       })
     });
 
-    await RatingStatistic.create({ userId: user.id });
+    await UserController.createStatistics(user.id);
 
     return user;
   }
@@ -250,6 +253,21 @@ abstract class UserHelper {
 
     return this;
   }
+
+  public static async createStatistics(userId) {
+    await RatingStatistic.findOrCreate({
+      where: { userId: userId },
+      defaults: { userId: userId },
+    });
+    await ChatsStatistic.findOrCreate({
+      where: { userId: userId },
+      defaults: { userId: userId },
+    });
+    await QuestsStatistic.findOrCreate({
+      where: { userId: userId },
+      defaults: { userId: userId },
+    });
+  }
 }
 
 export class UserController extends UserHelper {
@@ -278,7 +296,7 @@ export class UserController extends UserHelper {
     }
   }
 
-  public async setUnverifiedPhoneNumber(phoneNumber: string, confirmCode: number, transaction?: Transaction) {
+  public async setUnverifiedPhoneNumber(phoneNumber: object, confirmCode: number, transaction?: Transaction) {
     try {
       await this.user.update({
         tempPhone: phoneNumber,
