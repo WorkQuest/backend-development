@@ -377,6 +377,9 @@ export async function getQuests(r) {
     '(1 = (CASE WHEN EXISTS (SELECT * FROM "QuestSpecializationFilters" WHERE "questId" = "Quest"."id" AND "QuestSpecializationFilters"."path" IN (:path)) THEN 1 END))' +
     'OR (1 = (CASE WHEN EXISTS (SELECT * FROM "QuestSpecializationFilters" WHERE "questId" = "Quest"."id" AND "QuestSpecializationFilters"."industryKey" IN (:industryKey)) THEN 1 END))'
   );
+  const questChatWorkerLiteral = literal(
+    '"questChat"."workerId" = "Quest"."assignedWorkerId"'
+  );
 
   const order = [];
   const include = [];
@@ -454,7 +457,7 @@ export async function getQuests(r) {
         },
         required: false
       },
-      where: { employerId: user.id },
+      where: { employerId: user.id, questChatWorkerLiteral },
       required: false,
     });
   }
