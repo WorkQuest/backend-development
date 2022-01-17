@@ -10,16 +10,16 @@ import { MediaController } from "../controllers/controller.media";
 import { addUpdateReviewStatisticsJob } from "../jobs/updateReviewStatistics";
 import { updateQuestsStatisticJob } from "../jobs/updateQuestsStatistic";
 import {
-  User,
   Quest,
-  Review,
-  UserRole,
   QuestChat,
-  QuestStatus,
-  StarredQuests,
-  QuestsResponse,
   QuestChatStatuses,
+  QuestsResponse,
   QuestsResponseType,
+  QuestStatus,
+  Review,
+  StarredQuests,
+  User,
+  UserRole
 } from "@workquest/database-models/lib/models";
 import { SkillsFiltersController } from "../controllers/controller.skillsFilters";
 
@@ -31,23 +31,30 @@ export const searchFields = [
 export async function getQuest(r) {
   const user: User = r.auth.credentials;
 
-  const quest = await Quest.findOne({
-    where: { id: r.params.questId },
-    include: [{
-      model: StarredQuests,
-      as: "star",
-      where: { userId: r.auth.credentials.id },
-      required: false
-    }, {
-      model: QuestsResponse,
-      as: "response",
-      where: { workerId: r.auth.credentials.id },
-      required: false
-    }, {
+  const include = [{
+    model: StarredQuests,
+    as: "star",
+    where: { userId: r.auth.credentials.id },
+    required: false
+  }, {
+    model: QuestsResponse,
+    as: "response",
+    where: { workerId: r.auth.credentials.id },
+    required: false
+  }] as any[];
+
+  if (user.role === UserRole.Worker) {
+    include.push({
       model: QuestChat.scope('idsOnly'),
       as: 'questChat',
       required: false,
-    }]
+      where: { workerId: user.id }
+    })
+  }
+
+  const quest = await Quest.findOne({
+    where: { id: r.params.questId },
+    include,
   });
 
   if (!quest) {
@@ -440,6 +447,8 @@ export async function getQuests(r) {
       attributes: {
         include: [[questChatLiteral, 'id']]
       },
+      where: { employerId: user.id },
+      required: false,
       include: {
         model: Quest.unscoped(),
         as: 'quest',
@@ -454,8 +463,6 @@ export async function getQuests(r) {
         },
         required: false
       },
-      where: { employerId: user.id },
-      required: false,
     });
   }
 
