@@ -19,6 +19,7 @@
     "./src/server/abi/*.json",
     "./src/proposal/abi/*.json",
     "./src/dailyLiquidity/abi/*.json",
+    "./src/syncParser/abi/*.json"
   ],
   "rootDirs": [
     "src",

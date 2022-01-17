@@ -7,7 +7,7 @@ import { DailyLiquidity } from "@workquest/database-models/lib/models";
 import { ControllerDailyLiquidity} from "./src/controllers/ControllerDailyLiquidity";
 import { initDatabase } from "@workquest/database-models/lib/models";
 import configDatabase from "./config/config.database";
-import configLiquidity from "./config/config.liquidity";
+import configLiquidity from "./config/config.syncParser";
 
 const abiFilePath = path.join(__dirname, '/abi/syncParser.json');
 const abi: any[] = JSON.parse(fs.readFileSync(abiFilePath).toString()).abi;
