@@ -5,6 +5,7 @@ import {
   idSchema,
   userSchema,
   limitSchema,
+  phoneSchema,
   offsetSchema,
   searchSchema,
   emptyOkSchema,
@@ -14,7 +15,6 @@ import {
   userRoleSchema,
   workPlaceSchema,
   userWorkersSchema,
-  mobilePhoneSchema,
   workerQuerySchema,
   userLastNameSchema,
   userPasswordSchema,
@@ -227,7 +227,7 @@ export default [{
     description: "Send code for confirm phone number",
     validate: {
       payload: Joi.object({
-        phoneNumber: mobilePhoneSchema.required(),
+        phoneNumber: phoneSchema.required(),
       }).label('PhoneSendCodePayload')
     },
     response: {

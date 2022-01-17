@@ -135,7 +135,6 @@ export function getUsers(role: UserRole) {
     for (const [key, value] of Object.entries(r.query.sort)) {
       order.push([key, value]);
     }
-    console.log(replacements);
 
     const { count, rows } = await User.findAndCountAll({
       distinct: true,
@@ -143,7 +142,7 @@ export function getUsers(role: UserRole) {
       limit: r.query.limit,
       offset: r.query.offset,
       include, order, where,
-      replacements
+      replacements,
     });
 
     return output({ count, users: rows });
@@ -223,10 +222,10 @@ export async function confirmPhoneNumber(r) {
 
   const userController = new UserController(user);
 
-  await userController.userMustHaveVerificationPhone();
-  await userController.checkPhoneConfirmationCode(r.payload.confirmCode);
-
-  await userController.confirmPhoneNumber();
+  await userController
+    .userMustHaveVerificationPhone()
+    .checkPhoneConfirmationCode(r.payload.confirmCode)
+    .confirmPhoneNumber()
 
   return output();
 }
@@ -240,7 +239,7 @@ export async function sendCodeOnPhoneNumber(r) {
   await userController.setUnverifiedPhoneNumber(r.payload.phoneNumber, confirmCode);
 
   await addSendSmsJob({
-    toPhoneNumber: r.payload.phoneNumber,
+    toPhoneNumber: r.payload.phoneNumber.fullPhone,
     message: 'Code to confirm your phone number on WorkQuest: ' + confirmCode,
   });
 

@@ -296,7 +296,7 @@ export class UserController extends UserHelper {
     }
   }
 
-  public async setUnverifiedPhoneNumber(phoneNumber: string, confirmCode: number, transaction?: Transaction) {
+  public async setUnverifiedPhoneNumber(phoneNumber: object, confirmCode: number, transaction?: Transaction) {
     try {
       await this.user.update({
         tempPhone: phoneNumber,
