@@ -3,6 +3,17 @@ import {SwapEventWqtWbnb} from "@workquest/database-models/lib/models";
 import { CoinGeckoProvider, Coins } from "../../../dailyLiquidity/src/providers/CoinGeckoProvider";
 import BigNumber from "bignumber.js";
 
+export type SwapEvent = {
+  timestamp: string,
+  blockNumber: string,
+  totalUSD: string,
+  bnbAmountOut: string,
+  wqtAmountOut: string,
+  bnbAmountIn: string,
+  wqtAmountIn: string,
+  account: string,
+}
+
 export class SwapEventController {
   private readonly coinGeckoProvider: CoinGeckoProvider
 
@@ -19,7 +30,7 @@ export class SwapEventController {
     return await this.coinGeckoProvider.coinPriceInUSD(timestamp, coin) * coinAmount;
   }
 
-  private async processEvent(event: any): Promise<any> {
+  private async processEvent(event: any): Promise<SwapEvent> {
     const blockInfo = await this.web3Helper.web3.eth.getBlock(event.blockNumber);
     const usdDecimal: number = event.returnValues.amount0Out !== '0' ?
       await this.countUSD(blockInfo.timestamp, Coins.BNB, Number(event.returnValues.amount0Out)) :
@@ -39,24 +50,23 @@ export class SwapEventController {
     }
   }
 
-  private async processEvents(events: any): Promise<any> {
+  private async processEvents(events: any): Promise<SwapEvent[]> {
     return Promise.all(events.map((event) => { return this.processEvent(event) }));
   }
 
-  public async storeData(events:any) {
+  public async storeData(events:any): Promise<void> {
     const transactionsInfo = await this.processEvents(events);
     console.log(transactionsInfo);
 
     await SwapEventWqtWbnb.bulkCreate(transactionsInfo);
   }
 
-  public async processBlockInfo(blockNumber: number) {
+  public async processBlockInfo(blockNumber: number): Promise<void> {
     const swapInfo = await this.contract.getPastEvents('Swap', {fromBlock: blockNumber, toBlock: 'latest'});
-    console.log(swapInfo);
     await this.storeData(swapInfo);
   }
 
-  public async subscribeOnEvent() {
+  public async subscribeOnEvent(): Promise<void> {
     this.web3Helper.web3.eth.subscribe('newBlockHeaders', async (error, block) => {
         if (error) {
           console.log(error, 'ERROR SUBSCRIBE');
