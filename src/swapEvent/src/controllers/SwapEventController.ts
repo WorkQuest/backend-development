@@ -60,9 +60,31 @@ export class SwapEventController {
   }
 
   public async processBlockInfo(event: string, blockNumber: number): Promise<void> {
-    const swapInfo = await this.contract.getPastEvents(event, {fromBlock: blockNumber, toBlock: 'latest'});
-    if (swapInfo.length !== 0) {
-      await this.storeData(swapInfo);
+    const latestBlockNumber = await this.web3Helper.web3.eth.getBlockNumber();
+
+    const events = [];
+    const step = 6000;
+    let from = blockNumber;
+    let to = from + step;
+
+    while (to < latestBlockNumber) {
+      console.log('from block: ', from, ' to block: ', to)
+      const eventsData = await this.contract.getPastEvents(event, {
+        fromBlock: from,
+        toBlock: to,
+      });
+
+      events.push(...eventsData);
+
+      from = to + 1;
+      to += step;
+      if (to > latestBlockNumber) {
+        to = latestBlockNumber;
+      }
+    }
+
+    if (events.length !== 0) {
+      await this.storeData(events);
     }
   }
 
@@ -71,7 +93,7 @@ export class SwapEventController {
         if (error) {
           console.log(error, 'ERROR SUBSCRIBE');
         } else {
-          console.log(block.number)
+          console.log(block.number);
           await this.processBlockInfo('Swap', block.number);
         }
       }
