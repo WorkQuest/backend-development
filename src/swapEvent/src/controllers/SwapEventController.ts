@@ -1,5 +1,5 @@
 import { Web3Helper } from "../providers/Web3Helper";
-import {SwapEventWqtWbnb} from "@workquest/database-models/lib/models";
+import {WqtWbnbSwapEven} from "@workquest/database-models/lib/models";
 import { CoinGeckoProvider, Coins } from "../../../dailyLiquidity/src/providers/CoinGeckoProvider";
 import BigNumber from "bignumber.js";
 
@@ -56,11 +56,11 @@ export class SwapEventController {
 
   public async storeData(events:any): Promise<void> {
     const transactionsInfo = await this.processEvents(events);
-    await SwapEventWqtWbnb.bulkCreate(transactionsInfo);
+    await WqtWbnbSwapEven.bulkCreate(transactionsInfo);
   }
 
-  public async processBlockInfo(blockNumber: number): Promise<void> {
-    const swapInfo = await this.contract.getPastEvents('Swap', {fromBlock: blockNumber, toBlock: 'latest'});
+  public async processBlockInfo(event: string, blockNumber: number): Promise<void> {
+    const swapInfo = await this.contract.getPastEvents(event, {fromBlock: blockNumber, toBlock: 'latest'});
     if (swapInfo.length !== 0) {
       await this.storeData(swapInfo);
     }
@@ -72,7 +72,7 @@ export class SwapEventController {
           console.log(error, 'ERROR SUBSCRIBE');
         } else {
           console.log(block.number)
-          await this.processBlockInfo(block.number);
+          await this.processBlockInfo('Swap', block.number);
         }
       }
     );
