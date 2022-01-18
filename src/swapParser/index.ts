@@ -3,7 +3,7 @@ import * as fs from "fs";
 import * as path from "path";
 import cron from 'node-cron';
 import { Web3Helper } from "./src/providers/Web3Helper";
-import { DailyLiquidity } from "@workquest/database-models/lib/models";
+import { DailyLiquidity, SwapParser } from "@workquest/database-models/lib/models";
 //import { ControllerDailyLiquidity} from "./src/controllers/ControllerDailyLiquidity";
 import { initDatabase } from "@workquest/database-models/lib/models";
 import configDatabase from "./config/config.database";
@@ -31,9 +31,15 @@ export async function init() {
 
   const swapParser = new SwapParserController(web3Helper, dailyLiquidityContract);
 
+  const lastBlock = await SwapParser.findOne({
+    order: [["createdAt", "DESC"]]
+  });
+
+  if (lastBlock) {
+    await swapParser.processBlockInfo(Number(lastBlock.blockNumber+1));
+  }
+
   await swapParser.subscribeOnEvent();
-
-
 }
 
 init().catch(console.error);
