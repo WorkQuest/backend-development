@@ -6,7 +6,7 @@ import { output } from "../utils";
 import { ChainId, Token, TokenAmount, Pair } from "@pancakeswap/sdk";
 import { PancakeSwapApi } from "../controllers/controller.pancakeSwap";
 import { CoingeckoApi } from "../controllers/controller.coingecko";
-import { DailyLiquidity } from "@workquest/database-models/lib/models";
+import { DailyLiquidity, WqtWbnbSwapEven } from "@workquest/database-models/lib/models";
 
 const Web3 = require('web3');
 
@@ -51,7 +51,7 @@ const liquidityMiningAbi: [] = JSON.parse(fs.readFileSync(liquidityMiningAbiPath
 const liquidityMiningContract = new liquidityMiningProvider.eth.Contract(liquidityMiningAbi, config.contracts.liquidityMining.contract);
 
 export async function getSwaps(r) {
-  const swaps = await pancakeSwapApi.getSwaps({
+  const swaps = await WqtWbnbSwapEven.findAll({
     limit: r.query.limit,
     offset: r.query.offset,
   });
