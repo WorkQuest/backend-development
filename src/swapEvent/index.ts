@@ -34,7 +34,7 @@ export async function init() {
   });
 
   if (lastBlock) {
-    await swapParser.processBlockInfo(Number(lastBlock.blockNumber+1));
+    await swapParser.processBlockInfo(Number(lastBlock.blockNumber) + 1);
   }
 
   await swapParser.subscribeOnEvent();

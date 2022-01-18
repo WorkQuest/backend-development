@@ -56,14 +56,14 @@ export class SwapEventController {
 
   public async storeData(events:any): Promise<void> {
     const transactionsInfo = await this.processEvents(events);
-    console.log(transactionsInfo);
-
     await SwapEventWqtWbnb.bulkCreate(transactionsInfo);
   }
 
   public async processBlockInfo(blockNumber: number): Promise<void> {
     const swapInfo = await this.contract.getPastEvents('Swap', {fromBlock: blockNumber, toBlock: 'latest'});
-    await this.storeData(swapInfo);
+    if (swapInfo.length !== 0) {
+      await this.storeData(swapInfo);
+    }
   }
 
   public async subscribeOnEvent(): Promise<void> {
@@ -71,6 +71,7 @@ export class SwapEventController {
         if (error) {
           console.log(error, 'ERROR SUBSCRIBE');
         } else {
+          console.log(block.number)
           await this.processBlockInfo(block.number);
         }
       }
