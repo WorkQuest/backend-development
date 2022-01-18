@@ -1,6 +1,6 @@
 import {config} from "dotenv";
 
-config({ path: __dirname +  '/../../../.env.swapParser' });
+config({ path: __dirname +  '/../../../.env.swapEvent' });
 
 export default {
   contractAddress: process.env.SYNC_PARSER_CONTRACT_ADDRESS,

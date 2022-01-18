@@ -1,16 +1,14 @@
 import Web3 from "web3";
 import * as fs from "fs";
 import * as path from "path";
-import cron from 'node-cron';
 import { Web3Helper } from "./src/providers/Web3Helper";
-import { DailyLiquidity, SwapParser } from "@workquest/database-models/lib/models";
-//import { ControllerDailyLiquidity} from "./src/controllers/ControllerDailyLiquidity";
+import { SwapEventWqtWbnb } from "@workquest/database-models/lib/models";
 import { initDatabase } from "@workquest/database-models/lib/models";
 import configDatabase from "./config/config.database";
 import configSwapParser from "./config/config.swapParser";
-import { SwapParserController } from "./src/controllers/SwapParserController";
+import { SwapEventController } from "./src/controllers/SwapEventController";
 
-const abiFilePath = path.join(__dirname, '/abi/swapParser.json');
+const abiFilePath = path.join(__dirname, '/abi/swapEvent.json');
 const abi: any[] = JSON.parse(fs.readFileSync(abiFilePath).toString()).abi;
 
 export async function init() {
@@ -29,9 +27,9 @@ export async function init() {
 
   const dailyLiquidityContract = new web3.eth.Contract(abi, configSwapParser.contractAddress);
 
-  const swapParser = new SwapParserController(web3Helper, dailyLiquidityContract);
+  const swapParser = new SwapEventController(web3Helper, dailyLiquidityContract);
 
-  const lastBlock = await SwapParser.findOne({
+  const lastBlock = await SwapEventWqtWbnb.findOne({
     order: [["createdAt", "DESC"]]
   });
 

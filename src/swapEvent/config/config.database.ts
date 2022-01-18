@@ -1,6 +1,6 @@
 import {config} from "dotenv";
 
-config({ path: __dirname +  '/../../../.env.swapParser'});
+config({ path: __dirname +  '/../../../.env.swapEvent'});
 
 export default {
   dbLink: process.env.DB_LINK,

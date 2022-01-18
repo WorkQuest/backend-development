@@ -1,9 +1,9 @@
 import { Web3Helper } from "../providers/Web3Helper";
-import {SwapParser} from "@workquest/database-models/lib/models";
+import {SwapEventWqtWbnb} from "@workquest/database-models/lib/models";
 import { CoinGeckoProvider, Coins } from "../../../dailyLiquidity/src/providers/CoinGeckoProvider";
 import BigNumber from "bignumber.js";
 
-export class SwapParserController {
+export class SwapEventController {
   private readonly coinGeckoProvider: CoinGeckoProvider
 
   constructor (
@@ -47,7 +47,7 @@ export class SwapParserController {
     const transactionsInfo = await this.processEvents(events);
     console.log(transactionsInfo);
 
-    await SwapParser.bulkCreate(transactionsInfo);
+    await SwapEventWqtWbnb.bulkCreate(transactionsInfo);
   }
 
   public async processBlockInfo(blockNumber: number) {
