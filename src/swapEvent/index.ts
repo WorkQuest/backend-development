@@ -1,47 +1,48 @@
 import Web3 from "web3";
 import * as fs from "fs";
 import * as path from "path";
-import { Web3Helper } from "./src/providers/Web3Helper";
-import { WqtWbnbSwapEven } from "@workquest/database-models/lib/models";
-import { initDatabase } from "@workquest/database-models/lib/models";
+import {WqtWbnbProvider} from "./src/providers/WqtWbnbProvider";
+import {WqtWbnbController} from "./src/controllers/WqtWbnbController";
 import configDatabase from "./config/config.database";
-import configSwapParser from "./config/config.swapParser";
-import { SwapEventController } from "./src/controllers/SwapEventController";
+import configWqtWbnb from "./config/config.WqtWbnb";
+import {CoinGeckoProvider} from "./src/providers/CoinGeckoProvider";
+import {
+  initDatabase,
+  WqtWbnbBlockInfo,
+  BlockchainNetworks,
+} from "@workquest/database-models/lib/models";
 
-const abiFilePath = path.join(__dirname, '/abi/swapEvent.json');
+const abiFilePath = path.join(__dirname, '/abi/WqtWbnb.json');
 const abi: any[] = JSON.parse(fs.readFileSync(abiFilePath).toString()).abi;
 
 export async function init() {
   await initDatabase(configDatabase.dbLink, true, true);
 
-  const websocketProvider = new Web3.providers.WebsocketProvider(configSwapParser.wsProvider, {
+  const websocketProvider = new Web3.providers.WebsocketProvider(configWqtWbnb.wsProvider, {
     reconnect: {
       auto: true,
       delay: 10000,
-      onTimeout: false
+      onTimeout: false,
     }
   });
 
   const web3 = new Web3(websocketProvider);
-  const web3Helper = new Web3Helper(web3);
+  const wqtWbnbContract = new web3.eth.Contract(abi, configWqtWbnb.contractAddress);
 
-  const swapEventContract = new web3.eth.Contract(abi, configSwapParser.contractAddress);
+  // @ts-ignore
+  const wqtWbnbProvider = new WqtWbnbProvider(web3, wqtWbnbContract);
+  const wqtWbnbController = new WqtWbnbController(wqtWbnbProvider, new CoinGeckoProvider());
 
-  const swapEvent = new SwapEventController(web3Helper, swapEventContract);
-
-  const lastBlock = await WqtWbnbSwapEven.findOne({
-    order: [["createdAt", "DESC"]]
+  const [wqtWbnbBlockInfo, ] = await WqtWbnbBlockInfo.findOrCreate({
+    where: { network: BlockchainNetworks.bscMainNetwork },
+    defaults: {
+      network: BlockchainNetworks.bscMainNetwork,
+      lastParsedBlock: 11335760, // TODO
+    }
   });
 
-  const firstContractBlock = 11335760;
-
-  if (lastBlock) {
-    await swapEvent.processBlockInfo('Swap', Number(lastBlock.blockNumber) + 1);
-  } else {
-    await swapEvent.processBlockInfo('Swap',firstContractBlock - 1);
-  }
-
-  await swapEvent.subscribeOnEvent();
+  await wqtWbnbController.collectAllUncollectedEvents(wqtWbnbBlockInfo.lastParsedBlock);
+  await wqtWbnbProvider.startListener();
 }
 
 init().catch(console.error);
