@@ -22,5 +22,8 @@ export async function createRaiseView(r) {
     duration: r.payload.duration,
     type: r.payload.type,
   });
+
   return output(questRaiseView);
 }
+
+//TODO: сделать оплату

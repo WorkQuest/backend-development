@@ -20,7 +20,6 @@ export default [{
         questId: idSchema.required(),
       }).label("QuestRaiseViewParams"),
       payload: Joi.object({
-        userId: idSchema.required(),
         duration: questRaiseDurationSchema.required(),
         type: questRaiseTypeScheme.required(),
       }).label("QuestRaiseViewPayload")

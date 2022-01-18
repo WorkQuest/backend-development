@@ -112,8 +112,8 @@ abstract class QuestHelper {
       }
     });
 
-    if(raiseView) {
-      throw error(Errors.AlreadyExists, "Raise view already exists", {raiseViewId: raiseView.id});
+    if (raiseView) {
+      throw error(Errors.AlreadyExists, "Raise view in progress", {raiseViewId: raiseView.id});
     }
 
     return this;
