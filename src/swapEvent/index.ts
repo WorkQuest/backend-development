@@ -37,7 +37,7 @@ export async function init() {
     where: { network: BlockchainNetworks.bscMainNetwork },
     defaults: {
       network: BlockchainNetworks.bscMainNetwork,
-      lastParsedBlock: 11335760, // TODO
+      lastParsedBlock: configWqtWbnb.parseEventsFromHeight, // TODO
     }
   });
 
