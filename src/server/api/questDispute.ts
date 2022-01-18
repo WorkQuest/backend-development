@@ -1,4 +1,4 @@
-import {Op} from "sequelize";
+import {Op, literal} from "sequelize";
 import {error, output} from "../utils";
 import {Errors} from "../utils/errors";
 import {QuestController} from "../controllers/quest/controller.quest";
@@ -7,7 +7,7 @@ import {
   Quest,
   QuestStatus,
   QuestDispute,
-  DisputeStatus,
+  DisputeStatus, QuestChat
 } from "@workquest/database-models/lib/models";
 
 export async function openDispute(r) {
@@ -63,8 +63,19 @@ export async function openDispute(r) {
 
 export async function getDispute(r) {
   const user: User = r.auth.credentials;
+  const questChatWorkerLiteral = literal(
+    '"quest->questChat"."workerId" = "quest"."assignedWorkerId"'
+  );
 
-  const dispute = await QuestDispute.findByPk(r.params.disputeId);
+  const dispute = await QuestDispute.findByPk(r.params.disputeId, {
+    include: [{
+      model: Quest,
+      include: [{
+        model: QuestChat.unscoped(),
+        where: { questChatWorkerLiteral }
+      }]
+    }]
+  });
 
   if (!dispute) {
     return error(Errors.NotFound, 'Dispute is not found', {});
