@@ -1,9 +1,11 @@
 import * as Joi from "joi";
 import * as handlers from '../../api/questRaiseView';
 import {
-  outputOkSchema,
   idSchema,
-  questRaiseViewSchema, questRaiseDurationSchema, questRaiseTypeScheme
+  outputOkSchema,
+  questRaiseTypeScheme,
+  questRaiseViewSchema,
+  questRaiseDurationSchema,
 } from "@workquest/database-models/lib/schemes";
 
 export default [{
