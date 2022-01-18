@@ -42,10 +42,12 @@ export async function getQuest(r) {
     where: { workerId: r.auth.credentials.id },
     required: false
   }, {
-    model: User.scope('shortWithWallet'),
+    model: User.scope('short'),
+    // model: User.scope('shortWithWallet'),
     as: 'user'
   }, {
-    model: User.scope('shortWithWallet'),
+    model: User.scope('short'),
+    // model: User.scope('shortWithWallet'),
     as: 'assignedWorker'
   },] as any[];
 
