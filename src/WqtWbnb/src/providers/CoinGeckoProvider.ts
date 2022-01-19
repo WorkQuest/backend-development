@@ -36,7 +36,7 @@ export class CoinGeckoProvider implements TokenPriceProvider {
     }
   }
 
-  public async coinPriceInUSD(timestamp: number | string, coin: Coin): Promise<number> {
+  public async coinPriceInUSD(timestamp: number | string, coin: Coin): Promise<number | null> {
     this.checkLimit();
 
     const coinName = CoinGeckoProvider.getNameCoin(coin);
@@ -47,11 +47,14 @@ export class CoinGeckoProvider implements TokenPriceProvider {
 
     this.updateLimit();
 
-    if (result.data.prices.length === 0) {
-      return null
-    } else {
+    if (result.data && result.data.prices) {
+      if (result.data.prices.length === 0) {
+        return null;
+      }
+
       return result.data.prices[0][1];
     }
 
+    return null;
   }
 }

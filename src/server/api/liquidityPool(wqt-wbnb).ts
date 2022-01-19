@@ -105,5 +105,6 @@ export async function getDistribution(r) {
     priceUSD: UsdPrice.toString(),
     totalStaked: totalStaked.toString(),
     reserveUSD: reserveUSD,
-    totalSupply: totalSupply });
+    totalSupply: totalSupply
+  });
 }

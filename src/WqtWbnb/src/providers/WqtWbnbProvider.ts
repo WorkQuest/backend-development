@@ -49,6 +49,8 @@ export class WqtWbnbProvider implements Web3Provider {
         fromBlock += this.preParsingSteps;
         toBlock = fromBlock + this.preParsingSteps;
 
+        console.info("Block from: ", fromBlock, " block to: ", toBlock);
+
         if (toBlock >= lastBlockNumber) {
           const eventsData = await this.contract.getPastEvents('allEvents', { fromBlock, toBlock });
 
@@ -57,6 +59,7 @@ export class WqtWbnbProvider implements Web3Provider {
       }
     } catch (error) {
       console.error(error);
+      console.error("GetAllEvents: Last block: ", collectedEvents[collectedEvents.length - 1].blockNumber);
 
       return { collectedEvents, isGotAllEvents: false };
     }
