@@ -47,6 +47,11 @@ export class CoinGeckoProvider implements TokenPriceProvider {
 
     this.updateLimit();
 
-    return result.data.prices[0][1];
+    if (result.data.prices.length === 0) {
+      return null
+    } else {
+      return result.data.prices[0][1];
+    }
+
   }
 }
