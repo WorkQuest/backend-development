@@ -29,15 +29,19 @@ export class WqtWbnbController {
 
     const usdAmount = new BigNumber(tokenPriceInUsd).shiftedBy(-18);
 
-    await WqtWbnbSwapEvent.create({
-      timestamp: block.timestamp,
-      totalUSD: usdAmount.toString(),
-      blockNumber: eventsData.blockNumber,
-      account: eventsData.returnValues.to,
-      bnbAmountOut: eventsData.returnValues.amount0In,
-      wqtAmountOut: eventsData.returnValues.amount1In,
-      bnbAmountIn: eventsData.returnValues.amount0Out,
-      wqtAmountIn: eventsData.returnValues.amount1Out,
+    await WqtWbnbSwapEvent.findOrCreate({
+      where: { transactionHash: eventsData.transactionHash },
+      defaults: {
+        timestamp: block.timestamp,
+        totalUSD: usdAmount.toString(),
+        blockNumber: eventsData.blockNumber,
+        account: eventsData.returnValues.to,
+        transactionHash: eventsData.transactionHash,
+        bnbAmountOut: eventsData.returnValues.amount0In,
+        wqtAmountOut: eventsData.returnValues.amount1In,
+        bnbAmountIn: eventsData.returnValues.amount0Out,
+        wqtAmountIn: eventsData.returnValues.amount1Out,
+      }
     });
 
     await WqtWbnbBlockInfo.update({ lastParsedBlock: eventsData.blockNumber }, {
