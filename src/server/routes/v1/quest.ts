@@ -7,7 +7,6 @@ import {
   emptyOkSchema,
   locationSchema,
   workPlaceSchema,
-  questAdTypeSchema,
   questCategorySchema,
   questDescriptionSchema,
   questPriceSchema,
@@ -61,7 +60,6 @@ export default [{
         description: questDescriptionSchema.required(),
         price: questPriceSchema.required(),
         medias: idsSchema.required().unique(),
-        adType: questAdTypeSchema.required(),
         specializationKeys: specializationKeysSchema.required().unique(),
       }).label("CreateQuestPayload")
     },
@@ -110,7 +108,6 @@ export default [{
         title: questTitleSchema.required(),
         description: questDescriptionSchema.required(),
         price: questPriceSchema.required(),
-        adType: questAdTypeSchema.required(),
         medias: idsSchema.unique().required(),
         specializationKeys: specializationKeysSchema.unique().required(),
       }).label("EditQuestPayload"),

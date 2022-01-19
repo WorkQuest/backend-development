@@ -1,4 +1,4 @@
-import {error} from "../../utils";
+import { error, output } from "../../utils";
 import {Op, Transaction} from "sequelize";
 import {Errors} from "../../utils/errors";
 import {SkillsFiltersController} from "../controller.skillsFilters";
@@ -11,8 +11,10 @@ import {
   QuestRaiseView,
   QuestsResponse,
   QuestRaiseStatus,
-  QuestSpecializationFilter,
+  QuestSpecializationFilter, UserRole
 } from "@workquest/database-models/lib/models";
+import { createRaiseView } from "../../api/questRaiseView";
+import { UserController } from "../user/controller.user";
 
 abstract class QuestHelper {
   public abstract quest: Quest;
@@ -101,6 +103,15 @@ abstract class QuestHelper {
     if (userId !== this.quest.userId && userId !== this.quest.assignedWorkerId) {
       throw error(Errors.Forbidden, "User does not belong to quest", {});
     }
+
+    return this;
+  }
+
+  public async createRaiseView(userId: string) {
+    await QuestRaiseView.create({
+      questId: this.quest.id,
+      userId: userId,
+    });
 
     return this;
   }

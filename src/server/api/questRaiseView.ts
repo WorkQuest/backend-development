@@ -1,7 +1,8 @@
-import { UserController } from "../controllers/user/controller.user";
-import { QuestController } from "../controllers/quest/controller.quest";
-import { output } from "../utils";
-import { Quest, QuestRaiseView, User, UserRole } from "@workquest/database-models/lib/models";
+import {UserController} from "../controllers/user/controller.user";
+import {QuestController} from "../controllers/quest/controller.quest";
+import {output} from "../utils";
+import {Quest, QuestRaiseView, User, UserRole} from "@workquest/database-models/lib/models";
+import {Op} from "sequelize";
 
 //TODO: проверка на то, вышел срок подписки или нет
 export async function createRaiseView(r) {
@@ -16,14 +17,16 @@ export async function createRaiseView(r) {
 
   await questController.checkQuestRaiseViews();
 
-  const questRaiseView = await QuestRaiseView.create({
-    questId: r.params.questId,
-    userId: r.auth.credentials.id,
+  await QuestRaiseView.update({
     duration: r.payload.duration,
     type: r.payload.type,
+  }, {
+    where: {
+      questId: r.params.questId
+    }
   });
 
-  return output(questRaiseView);
+  return output();
 }
 
 //TODO: сделать оплату

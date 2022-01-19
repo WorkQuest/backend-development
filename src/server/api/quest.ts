@@ -95,6 +95,7 @@ export async function createQuest(r) {
 
   await questController.setMedias(medias, transaction);
   await questController.setQuestSpecializations(r.payload.specializationKeys, true, transaction);
+  await questController.createRaiseView(r.auth.credentials.id);
 
   await transaction.commit();
 

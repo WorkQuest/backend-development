@@ -10,7 +10,7 @@ import {
 
 export default [{
   method: "POST",
-  path: "/v1/quest/{questId}/create-raiseView",
+  path: "/v1/quest/{questId}/raise",
   handler: handlers.createRaiseView,
   options: {
     auth: 'jwt-access',
