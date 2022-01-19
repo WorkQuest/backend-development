@@ -33,17 +33,19 @@ export class CoinGeckoProvider implements TokenPriceProvider {
 
     if (this.numberOfRequests >= this.limitRequests && timeDifference >= this.limitTimeInMilliseconds) {
       const timeToNextRequest = 5000; //5 sec
-      new Promise(res => setTimeout(res, timeToNextRequest));
+      await new Promise(res => setTimeout(res, timeToNextRequest));
       this.zeroingLimit();
     }
   }
 
   private zeroingLimit() {
+
     this.checkStartTimeInMilliseconds = Date.now();
     this.numberOfRequests = 0;
   }
 
   private updateLimitInfo() {
+
     this.numberOfRequests++;
   }
 
@@ -67,12 +69,12 @@ export class CoinGeckoProvider implements TokenPriceProvider {
 
     this.updateLimitInfo();
 
-/*    if (result.data && result.data.prices) {
+    if (result.data && result.data.prices) {
       if (result.data.prices.length === 0) {
         return null;
       }
       return result.data.prices[0][1];
-    }*/
+    }
 
     return null;
   }

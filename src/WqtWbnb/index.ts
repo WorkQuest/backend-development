@@ -7,12 +7,18 @@ import configDatabase from "./config/config.database";
 import configWqtWbnb from "./config/config.WqtWbnb";
 import { CoinGeckoProvider } from "./src/providers/CoinGeckoProvider";
 import { BlockchainNetworks, initDatabase, WqtWbnbBlockInfo } from "@workquest/database-models/lib/models";
+import { Coin } from "./src/providers/types";
 
 const abiFilePath = path.join(__dirname, '/abi/WqtWbnb.json');
 const abi: any[] = JSON.parse(fs.readFileSync(abiFilePath).toString()).abi;
 
 export async function init() {
   await initDatabase(configDatabase.dbLink, true, true);
+
+/*  const test = new CoinGeckoProvider();
+  for(let i = 0; i<1000; i++) {
+    await test.coinPriceInUSD(11335760, Coin.BNB);
+  }*/
 
   const websocketProvider = new Web3.providers.WebsocketProvider(configWqtWbnb.wsProvider, {
     reconnect: {
