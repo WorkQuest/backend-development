@@ -9,22 +9,42 @@ enum CoinGeckoCoin {
 export class CoinGeckoProvider implements TokenPriceProvider {
   private readonly api;
 
-  private limitCheckStartTimeInMilliseconds: number;
+  private checkStartTimeInMilliseconds: number;
+
+  private readonly limitTimeInMilliseconds: number;
 
   private numberOfRequests: number;
 
-  constructor() {
+  private readonly limitRequests: number;
+
+  constructor(
+  ) {
     this.api = axios.create({
       baseURL: 'https://api.coingecko.com/api/v3/'
     });
+    this.limitTimeInMilliseconds = 1000;
+    this.limitRequests = 10;
+    this.checkStartTimeInMilliseconds = Date.now();
+    this.numberOfRequests = 0;
   }
 
-  private checkLimit() {
-    // TODO
+  private async checkLimit() {
+    const timeDifference = Date.now() - this.checkStartTimeInMilliseconds;
+
+    if (this.numberOfRequests >= this.limitRequests && timeDifference >= this.limitTimeInMilliseconds) {
+      const timeToNextRequest = 5000; //5 sec
+      new Promise(res => setTimeout(res, timeToNextRequest));
+      this.zeroingLimit();
+    }
   }
 
-  private updateLimit() {
-    // TODO
+  private zeroingLimit() {
+    this.checkStartTimeInMilliseconds = Date.now();
+    this.numberOfRequests = 0;
+  }
+
+  private updateLimitInfo() {
+    this.numberOfRequests++;
   }
 
   public static getNameCoin(coin: Coin): string {
@@ -37,7 +57,7 @@ export class CoinGeckoProvider implements TokenPriceProvider {
   }
 
   public async coinPriceInUSD(timestamp: number | string, coin: Coin): Promise<number | null> {
-    this.checkLimit();
+    await this.checkLimit();
 
     const coinName = CoinGeckoProvider.getNameCoin(coin);
 
@@ -45,15 +65,14 @@ export class CoinGeckoProvider implements TokenPriceProvider {
       timeout: 10000
     });
 
-    this.updateLimit();
+    this.updateLimitInfo();
 
-    if (result.data && result.data.prices) {
+/*    if (result.data && result.data.prices) {
       if (result.data.prices.length === 0) {
         return null;
       }
-
       return result.data.prices[0][1];
-    }
+    }*/
 
     return null;
   }
