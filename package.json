@@ -11,6 +11,8 @@
     "proposal:compile": "tsc && node ./build/proposal/index.js",
     "dailyLiquidity:start": "nodemon -e ts --exec \"npm run dailyLiquidity:compile\"",
     "dailyLiquidity:compile": "tsc && node ./build/dailyLiquidity/index.js",
+    "WqtWbnb:start": "nodemon -e ts --exec \"npm run WqtWbnb:compile\"",
+    "WqtWbnb:compile": "tsc && node ./build/WqtWbnb/index.js",
     "compile": "tsc && node ./build/main.js",
     "build": "tsc",
     "test": "lab --sourcemaps --transform node_modules/lab-transform-typescript -v --leaks"
@@ -39,7 +41,7 @@
     "@types/dotenv": "^6.1.1",
     "@types/joi": "^14.3.4",
     "@types/validator": "^13.1.0",
-    "@workquest/database-models": "git+https://github.com/WorkQuest/database-models.git#531ec23f5eb6f1f4e788135404b8024e4243701b",
+    "@workquest/database-models": "git+https://github.com/WorkQuest/database-models.git#9daea5e1de22370e5f323b054523fa8e85a51615",
     "aws-sdk": "^2.918.0",
     "axios": "^0.21.1",
     "bcrypt": "^5.0.0",

@@ -24,6 +24,7 @@ npm-debug.log
 .env.liquidity
 .env.proposal
 .env.quest
+.env.WqtWbnb
 
 # build directory
 build/
