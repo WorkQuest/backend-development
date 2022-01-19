@@ -51,13 +51,13 @@ const liquidityMiningAbi: [] = JSON.parse(fs.readFileSync(liquidityMiningAbiPath
 const liquidityMiningContract = new liquidityMiningProvider.eth.Contract(liquidityMiningAbi, config.contracts.liquidityMining.contract);
 
 export async function getSwaps(r) {
-  const swaps = await WqtWbnbSwapEvent.findAll({
+  const { count, rows } = await WqtWbnbSwapEvent.findAndCountAll({
     limit: r.query.limit,
     offset: r.query.offset,
     order: [ ["timestamp", "DESC"] ],
   });
 
-  return output(swaps);
+  return output({ count, swaps: rows });
 }
 
 export async function getMints(r) {
