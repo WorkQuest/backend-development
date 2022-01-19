@@ -160,6 +160,7 @@ jobs:
           PM2_BRIDGE_SERVICE_NAME=${{ secrets.PROD_PM2_BRIDGE_SERVICE_NAME }} \
           PM2_LIQUIDITY_SERVICE_NAME=${{ secrets.PROD_PM2_LIQUIDITY_SERVICE_NAME }} \
           PM2_PROPOSAL_SERVICE_NAME=${{ secrets.PROD_PM2_PROPOSAL_SERVICE_NAME }} \
+          PM2_WQT_WBNB_SERVICE_NAME=${{ secrets.PROD_PM2_WQT_WBNB_SERVICE_NAME }} \
           SRC_DIR=${{ github.workspace }}/" backend-update.yml;
 
   deploy-dev:
@@ -308,4 +309,5 @@ jobs:
             PM2_BRIDGE_SERVICE_NAME=${{ secrets.DEV_PM2_BRIDGE_SERVICE_NAME }} \
             PM2_LIQUIDITY_SERVICE_NAME=${{ secrets.DEV_PM2_LIQUIDITY_SERVICE_NAME }} \
             PM2_PROPOSAL_SERVICE_NAME=${{ secrets.DEV_PM2_PROPOSAL_SERVICE_NAME }} \
+            PM2_WQT_WBNB_SERVICE_NAME=${{ secrets.DEV_PM2_WQT_WBNB_SERVICE_NAME }} \
             SRC_DIR=${{ github.workspace }}/" backend-update.yml;
