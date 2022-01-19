@@ -7,7 +7,7 @@ import {
   outputOkSchema,
   dailyLiquiditySchema,
   contractAmountSchema,
-  wqtWbnbSwapEvenSchema
+  wqtWbnbSwapEventsSchema,
 } from '@workquest/database-models/lib/schemes';
 
 export default [{
@@ -26,7 +26,7 @@ export default [{
       }).label("GetSwapsWQTQuery")
     },
     response: {
-      schema: outputOkSchema(wqtWbnbSwapEvenSchema).label("GetSwapsWQTResponse")
+      schema: outputOkSchema(wqtWbnbSwapEventsSchema).label("GetSwapsWQTResponse")
     }
   }
 }, {
