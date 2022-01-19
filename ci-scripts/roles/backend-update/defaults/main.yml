@@ -12,3 +12,6 @@ liquidity_env: .env.liquidity
 
 # defaults file for proposal-update
 proposal_env: .env.proposal
+
+# defaults file for WqtWbnb-update
+wqt_wbnb_env: .env.WqtWbnb
