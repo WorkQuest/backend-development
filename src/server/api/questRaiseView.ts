@@ -2,7 +2,6 @@ import {UserController} from "../controllers/user/controller.user";
 import {QuestController} from "../controllers/quest/controller.quest";
 import {output} from "../utils";
 import {Quest, QuestRaiseView, User, UserRole} from "@workquest/database-models/lib/models";
-import {Op} from "sequelize";
 
 //TODO: проверка на то, вышел срок подписки или нет
 export async function createRaiseView(r) {

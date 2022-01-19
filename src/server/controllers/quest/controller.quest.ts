@@ -107,11 +107,11 @@ abstract class QuestHelper {
     return this;
   }
 
-  public async createRaiseView(userId: string) {
+  public async createRaiseView(userId: string, transaction: Transaction) {
     await QuestRaiseView.create({
       questId: this.quest.id,
       userId: userId,
-    });
+    }, {transaction});
 
     return this;
   }

@@ -19,7 +19,8 @@ import {
   Review,
   StarredQuests,
   User,
-  UserRole
+  UserRole,
+  QuestRaiseView, QuestRaiseStatus
 } from "@workquest/database-models/lib/models";
 import { SkillsFiltersController } from "../controllers/controller.skillsFilters";
 
@@ -95,7 +96,7 @@ export async function createQuest(r) {
 
   await questController.setMedias(medias, transaction);
   await questController.setQuestSpecializations(r.payload.specializationKeys, true, transaction);
-  await questController.createRaiseView(r.auth.credentials.id);
+  await questController.createRaiseView(r.auth.credentials.id, transaction);
 
   await transaction.commit();
 
@@ -386,6 +387,11 @@ export async function getQuests(r) {
     'OR (1 = (CASE WHEN EXISTS (SELECT * FROM "QuestSpecializationFilters" WHERE "questId" = "Quest"."id" AND "QuestSpecializationFilters"."industryKey" IN (:industryKey)) THEN 1 END))'
   );
 
+  const questRaiseViewSortLiteral = literal(
+    '"raiseView"."type" ASC'
+  );
+
+
   const order = [];
   const include = [];
   const replacements = { };
@@ -501,18 +507,25 @@ export async function getQuests(r) {
     model: QuestChat.scope('idsOnly'),
     as: 'questChat',
     required: false,
+  }, {
+    model: QuestRaiseView,
+    as: 'raiseView',
   });
+
+  order.push(questRaiseViewSortLiteral);
 
   for (const [key, value] of Object.entries(r.query.sort)) {
     order.push([key, value]);
   }
-  order.push([])
+
+
 
   const { count, rows } = await Quest.findAndCountAll({
     distinct: true,
     limit: r.query.limit,
     offset: r.query.offset,
     include, order, where,
+    subQuery: false,
     replacements,
   });
 
