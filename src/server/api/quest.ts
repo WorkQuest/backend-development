@@ -505,6 +505,7 @@ export async function getQuests(r) {
   for (const [key, value] of Object.entries(r.query.sort)) {
     order.push([key, value]);
   }
+  order.push([])
 
   const { count, rows } = await Quest.findAndCountAll({
     distinct: true,
