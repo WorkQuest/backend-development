@@ -8,6 +8,8 @@ export class WqtWbnbController {
   constructor (
     private readonly web3Provider: Web3Provider,
     private readonly tokenPriceProvider: TokenPriceProvider,
+    private readonly network: BlockchainNetworks,
+
   ) {
     this.web3Provider.subscribeOnEvents(async (eventData) => {
       await this.onEvent(eventData);
@@ -41,6 +43,7 @@ export class WqtWbnbController {
         wqtAmountOut: eventsData.returnValues.amount1In,
         bnbAmountIn: eventsData.returnValues.amount0Out,
         wqtAmountIn: eventsData.returnValues.amount1Out,
+        network: this.network,
       }
     });
 
@@ -49,7 +52,7 @@ export class WqtWbnbController {
     });
   }
 
-  private async getTokenPriceInUsd(timestamp: string | number, coin: Coin, coinAmount: number): Promise<number> {
+  private async getTokenPriceInUsd(timestamp: string | number, coin: Coin, coinAmount: number = 1): Promise<number> {
     return await this.tokenPriceProvider.coinPriceInUSD(timestamp, coin) * coinAmount;
   }
 
