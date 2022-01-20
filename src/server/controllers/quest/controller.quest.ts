@@ -117,7 +117,7 @@ abstract class QuestHelper {
   public async checkQuestRaiseViews() {
     const raiseView = await QuestRaiseView.findOne({
       where: {
-        [Op.and]: [{ questId: this.quest.id }, { status: {[Op.or]: [QuestRaiseStatus.Paid, QuestRaiseStatus.Unpaid]} }]
+        [Op.and]: [{ questId: this.quest.id }, { status: {[Op.or]: [QuestRaiseStatus.Paid]} }]
       }
     });
 
