@@ -37,12 +37,12 @@ export class WqtWbnbController {
         timestamp: block.timestamp,
         amountUSD: usdAmount.toString(),
         blockNumber: eventsData.blockNumber,
-        account: eventsData.returnValues.to,
+        to: eventsData.returnValues.to,
         transactionHash: eventsData.transactionHash,
-        amount0Out: eventsData.returnValues.amount0In,
-        amount1Out: eventsData.returnValues.amount1In,
-        amount0In: eventsData.returnValues.amount0Out,
-        amount1In: eventsData.returnValues.amount1Out,
+        amount0In: eventsData.returnValues.amount0In,
+        amount1In: eventsData.returnValues.amount1In,
+        amount0Out: eventsData.returnValues.amount0Out,
+        amount1Out: eventsData.returnValues.amount1Out,
         network: this.network,
       }
     });
