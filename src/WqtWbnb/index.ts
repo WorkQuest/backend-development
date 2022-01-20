@@ -44,6 +44,7 @@ export async function init() {
   });
 
   await wqtWbnbController.collectAllUncollectedEvents(wqtWbnbBlockInfo.lastParsedBlock);
+  console.log("Start swap listener");
   await wqtWbnbProvider.startListener();
 }
 
