@@ -8,7 +8,7 @@ import { QuestProvider } from "./src/providers/QuestProvider";
 import {
   initDatabase,
   QuestFactoryBlockInfo,
-  BlockchainNetworks
+  BlockchainNetworks, QuestCreatedEvent
 } from "@workquest/database-models/lib/models";
 
 const abiFilePath = path.join(__dirname, '../../src/questFactory/abi/QuestFactory.json');
@@ -53,7 +53,29 @@ export async function init() {
   const questFactoryProvider = new QuestProvider(web3Factory, questFactoryContract);
   new QuestFactoryController(questFactoryProvider, BlockchainNetworks.workQuestDevNetwork);
 
-  const events = await questFactoryProvider.getAllEvents(questFactoryInfo.lastParsedBlock);
+  const { collectedEvents } = await questFactoryProvider.getAllEvents(questFactoryInfo.lastParsedBlock);
+
+  for (const event of collectedEvents) {
+    await QuestCreatedEvent.findOrCreate({
+      where: {
+        nonce: event.returnValues.nonce,
+        jobHash: event.returnValues.jobHash,
+        employerAddress: event.returnValues.employer,
+        contractAddress: contractFactoryAddress,
+        transactionHash: event.transactionHash,
+        network: BlockchainNetworks.workQuestDevNetwork
+      },
+      defaults: {
+        nonce: event.returnValues.nonce,
+        jobHash: event.returnValues.jobHash,
+        employerAddress: event.returnValues.employer,
+        contractAddress: contractFactoryAddress,
+        transactionHash: event.transactionHash,
+        network: BlockchainNetworks.workQuestDevNetwork
+      }
+    });
+  }
+
   await questFactoryProvider.startListener();
 }
 

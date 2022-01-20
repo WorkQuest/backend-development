@@ -1,6 +1,7 @@
 import Web3 from "web3";
 import {Contract, EventData} from "web3-eth-contract";
 import {onEventCallBack, Web3Provider} from "./types";
+import { QuestFactoryEvent } from "../controllers/types";
 
 export class QuestProvider implements Web3Provider {
   private readonly onEventCallBacks: onEventCallBack[] = [];
@@ -38,21 +39,24 @@ export class QuestProvider implements Web3Provider {
     const lastBlockNumber = await this.web3.eth.getBlockNumber();
 
     let fromBlock = fromBlockNumber;
-    let toBlock = fromBlock + this.preParsingSteps - 1;
+    let toBlock = fromBlock + this.preParsingSteps;
 
     try {
       while (true) {
-        const eventsData = await this.contract.getPastEvents('allEvents', { fromBlock, toBlock });
+        const eventsData = await this.contract.getPastEvents(QuestFactoryEvent.Created, { fromBlock, toBlock });
 
         collectedEvents.push(...eventsData);
 
-        fromBlock += this.preParsingSteps;
-        toBlock = fromBlock + this.preParsingSteps;
-
         console.info("Block from: ", fromBlock, " block to: ", toBlock);
 
+        fromBlock += this.preParsingSteps;
+        toBlock = fromBlock + this.preParsingSteps - 1;
+
         if (toBlock >= lastBlockNumber) {
-          const eventsData = await this.contract.getPastEvents('allEvents', { fromBlock, toBlock });
+          const eventsData = await this.contract.getPastEvents(QuestFactoryEvent.Created, {
+            fromBlock,
+            toBlock: await this.web3.eth.getBlockNumber()
+          });
 
           collectedEvents.push(...eventsData); break;
         }
