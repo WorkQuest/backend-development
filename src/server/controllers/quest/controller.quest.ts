@@ -13,8 +13,6 @@ import {
   QuestRaiseStatus,
   QuestSpecializationFilter, UserRole
 } from "@workquest/database-models/lib/models";
-import { createRaiseView } from "../../api/questRaiseView";
-import { UserController } from "../user/controller.user";
 
 abstract class QuestHelper {
   public abstract quest: Quest;

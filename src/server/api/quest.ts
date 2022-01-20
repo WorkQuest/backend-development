@@ -510,6 +510,7 @@ export async function getQuests(r) {
   }, {
     model: QuestRaiseView,
     as: 'raiseView',
+    subQuery: false,
   });
 
   order.push(questRaiseViewSortLiteral);
@@ -518,14 +519,11 @@ export async function getQuests(r) {
     order.push([key, value]);
   }
 
-
-
   const { count, rows } = await Quest.findAndCountAll({
     distinct: true,
     limit: r.query.limit,
     offset: r.query.offset,
     include, order, where,
-    subQuery: false,
     replacements,
   });
 
