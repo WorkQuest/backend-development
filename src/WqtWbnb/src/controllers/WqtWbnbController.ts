@@ -52,7 +52,7 @@ export class WqtWbnbController {
     });
   }
 
-  private async getTokenPriceInUsd(timestamp: string | number, coin: Coin, coinAmount: number): Promise<number> {
+  private async getTokenPriceInUsd(timestamp: string | number, coin: Coin, coinAmount: number = 1): Promise<number> {
     return await this.tokenPriceProvider.coinPriceInUSD(timestamp, coin) * coinAmount;
   }
 

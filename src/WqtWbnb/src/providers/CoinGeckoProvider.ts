@@ -1,5 +1,5 @@
 import axios from "axios";
-import { Coin, TokenPriceProvider } from "./types";
+import {Coin, TokenPriceProvider} from "./types";
 
 enum CoinGeckoCoin {
   WQT = "work-quest",
@@ -32,20 +32,20 @@ export class CoinGeckoProvider implements TokenPriceProvider {
     const timeDifference = Date.now() - this.checkStartTimeInMilliseconds;
 
     if (this.numberOfRequests >= this.limitRequests && timeDifference >= this.limitTimeInMilliseconds) {
-      const timeToNextRequest = 10000; //5 sec
+      const timeToNextRequest = 10000; // 10 sec
+
       await new Promise(res => setTimeout(res, timeToNextRequest));
+
       this.zeroingLimit();
     }
   }
 
   private zeroingLimit() {
-
     this.checkStartTimeInMilliseconds = Date.now();
     this.numberOfRequests = 0;
   }
 
   private updateLimitInfo() {
-
     this.numberOfRequests++;
   }
 

@@ -1,24 +1,18 @@
 import Web3 from "web3";
 import * as fs from "fs";
 import * as path from "path";
-import { WqtWbnbProvider } from "./src/providers/WqtWbnbProvider";
-import { WqtWbnbController } from "./src/controllers/WqtWbnbController";
+import {WqtWbnbProvider} from "./src/providers/WqtWbnbProvider";
+import {WqtWbnbController} from "./src/controllers/WqtWbnbController";
 import configDatabase from "./config/config.database";
 import configWqtWbnb from "./config/config.WqtWbnb";
-import { CoinGeckoProvider } from "./src/providers/CoinGeckoProvider";
-import { BlockchainNetworks, initDatabase, WqtWbnbBlockInfo } from "@workquest/database-models/lib/models";
-import { Coin } from "./src/providers/types";
+import {CoinGeckoProvider} from "./src/providers/CoinGeckoProvider";
+import {BlockchainNetworks, initDatabase, WqtWbnbBlockInfo} from "@workquest/database-models/lib/models";
 
 const abiFilePath = path.join(__dirname, '/abi/WqtWbnb.json');
 const abi: any[] = JSON.parse(fs.readFileSync(abiFilePath).toString()).abi;
 
 export async function init() {
   await initDatabase(configDatabase.dbLink, true, true);
-
-/*  const test = new CoinGeckoProvider();
-  for(let i = 0; i<1000; i++) {
-    await test.coinPriceInUSD(11335760, Coin.BNB);
-  }*/
 
   const websocketProvider = new Web3.providers.WebsocketProvider(configWqtWbnb.wsProvider, {
     reconnect: {
@@ -39,12 +33,14 @@ export async function init() {
     where: { network: BlockchainNetworks.bscMainNetwork },
     defaults: {
       network: BlockchainNetworks.bscMainNetwork,
-      lastParsedBlock: configWqtWbnb.parseEventsFromHeight, // TODO
+      lastParsedBlock: configWqtWbnb.parseEventsFromHeight,
     }
   });
 
   await wqtWbnbController.collectAllUncollectedEvents(wqtWbnbBlockInfo.lastParsedBlock);
+
   console.log("Start swap listener");
+
   await wqtWbnbProvider.startListener();
 }
 
