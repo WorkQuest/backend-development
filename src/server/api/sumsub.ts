@@ -2,7 +2,7 @@ import axios from "axios";
 import * as crypto from "crypto";
 import serverConfig from "../config/config";
 import { error, output } from "../utils";
-import * as FormData from "form-data";
+// import * as FormData from "form-data";
 import { Errors } from "../utils/errors";
 import * as querystring from "querystring";
 import {
@@ -42,7 +42,7 @@ function createSignature(config) {
   signature.update(ts + config.method.toUpperCase() + config.url);
 
   // @ts-ignore
-  // if (config.data instanceof FormData) {
+  // if (config.data && config.data instanceof FormData) {
   //   signature.update (config.data.getBuffer());
   // } else if (config.data) {
   //   signature.update (config.data);
