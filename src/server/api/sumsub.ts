@@ -42,11 +42,11 @@ function createSignature(config) {
   signature.update(ts + config.method.toUpperCase() + config.url);
 
   // @ts-ignore
-  if (config.data && config.data instanceof FormData) {
-    signature.update (config.data.getBuffer());
-  } else if (config.data) {
-    signature.update (config.data);
-  }
+  // if (config.data && config.data instanceof FormData) {
+  //   signature.update (config.data.getBuffer());
+  // } else if (config.data) {
+  //   signature.update (config.data);
+  // }
 
   config.headers['X-App-Access-Ts'] = ts;
   config.headers['X-App-Access-Sig'] = signature.digest('hex');
