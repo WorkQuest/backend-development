@@ -7,7 +7,7 @@ import {resetUnreadCountMessagesOfMemberJob} from "../jobs/resetUnreadCountMessa
 import {incrementUnreadCountMessageOfMembersJob} from "../jobs/incrementUnreadCountMessageOfMembers";
 import {updateCountUnreadChatsJob} from "../jobs/updateCountUnreadChats";
 import {ChatController} from "../controllers/chat/controller.chat";
-import {ChatNotificationActions, publishChatNotifications} from "../websocket/websocket.chat";
+import {MessageBroker, ChatNotificationActions} from "../controllers/controller.broker";
 import {MediaController} from "../controllers/controller.media";
 import {MessageController} from "../controllers/chat/controller.message";
 import {UserController} from "../controllers/user/controller.user";
@@ -202,7 +202,7 @@ export async function createGroupChat(r) {
 
   await updateCountUnreadChatsJob({ userIds: memberUserIds });
 
-  await publishChatNotifications(r.server, {
+  MessageBroker.sendChatNotification({
     recipients: memberUserIds.filter(userId => userId !== r.auth.credentials.id),
     action: ChatNotificationActions.groupChatCreate,
     data: result, // TODO lastReadMessageId: message.id
@@ -309,7 +309,7 @@ export async function sendMessageToUser(r) {
 
   const result = await Message.findByPk(message.id);
 
-  await publishChatNotifications(r.server, {
+  MessageBroker.sendChatNotification({
     action: ChatNotificationActions.newMessage,
     recipients: [r.params.userId],
     data: result,
@@ -381,7 +381,7 @@ export async function sendMessageToChat(r) {
     userIds: [r.auth.credentials.id, ...userIdsWithoutSender]
   });
 
-  await publishChatNotifications(r.server, {
+  MessageBroker.sendChatNotification({
     action: ChatNotificationActions.newMessage,
     recipients: userIdsWithoutSender,
     data: result,
@@ -481,7 +481,7 @@ export async function addUsersInGroupChat(r) {
     userIds: [r.auth.credentials.id, ...userIdsInChatWithoutSender]
   });
 
-  await publishChatNotifications(r.server, {
+  MessageBroker.sendChatNotification({
     action: ChatNotificationActions.groupChatAddUser,
     recipients: userIdsInChatWithoutSender,
     data: messagesResult,
@@ -553,7 +553,7 @@ export async function removeUserInGroupChat(r) {
     userIds: [r.auth.credentials.id, ...userIdsWithoutSender]
   });
 
-  await publishChatNotifications(r.server, {
+  MessageBroker.sendChatNotification({
     action: ChatNotificationActions.groupChatDeleteUser,
     recipients: userIdsWithoutSender,
     data: result,
@@ -615,7 +615,7 @@ export async function leaveFromGroupChat(r) {
     userIds: [r.auth.credentials.id, ...userIdsWithoutSender]
   });
 
-  await publishChatNotifications(r.server, {
+  MessageBroker.sendChatNotification({
     action: ChatNotificationActions.groupChatLeaveUser,
     recipients: userIdsWithoutSender,
     data: result,
@@ -667,7 +667,7 @@ export async function setMessagesAsRead(r) {
     userIds: [r.auth.credentials.id]
   });
 
-  await publishChatNotifications(r.server, {
+  MessageBroker.sendChatNotification({
     action: ChatNotificationActions.messageReadByRecipient,
     recipients: otherSenders.map(sender => sender.senderUserId),
     data: message,

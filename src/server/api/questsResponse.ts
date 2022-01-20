@@ -1,8 +1,7 @@
-import { Op } from "sequelize";
+import {Op} from "sequelize";
 import {error, output} from "../utils";
 import {Errors} from "../utils/errors";
-import {publishQuestNotifications, QuestNotificationActions} from "../websocket/websocket.quest";
-import { ChatNotificationActions, publishChatNotifications } from "../websocket/websocket.chat";
+import {ChatNotificationActions, QuestNotificationActions} from "../controllers/controller.broker";
 import {QuestsResponseController} from "../controllers/quest/controller.questsResponse";
 import {QuestController} from "../controllers/quest/controller.quest";
 import {UserController}  from "../controllers/user/controller.user";
@@ -25,6 +24,7 @@ import {
   QuestsResponseStatus,
 } from "@workquest/database-models/lib/models";
 import { MediaController } from "../controllers/controller.media";
+import { MessageBroker } from "../controllers/controller.broker";
 
 export async function responseOnQuest(r) {
   let questResponse: QuestsResponse;
@@ -131,7 +131,7 @@ export async function responseOnQuest(r) {
 
   await transaction.commit();
 
-  await publishChatNotifications(r.server, {
+  MessageBroker.sendChatNotification({
     action: ChatNotificationActions.newMessage,
     recipients: [quest.userId],
     data: await Message.findByPk(firstInfoMessage.id),
@@ -241,7 +241,7 @@ export async function inviteOnQuest(r) {
 
   await transaction.commit();
 
-  await publishChatNotifications(r.server, {
+  MessageBroker.sendChatNotification({
     action: ChatNotificationActions.newMessage,
     recipients: [quest.userId],
     data: await Message.findByPk(firstInfoMessage.id),
@@ -345,10 +345,10 @@ export async function acceptInviteOnQuest(r) {
 
   await transaction.commit();
 
-  await publishQuestNotifications(r.server, {
-    data: questResponse,
-    recipients: [questResponse.quest.userId],
+  MessageBroker.sendQuestNotification({
     action: QuestNotificationActions.workerAcceptedInvitationToQuest,
+    recipients: [questResponse.quest.userId],
+    data: questResponse,
   });
 
   return output();
@@ -408,10 +408,10 @@ export async function rejectInviteOnQuest(r) {
 
   await transaction.commit();
 
-  await publishQuestNotifications(r.server, {
-    data: questResponse,
-    recipients: [questResponse.quest.userId],
+  MessageBroker.sendQuestNotification({
     action: QuestNotificationActions.workerRejectedInvitationToQuest,
+    recipients: [questResponse.quest.userId],
+    data: questResponse,
   });
 
   return output();
@@ -470,10 +470,10 @@ export async function rejectResponseOnQuest(r) {
 
   await transaction.commit();
 
-  await publishQuestNotifications(r.server, {
-    data: questResponse,
-    recipients: [questResponse.quest.userId],
+  MessageBroker.sendQuestNotification({
     action: QuestNotificationActions.employerRejectedWorkersResponse,
+    recipients: [questResponse.quest.userId],
+    data: questResponse,
   });
 
   return output();
