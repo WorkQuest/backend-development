@@ -4,7 +4,7 @@ import {output} from "../utils";
 import {Quest, QuestRaiseView, User, UserRole} from "@workquest/database-models/lib/models";
 
 //TODO: проверка на то, вышел срок подписки или нет
-export async function createRaiseView(r) {
+export async function activateRaiseView(r) {
   const employer: User = r.auth.credentials;
   const userController = new UserController(employer);
   userController.userMustHaveRole(UserRole.Employer);

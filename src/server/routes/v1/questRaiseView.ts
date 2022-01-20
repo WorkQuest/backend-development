@@ -7,16 +7,17 @@ import {
   questRaiseViewSchema,
   questRaiseDurationSchema,
 } from "@workquest/database-models/lib/schemes";
+import { activateRaiseView } from "../../api/questRaiseView";
 
 export default [{
   method: "POST",
   path: "/v1/quest/{questId}/raise",
-  handler: handlers.createRaiseView,
+  handler: handlers.activateRaiseView,
   options: {
     auth: 'jwt-access',
-    id: "v1.quest.raiseDispute.create",
+    id: "v1.quest.raiseDispute.activate",
     tags: ["api", "quest-raiseView"],
-    description: "Create quest raise view",
+    description: "Activate quest raise view",
     validate: {
       params: Joi.object({
         questId: idSchema.required(),

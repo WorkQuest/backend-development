@@ -20,7 +20,7 @@ import {
   StarredQuests,
   User,
   UserRole,
-  QuestRaiseView, QuestRaiseStatus
+  QuestRaiseView,
 } from "@workquest/database-models/lib/models";
 import { SkillsFiltersController } from "../controllers/controller.skillsFilters";
 
