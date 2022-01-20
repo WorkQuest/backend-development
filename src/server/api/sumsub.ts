@@ -42,11 +42,11 @@ function createSignature(config) {
   signature.update(ts + config.method.toUpperCase() + config.url);
 
   // @ts-ignore
-  if (config.data instanceof FormData) {
-    signature.update (config.data.getBuffer());
-  } else if (config.data) {
-    signature.update (config.data);
-  }
+  // if (config.data instanceof FormData) {
+  //   signature.update (config.data.getBuffer());
+  // } else if (config.data) {
+  //   signature.update (config.data);
+  // }
 
   config.headers['X-App-Access-Ts'] = ts;
   config.headers['X-App-Access-Sig'] = signature.digest('hex');
@@ -68,8 +68,8 @@ export async function createAccessToken(r) {
 
     return output(result.data);
   } catch (err) {
-    if (err.response && err.response.description && err.response.data) {
-      return error(Errors.SumSubError, err.response.description, err.response.data);
+    if (err.response && err.response.statusText && err.response.data) {
+      return error(Errors.SumSubError, err.response.statusText, err.response.data);
     }
 
     return error(Errors.SumSubError, err, {});
