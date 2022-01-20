@@ -38,7 +38,7 @@ export class QuestProvider implements Web3Provider {
     const lastBlockNumber = await this.web3.eth.getBlockNumber();
 
     let fromBlock = fromBlockNumber;
-    let toBlock = fromBlock + this.preParsingSteps;
+    let toBlock = fromBlock + this.preParsingSteps - 1;
 
     try {
       while (true) {

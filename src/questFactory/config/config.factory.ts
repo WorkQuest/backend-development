@@ -1,6 +1,6 @@
 import {config} from "dotenv";
 
-config({ path: __dirname +  '/../../../.env.quest'});
+config({ path: __dirname +  '/../../../.env.factory'});
 
 export default {
   debug: process.env.BRIDGE_DEBUG === "true",

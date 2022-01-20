@@ -5,7 +5,7 @@ import {
   QuestBlockInfo,
   QuestCreatedEvent,
   BlockchainNetworks,
-} from "@workquest/database-models/src/models";
+} from "@workquest/database-models/lib/models";
 
 export class QuestFactoryController {
   constructor (
