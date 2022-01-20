@@ -35,14 +35,14 @@ export class WqtWbnbController {
       where: { transactionHash: eventsData.transactionHash },
       defaults: {
         timestamp: block.timestamp,
-        totalUSD: usdAmount.toString(),
+        amountUSD: usdAmount.toString(),
         blockNumber: eventsData.blockNumber,
         account: eventsData.returnValues.to,
         transactionHash: eventsData.transactionHash,
-        bnbAmountOut: eventsData.returnValues.amount0In,
-        wqtAmountOut: eventsData.returnValues.amount1In,
-        bnbAmountIn: eventsData.returnValues.amount0Out,
-        wqtAmountIn: eventsData.returnValues.amount1Out,
+        amount0Out: eventsData.returnValues.amount0In,
+        amount1Out: eventsData.returnValues.amount1In,
+        amount0In: eventsData.returnValues.amount0Out,
+        amount1In: eventsData.returnValues.amount1Out,
         network: this.network,
       }
     });
