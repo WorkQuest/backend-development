@@ -4,7 +4,7 @@ import config from "../config/config";
 
 export const enum MainBrokerQueues {
   Chat = 'chat',
-  Platform = 'platform'
+  Quest = 'quest'
 }
 
 export const enum QuestNotificationActions {
@@ -89,7 +89,7 @@ export class ControllerBroker {
 
     const convertedData = ControllerBroker.convertData(notification);
 
-    this.channel.sendToQueue(MainBrokerQueues.Platform, convertedData);
+    this.channel.sendToQueue(MainBrokerQueues.Quest, convertedData);
   };
 
   public sendChatNotification (notification: Notification<ChatNotificationActions>) {
