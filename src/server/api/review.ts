@@ -1,6 +1,6 @@
 import { error, output } from "../utils";
 import {addUpdateReviewStatisticsJob} from '../jobs/updateReviewStatistics';
-import {publishQuestNotifications, QuestNotificationActions} from "../websocket/websocket.quest";
+import {QuestNotificationActions} from "../controllers/controller.broker";
 import {QuestController} from "../controllers/quest/controller.quest"
 import { Errors } from "../utils/errors";
 import {
@@ -48,10 +48,10 @@ export async function sendReview(r) {
     userId: toUser.id,
   });
 
-  await publishQuestNotifications(r.server, {
-    data: review,
-    recipients: [toUser.id],
+  r.server.app.broker.sendQuestNotification({
     action: QuestNotificationActions.userLeftReviewAboutQuest,
+    recipients: [toUser.id],
+    data: review,
   });
 
   return output(review);

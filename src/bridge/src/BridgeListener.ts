@@ -54,7 +54,7 @@ export class BridgeBscListener extends BridgeListener {
   }
 
   protected async _parseSwapInitializedEvent(event: BridgeEventType): Promise<void> {
-    await BridgeSwapTokenEvent.findOrCreate({
+    const [swappedEvent, _] = await BridgeSwapTokenEvent.findOrCreate({
       where: {
         transactionHash: event.transactionHash,
         network: BlockchainNetworks.bscMainNetwork, // TODO

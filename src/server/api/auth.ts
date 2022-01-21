@@ -66,7 +66,7 @@ export function register(host: 'dao'|'main') {
 		});
 
 		const result = {
-			...generateJwt({ id: session.id }),
+			...generateJwt({ id: session.id, userId: session.userId }),
 			userStatus: user.status,
 		};
 
@@ -93,7 +93,7 @@ export function getLoginViaSocialNetworkHandler(returnType: "token" | "redirect"
 		});
 
 		const result = {
-			...generateJwt({ id: session.id }),
+			...generateJwt({ id: session.id, userId: session.userId }),
 			userStatus: user.status
 		};
 
@@ -160,7 +160,7 @@ export async function login(r) {
 	});
 
 	const result = {
-		...generateJwt({ id: session.id }),
+		...generateJwt({ id: session.id, userId: session.userId }),
 		userStatus: user.status,
 		address: user.wallet ?
 			user.wallet.address :
@@ -261,7 +261,7 @@ export async function loginWallet(r) {
 	});
 
 	const result = {
-		...generateJwt({ id: session.id }),
+		...generateJwt({ id: session.id, userId: session.userId }),
 		userStatus: wallet.user.status,
 		address: wallet.address
 	};
