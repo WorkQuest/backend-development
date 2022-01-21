@@ -42,7 +42,13 @@ export async function getQuest(r) {
     as: "response",
     where: { workerId: r.auth.credentials.id },
     required: false
-  }] as any[];
+  }, {
+    model: User.scope('shortWithWallet'),
+    as: 'user'
+  }, {
+    model: User.scope('shortWithWallet'),
+    as: 'assignedWorker'
+  },] as any[];
 
   if (user.role === UserRole.Worker) {
     include.push({

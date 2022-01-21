@@ -259,11 +259,14 @@ export async function userResponsesToQuest(r) {
   await questController.employerMustBeQuestCreator(employer.id);
 
   const { rows, count } = await QuestsResponse.findAndCountAll({
-    include: {
+    include: [{
       model: QuestChat.unscoped(),
       attributes: ["chatId"],
       as: 'questChat'
-    },
+    }, {
+      model: User.scope('shortWithWallet'),
+      as: 'worker'
+    }],
     where: { questId: questController.quest.id },
     limit: r.query.limit,
     offset: r.query.offset,
