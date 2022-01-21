@@ -62,6 +62,8 @@ jobs:
           DB_PASSWORD=${{ secrets.PROD_DB_PASSWORD }} \
           DB_NAME=${{ secrets.PROD_DB_NAME }} \
 
+          NOTIFICATION_MESSAGE_BROKER_LINK=${{ secrets.PROD_NOTIFICATION_MESSAGE_BROKER_LINK }} \
+
           SMTP_HOST=${{ secrets.PROD_SMTP_HOST }} \
           SMTP_PORT=${{ secrets.PROD_SMTP_PORT }} \
           SMTP_SECURE=${{ secrets.PROD_SMTP_SECURE }} \
@@ -200,6 +202,8 @@ jobs:
             DB_USERNAME=${{ secrets.DEV_DB_USERNAME }} \
             DB_PASSWORD=${{ secrets.DEV_DB_PASSWORD }} \
             DB_NAME=${{ secrets.DEV_DB_NAME }} \
+
+            NOTIFICATION_MESSAGE_BROKER_LINK=${{ secrets.DEV_NOTIFICATION_MESSAGE_BROKER_LINK }} \
 
             SMTP_HOST=${{ secrets.DEV_SMTP_HOST }} \
             SMTP_PORT=${{ secrets.DEV_SMTP_PORT }} \

@@ -12,9 +12,9 @@ import * as Qs from "qs";
 import Web3 from 'web3';
 import routes from "./routes";
 import config from "./config/config";
-import initWebSocketService from "./websocket/index";
 import SwaggerOptions from "./config/swagger";
 import { initDatabase } from "@workquest/database-models/lib/models";
+import { ControllerBroker } from "./controllers/controller.broker";
 import { handleValidationError, responseHandler } from "./utils";
 import { tokenValidate } from "./utils/auth";
 import { pinoConfig } from "./config/pino";
@@ -89,6 +89,7 @@ const init = async () => {
 
   server.app.db = await initDatabase(config.dbLink, true, true);
   server.app.web3 = new Web3();
+  server.app.broker = new ControllerBroker();
   server.app.scheduler = await run({
     connectionString: config.dbLink,
     concurrency: 5,
@@ -112,7 +113,6 @@ const init = async () => {
   });
   server.auth.default('jwt-access');
 
-  initWebSocketService(server);
   initAuthStrategiesOfSocialNetworks(server);
 
   server.route(routes);

@@ -19,6 +19,9 @@ export default {
       }
     }
   },
+  notificationMessageBroker: {
+    link: process.env.NOTIFICATION_MESSAGE_BROKER_LINK,
+  },
   server: {
     local: process.env.LOCAL ? process.env.LOCAL === "true" : false,
     port: process.env.SERVER_PORT ? Number(process.env.SERVER_PORT) : 3000,
