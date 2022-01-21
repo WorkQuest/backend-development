@@ -9,10 +9,12 @@ import { QuestsResponseController } from "../controllers/quest/controller.quests
 import { MediaController } from "../controllers/controller.media";
 import { addUpdateReviewStatisticsJob } from "../jobs/updateReviewStatistics";
 import { updateQuestsStatisticJob } from "../jobs/updateQuestsStatistic";
+import { SkillsFiltersController } from "../controllers/controller.skillsFilters";
 import {
   Quest,
   QuestChat,
-  QuestChatStatuses, QuestDispute,
+  QuestDispute,
+  QuestChatStatuses,
   QuestsResponse,
   QuestsResponseType,
   QuestStatus,
@@ -21,7 +23,6 @@ import {
   User,
   UserRole
 } from "@workquest/database-models/lib/models";
-import { SkillsFiltersController } from "../controllers/controller.skillsFilters";
 
 export const searchFields = [
   "title",
@@ -510,11 +511,6 @@ export async function getQuests(r) {
   }, {
     model: QuestChat.scope('idsOnly'),
     as: 'questChat',
-    required: false,
-  }, {
-    model: QuestDispute.unscoped(),
-    as: 'questDisputes',
-    attributes:["id"],
     required: false,
   });
 
