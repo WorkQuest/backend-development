@@ -52,7 +52,10 @@ export async function getQuest(r) {
     model: QuestDispute.unscoped(),
     as: 'questDisputes',
     where: {
-      [Op.or]: [{openDisputeUserId: r.auth.credentials.id},{opponentUserId: r.auth.credentials.id}]
+      [Op.or]: [
+        {opponentUserId: r.auth.credentials.id},
+        {openDisputeUserId: r.auth.credentials.id},
+      ]
     },
     attributes:["id"],
     required: false,
