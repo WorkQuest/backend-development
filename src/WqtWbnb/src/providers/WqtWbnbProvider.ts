@@ -47,7 +47,7 @@ export class WqtWbnbProvider implements Web3Provider {
         collectedEvents.push(...eventsData);
 
         fromBlock += this.preParsingSteps;
-        toBlock = fromBlock + this.preParsingSteps;
+        toBlock = fromBlock + this.preParsingSteps - 1;
 
         console.info("Block from: ", fromBlock, " block to: ", toBlock);
 
