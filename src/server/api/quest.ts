@@ -47,7 +47,12 @@ export async function getQuest(r) {
   }, {
     model: User.scope('shortWithWallet'),
     as: 'assignedWorker'
-  },] as any[];
+  }, {
+    model: QuestDispute.unscoped(),
+    as: 'questDisputes',
+    attributes:["id"],
+    required: false,
+  }] as any[];
 
   if (user.role === UserRole.Worker) {
     include.push({
