@@ -12,7 +12,7 @@ import { updateQuestsStatisticJob } from "../jobs/updateQuestsStatistic";
 import {
   Quest,
   QuestChat,
-  QuestChatStatuses,
+  QuestChatStatuses, QuestDispute,
   QuestsResponse,
   QuestsResponseType,
   QuestStatus,
@@ -505,6 +505,11 @@ export async function getQuests(r) {
   }, {
     model: QuestChat.scope('idsOnly'),
     as: 'questChat',
+    required: false,
+  }, {
+    model: QuestDispute.unscoped(),
+    as: 'questDisputes',
+    attributes:["id"],
     required: false,
   });
 
