@@ -9,9 +9,11 @@ import { QuestsResponseController } from "../controllers/quest/controller.quests
 import { MediaController } from "../controllers/controller.media";
 import { addUpdateReviewStatisticsJob } from "../jobs/updateReviewStatistics";
 import { updateQuestsStatisticJob } from "../jobs/updateQuestsStatistic";
+import { SkillsFiltersController } from "../controllers/controller.skillsFilters";
 import {
   Quest,
   QuestChat,
+  QuestDispute,
   QuestChatStatuses,
   QuestsResponse,
   QuestsResponseType,
@@ -21,7 +23,6 @@ import {
   User,
   UserRole
 } from "@workquest/database-models/lib/models";
-import { SkillsFiltersController } from "../controllers/controller.skillsFilters";
 
 export const searchFields = [
   "title",
@@ -47,7 +48,18 @@ export async function getQuest(r) {
   }, {
     model: User.scope('shortWithWallet'),
     as: 'assignedWorker'
-  },] as any[];
+  }, {
+    model: QuestDispute.unscoped(),
+    as: 'questDisputes',
+    where: {
+      [Op.or]: [
+        { opponentUserId: r.auth.credentials.id },
+        { openDisputeUserId: r.auth.credentials.id },
+      ]
+    },
+    attributes:["id"],
+    required: false,
+  }] as any[];
 
   if (user.role === UserRole.Worker) {
     include.push({
