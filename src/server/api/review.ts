@@ -2,7 +2,6 @@ import { error, output } from "../utils";
 import {addUpdateReviewStatisticsJob} from '../jobs/updateReviewStatistics';
 import {QuestNotificationActions} from "../controllers/controller.broker";
 import {QuestController} from "../controllers/quest/controller.quest"
-import {MessageBroker} from "../controllers/controller.broker";
 import { Errors } from "../utils/errors";
 import {
   User,
@@ -49,7 +48,7 @@ export async function sendReview(r) {
     userId: toUser.id,
   });
 
-  MessageBroker.sendQuestNotification({
+  r.server.app.broker.sendQuestNotification({
     action: QuestNotificationActions.userLeftReviewAboutQuest,
     recipients: [toUser.id],
     data: review,

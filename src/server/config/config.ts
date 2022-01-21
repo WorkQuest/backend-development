@@ -19,8 +19,8 @@ export default {
       }
     }
   },
-  broker: {
-    link: process.env.RABBIT_LINK
+  notificationMessageBroker: {
+    link: process.env.NOTIFICATION_MESSAGE_BROKER_LINK,
   },
   server: {
     local: process.env.LOCAL ? process.env.LOCAL === "true" : false,

@@ -2,7 +2,7 @@ import * as path from "path";
 import * as fs from "fs";
 import Web3 from "web3";
 import configBridge from "./config/config.bridge";
-import configDatabase from "./config/config.database";
+import config from "./config/config.common";
 import {BridgeContract} from "./src/BridgeContract";
 import {BridgeEthListener, BridgeBscListener} from "./src/BridgeListener";
 import {BridgeProvider} from "./src/BridgeProvider";
@@ -22,7 +22,7 @@ const urlBscProvider = configBridge.debug ? configBridge.bscTestNetwork.webSocke
 export async function init() {
   console.log('Start bridge'); // TODO add pino
 
-  await initDatabase(configDatabase.dbLink, false, false);
+  await initDatabase(config.database.link, false, false);
 
   const web3Eth = new Web3(new Web3.providers.WebsocketProvider(urlEthProvider, {
     clientConfig: {

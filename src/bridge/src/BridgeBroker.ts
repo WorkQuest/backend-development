@@ -1,8 +1,8 @@
 import amqp from 'amqplib/callback_api';
-import config from "../../server/config/config";
+import config from "../config/config.common";
 
 export function initRabbitMQ() {
-  return amqp.connect(config.broker.link, (connectError, conn) => {
+  return amqp.connect(config.notificationMessageBroker.link, (connectError, conn) => {
     if (connectError) {
       console.error(connectError.message);
     }
@@ -41,6 +41,8 @@ export class BridgeBroker {
   }
 
   public sendBridgeNotification(data: object): void {
+    if (!this.channel) return;
+
     const convertedData = this.convertData(data);
 
     this.channel.sendToQueue('bridge', convertedData);

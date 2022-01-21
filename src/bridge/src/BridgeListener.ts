@@ -5,7 +5,6 @@ import {
   BridgeSwapTokenEvent,
   SwapEvents,
 } from "@workquest/database-models/lib/models";
-import { BridgeMessageBroker } from "./BridgeBroker";
 
 export enum TrackedEvents {
   swapInitialized = "SwapInitialized",

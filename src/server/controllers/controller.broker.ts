@@ -46,8 +46,12 @@ type Notification<Action> = {
 export class ControllerBroker {
   private channel;
 
-  public initMessageBroker() {
-    amqp.connect(config.broker.link , (connectError, conn) => {
+  constructor() {
+    this.initMessageBroker();
+  }
+
+  private initMessageBroker() {
+    amqp.connect(config.notificationMessageBroker.link , (connectError, conn) => {
       if (connectError) {
         console.error(connectError.message);
       }
@@ -74,23 +78,25 @@ export class ControllerBroker {
     });
   }
 
-  private convertData(data: object) {
+  public static convertData(data: object) {
     const stringData = JSON.stringify(data);
 
     return Buffer.from(stringData);
   }
 
   public sendQuestNotification (notification: Notification<QuestNotificationActions>) {
-    const convertedData = this.convertData(notification);
+    if (!this.channel) return;
+
+    const convertedData = ControllerBroker.convertData(notification);
 
     this.channel.sendToQueue(MainBrokerQueues.Platform, convertedData);
   };
 
   public sendChatNotification (notification: Notification<ChatNotificationActions>) {
-    const convertedData = this.convertData(notification);
+    if (!this.channel) return;
+
+    const convertedData = ControllerBroker.convertData(notification);
 
     this.channel.sendToQueue(MainBrokerQueues.Chat, convertedData);
   }
 }
-
-export const MessageBroker = new ControllerBroker();

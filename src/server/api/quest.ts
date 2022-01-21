@@ -5,7 +5,6 @@ import { QuestController } from "../controllers/quest/controller.quest";
 import { transformToGeoPostGIS } from "../utils/postGIS";
 import { error, output } from "../utils";
 import { QuestNotificationActions } from "../controllers/controller.broker";
-import { MessageBroker } from "../controllers/controller.broker";
 import { QuestsResponseController } from "../controllers/quest/controller.questsResponse";
 import { MediaController } from "../controllers/controller.media";
 import { addUpdateReviewStatisticsJob } from "../jobs/updateReviewStatistics";
@@ -221,7 +220,7 @@ export async function startQuest(r) {
 
   await transaction.commit();
 
-  MessageBroker.sendQuestNotification({
+  r.server.app.broker.sendQuestNotification({
     data: questController.quest,
     recipients: [assignedWorkerController.user.id],
     action: QuestNotificationActions.questStarted,
@@ -250,7 +249,7 @@ export async function rejectWorkOnQuest(r) {
 
   await transaction.commit();
 
-  MessageBroker.sendQuestNotification({
+  r.server.app.broker.sendQuestNotification({
     recipients: [questController.quest.userId],
     action: QuestNotificationActions.workerRejectedQuest,
     data: questController.quest,
@@ -284,7 +283,7 @@ export async function acceptWorkOnQuest(r) {
     role: UserRole.Worker,
   });
 
-  MessageBroker.sendQuestNotification({
+  r.server.app.broker.sendQuestNotification({
     data: questController.quest,
     recipients: [questController.quest.userId],
     action: QuestNotificationActions.workerAcceptedQuest,
@@ -305,7 +304,7 @@ export async function completeWorkOnQuest(r) {
 
   await questController.completeWork();
 
-  MessageBroker.sendQuestNotification({
+  r.server.app.broker.sendQuestNotification({
     data: questController.quest,
     recipients: [questController.quest.userId],
     action: QuestNotificationActions.workerCompletedQuest,
@@ -326,7 +325,7 @@ export async function acceptCompletedWorkOnQuest(r) {
 
   await questController.approveCompletedWork();
 
-  MessageBroker.sendQuestNotification({
+  r.server.app.broker.sendQuestNotification({
     data: quest,
     recipients: [quest.assignedWorkerId],
     action: QuestNotificationActions.employerAcceptedCompletedQuest,
@@ -363,7 +362,7 @@ export async function rejectCompletedWorkOnQuest(r) {
 
   await questController.rejectCompletedWork();
 
-  MessageBroker.sendQuestNotification({
+  r.server.app.broker.sendQuestNotification({
     data: quest,
     recipients: [quest.assignedWorkerId],
     action: QuestNotificationActions.employerRejectedCompletedQuest,
