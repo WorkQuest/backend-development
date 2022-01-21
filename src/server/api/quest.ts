@@ -388,11 +388,6 @@ export async function getQuests(r) {
     'OR (1 = (CASE WHEN EXISTS (SELECT * FROM "QuestSpecializationFilters" WHERE "questId" = "Quest"."id" AND "QuestSpecializationFilters"."industryKey" IN (:industryKey)) THEN 1 END))'
   );
 
-  const questRaiseViewSortLiteral = literal(
-    '"raiseView"."type" ASC'
-  );
-
-
   const order = [];
   const include = [];
   const replacements = { };
@@ -474,8 +469,6 @@ export async function getQuests(r) {
     });
   }
 
-  //order.push(questRaiseViewSortLiteral);
-
   include.push({
     model: Review.unscoped(),
     as: "yourReview",
@@ -512,14 +505,10 @@ export async function getQuests(r) {
     required: false,
   }, {
     model: QuestRaiseView,
-    //order: [fn('min', col('type'))],
     as: 'raiseView',
-    required: true,
-    subQuery: false,
   });
 
-  order.push(questRaiseViewSortLiteral);
-
+  order.push([{model: QuestRaiseView, as: 'raiseView'}, 'type', 'asc']);
 
   for (const [key, value] of Object.entries(r.query.sort)) {
     order.push([key, value]);
