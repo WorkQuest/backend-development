@@ -15,11 +15,11 @@ import config from "./config/config";
 import initWebSocketService from "./websocket/index";
 import SwaggerOptions from "./config/swagger";
 import { initDatabase } from "@workquest/database-models/lib/models";
+import { MessageBroker } from "./controllers/controller.broker";
 import { handleValidationError, responseHandler } from "./utils";
 import { tokenValidate } from "./utils/auth";
 import { pinoConfig } from "./config/pino";
 import { run } from "graphile-worker";
-import { initRabbitMQ } from "./broker";
 
 const HapiSwagger = require("hapi-swagger");
 const Package = require("../../package.json");
@@ -115,7 +115,7 @@ const init = async () => {
 
   initWebSocketService(server);
   initAuthStrategiesOfSocialNetworks(server);
-  initRabbitMQ();
+  MessageBroker.initMessageBroker();
 
   server.route(routes);
 

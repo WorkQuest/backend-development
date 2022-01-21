@@ -7,7 +7,8 @@ import {resetUnreadCountMessagesOfMemberJob} from "../jobs/resetUnreadCountMessa
 import {incrementUnreadCountMessageOfMembersJob} from "../jobs/incrementUnreadCountMessageOfMembers";
 import {updateCountUnreadChatsJob} from "../jobs/updateCountUnreadChats";
 import {ChatController} from "../controllers/chat/controller.chat";
-import {MessageBroker, ChatNotificationActions} from "../controllers/controller.broker";
+import {ChatNotificationActions} from "../controllers/controller.broker";
+import {MessageBroker} from "../controllers/controller.broker";
 import {MediaController} from "../controllers/controller.media";
 import {MessageController} from "../controllers/chat/controller.message";
 import {UserController} from "../controllers/user/controller.user";

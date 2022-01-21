@@ -1,5 +1,6 @@
-import { initRabbitMQ } from "../broker";
 import { Buffer } from "buffer";
+import amqp from "amqplib/callback_api";
+import config from "../config/config";
 
 export const enum MainBrokerQueues {
   Chat = 'chat',
@@ -43,7 +44,35 @@ type Notification<Action> = {
 }
 
 export class ControllerBroker {
-  private channel = initRabbitMQ();
+  private channel;
+
+  public initMessageBroker() {
+    amqp.connect(config.broker.link , (connectError, conn) => {
+      if (connectError) {
+        console.error(connectError.message);
+      }
+
+      conn.on('error', (connectionError) => {
+        console.error(connectionError.message);
+      });
+
+      conn.on('close', () => {
+        setTimeout(() => {
+          this.initMessageBroker();
+        }, 5000);
+      });
+
+      conn.createChannel((channelError, channel) => {
+        if (channelError) {
+          console.error(channelError.message);
+        }
+
+        this.channel = channel;
+      });
+
+      console.log('Message broker connected');
+    });
+  }
 
   private convertData(data: object) {
     const stringData = JSON.stringify(data);
@@ -51,13 +80,13 @@ export class ControllerBroker {
     return Buffer.from(stringData);
   }
 
-  public sendQuestNotification(notification: Notification<QuestNotificationActions>) {
+  public sendQuestNotification (notification: Notification<QuestNotificationActions>) {
     const convertedData = this.convertData(notification);
 
     this.channel.sendToQueue(MainBrokerQueues.Platform, convertedData);
   };
 
-  public sendChatNotification(notification: Notification<ChatNotificationActions>) {
+  public sendChatNotification (notification: Notification<ChatNotificationActions>) {
     const convertedData = this.convertData(notification);
 
     this.channel.sendToQueue(MainBrokerQueues.Chat, convertedData);
