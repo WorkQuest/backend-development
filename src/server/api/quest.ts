@@ -1,4 +1,4 @@
-import { literal, Op } from "sequelize";
+import { literal, Op, fn, col } from "sequelize";
 import { Errors } from "../utils/errors";
 import { UserController } from "../controllers/user/controller.user";
 import { QuestController } from "../controllers/quest/controller.quest";
@@ -20,9 +20,10 @@ import {
   StarredQuests,
   User,
   UserRole,
-  QuestRaiseView,
+  QuestRaiseView, QuestRaiseStatus
 } from "@workquest/database-models/lib/models";
 import { SkillsFiltersController } from "../controllers/controller.skillsFilters";
+import { getModels } from "sequelize-typescript";
 
 export const searchFields = [
   "title",
@@ -473,6 +474,8 @@ export async function getQuests(r) {
     });
   }
 
+  //order.push(questRaiseViewSortLiteral);
+
   include.push({
     model: Review.unscoped(),
     as: "yourReview",
@@ -509,11 +512,14 @@ export async function getQuests(r) {
     required: false,
   }, {
     model: QuestRaiseView,
+    //order: [fn('min', col('type'))],
     as: 'raiseView',
+    required: true,
     subQuery: false,
   });
 
   order.push(questRaiseViewSortLiteral);
+
 
   for (const [key, value] of Object.entries(r.query.sort)) {
     order.push([key, value]);
