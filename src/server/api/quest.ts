@@ -53,8 +53,8 @@ export async function getQuest(r) {
     as: 'questDisputes',
     where: {
       [Op.or]: [
-        {opponentUserId: r.auth.credentials.id},
-        {openDisputeUserId: r.auth.credentials.id},
+        { opponentUserId: r.auth.credentials.id },
+        { openDisputeUserId: r.auth.credentials.id },
       ]
     },
     attributes:["id"],
