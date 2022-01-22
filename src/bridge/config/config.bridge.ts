@@ -4,9 +4,6 @@ config({ path: __dirname +  '/../../../.env.bridge'});
 
 export default {
   debug: process.env.BRIDGE_DEBUG === "true",
-  broker: {
-    link: process.env.RABBIT_LINK
-  },
   ethereumMainNetwork: {
     parseEventsFromHeight: parseInt(process.env.BRIDGE_ETH_MAINNETWORK_PARSE_EVENTS_FROM_HEIGHT),
     contract: process.env.BRIDGE_ETH_MAINNETWORK_CONTRACT,
