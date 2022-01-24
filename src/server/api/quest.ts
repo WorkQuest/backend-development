@@ -388,7 +388,7 @@ export async function getQuests(r) {
     'OR (1 = (CASE WHEN EXISTS (SELECT * FROM "QuestSpecializationFilters" WHERE "questId" = "Quest"."id" AND "QuestSpecializationFilters"."industryKey" IN (:industryKey)) THEN 1 END))'
   );
 
-  const order = [];
+  const order = [['adType', 'asc']] as any;
   const include = [];
   const replacements = { };
   const where = {
@@ -507,8 +507,6 @@ export async function getQuests(r) {
     model: QuestRaiseView,
     as: 'raiseView',
   });
-
-  order.push(['adType', 'asc']);
 
   for (const [key, value] of Object.entries(r.query.sort)) {
     order.push([key, value]);
