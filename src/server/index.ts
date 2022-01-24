@@ -91,7 +91,7 @@ const init = async () => {
   server.app.web3 = new Web3();
   server.app.broker = new ControllerBroker();
   server.app.scheduler = await run({
-    connectionString: config.dbLink,
+    connectionString: 'postgres://postgres:postgres@localhost:5432/workquest',
     concurrency: 5,
     pollInterval: 1000,
     taskDirectory: `${__dirname}/jobs`, // Папка с исполняемыми тасками.
