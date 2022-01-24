@@ -1,13 +1,13 @@
-import axios, {AxiosInstance, AxiosResponse} from "axios";
-import {error} from "../utils";
-import {Errors} from "../utils/errors";
+import axios, { AxiosInstance, AxiosResponse } from 'axios';
+import { error } from '../utils';
+import { Errors } from '../utils/errors';
 
 export class CoingeckoApi {
   protected readonly _apiCoingecko: AxiosInstance;
 
   constructor() {
     this._apiCoingecko = axios.create({
-      baseURL: 'https://api.coingecko.com/api/v3/coins/work-quest'
+      baseURL: 'https://api.coingecko.com/api/v3/coins/work-quest',
     });
   }
 

@@ -1,11 +1,11 @@
-import {literal, Op} from "sequelize";
-import {addSendSmsJob} from '../jobs/sendSms';
-import {getRandomCodeNumber, output} from '../utils';
-import {UserController} from "../controllers/user/controller.user";
-import {transformToGeoPostGIS} from "../utils/postGIS";
-import {MediaController} from "../controllers/controller.media";
-import {SkillsFiltersController} from "../controllers/controller.skillsFilters";
-import {addUpdateReviewStatisticsJob} from "../jobs/updateReviewStatistics";
+import { literal, Op } from 'sequelize';
+import { addSendSmsJob } from '../jobs/sendSms';
+import { getRandomCodeNumber, output } from '../utils';
+import { UserController } from '../controllers/user/controller.user';
+import { transformToGeoPostGIS } from '../utils/postGIS';
+import { MediaController } from '../controllers/controller.media';
+import { SkillsFiltersController } from '../controllers/controller.skillsFilters';
+import { addUpdateReviewStatisticsJob } from '../jobs/updateReviewStatistics';
 import {
   User,
   Wallet,
@@ -14,17 +14,14 @@ import {
   RatingStatistic,
   QuestsStatistic,
   UserSpecializationFilter,
-} from "@workquest/database-models/lib/models";
+} from '@workquest/database-models/lib/models';
 
-export const searchFields = [
-  "firstName",
-  "lastName",
-];
+export const searchFields = ['firstName', 'lastName'];
 
 export async function getMe(r) {
   const user = await User.findByPk(r.auth.credentials.id, {
     attributes: { include: ['tempPhone'] },
-    include: [{ model: Wallet, as: 'wallet', attributes: ['address'] }]
+    include: [{ model: Wallet, as: 'wallet', attributes: ['address'] }],
   });
 
   return output(user);
@@ -33,8 +30,7 @@ export async function getMe(r) {
 export async function getUser(r) {
   const userController = new UserController(await User.findByPk(r.params.userId));
 
-  userController.
-    checkNotSeeYourself(r.auth.credentials.id)
+  userController.checkNotSeeYourself(r.auth.credentials.id);
 
   return output(userController.user);
 }
@@ -43,9 +39,7 @@ export async function getAllUsers(r) {
   const where = {};
 
   if (r.query.q) {
-    where[Op.or] = searchFields.map(
-      field => ({ [field]: { [Op.iLike]: `%${r.query.q}%` }})
-    );
+    where[Op.or] = searchFields.map((field) => ({ [field]: { [Op.iLike]: `%${r.query.q}%` } }));
   }
 
   const { count, rows } = await User.findAndCountAll({
@@ -60,39 +54,38 @@ export async function getAllUsers(r) {
 }
 
 export function getUsers(role: UserRole) {
-  return async function(r) {
-    const entersAreaLiteral = literal(
-      'st_within("User"."locationPostGIS", st_makeenvelope(:northLng, :northLat, :southLng, :southLat, 4326))'
-    );
+  return async function (r) {
+    const entersAreaLiteral = literal('st_within("User"."locationPostGIS", st_makeenvelope(:northLng, :northLat, :southLng, :southLat, 4326))');
     const userSpecializationOnlyPathsLiteral = literal(
-      '(1 = (CASE WHEN EXISTS (SELECT * FROM "UserSpecializationFilters" WHERE "userId" = "User"."id" AND "UserSpecializationFilters"."path" IN (:path)) THEN 1 END))'
+      '(1 = (CASE WHEN EXISTS (SELECT * FROM "UserSpecializationFilters" WHERE "userId" = "User"."id" AND "UserSpecializationFilters"."path" IN (:path)) THEN 1 END))',
     );
     const userSpecializationOnlyIndustryKeysLiteral = literal(
-      '(1 = (CASE WHEN EXISTS (SELECT * FROM "UserSpecializationFilters" WHERE "userId" = "User"."id" AND "UserSpecializationFilters"."industryKey" IN (:industryKey)) THEN 1 END))'
+      '(1 = (CASE WHEN EXISTS (SELECT * FROM "UserSpecializationFilters" WHERE "userId" = "User"."id" AND "UserSpecializationFilters"."industryKey" IN (:industryKey)) THEN 1 END))',
     );
     const userSpecializationIndustryKeysAndPathsLiteral = literal(
       '(1 = (CASE WHEN EXISTS (SELECT * FROM "UserSpecializationFilters" WHERE "userId" = "User"."id" AND "UserSpecializationFilters"."path" IN (:path)) THEN 1 END))' +
-      'OR (1 = (CASE WHEN EXISTS (SELECT * FROM "UserSpecializationFilters" WHERE "userId" = "User"."id" AND "UserSpecializationFilters"."industryKey" IN (:industryKey)) THEN 1 END))'
+        'OR (1 = (CASE WHEN EXISTS (SELECT * FROM "UserSpecializationFilters" WHERE "userId" = "User"."id" AND "UserSpecializationFilters"."industryKey" IN (:industryKey)) THEN 1 END))',
     );
 
     const order = [];
     const include = [];
-    const replacements = { };
+    const replacements = {};
     let distinctCol: '"User"."id"' | 'id' = '"User"."id"';
 
     const where = {
-      [Op.and]: [], role,
+      [Op.and]: [],
+      role,
       ...(r.query.workplace && { workplace: r.query.workplace }),
-      ...(r.query.priority && {priority: r.query.priority}),
-      ...(r.query.betweenWagePerHour && { wagePerHour: {
-          [Op.between]: [r.query.betweenWagePerHour.from, r.query.betweenWagePerHour.to]
-      } }),
+      ...(r.query.priority && { priority: r.query.priority }),
+      ...(r.query.betweenWagePerHour && {
+        wagePerHour: {
+          [Op.between]: [r.query.betweenWagePerHour.from, r.query.betweenWagePerHour.to],
+        },
+      }),
     };
 
     if (r.query.q) {
-      where[Op.or] = searchFields.map(
-        field => ({ [field]: { [Op.iLike]: `%${r.query.q}%` }})
-      );
+      where[Op.or] = searchFields.map((field) => ({ [field]: { [Op.iLike]: `%${r.query.q}%` } }));
     }
     if (r.query.ratingStatus) {
       include.push({
@@ -141,12 +134,14 @@ export function getUsers(role: UserRole) {
       col: distinctCol, // so..., else not working
       limit: r.query.limit,
       offset: r.query.offset,
-      include, order, where,
+      include,
+      order,
+      where,
       replacements,
     });
 
     return output({ count, users: rows });
-  }
+  };
 }
 
 export async function setRole(r) {
@@ -161,7 +156,7 @@ export async function setRole(r) {
 }
 
 export function editProfile(userRole: UserRole) {
-  return async function(r) {
+  return async function (r) {
     const user: User = r.auth.credentials;
     const userController = new UserController(user);
 
@@ -174,17 +169,20 @@ export function editProfile(userRole: UserRole) {
       await userController.setUserSpecializations(r.payload.specializationKeys, transaction);
     }
 
-    await user.update({
-      avatarId: avatarId,
-      lastName: r.payload.lastName,
-      location: r.payload.location,
-      firstName: r.payload.firstName,
-      priority: r.payload.priority || null,
-      workplace: r.payload.workplace || null,
-      wagePerHour: r.payload.wagePerHour || null,
-      additionalInfo: r.payload.additionalInfo,
-      locationPostGIS: r.payload.location ? transformToGeoPostGIS(r.payload.location) : null,
-    }, transaction);
+    await user.update(
+      {
+        avatarId: avatarId,
+        lastName: r.payload.lastName,
+        location: r.payload.location,
+        firstName: r.payload.firstName,
+        priority: r.payload.priority || null,
+        workplace: r.payload.workplace || null,
+        wagePerHour: r.payload.wagePerHour || null,
+        additionalInfo: r.payload.additionalInfo,
+        locationPostGIS: r.payload.location ? transformToGeoPostGIS(r.payload.location) : null,
+      },
+      transaction,
+    );
 
     await transaction.commit();
 
@@ -192,15 +190,13 @@ export function editProfile(userRole: UserRole) {
       userId: user.id,
     });
 
-    return output(
-      await User.findByPk(r.auth.credentials.id)
-    );
-  }
+    return output(await User.findByPk(r.auth.credentials.id));
+  };
 }
 
 export async function changePassword(r) {
-  const user = await User.scope("withPassword").findOne({
-    where: { id: r.auth.credentials.id }
+  const user = await User.scope('withPassword').findOne({
+    where: { id: r.auth.credentials.id },
   });
 
   const userController = new UserController(user);
@@ -218,20 +214,17 @@ export async function changePassword(r) {
 }
 
 export async function confirmPhoneNumber(r) {
-  const user = await User.scope("withPassword").findByPk(r.auth.credentials.id);
+  const user = await User.scope('withPassword').findByPk(r.auth.credentials.id);
 
   const userController = new UserController(user);
 
-  await userController
-    .userMustHaveVerificationPhone()
-    .checkPhoneConfirmationCode(r.payload.confirmCode)
-    .confirmPhoneNumber()
+  await userController.userMustHaveVerificationPhone().checkPhoneConfirmationCode(r.payload.confirmCode).confirmPhoneNumber();
 
   return output();
 }
 
 export async function sendCodeOnPhoneNumber(r) {
-  const userWithPassword = await User.scope("withPassword").findByPk(r.auth.credentials.id);
+  const userWithPassword = await User.scope('withPassword').findByPk(r.auth.credentials.id);
   const confirmCode = getRandomCodeNumber();
 
   const userController = new UserController(userWithPassword);
@@ -248,15 +241,15 @@ export async function sendCodeOnPhoneNumber(r) {
 
 export async function getUserStatistics(r) {
   const chatsStatistic = await ChatsStatistic.findOne({
-    where: { userId: r.auth.credentials.id }
+    where: { userId: r.auth.credentials.id },
   });
 
   const questsStatistic = await QuestsStatistic.findOne({
-    where: { userId: r.auth.credentials.id }
+    where: { userId: r.auth.credentials.id },
   });
 
   const ratingStatistic = await RatingStatistic.findOne({
-    where: { userId: r.auth.credentials.id }
+    where: { userId: r.auth.credentials.id },
   });
 
   return output({ chatsStatistic, questsStatistic, ratingStatistic });

@@ -1,15 +1,6 @@
 import { col, fn } from 'sequelize';
-import { addJob } from "../utils/scheduler";
-import {
-  User,
-  Quest,
-  Review,
-  UserRole,
-  StatusKYC,
-  QuestStatus,
-  RatingStatus,
-  RatingStatistic,
-} from "@workquest/database-models/lib/models";
+import { addJob } from '../utils/scheduler';
+import { User, Quest, Review, UserRole, StatusKYC, QuestStatus, RatingStatus, RatingStatistic } from '@workquest/database-models/lib/models';
 
 /**
  * 1 уровень Verified.
@@ -37,37 +28,32 @@ import {
  */
 
 export interface StatisticPayload {
-  userId: string,
+  userId: string;
 }
 
 export async function addUpdateReviewStatisticsJob(payload: StatisticPayload) {
-  return addJob("updateReviewStatistics", payload);
+  return addJob('updateReviewStatistics', payload);
 }
 
 type RatingConditions = {
-  completedQuests: number,
-  averageMark: number,
-  socialNetworks: number,
-}
+  completedQuests: number;
+  averageMark: number;
+  socialNetworks: number;
+};
 
 const RatingConditions = class {
-  constructor(
-    public readonly user: User,
-    public readonly completedQuestsCount: number,
-    public readonly averageMark: number,
-  ) {
-  }
+  constructor(public readonly user: User, public readonly completedQuestsCount: number, public readonly averageMark: number) {}
 
   public check(conditions: RatingConditions): boolean {
-    const socialNetworks = Object.values(this.user["additionalInfo"]["socialNetwork"])
-      .filter(network => network !== null)
-      .length;
+    const socialNetworks = Object.values(this.user['additionalInfo']['socialNetwork']).filter((network) => network !== null).length;
 
-    return this.completedQuestsCount >= conditions.completedQuests
-      && this.averageMark >= conditions.averageMark
-      && socialNetworks >= conditions.socialNetworks;
+    return (
+      this.completedQuestsCount >= conditions.completedQuests &&
+      this.averageMark >= conditions.averageMark &&
+      socialNetworks >= conditions.socialNetworks
+    );
   }
-}
+};
 
 function ratingStatus(user: User, completedQuestsCount: number, averageMark: number): RatingStatus {
   const thisUser = new RatingConditions(user, completedQuestsCount, averageMark);
@@ -96,8 +82,8 @@ function ratingStatus(user: User, completedQuestsCount: number, averageMark: num
   return RatingStatus.noStatus;
 }
 
-export default async function(payload: StatisticPayload) {
-  const [ratingStatistic, ] = await RatingStatistic.findOrCreate({
+export default async function (payload: StatisticPayload) {
+  const [ratingStatistic] = await RatingStatistic.findOrCreate({
     include: { model: User, as: 'user' },
     where: { userId: payload.userId },
     defaults: { userId: payload.userId },
@@ -108,14 +94,14 @@ export default async function(payload: StatisticPayload) {
   const reviewCountPromise = Review.count({ where: { toUserId: user.id } });
   const averageMarkResultPromise = Review.findOne({
     attributes: [[fn('AVG', col('mark')), 'avgMark']],
-    where: { toUserId: ratingStatistic.userId }
+    where: { toUserId: ratingStatistic.userId },
   });
   const completedQuestsCountPromise = Quest.count({
     where: {
       ...(user.role === UserRole.Employer && { userId: user.id }),
       ...(user.role === UserRole.Worker && { assignedWorkerId: user.id }),
       status: QuestStatus.Done,
-    }
+    },
   });
 
   const [reviewCount, completedQuestsCount, averageMarkResult] = await Promise.all([

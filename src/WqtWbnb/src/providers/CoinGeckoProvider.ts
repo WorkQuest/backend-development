@@ -1,9 +1,9 @@
-import axios from "axios";
-import {Coin, TokenPriceProvider} from "./types";
+import axios from 'axios';
+import { Coin, TokenPriceProvider } from './types';
 
 enum CoinGeckoCoin {
-  WQT = "work-quest",
-  BNB = "binancecoin",
+  WQT = 'work-quest',
+  BNB = 'binancecoin',
 }
 
 export class CoinGeckoProvider implements TokenPriceProvider {
@@ -17,10 +17,9 @@ export class CoinGeckoProvider implements TokenPriceProvider {
 
   private readonly limitRequests: number;
 
-  constructor(
-  ) {
+  constructor() {
     this.api = axios.create({
-      baseURL: 'https://api.coingecko.com/api/v3/'
+      baseURL: 'https://api.coingecko.com/api/v3/',
     });
     this.limitTimeInMilliseconds = 1000;
     this.limitRequests = 10;
@@ -34,7 +33,7 @@ export class CoinGeckoProvider implements TokenPriceProvider {
     if (this.numberOfRequests >= this.limitRequests && timeDifference >= this.limitTimeInMilliseconds) {
       const timeToNextRequest = 10000; // 10 sec
 
-      await new Promise(res => setTimeout(res, timeToNextRequest));
+      await new Promise((res) => setTimeout(res, timeToNextRequest));
 
       this.zeroingLimit();
     }
@@ -63,9 +62,14 @@ export class CoinGeckoProvider implements TokenPriceProvider {
 
     const coinName = CoinGeckoProvider.getNameCoin(coin);
 
-    const result = await this.api.get(`coins/${coinName}/market_chart/range?vs_currency=usd&from=${parseInt(timestamp as string) - 1800 - 60}&to=${parseInt(timestamp as string) + 1800 + 60}`, {
-      timeout: 10000
-    });
+    const result = await this.api.get(
+      `coins/${coinName}/market_chart/range?vs_currency=usd&from=${parseInt(timestamp as string) - 1800 - 60}&to=${
+        parseInt(timestamp as string) + 1800 + 60
+      }`,
+      {
+        timeout: 10000,
+      },
+    );
 
     this.updateLimitInfo();
 

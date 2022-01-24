@@ -1,28 +1,28 @@
-import { Buffer } from "buffer";
-import amqp from "amqplib/callback_api";
-import config from "../config/config";
+import { Buffer } from 'buffer';
+import amqp from 'amqplib/callback_api';
+import config from '../config/config';
 
 export const enum MainBrokerQueues {
   Chat = 'chat',
-  Quest = 'quest'
+  Quest = 'quest',
 }
 
 export const enum QuestNotificationActions {
   /** Quest flow */
-  questStarted = "questStarted",
-  workerRejectedQuest = "workerRejectedQuest",
-  workerAcceptedQuest = "workerAcceptedQuest",
-  workerCompletedQuest = "workerCompletedQuest",
-  employerAcceptedCompletedQuest = "employerAcceptedCompletedQuest",
-  employerRejectedCompletedQuest = "employerRejectedCompletedQuest",
+  questStarted = 'questStarted',
+  workerRejectedQuest = 'workerRejectedQuest',
+  workerAcceptedQuest = 'workerAcceptedQuest',
+  workerCompletedQuest = 'workerCompletedQuest',
+  employerAcceptedCompletedQuest = 'employerAcceptedCompletedQuest',
+  employerRejectedCompletedQuest = 'employerRejectedCompletedQuest',
   /** Quest Response */
-  workerRespondedToQuest = "workerRespondedToQuest",
-  employerInvitedWorkerToQuest = "employerInvitedWorkerToQuest",
-  workerAcceptedInvitationToQuest = "workerAcceptedInvitationToQuest",
-  workerRejectedInvitationToQuest = "workerRejectedInvitationToQuest",
-  employerRejectedWorkersResponse = "employerRejectedWorkersResponse",
+  workerRespondedToQuest = 'workerRespondedToQuest',
+  employerInvitedWorkerToQuest = 'employerInvitedWorkerToQuest',
+  workerAcceptedInvitationToQuest = 'workerAcceptedInvitationToQuest',
+  workerRejectedInvitationToQuest = 'workerRejectedInvitationToQuest',
+  employerRejectedWorkersResponse = 'employerRejectedWorkersResponse',
   /** Review */
-  userLeftReviewAboutQuest = "userLeftReviewAboutQuest"
+  userLeftReviewAboutQuest = 'userLeftReviewAboutQuest',
 }
 
 export const enum ChatNotificationActions {
@@ -34,14 +34,13 @@ export const enum ChatNotificationActions {
   /** */
   messageReadByRecipient = 'messageReadByRecipient',
   newMessage = 'newMessage',
-
 }
 
 type Notification<Action> = {
   action: Action;
   data: any;
-  recipients: string[]
-}
+  recipients: string[];
+};
 
 export class ControllerBroker {
   private channel;
@@ -51,7 +50,7 @@ export class ControllerBroker {
   }
 
   private initMessageBroker() {
-    amqp.connect(config.notificationMessageBroker.link , (connectError, conn) => {
+    amqp.connect(config.notificationMessageBroker.link, (connectError, conn) => {
       if (connectError) {
         console.error(connectError.message);
       }
@@ -84,15 +83,15 @@ export class ControllerBroker {
     return Buffer.from(stringData);
   }
 
-  public sendQuestNotification (notification: Notification<QuestNotificationActions>) {
+  public sendQuestNotification(notification: Notification<QuestNotificationActions>) {
     if (!this.channel) return;
 
     const convertedData = ControllerBroker.convertData(notification);
 
     this.channel.sendToQueue(MainBrokerQueues.Quest, convertedData);
-  };
+  }
 
-  public sendChatNotification (notification: Notification<ChatNotificationActions>) {
+  public sendChatNotification(notification: Notification<ChatNotificationActions>) {
     if (!this.channel) return;
 
     const convertedData = ControllerBroker.convertData(notification);

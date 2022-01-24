@@ -1,33 +1,33 @@
-const pino = require("pino");
+const pino = require('pino');
 
 export const pinoConfig = (prettify?: boolean) => ({
   prettyPrint: prettify
     ? {
-      colorize: true,
-      crlf: false,
-      jsonPretty: false,
-      translateTime: "yyyy-mm-dd HH:MM:ss",
-      ignore: "pid,hostname,v,tags,data",
-      messageFormat: "{data}",
-      customPrettifiers: {
-        response: { messageFormat: "{req.url} - {req.method} - code:{req.statusCode}" }
+        colorize: true,
+        crlf: false,
+        jsonPretty: false,
+        translateTime: 'yyyy-mm-dd HH:MM:ss',
+        ignore: 'pid,hostname,v,tags,data',
+        messageFormat: '{data}',
+        customPrettifiers: {
+          response: { messageFormat: '{req.url} - {req.method} - code:{req.statusCode}' },
+        },
       }
-    }
     : false,
-  redact: { paths: ["payload.password", "req.headers.authorization"], censor: "***" },
+  redact: { paths: ['payload.password', 'req.headers.authorization'], censor: '***' },
   serializers: {
     res: function customResSerializer(res) {
       return {
-        code: res.statusCode
+        code: res.statusCode,
       };
-    }
+    },
   },
   logPayload: true,
   logEvents: ['response', 'request'],
   logQueryParams: true,
   formatters: {
     req: (req) => ({
-      method: req.method
+      method: req.method,
     }),
     level() {
       return {};
@@ -37,7 +37,7 @@ export const pinoConfig = (prettify?: boolean) => ({
     },
     tags() {
       return {};
-    }
+    },
   },
-  timestamp: pino.stdTimeFunctions.isoTime
+  timestamp: pino.stdTimeFunctions.isoTime,
 });

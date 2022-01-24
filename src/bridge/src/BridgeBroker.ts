@@ -1,46 +1,45 @@
 import amqp from 'amqplib/callback_api';
-import config from "../config/config.common";
+import config from '../config/config.common';
+import { BridgeEventType } from './BridgeContract';
 
-export function initRabbitMQ() {
-  return amqp.connect(config.notificationMessageBroker.link, (connectError, conn) => {
-    if (connectError) {
-      console.error(connectError.message);
-    }
+export class BridgeBrokerController {
+  private channel;
 
-    conn.on('error', (connectionError) => {
-      console.error(connectionError.message);
-    });
-
-    conn.on('close', () => {
-      setTimeout(() => {
-        initRabbitMQ();
-      }, 5000);
-    });
-
-    const channel = conn.createChannel((channelError, channel) => {
-      if (channelError) {
-        console.error(channelError.message);
+  public initMessageBroker() {
+    amqp.connect(config.notificationMessageBroker.link, (connectError, conn) => {
+      if (connectError) {
+        console.error(connectError.message);
       }
 
-      return channel;
+      conn.on('error', (connectionError) => {
+        console.error(connectionError.message);
+      });
+
+      conn.on('close', () => {
+        setTimeout(() => {
+          this.initMessageBroker();
+        }, 5000);
+      });
+
+      conn.createChannel((channelError, channel) => {
+        if (channelError) {
+          console.error(channelError.message);
+        }
+
+        this.channel = channel;
+      });
+
+      console.log('Bridge message broker connected');
     });
+  }
 
-    console.log('Bridge message broker connected');
-
-    return channel;
-  })
-}
-
-export class BridgeBroker {
-  private channel = initRabbitMQ();
-
-  private convertData(data: object): Buffer {
+  private convertData(data: BridgeEventType): Buffer {
     const stringData = JSON.stringify(data);
 
     return Buffer.from(stringData);
   }
 
-  public sendBridgeNotification(data: object): void {
+  public sendBridgeNotification(data: BridgeEventType): void {
     if (!this.channel) return;
 
     const convertedData = this.convertData(data);
@@ -49,4 +48,4 @@ export class BridgeBroker {
   }
 }
 
-export const BridgeMessageBroker = new BridgeBroker();
+export const BridgeMessageBroker = new BridgeBrokerController();

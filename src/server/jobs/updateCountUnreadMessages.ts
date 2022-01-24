@@ -1,15 +1,15 @@
-import { addJob } from "../utils/scheduler";
-import { Message, ChatMember } from "@workquest/database-models/lib/models";
-import { Op } from "sequelize";
+import { addJob } from '../utils/scheduler';
+import { Message, ChatMember } from '@workquest/database-models/lib/models';
+import { Op } from 'sequelize';
 
 export type MemberUnreadMessagesPayload = {
-  lastUnreadMessage: { id: string, number: number };
+  lastUnreadMessage: { id: string; number: number };
   readerUserId: string;
   chatId: string;
-}
+};
 
 export async function updateCountUnreadMessagesJob(payload: MemberUnreadMessagesPayload) {
-  return addJob("updateCountUnreadMessages", payload);
+  return addJob('updateCountUnreadMessages', payload);
 }
 
 export default async function updateCountUnreadMessages(payload: MemberUnreadMessagesPayload) {
@@ -21,9 +21,9 @@ export default async function updateCountUnreadMessages(payload: MemberUnreadMes
   });
 
   let unreadMessageCounter: {
-    unreadCountMessages: number,
-    lastReadMessageId?: string,
-    lastReadMessageNumber?: number,
+    unreadCountMessages: number;
+    lastReadMessageId?: string;
+    lastReadMessageNumber?: number;
   } = null;
 
   if (chatMember.lastReadMessageId === payload.lastUnreadMessage.id) {
@@ -31,18 +31,15 @@ export default async function updateCountUnreadMessages(payload: MemberUnreadMes
 
     unreadMessageCounter = { unreadCountMessages: 0 };
   } else {
-    const firstUnreadMessageNumber = chatMember.lastReadMessageNumber ? chatMember.lastReadMessageNumber : 1
+    const firstUnreadMessageNumber = chatMember.lastReadMessageNumber ? chatMember.lastReadMessageNumber : 1;
     const unreadMessageCount = await Message.count({
       where: {
         id: { [Op.ne]: chatMember.lastReadMessageId },
         senderUserId: { [Op.ne]: chatMember.userId },
         number: {
-          [Op.between]: [
-            firstUnreadMessageNumber,
-            payload.lastUnreadMessage.number,
-          ]
+          [Op.between]: [firstUnreadMessageNumber, payload.lastUnreadMessage.number],
         },
-      }
+      },
     });
 
     const unreadCountMessages = chatMember.unreadCountMessages - unreadMessageCount;
@@ -56,4 +53,3 @@ export default async function updateCountUnreadMessages(payload: MemberUnreadMes
 
   await chatMember.update(unreadMessageCounter);
 }
-

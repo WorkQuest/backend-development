@@ -31,11 +31,11 @@ export type ProposalEventType = {
   votes: string;
   succeded: boolean;
   defeated: boolean;
-}
+};
 
 export type onEventCallBack = {
   (eventData: ProposalEventType): void;
-}
+};
 
 export class ProposalContract {
   private readonly _address: string;
@@ -74,9 +74,7 @@ export class ProposalContract {
   }
 
   private async _parseEventsData(eventsData: ProposalEventData[]): Promise<ProposalEventType[]> {
-    return Promise.all(
-      eventsData.map(async (data) => await ProposalContract._parseEventData(data))
-    );
+    return Promise.all(eventsData.map(async (data) => await ProposalContract._parseEventData(data)));
   }
 
   private async _onEventData(eventData: ProposalEventData) {
@@ -84,11 +82,12 @@ export class ProposalContract {
 
     this._provider.lastTrackedBlock = eventData.blockNumber;
 
-    this._onEventCallBacks.forEach(callBack => callBack(event));
+    this._onEventCallBacks.forEach((callBack) => callBack(event));
   }
 
   private _eventListenerInit(fromBlock: number) {
-    this._contract.events.allEvents({ fromBlock })
+    this._contract.events
+      .allEvents({ fromBlock })
       .on('error', console.error)
       .on('data', (data: ProposalEventData) => this._onEventData(data));
   }
@@ -109,7 +108,7 @@ export class ProposalContract {
     return this._contract.getPastEvents(event, options);
   }
 
-  public async* preParsingEvents() {
+  public async *preParsingEvents() {
     const lastBlockNumber = await this._provider.getBlockNumber();
 
     let fromBlock = this._provider.lastTrackedBlock;

@@ -1,16 +1,17 @@
 import * as Joi from 'joi';
 import {
-  idsSchema, isActiveSchema,
+  idsSchema,
+  isActiveSchema,
   limitSchema,
   offsetSchema,
-  outputOkSchema, proposalNumberSchema, proposalStatus,
-  proposerIdWalletSchema, searchSchema, sortDirectionSchema
+  outputOkSchema,
+  proposalNumberSchema,
+  proposalStatus,
+  proposerIdWalletSchema,
+  searchSchema,
+  sortDirectionSchema,
 } from '@workquest/database-models/lib/schemes';
-import {
-  proposalDescriptionSchema,
-  proposalSchema,
-  proposalTitleSchema
-} from '@workquest/database-models/lib/schemes/proposal';
+import { proposalDescriptionSchema, proposalSchema, proposalTitleSchema } from '@workquest/database-models/lib/schemes/proposal';
 import { createProposal, getProposal, getProposals, getVotingsProposal } from '../../api/proposal';
 
 export default [
@@ -28,14 +29,15 @@ export default [
           proposer: proposerIdWalletSchema.required(),
           title: proposalTitleSchema.required(),
           description: proposalDescriptionSchema.required(),
-          medias: idsSchema.required().unique()
-        }).label('CreateProposalPayload')
+          medias: idsSchema.required().unique(),
+        }).label('CreateProposalPayload'),
       },
       response: {
-        schema: outputOkSchema(proposalSchema).label('CreateProposalResponse')
-      }
-    }
-  }, {
+        schema: outputOkSchema(proposalSchema).label('CreateProposalResponse'),
+      },
+    },
+  },
+  {
     method: 'GET',
     path: '/v1/proposal',
     handler: getProposals,
@@ -51,13 +53,14 @@ export default [
           offset: offsetSchema,
           createdAt: sortDirectionSchema.default('DESC'),
           status: proposalStatus.default(null),
-        }).label('GetProposalsQuery')
+        }).label('GetProposalsQuery'),
       },
       response: {
-        schema: outputOkSchema(proposalSchema).label('GetProposalsResponse')
-      }
-    }
-  }, {
+        schema: outputOkSchema(proposalSchema).label('GetProposalsResponse'),
+      },
+    },
+  },
+  {
     method: 'GET',
     path: '/v1/proposal/{proposalId}',
     handler: getProposal,
@@ -68,14 +71,15 @@ export default [
       description: 'Get proposal',
       validate: {
         params: Joi.object({
-          proposalId: proposalNumberSchema.required()
-        }).label('GetProposalParams')
+          proposalId: proposalNumberSchema.required(),
+        }).label('GetProposalParams'),
       },
       response: {
-        schema: outputOkSchema(proposalSchema).label('GetProposalResponse')
-      }
-    }
-  }, {
+        schema: outputOkSchema(proposalSchema).label('GetProposalResponse'),
+      },
+    },
+  },
+  {
     method: 'GET',
     path: '/v1/votings/{proposalId}',
     handler: getVotingsProposal,
@@ -86,18 +90,18 @@ export default [
       description: 'Get voting in proposal',
       validate: {
         params: Joi.object({
-          proposalId: proposalNumberSchema.required()
+          proposalId: proposalNumberSchema.required(),
         }).label('GetProposalParams'),
         query: Joi.object({
           limit: limitSchema,
           offset: offsetSchema,
           createdAt: sortDirectionSchema.default('DESC'),
-          support: isActiveSchema
-        }).label('GetVotingsQuery')
+          support: isActiveSchema,
+        }).label('GetVotingsQuery'),
       },
       response: {
-        schema: outputOkSchema(proposalSchema).label('GetVotingsProposalResponse')
-      }
-    }
-  }];
-
+        schema: outputOkSchema(proposalSchema).label('GetVotingsProposalResponse'),
+      },
+    },
+  },
+];

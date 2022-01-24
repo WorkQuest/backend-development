@@ -1,10 +1,10 @@
-import {Op} from "sequelize";
-import {error, output} from "../utils";
-import {Errors} from "../utils/errors";
-import {ChatNotificationActions, QuestNotificationActions} from "../controllers/controller.broker";
-import {QuestsResponseController} from "../controllers/quest/controller.questsResponse";
-import {QuestController} from "../controllers/quest/controller.quest";
-import {UserController}  from "../controllers/user/controller.user";
+import { Op } from 'sequelize';
+import { error, output } from '../utils';
+import { Errors } from '../utils/errors';
+import { ChatNotificationActions, QuestNotificationActions } from '../controllers/controller.broker';
+import { QuestsResponseController } from '../controllers/quest/controller.questsResponse';
+import { QuestController } from '../controllers/quest/controller.quest';
+import { UserController } from '../controllers/user/controller.user';
 import {
   User,
   Chat,
@@ -22,8 +22,8 @@ import {
   QuestChatStatuses,
   QuestsResponseType,
   QuestsResponseStatus,
-} from "@workquest/database-models/lib/models";
-import { MediaController } from "../controllers/controller.media";
+} from '@workquest/database-models/lib/models';
+import { MediaController } from '../controllers/controller.media';
 
 export async function responseOnQuest(r) {
   let questResponse: QuestsResponse;
@@ -40,12 +40,12 @@ export async function responseOnQuest(r) {
     where: {
       workerId: worker.id,
       questId: questController.quest.id,
-      status: { [Op.ne]: QuestsResponseStatus.Accepted }
-    }
+      status: { [Op.ne]: QuestsResponseStatus.Accepted },
+    },
   });
 
   if (questResponse) {
-    return error(Errors.AlreadyAnswer, "You already answered quest", { questResponse });
+    return error(Errors.AlreadyAnswer, 'You already answered quest', { questResponse });
 
     // if (questResponse.previousStatus === QuestsResponseStatus.Rejected) {
     //   return error(Errors.Forbidden, "Client already rejected your response on quest", { questResponse });
@@ -59,13 +59,16 @@ export async function responseOnQuest(r) {
 
   const medias = await MediaController.getMedias(r.payload.medias);
 
-  questResponse = await QuestsResponse.create({
-    workerId: worker.id,
-    questId: quest.id,
-    message: r.payload.message,
-    status: QuestsResponseStatus.Open,
-    type: QuestsResponseType.Response,
-  }, { transaction });
+  questResponse = await QuestsResponse.create(
+    {
+      workerId: worker.id,
+      questId: quest.id,
+      message: r.payload.message,
+      status: QuestsResponseStatus.Open,
+      type: QuestsResponseType.Response,
+    },
+    { transaction },
+  );
 
   const questResponseController = new QuestsResponseController(questResponse);
 
@@ -77,7 +80,7 @@ export async function responseOnQuest(r) {
     senderUserId: worker.id,
     chatId: chat.id,
     type: MessageType.info,
-    number: 1, /** Because create */
+    number: 1 /** Because create */,
     createdAt: Date.now(),
   });
   const infoMessage = InfoMessage.build({
@@ -90,29 +93,32 @@ export async function responseOnQuest(r) {
     chatId: chat.id,
     text: r.payload.message,
     type: MessageType.message,
-    number: 2, /** Because create */
+    number: 2 /** Because create */,
     createdAt: Date.now() + 100,
   });
   const questChat = QuestChat.build({
-    employerId: quest.userId ,
+    employerId: quest.userId,
     workerId: worker.id,
     questId: quest.id,
     responseId: questResponse.id,
     chatId: chat.id,
   });
-  const members = ChatMember.bulkBuild([{
-    unreadCountMessages: 0, /** Because created */
-    chatId: chat.id,
-    userId: r.auth.credentials.id,
-    lastReadMessageId: firstInfoMessage.id, /** Because created,  */
-    lastReadMessageNumber: firstInfoMessage.number,
-  }, {
-    unreadCountMessages: 1, /** Because created */
-    chatId: chat.id,
-    userId: quest.userId,
-    lastReadMessageId: null, /** Because created */
-    lastReadMessageNumber: null,
-  }]);
+  const members = ChatMember.bulkBuild([
+    {
+      unreadCountMessages: 0 /** Because created */,
+      chatId: chat.id,
+      userId: r.auth.credentials.id,
+      lastReadMessageId: firstInfoMessage.id /** Because created,  */,
+      lastReadMessageNumber: firstInfoMessage.number,
+    },
+    {
+      unreadCountMessages: 1 /** Because created */,
+      chatId: chat.id,
+      userId: quest.userId,
+      lastReadMessageId: null /** Because created */,
+      lastReadMessageNumber: null,
+    },
+  ]);
 
   chat.lastMessageId = responseWorkerMessage.id;
   chat.lastMessageDate = responseWorkerMessage.createdAt;
@@ -123,7 +129,7 @@ export async function responseOnQuest(r) {
     infoMessage.save({ transaction }),
     responseWorkerMessage.save({ transaction }),
     questChat.save({ transaction }),
-    ...members.map(member => member.save({ transaction })),
+    ...members.map((member) => member.save({ transaction })),
   ] as Promise<any>[]);
 
   await responseWorkerMessage.$set('medias', medias, { transaction });
@@ -140,7 +146,7 @@ export async function responseOnQuest(r) {
 }
 
 export async function inviteOnQuest(r) {
-  let questResponse: QuestsResponse
+  let questResponse: QuestsResponse;
   const employer: User = r.auth.credentials;
   const employerController = new UserController(employer);
 
@@ -160,11 +166,12 @@ export async function inviteOnQuest(r) {
     where: {
       questId: questController.quest.id,
       workerId: invitedWorkerController.user.id,
-      status: { [Op.ne]: QuestsResponseStatus.Accepted} },
+      status: { [Op.ne]: QuestsResponseStatus.Accepted },
+    },
   });
 
   if (questResponse) {
-    return error(Errors.AlreadyAnswer, "You have already been invited user to the quest", { questResponse });
+    return error(Errors.AlreadyAnswer, 'You have already been invited user to the quest', { questResponse });
     // if(questResponse.previousStatus === QuestsResponseStatus.Rejected) {
     //   return error(Errors.Forbidden, 'Person reject quest invitation', {});
     // }
@@ -175,21 +182,24 @@ export async function inviteOnQuest(r) {
 
   const transaction = await r.server.app.db.transaction();
 
-  questResponse = await QuestsResponse.create({
-    workerId: invitedWorkerController.user.id,
-    questId: questController.quest.id,
-    message: r.payload.message,
-    status: QuestsResponseStatus.Open,
-    previousStatus: QuestsResponseStatus.Open,
-    type: QuestsResponseType.Invite,
-  }, { transaction });
+  questResponse = await QuestsResponse.create(
+    {
+      workerId: invitedWorkerController.user.id,
+      questId: questController.quest.id,
+      message: r.payload.message,
+      status: QuestsResponseStatus.Open,
+      previousStatus: QuestsResponseStatus.Open,
+      type: QuestsResponseType.Invite,
+    },
+    { transaction },
+  );
 
   const chat = Chat.build({ type: ChatType.quest });
   const firstInfoMessage = Message.build({
     senderUserId: employer.id,
     chatId: chat.id,
     type: MessageType.info,
-    number: 1, /** Because create */
+    number: 1 /** Because create */,
     createdAt: Date.now(),
   });
   const infoMessage = InfoMessage.build({
@@ -202,24 +212,27 @@ export async function inviteOnQuest(r) {
     chatId: chat.id,
     text: r.payload.message,
     type: MessageType.message,
-    number: 2, /** Because create */
+    number: 2 /** Because create */,
     createdAt: Date.now() + 100,
   });
-  const members = ChatMember.bulkBuild([{
-    unreadCountMessages: 0, /** Because created */
-    chatId: chat.id,
-    userId: r.auth.credentials.id,
-    lastReadMessageId: firstInfoMessage.id, /** Because created,  */
-    lastReadMessageNumber: 1
-  }, {
-    unreadCountMessages: 1, /** Because created */
-    chatId: chat.id,
-    userId: invitedWorker.id,
-    lastReadMessageId: null, /** Because created */
-    lastReadMessageNumber: null,
-  }]);
+  const members = ChatMember.bulkBuild([
+    {
+      unreadCountMessages: 0 /** Because created */,
+      chatId: chat.id,
+      userId: r.auth.credentials.id,
+      lastReadMessageId: firstInfoMessage.id /** Because created,  */,
+      lastReadMessageNumber: 1,
+    },
+    {
+      unreadCountMessages: 1 /** Because created */,
+      chatId: chat.id,
+      userId: invitedWorker.id,
+      lastReadMessageId: null /** Because created */,
+      lastReadMessageNumber: null,
+    },
+  ]);
   const questChat = QuestChat.build({
-    employerId: quest.userId ,
+    employerId: quest.userId,
     workerId: invitedWorker.id,
     questId: quest.id,
     responseId: questResponse.id,
@@ -235,7 +248,7 @@ export async function inviteOnQuest(r) {
     infoMessage.save({ transaction }),
     inviteEmployerMessage.save({ transaction }),
     questChat.save({ transaction }),
-    ...members.map( member => member.save({ transaction }) ),
+    ...members.map((member) => member.save({ transaction })),
   ] as Promise<any>[]);
 
   await transaction.commit();
@@ -258,14 +271,17 @@ export async function userResponsesToQuest(r) {
   await questController.employerMustBeQuestCreator(employer.id);
 
   const { rows, count } = await QuestsResponse.findAndCountAll({
-    include: [{
-      model: QuestChat.unscoped(),
-      attributes: ["chatId"],
-      as: 'questChat'
-    }, {
-      model: User.scope('shortWithWallet'),
-      as: 'worker'
-    }],
+    include: [
+      {
+        model: QuestChat.unscoped(),
+        attributes: ['chatId'],
+        as: 'questChat',
+      },
+      {
+        model: User.scope('shortWithWallet'),
+        as: 'worker',
+      },
+    ],
     where: { questId: questController.quest.id },
     limit: r.query.limit,
     offset: r.query.offset,
@@ -282,14 +298,17 @@ export async function responsesToQuestsForUser(r) {
 
   const { rows, count } = await QuestsResponse.findAndCountAll({
     where: { workerId: worker.id },
-    include: [{
-      model: Quest,
-      as: 'quest',
-    }, {
-      model: QuestChat.unscoped(),
-      attributes: ["chatId"],
-      as: 'questChat'
-    }],
+    include: [
+      {
+        model: Quest,
+        as: 'quest',
+      },
+      {
+        model: QuestChat.unscoped(),
+        attributes: ['chatId'],
+        as: 'questChat',
+      },
+    ],
     limit: r.query.limit,
     offset: r.query.offset,
   });
@@ -310,20 +329,24 @@ export async function acceptInviteOnQuest(r) {
   questsResponseController
     .workerMustBeInvitedToQuest(worker.id)
     .questsResponseMustHaveType(QuestsResponseType.Invite)
-    .questsResponseMustHaveStatus(QuestsResponseStatus.Open)
+    .questsResponseMustHaveStatus(QuestsResponseStatus.Open);
 
   const transaction = await r.server.app.db.transaction();
 
-  questResponse = await questResponse.update({
-    status: QuestsResponseStatus.Accepted,
-  }, { transaction });
+  questResponse = await questResponse.update(
+    {
+      status: QuestsResponseStatus.Accepted,
+    },
+    { transaction },
+  );
   questsResponseController.questsResponse = questResponse;
 
   const questChat = await QuestChat.findOne({
     where: { responseId: questResponse.id },
     include: {
-      model: Chat.unscoped(), as: 'chat',
-      include: [{ model: Message.unscoped(), as: 'lastMessage' }]
+      model: Chat.unscoped(),
+      as: 'chat',
+      include: [{ model: Message.unscoped(), as: 'lastMessage' }],
     },
   });
   const message = Message.build({
@@ -369,24 +392,30 @@ export async function rejectInviteOnQuest(r) {
   questsResponseController
     .workerMustBeInvitedToQuest(worker.id)
     .questsResponseMustHaveType(QuestsResponseType.Invite)
-    .questsResponseMustHaveStatus(QuestsResponseStatus.Open)
+    .questsResponseMustHaveStatus(QuestsResponseStatus.Open);
 
   const transaction = await r.server.app.db.transaction();
 
-  questResponse = await questResponse.update({
-    status: QuestsResponseStatus.Rejected
-  }, { transaction });
+  questResponse = await questResponse.update(
+    {
+      status: QuestsResponseStatus.Rejected,
+    },
+    { transaction },
+  );
   questsResponseController.questsResponse = questResponse;
 
   //TODO In chat controller
   const questChat = await QuestChat.findOne({
     where: { responseId: questResponse.id },
     include: {
-      model: Chat.unscoped(), as: 'chat',
-      include: [{
-        model: Message.unscoped(),
-        as: 'lastMessage'
-      }]
+      model: Chat.unscoped(),
+      as: 'chat',
+      include: [
+        {
+          model: Message.unscoped(),
+          as: 'lastMessage',
+        },
+      ],
     },
   });
   const message = Message.build({
@@ -430,25 +459,29 @@ export async function rejectResponseOnQuest(r) {
 
   await questController.employerMustBeQuestCreator(employer.id);
 
-  questsResponseController
-    .questsResponseMustHaveType(QuestsResponseType.Response)
-    .questsResponseMustHaveStatus(QuestsResponseStatus.Open)
+  questsResponseController.questsResponseMustHaveType(QuestsResponseType.Response).questsResponseMustHaveStatus(QuestsResponseStatus.Open);
 
   const transaction = await r.server.app.db.transaction();
 
-  questResponse = await questResponse.update({
-    status: QuestsResponseStatus.Rejected
-  }, { transaction });
+  questResponse = await questResponse.update(
+    {
+      status: QuestsResponseStatus.Rejected,
+    },
+    { transaction },
+  );
   questsResponseController.questsResponse = questResponse;
 
   const questChat = await QuestChat.findOne({
     where: { responseId: questResponse.id },
     include: {
-      model: Chat.unscoped(), as: 'chat',
-      include: [{
-        model: Message.unscoped(),
-        as: 'lastMessage'
-      }]
+      model: Chat.unscoped(),
+      as: 'chat',
+      include: [
+        {
+          model: Message.unscoped(),
+          as: 'lastMessage',
+        },
+      ],
     },
   });
   const message = Message.build({

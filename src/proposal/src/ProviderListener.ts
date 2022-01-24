@@ -7,13 +7,13 @@ import {
   ProposalCreatedEvent,
   ProposalVoteCastEvent,
   ProposalExecutedEvent,
-  Discussion
+  Discussion,
 } from '@workquest/database-models/lib/models';
 
 export enum TrackedEvents {
   ProposalCreated = 'ProposalCreated',
   VoteCast = 'VoteCast',
-  ProposalExecuted = 'ProposalExecuted'
+  ProposalExecuted = 'ProposalExecuted',
 }
 
 abstract class ProviderListener {
@@ -65,12 +65,11 @@ export class ProposalEthListener extends ProviderListener {
   }
 
   protected async _parseProposalCreatedEvent(event: ProposalEventType): Promise<void> {
-
     try {
       const [proposalEvent, isCreated] = await ProposalCreatedEvent.findOrCreate({
         where: {
           transactionHash: event.transactionHash,
-          timestamp: event.timestamp
+          timestamp: event.timestamp,
         },
         defaults: {
           timestamp: event.timestamp,
@@ -81,23 +80,23 @@ export class ProposalEthListener extends ProviderListener {
           description: event.description,
           votingPeriod: event.votingPeriod,
           minimumQuorum: event.minimumQuorum,
-          network: BlockchainNetworks.rinkebyTestNetwork // TODO
-        }
+          network: BlockchainNetworks.rinkebyTestNetwork, // TODO
+        },
       });
       if (isCreated) {
         const proposal = await Proposal.findOne({
           where: {
             proposer: proposalEvent.proposer.toLowerCase(),
-            nonce: proposalEvent.nonce
-          }
+            nonce: proposalEvent.nonce,
+          },
         });
         const discussion = await Discussion.create({
           authorId: proposal.userId,
           title: proposal.title,
-          description: proposal.description
+          description: proposal.description,
         });
 
-        await discussion.$set("medias", proposal.medias);
+        await discussion.$set('medias', proposal.medias);
 
         await proposal.update({
           discussionId: discussion.id,
@@ -106,7 +105,7 @@ export class ProposalEthListener extends ProviderListener {
           votingPeriod: proposalEvent.votingPeriod,
           minimumQuorum: proposalEvent.minimumQuorum,
           timestamp: proposalEvent.timestamp,
-          proposalId: proposalEvent.proposalId
+          proposalId: proposalEvent.proposalId,
         });
       }
     } catch (err) {
@@ -119,7 +118,7 @@ export class ProposalEthListener extends ProviderListener {
       const VoteCastEvent = await ProposalVoteCastEvent.findOrCreate({
         where: {
           transactionHash: event.transactionHash,
-          timestamp: event.timestamp
+          timestamp: event.timestamp,
         },
         defaults: {
           transactionHash: event.transactionHash,
@@ -128,8 +127,8 @@ export class ProposalEthListener extends ProviderListener {
           support: event.support,
           votes: event.votes,
           timestamp: event.timestamp,
-          network: BlockchainNetworks.rinkebyTestNetwork // TODO
-        }
+          network: BlockchainNetworks.rinkebyTestNetwork, // TODO
+        },
       });
     } catch (err) {
       console.log(err);
@@ -141,33 +140,39 @@ export class ProposalEthListener extends ProviderListener {
       const [ProposalExecutives, isCreated] = await ProposalExecutedEvent.findOrCreate({
         where: {
           transactionHash: event.transactionHash,
-          proposalId: event.transId
+          proposalId: event.transId,
         },
         defaults: {
           transactionHash: event.transactionHash,
           proposalId: event.transId,
           succeeded: event.succeded,
           defeated: event.defeated,
-          network: BlockchainNetworks.rinkebyTestNetwork // TODO
-        }
+          network: BlockchainNetworks.rinkebyTestNetwork, // TODO
+        },
       });
       if (isCreated) {
         if (ProposalExecutives.succeeded === true) {
-          await Proposal.update({
-            status: ProposalStatus.Accepted
-          }, {
-            where: {
-              proposalId: ProposalExecutives.proposalId
-            }
-          });
+          await Proposal.update(
+            {
+              status: ProposalStatus.Accepted,
+            },
+            {
+              where: {
+                proposalId: ProposalExecutives.proposalId,
+              },
+            },
+          );
         } else if (ProposalExecutives.defeated === true) {
-          await Proposal.update({
-            status: ProposalStatus.Rejected
-          }, {
-            where: {
-              proposalId: ProposalExecutives.proposalId
-            }
-          });
+          await Proposal.update(
+            {
+              status: ProposalStatus.Rejected,
+            },
+            {
+              where: {
+                proposalId: ProposalExecutives.proposalId,
+              },
+            },
+          );
         }
       }
     } catch (err) {
