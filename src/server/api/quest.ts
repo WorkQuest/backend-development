@@ -30,8 +30,7 @@ export const searchFields = ['title', 'description'];
 export async function getQuest(r) {
   const user: User = r.auth.credentials;
 
-  const include = [
-    {
+  const include = [{
       model: StarredQuests,
       as: 'star',
       where: { userId: r.auth.credentials.id },
