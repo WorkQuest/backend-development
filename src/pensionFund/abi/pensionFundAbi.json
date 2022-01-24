@@ -1,5 +1,6 @@
 {
-  "abi": {
+  "abi": [
+    {
     "_format": "hh-sol-artifact-1",
     "contractName": "WQPensionFund",
     "sourceName": "contracts/WQPensionFund.sol",
@@ -773,4 +774,5 @@
     "linkReferences": {},
     "deployedLinkReferences": {}
   }
+  ]
 }
