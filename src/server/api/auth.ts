@@ -25,7 +25,8 @@ export function register(host: 'dao' | 'main') {
     await UserController.checkEmail(r.payload.email);
 
     const emailConfirmCode = getRandomHexToken().substring(0, 6).toUpperCase();
-    const emailConfirmLink = host === 'main' ? `${config.baseUrl}/confirm?token=${emailConfirmCode}` : `${config.baseUrlDao}/confirm?token=${emailConfirmCode}`;
+    const emailConfirmLink =
+      host === 'main' ? `${config.baseUrl}/confirm?token=${emailConfirmCode}` : `${config.baseUrlDao}/confirm?token=${emailConfirmCode}`;
     const emailHtml = confirmTemplate({
       confirmLink: emailConfirmLink,
       confirmCode: emailConfirmCode,
@@ -253,7 +254,7 @@ export async function loginWallet(r) {
   });
 
   const result = {
-    ...generateJwt({ id: session.id, userId: session.userId }),
+    ...generateJwt({ id: session.id, userId: wallet.user.id }),
     userStatus: wallet.user.status,
     address: wallet.address,
   };

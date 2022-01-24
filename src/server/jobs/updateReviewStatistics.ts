@@ -47,7 +47,11 @@ const RatingConditions = class {
   public check(conditions: RatingConditions): boolean {
     const socialNetworks = Object.values(this.user['additionalInfo']['socialNetwork']).filter((network) => network !== null).length;
 
-    return this.completedQuestsCount >= conditions.completedQuests && this.averageMark >= conditions.averageMark && socialNetworks >= conditions.socialNetworks;
+    return (
+      this.completedQuestsCount >= conditions.completedQuests &&
+      this.averageMark >= conditions.averageMark &&
+      socialNetworks >= conditions.socialNetworks
+    );
   }
 };
 
@@ -100,7 +104,11 @@ export default async function (payload: StatisticPayload) {
     },
   });
 
-  const [reviewCount, completedQuestsCount, averageMarkResult] = await Promise.all([reviewCountPromise, completedQuestsCountPromise, averageMarkResultPromise]);
+  const [reviewCount, completedQuestsCount, averageMarkResult] = await Promise.all([
+    reviewCountPromise,
+    completedQuestsCountPromise,
+    averageMarkResultPromise,
+  ]);
 
   const status = ratingStatus(user, completedQuestsCount, averageMarkResult.getDataValue('avgMark'));
 

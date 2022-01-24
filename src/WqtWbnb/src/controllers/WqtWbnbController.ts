@@ -5,7 +5,11 @@ import { WqtWbnbEvent } from './types';
 import { EventData } from 'web3-eth-contract';
 
 export class WqtWbnbController {
-  constructor(private readonly web3Provider: Web3Provider, private readonly tokenPriceProvider: TokenPriceProvider, private readonly network: BlockchainNetworks) {
+  constructor(
+    private readonly web3Provider: Web3Provider,
+    private readonly tokenPriceProvider: TokenPriceProvider,
+    private readonly network: BlockchainNetworks,
+  ) {
     this.web3Provider.subscribeOnEvents(async (eventData) => {
       await this.onEvent(eventData);
     });

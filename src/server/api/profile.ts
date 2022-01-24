@@ -6,7 +6,15 @@ import { transformToGeoPostGIS } from '../utils/postGIS';
 import { MediaController } from '../controllers/controller.media';
 import { SkillsFiltersController } from '../controllers/controller.skillsFilters';
 import { addUpdateReviewStatisticsJob } from '../jobs/updateReviewStatistics';
-import { User, Wallet, UserRole, ChatsStatistic, RatingStatistic, QuestsStatistic, UserSpecializationFilter } from '@workquest/database-models/lib/models';
+import {
+  User,
+  Wallet,
+  UserRole,
+  ChatsStatistic,
+  RatingStatistic,
+  QuestsStatistic,
+  UserSpecializationFilter,
+} from '@workquest/database-models/lib/models';
 
 export const searchFields = ['firstName', 'lastName'];
 

@@ -62,9 +62,14 @@ export class CoinGeckoProvider implements TokenPriceProvider {
 
     const coinName = CoinGeckoProvider.getNameCoin(coin);
 
-    const result = await this.api.get(`coins/${coinName}/market_chart/range?vs_currency=usd&from=${parseInt(timestamp as string) - 1800 - 60}&to=${parseInt(timestamp as string) + 1800 + 60}`, {
-      timeout: 10000,
-    });
+    const result = await this.api.get(
+      `coins/${coinName}/market_chart/range?vs_currency=usd&from=${parseInt(timestamp as string) - 1800 - 60}&to=${
+        parseInt(timestamp as string) + 1800 + 60
+      }`,
+      {
+        timeout: 10000,
+      },
+    );
 
     this.updateLimitInfo();
 

@@ -1,5 +1,15 @@
 import * as Joi from 'joi';
-import { confirmEmail, getLoginViaSocialNetworkHandler, login, loginWallet, logout, refreshTokens, register, registerWallet, validateUserPassword } from '../../api/auth';
+import {
+  confirmEmail,
+  getLoginViaSocialNetworkHandler,
+  login,
+  loginWallet,
+  logout,
+  refreshTokens,
+  register,
+  registerWallet,
+  validateUserPassword,
+} from '../../api/auth';
 import {
   outputOkSchema,
   userEmailSchema,

@@ -1,6 +1,14 @@
 import * as Joi from 'joi';
 import { getBurns, getMints, getSwaps, getTokenDayData, getDistribution } from '../../api/liquidityPool(wqt-wbnb)';
-import { limitSchema, offsetSchema, swapWQTSchema, outputOkSchema, dailyLiquiditySchema, contractAmountSchema, wqtWbnbSwapEventsSchema } from '@workquest/database-models/lib/schemes';
+import {
+  limitSchema,
+  offsetSchema,
+  swapWQTSchema,
+  outputOkSchema,
+  dailyLiquiditySchema,
+  contractAmountSchema,
+  wqtWbnbSwapEventsSchema,
+} from '@workquest/database-models/lib/schemes';
 
 export default [
   {

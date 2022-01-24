@@ -7,15 +7,20 @@ import { BridgeContract } from './src/BridgeContract';
 import { BridgeEthListener, BridgeBscListener } from './src/BridgeListener';
 import { BridgeProvider } from './src/BridgeProvider';
 import { BridgeParserBlockInfo, BlockchainNetworks, initDatabase } from '@workquest/database-models/lib/models';
+import { BridgeMessageBroker } from './src/BridgeBroker';
 
 const abiFilePath = path.join(__dirname, '/abi/liquidityMiningAbi.json');
 const abi: any[] = JSON.parse(fs.readFileSync(abiFilePath).toString()).abi;
 
-const parseEthEventsFromHeight = configBridge.debug ? configBridge.rinkebyTestNetwork.parseEventsFromHeight : configBridge.ethereumMainNetwork.parseEventsFromHeight;
+const parseEthEventsFromHeight = configBridge.debug
+  ? configBridge.rinkebyTestNetwork.parseEventsFromHeight
+  : configBridge.ethereumMainNetwork.parseEventsFromHeight;
 const contractEthAddress = configBridge.debug ? configBridge.rinkebyTestNetwork.contract : configBridge.ethereumMainNetwork.contract;
 const urlEthProvider = configBridge.debug ? configBridge.rinkebyTestNetwork.webSocketProvider : configBridge.ethereumMainNetwork.webSocketProvider;
 
-const parseBscEventsFromHeight = configBridge.debug ? configBridge.bscTestNetwork.parseEventsFromHeight : configBridge.bscMainNetwork.parseEventsFromHeight;
+const parseBscEventsFromHeight = configBridge.debug
+  ? configBridge.bscTestNetwork.parseEventsFromHeight
+  : configBridge.bscMainNetwork.parseEventsFromHeight;
 const contractBscAddress = configBridge.debug ? configBridge.bscTestNetwork.contract : configBridge.bscMainNetwork.contract;
 const urlBscProvider = configBridge.debug ? configBridge.bscTestNetwork.webSocketProvider : configBridge.bscMainNetwork.webSocketProvider;
 
@@ -23,6 +28,7 @@ export async function init() {
   console.log('Start bridge'); // TODO add pino
 
   await initDatabase(config.database.link, false, false);
+  BridgeMessageBroker.initMessageBroker();
 
   const web3Eth = new Web3(
     new Web3.providers.WebsocketProvider(urlEthProvider, {

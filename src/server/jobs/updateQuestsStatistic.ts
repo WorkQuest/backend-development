@@ -59,7 +59,8 @@ export default async function updateQuestsStatistic(payload: Data) {
     defaults: { userId: payload.userId },
   });
 
-  const statistic = payload.role === UserRole.Worker ? await getWorkerQuestStatistic(payload.userId) : await getEmployerQuestStatistic(payload.userId);
+  const statistic =
+    payload.role === UserRole.Worker ? await getWorkerQuestStatistic(payload.userId) : await getEmployerQuestStatistic(payload.userId);
 
   await questsStatistic.update(statistic);
 }

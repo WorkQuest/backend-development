@@ -10,7 +10,19 @@ import { MediaController } from '../controllers/controller.media';
 import { addUpdateReviewStatisticsJob } from '../jobs/updateReviewStatistics';
 import { updateQuestsStatisticJob } from '../jobs/updateQuestsStatistic';
 import { SkillsFiltersController } from '../controllers/controller.skillsFilters';
-import { Quest, QuestChat, QuestDispute, QuestChatStatuses, QuestsResponse, QuestsResponseType, QuestStatus, Review, StarredQuests, User, UserRole } from '@workquest/database-models/lib/models';
+import {
+  Quest,
+  QuestChat,
+  QuestDispute,
+  QuestChatStatuses,
+  QuestsResponse,
+  QuestsResponseType,
+  QuestStatus,
+  Review,
+  StarredQuests,
+  User,
+  UserRole,
+} from '@workquest/database-models/lib/models';
 
 export const searchFields = ['title', 'description'];
 

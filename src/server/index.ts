@@ -76,7 +76,16 @@ const init = async () => {
 
   server.realm.modifiers.route.prefix = '/api';
 
-  await server.register([Basic, Nes, Inert, Vision, HapiBearer, Bell, { plugin: Pino, options: pinoConfig(false) }, { plugin: HapiSwagger, options: SwaggerOptions }]);
+  await server.register([
+    Basic,
+    Nes,
+    Inert,
+    Vision,
+    HapiBearer,
+    Bell,
+    { plugin: Pino, options: pinoConfig(false) },
+    { plugin: HapiSwagger, options: SwaggerOptions },
+  ]);
 
   server.app.db = await initDatabase(config.dbLink, true, true);
   server.app.web3 = new Web3();
@@ -90,7 +99,12 @@ const init = async () => {
 
   /** JWT Auth */
   server.auth.strategy('jwt-access', 'bearer-access-token', {
-    validate: tokenValidate('access', ['/api/v1/auth/confirm-email', '/api/v1/profile/set-role', '/api/v1/auth/logout', '/api/v1/auth/register/wallet']),
+    validate: tokenValidate('access', [
+      '/api/v1/auth/confirm-email',
+      '/api/v1/profile/set-role',
+      '/api/v1/auth/logout',
+      '/api/v1/auth/register/wallet',
+    ]),
   });
   server.auth.strategy('jwt-refresh', 'bearer-access-token', {
     validate: tokenValidate('refresh', ['/v1/auth/refresh-tokens']),

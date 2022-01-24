@@ -1,5 +1,6 @@
 import { BridgeContract, BridgeEventType } from './BridgeContract';
 import { BlockchainNetworks, BridgeParserBlockInfo, BridgeSwapTokenEvent, SwapEvents } from '@workquest/database-models/lib/models';
+import { BridgeMessageBroker } from './BridgeBroker';
 
 export enum TrackedEvents {
   swapInitialized = 'SwapInitialized',
@@ -29,8 +30,10 @@ abstract class BridgeListener {
   protected async _onEvent(event: BridgeEventType): Promise<void> {
     if (event.event === TrackedEvents.swapInitialized) {
       await this._parseSwapInitializedEvent(event);
+      BridgeMessageBroker.sendBridgeNotification(event);
     } else if (event.event === TrackedEvents.swapRedeemed) {
       await this._parseSwapRedeemedEvent(event);
+      BridgeMessageBroker.sendBridgeNotification(event);
     }
 
     this._parserBlockInfo.lastParsedBlock = event.blockNumber;

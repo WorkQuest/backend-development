@@ -29,7 +29,14 @@ export async function getRecipientSwaps(r) {
   });
 
   for (const swapEvent of rows) {
-    const data = web3.utils.soliditySha3(swapEvent.nonce, swapEvent.amount, swapEvent.recipient, swapEvent.chainFrom, swapEvent.chainTo, swapEvent.symbol);
+    const data = web3.utils.soliditySha3(
+      swapEvent.nonce,
+      swapEvent.amount,
+      swapEvent.recipient,
+      swapEvent.chainFrom,
+      swapEvent.chainTo,
+      swapEvent.symbol,
+    );
     const sing = await web3.eth.accounts.sign(data, configBridge.privateKey);
     const redeemedRowIndex = redeemedEvents.findIndex((row) => row.messageHash === swapEvent.messageHash);
 

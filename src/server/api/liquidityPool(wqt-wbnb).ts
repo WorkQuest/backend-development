@@ -10,7 +10,13 @@ import { DailyLiquidity, WqtWbnbSwapEvent } from '@workquest/database-models/lib
 
 const Web3 = require('web3');
 
-const WQT = new Token(ChainId.MAINNET, config.token.WQT.bscNetwork.address, config.token.WQT.bscNetwork.decimals, config.token.WQT.bscNetwork.symbol, config.token.WQT.bscNetwork.name);
+const WQT = new Token(
+  ChainId.MAINNET,
+  config.token.WQT.bscNetwork.address,
+  config.token.WQT.bscNetwork.decimals,
+  config.token.WQT.bscNetwork.symbol,
+  config.token.WQT.bscNetwork.name,
+);
 
 const WBNB = new Token(ChainId.MAINNET, config.token.WBNB.address, config.token.WBNB.decimals, config.token.WBNB.symbol, config.token.WBNB.name);
 

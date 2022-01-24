@@ -4,7 +4,17 @@ import { Errors } from '../../utils/errors';
 import config from '../../config/config';
 import { totpValidate } from '@workquest/database-models/lib/utils';
 import { SkillsFiltersController } from '../controller.skillsFilters';
-import { User, Session, UserRole, UserStatus, ChatsStatistic, QuestsStatistic, RatingStatistic, defaultUserSettings, UserSpecializationFilter } from '@workquest/database-models/lib/models';
+import {
+  User,
+  Session,
+  UserRole,
+  UserStatus,
+  ChatsStatistic,
+  QuestsStatistic,
+  RatingStatistic,
+  defaultUserSettings,
+  UserSpecializationFilter,
+} from '@workquest/database-models/lib/models';
 
 abstract class UserHelper {
   public abstract user: User;
@@ -137,7 +147,10 @@ abstract class UserHelper {
     }
   }
 
-  public static async usersMustExist(userIds: string[], scope: 'defaultScope' | 'short' | 'shortWithAdditionalInfo' = 'defaultScope'): Promise<User[]> {
+  public static async usersMustExist(
+    userIds: string[],
+    scope: 'defaultScope' | 'short' | 'shortWithAdditionalInfo' = 'defaultScope',
+  ): Promise<User[]> {
     const users = await User.scope(scope).findAll({
       where: { id: userIds },
     });

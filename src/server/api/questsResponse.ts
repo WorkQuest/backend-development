@@ -326,7 +326,10 @@ export async function acceptInviteOnQuest(r) {
   });
   const questsResponseController = new QuestsResponseController(questResponse);
 
-  questsResponseController.workerMustBeInvitedToQuest(worker.id).questsResponseMustHaveType(QuestsResponseType.Invite).questsResponseMustHaveStatus(QuestsResponseStatus.Open);
+  questsResponseController
+    .workerMustBeInvitedToQuest(worker.id)
+    .questsResponseMustHaveType(QuestsResponseType.Invite)
+    .questsResponseMustHaveStatus(QuestsResponseStatus.Open);
 
   const transaction = await r.server.app.db.transaction();
 
@@ -359,7 +362,11 @@ export async function acceptInviteOnQuest(r) {
     messageAction: MessageAction.workerAcceptInviteOnQuest,
   });
 
-  await Promise.all([message.save({ transaction }), infoMessage.save({ transaction }), questResponse.update({ status: QuestsResponseStatus.Accepted }, { transaction })]);
+  await Promise.all([
+    message.save({ transaction }),
+    infoMessage.save({ transaction }),
+    questResponse.update({ status: QuestsResponseStatus.Accepted }, { transaction }),
+  ]);
 
   await transaction.commit();
 
@@ -382,7 +389,10 @@ export async function rejectInviteOnQuest(r) {
   });
   const questsResponseController = new QuestsResponseController(questResponse);
 
-  questsResponseController.workerMustBeInvitedToQuest(worker.id).questsResponseMustHaveType(QuestsResponseType.Invite).questsResponseMustHaveStatus(QuestsResponseStatus.Open);
+  questsResponseController
+    .workerMustBeInvitedToQuest(worker.id)
+    .questsResponseMustHaveType(QuestsResponseType.Invite)
+    .questsResponseMustHaveStatus(QuestsResponseStatus.Open);
 
   const transaction = await r.server.app.db.transaction();
 
@@ -421,7 +431,11 @@ export async function rejectInviteOnQuest(r) {
     messageAction: MessageAction.workerRejectInviteOnQuest,
   });
 
-  const [] = await Promise.all([message.save({ transaction }), infoMessage.save({ transaction }), questChat.update({ status: QuestChatStatuses.Close }, { transaction })]);
+  const [] = await Promise.all([
+    message.save({ transaction }),
+    infoMessage.save({ transaction }),
+    questChat.update({ status: QuestChatStatuses.Close }, { transaction }),
+  ]);
 
   await transaction.commit();
 
