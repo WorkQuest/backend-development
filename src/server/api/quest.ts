@@ -23,6 +23,7 @@ import {
   User,
   UserRole
 } from "@workquest/database-models/lib/models";
+import { DisputeStatus } from "@workquest/database-models/src/models/quest/QuestDispute";
 
 export const searchFields = [
   "title",
@@ -50,12 +51,13 @@ export async function getQuest(r) {
     as: 'assignedWorker'
   }, {
     model: QuestDispute.unscoped(),
-    as: 'questDisputes',
+    as: 'openDispute',
     where: {
       [Op.or]: [
         { opponentUserId: r.auth.credentials.id },
         { openDisputeUserId: r.auth.credentials.id },
-      ]
+      ],
+      status: { [Op.in]: [DisputeStatus.pending, DisputeStatus.inProgress] },
     },
     attributes:["id"],
     required: false,
