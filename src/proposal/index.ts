@@ -6,11 +6,7 @@ import configDatabase from './config/config.database';
 import { ProposalContract } from './src/ProposalContract';
 import { ProposalEthListener } from './src/ProviderListener';
 import { ProposalProvider } from './src/ProposalProvider';
-import {
-  initDatabase,
-  BlockchainNetworks,
-  ProposalParseBlock
-} from '@workquest/database-models/lib/models';
+import { initDatabase, BlockchainNetworks, ProposalParseBlock } from '@workquest/database-models/lib/models';
 
 const abiFilePath = path.join(__dirname, '../../src/proposal/abi/WQDAOVoting.json');
 const abi: any[] = JSON.parse(fs.readFileSync(abiFilePath).toString()).abi;
@@ -25,24 +21,26 @@ export async function init() {
 
   await initDatabase(configDatabase.dbLink, false, true);
 
-  const web3Eth = new Web3(new Web3.providers.WebsocketProvider(urlEthProvider, {
-    clientConfig: {
-      keepalive: true,
-      keepaliveInterval: 60000 // ms
-    },
-    reconnect: {
-      auto: true,
-      delay: 1000, // ms
-      onTimeout: false
-    }
-  }));
+  const web3Eth = new Web3(
+    new Web3.providers.WebsocketProvider(urlEthProvider, {
+      clientConfig: {
+        keepalive: true,
+        keepaliveInterval: 60000, // ms
+      },
+      reconnect: {
+        auto: true,
+        delay: 1000, // ms
+        onTimeout: false,
+      },
+    }),
+  );
 
-  const [proposalInfo, ] = await ProposalParseBlock.findOrCreate({
+  const [proposalInfo] = await ProposalParseBlock.findOrCreate({
     where: { network: BlockchainNetworks.ethMainNetwork },
     defaults: {
       network: BlockchainNetworks.ethMainNetwork,
-      lastParsedBlock: parseEthEventsFromHeight
-    }
+      lastParsedBlock: parseEthEventsFromHeight,
+    },
   });
 
   if (proposalInfo.lastParsedBlock < parseEthEventsFromHeight) {

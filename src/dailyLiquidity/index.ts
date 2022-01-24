@@ -1,13 +1,13 @@
-import Web3 from "web3";
-import * as fs from "fs";
-import * as path from "path";
+import Web3 from 'web3';
+import * as fs from 'fs';
+import * as path from 'path';
 import cron from 'node-cron';
-import { Web3Helper } from "./src/providers/Web3Helper";
-import { DailyLiquidity } from "@workquest/database-models/lib/models";
-import { ControllerDailyLiquidity} from "./src/controllers/ControllerDailyLiquidity";
-import { initDatabase } from "@workquest/database-models/lib/models";
-import configDatabase from "./config/config.database";
-import configLiquidity from "./config/config.liquidity";
+import { Web3Helper } from './src/providers/Web3Helper';
+import { DailyLiquidity } from '@workquest/database-models/lib/models';
+import { ControllerDailyLiquidity } from './src/controllers/ControllerDailyLiquidity';
+import { initDatabase } from '@workquest/database-models/lib/models';
+import configDatabase from './config/config.database';
+import configLiquidity from './config/config.liquidity';
 
 const abiFilePath = path.join(__dirname, '/abi/WqtWbnb.json');
 const abi: any[] = JSON.parse(fs.readFileSync(abiFilePath).toString()).abi;
@@ -19,8 +19,8 @@ export async function init() {
     reconnect: {
       auto: true,
       delay: 10000,
-      onTimeout: false
-    }
+      onTimeout: false,
+    },
   });
   const web3 = new Web3(websocketProvider);
   const web3Helper = new Web3Helper(web3);
@@ -33,7 +33,8 @@ export async function init() {
 
   for (const liquidity of liquidityDataPerPeriod) {
     await DailyLiquidity.findOrCreate({
-      where: { date: liquidity.date }, defaults: liquidity,
+      where: { date: liquidity.date },
+      defaults: liquidity,
     });
   }
 
@@ -42,14 +43,11 @@ export async function init() {
     const liquidityDataPerOneDay = await poolController.collectLiquidityData(1);
     for (const liquidity of liquidityDataPerOneDay) {
       await DailyLiquidity.findOrCreate({
-        where: { date: liquidity.date }, defaults: liquidity,
+        where: { date: liquidity.date },
+        defaults: liquidity,
       });
     }
   });
 }
 
 init().catch(console.error);
-
-
-
-

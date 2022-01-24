@@ -1,4 +1,4 @@
-import { Twilio } from "twilio";
+import { Twilio } from 'twilio';
 import { addJob } from '../utils/scheduler';
 import config from '../config/config';
 
@@ -10,14 +10,13 @@ export interface SmsPayload {
 }
 
 export async function addSendSmsJob(payload: SmsPayload) {
-  return addJob("sendSms", payload);
+  return addJob('sendSms', payload);
 }
 
-export default async function(payload: SmsPayload) {
-  await client.api.messages
-    .create({
-      body: payload.message,
-      to: payload.toPhoneNumber,
-      from: config.twilio.phoneNumberSender,
+export default async function (payload: SmsPayload) {
+  await client.api.messages.create({
+    body: payload.message,
+    to: payload.toPhoneNumber,
+    from: config.twilio.phoneNumberSender,
   });
 }

@@ -17,6 +17,7 @@
     "questFactory:compile": "tsc && node ./build/questFactory/index.js",
     "compile": "tsc && node ./build/main.js",
     "build": "tsc",
+    "lint": "eslint ./src --fix",
     "test": "lab --sourcemaps --transform node_modules/lab-transform-typescript -v --leaks"
   },
   "keywords": [],
@@ -83,22 +84,14 @@
   },
   "devDependencies": {
     "@hapi/code": "^8.0.3",
-    "@hapi/eslint-config-hapi": "^12.3.0",
-    "@hapi/eslint-plugin-hapi": "^4.3.4",
     "@hapi/lab": "^24.2.1",
     "@types/hapi": "^18.0.3",
     "@types/node": "^12.12.52",
-    "eslint": "^6.5.1",
-    "eslint-config-airbnb": "^18.0.1",
-    "eslint-config-prettier": "^6.4.0",
-    "eslint-config-standard": "^14.1.0",
-    "eslint-plugin-import": "^2.18.2",
-    "eslint-plugin-jsx-a11y": "^6.2.3",
-    "eslint-plugin-node": "^10.0.0",
-    "eslint-plugin-prettier": "^3.1.1",
-    "eslint-plugin-promise": "^4.2.1",
-    "eslint-plugin-react": "^7.16.0",
-    "eslint-plugin-standard": "^4.0.1",
+    "@typescript-eslint/eslint-plugin": "^5.8.0",
+    "@typescript-eslint/parser": "^5.8.0",
+    "eslint": "^8.7.0",
+    "eslint-config-prettier": "^8.3.0",
+    "eslint-plugin-prettier": "^4.0.0",
     "pino": "^6.13.2"
   }
 }

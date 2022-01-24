@@ -1,5 +1,5 @@
-import { Contract, EventData, PastEventOptions } from "web3-eth-contract";
-import { BridgeProvider } from "./BridgeProvider";
+import { Contract, EventData, PastEventOptions } from 'web3-eth-contract';
+import { BridgeProvider } from './BridgeProvider';
 
 export interface BridgeEventData extends EventData {
   nonce: number;
@@ -26,11 +26,11 @@ export type BridgeEventType = {
   messageHash: string;
   transactionHash: string;
   blockNumber: number;
-}
+};
 
 export type onEventCallBack = {
   (eventData: BridgeEventType): void;
-}
+};
 
 export class BridgeContract {
   private readonly _address: string;
@@ -66,9 +66,7 @@ export class BridgeContract {
   }
 
   private async _parseEventsData(eventsData: BridgeEventData[]): Promise<BridgeEventType[]> {
-    return Promise.all(
-      eventsData.map(async (data) => await this._parseEventData(data))
-    );
+    return Promise.all(eventsData.map(async (data) => await this._parseEventData(data)));
   }
 
   private async _onEventData(eventData: BridgeEventData) {
@@ -76,27 +74,24 @@ export class BridgeContract {
 
     this._provider.lastTrackedBlock = eventData.blockNumber;
 
-    this._onEventCallBacks.forEach(callBack => callBack(event));
+    this._onEventCallBacks.forEach((callBack) => callBack(event));
   }
 
   private _eventListenerInit(fromBlock: number) {
-    this._contract.events.allEvents({ fromBlock })
-      .on('error', (err) => { console.error(err) })
+    this._contract.events
+      .allEvents({ fromBlock })
+      .on('error', (err) => {
+        console.error(err);
+      })
       .on('data', (data: BridgeEventData) => this._onEventData(data));
   }
 
   private async _singEventData(event: BridgeEventType): Promise<BridgeEventType> {
-    const fields = [
-      event.nonce,
-      event.amount,
-      event.recipient,
-      event.sender,
-      event.chainFrom,
-      event.chainTo,
-      event.symbol,
-    ];
+    const fields = [event.nonce, event.amount, event.recipient, event.sender, event.chainFrom, event.chainTo, event.symbol];
 
-    try { event.messageHash = (await this._provider.sing(fields)).message } catch (_) { }
+    try {
+      event.messageHash = (await this._provider.sing(fields)).message;
+    } catch (_) {}
 
     return event;
   }
@@ -117,13 +112,13 @@ export class BridgeContract {
     return this._contract.getPastEvents(event, options);
   }
 
-  public async* preParsingEvents() {
+  public async *preParsingEvents() {
     const lastBlockNumber = await this._provider.getBlockNumber();
 
     let fromBlock = this._provider.lastTrackedBlock;
     let toBlock = fromBlock + this._preParsingSteps;
 
-    while(true) {
+    while (true) {
       const eventsData = await this.getPastEvents('allEvents', { fromBlock, toBlock });
       const events = await this._parseEventsData(eventsData);
 
@@ -136,7 +131,8 @@ export class BridgeContract {
         const eventsData = await this.getPastEvents('allEvents', { fromBlock, toBlock });
         const events = await this._parseEventsData(eventsData);
 
-        yield events; break;
+        yield events;
+        break;
       }
     }
   }

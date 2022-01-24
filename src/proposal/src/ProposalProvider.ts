@@ -1,5 +1,5 @@
-import Web3 from "web3";
-import { Contract } from "web3-eth-contract";
+import Web3 from 'web3';
+import { Contract } from 'web3-eth-contract';
 
 export class ProposalProvider {
   private readonly _web3: Web3;

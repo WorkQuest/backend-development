@@ -1,12 +1,8 @@
 import * as jwt from 'jsonwebtoken';
 import config from '../config/config';
-import { error } from "./index";
+import { error } from './index';
 import { Errors } from './errors';
-import {
-  User,
-  Session,
-  UserStatus,
-} from "@workquest/database-models/lib/models";
+import { User, Session, UserStatus } from '@workquest/database-models/lib/models';
 
 export const generateJwt = (data: object) => {
   const access = jwt.sign(data, config.auth.jwt.access.secret, { expiresIn: config.auth.jwt.access.lifetime });
@@ -19,8 +15,8 @@ export const decodeJwt = async (token: string, secret: string) => {
   try {
     return await jwt.verify(token, secret);
   } catch (e) {
-    let code = e.name === 'TokenExpiredError' ? Errors.TokenExpired : Errors.TokenInvalid
-    let msg = e.name === 'TokenExpiredError' ? 'Token expired' : 'Token invalid'
+    const code = e.name === 'TokenExpiredError' ? Errors.TokenExpired : Errors.TokenInvalid;
+    const msg = e.name === 'TokenExpiredError' ? 'Token expired' : 'Token invalid';
     throw error(code, msg, {});
   }
 };
@@ -29,11 +25,11 @@ export type validateFunc = (r, token: string) => Promise<any>;
 
 // Fabric which returns token validate function depending on token type
 export function tokenValidate(tokenType: 'access' | 'refresh', allowedUnconfirmedRoutes: string[] = []): validateFunc {
-  return async function(r, token: string) {
+  return async function (r, token: string) {
     const data = await decodeJwt(token, config.auth.jwt[tokenType].secret);
 
     const session = await Session.findByPk(data.id, {
-      include: [{ model: User, as: 'user' }]
+      include: [{ model: User, as: 'user' }],
     });
 
     if (!session) {
@@ -50,5 +46,5 @@ export function tokenValidate(tokenType: 'access' | 'refresh', allowedUnconfirme
     }
 
     return { isValid: true, credentials: session.user, artifacts: { token, type: tokenType, sessionId: session.id } };
-  }
+  };
 }
