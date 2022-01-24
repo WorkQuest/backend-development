@@ -1,22 +1,20 @@
-import Web3 from "web3";
-import EthDater from "ethereum-block-by-date";
+import Web3 from 'web3';
+import EthDater from 'ethereum-block-by-date';
 
 export type BlockData = {
-  date: Date,
-  block: number,
-  timestamp: number,
-}
+  date: Date;
+  block: number;
+  timestamp: number;
+};
 
 export class Web3Helper {
   public readonly dater;
-  constructor(
-    public readonly web3: any
-  ) {
+  constructor(public readonly web3: any) {
     this.web3 = web3;
     this.dater = new EthDater(web3);
   }
 
-/*  public async estimateBlockHeightByTimestamp(timestamp: number, pre: number = 1, post: number | 'latest' = 'latest'): Promise<number> {
+  /*  public async estimateBlockHeightByTimestamp(timestamp: number, pre: number = 1, post: number | 'latest' = 'latest'): Promise<number> {
     const firstBlock = await this.web3.eth.getBlock(pre);
     const latestBlock = await this.web3.eth.getBlock(post);
 
@@ -51,7 +49,7 @@ export class Web3Helper {
     );
   }*/
 
-  public async getBlockByDate(date: Date, after: boolean = false): Promise<BlockData> {
+  public async getBlockByDate(date: Date, after = false): Promise<BlockData> {
     // @ts-ignore
     return this.dater.getDate(date, after);
   }

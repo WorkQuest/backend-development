@@ -1,5 +1,5 @@
 import amqp from 'amqplib/callback_api';
-import config from "../config/config.common";
+import config from '../config/config.common';
 
 export function initRabbitMQ() {
   return amqp.connect(config.notificationMessageBroker.link, (connectError, conn) => {
@@ -28,7 +28,7 @@ export function initRabbitMQ() {
     console.log('Bridge message broker connected');
 
     return channel;
-  })
+  });
 }
 
 export class BridgeBroker {

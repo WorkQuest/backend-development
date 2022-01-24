@@ -1,11 +1,11 @@
-import * as path from "path";
-import * as fs from "fs";
-import Web3 from "web3";
-import configBridge from "./config/config.bridge";
-import config from "./config/config.common";
-import {BridgeContract} from "./src/BridgeContract";
-import {BridgeEthListener, BridgeBscListener} from "./src/BridgeListener";
-import {BridgeProvider} from "./src/BridgeProvider";
+import * as path from 'path';
+import * as fs from 'fs';
+import Web3 from 'web3';
+import configBridge from './config/config.bridge';
+import config from './config/config.common';
+import { BridgeContract } from './src/BridgeContract';
+import { BridgeEthListener, BridgeBscListener } from './src/BridgeListener';
+import { BridgeProvider } from './src/BridgeProvider';
 import { BridgeParserBlockInfo, BlockchainNetworks, initDatabase } from '@workquest/database-models/lib/models';
 
 const abiFilePath = path.join(__dirname, '/abi/liquidityMiningAbi.json');
@@ -24,43 +24,47 @@ export async function init() {
 
   await initDatabase(config.database.link, false, false);
 
-  const web3Eth = new Web3(new Web3.providers.WebsocketProvider(urlEthProvider, {
-    clientConfig: {
-      keepalive: true,
-      keepaliveInterval: 60000 // ms
-    },
-    reconnect: {
-      auto: true,
-      delay: 1000, // ms
-      onTimeout: false
-    }
-  }));
+  const web3Eth = new Web3(
+    new Web3.providers.WebsocketProvider(urlEthProvider, {
+      clientConfig: {
+        keepalive: true,
+        keepaliveInterval: 60000, // ms
+      },
+      reconnect: {
+        auto: true,
+        delay: 1000, // ms
+        onTimeout: false,
+      },
+    }),
+  );
 
-  const web3Bsc = new Web3(new Web3.providers.WebsocketProvider(urlBscProvider, {
-    clientConfig: {
-      keepalive: true,
-      keepaliveInterval: 60000 // ms
-    },
-    reconnect: {
-      auto: true,
-      delay: 1000, // ms
-      onTimeout: false
-    }
-  }));
+  const web3Bsc = new Web3(
+    new Web3.providers.WebsocketProvider(urlBscProvider, {
+      clientConfig: {
+        keepalive: true,
+        keepaliveInterval: 60000, // ms
+      },
+      reconnect: {
+        auto: true,
+        delay: 1000, // ms
+        onTimeout: false,
+      },
+    }),
+  );
 
-  const [ethBridgeInfo, ] = await BridgeParserBlockInfo.findOrCreate({
+  const [ethBridgeInfo] = await BridgeParserBlockInfo.findOrCreate({
     where: { network: BlockchainNetworks.ethMainNetwork },
     defaults: {
       network: BlockchainNetworks.ethMainNetwork,
-      lastParsedBlock: parseEthEventsFromHeight
-    }
+      lastParsedBlock: parseEthEventsFromHeight,
+    },
   });
-  const [bcsBridgeInfo, ] = await BridgeParserBlockInfo.findOrCreate({
+  const [bcsBridgeInfo] = await BridgeParserBlockInfo.findOrCreate({
     where: { network: BlockchainNetworks.bscMainNetwork },
     defaults: {
       network: BlockchainNetworks.bscMainNetwork,
-      lastParsedBlock: parseBscEventsFromHeight
-    }
+      lastParsedBlock: parseBscEventsFromHeight,
+    },
   });
 
   if (ethBridgeInfo.lastParsedBlock < parseEthEventsFromHeight) {
@@ -83,17 +87,9 @@ export async function init() {
   const bridgeEthListener = new BridgeEthListener(bridgeEthContract, ethBridgeInfo);
   const bridgeBscListener = new BridgeBscListener(bridgeBscContract, bcsBridgeInfo);
 
-  await Promise.all([
-    bridgeEthListener.preParseSwaps(),
-    bridgeBscListener.preParseSwaps(),
-  ]);
+  await Promise.all([bridgeEthListener.preParseSwaps(), bridgeBscListener.preParseSwaps()]);
 
-  await Promise.all([
-    bridgeEthListener.start(),
-    bridgeBscListener.start(),
-  ]);
+  await Promise.all([bridgeEthListener.start(), bridgeBscListener.start()]);
 }
 
 init().catch(console.error);
-
-

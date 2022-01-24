@@ -1,6 +1,6 @@
-import { config } from "dotenv";
+import { config } from 'dotenv';
 
-config({ path: __dirname +  '/../../../.env.bridge'});
+config({ path: __dirname + '/../../../.env.bridge' });
 
 export default {
   database: {
@@ -9,5 +9,4 @@ export default {
   notificationMessageBroker: {
     link: process.env.NOTIFICATION_MESSAGE_BROKER_LINK,
   },
-}
-
+};

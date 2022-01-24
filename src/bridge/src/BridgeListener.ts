@@ -1,14 +1,9 @@
-import { BridgeContract, BridgeEventType } from "./BridgeContract";
-import {
-  BlockchainNetworks,
-  BridgeParserBlockInfo,
-  BridgeSwapTokenEvent,
-  SwapEvents,
-} from "@workquest/database-models/lib/models";
+import { BridgeContract, BridgeEventType } from './BridgeContract';
+import { BlockchainNetworks, BridgeParserBlockInfo, BridgeSwapTokenEvent, SwapEvents } from '@workquest/database-models/lib/models';
 
 export enum TrackedEvents {
-  swapInitialized = "SwapInitialized",
-  swapRedeemed = "SwapRedeemed",
+  swapInitialized = 'SwapInitialized',
+  swapRedeemed = 'SwapRedeemed',
 }
 
 abstract class BridgeListener {
@@ -19,7 +14,7 @@ abstract class BridgeListener {
     this._contract = contract;
     this._parserBlockInfo = parserBlockInfo;
 
-    this._contract.signCallbackOnEvent(eventData => this._onEvent(eventData));
+    this._contract.signCallbackOnEvent((eventData) => this._onEvent(eventData));
   }
 
   protected abstract _parseSwapInitializedEvent(data: any): Promise<void>;
@@ -44,7 +39,7 @@ abstract class BridgeListener {
   }
 
   start(): Promise<void> {
-    return this._contract.startListener()
+    return this._contract.startListener();
   }
 }
 
@@ -73,7 +68,7 @@ export class BridgeBscListener extends BridgeListener {
         chainTo: event.chainTo,
         chainFrom: event.chainFrom,
         symbol: event.symbol,
-      }
+      },
     });
   }
 
@@ -97,7 +92,7 @@ export class BridgeBscListener extends BridgeListener {
         chainTo: event.chainTo,
         chainFrom: event.chainFrom,
         symbol: event.symbol,
-      }
+      },
     });
   }
 }
@@ -127,7 +122,7 @@ export class BridgeEthListener extends BridgeListener {
         chainTo: event.chainTo,
         chainFrom: event.chainFrom,
         symbol: event.symbol,
-      }
+      },
     });
   }
 
@@ -151,7 +146,7 @@ export class BridgeEthListener extends BridgeListener {
         chainTo: event.chainTo,
         chainFrom: event.chainFrom,
         symbol: event.symbol,
-      }
+      },
     });
   }
 }

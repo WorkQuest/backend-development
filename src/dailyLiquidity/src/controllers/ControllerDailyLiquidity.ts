@@ -1,42 +1,39 @@
-import { EventData } from "web3-eth-contract";
-import { Web3Helper } from "../providers/Web3Helper";
-import { CoinGeckoProvider, Coins } from "../providers/CoinGeckoProvider";
-import BigNumber from "bignumber.js";
+import { EventData } from 'web3-eth-contract';
+import { Web3Helper } from '../providers/Web3Helper';
+import { CoinGeckoProvider, Coins } from '../providers/CoinGeckoProvider';
+import BigNumber from 'bignumber.js';
 
 export type Event = {
   date: string | number;
   blockNumber: string | number;
-}
+};
 
 export type SyncEvent = Event & {
   bnbPool: string;
   wqtPool: string;
-}
+};
 
 export type Liquidity = SyncEvent & {
   usdPriceBNB: string;
   usdPriceWQT: string;
   reserveUSD: string;
-}
+};
 
 export class ControllerDailyLiquidity {
-  private readonly coinGeckoProvider: CoinGeckoProvider
+  private readonly coinGeckoProvider: CoinGeckoProvider;
 
-  constructor(
-    private readonly web3ProviderHelper: Web3Helper,
-    private readonly dailyLiquidityContract: any,
-  ) {
+  constructor(private readonly web3ProviderHelper: Web3Helper, private readonly dailyLiquidityContract: any) {
     this.coinGeckoProvider = new CoinGeckoProvider();
   }
 
-  private async parseEvents(event: string, range: { blockTo: number, blockFrom: number, step: number }): Promise<EventData[]> {
+  private async parseEvents(event: string, range: { blockTo: number; blockFrom: number; step: number }): Promise<EventData[]> {
     const events = [];
 
     let from = range.blockFrom;
     let to = range.blockFrom + range.step;
 
     while (to < range.blockTo) {
-      console.log('from block: ', from, ' to block: ', to)
+      console.log('from block: ', from, ' to block: ', to);
       const eventsData = await this.dailyLiquidityContract.getPastEvents(event, {
         fromBlock: from,
         toBlock: to,
@@ -62,7 +59,7 @@ export class ControllerDailyLiquidity {
       blockNumber: event.blockNumber,
       bnbPool: event.returnValues.reserve0,
       wqtPool: event.returnValues.reserve1,
-    }
+    };
   }
 
   private async makeLiquidityBySyncEvent(syncEvent: SyncEvent): Promise<Liquidity> {
@@ -75,9 +72,7 @@ export class ControllerDailyLiquidity {
     const usdOfBnb = bnbPool.multipliedBy(priceInfoBNBStartDay);
     const usdOfWqt = wqtPool.multipliedBy(priceInfoWQTStartDay);
 
-    const poolToken = usdOfBnb
-        .plus(usdOfWqt)
-        .toString()
+    const poolToken = usdOfBnb.plus(usdOfWqt).toString();
 
     return {
       date: syncEvent.date,
@@ -86,16 +81,24 @@ export class ControllerDailyLiquidity {
       wqtPool: wqtPool.toString(),
       usdPriceWQT: priceInfoWQTStartDay.toString(),
       usdPriceBNB: priceInfoBNBStartDay.toString(),
-      reserveUSD: poolToken
-    }
+      reserveUSD: poolToken,
+    };
   }
 
   private processSyncEvents(events: EventData[]): Promise<SyncEvent[]> {
-    return Promise.all(events.map((event) => { return this.processSyncEvent(event) }));
+    return Promise.all(
+      events.map((event) => {
+        return this.processSyncEvent(event);
+      }),
+    );
   }
 
   private async makeLiquidityBySyncEvents(syncEvents: SyncEvent[]): Promise<Liquidity[]> {
-    return Promise.all(syncEvents.map((syncEvent) => { return this.makeLiquidityBySyncEvent(syncEvent) } ));
+    return Promise.all(
+      syncEvents.map((syncEvent) => {
+        return this.makeLiquidityBySyncEvent(syncEvent);
+      }),
+    );
   }
 
   public async collectLiquidityData(periodInDays: number): Promise<Liquidity[]> {
@@ -106,8 +109,8 @@ export class ControllerDailyLiquidity {
     const blockRangeFromDate = new Date(lastTimestampInMs - 86400000 * periodInDays);
     const blockRangeToDate = new Date(lastTimestampInMs); //не нужно отнимать день, потому что работаем по юниксу
 
-    blockRangeFromDate.setHours(7,0,0,0);
-    blockRangeToDate.setHours(6,59,59,999);
+    blockRangeFromDate.setHours(7, 0, 0, 0);
+    blockRangeToDate.setHours(6, 59, 59, 999);
 
     const blockRangeFrom = await this.web3ProviderHelper.getBlockByDate(blockRangeFromDate);
     const blockRangeTo = await this.web3ProviderHelper.getBlockByDate(blockRangeToDate);
@@ -115,11 +118,9 @@ export class ControllerDailyLiquidity {
     const events = await this.parseEvents('Sync', {
       step: 4000,
       blockTo: blockRangeTo.block,
-      blockFrom: blockRangeFrom.block
+      blockFrom: blockRangeFrom.block,
     });
-    const syncEvents = ControllerDailyLiquidity.getLastDayEvents(
-      await this.processSyncEvents(events)
-    ) as SyncEvent[];
+    const syncEvents = ControllerDailyLiquidity.getLastDayEvents(await this.processSyncEvents(events)) as SyncEvent[];
 
     return this.makeLiquidityBySyncEvents(syncEvents);
   }
@@ -132,13 +133,9 @@ export class ControllerDailyLiquidity {
 
       if (!dayTimestampsMap.has(daySinceUnixEpoch)) dayTimestampsMap.set(daySinceUnixEpoch, []);
 
-      dayTimestampsMap
-        .get(daySinceUnixEpoch)
-        .push(event)
+      dayTimestampsMap.get(daySinceUnixEpoch).push(event);
     }
 
-    return Array
-      .from(dayTimestampsMap.values())
-      .map(_ => _.reduce((a, b) => a.date > b.date ? a : b ))
+    return Array.from(dayTimestampsMap.values()).map((_) => _.reduce((a, b) => (a.date > b.date ? a : b)));
   }
 }
