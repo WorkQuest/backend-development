@@ -508,7 +508,7 @@ export async function getQuests(r) {
     as: 'raiseView',
   });
 
-  order.push([{model: QuestRaiseView, as: 'raiseView'}, 'type', 'asc']);
+  order.push(['adType', 'asc']);
 
   for (const [key, value] of Object.entries(r.query.sort)) {
     order.push([key, value]);

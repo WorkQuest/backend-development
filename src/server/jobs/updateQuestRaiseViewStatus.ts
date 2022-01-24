@@ -1,9 +1,10 @@
-import { addJob } from "../utils/scheduler";
-import { QuestRaiseStatus, QuestRaiseView } from "@workquest/database-models/lib/models";
+import {addJob} from "../utils/scheduler";
+import {Quest, QuestRaiseStatus, QuestRaiseType, QuestRaiseView} from "@workquest/database-models/lib/models";
 
 export type QuestRaiseViewPayload = {
-  id: string,
+  questId: string,
   status: QuestRaiseStatus,
+  type: QuestRaiseType
 }
 
 export async function updateQuestRaiseViewStatusJob(payload: QuestRaiseViewPayload) {
@@ -11,6 +12,7 @@ export async function updateQuestRaiseViewStatusJob(payload: QuestRaiseViewPaylo
 }
 
 export default async function updateQuestRaiseViewStatus(payload: QuestRaiseViewPayload) {
-  await QuestRaiseView.update({ status: payload.status }, { where: { id: payload.id } });
+  await QuestRaiseView.update({ status: payload.status }, { where: { questId: payload.questId } });
+  await Quest.update({adType: QuestRaiseType}, {where: {id: payload.questId}});
 }
 
