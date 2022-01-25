@@ -25,10 +25,10 @@ import {
   outputPaginationSchema,
   workerWagePerHourSchema,
   specializationKeysSchema,
+  userLocationPlaceNameSchema,
   userAdditionalInfoWorkerSchema,
-  userAdditionalInfoEmployerSchema,
-} from "@workquest/database-models/lib/schemes";
-import { getUserStatistics } from "../../api/profile";
+  userAdditionalInfoEmployerSchema
+} from '@workquest/database-models/lib/schemes';
 
 export default [{
   method: "GET",
@@ -128,6 +128,7 @@ export default [{
         firstName: userFirstNameSchema.required(),
         lastName: userLastNameSchema.required(),
         location: locationSchema.allow(null).required(),
+        locationPlaceName: userLocationPlaceNameSchema.allow(null).required(),
         additionalInfo: userAdditionalInfoEmployerSchema.required(),
       }).label("EditEmployerProfilePayload")
     },
@@ -151,6 +152,7 @@ export default [{
         avatarId: idSchema.allow(null).required(),
         priority: prioritySchema.allow(null).required(),
         location: locationSchema.allow(null).required(),
+        locationPlaceName: userLocationPlaceNameSchema.allow(null).required(),
         workplace: workPlaceSchema.allow(null).required(),
         additionalInfo: userAdditionalInfoWorkerSchema.required(),
         wagePerHour: workerWagePerHourSchema.allow(null).required(),

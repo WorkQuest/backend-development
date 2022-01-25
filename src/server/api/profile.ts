@@ -19,6 +19,7 @@ import {
 export const searchFields = [
   "firstName",
   "lastName",
+  "locationPlaceName",
 ];
 
 export async function getMe(r) {
@@ -86,7 +87,8 @@ export function getUsers(role: UserRole) {
       ...(r.query.priority && {priority: r.query.priority}),
       ...(r.query.betweenWagePerHour && { wagePerHour: {
           [Op.between]: [r.query.betweenWagePerHour.from, r.query.betweenWagePerHour.to]
-      } }),
+        } }),
+      ...(r.query.locationPlaceName && { locationPlaceName: r.query.locationPlaceName})
     };
 
     if (r.query.q) {
@@ -101,7 +103,6 @@ export function getUsers(role: UserRole) {
         required: true,
         where: { status: r.query.ratingStatus },
       });
-
       distinctCol = 'id';
     }
     if (r.query.north && r.query.south) {
@@ -178,6 +179,7 @@ export function editProfile(userRole: UserRole) {
       avatarId: avatarId,
       lastName: r.payload.lastName,
       location: r.payload.location,
+      locationPlaceName: r.payload.locationPlaceName,
       firstName: r.payload.firstName,
       priority: r.payload.priority || null,
       workplace: r.payload.workplace || null,

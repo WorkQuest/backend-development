@@ -22,11 +22,15 @@ import {
   UserRole
 } from "@workquest/database-models/lib/models";
 import { SkillsFiltersController } from "../controllers/controller.skillsFilters";
+import { getLoginViaSocialNetworkHandler } from './auth';
+import { longHexTokenSchema } from '@workquest/database-models/lib/schemes';
 
-export const searchFields = [
-  "title",
-  "description",
+export const searchQuestFields = [
+  'title',
+  'description',
+  'locationPlaceName'
 ];
+
 
 export async function getQuest(r) {
   const user: User = r.auth.credentials;
@@ -390,6 +394,11 @@ export async function getQuests(r) {
     '(1 = (CASE WHEN EXISTS (SELECT * FROM "QuestSpecializationFilters" WHERE "questId" = "Quest"."id" AND "QuestSpecializationFilters"."path" IN (:path)) THEN 1 END))' +
     'OR (1 = (CASE WHEN EXISTS (SELECT * FROM "QuestSpecializationFilters" WHERE "questId" = "Quest"."id" AND "QuestSpecializationFilters"."industryKey" IN (:industryKey)) THEN 1 END))'
   );
+  const userSearchLiteral = literal(
+    `(SELECT "firstName" FROM "Users" WHERE "id" = "Quest"."userId") ILIKE '%${r.query.q}%'` +
+    `OR (SELECT "lastName" FROM "Users" WHERE "id" = "Quest"."userId") ILIKE '%${r.query.q}%'`
+)
+
 
   const order = [];
   const include = [];
@@ -405,14 +414,19 @@ export async function getQuests(r) {
     ...(r.query.priorities && { priority: {[Op.in]: r.query.priorities } }),
     ...(r.query.workplaces && { workplace: { [Op.in]: r.query.workplaces } }),
     ...(r.query.employments && { employment: { [Op.in]: r.query.employments } }),
+    ...(r.query.locationPlaceName && { locationPlaceName: r.query.locationPlaceName }),
     ...(r.query.priceBetween && { price: { [Op.between]: [r.query.priceBetween.from, r.query.priceBetween.to] } }),
   };
 
   if (r.query.q) {
-    where[Op.or] = searchFields.map(field => ({
+    where[Op.or] = searchQuestFields.map(field => ({
       [field]: { [Op.iLike]: `%${r.query.q}%` }
     }));
+    where[Op.or].push(userSearchLiteral)
   }
+
+
+
   if (r.query.specializations) { // TODO r.query.specialization on r.query.specialization[s]
     const { paths, industryKeys } = SkillsFiltersController.splitPathsAndSingleKeysOfIndustry(r.query.specializations);
 

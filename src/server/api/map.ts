@@ -1,5 +1,5 @@
 import { output } from "../utils";
-import { searchFields } from './quest';
+import { searchQuestFields } from './quest';
 
 function makeWhere(query) {
   const like = query.q ? ` LIKE '%${query.q}%' ` : '';
@@ -7,7 +7,7 @@ function makeWhere(query) {
   return `WHERE st_within("locationPostGIS", st_makeenvelope(:northLongitude, :northLatitude, :southLongitude, :southLatitude, 4326))
   ${query.priority ? ' AND priority=' + query.priority : ''}
   ${query.status ? ' AND status=' + query.status : ''}
-  ${query.q ? ' AND ' + searchFields.join(like + ' OR ') + like : ''}`;
+  ${query.q ? ' AND ' + searchQuestFields.join(like + ' OR ') + like : ''}`;
 }
 
 function makeOrderBy(sort) {
