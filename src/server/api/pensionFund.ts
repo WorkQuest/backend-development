@@ -1,8 +1,8 @@
 import { output } from '../utils';
-import { ClaimedEvent, ReceivedEvent, WithdrewEvent } from "@workquest/database-models/lib/models";
+import { PensionFundClaimedEvent, PensionFundReceivedEvent, PensionFundWithdrewEvent } from "@workquest/database-models/lib/models";
 
 export async function getClaim(r) {
-  const { count, rows } = await ClaimedEvent.findAndCountAll({
+  const { count, rows } = await PensionFundClaimedEvent.findAndCountAll({
     limit: r.query.limit,
     offset: r.query.offset,
     order: [['timestamp', 'DESC']],
@@ -12,7 +12,7 @@ export async function getClaim(r) {
 }
 
 export async function getReceive(r) {
-  const { count, rows } = await ReceivedEvent.findAndCountAll({
+  const { count, rows } = await PensionFundReceivedEvent.findAndCountAll({
     limit: r.query.limit,
     offset: r.query.offset,
     order: [['timestamp', 'DESC']],
@@ -22,7 +22,7 @@ export async function getReceive(r) {
 }
 
 export async function getWithdraw(r) {
-  const { count, rows } = await WithdrewEvent.findAndCountAll({
+  const { count, rows } = await PensionFundWithdrewEvent.findAndCountAll({
     limit: r.query.limit,
     offset: r.query.offset,
     order: [['timestamp', 'DESC']],
