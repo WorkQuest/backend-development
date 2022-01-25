@@ -17,6 +17,7 @@ import liquidityPoolWBNB from './liquidityPool(wqt-wbnb)';
 import discussion from './discussion';
 import skillFilters from './skillFilters';
 import proposal from './proposal';
+import pensionFund from "./pensionFund";
 
 export default [
   ...liquidityPoolWETH,
@@ -38,4 +39,5 @@ export default [
   ...discussion,
   ...skillFilters,
   ...proposal,
+  ...pensionFund,
 ];
