@@ -22,6 +22,7 @@ import {
   StarredQuests,
   User,
   UserRole,
+  DisputeStatus,
 } from '@workquest/database-models/lib/models';
 
 export const searchFields = ['title', 'description'];
@@ -29,8 +30,7 @@ export const searchFields = ['title', 'description'];
 export async function getQuest(r) {
   const user: User = r.auth.credentials;
 
-  const include = [
-    {
+  const include = [{
       model: StarredQuests,
       as: 'star',
       where: { userId: r.auth.credentials.id },
@@ -52,11 +52,14 @@ export async function getQuest(r) {
     },
     {
       model: QuestDispute.unscoped(),
-      as: 'questDisputes',
+      as: 'openDispute',
       where: {
-        [Op.or]: [{ opponentUserId: r.auth.credentials.id }, { openDisputeUserId: r.auth.credentials.id }],
+        [Op.or]: [
+          { opponentUserId: r.auth.credentials.id },
+          { openDisputeUserId: r.auth.credentials.id },
+        ],
+        status: { [Op.in]: [DisputeStatus.pending, DisputeStatus.inProgress] },
       },
-      attributes: ['id'],
       required: false,
     },
   ] as any[];
@@ -76,7 +79,7 @@ export async function getQuest(r) {
   });
 
   if (!quest) {
-    return error(Errors.NotFound, 'Quest not found', { questId: r.params.questId });
+    return error(Errors.NotFound, "Quest not found", { questId: r.params.questId });
   }
 
   return output(quest);
@@ -86,7 +89,8 @@ export async function createQuest(r) {
   const employer: User = r.auth.credentials;
   const userController = new UserController(employer);
 
-  await userController.userMustHaveRole(UserRole.Employer);
+  await userController
+    .userMustHaveRole(UserRole.Employer);
 
   const medias = await MediaController.getMedias(r.payload.medias);
   const transaction = await r.server.app.db.transaction();
@@ -133,7 +137,9 @@ export async function editQuest(r) {
 
   const medias = await MediaController.getMedias(r.payload.medias);
 
-  questController.employerMustBeQuestCreator(employer.id).questMustHaveStatus(QuestStatus.Created);
+  questController
+    .employerMustBeQuestCreator(employer.id)
+    .questMustHaveStatus(QuestStatus.Created);
 
   const transaction = await r.server.app.db.transaction();
 
@@ -167,7 +173,9 @@ export async function deleteQuest(r) {
 
   const questController = new QuestController(await Quest.findByPk(r.params.questId));
 
-  questController.employerMustBeQuestCreator(employer.id).questMustHaveStatus(QuestStatus.Created, QuestStatus.Closed);
+  questController
+    .employerMustBeQuestCreator(employer.id)
+    .questMustHaveStatus(QuestStatus.Created, QuestStatus.Closed);
 
   const transaction = await r.server.app.db.transaction();
 
@@ -183,7 +191,9 @@ export async function closeQuest(r) {
 
   const questController = new QuestController(await Quest.findByPk(r.params.questId));
 
-  await questController.employerMustBeQuestCreator(employer.id).questMustHaveStatus(QuestStatus.Created);
+  await questController
+    .employerMustBeQuestCreator(employer.id)
+    .questMustHaveStatus(QuestStatus.Created)
 
   const transaction = await r.server.app.db.transaction();
 
@@ -207,7 +217,9 @@ export async function startQuest(r) {
   const questController = new QuestController(await Quest.findByPk(r.params.questId));
   const assignedWorkerController = new UserController(await User.findByPk(r.payload.assignedWorkerId));
 
-  await questController.employerMustBeQuestCreator(employer.id).questMustHaveStatus(QuestStatus.Created);
+  await questController
+    .employerMustBeQuestCreator(employer.id)
+    .questMustHaveStatus(QuestStatus.Created)
 
   const questsResponseController = new QuestsResponseController(
     await QuestsResponse.findOne({
@@ -215,7 +227,8 @@ export async function startQuest(r) {
     }),
   );
 
-  questsResponseController.checkActiveResponse();
+  questsResponseController
+    .checkActiveResponse()
 
   const transaction = await r.server.app.db.transaction();
 
@@ -247,9 +260,12 @@ export async function rejectWorkOnQuest(r) {
 
   const questController = new QuestController(await Quest.findByPk(r.params.questId));
 
-  workerController.userMustHaveRole(UserRole.Worker);
+  workerController.
+    userMustHaveRole(UserRole.Worker)
 
-  questController.questMustHaveStatus(QuestStatus.WaitWorker).workerMustBeAppointedOnQuest(worker.id);
+  questController
+    .questMustHaveStatus(QuestStatus.WaitWorker)
+    .workerMustBeAppointedOnQuest(worker.id)
 
   const transaction = await r.server.app.db.transaction();
 
@@ -273,9 +289,12 @@ export async function acceptWorkOnQuest(r) {
 
   const questController = new QuestController(await Quest.findByPk(r.params.questId));
 
-  workerController.userMustHaveRole(UserRole.Worker);
+  workerController.
+    userMustHaveRole(UserRole.Worker)
 
-  questController.questMustHaveStatus(QuestStatus.WaitWorker).workerMustBeAppointedOnQuest(worker.id);
+  questController
+    .questMustHaveStatus(QuestStatus.WaitWorker)
+    .workerMustBeAppointedOnQuest(worker.id)
 
   const transaction = await r.server.app.db.transaction();
 
@@ -304,7 +323,9 @@ export async function completeWorkOnQuest(r) {
   const quest: Quest = await Quest.findByPk(r.params.questId);
   const questController = new QuestController(quest);
 
-  questController.questMustHaveStatus(QuestStatus.Active).workerMustBeAppointedOnQuest(worker.id);
+  questController
+    .questMustHaveStatus(QuestStatus.Active)
+    .workerMustBeAppointedOnQuest(worker.id)
 
   await questController.completeWork();
 
@@ -323,7 +344,9 @@ export async function acceptCompletedWorkOnQuest(r) {
   const quest = await Quest.findByPk(r.params.questId);
   const questController = new QuestController(quest);
 
-  questController.employerMustBeQuestCreator(employer.id).questMustHaveStatus(QuestStatus.WaitConfirm);
+  questController
+    .employerMustBeQuestCreator(employer.id)
+    .questMustHaveStatus(QuestStatus.WaitConfirm)
 
   await questController.approveCompletedWork();
 
@@ -358,7 +381,9 @@ export async function rejectCompletedWorkOnQuest(r) {
   const quest = await Quest.findByPk(r.params.questId);
   const questController = new QuestController(quest);
 
-  questController.employerMustBeQuestCreator(employer.id).questMustHaveStatus(QuestStatus.WaitConfirm);
+  questController
+    .employerMustBeQuestCreator(employer.id)
+    .questMustHaveStatus(QuestStatus.WaitConfirm)
 
   await questController.rejectCompletedWork();
 
@@ -374,17 +399,21 @@ export async function rejectCompletedWorkOnQuest(r) {
 export async function getQuests(r) {
   const user: User = r.auth.credentials;
 
-  const entersAreaLiteral = literal('st_within("Quest"."locationPostGIS", st_makeenvelope(:northLng, :northLat, :southLng, :southLat, 4326))');
-  const questChatLiteral = literal('CASE WHEN "questChat->quest" = NULL THEN NULL ELSE "questChat->quest"."id" END');
+  const entersAreaLiteral = literal(
+    'st_within("Quest"."locationPostGIS", st_makeenvelope(:northLng, :northLat, :southLng, :southLat, 4326))'
+  );
+  const questChatLiteral = literal(
+    'CASE WHEN "questChat->quest" = NULL THEN NULL ELSE "questChat->quest"."id" END'
+  );
   const questSpecializationOnlyPathsLiteral = literal(
-    '(1 = (CASE WHEN EXISTS (SELECT "id" FROM "QuestSpecializationFilters" WHERE "questId" = "Quest"."id" AND "QuestSpecializationFilters"."path" IN (:path)) THEN 1 END))',
+    '(1 = (CASE WHEN EXISTS (SELECT "id" FROM "QuestSpecializationFilters" WHERE "questId" = "Quest"."id" AND "QuestSpecializationFilters"."path" IN (:path)) THEN 1 END))'
   );
   const questSpecializationOnlyIndustryKeysLiteral = literal(
-    '(1 = (CASE WHEN EXISTS (SELECT * FROM "QuestSpecializationFilters" WHERE "questId" = "Quest"."id" AND "QuestSpecializationFilters"."industryKey" IN (:industryKey)) THEN 1 END))',
+    '(1 = (CASE WHEN EXISTS (SELECT * FROM "QuestSpecializationFilters" WHERE "questId" = "Quest"."id" AND "QuestSpecializationFilters"."industryKey" IN (:industryKey)) THEN 1 END))'
   );
   const questSpecializationIndustryKeysAndPathsLiteral = literal(
     '(1 = (CASE WHEN EXISTS (SELECT * FROM "QuestSpecializationFilters" WHERE "questId" = "Quest"."id" AND "QuestSpecializationFilters"."path" IN (:path)) THEN 1 END))' +
-      'OR (1 = (CASE WHEN EXISTS (SELECT * FROM "QuestSpecializationFilters" WHERE "questId" = "Quest"."id" AND "QuestSpecializationFilters"."industryKey" IN (:industryKey)) THEN 1 END))',
+    'OR (1 = (CASE WHEN EXISTS (SELECT * FROM "QuestSpecializationFilters" WHERE "questId" = "Quest"."id" AND "QuestSpecializationFilters"."industryKey" IN (:industryKey)) THEN 1 END))'
   );
 
   const order = [];
@@ -409,8 +438,7 @@ export async function getQuests(r) {
       [field]: { [Op.iLike]: `%${r.query.q}%` },
     }));
   }
-  if (r.query.specializations) {
-    // TODO r.query.specialization on r.query.specialization[s]
+  if (r.query.specializations) {    // TODO r.query.specialization on r.query.specialization[s]
     const { paths, industryKeys } = SkillsFiltersController.splitPathsAndSingleKeysOfIndustry(r.query.specializations);
 
     if (paths.length !== 0 && industryKeys.length === 0) {
