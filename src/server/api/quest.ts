@@ -301,8 +301,6 @@ export async function acceptWorkOnQuest(r) {
   // TODO Quest Responses?
   await questController.answerWorkOnQuest(worker, true, transaction);
 
-  await Quest.update({ startedAt: Date.now() }, { where: { id: r.params.questId }, transaction });
-
   await transaction.commit();
 
   await updateQuestsStatisticJob({

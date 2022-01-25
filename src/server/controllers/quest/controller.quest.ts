@@ -195,6 +195,7 @@ export class QuestController extends QuestHelper {
           },
           { transaction },
         );
+        await Quest.update({ startedAt: Date.now() }, { where: { id: this.quest.id }, transaction });
       } else {
         this.quest = await this.quest.update(
           {
