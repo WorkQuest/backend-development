@@ -25,7 +25,8 @@ npm-debug.log
 .env.proposal
 .env.quest
 .env.WqtWbnb
-.env.factory
+.env.pensionFund
+.env.questFactory
 
 # build directory
 build/
