@@ -82,8 +82,8 @@ export function getUsers(role: UserRole) {
 
     const where = {
       [Op.and]: [], role,
-      ...(r.query.priority && {priority: r.query.priority}),
-      ...(r.query.workplace && { workplace: r.query.workplace }),
+      ...(r.query.priorities && { priority: r.query.priorities }),
+      ...(r.query.workplaces && { workplace: r.query.workplaces }),
       ...(r.query.betweenWagePerHour && { wagePerHour: { [Op.between]: [r.query.betweenWagePerHour.from, r.query.betweenWagePerHour.to] } }),
     };
 
@@ -92,7 +92,7 @@ export function getUsers(role: UserRole) {
         field => ({ [field]: { [Op.iLike]: `%${r.query.q}%` }})
       );
     }
-    if (r.query.ratingStatus) {
+    if (r.query.ratingStatuses) {
       include.push({
         model: RatingStatistic,
         as: 'ratingStatistic',
@@ -101,11 +101,11 @@ export function getUsers(role: UserRole) {
       });
       distinctCol = 'id';
     }
-    if (r.query.north && r.query.south) {
-      replacements['northLng'] = r.query.north.longitude;
-      replacements['northLat'] = r.query.north.latitude;
-      replacements['southLng'] = r.query.south.longitude;
-      replacements['southLat'] = r.query.south.latitude;
+    if (r.query.northAndSouthCoordinates) {
+      replacements['northLng'] = r.query.northAndSouthCoordinates.north.longitude;
+      replacements['northLat'] = r.query.northAndSouthCoordinates.north.latitude;
+      replacements['southLng'] = r.query.northAndSouthCoordinates.south.longitude;
+      replacements['southLat'] = r.query.northAndSouthCoordinates.south.latitude;
 
       where[Op.and].push(entersAreaLiteral);
     }

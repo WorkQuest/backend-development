@@ -70,10 +70,10 @@ export async function mapPoints(r) {
 
   const [results, ] = await r.server.app.db.query(query, {
     replacements: {
-      northLongitude: r.query.north.longitude,
-      northLatitude: r.query.north.latitude,
-      southLongitude: r.query.south.longitude,
-      southLatitude: r.query.south.latitude,
+      northLongitude: r.query.northAndSouthCoordinates.north.longitude,
+      northLatitude: r.query.northAndSouthCoordinates.north.latitude,
+      southLongitude: r.query.northAndSouthCoordinates.south.longitude,
+      southLatitude: r.query.northAndSouthCoordinates.south.latitude,
     }
   });
 
@@ -95,10 +95,10 @@ export async function listMapPoints(r) {
 
   const [results, ] = await r.server.app.db.query(query, {
     replacements: {
-      northLongitude: r.query.north.longitude,
-      northLatitude: r.query.north.latitude,
-      southLongitude: r.query.south.longitude,
-      southLatitude: r.query.south.latitude,
+      northLongitude: r.query.northAndSouthCoordinates.north.longitude,
+      northLatitude: r.query.northAndSouthCoordinates.north.latitude,
+      southLongitude: r.query.northAndSouthCoordinates.south.longitude,
+      southLatitude: r.query.northAndSouthCoordinates.south.latitude,
     }
   });
 

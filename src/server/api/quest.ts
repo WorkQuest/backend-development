@@ -438,11 +438,11 @@ export async function getQuests(r) {
       where[Op.and].push(questSpecializationIndustryKeysAndPathsLiteral);
     }
   }
-  if (r.query.north && r.query.south) {
-    replacements['northLng'] = r.query.north.longitude;
-    replacements['northLat'] = r.query.north.latitude;
-    replacements['southLng'] = r.query.south.longitude;
-    replacements['southLat'] = r.query.south.latitude;
+  if (r.query.northAndSouthCoordinates) {
+    replacements['northLng'] = r.query.northAndSouthCoordinates.north.longitude;
+    replacements['northLat'] = r.query.northAndSouthCoordinates.north.latitude;
+    replacements['southLng'] = r.query.northAndSouthCoordinates.south.longitude;
+    replacements['southLat'] = r.query.northAndSouthCoordinates.south.latitude;
 
     where[Op.and].push(entersAreaLiteral);
   }
