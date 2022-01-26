@@ -1,26 +1,25 @@
-import Web3 from "web3";
-import {Contract, EventData} from "web3-eth-contract";
-import {onEventCallBack, Web3Provider} from "./types";
-import { QuestFactoryEvent } from "../controllers/types";
+import Web3 from 'web3';
+import { Contract, EventData } from 'web3-eth-contract';
+import { onEventCallBack, Web3Provider } from './types';
+import { QuestFactoryEvent } from '../controllers/types';
 
 export class QuestProvider implements Web3Provider {
   private readonly onEventCallBacks: onEventCallBack[] = [];
 
   private readonly preParsingSteps = 6000;
 
-  constructor(
-    public readonly web3: Web3,
-    public readonly contract: Contract,
-  ) {
-  }
+  constructor(public readonly web3: Web3, public readonly contract: Contract) {}
 
   private onEventData(eventData) {
-    this.onEventCallBacks.forEach(callBack => callBack(eventData));
+    this.onEventCallBacks.forEach((callBack) => callBack(eventData));
   }
 
   private _eventListenerInit(fromBlock: number) {
-    this.contract.events.allEvents({ fromBlock })
-      .on('error', (err) => { console.error(err) })
+    this.contract.events
+      .allEvents({ fromBlock })
+      .on('error', (err) => {
+        console.error(err);
+      })
       .on('data', (data) => this.onEventData(data));
   }
 
@@ -47,7 +46,7 @@ export class QuestProvider implements Web3Provider {
 
         collectedEvents.push(...eventsData);
 
-        console.info("Block from: ", fromBlock, " block to: ", toBlock);
+        console.info('Block from: ', fromBlock, ' block to: ', toBlock);
 
         fromBlock += this.preParsingSteps;
         toBlock = fromBlock + this.preParsingSteps - 1;
@@ -55,15 +54,16 @@ export class QuestProvider implements Web3Provider {
         if (toBlock >= lastBlockNumber) {
           const eventsData = await this.contract.getPastEvents(QuestFactoryEvent.Created, {
             fromBlock,
-            toBlock: await this.web3.eth.getBlockNumber()
+            toBlock: await this.web3.eth.getBlockNumber(),
           });
 
-          collectedEvents.push(...eventsData); break;
+          collectedEvents.push(...eventsData);
+          break;
         }
       }
     } catch (error) {
       console.error(error);
-      console.error("GetAllEvents: Last block: ", collectedEvents[collectedEvents.length - 1].blockNumber);
+      console.error('GetAllEvents: Last block: ', collectedEvents[collectedEvents.length - 1].blockNumber);
 
       return { collectedEvents, isGotAllEvents: false };
     }

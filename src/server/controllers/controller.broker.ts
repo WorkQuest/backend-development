@@ -9,7 +9,7 @@ export const enum MainBrokerQueues {
 
 export const enum QuestNotificationActions {
   /** Quest flow */
-  questStarted = 'questStarted',
+  waitWorker = 'waitWorker',
   workerRejectedQuest = 'workerRejectedQuest',
   workerAcceptedQuest = 'workerAcceptedQuest',
   workerCompletedQuest = 'workerCompletedQuest',
@@ -53,6 +53,12 @@ export class ControllerBroker {
     amqp.connect(config.notificationMessageBroker.link, (connectError, conn) => {
       if (connectError) {
         console.error(connectError.message);
+
+        setTimeout(() => {
+          this.initMessageBroker();
+        }, 5000);
+
+        return;
       }
 
       conn.on('error', (connectionError) => {
@@ -63,6 +69,8 @@ export class ControllerBroker {
         setTimeout(() => {
           this.initMessageBroker();
         }, 5000);
+
+        return;
       });
 
       conn.createChannel((channelError, channel) => {
