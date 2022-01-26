@@ -388,7 +388,7 @@ export async function getQuests(r) {
     'OR (1 = (CASE WHEN EXISTS (SELECT * FROM "QuestSpecializationFilters" WHERE "questId" = "Quest"."id" AND "QuestSpecializationFilters"."industryKey" IN (:industryKey)) THEN 1 END))'
   );
   const questRaiseViewLiteral = literal(
-    '(SELECT "type" FROM "QuestRaiseViews" WHERE "questId" = "Quest"."id")'
+    '(SELECT "type" FROM "QuestRaiseViews" WHERE "questId" = "Quest"."id" AND "QuestRaiseViews"."status" = 0)'
   );
 
   const order = [[questRaiseViewLiteral, 'asc']] as any;

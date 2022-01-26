@@ -1,7 +1,13 @@
+import cron from 'node-cron';
+import {output} from "../utils";
 import {UserController} from "../controllers/user/controller.user";
 import {QuestController} from "../controllers/quest/controller.quest";
-import {output} from "../utils";
-import {Quest, QuestRaiseView, User, UserRole} from "@workquest/database-models/lib/models";
+import {
+  User,
+  Quest,
+  UserRole,
+  QuestRaiseView,
+} from "@workquest/database-models/lib/models";
 
 //TODO: проверка на то, вышел срок подписки или нет
 export async function activateRaiseView(r) {
@@ -28,4 +34,18 @@ export async function activateRaiseView(r) {
   return output();
 }
 
-//TODO: сделать оплату
+export async function payForRaiseView(r) {
+//TODO: логику оплаты
+  const raiseView = await QuestRaiseView.findOne({
+    where: {
+      questId: r.params.questId
+    }
+  });
+
+  const endOfRaiseView = new Date(Date.now());
+
+  cron.schedule(Date(), async () => {
+  });
+
+  return output();
+}
