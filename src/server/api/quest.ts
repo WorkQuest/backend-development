@@ -387,8 +387,11 @@ export async function getQuests(r) {
     '(1 = (CASE WHEN EXISTS (SELECT * FROM "QuestSpecializationFilters" WHERE "questId" = "Quest"."id" AND "QuestSpecializationFilters"."path" IN (:path)) THEN 1 END))' +
     'OR (1 = (CASE WHEN EXISTS (SELECT * FROM "QuestSpecializationFilters" WHERE "questId" = "Quest"."id" AND "QuestSpecializationFilters"."industryKey" IN (:industryKey)) THEN 1 END))'
   );
+  const questRaiseViewLiteral = literal(
+    '(SELECT "type" FROM "QuestRaiseViews" WHERE "questId" = "Quest"."id")'
+  );
 
-  const order = [['adType', 'asc']] as any;
+  const order = [[questRaiseViewLiteral, 'asc']] as any;
   const include = [];
   const replacements = { };
   const where = {
@@ -505,7 +508,7 @@ export async function getQuests(r) {
     required: false,
   }, {
     model: QuestRaiseView,
-    as: 'raiseView',
+    as: 'raiseView'
   });
 
   for (const [key, value] of Object.entries(r.query.sort)) {
