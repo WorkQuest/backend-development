@@ -164,14 +164,22 @@ export function editProfile(userRole: UserRole) {
 
     await userController.userMustHaveRole(userRole);
 
+    const locationFields = { location: null, locationPostGIS: null, locationPlaceName: null };
     const avatarId = r.payload.avatarId ? (await MediaController.getMedia(r.payload.avatarId)).id : null;
+
     const transaction = await r.server.app.db.transaction();
 
+    if (r.payload.locationFull) {
+      locationFields.location = r.payload.locationFull.location;
+      locationFields.locationPlaceName = r.payload.locationFull.locationPlaceName;
+      locationFields.locationPostGIS = transformToGeoPostGIS(r.payload.locationFull.location);
+    }
     if (userRole === UserRole.Worker) {
       await userController.setUserSpecializations(r.payload.specializationKeys, transaction);
     }
 
     await user.update({
+      ...locationFields,
       avatarId: avatarId,
       lastName: r.payload.lastName,
       firstName: r.payload.firstName,
@@ -179,9 +187,6 @@ export function editProfile(userRole: UserRole) {
       workplace: r.payload.workplace || null,
       wagePerHour: r.payload.wagePerHour || null,
       additionalInfo: r.payload.additionalInfo,
-      location: r.payload.locationFull ? r.payload.locationFull.location : null,
-      locationPlaceName: r.payload.locationFull ? r.payload.locationFull.locationPlaceName : null,
-      locationPostGIS: r.payload.locationFull ? transformToGeoPostGIS(r.payload.locationFull.location) : null,
     }, transaction);
 
     await transaction.commit();
