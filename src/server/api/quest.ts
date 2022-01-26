@@ -9,6 +9,7 @@ import { QuestsResponseController } from "../controllers/quest/controller.quests
 import { MediaController } from "../controllers/controller.media";
 import { addUpdateReviewStatisticsJob } from "../jobs/updateReviewStatistics";
 import { updateQuestsStatisticJob } from "../jobs/updateQuestsStatistic";
+import { SkillsFiltersController } from "../controllers/controller.skillsFilters";
 import {
   Quest,
   QuestChat,
@@ -21,16 +22,12 @@ import {
   User,
   UserRole
 } from "@workquest/database-models/lib/models";
-import { SkillsFiltersController } from "../controllers/controller.skillsFilters";
-import { getLoginViaSocialNetworkHandler } from './auth';
-import { longHexTokenSchema } from '@workquest/database-models/lib/schemes';
 
 export const searchQuestFields = [
   'title',
   'description',
   'locationPlaceName'
 ];
-
 
 export async function getQuest(r) {
   const user: User = r.auth.credentials;
@@ -91,14 +88,14 @@ export async function createQuest(r) {
     workplace: r.payload.workplace,
     employment: r.payload.employment,
     priority: r.payload.priority,
-    location: r.payload.location,
     title: r.payload.title,
     description: r.payload.description,
     price: r.payload.price,
     medias: r.payload.medias,
     adType: r.payload.adType,
-    locationPlaceName: r.payload.locationPlaceName,
-    locationPostGIS: transformToGeoPostGIS(r.payload.location),
+    location: r.payload.locationFull.location,
+    locationPlaceName: r.payload.locationFull.locationPlaceName,
+    locationPostGIS: transformToGeoPostGIS(r.payload.locationFull.location),
   }, { transaction });
 
   const questController = new QuestController(quest);
@@ -143,9 +140,9 @@ export async function editQuest(r) {
     workplace: r.payload.workplace,
     employment: r.payload.employment,
     description: r.payload.description,
-    location: r.payload.location,
-    locationPlaceName: r.payload.locationPlaceName,
-    locationPostGIS: transformToGeoPostGIS(r.payload.location),
+    location: r.payload.locationFull.location,
+    locationPlaceName: r.payload.locationFull.locationPlaceName,
+    locationPostGIS: transformToGeoPostGIS(r.payload.locationFull.location),
   }, { transaction });
 
   await transaction.commit();
@@ -395,10 +392,10 @@ export async function getQuests(r) {
     'OR (1 = (CASE WHEN EXISTS (SELECT * FROM "QuestSpecializationFilters" WHERE "questId" = "Quest"."id" AND "QuestSpecializationFilters"."industryKey" IN (:industryKey)) THEN 1 END))'
   );
   const userSearchLiteral = literal(
+    // TODO добавь эти поля в replace типо так ILIKE '%:searchByFirstName%'`
     `(SELECT "firstName" FROM "Users" WHERE "id" = "Quest"."userId") ILIKE '%${r.query.q}%'` +
     `OR (SELECT "lastName" FROM "Users" WHERE "id" = "Quest"."userId") ILIKE '%${r.query.q}%'`
-)
-
+  );
 
   const order = [];
   const include = [];
@@ -414,7 +411,6 @@ export async function getQuests(r) {
     ...(r.query.priorities && { priority: {[Op.in]: r.query.priorities } }),
     ...(r.query.workplaces && { workplace: { [Op.in]: r.query.workplaces } }),
     ...(r.query.employments && { employment: { [Op.in]: r.query.employments } }),
-    ...(r.query.locationPlaceName && { locationPlaceName: r.query.locationPlaceName }),
     ...(r.query.priceBetween && { price: { [Op.between]: [r.query.priceBetween.from, r.query.priceBetween.to] } }),
   };
 
@@ -422,11 +418,9 @@ export async function getQuests(r) {
     where[Op.or] = searchQuestFields.map(field => ({
       [field]: { [Op.iLike]: `%${r.query.q}%` }
     }));
+
     where[Op.or].push(userSearchLiteral)
   }
-
-
-
   if (r.query.specializations) { // TODO r.query.specialization on r.query.specialization[s]
     const { paths, industryKeys } = SkillsFiltersController.splitPathsAndSingleKeysOfIndustry(r.query.specializations);
 

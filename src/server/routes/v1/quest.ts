@@ -16,10 +16,10 @@ import {
   questTitleSchema,
   questQuerySchema,
   questsForGetWithCountSchema,
-  questLocationPlaceNameSchema,
+  locationPlaceNameSchema,
   questEmploymentSchema,
   specializationKeysSchema,
-  chatForGetSchema,
+  locationFullSchema,
 } from "@workquest/database-models/lib/schemes";
 
 export default [{
@@ -55,8 +55,7 @@ export default [{
         workplace: workPlaceSchema.required(),
         employment: questEmploymentSchema.required(),
         priority: prioritySchema.required(),
-        locationPlaceName: questLocationPlaceNameSchema.required(),
-        location: locationSchema.required(),
+        locationFull: locationFullSchema.required(),
         title: questTitleSchema.required(),
         description: questDescriptionSchema.required(),
         price: questPriceSchema.required(),
@@ -105,8 +104,7 @@ export default [{
         workplace: workPlaceSchema.required(),
         employment: questEmploymentSchema.required(),
         priority: prioritySchema.required(),
-        location: locationSchema.required(),
-        locationPlaceName: questLocationPlaceNameSchema.required(),
+        locationFull: locationFullSchema.required(),
         title: questTitleSchema.required(),
         description: questDescriptionSchema.required(),
         price: questPriceSchema.required(),

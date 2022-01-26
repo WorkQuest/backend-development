@@ -13,7 +13,6 @@ import {
   ChatsStatistic,
   RatingStatistic,
   QuestsStatistic,
-  UserSpecializationFilter,
 } from "@workquest/database-models/lib/models";
 
 export const searchFields = [
@@ -83,12 +82,9 @@ export function getUsers(role: UserRole) {
 
     const where = {
       [Op.and]: [], role,
-      ...(r.query.workplace && { workplace: r.query.workplace }),
       ...(r.query.priority && {priority: r.query.priority}),
-      ...(r.query.betweenWagePerHour && { wagePerHour: {
-          [Op.between]: [r.query.betweenWagePerHour.from, r.query.betweenWagePerHour.to]
-        } }),
-      ...(r.query.locationPlaceName && { locationPlaceName: r.query.locationPlaceName})
+      ...(r.query.workplace && { workplace: r.query.workplace }),
+      ...(r.query.betweenWagePerHour && { wagePerHour: { [Op.between]: [r.query.betweenWagePerHour.from, r.query.betweenWagePerHour.to] } }),
     };
 
     if (r.query.q) {
@@ -178,14 +174,14 @@ export function editProfile(userRole: UserRole) {
     await user.update({
       avatarId: avatarId,
       lastName: r.payload.lastName,
-      location: r.payload.location,
-      locationPlaceName: r.payload.locationPlaceName,
       firstName: r.payload.firstName,
       priority: r.payload.priority || null,
       workplace: r.payload.workplace || null,
       wagePerHour: r.payload.wagePerHour || null,
       additionalInfo: r.payload.additionalInfo,
-      locationPostGIS: r.payload.location ? transformToGeoPostGIS(r.payload.location) : null,
+      location: r.payload.locationFull ? r.payload.locationFull.location : null,
+      locationPlaceName: r.payload.locationFull ? r.payload.locationFull.locationPlaceName : null,
+      locationPostGIS: r.payload.locationFull ? transformToGeoPostGIS(r.payload.locationFull.location) : null,
     }, transaction);
 
     await transaction.commit();

@@ -16,6 +16,7 @@ import {
   workPlaceSchema,
   userWorkersSchema,
   workerQuerySchema,
+  locationFullSchema,
   userLastNameSchema,
   userPasswordSchema,
   employerQuerySchema,
@@ -25,7 +26,7 @@ import {
   outputPaginationSchema,
   workerWagePerHourSchema,
   specializationKeysSchema,
-  userLocationPlaceNameSchema,
+  locationPlaceNameSchema,
   userAdditionalInfoWorkerSchema,
   userAdditionalInfoEmployerSchema
 } from '@workquest/database-models/lib/schemes';
@@ -127,8 +128,7 @@ export default [{
         avatarId: idSchema.allow(null).required(),
         firstName: userFirstNameSchema.required(),
         lastName: userLastNameSchema.required(),
-        location: locationSchema.allow(null).required(),
-        locationPlaceName: userLocationPlaceNameSchema.allow(null).required(),
+        locationFull: locationFullSchema.allow(null).required(),
         additionalInfo: userAdditionalInfoEmployerSchema.required(),
       }).label("EditEmployerProfilePayload")
     },
@@ -151,8 +151,7 @@ export default [{
         firstName: userFirstNameSchema.required(),
         avatarId: idSchema.allow(null).required(),
         priority: prioritySchema.allow(null).required(),
-        location: locationSchema.allow(null).required(),
-        locationPlaceName: userLocationPlaceNameSchema.allow(null).required(),
+        locationFull: locationFullSchema.allow(null).required(),
         workplace: workPlaceSchema.allow(null).required(),
         additionalInfo: userAdditionalInfoWorkerSchema.required(),
         wagePerHour: workerWagePerHourSchema.allow(null).required(),
