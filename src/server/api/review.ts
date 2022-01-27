@@ -4,9 +4,11 @@ import { QuestNotificationActions } from '../controllers/controller.broker';
 import { QuestController } from '../controllers/quest/controller.quest';
 import { Errors } from '../utils/errors';
 import { User, Quest, Review, UserRole, QuestStatus } from '@workquest/database-models/lib/models';
+import { UserController } from '../controllers/user/controller.user';
 
 export async function sendReview(r) {
   const fromUser: User = r.auth.credentials;
+  const fromUserController = new UserController(fromUser);
 
   const questController = new QuestController(await Quest.findByPk(r.payload.questId));
 
@@ -36,14 +38,7 @@ export async function sendReview(r) {
     mark: r.payload.mark,
   });
 
-  review.setDataValue('fromUser', {
-    id: fromUser.id,
-    firstName: fromUser.firstName,
-    lastName: fromUser.lastName,
-    avatarId: fromUser.avatarId,
-    avatar: fromUser.avatar,
-    additionalInfo: fromUser.additionalInfo,
-  });
+  review.setDataValue('fromUser', fromUserController.shortCredentials);
 
   await addUpdateReviewStatisticsJob({
     userId: toUser.id,
