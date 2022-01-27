@@ -43,7 +43,7 @@ export function tokenValidate(tokenType: 'access' | 'refresh', allowedUnconfirme
     }
 
     if (session.user.status === UserStatus.Blocked) {
-      throw error(Errors.UnconfirmedUser, 'Blocked user', {});
+      throw error(Errors.BlockedUser, 'Blocked user', {});
     }
 
     if (session.user.status === UserStatus.Unconfirmed && !allowedUnconfirmedRoutes.includes(r.route.path)) {
