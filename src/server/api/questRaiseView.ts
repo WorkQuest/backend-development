@@ -10,6 +10,7 @@ import {
   UserRole
 } from "@workquest/database-models/lib/models";
 import { updateQuestRaiseViewStatusJob } from "../jobs/updateQuestRaiseViewStatus";
+import questRaiseView from "../routes/v1/questRaiseView";
 
 export async function activateRaiseView(r) {
   const employer: User = r.auth.credentials;
