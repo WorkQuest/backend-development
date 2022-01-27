@@ -412,6 +412,9 @@ export async function getQuests(r) {
     `(SELECT "firstName" FROM "Users" WHERE "id" = "Quest"."userId") ILIKE '%${r.query.q}%'` +
     `OR (SELECT "lastName" FROM "Users" WHERE "id" = "Quest"."userId") ILIKE '%${r.query.q}%'`
   );
+  const questChatWorkerLiteral = literal(
+    '"questChat"."workerId" = "Quest"."assignedWorkerId"'
+  );
 
   const order = [];
   const include = [];
@@ -477,7 +480,7 @@ export async function getQuests(r) {
       attributes: {
         include: [[questChatLiteral, 'id']],
       },
-      where: { employerId: user.id },
+      where: { employerId: user.id, questChatWorkerLiteral },
       required: false,
       include: {
         model: Quest.unscoped(),
@@ -519,11 +522,6 @@ export async function getQuests(r) {
       where: {
         [Op.and]: [{ workerId: r.auth.credentials.id }, { type: QuestsResponseType.Response }],
       },
-    },
-    {
-      model: QuestChat.scope('idsOnly'),
-      as: 'questChat',
-      required: false,
     },
   );
 
