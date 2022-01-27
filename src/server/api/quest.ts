@@ -61,6 +61,11 @@ export async function getQuest(r) {
       status: { [Op.in]: [DisputeStatus.pending, DisputeStatus.inProgress] },
     },
     required: false,
+  }, {
+    model: Review.unscoped(),
+    as: 'yourReview',
+    where: { fromUserId: r.auth.credentials.id },
+    required: false,
   }] as any[];
 
   if (user.role === UserRole.Worker) {
