@@ -105,16 +105,7 @@ abstract class QuestHelper {
     return this;
   }
 
-  public async createRaiseView(userId: string, transaction: Transaction) {
-    await QuestRaiseView.create({
-      questId: this.quest.id,
-      userId: userId,
-    }, {transaction});
-
-    return this;
-  }
-
-  public async checkQuestRaiseViews() {
+  public async checkQuestRaiseViewStatus() {
     const raiseView = await QuestRaiseView.findOne({
       where: {
         [Op.and]: [{ questId: this.quest.id }, { status: {[Op.or]: [QuestRaiseStatus.Paid]} }]
@@ -238,6 +229,15 @@ export class QuestController extends QuestHelper {
       }
       throw e;
     }
+  }
+
+  public async createRaiseView(userId: string, transaction: Transaction) {
+    await QuestRaiseView.create({
+      questId: this.quest.id,
+      userId: userId,
+    }, {transaction});
+
+    return this;
   }
 
   public async openDispute(transaction?: Transaction) {
