@@ -264,8 +264,6 @@ export async function inviteOnQuest(r) {
   questResponse.setDataValue('quest', questController.quest);
   questResponse.setDataValue('employer', employerController.shortCredentials);
 
-  console.log(questResponse);
-
   r.server.app.broker.sendChatNotification({
     action: ChatNotificationActions.newMessage,
     recipients: [quest.userId],
