@@ -39,7 +39,7 @@ export default [{
     auth: 'jwt-access',
     id: "v1.quest.raiseView.pay",
     tags: ["api", "quest-raiseView"],
-    description: "Pay for quesя в любоt raise view",
+    description: "Pay for quest raise view",
     validate: {
       params: Joi.object({
         questId: idSchema.required(),
