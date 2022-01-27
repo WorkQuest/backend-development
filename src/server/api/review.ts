@@ -36,6 +36,15 @@ export async function sendReview(r) {
     mark: r.payload.mark,
   });
 
+  review.setDataValue('fromUser', {
+    id: fromUser.id,
+    firstName: fromUser.firstName,
+    lastName: fromUser.lastName,
+    avatarId: fromUser.avatarId,
+    avatar: fromUser.avatar,
+    additionalInfo: fromUser.additionalInfo,
+  });
+
   await addUpdateReviewStatisticsJob({
     userId: toUser.id,
   });

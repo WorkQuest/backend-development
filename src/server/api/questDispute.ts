@@ -3,6 +3,7 @@ import { error, output } from '../utils';
 import { Errors } from '../utils/errors';
 import { QuestController } from '../controllers/quest/controller.quest';
 import { User, Quest, QuestStatus, QuestDispute, DisputeStatus, QuestChat } from '@workquest/database-models/lib/models';
+import { QuestNotificationActions } from '../controllers/controller.broker';
 
 export async function openDispute(r) {
   const user: User = r.auth.credentials;
@@ -51,6 +52,12 @@ export async function openDispute(r) {
   await questController.openDispute(transaction);
 
   await transaction.commit();
+
+  r.server.app.broker.sendQuestNotification({
+    action: QuestNotificationActions.openDispute,
+    recipients: [opponentUserId],
+    data: dispute,
+  });
 
   return output(dispute);
 }

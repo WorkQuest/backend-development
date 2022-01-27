@@ -11,19 +11,19 @@ import { addUpdateReviewStatisticsJob } from '../jobs/updateReviewStatistics';
 import { updateQuestsStatisticJob } from '../jobs/updateQuestsStatistic';
 import { SkillsFiltersController } from '../controllers/controller.skillsFilters';
 import {
+  DisputeStatus,
   Quest,
   QuestChat,
-  QuestDispute,
   QuestChatStatuses,
+  QuestDispute,
   QuestsResponse,
   QuestsResponseType,
   QuestStatus,
   Review,
   StarredQuests,
   User,
-  DisputeStatus,
-  UserRole
-} from "@workquest/database-models/lib/models";
+  UserRole,
+} from '@workquest/database-models/lib/models';
 
 export const searchQuestFields = [
   'title',
@@ -83,7 +83,7 @@ export async function getQuest(r) {
   });
 
   if (!quest) {
-    return error(Errors.NotFound, "Quest not found", { questId: r.params.questId });
+    return error(Errors.NotFound, 'Quest not found', { questId: r.params.questId });
   }
 
   return output(quest);
@@ -163,6 +163,16 @@ export async function editQuest(r) {
 
   await transaction.commit();
 
+  r.server.app.broker.sendQuestNotification({
+    action: QuestNotificationActions.questEdited,
+    recipients: (
+      await QuestsResponse.findAll({
+        where: { questId: questController.quest.id },
+      })
+    ).map((response) => response.workerId),
+    data: questController.quest,
+  });
+
   return output(questController.quest);
 }
 
@@ -240,7 +250,7 @@ export async function startQuest(r) {
   r.server.app.broker.sendQuestNotification({
     data: questController.quest,
     recipients: [assignedWorkerController.user.id],
-    action: QuestNotificationActions.questStarted,
+    action: QuestNotificationActions.waitWorker,
   });
 
   return output();
