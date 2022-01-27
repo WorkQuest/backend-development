@@ -8,6 +8,7 @@ import {
   UserRole,
   QuestRaiseView,
 } from "@workquest/database-models/lib/models";
+import { updateQuestRaiseViewStatusJob } from "../jobs/updateQuestRaiseViewStatus";
 
 export async function activateRaiseView(r) {
   //TODO проверку на статус квеста, что он не начат ещё
@@ -37,21 +38,25 @@ export async function activateRaiseView(r) {
 export async function payForRaiseView(r) {
 //TODO: логику оплаты
 //TODO: проверку, заполнен ли тип и длительность
-  const raiseView = await QuestRaiseView.findOne({
-    where: {
-      questId: r.params.questId
-    }
-  });
+//   const raiseView = await QuestRaiseView.findOne({
+//     where: {
+//       questId: r.params.questId
+//     }
+//   });
+//
+//   const endOfRaiseView = new Date();
+//   const a = endOfRaiseView.setTime(1643259660*1000)
+//   console.log(new Date(a));
+//   endOfRaiseView.setDate(endOfRaiseView.getDate() + raiseView.duration);
+//
+//
+//
+//   //todo найти шедулер
+//   cron.schedule(`${a}`, async () => {
+//     console.log("Hello");
+//   });
 
-  const endOfRaiseView = new Date();
-  const a = endOfRaiseView.setTime(1643259660)
-  console.log(a);
-  endOfRaiseView.setDate(endOfRaiseView.getDate() + raiseView.duration);
-
-  //todo найти шедулер
-  cron.schedule(`${a}`, async () => {
-    console.log("Hello");
-  });
+  await  updateQuestRaiseViewStatusJob();
 
   return output();
 }

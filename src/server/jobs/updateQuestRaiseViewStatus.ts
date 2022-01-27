@@ -7,12 +7,19 @@ export type QuestRaiseViewPayload = {
   type: QuestRaiseType
 }
 
-export async function updateQuestRaiseViewStatusJob(payload: QuestRaiseViewPayload) {
-  return addJob("updateQuestRaiseViewStatus", payload);
-}
+//payload: QuestRaiseViewPayload
 
-export default async function updateQuestRaiseViewStatus(payload: QuestRaiseViewPayload) {
-  await QuestRaiseView.update({ status: payload.status }, { where: { questId: payload.questId } });
-  await Quest.update({adType: QuestRaiseType}, {where: {id: payload.questId}});
+export async function updateQuestRaiseViewStatusJob() {
+  //return addJob("updateQuestRaiseViewStatus", payload);
+  return addJob("updateQuestRaiseViewStatus");
+}
+//payload: QuestRaiseViewPayload
+export default async function updateQuestRaiseViewStatus() {
+  addJob('update', {}, {})
+
+  // await QuestRaiseView.update({ status: payload.status }, { where: { questId: payload.questId } });
+  // await Quest.update({adType: QuestRaiseType}, {where: {id: payload.questId}});
+
+
 }
 
