@@ -10,6 +10,7 @@ import {
 } from "@workquest/database-models/lib/models";
 
 export async function activateRaiseView(r) {
+  //TODO проверку на статус квеста, что он не начат ещё
   const employer: User = r.auth.credentials;
   const userController = new UserController(employer);
   userController.userMustHaveRole(UserRole.Employer);
@@ -35,15 +36,21 @@ export async function activateRaiseView(r) {
 
 export async function payForRaiseView(r) {
 //TODO: логику оплаты
+//TODO: проверку, заполнен ли тип и длительность
   const raiseView = await QuestRaiseView.findOne({
     where: {
       questId: r.params.questId
     }
   });
 
-  const endOfRaiseView = new Date(Date.now());
+  const endOfRaiseView = new Date();
+  const a = endOfRaiseView.setTime(1643259660)
+  console.log(a);
+  endOfRaiseView.setDate(endOfRaiseView.getDate() + raiseView.duration);
 
-  cron.schedule(Date(), async () => {
+  //todo найти шедулер
+  cron.schedule(`${a}`, async () => {
+    console.log("Hello");
   });
 
   return output();
