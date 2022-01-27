@@ -3,7 +3,6 @@ import { listMapPoints, mapPoints } from '../../api/map';
 import {
   outputOkSchema,
   mapPointsSchema,
-  locationSchema,
   searchSchema,
   prioritySchema,
   questsListSortSchema,
