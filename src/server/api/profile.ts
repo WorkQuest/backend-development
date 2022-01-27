@@ -1,11 +1,11 @@
-import {literal, Op} from "sequelize";
-import {addSendSmsJob} from '../jobs/sendSms';
-import {getRandomCodeNumber, output} from '../utils';
-import {UserController} from "../controllers/user/controller.user";
-import {transformToGeoPostGIS} from "../utils/postGIS";
-import {MediaController} from "../controllers/controller.media";
-import {SkillsFiltersController} from "../controllers/controller.skillsFilters";
-import {addUpdateReviewStatisticsJob} from "../jobs/updateReviewStatistics";
+import { literal, Op } from 'sequelize';
+import { addSendSmsJob } from '../jobs/sendSms';
+import { getRandomCodeNumber, output } from '../utils';
+import { UserController } from '../controllers/user/controller.user';
+import { transformToGeoPostGIS } from '../utils/postGIS';
+import { MediaController } from '../controllers/controller.media';
+import { SkillsFiltersController } from '../controllers/controller.skillsFilters';
+import { addUpdateReviewStatisticsJob } from '../jobs/updateReviewStatistics';
 import {
   User,
   Wallet,
@@ -24,7 +24,7 @@ export const searchFields = [
 export async function getMe(r) {
   const user = await User.findByPk(r.auth.credentials.id, {
     attributes: { include: ['tempPhone'] },
-    include: [{ model: Wallet, as: 'wallet', attributes: ['address'] }]
+    include: [{ model: Wallet, as: 'wallet', attributes: ['address'] }],
   });
 
   return output(user);
@@ -77,7 +77,7 @@ export function getUsers(role: UserRole) {
 
     const order = [];
     const include = [];
-    const replacements = { };
+    const replacements = {};
     let distinctCol: '"User"."id"' | 'id' = '"User"."id"';
 
     const where = {
@@ -143,7 +143,7 @@ export function getUsers(role: UserRole) {
     });
 
     return output({ count, users: rows });
-  }
+  };
 }
 
 export async function setRole(r) {
@@ -158,7 +158,7 @@ export async function setRole(r) {
 }
 
 export function editProfile(userRole: UserRole) {
-  return async function(r) {
+  return async function (r) {
     const user: User = r.auth.credentials;
     const userController = new UserController(user);
 
@@ -195,15 +195,13 @@ export function editProfile(userRole: UserRole) {
       userId: user.id,
     });
 
-    return output(
-      await User.findByPk(r.auth.credentials.id)
-    );
-  }
+    return output(await User.findByPk(r.auth.credentials.id));
+  };
 }
 
 export async function changePassword(r) {
-  const user = await User.scope("withPassword").findOne({
-    where: { id: r.auth.credentials.id }
+  const user = await User.scope('withPassword').findOne({
+    where: { id: r.auth.credentials.id },
   });
 
   const userController = new UserController(user);
@@ -221,7 +219,7 @@ export async function changePassword(r) {
 }
 
 export async function confirmPhoneNumber(r) {
-  const user = await User.scope("withPassword").findByPk(r.auth.credentials.id);
+  const user = await User.scope('withPassword').findByPk(r.auth.credentials.id);
 
   const userController = new UserController(user);
 
@@ -234,7 +232,7 @@ export async function confirmPhoneNumber(r) {
 }
 
 export async function sendCodeOnPhoneNumber(r) {
-  const userWithPassword = await User.scope("withPassword").findByPk(r.auth.credentials.id);
+  const userWithPassword = await User.scope('withPassword').findByPk(r.auth.credentials.id);
   const confirmCode = getRandomCodeNumber();
 
   const userController = new UserController(userWithPassword);
@@ -251,15 +249,15 @@ export async function sendCodeOnPhoneNumber(r) {
 
 export async function getUserStatistics(r) {
   const chatsStatistic = await ChatsStatistic.findOne({
-    where: { userId: r.auth.credentials.id }
+    where: { userId: r.auth.credentials.id },
   });
 
   const questsStatistic = await QuestsStatistic.findOne({
-    where: { userId: r.auth.credentials.id }
+    where: { userId: r.auth.credentials.id },
   });
 
   const ratingStatistic = await RatingStatistic.findOne({
-    where: { userId: r.auth.credentials.id }
+    where: { userId: r.auth.credentials.id },
   });
 
   return output({ chatsStatistic, questsStatistic, ratingStatistic });

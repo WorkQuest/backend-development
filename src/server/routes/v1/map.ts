@@ -1,15 +1,15 @@
-import Joi = require("joi");
+import Joi = require('joi');
 import { listMapPoints, mapPoints } from '../../api/map';
 import {
+  searchSchema,
+  questsSchema,
+  prioritySchema,
   outputOkSchema,
   mapPointsSchema,
-  searchSchema,
-  prioritySchema,
-  questsListSortSchema,
   questStatusSchema,
-  questsSchema,
+  questsListSortSchema,
   searchByNorthAndSouthCoordinatesSchema,
-} from "@workquest/database-models/lib/schemes"
+} from '@workquest/database-models/lib/schemes';
 
 export default [{
   method: "GET",

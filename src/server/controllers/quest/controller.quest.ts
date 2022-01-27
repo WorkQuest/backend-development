@@ -1,16 +1,8 @@
-import {error} from "../../utils";
-import {Transaction} from "sequelize";
-import {Errors} from "../../utils/errors";
-import {SkillsFiltersController} from "../controller.skillsFilters";
-import {
-  User,
-  Quest,
-  QuestChat,
-  QuestStatus,
-  StarredQuests,
-  QuestsResponse,
-  QuestSpecializationFilter,
-} from "@workquest/database-models/lib/models";
+import { error } from '../../utils';
+import { Transaction } from 'sequelize';
+import { Errors } from '../../utils/errors';
+import { SkillsFiltersController } from '../controller.skillsFilters';
+import { User, Quest, QuestChat, QuestStatus, StarredQuests, QuestsResponse, QuestSpecializationFilter } from '@workquest/database-models/lib/models';
 
 abstract class QuestHelper {
   public abstract quest: Quest;
@@ -62,9 +54,9 @@ abstract class QuestHelper {
   }
 
   /** Checks list */
-  public employerMustBeQuestCreator(userId: String): QuestHelper {
+  public employerMustBeQuestCreator(userId: string): QuestHelper {
     if (this.quest.userId !== userId) {
-      throw error(Errors.Forbidden, "User is not quest creator", {
+      throw error(Errors.Forbidden, 'User is not quest creator', {
         current: this.quest.userId,
         mustHave: userId,
       });
@@ -86,7 +78,7 @@ abstract class QuestHelper {
 
   public workerMustBeAppointedOnQuest(workerId: string): QuestHelper {
     if (this.quest.assignedWorkerId !== workerId) {
-      throw error(Errors.Forbidden, "Worker is not appointed on quest", {
+      throw error(Errors.Forbidden, 'Worker is not appointed on quest', {
         current: this.quest.userId,
         mustHave: workerId,
       });
@@ -97,7 +89,7 @@ abstract class QuestHelper {
 
   public userMustBelongToQuest(userId: string): QuestHelper {
     if (userId !== this.quest.userId && userId !== this.quest.assignedWorkerId) {
-      throw error(Errors.Forbidden, "User does not belong to quest", {});
+      throw error(Errors.Forbidden, 'User does not belong to quest', {});
     }
 
     return this;
@@ -105,22 +97,23 @@ abstract class QuestHelper {
 }
 
 export class QuestController extends QuestHelper {
-  constructor(
-    public quest: Quest,
-  ) {
+  constructor(public quest: Quest) {
     super();
 
     if (!quest) {
-      throw error(Errors.NotFound, "Quest not found", {});
+      throw error(Errors.NotFound, 'Quest not found', {});
     }
   }
 
   public async start(assignedWorker: User, transaction?: Transaction) {
     try {
-      this.quest = await this.quest.update({
-        assignedWorkerId: assignedWorker.id,
-        status: QuestStatus.WaitWorker,
-      }, { transaction });
+      this.quest = await this.quest.update(
+        {
+          assignedWorkerId: assignedWorker.id,
+          status: QuestStatus.WaitWorker,
+        },
+        { transaction },
+      );
     } catch (e) {
       if (transaction) {
         await transaction.rollback();
@@ -131,9 +124,12 @@ export class QuestController extends QuestHelper {
 
   public async close(transaction?: Transaction) {
     try {
-      this.quest = await this.quest.update({
-        status: QuestStatus.Closed,
-      }, { transaction });
+      this.quest = await this.quest.update(
+        {
+          status: QuestStatus.Closed,
+        },
+        { transaction },
+      );
     } catch (e) {
       if (transaction) {
         await transaction.rollback();
@@ -144,9 +140,12 @@ export class QuestController extends QuestHelper {
 
   public async completeWork(transaction?: Transaction) {
     try {
-      this.quest = await this.quest.update({
-        status: QuestStatus.WaitConfirm,
-      }, { transaction });
+      this.quest = await this.quest.update(
+        {
+          status: QuestStatus.WaitConfirm,
+        },
+        { transaction },
+      );
     } catch (e) {
       if (transaction) {
         await transaction.rollback();
@@ -157,9 +156,12 @@ export class QuestController extends QuestHelper {
 
   public async approveCompletedWork(transaction?: Transaction) {
     try {
-      this.quest = await this.quest.update({
-        status: QuestStatus.Done,
-      }, { transaction });
+      this.quest = await this.quest.update(
+        {
+          status: QuestStatus.Done,
+        },
+        { transaction },
+      );
     } catch (e) {
       if (transaction) {
         await transaction.rollback();
@@ -170,9 +172,12 @@ export class QuestController extends QuestHelper {
 
   public async rejectCompletedWork(transaction?: Transaction) {
     try {
-      this.quest = await this.quest.update({
-        status: QuestStatus.Dispute,
-      }, { transaction });
+      this.quest = await this.quest.update(
+        {
+          status: QuestStatus.Dispute,
+        },
+        { transaction },
+      );
     } catch (e) {
       if (transaction) {
         await transaction.rollback();
@@ -184,14 +189,21 @@ export class QuestController extends QuestHelper {
   async answerWorkOnQuest(worker: User, acceptWork: boolean, transaction: Transaction) {
     try {
       if (acceptWork) {
-        this.quest = await this.quest.update({
-          status: QuestStatus.Active,
-        }, { transaction });
+        this.quest = await this.quest.update(
+          {
+            status: QuestStatus.Active,
+          },
+          { transaction },
+        );
+        await Quest.update({ startedAt: Date.now() }, { where: { id: this.quest.id }, transaction });
       } else {
-        this.quest = await this.quest.update({
-          status: QuestStatus.Created,
-          assignedWorkerId: null,
-        }, { transaction });
+        this.quest = await this.quest.update(
+          {
+            status: QuestStatus.Created,
+            assignedWorkerId: null,
+          },
+          { transaction },
+        );
       }
     } catch (e) {
       if (transaction) {
@@ -205,7 +217,7 @@ export class QuestController extends QuestHelper {
     try {
       await QuestChat.destroy({ where: { questId: this.quest.id }, transaction });
       await QuestSpecializationFilter.destroy({ where: { questId: this.quest.id }, transaction });
-      await QuestsResponse.destroy({ where: { questId: this.quest.id }, transaction })
+      await QuestsResponse.destroy({ where: { questId: this.quest.id }, transaction });
       await this.quest.destroy({ force: true, transaction });
     } catch (e) {
       if (transaction) {
@@ -226,7 +238,5 @@ export class QuestController extends QuestHelper {
     }
   }
 
-  public static get(id) {
-
-  }
+  public static get(id) {}
 }

@@ -1,6 +1,6 @@
-import * as Joi from "joi";
-import * as handlers from "../../api/profile";
-import { UserRole } from "@workquest/database-models/lib/models";
+import * as Joi from 'joi';
+import * as handlers from '../../api/profile';
+import { UserRole } from '@workquest/database-models/lib/models';
 import {
   idSchema,
   userSchema,
@@ -25,11 +25,11 @@ import {
   userStatisticsSchema,
   outputPaginationSchema,
   workerWagePerHourSchema,
-  specializationKeysSchema,
   locationPlaceNameSchema,
+  specializationKeysSchema,
   userAdditionalInfoWorkerSchema,
-  userAdditionalInfoEmployerSchema
-} from '@workquest/database-models/lib/schemes';
+  userAdditionalInfoEmployerSchema,
+} from "@workquest/database-models/lib/schemes";
 
 export default [{
   method: "GET",

@@ -1,18 +1,19 @@
-import { literal, Op } from "sequelize";
-import { Errors } from "../utils/errors";
-import { UserController } from "../controllers/user/controller.user";
-import { QuestController } from "../controllers/quest/controller.quest";
-import { transformToGeoPostGIS } from "../utils/postGIS";
-import { error, output } from "../utils";
-import { publishQuestNotifications, QuestNotificationActions } from "../websocket/websocket.quest";
-import { QuestsResponseController } from "../controllers/quest/controller.questsResponse";
-import { MediaController } from "../controllers/controller.media";
-import { addUpdateReviewStatisticsJob } from "../jobs/updateReviewStatistics";
-import { updateQuestsStatisticJob } from "../jobs/updateQuestsStatistic";
-import { SkillsFiltersController } from "../controllers/controller.skillsFilters";
+import { literal, Op } from 'sequelize';
+import { Errors } from '../utils/errors';
+import { UserController } from '../controllers/user/controller.user';
+import { QuestController } from '../controllers/quest/controller.quest';
+import { transformToGeoPostGIS } from '../utils/postGIS';
+import { error, output } from '../utils';
+import { QuestNotificationActions } from '../controllers/controller.broker';
+import { QuestsResponseController } from '../controllers/quest/controller.questsResponse';
+import { MediaController } from '../controllers/controller.media';
+import { addUpdateReviewStatisticsJob } from '../jobs/updateReviewStatistics';
+import { updateQuestsStatisticJob } from '../jobs/updateQuestsStatistic';
+import { SkillsFiltersController } from '../controllers/controller.skillsFilters';
 import {
   Quest,
   QuestChat,
+  QuestDispute,
   QuestChatStatuses,
   QuestsResponse,
   QuestsResponseType,
@@ -20,6 +21,7 @@ import {
   Review,
   StarredQuests,
   User,
+  DisputeStatus,
   UserRole
 } from "@workquest/database-models/lib/models";
 
@@ -48,15 +50,26 @@ export async function getQuest(r) {
   }, {
     model: User.scope('shortWithWallet'),
     as: 'assignedWorker'
-  },] as any[];
+  }, {
+    model: QuestDispute.unscoped(),
+    as: 'openDispute',
+    where: {
+      [Op.or]: [
+        { opponentUserId: r.auth.credentials.id },
+        { openDisputeUserId: r.auth.credentials.id },
+      ],
+      status: { [Op.in]: [DisputeStatus.pending, DisputeStatus.inProgress] },
+    },
+    required: false,
+  }] as any[];
 
   if (user.role === UserRole.Worker) {
     include.push({
       model: QuestChat.scope('idsOnly'),
       as: 'questChat',
       required: false,
-      where: { workerId: user.id }
-    })
+      where: { workerId: user.id },
+    });
   }
 
   const quest = await Quest.findOne({
@@ -110,9 +123,7 @@ export async function createQuest(r) {
     role: UserRole.Employer,
   });
 
-  return output(
-    await Quest.findByPk(quest.id)
-  )
+  return output(await Quest.findByPk(quest.id));
 }
 
 export async function editQuest(r) {
@@ -221,7 +232,7 @@ export async function startQuest(r) {
 
   await transaction.commit();
 
-  await publishQuestNotifications(r.server, {
+  r.server.app.broker.sendQuestNotification({
     data: questController.quest,
     recipients: [assignedWorkerController.user.id],
     action: QuestNotificationActions.questStarted,
@@ -250,7 +261,7 @@ export async function rejectWorkOnQuest(r) {
 
   await transaction.commit();
 
-  await publishQuestNotifications(r.server, {
+  r.server.app.broker.sendQuestNotification({
     recipients: [questController.quest.userId],
     action: QuestNotificationActions.workerRejectedQuest,
     data: questController.quest,
@@ -284,7 +295,7 @@ export async function acceptWorkOnQuest(r) {
     role: UserRole.Worker,
   });
 
-  await publishQuestNotifications(r.server, {
+  r.server.app.broker.sendQuestNotification({
     data: questController.quest,
     recipients: [questController.quest.userId],
     action: QuestNotificationActions.workerAcceptedQuest,
@@ -305,7 +316,7 @@ export async function completeWorkOnQuest(r) {
 
   await questController.completeWork();
 
-  await publishQuestNotifications(r.server, {
+  r.server.app.broker.sendQuestNotification({
     data: questController.quest,
     recipients: [questController.quest.userId],
     action: QuestNotificationActions.workerCompletedQuest,
@@ -326,7 +337,7 @@ export async function acceptCompletedWorkOnQuest(r) {
 
   await questController.approveCompletedWork();
 
-  await publishQuestNotifications(r.server, {
+  r.server.app.broker.sendQuestNotification({
     data: quest,
     recipients: [quest.assignedWorkerId],
     action: QuestNotificationActions.employerAcceptedCompletedQuest,
@@ -363,7 +374,7 @@ export async function rejectCompletedWorkOnQuest(r) {
 
   await questController.rejectCompletedWork();
 
-  await publishQuestNotifications(r.server, {
+  r.server.app.broker.sendQuestNotification({
     data: quest,
     recipients: [quest.assignedWorkerId],
     action: QuestNotificationActions.employerRejectedCompletedQuest,
@@ -399,7 +410,7 @@ export async function getQuests(r) {
 
   const order = [];
   const include = [];
-  const replacements = { };
+  const replacements = {};
   const where = {
     [Op.and]: [],
     ...(r.query.adType && { adType: r.query.adType }),
@@ -408,7 +419,7 @@ export async function getQuests(r) {
     ...(r.params.workerId && { assignedWorkerId: r.params.workerId }),
     ...(r.query.statuses && { status: { [Op.in]: r.query.statuses } }),
     ...(r.query.performing && { assignedWorkerId: r.auth.credentials.id }),
-    ...(r.query.priorities && { priority: {[Op.in]: r.query.priorities } }),
+    ...(r.query.priorities && { priority: { [Op.in]: r.query.priorities } }),
     ...(r.query.workplaces && { workplace: { [Op.in]: r.query.workplaces } }),
     ...(r.query.employments && { employment: { [Op.in]: r.query.employments } }),
     ...(r.query.priceBetween && { price: { [Op.between]: [r.query.priceBetween.from, r.query.priceBetween.to] } }),
@@ -459,62 +470,57 @@ export async function getQuests(r) {
       model: QuestChat.scope('idsOnly'),
       as: 'questChat',
       attributes: {
-        include: [[questChatLiteral, 'id']]
+        include: [[questChatLiteral, 'id']],
       },
       where: { employerId: user.id },
       required: false,
       include: {
         model: Quest.unscoped(),
         as: 'quest',
-        attributes: ["id", "status"],
+        attributes: ['id', 'status'],
         where: {
-          status: [
-            QuestStatus.Active,
-            QuestStatus.Dispute,
-            QuestStatus.WaitWorker,
-            QuestStatus.WaitConfirm,
-          ],
+          status: [QuestStatus.Active, QuestStatus.Dispute, QuestStatus.WaitWorker, QuestStatus.WaitConfirm],
         },
-        required: false
+        required: false,
       },
     });
   }
 
-  include.push({
-    model: Review.unscoped(),
-    as: "yourReview",
-    where: { fromUserId: r.auth.credentials.id },
-    required: false,
-  }, {
-    model: StarredQuests.unscoped(),
-    as: "star",
-    where: { userId: r.auth.credentials.id },
-    required: r.query.starred,
-  }, {
-    model: QuestsResponse.unscoped(),
-    as: 'invited',
-    required: r.query.invited,
-    where: {
-      [Op.and]: [
-        { workerId: r.auth.credentials.id },
-        { type: QuestsResponseType.Invite },
-      ]
-    }
-  }, {
-    model: QuestsResponse.unscoped(),
-    as: "responded",
-    required: r.query.responded,
-    where: {
-      [Op.and]: [
-        { workerId: r.auth.credentials.id },
-        { type: QuestsResponseType.Response },
-      ]
+  include.push(
+    {
+      model: Review.unscoped(),
+      as: 'yourReview',
+      where: { fromUserId: r.auth.credentials.id },
+      required: false,
     },
-  }, {
-    model: QuestChat.scope('idsOnly'),
-    as: 'questChat',
-    required: false,
-  });
+    {
+      model: StarredQuests.unscoped(),
+      as: 'star',
+      where: { userId: r.auth.credentials.id },
+      required: r.query.starred,
+    },
+    {
+      model: QuestsResponse.unscoped(),
+      as: 'invited',
+      required: r.query.invited,
+      where: {
+        [Op.and]: [{ workerId: r.auth.credentials.id }, { type: QuestsResponseType.Invite }],
+      },
+    },
+    {
+      model: QuestsResponse.unscoped(),
+      as: 'responded',
+      required: r.query.responded,
+      where: {
+        [Op.and]: [{ workerId: r.auth.credentials.id }, { type: QuestsResponseType.Response }],
+      },
+    },
+    {
+      model: QuestChat.scope('idsOnly'),
+      as: 'questChat',
+      required: false,
+    },
+  );
 
   for (const [key, value] of Object.entries(r.query.sort)) {
     order.push([key, value]);
@@ -524,7 +530,9 @@ export async function getQuests(r) {
     distinct: true,
     limit: r.query.limit,
     offset: r.query.offset,
-    include, order, where,
+    include,
+    order,
+    where,
     replacements,
   });
 

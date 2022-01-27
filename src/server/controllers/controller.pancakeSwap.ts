@@ -1,12 +1,12 @@
-import axios, {AxiosInstance, AxiosResponse} from "axios";
-import {Pair} from "@pancakeswap/sdk";
-import {error} from "../utils";
-import {Errors} from "../utils/errors";
+import axios, { AxiosInstance, AxiosResponse } from 'axios';
+import { Pair } from '@pancakeswap/sdk';
+import { error } from '../utils';
+import { Errors } from '../utils/errors';
 
 type TokenTransaction = {
   id: string;
   timestamp: string;
-}
+};
 
 type BaseTokenInfo = {
   amount0: string;
@@ -15,7 +15,7 @@ type BaseTokenInfo = {
   liquidity: string;
   to: string;
   transaction: TokenTransaction;
-}
+};
 
 export type Swap = {
   amount0In: string;
@@ -25,7 +25,7 @@ export type Swap = {
   amountUSD: string;
   to: string;
   transaction: TokenTransaction;
-}
+};
 
 export type TokenDayData = {
   dailyTxns: string;
@@ -37,7 +37,7 @@ export type TokenDayData = {
   reserve1: string;
   reserveUSD: string;
   totalSupply: string;
-}
+};
 
 export type Burn = BaseTokenInfo;
 export type Mint = BaseTokenInfo;
@@ -50,11 +50,11 @@ export class PancakeSwapApi {
   constructor(pair: Pair) {
     this._pair = pair;
     this._apiPancakeSwap = axios.create({
-      baseURL: 'https://bsc.streamingfast.io/subgraphs/name/pancakeswap/exchange-v2'
+      baseURL: 'https://bsc.streamingfast.io/subgraphs/name/pancakeswap/exchange-v2',
     });
   }
 
-  public async getSwaps(options: { limit: number, offset: number }): Promise<Swap[] | never> {
+  public async getSwaps(options: { limit: number; offset: number }): Promise<Swap[] | never> {
     let result: AxiosResponse;
 
     try {
@@ -63,7 +63,7 @@ export class PancakeSwapApi {
         swaps(first:${options.limit}, skip:${options.offset}, orderBy: timestamp, orderDirection: desc, 
         where: { pair: "${this._pair.liquidityToken.address.toLowerCase()}" }) 
         { transaction { id timestamp } 
-        amount0In amount0Out amount1In amount1Out amountUSD to } }`
+        amount0In amount0Out amount1In amount1Out amountUSD to } }`,
       });
     } catch (responseError) {
       if (responseError.response) {
@@ -80,7 +80,7 @@ export class PancakeSwapApi {
     return result.data.data.swaps;
   }
 
-  public async getMints(options: { limit: number, offset: number }): Promise<Mint[] | never> {
+  public async getMints(options: { limit: number; offset: number }): Promise<Mint[] | never> {
     let result: AxiosResponse;
 
     try {
@@ -89,7 +89,7 @@ export class PancakeSwapApi {
         mints(first:${options.limit}, skip:${options.offset}, orderBy: timestamp, orderDirection: desc, 
         where: { pair: "${this._pair.liquidityToken.address.toLowerCase()}" }) {
         transaction { id timestamp } 
-        to liquidity amount0 amount1 amountUSD } }`
+        to liquidity amount0 amount1 amountUSD } }`,
       });
     } catch (responseError) {
       if (responseError.response) {
@@ -106,7 +106,7 @@ export class PancakeSwapApi {
     return result.data.data.mints;
   }
 
-  public async getBurns(options: { limit: number, offset: number }): Promise<Burn[] | never> {
+  public async getBurns(options: { limit: number; offset: number }): Promise<Burn[] | never> {
     let result: AxiosResponse;
 
     try {
@@ -115,7 +115,7 @@ export class PancakeSwapApi {
         burns(first:${options.limit}, skip:${options.offset}, orderBy: timestamp, orderDirection: desc,
         where: { pair: "${this._pair.liquidityToken.address.toLowerCase()}" })
         { transaction { id timestamp }
-        to liquidity amount0 amount1 amountUSD } }`
+        to liquidity amount0 amount1 amountUSD } }`,
       });
     } catch (responseError) {
       if (responseError.response) {
@@ -132,7 +132,7 @@ export class PancakeSwapApi {
     return result.data.data.burns;
   }
 
-  public async getTokenDayData(options: { limit: number, offset: number }): Promise<TokenDayData | never> {
+  public async getTokenDayData(options: { limit: number; offset: number }): Promise<TokenDayData | never> {
     let result: AxiosResponse;
 
     try {
@@ -143,7 +143,7 @@ export class PancakeSwapApi {
         where: {pairAddress: "${this._pair.liquidityToken.address.toLowerCase()}"})
         { date reserve0 reserve1 totalSupply reserveUSD dailyVolumeToken0
           dailyVolumeToken1 dailyVolumeUSD dailyTxns 
-        }}`
+        }}`,
       });
     } catch (responseError) {
       if (responseError.response) {
