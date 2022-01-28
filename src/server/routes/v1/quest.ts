@@ -18,7 +18,7 @@ import {
   questLocationPlaceNameSchema,
   questEmploymentSchema,
   specializationKeysSchema,
-  chatForGetSchema, questRaiseDurationSchema, questRaiseTypeScheme, questRaiseViewSchema
+  chatForGetSchema, questRaiseDurationSchema, questRaiseTypeScheme, questRaiseViewSchema, questRaisePayAmountSchema
 } from "@workquest/database-models/lib/schemes";
 
 export default [{
@@ -353,8 +353,7 @@ export default [{
         questId: idSchema.required(),
       }).label("QuestPayRaiseViewParams"),
       payload: Joi.object({
-        duration: questRaiseDurationSchema.required(),
-        type: questRaiseTypeScheme.required(),
+        amount: questRaisePayAmountSchema.required(),
       }).label("QuestPayRaiseViewPayload")
     },
     response: {
