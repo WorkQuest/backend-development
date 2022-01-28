@@ -4,8 +4,8 @@ import {
   limitSchema,
   offsetSchema,
   outputOkSchema,
+  pensionFundsEventsScheme,
 } from '@workquest/database-models/lib/schemes';
-import { pensionFundsEventsScheme } from "@workquest/database-models/lib/schemes/pensionFund";
 
 export default [
   {

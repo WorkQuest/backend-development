@@ -1,5 +1,9 @@
 import { output } from '../utils';
-import { PensionFundClaimedEvent, PensionFundReceivedEvent, PensionFundWithdrewEvent } from "@workquest/database-models/lib/models";
+import {
+  PensionFundClaimedEvent,
+  PensionFundReceivedEvent,
+  PensionFundWithdrewEvent,
+} from "@workquest/database-models/lib/models";
 
 export async function getClaim(r) {
   const { count, rows } = await PensionFundClaimedEvent.findAndCountAll({
