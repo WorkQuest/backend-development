@@ -554,8 +554,10 @@ export async function activateRaiseView(r) {
 
   await questController
     .employerMustBeQuestCreator(employer.id)
-    .questMustHaveStatus(QuestStatus.Created)
-    .checkQuestRaiseViewStatus();
+    .questMustHaveStatus(QuestStatus.Created);
+
+  await questController.checkQuestRaiseViewStatus();
+
 
   await QuestRaiseView.update({ duration: r.payload.duration, type: r.payload.type, status: QuestRaiseStatus.Unpaid }, { where: { questId: r.params.questId } });
 

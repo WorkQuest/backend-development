@@ -104,21 +104,6 @@ abstract class QuestHelper {
 
     return this;
   }
-
-  public async checkQuestRaiseViewStatus() {
-    const raiseView = await QuestRaiseView.findOne({
-      where: {
-        questId: this.quest.id,
-        status: QuestRaiseStatus.Paid
-      }
-    });
-
-    if (raiseView) {
-      throw error(Errors.AlreadyExists, "Raise view in progress", {raiseViewId: raiseView.id});
-    }
-
-    return this;
-  }
 }
 
 export class QuestController extends QuestHelper {
@@ -248,6 +233,21 @@ export class QuestController extends QuestHelper {
       questId: this.quest.id,
       userId: userId,
     }, {transaction});
+
+    return this;
+  }
+
+  public async checkQuestRaiseViewStatus() {
+    const raiseView = await QuestRaiseView.findOne({
+      where: {
+        questId: this.quest.id,
+        status: QuestRaiseStatus.Paid
+      }
+    });
+
+    if (raiseView) {
+      throw error(Errors.AlreadyExists, "Raise view in progress", {raiseViewId: raiseView.id});
+    }
 
     return this;
   }
