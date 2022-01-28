@@ -128,6 +128,7 @@ export default [{
         avatarId: idSchema.allow(null).required(),
         firstName: userFirstNameSchema.required(),
         lastName: userLastNameSchema.required(),
+        phoneNumber: phoneSchema.allow(null).required(),
         locationFull: locationFullSchema.allow(null).required(),
         additionalInfo: userAdditionalInfoEmployerSchema.required(),
       }).label("EditEmployerProfilePayload")
@@ -150,6 +151,7 @@ export default [{
         lastName: userLastNameSchema.required(),
         firstName: userFirstNameSchema.required(),
         avatarId: idSchema.allow(null).required(),
+        phoneNumber: phoneSchema.allow(null).required(),
         priority: prioritySchema.allow(null).required(),
         locationFull: locationFullSchema.allow(null).required(),
         workplace: workPlaceSchema.allow(null).required(),

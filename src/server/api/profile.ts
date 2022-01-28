@@ -177,6 +177,11 @@ export function editProfile(userRole: UserRole) {
     if (userRole === UserRole.Worker) {
       await userController.setUserSpecializations(r.payload.specializationKeys, transaction);
     }
+    if (r.payload.phoneNumber !== user.phone) {
+      const confirmCode = getRandomCodeNumber();
+
+      await userController.setUnverifiedPhoneNumber(r.payload.phoneNumber, confirmCode, transaction);
+    }
 
     await user.update({
       ...locationFields,
