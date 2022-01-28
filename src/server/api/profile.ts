@@ -13,8 +13,9 @@ import {
   UserRaiseView,
   ChatsStatistic,
   QuestsStatistic,
-  RatingStatistic,
-} from '@workquest/database-models/lib/models';
+  RatingStatistic, UserRaiseStatus
+} from "@workquest/database-models/lib/models";
+import { worker } from "cluster";
 
 export const searchFields = ['firstName', 'lastName'];
 
@@ -255,23 +256,37 @@ export async function getUserStatistics(r) {
   return output({ chatsStatistic, questsStatistic, ratingStatistic });
 }
 
-//TODO: проверка на то, вышел срок подписки или нет
 export async function activateRaiseView(r) {
-  const worker: User = r.auth.credentials;
-  const userController = new UserController(worker);
-  userController.userMustHaveRole(UserRole.Worker);
+  const userController = new UserController(await User.findByPk(r.params.userId));
 
-  await UserRaiseView.update({
-    duration: r.payload.duration,
-    type: r.payload.type,
-  }, {
-    where: {
-      userId: r.params.questId
-    }
-  });
+  await userController
+    .userMustHaveRole(UserRole.Worker)
+    .checkQuestRaiseViewStatus();
+
+  await UserRaiseView.update({ duration: r.payload.duration, type: r.payload.type, status: UserRaiseStatus.Unpaid }, { where: { userId: r.params.userId } });
 
   return output();
 }
 
-//TODO: сделать оплату
+export async function payForRaiseView(r) {
+//TODO: логику оплаты
+  const raiseView = await UserRaiseView.findOne({
+    where: {
+      questId: r.params.questId
+    }
+  });
 
+  const endOfRaiseView = new Date();
+  endOfRaiseView.setDate(endOfRaiseView.getDate() + raiseView.duration);
+
+  await  updateQuestRaiseViewStatusJob({
+    questId: r.params.questId,
+    runAt: endOfRaiseView
+  });
+
+  await raiseView.update({
+    status: QuestRaiseStatus.Paid,
+  });
+
+  return output();
+}

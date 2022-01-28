@@ -13,8 +13,8 @@ import {
   QuestsStatistic,
   RatingStatistic,
   defaultUserSettings,
-  UserSpecializationFilter,
-} from '@workquest/database-models/lib/models';
+  UserSpecializationFilter, UserRaiseView, UserRaiseStatus
+} from "@workquest/database-models/lib/models";
 
 abstract class UserHelper {
   public abstract user: User;
@@ -348,5 +348,28 @@ export class UserController extends UserHelper {
       }
       throw e;
     }
+  }
+
+  public async checkQuestRaiseViewStatus() {
+    const raiseView = await UserRaiseView.findOne({
+      where: {
+        user: this.user.id,
+        status: UserRaiseStatus.Paid
+      }
+    });
+
+    if (raiseView) {
+      throw error(Errors.AlreadyExists, "Raise view in progress", {raiseViewId: raiseView.id});
+    }
+
+    return this;
+  }
+
+  public async createRaiseView(userId: string, transaction: Transaction) {
+    await UserRaiseView.create({
+      userId: this.user.id,
+    }, {transaction});
+
+    return this;
   }
 }
