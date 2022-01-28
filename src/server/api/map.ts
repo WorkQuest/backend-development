@@ -1,5 +1,5 @@
-import { output } from '../utils';
-import { searchFields } from './quest';
+import { output } from "../utils";
+import { searchQuestFields } from './quest';
 
 function makeWhere(query) {
   const like = query.q ? ` LIKE '%${query.q}%' ` : '';
@@ -7,7 +7,7 @@ function makeWhere(query) {
   return `WHERE st_within("locationPostGIS", st_makeenvelope(:northLongitude, :northLatitude, :southLongitude, :southLatitude, 4326))
   ${query.priority ? ' AND priority=' + query.priority : ''}
   ${query.status ? ' AND status=' + query.status : ''}
-  ${query.q ? ' AND ' + searchFields.join(like + ' OR ') + like : ''}`;
+  ${query.q ? ' AND ' + searchQuestFields.join(like + ' OR ') + like : ''}`;
 }
 
 function makeOrderBy(sort) {
@@ -70,11 +70,11 @@ export async function mapPoints(r) {
 
   const [results] = await r.server.app.db.query(query, {
     replacements: {
-      northLongitude: r.query.north.longitude,
-      northLatitude: r.query.north.latitude,
-      southLongitude: r.query.south.longitude,
-      southLatitude: r.query.south.latitude,
-    },
+      northLongitude: r.query.northAndSouthCoordinates.north.longitude,
+      northLatitude: r.query.northAndSouthCoordinates.north.latitude,
+      southLongitude: r.query.northAndSouthCoordinates.south.longitude,
+      southLatitude: r.query.northAndSouthCoordinates.south.latitude,
+    }
   });
 
   return output(results);
@@ -95,11 +95,11 @@ export async function listMapPoints(r) {
 
   const [results] = await r.server.app.db.query(query, {
     replacements: {
-      northLongitude: r.query.north.longitude,
-      northLatitude: r.query.north.latitude,
-      southLongitude: r.query.south.longitude,
-      southLatitude: r.query.south.latitude,
-    },
+      northLongitude: r.query.northAndSouthCoordinates.north.longitude,
+      northLatitude: r.query.northAndSouthCoordinates.north.latitude,
+      southLongitude: r.query.northAndSouthCoordinates.south.longitude,
+      southLatitude: r.query.northAndSouthCoordinates.south.latitude,
+    }
   });
 
   return output({ quests: results });
