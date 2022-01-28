@@ -5,7 +5,6 @@ import { MediaController } from '../controllers/controller.media';
 import { Discussion, DiscussionComment, DiscussionCommentLike, DiscussionLike, StarredDiscussion, User } from '@workquest/database-models/lib/models';
 import { DaoNotificationActions } from '../controllers/controller.broker';
 import { UserController } from '../controllers/user/controller.user';
-import discussion from '../routes/v1/discussion';
 
 const searchFields = ['title', 'description'];
 
@@ -298,7 +297,6 @@ export async function putCommentLike(r) {
   }
 
   like.setDataValue('comment', comment);
-  like.setDataValue('discussion', discussion);
   like.setDataValue('user', userController.shortCredentials);
   r.server.app.broker.sendDaoNotification({
     action: DaoNotificationActions.commentLiked,
