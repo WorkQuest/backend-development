@@ -276,6 +276,12 @@ abstract class UserHelper {
       defaults: { userId: userId },
     });
   }
+
+  public async createRaiseView() {
+    await UserRaiseView.create({
+      userId: this.user.id,
+    });
+  }
 }
 
 export class UserController extends UserHelper {
@@ -361,14 +367,6 @@ export class UserController extends UserHelper {
     if (raiseView) {
       throw error(Errors.AlreadyExists, "Raise view in progress", {raiseViewId: raiseView.id});
     }
-
-    return this;
-  }
-
-  public async createRaiseView(userId: string, transaction: Transaction) {
-    await UserRaiseView.create({
-      userId: this.user.id,
-    }, {transaction});
 
     return this;
   }
