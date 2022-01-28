@@ -18,17 +18,20 @@ import {
   workerQuerySchema,
   userLastNameSchema,
   userPasswordSchema,
+  userRaiseTypeSchema,
+  userRaiseViewSchema,
   employerQuerySchema,
   userEmployersSchema,
   userFirstNameSchema,
   userStatisticsSchema,
   outputPaginationSchema,
   workerWagePerHourSchema,
+  userRaiseDurationSchema,
   specializationKeysSchema,
+  userRaisePayAmountSchema,
   userAdditionalInfoWorkerSchema,
-  userAdditionalInfoEmployerSchema, userRaiseDurationSchema, userRaiseTypeScheme, userRaiseViewSchema
+  userAdditionalInfoEmployerSchema,
 } from "@workquest/database-models/lib/schemes";
-import { getUserStatistics } from '../../api/profile';
 
 export default [
   {
@@ -262,24 +265,45 @@ export default [
   },
   {
     method: "POST",
-    path: "/v1/user/{userId}/raise",
+    path: "/v1/profile/{userId}/raise",
     handler: handlers.activateRaiseView,
     options: {
       auth: 'jwt-access',
-      id: "v1.quest.raiseDispute.activate",
-      tags: ["api", "user-raiseView"],
+      id: "v1.quest.raiseView.activate",
+      tags: ["api", "profile"],
       description: "Activate user raise view",
       validate: {
         params: Joi.object({
-          questId: idSchema.required(),
+          userId: idSchema.required(),
         }).label("UserRaiseViewParams"),
         payload: Joi.object({
           duration: userRaiseDurationSchema.required(),
-          type: userRaiseTypeScheme.required(),
+          type: userRaiseTypeSchema.required(),
         }).label("UserRaiseViewPayload")
       },
       response: {
         schema: outputOkSchema(userRaiseViewSchema).label("UserRaiseViewResponse"),
+      },
+    },
+  }, {
+    method: "POST",
+    path: "/v1/profile/{userId}/pay",
+    handler: handlers.payForRaiseView,
+    options: {
+      auth: 'jwt-access',
+      id: "v1.user.raiseView.pay",
+      tags: ["api", "profile"],
+      description: "Pay for user raise view",
+      validate: {
+        params: Joi.object({
+          userId: idSchema.required(),
+        }).label("UserPayRaiseViewParams"),
+        payload: Joi.object({
+          amount: userRaisePayAmountSchema.required(),
+        }).label("UserPayRaiseViewPayload")
+      },
+      response: {
+        schema: outputOkSchema(userRaiseViewSchema).label("UserPayRaiseViewResponse"),
       },
     },
   }

@@ -273,7 +273,7 @@ export async function payForRaiseView(r) {
 //TODO: логику оплаты
   const raiseView = await UserRaiseView.findOne({
     where: {
-      questId: r.params.questId
+      userId: r.params.userId
     }
   });
 
