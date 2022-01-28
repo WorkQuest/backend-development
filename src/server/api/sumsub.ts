@@ -2,7 +2,6 @@ import axios from 'axios';
 import * as crypto from 'crypto';
 import serverConfig from '../config/config';
 import { error, output } from '../utils';
-import * as FormData from 'form-data';
 import { Errors } from '../utils/errors';
 import * as querystring from 'querystring';
 import { StatusKYC, User } from '@workquest/database-models/lib/models';
