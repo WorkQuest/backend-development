@@ -6,6 +6,7 @@ import { transformToGeoPostGIS } from '../utils/postGIS';
 import { MediaController } from '../controllers/controller.media';
 import { SkillsFiltersController } from '../controllers/controller.skillsFilters';
 import { addUpdateReviewStatisticsJob } from '../jobs/updateReviewStatistics';
+import { updateUserRaiseViewStatusJob } from '../jobs/updateUserRaiseViewStatus'
 import {
   User,
   Wallet,
@@ -13,9 +14,9 @@ import {
   UserRaiseView,
   ChatsStatistic,
   QuestsStatistic,
-  RatingStatistic, UserRaiseStatus
+  RatingStatistic,
+  UserRaiseStatus
 } from "@workquest/database-models/lib/models";
-import { worker } from "cluster";
 
 export const searchFields = ['firstName', 'lastName'];
 
@@ -279,13 +280,13 @@ export async function payForRaiseView(r) {
   const endOfRaiseView = new Date();
   endOfRaiseView.setDate(endOfRaiseView.getDate() + raiseView.duration);
 
-  await  updateQuestRaiseViewStatusJob({
+  await updateUserRaiseViewStatusJob({
     questId: r.params.questId,
     runAt: endOfRaiseView
   });
 
   await raiseView.update({
-    status: QuestRaiseStatus.Paid,
+    status: UserRaiseStatus.Paid,
   });
 
   return output();

@@ -6,10 +6,10 @@ export type UserRaiseViewPayload = {
   runAt: Date
 }
 
-export async function updateQuestRaiseViewStatusJob(payload: UserRaiseViewPayload) {
-  return addJob("updateQuestRaiseViewStatus", payload, {'run_at': payload.runAt});
+export async function updateUserRaiseViewStatusJob(payload: UserRaiseViewPayload) {
+  return addJob("updateUserRaiseViewStatus", payload, {'run_at': payload.runAt});
 }
 
-export default async function updateQuestRaiseViewStatus(payload: UserRaiseViewPayload) {
+export default async function updateUserRaiseViewStatus(payload: UserRaiseViewPayload) {
   await UserRaiseView.update({ status: UserRaiseStatus.Closed }, { where: { questId: payload.questId } });
 }
