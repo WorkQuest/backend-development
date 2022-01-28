@@ -26,8 +26,8 @@ import {
   workerWagePerHourSchema,
   specializationKeysSchema,
   userAdditionalInfoWorkerSchema,
-  userAdditionalInfoEmployerSchema,
-} from '@workquest/database-models/lib/schemes';
+  userAdditionalInfoEmployerSchema, userRaiseDurationSchema, userRaiseTypeScheme, userRaiseViewSchema
+} from "@workquest/database-models/lib/schemes";
 import { getUserStatistics } from '../../api/profile';
 
 export default [
@@ -260,4 +260,27 @@ export default [
       },
     },
   },
+  {
+    method: "POST",
+    path: "/v1/user/{userId}/raise",
+    handler: handlers.activateRaiseView,
+    options: {
+      auth: 'jwt-access',
+      id: "v1.quest.raiseDispute.activate",
+      tags: ["api", "user-raiseView"],
+      description: "Activate user raise view",
+      validate: {
+        params: Joi.object({
+          questId: idSchema.required(),
+        }).label("UserRaiseViewParams"),
+        payload: Joi.object({
+          duration: userRaiseDurationSchema.required(),
+          type: userRaiseTypeScheme.required(),
+        }).label("UserRaiseViewPayload")
+      },
+      response: {
+        schema: outputOkSchema(userRaiseViewSchema).label("UserRaiseViewResponse"),
+      },
+    },
+  }
 ];

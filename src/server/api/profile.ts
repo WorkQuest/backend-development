@@ -10,10 +10,10 @@ import {
   User,
   Wallet,
   UserRole,
+  UserRaiseView,
   ChatsStatistic,
-  RatingStatistic,
   QuestsStatistic,
-  UserSpecializationFilter,
+  RatingStatistic,
 } from '@workquest/database-models/lib/models';
 
 export const searchFields = ['firstName', 'lastName'];
@@ -254,3 +254,24 @@ export async function getUserStatistics(r) {
 
   return output({ chatsStatistic, questsStatistic, ratingStatistic });
 }
+
+//TODO: проверка на то, вышел срок подписки или нет
+export async function activateRaiseView(r) {
+  const worker: User = r.auth.credentials;
+  const userController = new UserController(worker);
+  userController.userMustHaveRole(UserRole.Worker);
+
+  await UserRaiseView.update({
+    duration: r.payload.duration,
+    type: r.payload.type,
+  }, {
+    where: {
+      userId: r.params.questId
+    }
+  });
+
+  return output();
+}
+
+//TODO: сделать оплату
+
