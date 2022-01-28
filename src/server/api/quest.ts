@@ -9,6 +9,7 @@ import { QuestsResponseController } from "../controllers/quest/controller.quests
 import { MediaController } from "../controllers/controller.media";
 import { addUpdateReviewStatisticsJob } from "../jobs/updateReviewStatistics";
 import { updateQuestsStatisticJob } from "../jobs/updateQuestsStatistic";
+import { SkillsFiltersController } from "../controllers/controller.skillsFilters";
 import {
   Quest,
   QuestChat,
@@ -20,10 +21,8 @@ import {
   StarredQuests,
   User,
   UserRole,
-  QuestRaiseView, QuestRaiseStatus
+  QuestRaiseView,
 } from "@workquest/database-models/lib/models";
-import { SkillsFiltersController } from "../controllers/controller.skillsFilters";
-import { getModels } from "sequelize-typescript";
 
 export const searchFields = [
   "title",

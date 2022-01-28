@@ -1,6 +1,7 @@
 import { output } from "../utils";
 import { UserController } from "../controllers/user/controller.user";
 import { QuestController } from "../controllers/quest/controller.quest";
+import { updateQuestRaiseViewStatusJob } from "../jobs/updateQuestRaiseViewStatus";
 import {
   Quest,
   QuestRaiseStatus,
@@ -9,8 +10,6 @@ import {
   User,
   UserRole
 } from "@workquest/database-models/lib/models";
-import { updateQuestRaiseViewStatusJob } from "../jobs/updateQuestRaiseViewStatus";
-import questRaiseView from "../routes/v1/questRaiseView";
 
 export async function activateRaiseView(r) {
   const employer: User = r.auth.credentials;
@@ -31,7 +30,6 @@ export async function activateRaiseView(r) {
 
 export async function payForRaiseView(r) {
 //TODO: логику оплаты
-//TODO: проверку, заполнен ли тип и длительность
   const raiseView = await QuestRaiseView.findOne({
     where: {
       questId: r.params.questId

@@ -1,5 +1,5 @@
-import { error, output } from "../../utils";
-import {Op, Transaction} from "sequelize";
+import {error} from "../../utils";
+import {Transaction} from "sequelize";
 import {Errors} from "../../utils/errors";
 import {SkillsFiltersController} from "../controller.skillsFilters";
 import {
@@ -11,7 +11,7 @@ import {
   QuestRaiseView,
   QuestsResponse,
   QuestRaiseStatus,
-  QuestSpecializationFilter, UserRole
+  QuestSpecializationFilter
 } from "@workquest/database-models/lib/models";
 
 abstract class QuestHelper {
@@ -108,7 +108,8 @@ abstract class QuestHelper {
   public async checkQuestRaiseViewStatus() {
     const raiseView = await QuestRaiseView.findOne({
       where: {
-        [Op.and]: [{ questId: this.quest.id }, { status: {[Op.or]: [QuestRaiseStatus.Paid]} }]
+        questId: this.quest.id,
+        status: QuestRaiseStatus.Paid
       }
     });
 
@@ -231,15 +232,6 @@ export class QuestController extends QuestHelper {
     }
   }
 
-  public async createRaiseView(userId: string, transaction: Transaction) {
-    await QuestRaiseView.create({
-      questId: this.quest.id,
-      userId: userId,
-    }, {transaction});
-
-    return this;
-  }
-
   public async openDispute(transaction?: Transaction) {
     try {
       await this.quest.update({ status: QuestStatus.Dispute }, { transaction });
@@ -249,5 +241,14 @@ export class QuestController extends QuestHelper {
       }
       throw e;
     }
+  }
+
+  public async createRaiseView(userId: string, transaction: Transaction) {
+    await QuestRaiseView.create({
+      questId: this.quest.id,
+      userId: userId,
+    }, {transaction});
+
+    return this;
   }
 }
