@@ -17,7 +17,6 @@ import liquidityPoolWBNB from "./liquidityPool(wqt-wbnb)";
 import discussion from "./discussion";
 import skillFilters from "./skillFilters";
 import proposal from "./proposal";
-import questRaiseView from "./questRaiseView";
 
 export default [
   ...liquidityPoolWETH,
@@ -39,5 +38,4 @@ export default [
   ...discussion,
   ...skillFilters,
   ...proposal,
-  ...questRaiseView,
 ];
