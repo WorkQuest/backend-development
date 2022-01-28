@@ -2,7 +2,10 @@ import { Op } from 'sequelize';
 import { error, output } from '../utils';
 import { Errors } from '../utils/errors';
 import { MediaController } from '../controllers/controller.media';
-import { User, Discussion, DiscussionLike, DiscussionComment, DiscussionCommentLike, StarredDiscussion } from '@workquest/database-models/lib/models';
+import { Discussion, DiscussionComment, DiscussionCommentLike, DiscussionLike, StarredDiscussion, User } from '@workquest/database-models/lib/models';
+import { DaoNotificationActions } from '../controllers/controller.broker';
+import { UserController } from '../controllers/user/controller.user';
+import discussion from '../routes/v1/discussion';
 
 const searchFields = ['title', 'description'];
 
@@ -147,6 +150,9 @@ export async function createDiscussion(r) {
 }
 
 export async function sendComment(r) {
+  const user: User = r.auth.credentials;
+  const userController = new UserController(user);
+
   const medias = await MediaController.getMedias(r.payload.medias);
 
   const discussion = await Discussion.findOne({
@@ -161,6 +167,7 @@ export async function sendComment(r) {
 
   const transaction = await r.server.app.db.transaction();
 
+  let notificationCallBack = (comment: DiscussionComment) => {};
   if (r.payload.rootCommentId) {
     // TODO в джобу
     const rootComment = await DiscussionComment.findByPk(r.payload.rootCommentId);
@@ -174,6 +181,15 @@ export async function sendComment(r) {
     await rootComment.increment('amountSubComments', { transaction });
 
     commentLevel = rootComment.level + 1;
+
+    notificationCallBack = (comment: DiscussionComment) => {
+      comment.setDataValue('rootComment', rootComment);
+      r.server.app.broker.sendDaoNotification({
+        action: DaoNotificationActions.replyToComment,
+        recipients: [rootComment.authorId],
+        data: comment,
+      });
+    };
   } else {
     await discussion.increment('amountComments', { transaction });
   }
@@ -193,10 +209,22 @@ export async function sendComment(r) {
 
   await transaction.commit();
 
+  comment.setDataValue('user', userController.shortCredentials);
+  comment.setDataValue('discussion', discussion);
+  notificationCallBack(comment);
+  r.server.app.broker.sendDaoNotification({
+    action: DaoNotificationActions.newCommentInDiscussion,
+    recipients: [discussion.authorId],
+    data: comment,
+  });
+
   return output(comment);
 }
 
 export async function putDiscussionLike(r) {
+  const user: User = r.auth.credentials;
+  const userController = new UserController(user);
+
   const discussion = await Discussion.findByPk(r.params.discussionId);
 
   if (!discussion) {
@@ -215,6 +243,14 @@ export async function putDiscussionLike(r) {
     await discussion.increment('amountLikes', { transaction });
   }
   await transaction.commit();
+
+  like.setDataValue('discussion', discussion);
+  like.setDataValue('user', userController.shortCredentials);
+  r.server.app.broker.sendDaoNotification({
+    action: DaoNotificationActions.newDiscussionLike,
+    recipients: [discussion.authorId],
+    data: like,
+  });
 
   return output();
 }
@@ -241,6 +277,9 @@ export async function removeDiscussionLike(r) {
 }
 
 export async function putCommentLike(r) {
+  const user: User = r.auth.credentials;
+  const userController = new UserController(user);
+
   const comment = await DiscussionComment.findByPk(r.params.commentId);
 
   if (!comment) {
@@ -257,6 +296,15 @@ export async function putCommentLike(r) {
   if (isCreated) {
     await comment.increment('amountLikes', { transaction });
   }
+
+  like.setDataValue('comment', comment);
+  like.setDataValue('discussion', discussion);
+  like.setDataValue('user', userController.shortCredentials);
+  r.server.app.broker.sendDaoNotification({
+    action: DaoNotificationActions.commentLiked,
+    recipients: [comment.authorId],
+    data: like,
+  });
 
   await transaction.commit();
 

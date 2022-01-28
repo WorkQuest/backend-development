@@ -16,14 +16,14 @@ import {
   QuestChat,
   QuestChatStatuses,
   QuestDispute,
-  QuestsResponse,
+  QuestsResponse, QuestsResponseStatus,
   QuestsResponseType,
   QuestStatus,
   Review,
   StarredQuests,
   User,
-  UserRole,
-} from '@workquest/database-models/lib/models';
+  UserRole
+} from "@workquest/database-models/lib/models";
 
 export const searchQuestFields = [
   'title',
@@ -167,7 +167,10 @@ export async function editQuest(r) {
     action: QuestNotificationActions.questEdited,
     recipients: (
       await QuestsResponse.findAll({
-        where: { questId: questController.quest.id },
+        where: {
+          questId: questController.quest.id,
+          status: QuestsResponseStatus.Open,
+        },
       })
     ).map((response) => response.workerId),
     data: questController.quest,

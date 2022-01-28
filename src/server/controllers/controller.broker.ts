@@ -40,6 +40,15 @@ export const enum ChatNotificationActions {
   newMessage = 'newMessage',
 }
 
+export const enum DaoNotificationActions {
+  /** Discussions */
+  newDiscussionLike = 'newDiscussionLike',
+  newCommentInDiscussion = 'newCommentInDiscussion',
+  commentLiked = 'commentLiked',
+  replyToComment = 'replyToComment',
+  /** Proposal */
+}
+
 type Notification<Action> = {
   action: Action;
   data: any;
@@ -103,5 +112,9 @@ export class ControllerBroker {
     const convertedData = ControllerBroker.convertData(notification);
 
     this.channel.sendToQueue(MainBrokerQueues.Chat, convertedData);
+  }
+
+  public sendDaoNotification(notification: Notification<DaoNotificationActions>) {
+    if (!this.channel) return;
   }
 }
