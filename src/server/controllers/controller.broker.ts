@@ -1,10 +1,12 @@
 import { Buffer } from 'buffer';
 import amqp from 'amqplib/callback_api';
 import config from '../config/config';
+import { not } from "joi";
 
 export const enum MainBrokerQueues {
   Chat = 'chat',
   Quest = 'quest',
+  DAO = 'dao'
 }
 
 export const enum QuestNotificationActions {
@@ -116,5 +118,9 @@ export class ControllerBroker {
 
   public sendDaoNotification(notification: Notification<DaoNotificationActions>) {
     if (!this.channel) return;
+
+    const convertedData = ControllerBroker.convertData(notification);
+
+    this.channel.sendToQueue(MainBrokerQueues.DAO, convertedData);
   }
 }
