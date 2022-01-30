@@ -91,38 +91,16 @@ export default {
     WQT: {
       bscNetwork: {
         address: process.env.TOKEN_WQT_BSC_NETWORK_ADDRESS,
-        decimals: parseInt(process.env.TOKEN_WQT_BSC_NETWORK_DECIMAL),
-        symbol: process.env.TOKEN_WQT_BSC_NETWORK_SYMBOL,
-        name: process.env.TOKEN_WQT_BSC_NETWORK_NAME,
-        amountMax: process.env.TOKEN_WQT_BSC_NETWORK_AMOUNT_MAX,
       },
       ethereumNetwork: {
         address: process.env.TOKEN_WQT_ETHEREUM_NETWORK_ADDRESS,
-        decimals: parseInt(process.env.TOKEN_WQT_ETHEREUM_NETWORK_DECIMAL),
-        symbol: process.env.TOKEN_WQT_ETHEREUM_NETWORK_SYMBOL,
-        name: process.env.TOKEN_WQT_ETHEREUM_NETWORK_NAME,
-        amountMax: process.env.TOKEN_WQT_ETHEREUM_NETWORK_AMOUNT_MAX,
       },
     },
     WETH: {
       address: process.env.TOKEN_WETH_ADDRESS,
-      decimals: parseInt(process.env.TOKEN_WETH_DECIMAL),
-      symbol: process.env.TOKEN_WETH_SYMBOL,
-      name: process.env.TOKEN_WETH_NAME,
-      amountMax: process.env.TOKEN_WETH_AMOUNT_MAX,
     },
     WBNB: {
       address: process.env.TOKEN_WBNB_ADDRESS,
-      decimals: parseInt(process.env.TOKEN_WBNB_DECIMAL),
-      symbol: process.env.TOKEN_WBNB_SYMBOL,
-      name: process.env.TOKEN_WBNB_NAME,
-      amountMax: process.env.TOKEN_WBNB_AMOUNT_MAX,
-    },
-  },
-  contracts: {
-    liquidityMining: {
-      webSocketProvider: process.env.CONTRACT_LIQUIDITY_MINING_WEBSOCKET_PROVIDER,
-      contract: process.env.CONTRACT_LIQUIDITY_MINING_ADDRESS,
     },
   },
 };
