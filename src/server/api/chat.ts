@@ -43,15 +43,52 @@ export async function getUserChats(r) {
     },
   ];
 
-  const count = await Chat.unscoped().count({ include });
-  const chats = await Chat.findAll({
+  let where = {};
+  let replacements = {};
+  if (r.query.q) {
+    const searchByChatNameLiteral = literal(
+      `"name" ILIKE :query`
+    )
+    const searchByQuestNameLiteral = literal(
+      `(SELECT "title" FROM "Quests" WHERE "id" = ` +
+      `(SELECT "questId" FROM "QuestChats" WHERE "chatId" = "Chat"."id")) ` +
+      `ILIKE :query`
+    )
+    const searchByFirstNameLiteral = literal(
+      `(SELECT "firstName" FROM "Users" WHERE "Users"."id" = ` +
+      `(SELECT "userId" FROM "ChatMembers" WHERE "chatId" = "Chat"."id" AND "userId" != :searcherId)) ` +
+      `ILIKE :query AND "Chat"."type" = :chatType`
+    )
+    const searchByLastNameLiteral = literal(
+      `(SELECT "lastName" FROM "Users" WHERE "Users"."id" = ` +
+      `(SELECT "userId" FROM "ChatMembers" WHERE "chatId" = "Chat"."id" AND "userId" != :searcherId)) ` +
+      `ILIKE :query AND "Chat"."type" = :chatType`
+    )
+
+    replacements = {
+      query: r.query.q,
+      chatType: ChatType.private,
+      searcherId: r.auth.credentials.id
+    }
+    where[Op.or] = [
+      searchByChatNameLiteral,
+      searchByQuestNameLiteral,
+      searchByFirstNameLiteral,
+      searchByLastNameLiteral
+    ]
+  }
+
+  const { count, rows } = await Chat.findAndCountAll({
+    where,
     include,
-    order: [['lastMessageDate', r.query.sort.lastMessageDate]],
+    replacements,
+    distinct: true,
     limit: r.query.limit,
     offset: r.query.offset,
+    order: [['lastMessageDate', r.query.sort.lastMessageDate]],
   });
 
-  return output({ count, chats });
+  return output({ count, chats: rows });
 }
 
 export async function getChatMessages(r) {
