@@ -25,7 +25,7 @@ export async function openDispute(r) {
   // }
 
   const dayInMilliseconds = 86400000;
-  const allowDate = quest.createdAt.getTime() + dayInMilliseconds;
+  const allowDate = quest.startedAt.getTime() + dayInMilliseconds;
 
   if (allowDate > Date.now()) {
     return error(Errors.InvalidDate, 'Can open dispute after 24 hours after creating quest', {});

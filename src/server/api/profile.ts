@@ -13,10 +13,13 @@ import {
   ChatsStatistic,
   RatingStatistic,
   QuestsStatistic,
-  UserSpecializationFilter,
-} from '@workquest/database-models/lib/models';
+} from "@workquest/database-models/lib/models";
 
-export const searchFields = ['firstName', 'lastName'];
+export const searchFields = [
+  "firstName",
+  "lastName",
+  "locationPlaceName",
+];
 
 export async function getMe(r) {
   const user = await User.findByPk(r.auth.credentials.id, {
@@ -30,7 +33,8 @@ export async function getMe(r) {
 export async function getUser(r) {
   const userController = new UserController(await User.findByPk(r.params.userId));
 
-  userController.checkNotSeeYourself(r.auth.credentials.id);
+  userController.
+    checkNotSeeYourself(r.auth.credentials.id)
 
   return output(userController.user);
 }
@@ -39,7 +43,9 @@ export async function getAllUsers(r) {
   const where = {};
 
   if (r.query.q) {
-    where[Op.or] = searchFields.map((field) => ({ [field]: { [Op.iLike]: `%${r.query.q}%` } }));
+    where[Op.or] = searchFields.map(
+      field => ({ [field]: { [Op.iLike]: `%${r.query.q}%` }})
+    );
   }
 
   const { count, rows } = await User.findAndCountAll({
@@ -54,17 +60,19 @@ export async function getAllUsers(r) {
 }
 
 export function getUsers(role: UserRole) {
-  return async function (r) {
-    const entersAreaLiteral = literal('st_within("User"."locationPostGIS", st_makeenvelope(:northLng, :northLat, :southLng, :southLat, 4326))');
+  return async function(r) {
+    const entersAreaLiteral = literal(
+      'st_within("User"."locationPostGIS", st_makeenvelope(:northLng, :northLat, :southLng, :southLat, 4326))'
+    );
     const userSpecializationOnlyPathsLiteral = literal(
-      '(1 = (CASE WHEN EXISTS (SELECT * FROM "UserSpecializationFilters" WHERE "userId" = "User"."id" AND "UserSpecializationFilters"."path" IN (:path)) THEN 1 END))',
+      '(1 = (CASE WHEN EXISTS (SELECT * FROM "UserSpecializationFilters" WHERE "userId" = "User"."id" AND "UserSpecializationFilters"."path" IN (:path)) THEN 1 END))'
     );
     const userSpecializationOnlyIndustryKeysLiteral = literal(
-      '(1 = (CASE WHEN EXISTS (SELECT * FROM "UserSpecializationFilters" WHERE "userId" = "User"."id" AND "UserSpecializationFilters"."industryKey" IN (:industryKey)) THEN 1 END))',
+      '(1 = (CASE WHEN EXISTS (SELECT * FROM "UserSpecializationFilters" WHERE "userId" = "User"."id" AND "UserSpecializationFilters"."industryKey" IN (:industryKey)) THEN 1 END))'
     );
     const userSpecializationIndustryKeysAndPathsLiteral = literal(
       '(1 = (CASE WHEN EXISTS (SELECT * FROM "UserSpecializationFilters" WHERE "userId" = "User"."id" AND "UserSpecializationFilters"."path" IN (:path)) THEN 1 END))' +
-        'OR (1 = (CASE WHEN EXISTS (SELECT * FROM "UserSpecializationFilters" WHERE "userId" = "User"."id" AND "UserSpecializationFilters"."industryKey" IN (:industryKey)) THEN 1 END))',
+      'OR (1 = (CASE WHEN EXISTS (SELECT * FROM "UserSpecializationFilters" WHERE "userId" = "User"."id" AND "UserSpecializationFilters"."industryKey" IN (:industryKey)) THEN 1 END))'
     );
 
     const order = [];
@@ -73,40 +81,36 @@ export function getUsers(role: UserRole) {
     let distinctCol: '"User"."id"' | 'id' = '"User"."id"';
 
     const where = {
-      [Op.and]: [],
-      role,
-      ...(r.query.workplace && { workplace: r.query.workplace }),
-      ...(r.query.priority && { priority: r.query.priority }),
-      ...(r.query.betweenWagePerHour && {
-        wagePerHour: {
-          [Op.between]: [r.query.betweenWagePerHour.from, r.query.betweenWagePerHour.to],
-        },
-      }),
+      [Op.and]: [], role,
+      ...(r.query.priorities && { priority: r.query.priorities }),
+      ...(r.query.workplaces && { workplace: r.query.workplaces }),
+      ...(r.query.betweenWagePerHour && { wagePerHour: { [Op.between]: [r.query.betweenWagePerHour.from, r.query.betweenWagePerHour.to] } }),
     };
 
     if (r.query.q) {
-      where[Op.or] = searchFields.map((field) => ({ [field]: { [Op.iLike]: `%${r.query.q}%` } }));
+      where[Op.or] = searchFields.map(
+        field => ({ [field]: { [Op.iLike]: `%${r.query.q}%` }})
+      );
     }
-    if (r.query.ratingStatus) {
+    if (r.query.ratingStatuses) {
       include.push({
         model: RatingStatistic,
         as: 'ratingStatistic',
         required: true,
-        where: { status: r.query.ratingStatus },
+        where: { status: r.query.ratingStatuses },
       });
-
       distinctCol = 'id';
     }
-    if (r.query.north && r.query.south) {
-      replacements['northLng'] = r.query.north.longitude;
-      replacements['northLat'] = r.query.north.latitude;
-      replacements['southLng'] = r.query.south.longitude;
-      replacements['southLat'] = r.query.south.latitude;
+    if (r.query.northAndSouthCoordinates) {
+      replacements['northLng'] = r.query.northAndSouthCoordinates.north.longitude;
+      replacements['northLat'] = r.query.northAndSouthCoordinates.north.latitude;
+      replacements['southLng'] = r.query.northAndSouthCoordinates.south.longitude;
+      replacements['southLat'] = r.query.northAndSouthCoordinates.south.latitude;
 
       where[Op.and].push(entersAreaLiteral);
     }
-    if (r.query.specialization && role === UserRole.Worker) {
-      const { paths, industryKeys } = SkillsFiltersController.splitPathsAndSingleKeysOfIndustry(r.query.specialization);
+    if (r.query.specializations && role === UserRole.Worker) {
+      const { paths, industryKeys } = SkillsFiltersController.splitPathsAndSingleKeysOfIndustry(r.query.specializations);
 
       if (paths.length !== 0 && industryKeys.length === 0) {
         replacements['path'] = paths;
@@ -134,9 +138,7 @@ export function getUsers(role: UserRole) {
       col: distinctCol, // so..., else not working
       limit: r.query.limit,
       offset: r.query.offset,
-      include,
-      order,
-      where,
+      include, order, where,
       replacements,
     });
 
@@ -162,27 +164,30 @@ export function editProfile(userRole: UserRole) {
 
     await userController.userMustHaveRole(userRole);
 
+    const locationFields = { location: null, locationPostGIS: null, locationPlaceName: null };
     const avatarId = r.payload.avatarId ? (await MediaController.getMedia(r.payload.avatarId)).id : null;
+
     const transaction = await r.server.app.db.transaction();
 
+    if (r.payload.locationFull) {
+      locationFields.location = r.payload.locationFull.location;
+      locationFields.locationPlaceName = r.payload.locationFull.locationPlaceName;
+      locationFields.locationPostGIS = transformToGeoPostGIS(r.payload.locationFull.location);
+    }
     if (userRole === UserRole.Worker) {
       await userController.setUserSpecializations(r.payload.specializationKeys, transaction);
     }
 
-    await user.update(
-      {
-        avatarId: avatarId,
-        lastName: r.payload.lastName,
-        location: r.payload.location,
-        firstName: r.payload.firstName,
-        priority: r.payload.priority || null,
-        workplace: r.payload.workplace || null,
-        wagePerHour: r.payload.wagePerHour || null,
-        additionalInfo: r.payload.additionalInfo,
-        locationPostGIS: r.payload.location ? transformToGeoPostGIS(r.payload.location) : null,
-      },
-      transaction,
-    );
+    await user.update({
+      ...locationFields,
+      avatarId: avatarId,
+      lastName: r.payload.lastName,
+      firstName: r.payload.firstName,
+      priority: r.payload.priority || null,
+      workplace: r.payload.workplace || null,
+      wagePerHour: r.payload.wagePerHour || null,
+      additionalInfo: r.payload.additionalInfo,
+    }, transaction);
 
     await transaction.commit();
 
@@ -218,7 +223,10 @@ export async function confirmPhoneNumber(r) {
 
   const userController = new UserController(user);
 
-  await userController.userMustHaveVerificationPhone().checkPhoneConfirmationCode(r.payload.confirmCode).confirmPhoneNumber();
+  await userController
+    .userMustHaveVerificationPhone()
+    .checkPhoneConfirmationCode(r.payload.confirmCode)
+    .confirmPhoneNumber()
 
   return output();
 }
