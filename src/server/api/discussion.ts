@@ -163,13 +163,14 @@ export async function sendComment(r) {
   }
 
   let commentLevel = 0;
+  const notificationRecipients = [discussion.authorId];
 
   const transaction = await r.server.app.db.transaction();
 
-  let notificationCallBack = (comment: DiscussionComment) => {};
+  let rootComment;
   if (r.payload.rootCommentId) {
     // TODO в джобу
-    const rootComment = await DiscussionComment.findByPk(r.payload.rootCommentId);
+    rootComment = await DiscussionComment.findByPk(r.payload.rootCommentId);
 
     if (!rootComment) {
       await transaction.rollback();
@@ -179,16 +180,8 @@ export async function sendComment(r) {
 
     await rootComment.increment('amountSubComments', { transaction });
 
+    notificationRecipients.push(rootComment.authorId);
     commentLevel = rootComment.level + 1;
-
-    notificationCallBack = (comment: DiscussionComment) => {
-      comment.setDataValue('rootComment', rootComment);
-      r.server.app.broker.sendDaoNotification({
-        action: DaoNotificationActions.replyToComment,
-        recipients: [rootComment.authorId],
-        data: comment,
-      });
-    };
   } else {
     await discussion.increment('amountComments', { transaction });
   }
@@ -210,10 +203,10 @@ export async function sendComment(r) {
 
   comment.setDataValue('user', userController.shortCredentials);
   comment.setDataValue('discussion', discussion);
-  notificationCallBack(comment);
+  comment.setDataValue('rootComment', rootComment);
   r.server.app.broker.sendDaoNotification({
     action: DaoNotificationActions.newCommentInDiscussion,
-    recipients: [discussion.authorId],
+    recipients: notificationRecipients,
     data: comment,
   });
 

@@ -1,4 +1,4 @@
-import { Op } from 'sequelize';
+import { literal, Op } from "sequelize";
 import { error, output } from '../utils';
 import { Errors } from '../utils/errors';
 import { setMessageAsReadJob } from '../jobs/setMessageAsRead';
@@ -24,11 +24,11 @@ import {
   MessageAction,
   StarredMessage,
   QuestChatStatuses,
-  SenderMessageStatus,
-} from '@workquest/database-models/lib/models';
+  SenderMessageStatus, QuestChat, Quest
+} from "@workquest/database-models/lib/models";
 
 export async function getUserChats(r) {
-  const include = [
+  const include: object[] = [
     {
       model: ChatMember,
       where: { userId: r.auth.credentials.id },
@@ -43,9 +43,42 @@ export async function getUserChats(r) {
     },
   ];
 
+  let where = {};
+  if (r.query.q) {
+    include.push({
+      model: QuestChat,
+      as: 'questChat',
+      required: false,
+      include: [{
+        model: Quest,
+        as: 'quest',
+        required: false
+      }]
+    });
+
+    const searchByQuestNameLiteral = literal(
+      `"questChat"."quest"."title" ILIKE '%${r.query.q}%'`
+    )
+
+    const searchByUserNameLiteral = literal(
+      `"meMember"."user"."firstName" ILIKE '%${r.query.q}%' OR "meMember"."user"."lastName" ILIKE '%${r.query.q}%'`
+    )
+
+    const searchByChatNameLiteral = literal(
+      `"name" ILIKE '%${r.query.q}%'`
+    )
+
+    where[Op.or] = [
+      searchByQuestNameLiteral,
+      searchByUserNameLiteral,
+      searchByChatNameLiteral
+    ]
+  }
+
   const count = await Chat.unscoped().count({ include });
   const chats = await Chat.findAll({
     include,
+    where,
     order: [['lastMessageDate', r.query.sort.lastMessageDate]],
     limit: r.query.limit,
     offset: r.query.offset,
