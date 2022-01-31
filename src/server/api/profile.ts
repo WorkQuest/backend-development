@@ -169,9 +169,19 @@ export function editProfile(userRole: UserRole) {
 
     const locationFields = { location: null, locationPostGIS: null, locationPlaceName: null };
     const avatarId = r.payload.avatarId ? (await MediaController.getMedia(r.payload.avatarId)).id : null;
+    const phonesFields = r.payload.phone ? { tempPhone: user.tempPhone, phone: user.phone } : { tempPhone: null, phone: null };
 
     const transaction = await r.server.app.db.transaction();
 
+    if (r.payload.phone) {
+      if (
+        (user.phone && user.phone.fullPhone !== r.payload.phone.fullPhone) ||
+        (user.tempPhone && user.tempPhone.fullPhone !== r.payload.phone.fullPhone)
+      ) {
+        phonesFields.phone = null;
+        phonesFields.tempPhone = r.payload.phone;
+      }
+    }
     if (r.payload.locationFull) {
       locationFields.location = r.payload.locationFull.location;
       locationFields.locationPlaceName = r.payload.locationFull.locationPlaceName;
@@ -180,15 +190,9 @@ export function editProfile(userRole: UserRole) {
     if (userRole === UserRole.Worker) {
       await userController.setUserSpecializations(r.payload.specializationKeys, transaction);
     }
-    if (r.payload.phoneNumber) {
-      const oldNumber = user.phone ? user.phone.fullPhone : null;
-
-      if (oldNumber !== r.payload.phoneNumber.fullPhone) {
-        await userController.changePhoneNumber(r.payload.phoneNumber, transaction);
-      }
-    }
 
     await user.update({
+      ...phonesFields,
       ...locationFields,
       avatarId: avatarId,
       lastName: r.payload.lastName,
