@@ -16,7 +16,8 @@ import {
   QuestChat,
   QuestChatStatuses,
   QuestDispute,
-  QuestsResponse, QuestsResponseStatus,
+  QuestsResponse,
+  QuestsResponseStatus,
   QuestsResponseType,
   QuestStatus,
   Review,
@@ -163,18 +164,17 @@ export async function editQuest(r) {
 
   await transaction.commit();
 
-  r.server.app.broker.sendQuestNotification({
-    action: QuestNotificationActions.questEdited,
-    recipients: (
-      await QuestsResponse.findAll({
-        where: {
-          questId: questController.quest.id,
-          status: QuestsResponseStatus.Open,
-        },
-      })
-    ).map((response) => response.workerId),
-    data: questController.quest,
+  const responses = await QuestsResponse.findAll({
+    where: { questId: questController.quest.id, status: QuestsResponseStatus.Open },
   });
+
+  if (responses.length !== 0) {
+    r.server.app.broker.sendQuestNotification({
+      action: QuestNotificationActions.questEdited,
+      recipients: responses.map(_ => _.workerId),
+      data: questController.quest,
+    });
+  }
 
   return output(questController.quest);
 }

@@ -2,9 +2,16 @@ import { Op } from 'sequelize';
 import { error, output } from '../utils';
 import { Errors } from '../utils/errors';
 import { MediaController } from '../controllers/controller.media';
-import { Discussion, DiscussionComment, DiscussionCommentLike, DiscussionLike, StarredDiscussion, User } from '@workquest/database-models/lib/models';
-import { DaoNotificationActions } from '../controllers/controller.broker';
 import { UserController } from '../controllers/user/controller.user';
+import { DaoNotificationActions } from '../controllers/controller.broker';
+import {
+  User,
+  Discussion,
+  DiscussionLike,
+  DiscussionComment,
+  StarredDiscussion,
+  DiscussionCommentLike,
+} from '@workquest/database-models/lib/models';
 
 const searchFields = ['title', 'description'];
 
@@ -152,6 +159,9 @@ export async function sendComment(r) {
   const user: User = r.auth.credentials;
   const userController = new UserController(user);
 
+  let commentLevel = 0;
+  let rootComment: DiscussionComment = null;
+
   const medias = await MediaController.getMedias(r.payload.medias);
 
   const discussion = await Discussion.findOne({
@@ -162,14 +172,11 @@ export async function sendComment(r) {
     return error(Errors.NotFound, 'Discussion not found', {});
   }
 
-  let commentLevel = 0;
   const notificationRecipients = [discussion.authorId];
 
   const transaction = await r.server.app.db.transaction();
 
-  let rootComment;
   if (r.payload.rootCommentId) {
-    // TODO в джобу
     rootComment = await DiscussionComment.findByPk(r.payload.rootCommentId);
 
     if (!rootComment) {
@@ -201,9 +208,10 @@ export async function sendComment(r) {
 
   await transaction.commit();
 
-  comment.setDataValue('user', userController.shortCredentials);
   comment.setDataValue('discussion', discussion);
   comment.setDataValue('rootComment', rootComment);
+  comment.setDataValue('user', userController.shortCredentials);
+
   r.server.app.broker.sendDaoNotification({
     action: DaoNotificationActions.newCommentInDiscussion,
     recipients: notificationRecipients,
@@ -234,10 +242,12 @@ export async function putDiscussionLike(r) {
   if (isCreated) {
     await discussion.increment('amountLikes', { transaction });
   }
+
   await transaction.commit();
 
   like.setDataValue('discussion', discussion);
   like.setDataValue('user', userController.shortCredentials);
+
   r.server.app.broker.sendDaoNotification({
     action: DaoNotificationActions.newDiscussionLike,
     recipients: [discussion.authorId],
@@ -256,12 +266,14 @@ export async function removeDiscussionLike(r) {
 
   const transaction = await r.server.app.db.transaction();
 
-  await DiscussionLike.destroy({
+  const numberOfDestroyedLikes = await DiscussionLike.destroy({
     where: { discussionId: r.params.discussionId, userId: r.auth.credentials.id },
     transaction,
   });
 
-  await discussion.decrement('amountLikes', { transaction });
+  if (numberOfDestroyedLikes !== 0) {
+    await discussion.decrement('amountLikes', { transaction });
+  }
 
   await transaction.commit();
 
@@ -289,15 +301,16 @@ export async function putCommentLike(r) {
     await comment.increment('amountLikes', { transaction });
   }
 
+  await transaction.commit();
+
   like.setDataValue('comment', comment);
   like.setDataValue('user', userController.shortCredentials);
+
   r.server.app.broker.sendDaoNotification({
     action: DaoNotificationActions.commentLiked,
     recipients: [comment.authorId],
     data: like,
   });
-
-  await transaction.commit();
 
   return output();
 }
@@ -311,12 +324,14 @@ export async function removeCommentLike(r) {
 
   const transaction = await r.server.app.db.transaction();
 
-  await comment.decrement('amountLikes', { transaction });
-
-  await DiscussionCommentLike.destroy({
+  const numberOfDestroyedLikes = await DiscussionCommentLike.destroy({
     where: { commentId: r.params.commentId, userId: r.auth.credentials.id },
     transaction,
   });
+
+  if (numberOfDestroyedLikes !== 0) {
+    await comment.decrement('amountLikes', { transaction });
+  }
 
   await transaction.commit();
 

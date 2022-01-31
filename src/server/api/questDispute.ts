@@ -2,8 +2,15 @@ import { Op, literal } from 'sequelize';
 import { error, output } from '../utils';
 import { Errors } from '../utils/errors';
 import { QuestController } from '../controllers/quest/controller.quest';
-import { User, Quest, QuestStatus, QuestDispute, DisputeStatus, QuestChat } from '@workquest/database-models/lib/models';
 import { QuestNotificationActions } from '../controllers/controller.broker';
+import {
+  User,
+  Quest,
+  QuestChat,
+  QuestStatus,
+  QuestDispute,
+  DisputeStatus,
+} from '@workquest/database-models/lib/models';
 
 export async function openDispute(r) {
   const user: User = r.auth.credentials;
@@ -25,7 +32,7 @@ export async function openDispute(r) {
   //   questController.questMustHaveStatus(QuestStatus.WaitConfirm);
   // }
 
-  const dayInMilliseconds = 86400000;
+  const dayInMilliseconds = 60000; // 86400000; TODO после тестов перевести в 86400000
   const allowDate = quest.startedAt.getTime() + dayInMilliseconds;
 
   if (allowDate > Date.now()) {
