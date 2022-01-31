@@ -169,17 +169,18 @@ export function editProfile(userRole: UserRole) {
 
     const locationFields = { location: null, locationPostGIS: null, locationPlaceName: null };
     const avatarId = r.payload.avatarId ? (await MediaController.getMedia(r.payload.avatarId)).id : null;
-    const phonesFields = r.payload.phone ? { tempPhone: user.tempPhone, phone: user.phone } : { tempPhone: null, phone: null };
+    const phonesFields = r.payload.phoneNumber ? { tempPhone: user.tempPhone, phone: user.phone } : { tempPhone: null, phone: null };
 
     const transaction = await r.server.app.db.transaction();
 
-    if (r.payload.phone) {
+    if (r.payload.phoneNumber) {
       if (
-        (user.phone && user.phone.fullPhone !== r.payload.phone.fullPhone) ||
-        (user.tempPhone && user.tempPhone.fullPhone !== r.payload.phone.fullPhone)
+        (user.phone && user.phone.fullPhone !== r.payload.phoneNumber.fullPhone) ||
+        (user.tempPhone && user.tempPhone.fullPhone !== r.payload.phoneNumber.fullPhone) ||
+        (!user.phone && !user.tempPhone)
       ) {
         phonesFields.phone = null;
-        phonesFields.tempPhone = r.payload.phone;
+        phonesFields.tempPhone = r.payload.phoneNumber;
       }
     }
     if (r.payload.locationFull) {

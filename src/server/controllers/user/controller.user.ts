@@ -370,19 +370,4 @@ export class UserController extends UserHelper {
       additionalInfo: this.user.additionalInfo,
     };
   }
-
-  public async changePhoneNumber(newPhoneNumber: object, transaction?: Transaction) {
-    try {
-      this.user = await this.user.update({
-        phone: null,
-        tempPhone: newPhoneNumber,
-        'settings.confirmCode': null,
-      });
-    } catch (e) {
-      if (transaction) {
-        await transaction.rollback()
-      }
-      throw e;
-    }
-  }
 }
