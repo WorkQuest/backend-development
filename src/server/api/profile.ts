@@ -251,11 +251,10 @@ export async function sendCodeOnPhoneNumber(r) {
 
   const userController = new UserController(userWithPassword);
 
-  if (userWithPassword.phone) {
+  if (userWithPassword.phone) { //TODO Возможно что-то подобное есть
     return error(Errors.PhoneNumberAlreadyConfirmed, 'Phone number already confirmed', {});
   }
-
-  if (!userWithPassword.tempPhone) {
+  if (!userWithPassword.tempPhone) { // TODO -> userMustHaveVerificationPhone
     return error(Errors.NotFound, 'Phone number for verification not found', {});
   }
 
