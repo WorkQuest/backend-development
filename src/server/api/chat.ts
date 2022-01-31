@@ -66,7 +66,7 @@ export async function getUserChats(r) {
     )
 
     replacements = {
-      query: r.query.q,
+      query: `%${r.query.q}%`,
       chatType: ChatType.private,
       searcherId: r.auth.credentials.id
     }
