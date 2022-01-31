@@ -302,11 +302,10 @@ export class UserController extends UserHelper {
     }
   }
 
-  public async setUnverifiedPhoneNumber(phoneNumber: object, confirmCode: number, transaction?: Transaction) {
+  public async setConfirmCodeToVerifyCodeNumber(confirmCode: number, transaction?: Transaction) {
     try {
       await this.user.update(
         {
-          tempPhone: phoneNumber,
           'settings.phoneConfirm': confirmCode,
         },
         { transaction },
@@ -350,12 +349,12 @@ export class UserController extends UserHelper {
     }
   }
 
-  public async changePhoneNumber(newPhoneNumber: object, confirmCode: number, transaction?: Transaction) {
+  public async changePhoneNumber(newPhoneNumber: object, transaction?: Transaction) {
     try {
       this.user = await this.user.update({
         phone: null,
         tempPhone: newPhoneNumber,
-        'settings.phoneConfirm': confirmCode
+        'settings.confirmCode': null,
       });
     } catch (e) {
       if (transaction) {

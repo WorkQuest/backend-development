@@ -1,6 +1,6 @@
 import { literal, Op } from 'sequelize';
 import { addSendSmsJob } from '../jobs/sendSms';
-import { getRandomCodeNumber, output } from '../utils';
+import { error, getRandomCodeNumber, output } from "../utils";
 import { UserController } from '../controllers/user/controller.user';
 import { transformToGeoPostGIS } from '../utils/postGIS';
 import { MediaController } from '../controllers/controller.media';
@@ -14,6 +14,7 @@ import {
   RatingStatistic,
   QuestsStatistic,
 } from "@workquest/database-models/lib/models";
+import { Errors } from "../utils/errors";
 
 export const searchFields = [
   "firstName",
@@ -177,10 +178,12 @@ export function editProfile(userRole: UserRole) {
     if (userRole === UserRole.Worker) {
       await userController.setUserSpecializations(r.payload.specializationKeys, transaction);
     }
-    if (r.payload.phoneNumber.fullPhone !== user.phone.fullPhone) {
-      const confirmCode = getRandomCodeNumber();
+    if (r.payload.phoneNumber) {
+      const oldNumber = user.phone ? user.phone.fullPhone : null;
 
-      await userController.changePhoneNumber(r.payload.phoneNumber, confirmCode, transaction);
+      if (oldNumber !== r.payload.phoneNumber.fullPhone) {
+        await userController.changePhoneNumber(r.payload.phoneNumber, transaction);
+      }
     }
 
     await user.update({
@@ -242,7 +245,15 @@ export async function sendCodeOnPhoneNumber(r) {
 
   const userController = new UserController(userWithPassword);
 
-  await userController.setUnverifiedPhoneNumber(r.payload.phoneNumber, confirmCode);
+  if (userWithPassword.phone) {
+    return error(Errors.PhoneNumberAlreadyConfirmed, 'Phone number already confirmed', {});
+  }
+
+  if (!userWithPassword.tempPhone) {
+    return error(Errors.NotFound, 'Phone number for verification not found', {});
+  }
+
+  await userController.setConfirmCodeToVerifyCodeNumber(confirmCode);
 
   await addSendSmsJob({
     toPhoneNumber: r.payload.phoneNumber.fullPhone,
