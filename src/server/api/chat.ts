@@ -1,4 +1,4 @@
-import { Op } from 'sequelize';
+import { literal, Op } from "sequelize";
 import { error, output } from '../utils';
 import { Errors } from '../utils/errors';
 import { setMessageAsReadJob } from '../jobs/setMessageAsRead';
@@ -24,11 +24,11 @@ import {
   MessageAction,
   StarredMessage,
   QuestChatStatuses,
-  SenderMessageStatus,
-} from '@workquest/database-models/lib/models';
+  SenderMessageStatus, QuestChat, Quest
+} from "@workquest/database-models/lib/models";
 
 export async function getUserChats(r) {
-  const include = [
+  const include: object[] = [
     {
       model: ChatMember,
       where: { userId: r.auth.credentials.id },

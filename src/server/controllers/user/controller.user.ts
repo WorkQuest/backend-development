@@ -360,4 +360,15 @@ export class UserController extends UserHelper {
       defaults: { userId: userId },
     });
   }
+
+  public get shortCredentials() {
+    return {
+      id: this.user.id,
+      firstName: this.user.firstName,
+      lastName: this.user.lastName,
+      avatarId: this.user.avatarId,
+      avatar: this.user.avatar,
+      additionalInfo: this.user.additionalInfo,
+    };
+  }
 }
