@@ -2,7 +2,16 @@ import { Op } from 'sequelize';
 import { error, output } from '../utils';
 import { Errors } from '../utils/errors';
 import { MediaController } from '../controllers/controller.media';
-import { User, Discussion, DiscussionLike, DiscussionComment, DiscussionCommentLike, StarredDiscussion } from '@workquest/database-models/lib/models';
+import { UserController } from '../controllers/user/controller.user';
+import { DaoNotificationActions } from '../controllers/controller.broker';
+import {
+  User,
+  Discussion,
+  DiscussionLike,
+  DiscussionComment,
+  StarredDiscussion,
+  DiscussionCommentLike,
+} from '@workquest/database-models/lib/models';
 
 const searchFields = ['title', 'description'];
 
@@ -147,6 +156,12 @@ export async function createDiscussion(r) {
 }
 
 export async function sendComment(r) {
+  const user: User = r.auth.credentials;
+  const userController = new UserController(user);
+
+  let commentLevel = 0;
+  let rootComment: DiscussionComment = null;
+
   const medias = await MediaController.getMedias(r.payload.medias);
 
   const discussion = await Discussion.findOne({
@@ -157,13 +172,12 @@ export async function sendComment(r) {
     return error(Errors.NotFound, 'Discussion not found', {});
   }
 
-  let commentLevel = 0;
+  const notificationRecipients = [discussion.authorId];
 
   const transaction = await r.server.app.db.transaction();
 
   if (r.payload.rootCommentId) {
-    // TODO в джобу
-    const rootComment = await DiscussionComment.findByPk(r.payload.rootCommentId);
+    rootComment = await DiscussionComment.findByPk(r.payload.rootCommentId);
 
     if (!rootComment) {
       await transaction.rollback();
@@ -173,6 +187,7 @@ export async function sendComment(r) {
 
     await rootComment.increment('amountSubComments', { transaction });
 
+    notificationRecipients.push(rootComment.authorId);
     commentLevel = rootComment.level + 1;
   } else {
     await discussion.increment('amountComments', { transaction });
@@ -193,10 +208,23 @@ export async function sendComment(r) {
 
   await transaction.commit();
 
+  comment.setDataValue('discussion', discussion);
+  comment.setDataValue('rootComment', rootComment);
+  comment.setDataValue('user', userController.shortCredentials);
+
+  r.server.app.broker.sendDaoNotification({
+    action: DaoNotificationActions.newCommentInDiscussion,
+    recipients: notificationRecipients,
+    data: comment,
+  });
+
   return output(comment);
 }
 
 export async function putDiscussionLike(r) {
+  const user: User = r.auth.credentials;
+  const userController = new UserController(user);
+
   const discussion = await Discussion.findByPk(r.params.discussionId);
 
   if (!discussion) {
@@ -214,7 +242,17 @@ export async function putDiscussionLike(r) {
   if (isCreated) {
     await discussion.increment('amountLikes', { transaction });
   }
+
   await transaction.commit();
+
+  like.setDataValue('discussion', discussion);
+  like.setDataValue('user', userController.shortCredentials);
+
+  r.server.app.broker.sendDaoNotification({
+    action: DaoNotificationActions.newDiscussionLike,
+    recipients: [discussion.authorId],
+    data: like,
+  });
 
   return output();
 }
@@ -228,12 +266,14 @@ export async function removeDiscussionLike(r) {
 
   const transaction = await r.server.app.db.transaction();
 
-  await DiscussionLike.destroy({
+  const numberOfDestroyedLikes = await DiscussionLike.destroy({
     where: { discussionId: r.params.discussionId, userId: r.auth.credentials.id },
     transaction,
   });
 
-  await discussion.decrement('amountLikes', { transaction });
+  if (numberOfDestroyedLikes !== 0) {
+    await discussion.decrement('amountLikes', { transaction });
+  }
 
   await transaction.commit();
 
@@ -241,6 +281,9 @@ export async function removeDiscussionLike(r) {
 }
 
 export async function putCommentLike(r) {
+  const user: User = r.auth.credentials;
+  const userController = new UserController(user);
+
   const comment = await DiscussionComment.findByPk(r.params.commentId);
 
   if (!comment) {
@@ -260,6 +303,15 @@ export async function putCommentLike(r) {
 
   await transaction.commit();
 
+  like.setDataValue('comment', comment);
+  like.setDataValue('user', userController.shortCredentials);
+
+  r.server.app.broker.sendDaoNotification({
+    action: DaoNotificationActions.commentLiked,
+    recipients: [comment.authorId],
+    data: like,
+  });
+
   return output();
 }
 
@@ -272,12 +324,14 @@ export async function removeCommentLike(r) {
 
   const transaction = await r.server.app.db.transaction();
 
-  await comment.decrement('amountLikes', { transaction });
-
-  await DiscussionCommentLike.destroy({
+  const numberOfDestroyedLikes = await DiscussionCommentLike.destroy({
     where: { commentId: r.params.commentId, userId: r.auth.credentials.id },
     transaction,
   });
+
+  if (numberOfDestroyedLikes !== 0) {
+    await comment.decrement('amountLikes', { transaction });
+  }
 
   await transaction.commit();
 

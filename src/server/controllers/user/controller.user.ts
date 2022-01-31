@@ -19,49 +19,6 @@ import {
 abstract class UserHelper {
   public abstract user: User;
 
-  public async setUserSpecializations(keys: string[], transaction?: Transaction) {
-    try {
-      await UserSpecializationFilter.destroy({
-        where: { userId: this.user.id },
-        transaction,
-      });
-
-      if (keys.length <= 0) {
-        return;
-      }
-
-      const skillsFiltersController = await SkillsFiltersController.getInstance();
-      const userSpecializations = skillsFiltersController.keysToRecords(keys, 'userId', this.user.id);
-
-      await UserSpecializationFilter.bulkCreate(userSpecializations, { transaction });
-    } catch (e) {
-      if (transaction) {
-        await transaction.rollback();
-        throw e;
-      }
-    }
-  }
-
-  public async logoutAllSessions(transaction?: Transaction) {
-    try {
-      await Session.update(
-        { invalidating: true },
-        {
-          where: {
-            userId: this.user.id,
-            createdAt: { [Op.gte]: Date.now() - config.auth.jwt.refresh.lifetime * 1000 },
-          },
-          transaction,
-        },
-      );
-    } catch (e) {
-      if (transaction) {
-        await transaction.rollback();
-      }
-      throw e;
-    }
-  }
-
   public static getDefaultAdditionalInfo(role: UserRole) {
     let additionalInfo: object = {
       description: null,
@@ -183,6 +140,17 @@ abstract class UserHelper {
     return this;
   }
 
+  public userMustHaveStatus(...statuses: UserStatus[]): this {
+    if (!statuses.includes(this.user.status)) {
+      throw error(Errors.InvalidStatus, "User status doesn't match", {
+        current: this.user.status,
+        mustHave: statuses,
+      });
+    }
+
+    return this;
+  }
+
   public userNeedsSetRole(): this {
     if (this.user.status !== UserStatus.NeedSetRole) {
       throw error(Errors.InvalidPayload, "User don't need to set role", {
@@ -261,21 +229,6 @@ abstract class UserHelper {
 
     return this;
   }
-
-  public static async createStatistics(userId) {
-    await RatingStatistic.findOrCreate({
-      where: { userId: userId },
-      defaults: { userId: userId },
-    });
-    await ChatsStatistic.findOrCreate({
-      where: { userId: userId },
-      defaults: { userId: userId },
-    });
-    await QuestsStatistic.findOrCreate({
-      where: { userId: userId },
-      defaults: { userId: userId },
-    });
-  }
 }
 
 export class UserController extends UserHelper {
@@ -347,6 +300,75 @@ export class UserController extends UserHelper {
       }
       throw e;
     }
+  }
+
+  public async logoutAllSessions(transaction?: Transaction) {
+    try {
+      await Session.update(
+        { invalidating: true },
+        {
+          where: {
+            userId: this.user.id,
+            createdAt: { [Op.gte]: Date.now() - config.auth.jwt.refresh.lifetime * 1000 },
+          },
+          transaction,
+        },
+      );
+    } catch (e) {
+      if (transaction) {
+        await transaction.rollback();
+      }
+      throw e;
+    }
+  }
+
+  public async setUserSpecializations(keys: string[], transaction?: Transaction) {
+    try {
+      await UserSpecializationFilter.destroy({
+        where: { userId: this.user.id },
+        transaction,
+      });
+
+      if (keys.length <= 0) {
+        return;
+      }
+
+      const skillsFiltersController = await SkillsFiltersController.getInstance();
+      const userSpecializations = skillsFiltersController.keysToRecords(keys, 'userId', this.user.id);
+
+      await UserSpecializationFilter.bulkCreate(userSpecializations, { transaction });
+    } catch (e) {
+      if (transaction) {
+        await transaction.rollback();
+        throw e;
+      }
+    }
+  }
+
+  public static async createStatistics(userId) {
+    await RatingStatistic.findOrCreate({
+      where: { userId: userId },
+      defaults: { userId: userId },
+    });
+    await ChatsStatistic.findOrCreate({
+      where: { userId: userId },
+      defaults: { userId: userId },
+    });
+    await QuestsStatistic.findOrCreate({
+      where: { userId: userId },
+      defaults: { userId: userId },
+    });
+  }
+
+  public get shortCredentials() {
+    return {
+      id: this.user.id,
+      firstName: this.user.firstName,
+      lastName: this.user.lastName,
+      avatarId: this.user.avatarId,
+      avatar: this.user.avatar,
+      additionalInfo: this.user.additionalInfo,
+    };
   }
 
   public async changePhoneNumber(newPhoneNumber: object, transaction?: Transaction) {

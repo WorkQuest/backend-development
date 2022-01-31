@@ -12,7 +12,7 @@ import {
   UserRole,
   ChatsStatistic,
   RatingStatistic,
-  QuestsStatistic,
+  QuestsStatistic, UserStatus
 } from "@workquest/database-models/lib/models";
 import { Errors } from "../utils/errors";
 
@@ -34,14 +34,15 @@ export async function getMe(r) {
 export async function getUser(r) {
   const userController = new UserController(await User.findByPk(r.params.userId));
 
-  userController.
-    checkNotSeeYourself(r.auth.credentials.id)
+  userController
+    .checkNotSeeYourself(r.auth.credentials.id)
+    .userMustHaveStatus(UserStatus.Confirmed)
 
   return output(userController.user);
 }
 
 export async function getAllUsers(r) {
-  const where = {};
+  const where = { status: UserStatus.Confirmed };
 
   if (r.query.q) {
     where[Op.or] = searchFields.map(
@@ -82,7 +83,8 @@ export function getUsers(role: UserRole) {
     let distinctCol: '"User"."id"' | 'id' = '"User"."id"';
 
     const where = {
-      [Op.and]: [], role,
+      role, [Op.and]: [],
+      status: UserStatus.Confirmed,
       ...(r.query.priorities && { priority: r.query.priorities }),
       ...(r.query.workplaces && { workplace: r.query.workplaces }),
       ...(r.query.betweenWagePerHour && { wagePerHour: { [Op.between]: [r.query.betweenWagePerHour.from, r.query.betweenWagePerHour.to] } }),
