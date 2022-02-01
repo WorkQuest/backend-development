@@ -16,6 +16,7 @@ export enum Errors {
   InvalidDate = 400011,
   WalletExists = 400012,
   BlockedUser = 400013,
+  PhoneNumberAlreadyConfirmed = 400014,
   // Authorization errors (401)
   TokenExpired = 401001,
   TokenInvalid = 401002,

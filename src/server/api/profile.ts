@@ -1,6 +1,6 @@
 import { literal, Op } from 'sequelize';
 import { addSendSmsJob } from '../jobs/sendSms';
-import { getRandomCodeNumber, output } from '../utils';
+import { error, getRandomCodeNumber, output } from "../utils";
 import { UserController } from '../controllers/user/controller.user';
 import { transformToGeoPostGIS } from '../utils/postGIS';
 import { MediaController } from '../controllers/controller.media';
@@ -14,6 +14,7 @@ import {
   RatingStatistic,
   QuestsStatistic, UserStatus
 } from "@workquest/database-models/lib/models";
+import { Errors } from "../utils/errors";
 
 export const searchFields = [
   "firstName",
@@ -168,9 +169,20 @@ export function editProfile(userRole: UserRole) {
 
     const locationFields = { location: null, locationPostGIS: null, locationPlaceName: null };
     const avatarId = r.payload.avatarId ? (await MediaController.getMedia(r.payload.avatarId)).id : null;
+    const phonesFields = r.payload.phoneNumber ? { tempPhone: user.tempPhone, phone: user.phone } : { tempPhone: null, phone: null };
 
     const transaction = await r.server.app.db.transaction();
 
+    if (r.payload.phoneNumber) {
+      if (
+        (user.phone && user.phone.fullPhone !== r.payload.phoneNumber.fullPhone) ||
+        (user.tempPhone && user.tempPhone.fullPhone !== r.payload.phoneNumber.fullPhone) ||
+        (!user.phone && !user.tempPhone)
+      ) {
+        phonesFields.phone = null;
+        phonesFields.tempPhone = r.payload.phoneNumber;
+      }
+    }
     if (r.payload.locationFull) {
       locationFields.location = r.payload.locationFull.location;
       locationFields.locationPlaceName = r.payload.locationFull.locationPlaceName;
@@ -181,6 +193,7 @@ export function editProfile(userRole: UserRole) {
     }
 
     await user.update({
+      ...phonesFields,
       ...locationFields,
       avatarId: avatarId,
       lastName: r.payload.lastName,
@@ -239,10 +252,17 @@ export async function sendCodeOnPhoneNumber(r) {
 
   const userController = new UserController(userWithPassword);
 
-  await userController.setUnverifiedPhoneNumber(r.payload.phoneNumber, confirmCode);
+  if (userWithPassword.phone) { //TODO Возможно что-то подобное есть
+    return error(Errors.PhoneNumberAlreadyConfirmed, 'Phone number already confirmed', {});
+  }
+  if (!userWithPassword.tempPhone) { // TODO -> userMustHaveVerificationPhone
+    return error(Errors.NotFound, 'Phone number for verification not found', {});
+  }
+
+  await userController.setConfirmCodeToVerifyCodeNumber(confirmCode);
 
   await addSendSmsJob({
-    toPhoneNumber: r.payload.phoneNumber.fullPhone,
+    toPhoneNumber: userWithPassword.tempPhone.fullPhone,
     message: 'Code to confirm your phone number on WorkQuest: ' + confirmCode,
   });
 
