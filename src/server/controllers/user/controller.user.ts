@@ -277,7 +277,7 @@ export class UserController extends UserHelper {
         phone: this.user.tempPhone,
         tempPhone: null,
         'settings.phoneConfirm': null,
-      });
+      }, { transaction });
     } catch (e) {
       if (transaction) {
         await transaction.rollback();

@@ -262,7 +262,7 @@ export async function sendCodeOnPhoneNumber(r) {
   await userController.setConfirmCodeToVerifyCodeNumber(confirmCode);
 
   await addSendSmsJob({
-    toPhoneNumber: r.payload.phoneNumber.fullPhone,
+    toPhoneNumber: userWithPassword.tempPhone.fullPhone,
     message: 'Code to confirm your phone number on WorkQuest: ' + confirmCode,
   });
 

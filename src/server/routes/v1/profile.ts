@@ -126,7 +126,7 @@ export default [{
         avatarId: idSchema.allow(null).required(),
         firstName: userFirstNameSchema.required(),
         lastName: userLastNameSchema.required(),
-        phone: phoneSchema.allow(null).required(),
+        phoneNumber: phoneSchema.allow(null).required(),
         locationFull: locationFullSchema.allow(null).required(),
         additionalInfo: userAdditionalInfoEmployerSchema.required(),
       }).label("EditEmployerProfilePayload")
@@ -226,11 +226,6 @@ export default [{
     id: "v1.profile.phone.sendCode",
     tags: ["api", "profile"],
     description: "Send code for confirm phone number",
-    validate: {
-      payload: Joi.object({
-        phoneNumber: phoneSchema.required(),
-      }).label('PhoneSendCodePayload')
-    },
     response: {
       schema: emptyOkSchema
     }
