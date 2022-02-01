@@ -1,4 +1,4 @@
-import { literal, Op } from "sequelize";
+import { literal, Op } from 'sequelize';
 import { error, output } from '../utils';
 import { Errors } from '../utils/errors';
 import { setMessageAsReadJob } from '../jobs/setMessageAsRead';
@@ -24,11 +24,31 @@ import {
   MessageAction,
   StarredMessage,
   QuestChatStatuses,
-  SenderMessageStatus, QuestChat, Quest
-} from "@workquest/database-models/lib/models";
+  SenderMessageStatus,
+  QuestChat,
+  Quest,
+} from '@workquest/database-models/lib/models';
 
 export async function getUserChats(r) {
-  const include: object[] = [
+  const searchByChatNameLiteral = literal(`"name" ILIKE :query`);
+  const searchByQuestNameLiteral = literal(
+    `(SELECT "title" FROM "Quests" WHERE "id" = ` + `(SELECT "questId" FROM "QuestChats" WHERE "chatId" = "Chat"."id")) ` + `ILIKE :query`,
+  );
+  const searchByFirstNameLiteral = literal(
+    `(SELECT "firstName" FROM "Users" WHERE "Users"."id" = ` +
+      `(SELECT "userId" FROM "ChatMembers" WHERE "chatId" = "Chat"."id" AND "userId" != :searcherId)) ` +
+      `ILIKE :query AND "Chat"."type" = :chatType`,
+  );
+  const searchByLastNameLiteral = literal(
+    `(SELECT "lastName" FROM "Users" WHERE "Users"."id" = ` +
+      `(SELECT "userId" FROM "ChatMembers" WHERE "chatId" = "Chat"."id" AND "userId" != :searcherId)) ` +
+      `ILIKE :query AND "Chat"."type" = :chatType`,
+  );
+
+  const where = { [Op.or]: [] };
+  const replacements = {};
+
+  const include: any[] = [
     {
       model: ChatMember,
       where: { userId: r.auth.credentials.id },
@@ -43,39 +63,17 @@ export async function getUserChats(r) {
     },
   ];
 
-  let where = {};
-  let replacements = {};
   if (r.query.q) {
-    const searchByChatNameLiteral = literal(
-      `"name" ILIKE :query`
-    )
-    const searchByQuestNameLiteral = literal(
-      `(SELECT "title" FROM "Quests" WHERE "id" = ` +
-      `(SELECT "questId" FROM "QuestChats" WHERE "chatId" = "Chat"."id")) ` +
-      `ILIKE :query`
-    )
-    const searchByFirstNameLiteral = literal(
-      `(SELECT "firstName" FROM "Users" WHERE "Users"."id" = ` +
-      `(SELECT "userId" FROM "ChatMembers" WHERE "chatId" = "Chat"."id" AND "userId" != :searcherId)) ` +
-      `ILIKE :query AND "Chat"."type" = :chatType`
-    )
-    const searchByLastNameLiteral = literal(
-      `(SELECT "lastName" FROM "Users" WHERE "Users"."id" = ` +
-      `(SELECT "userId" FROM "ChatMembers" WHERE "chatId" = "Chat"."id" AND "userId" != :searcherId)) ` +
-      `ILIKE :query AND "Chat"."type" = :chatType`
-    )
+    replacements['query'] = `%${r.query.q}%`;
+    replacements['chatType'] = ChatType.private;
+    replacements['searcherId'] = r.auth.credentials.id;
 
-    replacements = {
-      query: `%${r.query.q}%`,
-      chatType: ChatType.private,
-      searcherId: r.auth.credentials.id
-    }
-    where[Op.or] = [
+    where[Op.or].push(
+      searchByLastNameLiteral,
       searchByChatNameLiteral,
       searchByQuestNameLiteral,
       searchByFirstNameLiteral,
-      searchByLastNameLiteral
-    ]
+    );
   }
 
   const { count, rows } = await Chat.findAndCountAll({
