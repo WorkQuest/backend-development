@@ -10,13 +10,13 @@ import {
 export default [
   {
     method: 'GET',
-    path: '/v1/pension-fund/claim',
-    handler: handlers.getClaim,
+    path: '/v1/pension-fund/wallet-update',
+    handler: handlers.getWalletUpdate,
     options: {
       auth: false,
-      id: 'v1.pensionFund.getClaim',
+      id: 'v1.pensionFund.getWalletUpdate',
       tags: ['api', 'pension-fund'],
-      description: 'Get claim events',
+      description: 'Get wallet update events',
       validate: {
         query: Joi.object({
           offset: offsetSchema,
