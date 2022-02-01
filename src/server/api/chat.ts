@@ -45,7 +45,7 @@ export async function getUserChats(r) {
       `ILIKE :query AND "Chat"."type" = :chatType`,
   );
 
-  const where = { [Op.or]: [] };
+  const where = {};
   const replacements = {};
 
   const include: any[] = [
@@ -68,12 +68,12 @@ export async function getUserChats(r) {
     replacements['chatType'] = ChatType.private;
     replacements['searcherId'] = r.auth.credentials.id;
 
-    where[Op.or].push(
+    where[Op.or] = [
       searchByLastNameLiteral,
       searchByChatNameLiteral,
       searchByQuestNameLiteral,
       searchByFirstNameLiteral,
-    );
+    ];
   }
 
   const { count, rows } = await Chat.findAndCountAll({
