@@ -92,7 +92,10 @@ export function getLoginViaSocialNetworkHandler(returnType: 'token' | 'redirect'
 
     if (returnType === 'redirect') {
       const qs = querystring.stringify(result);
-      return h.redirect(config.baseUrl + '/sign-in?' + qs);
+      return h.redirect(
+        'http://localhost:3000'
+        // config.baseUrl  // TODO пока для тестов
+        + '/sign-in?' + qs);
     }
     return output(result);
   };
