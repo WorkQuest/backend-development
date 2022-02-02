@@ -66,9 +66,9 @@ export async function getReviewsOfUser(r) {
       },
     ],
     distinct: true,
-    where: { toUserId: r.params.userId },
     limit: r.query.limit,
     offset: r.query.offset,
+    where: { toUserId: r.params.userId },
     order: [['createdAt', 'DESC']],
   });
 
