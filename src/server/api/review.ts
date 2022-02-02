@@ -69,6 +69,7 @@ export async function getReviewsOfUser(r) {
     where: { toUserId: r.params.userId },
     limit: r.query.limit,
     offset: r.query.offset,
+    order: [['createdAt', 'DESC']],
   });
 
   return output({ count, reviews: rows });
