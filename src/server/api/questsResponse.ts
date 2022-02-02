@@ -136,8 +136,6 @@ export async function responseOnQuest(r) {
 
   await transaction.commit();
 
-  questResponse.setDataValue('worker', workerController.shortCredentials);
-
   r.server.app.broker.sendChatNotification({
     action: ChatNotificationActions.newMessage,
     recipients: [quest.userId],
