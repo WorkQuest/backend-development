@@ -25,24 +25,23 @@ import {
   StarredMessage,
   QuestChatStatuses,
   SenderMessageStatus,
-  QuestChat,
-  Quest,
 } from '@workquest/database-models/lib/models';
 
+export const searchChatFields = ['name'];
+
 export async function getUserChats(r) {
-  const searchByChatNameLiteral = literal(`"name" ILIKE :query`);
   const searchByQuestNameLiteral = literal(
     `(SELECT "title" FROM "Quests" WHERE "id" = ` + `(SELECT "questId" FROM "QuestChats" WHERE "chatId" = "Chat"."id")) ` + `ILIKE :query`,
   );
   const searchByFirstNameLiteral = literal(
     `(SELECT "firstName" FROM "Users" WHERE "Users"."id" = ` +
-      `(SELECT "userId" FROM "ChatMembers" WHERE "chatId" = "Chat"."id" AND "userId" != :searcherId)) ` +
-      `ILIKE :query AND "Chat"."type" = :chatType`,
+      `(SELECT "userId" FROM "ChatMembers" WHERE "Chat"."type" = :chatType AND "chatId" = "Chat"."id" AND "userId" != :searcherId)) ` +
+      `ILIKE :query`,
   );
   const searchByLastNameLiteral = literal(
     `(SELECT "lastName" FROM "Users" WHERE "Users"."id" = ` +
-      `(SELECT "userId" FROM "ChatMembers" WHERE "chatId" = "Chat"."id" AND "userId" != :searcherId)) ` +
-      `ILIKE :query AND "Chat"."type" = :chatType`,
+      `(SELECT "userId" FROM "ChatMembers" WHERE  "Chat"."type" = :chatType AND "chatId" = "Chat"."id" AND "userId" != :searcherId)) ` +
+      `ILIKE :query`,
   );
 
   const where = {};
@@ -64,13 +63,16 @@ export async function getUserChats(r) {
   ];
 
   if (r.query.q) {
+    where[Op.or] = searchChatFields.map(field => ({
+      [field]: { [Op.iLike]: `%${r.query.q}%` }
+    }));
+
     replacements['query'] = `%${r.query.q}%`;
     replacements['chatType'] = ChatType.private;
     replacements['searcherId'] = r.auth.credentials.id;
 
     where[Op.or] = [
       searchByLastNameLiteral,
-      searchByChatNameLiteral,
       searchByQuestNameLiteral,
       searchByFirstNameLiteral,
     ];
