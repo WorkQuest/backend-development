@@ -144,6 +144,8 @@ export async function responseOnQuest(r) {
     data: await Message.findByPk(firstInfoMessage.id),
   });
 
+  questResponse.setDataValue('quest', quest);
+  questResponse.setDataValue('worker', workerController.shortCredentials);
   r.server.app.broker.sendQuestNotification({
     action: QuestNotificationActions.workerRespondedToQuest,
     recipients: [quest.userId],
