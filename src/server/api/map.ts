@@ -1,5 +1,5 @@
 import { output } from "../utils";
-import { searchFields } from './quest';
+import { searchQuestFields } from './quest';
 
 function makeWhere(query) {
   const like = query.q ? ` LIKE '%${query.q}%' ` : '';
@@ -7,12 +7,12 @@ function makeWhere(query) {
   return `WHERE st_within("locationPostGIS", st_makeenvelope(:northLongitude, :northLatitude, :southLongitude, :southLatitude, 4326))
   ${query.priority ? ' AND priority=' + query.priority : ''}
   ${query.status ? ' AND status=' + query.status : ''}
-  ${query.q ? ' AND ' + searchFields.join(like + ' OR ') + like : ''}`;
+  ${query.q ? ' AND ' + searchQuestFields.join(like + ' OR ') + like : ''}`;
 }
 
 function makeOrderBy(sort) {
-  let order = ' ORDER BY ';
-  let byFields = [];
+  const order = ' ORDER BY ';
+  const byFields = [];
 
   for (const [column, sortBy] of Object.entries(sort)) {
     byFields.push(`"${column}" ${sortBy}`);
@@ -22,8 +22,8 @@ function makeOrderBy(sort) {
 }
 
 export async function mapPoints(r) {
-  let where = makeWhere(r);
-  let query = `
+  const where = makeWhere(r);
+  const query = `
   SELECT
        count as "pointsCount",
        id as "questId",
@@ -68,12 +68,12 @@ export async function mapPoints(r) {
     GROUP BY cid
     Order BY cid) LC;`;
 
-  const [results, ] = await r.server.app.db.query(query, {
+  const [results] = await r.server.app.db.query(query, {
     replacements: {
-      northLongitude: r.query.north.longitude,
-      northLatitude: r.query.north.latitude,
-      southLongitude: r.query.south.longitude,
-      southLatitude: r.query.south.latitude,
+      northLongitude: r.query.northAndSouthCoordinates.north.longitude,
+      northLatitude: r.query.northAndSouthCoordinates.north.latitude,
+      southLongitude: r.query.northAndSouthCoordinates.south.longitude,
+      southLatitude: r.query.northAndSouthCoordinates.south.latitude,
     }
   });
 
@@ -81,9 +81,9 @@ export async function mapPoints(r) {
 }
 
 export async function listMapPoints(r) {
-  let where = makeWhere(r);
-  let order = r.query.sort ? makeOrderBy(r.query.sort) : '';
-  let query = `
+  const where = makeWhere(r);
+  const order = r.query.sort ? makeOrderBy(r.query.sort) : '';
+  const query = `
   SELECT 
     id, "userId", status,
     priority, category, location,
@@ -93,12 +93,12 @@ export async function listMapPoints(r) {
   ${where}
   ${order}`;
 
-  const [results, ] = await r.server.app.db.query(query, {
+  const [results] = await r.server.app.db.query(query, {
     replacements: {
-      northLongitude: r.query.north.longitude,
-      northLatitude: r.query.north.latitude,
-      southLongitude: r.query.south.longitude,
-      southLatitude: r.query.south.latitude,
+      northLongitude: r.query.northAndSouthCoordinates.north.longitude,
+      northLatitude: r.query.northAndSouthCoordinates.north.latitude,
+      southLongitude: r.query.northAndSouthCoordinates.south.longitude,
+      southLatitude: r.query.northAndSouthCoordinates.south.latitude,
     }
   });
 

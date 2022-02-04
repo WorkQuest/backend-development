@@ -1,26 +1,27 @@
-import * as Joi from "joi";
-import * as handlers from "../../api/profile";
-import { UserRole } from "@workquest/database-models/lib/models";
+import * as Joi from 'joi';
+import * as handlers from '../../api/profile';
+import { UserRole } from '@workquest/database-models/lib/models';
 import {
   idSchema,
   userSchema,
   limitSchema,
+  phoneSchema,
   offsetSchema,
   searchSchema,
   emptyOkSchema,
   outputOkSchema,
-  locationSchema,
   prioritySchema,
   userRoleSchema,
   workPlaceSchema,
   userWorkersSchema,
-  mobilePhoneSchema,
   workerQuerySchema,
+  locationFullSchema,
   userLastNameSchema,
   userPasswordSchema,
   employerQuerySchema,
   userEmployersSchema,
   userFirstNameSchema,
+  userStatisticsSchema,
   outputPaginationSchema,
   workerWagePerHourSchema,
   specializationKeysSchema,
@@ -125,7 +126,8 @@ export default [{
         avatarId: idSchema.allow(null).required(),
         firstName: userFirstNameSchema.required(),
         lastName: userLastNameSchema.required(),
-        location: locationSchema.allow(null).required(),
+        phoneNumber: phoneSchema.allow(null).required(),
+        locationFull: locationFullSchema.allow(null).required(),
         additionalInfo: userAdditionalInfoEmployerSchema.required(),
       }).label("EditEmployerProfilePayload")
     },
@@ -147,8 +149,9 @@ export default [{
         lastName: userLastNameSchema.required(),
         firstName: userFirstNameSchema.required(),
         avatarId: idSchema.allow(null).required(),
+        phoneNumber: phoneSchema.allow(null).required(),
         priority: prioritySchema.allow(null).required(),
-        location: locationSchema.allow(null).required(),
+        locationFull: locationFullSchema.allow(null).required(),
         workplace: workPlaceSchema.allow(null).required(),
         additionalInfo: userAdditionalInfoWorkerSchema.required(),
         wagePerHour: workerWagePerHourSchema.allow(null).required(),
@@ -223,13 +226,21 @@ export default [{
     id: "v1.profile.phone.sendCode",
     tags: ["api", "profile"],
     description: "Send code for confirm phone number",
-    validate: {
-      payload: Joi.object({
-        phoneNumber: mobilePhoneSchema.required(),
-      }).label('PhoneSendCodePayload')
-    },
     response: {
       schema: emptyOkSchema
+    }
+  }
+}, {
+  method: "GET",
+  path: "/v1/profile/statistic/me",
+  handler: handlers.getUserStatistics,
+  options: {
+    auth: 'jwt-access',
+    id: "v1.profile.getUserStatistic",
+    tags: ["api", "profile"],
+    description: "Get all statistic about current user",
+    response: {
+      schema: outputOkSchema(userStatisticsSchema).label("GetUserStatisticsResponse")
     }
   }
 }];

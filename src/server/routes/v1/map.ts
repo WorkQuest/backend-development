@@ -1,15 +1,15 @@
-import Joi = require("joi");
+import Joi = require('joi');
 import { listMapPoints, mapPoints } from '../../api/map';
 import {
+  searchSchema,
+  questsSchema,
+  prioritySchema,
   outputOkSchema,
   mapPointsSchema,
-  locationSchema,
-  searchSchema,
-  prioritySchema,
-  questsListSortSchema,
   questStatusSchema,
-  questsSchema,
-} from "@workquest/database-models/lib/schemes"
+  questsListSortSchema,
+  searchByNorthAndSouthCoordinatesSchema,
+} from '@workquest/database-models/lib/schemes';
 
 export default [{
   method: "GET",
@@ -22,11 +22,10 @@ export default [{
     description: "Get points in map",
     validate: {
       query: Joi.object({
-        north: locationSchema.required().label('NorthLocation'),
-        south: locationSchema.required().label('SouthLocation'),
         q: searchSchema,
         priority: prioritySchema,
         status: questStatusSchema,
+        northAndSouthCoordinates: searchByNorthAndSouthCoordinatesSchema.required(),
       }).label('MapPointsQuery'),
     },
     response: {
@@ -44,12 +43,11 @@ export default [{
     description: "Get list points in map (Old - use get quests)",
     validate: {
       query: Joi.object({
-        north: locationSchema.label('NorthLocation').required(),
-        south: locationSchema.label('SouthLocation').required(),
         q: searchSchema,
         priority: prioritySchema,
         status: questStatusSchema,
         sort: questsListSortSchema.default(null),
+        northAndSouthCoordinates: searchByNorthAndSouthCoordinatesSchema.required(),
       }).label('ListPointsQuery'),
     },
     response: {

@@ -1,4 +1,4 @@
-import * as Joi from "joi";
+import * as Joi from 'joi';
 import * as handlers from '../../api/quest';
 import {
   outputOkSchema,
@@ -16,10 +16,10 @@ import {
   questTitleSchema,
   questQuerySchema,
   questsForGetWithCountSchema,
-  questLocationPlaceNameSchema,
+  locationPlaceNameSchema,
   questEmploymentSchema,
   specializationKeysSchema,
-  chatForGetSchema,
+  locationFullSchema,
 } from "@workquest/database-models/lib/schemes";
 
 export default [{
@@ -55,8 +55,7 @@ export default [{
         workplace: workPlaceSchema.required(),
         employment: questEmploymentSchema.required(),
         priority: prioritySchema.required(),
-        locationPlaceName: questLocationPlaceNameSchema.required(),
-        location: locationSchema.required(),
+        locationFull: locationFullSchema.required(),
         title: questTitleSchema.required(),
         description: questDescriptionSchema.required(),
         price: questPriceSchema.required(),
@@ -105,8 +104,7 @@ export default [{
         workplace: workPlaceSchema.required(),
         employment: questEmploymentSchema.required(),
         priority: prioritySchema.required(),
-        location: locationSchema.required(),
-        locationPlaceName: questLocationPlaceNameSchema.required(),
+        locationFull: locationFullSchema.required(),
         title: questTitleSchema.required(),
         description: questDescriptionSchema.required(),
         price: questPriceSchema.required(),
@@ -279,24 +277,6 @@ export default [{
       params: Joi.object({
         questId: idSchema.required(),
       }).label("AcceptCompletedWorkParams")
-    },
-    response: {
-      schema: emptyOkSchema
-    },
-  }
-}, {
-  method: "POST",
-  path: "/v1/quest/{questId}/reject-completed-work",
-  handler: handlers.rejectCompletedWorkOnQuest,
-  options: {
-    auth: 'jwt-access',
-    id: "v1.quest.rejectCompletedWork",
-    tags: ["api", "quest"],
-    description: "Reject completed work on quest",
-    validate: {
-      params: Joi.object({
-        questId: idSchema.required(),
-      }).label("RejectCompletedWorkParams")
     },
     response: {
       schema: emptyOkSchema

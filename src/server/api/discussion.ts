@@ -1,77 +1,85 @@
-import { Op } from "sequelize";
-import { error, output } from "../utils";
-import { Errors } from "../utils/errors";
-import { MediaController } from "../controllers/controller.media";
+import { Op } from 'sequelize';
+import { error, output } from '../utils';
+import { Errors } from '../utils/errors';
+import { MediaController } from '../controllers/controller.media';
+import { UserController } from '../controllers/user/controller.user';
+import { DaoNotificationActions } from '../controllers/controller.broker';
 import {
   User,
   Discussion,
   DiscussionLike,
   DiscussionComment,
+  StarredDiscussion,
   DiscussionCommentLike,
-  StarredDiscussion
-} from "@workquest/database-models/lib/models";
+} from '@workquest/database-models/lib/models';
 
-const searchFields = [
-  'title',
-  'description',
-];
+const searchFields = ['title', 'description'];
 
 export async function getDiscussion(r) {
   const discussion = await Discussion.findOne({
-    include: [{
-      model: DiscussionLike,
-      as: "liked",
-      where: { userId: r.auth.credentials.id },
-      required: false
-    }, {
-      model: StarredDiscussion,
-      as: 'star',
-      where: { userId: r.auth.credentials.id },
-      required: false
-    }, {
-      model: User.scope('short'),
-      as: "author",
-    }],
-    where: { id: r.params.discussionId }
+    include: [
+      {
+        model: DiscussionLike,
+        as: 'liked',
+        where: { userId: r.auth.credentials.id },
+        required: false,
+      },
+      {
+        model: StarredDiscussion,
+        as: 'star',
+        where: { userId: r.auth.credentials.id },
+        required: false,
+      },
+      {
+        model: User.scope('short'),
+        as: 'author',
+      },
+    ],
+    where: { id: r.params.discussionId },
   });
 
   if (!discussion) {
-    return error(Errors.NotFound, "Discussion not found", { discussionId: r.params.discussionId });
+    return error(Errors.NotFound, 'Discussion not found', { discussionId: r.params.discussionId });
   }
 
   return output(discussion);
 }
 
 export async function getDiscussions(r) {
-  const where = { };
+  const where = {};
 
-  const include = [{
-    model: DiscussionLike,
-    as: "liked",
-    where: { userId: r.auth.credentials.id },
-    required: false,
-  }, {
-    model: StarredDiscussion,
-    as: 'star',
-    where: { userId: r.auth.credentials.id },
-    required: r.query.starred,
-  }, {
-    model: User,
-    as: "author",
-  }];
+  const include = [
+    {
+      model: DiscussionLike,
+      as: 'liked',
+      where: { userId: r.auth.credentials.id },
+      required: false,
+    },
+    {
+      model: StarredDiscussion,
+      as: 'star',
+      where: { userId: r.auth.credentials.id },
+      required: r.query.starred,
+    },
+    {
+      model: User,
+      as: 'author',
+    },
+  ];
 
   if (r.query.q) {
-    where[Op.or] = searchFields.map(field => ({
-      [field]: { [Op.iLike]: `%${r.query.q}%` }
+    where[Op.or] = searchFields.map((field) => ({
+      [field]: { [Op.iLike]: `%${r.query.q}%` },
     }));
   }
 
   const { count, rows } = await Discussion.findAndCountAll({
     distinct: true,
-    include, where,
-    order: [["createdAt", "DESC"]],
+    include,
+    where,
+    order: [['createdAt', 'DESC']],
     limit: r.query.limit,
-    offset: r.query.offset
+    offset: r.query.offset,
   });
 
   return output({ count, discussions: rows });
@@ -81,20 +89,22 @@ export async function getSubComments(r) {
   const rootComment = await DiscussionComment.findByPk(r.params.commentId);
 
   if (!rootComment) {
-    return error(Errors.NotFound, "Root comment not found", {});
+    return error(Errors.NotFound, 'Root comment not found', {});
   }
 
   const { count, rows } = await DiscussionComment.findAndCountAll({
-    include: [{
-      model: DiscussionCommentLike,
-      as: "commentLikes",
-      where: { userId: r.auth.credentials.id },
-      required: false
-    }],
+    include: [
+      {
+        model: DiscussionCommentLike,
+        as: 'commentLikes',
+        where: { userId: r.auth.credentials.id },
+        required: false,
+      },
+    ],
     where: { rootCommentId: rootComment.id },
-    order: [["createdAt", "DESC"]],
+    order: [['createdAt', 'DESC']],
     limit: r.query.limit,
-    offset: r.query.offset
+    offset: r.query.offset,
   });
 
   return output({ count, comments: rows });
@@ -104,20 +114,22 @@ export async function getRootComments(r) {
   const discussion = await Discussion.findByPk(r.params.discussionId);
 
   if (!discussion) {
-    return error(Errors.NotFound, "Discussion not found", {});
+    return error(Errors.NotFound, 'Discussion not found', {});
   }
 
   const { count, rows } = await DiscussionComment.findAndCountAll({
-    include: [{
-      model: DiscussionCommentLike,
-      as: "commentLikes",
-      where: { userId: r.auth.credentials.id },
-      required: false
-    }],
+    include: [
+      {
+        model: DiscussionCommentLike,
+        as: 'commentLikes',
+        where: { userId: r.auth.credentials.id },
+        required: false,
+      },
+    ],
     where: { rootCommentId: null, discussionId: r.params.discussionId },
-    order: [["createdAt", "DESC"]],
+    order: [['createdAt', 'DESC']],
     limit: r.query.limit,
-    offset: r.query.offset
+    offset: r.query.offset,
   });
 
   return output({ count, comments: rows });
@@ -127,13 +139,16 @@ export async function createDiscussion(r) {
   const medias = await MediaController.getMedias(r.payload.medias);
   const transaction = await r.server.app.db.transaction();
 
-  const discussion = await Discussion.create({
-    authorId: r.auth.credentials.id,
-    title: r.payload.title,
-    description: r.payload.description
-  }, { transaction });
+  const discussion = await Discussion.create(
+    {
+      authorId: r.auth.credentials.id,
+      title: r.payload.title,
+      description: r.payload.description,
+    },
+    { transaction },
+  );
 
-  await discussion.$set("medias", medias, { transaction });
+  await discussion.$set('medias', medias, { transaction });
 
   await transaction.commit();
 
@@ -141,56 +156,79 @@ export async function createDiscussion(r) {
 }
 
 export async function sendComment(r) {
+  const user: User = r.auth.credentials;
+  const userController = new UserController(user);
+
+  let commentLevel = 0;
+  let rootComment: DiscussionComment = null;
+
   const medias = await MediaController.getMedias(r.payload.medias);
 
   const discussion = await Discussion.findOne({
-    where: { id: r.params.discussionId }
+    where: { id: r.params.discussionId },
   });
 
   if (!discussion) {
-    return error(Errors.NotFound, "Discussion not found", {});
+    return error(Errors.NotFound, 'Discussion not found', {});
   }
 
-  let commentLevel = 0;
+  const notificationRecipients = [discussion.authorId];
 
   const transaction = await r.server.app.db.transaction();
 
-  if (r.payload.rootCommentId) { // TODO в джобу
-    const rootComment = await DiscussionComment.findByPk(r.payload.rootCommentId);
+  if (r.payload.rootCommentId) {
+    rootComment = await DiscussionComment.findByPk(r.payload.rootCommentId);
 
     if (!rootComment) {
       await transaction.rollback();
 
-      return error(Errors.NotFound, "Discussion comment not found", {});
+      return error(Errors.NotFound, 'Discussion comment not found', {});
     }
 
-    await rootComment.increment("amountSubComments", { transaction });
+    await rootComment.increment('amountSubComments', { transaction });
 
-    commentLevel = rootComment.level + 1
+    notificationRecipients.push(rootComment.authorId);
+    commentLevel = rootComment.level + 1;
   } else {
-    await discussion.increment("amountComments", { transaction });
+    await discussion.increment('amountComments', { transaction });
   }
 
-  const comment = await DiscussionComment.create({
-    authorId: r.auth.credentials.id,
-    discussionId: r.params.discussionId,
-    rootCommentId: r.payload.rootCommentId,
-    text: r.payload.text,
-    level: commentLevel,
-  }, { transaction });
+  const comment = await DiscussionComment.create(
+    {
+      authorId: r.auth.credentials.id,
+      discussionId: r.params.discussionId,
+      rootCommentId: r.payload.rootCommentId,
+      text: r.payload.text,
+      level: commentLevel,
+    },
+    { transaction },
+  );
 
-  await comment.$set("medias", medias, { transaction });
+  await comment.$set('medias', medias, { transaction });
 
   await transaction.commit();
+
+  comment.setDataValue('discussion', discussion);
+  comment.setDataValue('rootComment', rootComment);
+  comment.setDataValue('user', userController.shortCredentials);
+
+  r.server.app.broker.sendDaoNotification({
+    action: DaoNotificationActions.newCommentInDiscussion,
+    recipients: notificationRecipients,
+    data: comment,
+  });
 
   return output(comment);
 }
 
 export async function putDiscussionLike(r) {
+  const user: User = r.auth.credentials;
+  const userController = new UserController(user);
+
   const discussion = await Discussion.findByPk(r.params.discussionId);
 
   if (!discussion) {
-    return error(Errors.NotFound, "Discussion not found", {});
+    return error(Errors.NotFound, 'Discussion not found', {});
   }
 
   const transaction = await r.server.app.db.transaction();
@@ -198,13 +236,23 @@ export async function putDiscussionLike(r) {
   const [like, isCreated] = await DiscussionLike.findOrCreate({
     where: { userId: r.auth.credentials.id, discussionId: r.params.discussionId },
     defaults: { userId: r.auth.credentials.id, discussionId: r.params.discussionId },
-    transaction
+    transaction,
   });
 
   if (isCreated) {
-    await discussion.increment("amountLikes", { transaction });
+    await discussion.increment('amountLikes', { transaction });
   }
+
   await transaction.commit();
+
+  like.setDataValue('discussion', discussion);
+  like.setDataValue('user', userController.shortCredentials);
+
+  r.server.app.broker.sendDaoNotification({
+    action: DaoNotificationActions.newDiscussionLike,
+    recipients: [discussion.authorId],
+    data: like,
+  });
 
   return output();
 }
@@ -213,17 +261,19 @@ export async function removeDiscussionLike(r) {
   const discussion = await Discussion.findByPk(r.params.discussionId);
 
   if (!discussion) {
-    return error(Errors.NotFound, "Discussion not found", {});
+    return error(Errors.NotFound, 'Discussion not found', {});
   }
 
   const transaction = await r.server.app.db.transaction();
 
-  await DiscussionLike.destroy({
+  const numberOfDestroyedLikes = await DiscussionLike.destroy({
     where: { discussionId: r.params.discussionId, userId: r.auth.credentials.id },
-    transaction
+    transaction,
   });
 
-  await discussion.decrement("amountLikes", { transaction });
+  if (numberOfDestroyedLikes !== 0) {
+    await discussion.decrement('amountLikes', { transaction });
+  }
 
   await transaction.commit();
 
@@ -231,24 +281,36 @@ export async function removeDiscussionLike(r) {
 }
 
 export async function putCommentLike(r) {
+  const user: User = r.auth.credentials;
+  const userController = new UserController(user);
+
   const comment = await DiscussionComment.findByPk(r.params.commentId);
 
   if (!comment) {
-    return error(Errors.NotFound, "Comment not found", {});
+    return error(Errors.NotFound, 'Comment not found', {});
   }
 
   const transaction = await r.server.app.db.transaction();
 
   const [like, isCreated] = await DiscussionCommentLike.findOrCreate({
     where: { userId: r.auth.credentials.id, commentId: r.params.commentId },
-    defaults: { userId: r.auth.credentials.id, commentId: r.params.commentId }
+    defaults: { userId: r.auth.credentials.id, commentId: r.params.commentId },
   });
 
   if (isCreated) {
-    await comment.increment("amountLikes", { transaction });
+    await comment.increment('amountLikes', { transaction });
   }
 
   await transaction.commit();
+
+  like.setDataValue('comment', comment);
+  like.setDataValue('user', userController.shortCredentials);
+
+  r.server.app.broker.sendDaoNotification({
+    action: DaoNotificationActions.commentLiked,
+    recipients: [comment.authorId],
+    data: like,
+  });
 
   return output();
 }
@@ -257,17 +319,19 @@ export async function removeCommentLike(r) {
   const comment = await DiscussionComment.findByPk(r.params.commentId);
 
   if (!comment) {
-    return error(Errors.NotFound, "Comment not found", {});
+    return error(Errors.NotFound, 'Comment not found', {});
   }
 
   const transaction = await r.server.app.db.transaction();
 
-  await comment.decrement("amountLikes", { transaction });
-
-  await DiscussionCommentLike.destroy({
+  const numberOfDestroyedLikes = await DiscussionCommentLike.destroy({
     where: { commentId: r.params.commentId, userId: r.auth.credentials.id },
-    transaction
+    transaction,
   });
+
+  if (numberOfDestroyedLikes !== 0) {
+    await comment.decrement('amountLikes', { transaction });
+  }
 
   await transaction.commit();
 
@@ -275,26 +339,30 @@ export async function removeCommentLike(r) {
 }
 
 export async function getDiscussionUsersLikes(r) {
-  const { count, rows } = await User.scope("short").findAndCountAll({
-    include: [{
-      model: DiscussionLike,
-      as: "discussionLikes",
-      where: { discussionId: r.params.discussionId }
-    }],
+  const { count, rows } = await User.scope('short').findAndCountAll({
+    include: [
+      {
+        model: DiscussionLike,
+        as: 'discussionLikes',
+        where: { discussionId: r.params.discussionId },
+      },
+    ],
     limit: r.query.limit,
-    offset: r.query.offset
+    offset: r.query.offset,
   });
 
   return output({ count, users: rows });
 }
 
 export async function getCommentUsersLikes(r) {
-  const { count, rows } = await User.scope("short").findAndCountAll({
-    include: [{
-      model: DiscussionCommentLike,
-      as: "commentLikes",
-      where: { commentId: r.params.commentId }
-    }],
+  const { count, rows } = await User.scope('short').findAndCountAll({
+    include: [
+      {
+        model: DiscussionCommentLike,
+        as: 'commentLikes',
+        where: { commentId: r.params.commentId },
+      },
+    ],
     limit: r.query.limit,
     offset: r.query.offset,
   });
@@ -306,19 +374,19 @@ export async function markDiscussionStar(r) {
   const discussion = await Discussion.findByPk(r.params.discussionId);
 
   if (!discussion) {
-    return error(Errors.NotFound, "Discussion is not found", {});
+    return error(Errors.NotFound, 'Discussion is not found', {});
   }
 
   const [star, isCreated] = await StarredDiscussion.findOrCreate({
     where: { discussionId: r.params.discussionId, userId: r.auth.credentials.id },
     defaults: {
       userId: r.auth.credentials.id,
-      discussionId: r.params.discussionId
-    }
+      discussionId: r.params.discussionId,
+    },
   });
 
   if (!isCreated) {
-    return error(Errors.AlreadyExists, "You already set star on this discussion", {});
+    return error(Errors.AlreadyExists, 'You already set star on this discussion', {});
   }
 
   return output();
@@ -329,11 +397,11 @@ export async function removeDiscussionStar(r) {
     where: {
       discussionId: r.params.discussionId,
       userId: r.auth.credentials.id,
-    }
+    },
   });
 
   if (!starredDiscussion) {
-    return error(Errors.NotFound, "This discussion has no star", {});
+    return error(Errors.NotFound, 'This discussion has no star', {});
   }
 
   await starredDiscussion.destroy();

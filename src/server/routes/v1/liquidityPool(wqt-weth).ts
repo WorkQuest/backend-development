@@ -1,86 +1,86 @@
-import { getBurns, getMints, getSwaps, getTokenDayData } from "../../api/liquidityPool(wqt-weth)";
-import {
-  outputOkSchema,
-  tokensDayWQTSchema,
-  swapWQTSchema,
-  offsetSchema, limitSchema
-} from "@workquest/database-models/lib/schemes";
-import * as Joi from "joi";
+import * as Joi from 'joi';
+import * as handlers from '../../api/liquidityPool(wqt-weth)';
+import { limitSchema, offsetSchema, swapWQTSchema, outputOkSchema, tokensDayWQTSchema } from '@workquest/database-models/lib/schemes';
 
-export default [{
-  method: "GET",
-  path: "/v1/pool-liquidity/wqt-weth/swaps",
-  handler: getSwaps,
-  options: {
-    auth: false,
-    id: "v1.liquidity.wqt-weth.getSwaps",
-    tags: ["api", "pool-liquidity"],
-    description: "Get swaps on a pair by fetching Swap events",
-    validate: {
-      query: Joi.object({
-        offset: offsetSchema,
-        limit: limitSchema
-      }).label("GetSwapsWQTQuery")
+export default [
+  {
+    method: 'GET',
+    path: '/v1/pool-liquidity/wqt-weth/swaps',
+    handler: handlers.getSwaps,
+    options: {
+      auth: false,
+      id: 'v1.liquidity.wqt-weth.getSwaps',
+      tags: ['api', 'pool-liquidity'],
+      description: 'Get swaps on a pair by fetching Swap events',
+      validate: {
+        query: Joi.object({
+          offset: offsetSchema,
+          limit: limitSchema,
+        }).label('GetSwapsWQTQuery'),
+      },
+      response: {
+        schema: outputOkSchema(swapWQTSchema).label('GetSwapsWQTResponse'),
+      },
     },
-    response: {
-      schema: outputOkSchema(swapWQTSchema).label("GetSwapsWQTResponse")
-    }
-  }
-}, {
-  method: "GET",
-  path: "/v1/pool-liquidity/wqt-weth/mints",
-  handler: getMints,
-  options: {
-    auth: false,
-    id: "v1.liquidity.wqt-weth.getMints",
-    tags: ["api", "pool-liquidity"],
-    description: "Get mints on a pair by fetching Mints events",
-    validate: {
-      query: Joi.object({
-        offset: offsetSchema,
-        limit: limitSchema
-      }).label("GetMintsCounts")
+  },
+  {
+    method: 'GET',
+    path: '/v1/pool-liquidity/wqt-weth/mints',
+    handler: handlers.getMints,
+    options: {
+      auth: false,
+      id: 'v1.liquidity.wqt-weth.getMints',
+      tags: ['api', 'pool-liquidity'],
+      description: 'Get mints on a pair by fetching Mints events',
+      validate: {
+        query: Joi.object({
+          limit: limitSchema,
+          offset: offsetSchema,
+        }).label('GetMintsWQTQuery'),
+      },
+      response: {
+        schema: outputOkSchema(swapWQTSchema).label('GetMintsWQTResponse'),
+      },
     },
-    response: {
-      schema: outputOkSchema(swapWQTSchema).label("GetMintsWQTResponse")
-    }
-  }
-}, {
-  method: "GET",
-  path: "/v1/pool-liquidity/wqt-weth/burns",
-  handler: getBurns,
-  options: {
-    auth: false,
-    id: "v1.liquidity.wqt-weth.getSBurns",
-    tags: ["api", "pool-liquidity"],
-    description: "Get burns on a pair by fetching Burns events",
-    validate: {
-      query: Joi.object({
-        offset: offsetSchema,
-        limit: limitSchema
-      }).label("GetBurnsCounts")
+  },
+  {
+    method: 'GET',
+    path: '/v1/pool-liquidity/wqt-weth/burns',
+    handler: handlers.getBurns,
+    options: {
+      auth: false,
+      id: 'v1.liquidity.wqt-weth.getSBurns',
+      tags: ['api', 'pool-liquidity'],
+      description: 'Get burns on a pair by fetching Burns events',
+      validate: {
+        query: Joi.object({
+          limit: limitSchema,
+          offset: offsetSchema,
+        }).label('GetBurnsWQTQuery'),
+      },
+      response: {
+        schema: outputOkSchema(swapWQTSchema).label('GetBurnsWQTResponse'),
+      },
     },
-    response: {
-      schema: outputOkSchema(swapWQTSchema).label("GetBurnsWQTResponse")
-    }
-  }
-}, {
-  method: "GET",
-  path: "/v1/pool-liquidity/wqt-weth/tokenDay",
-  handler: getTokenDayData,
-  options: {
-    auth: false,
-    id: "v1.liquidity.wqt-weth.getTokenDayData",
-    tags: ["api", "pool-liquidity"],
-    description: "Get daily information for DAI",
-    validate: {
-      query: Joi.object({
-        offset: offsetSchema,
-        limit: limitSchema
-      }).label("GetTokenDayDataQuery")
+  },
+  {
+    method: 'GET',
+    path: '/v1/pool-liquidity/wqt-weth/tokenDay',
+    handler: handlers.getTokenDayData,
+    options: {
+      auth: false,
+      id: 'v1.liquidity.wqt-weth.getTokenDayData',
+      tags: ['api', 'pool-liquidity'],
+      description: 'Get daily information for DAI',
+      validate: {
+        query: Joi.object({
+          offset: offsetSchema,
+          limit: limitSchema,
+        }).label('GetTokenDayDataQuery'),
+      },
+      response: {
+        schema: outputOkSchema(tokensDayWQTSchema).label('GetTokenDayDataResponse'),
+      },
     },
-    response: {
-      schema: outputOkSchema(tokensDayWQTSchema).label("GetTokenDayDataResponse")
-    }
-  }
-}];
+  },
+];

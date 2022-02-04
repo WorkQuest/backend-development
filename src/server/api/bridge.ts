@@ -1,14 +1,10 @@
-import Web3 from "web3";
-import configBridge from "../config/config.bridge";
-import { output } from "../utils";
-import {
-  SwapEvents,
-  BridgeSwapTokenEvent,
-} from "@workquest/database-models/lib/models";
+import Web3 from 'web3';
+import configBridge from '../config/config.bridge';
+import { output } from '../utils';
+import { SwapEvents, BridgeSwapTokenEvent } from '@workquest/database-models/lib/models';
 
-const linkWsProvider = configBridge.debug ?
-  configBridge.bscTestNetwork.webSocketProvider : configBridge.bscMainNetwork.webSocketProvider;
-
+// TODO to rpc provider
+const linkWsProvider = configBridge.debug ? configBridge.bscTestNetwork.webSocketProvider : configBridge.bscMainNetwork.webSocketProvider;
 const web3 = new Web3(new Web3.providers.WebsocketProvider(linkWsProvider));
 
 export async function getRecipientSwaps(r) {
@@ -19,19 +15,17 @@ export async function getRecipientSwaps(r) {
     where: {
       event: SwapEvents.swapRedeemed,
       recipient,
-    }
+    },
   });
 
   const { count, rows } = await BridgeSwapTokenEvent.findAndCountAll({
     limit: r.query.limit,
     offset: r.query.offset,
-    order: [
-      ["timestamp", "DESC"]
-    ],
+    order: [['timestamp', 'DESC']],
     where: {
       event: SwapEvents.swapInitialized,
       recipient,
-    }
+    },
   });
 
   for (const swapEvent of rows) {
@@ -58,12 +52,14 @@ export async function getRecipientSwaps(r) {
       chainTo: swapEvent.chainTo,
       chainFrom: swapEvent.chainFrom,
       symbol: swapEvent.symbol,
-      signData: [ /** Не трогать последовательность! Метод redeem на контракте */
-        swapEvent.nonce.toString(),
+      signData: [
+        /** Не трогать последовательность! Метод redeem на контракте */ swapEvent.nonce.toString(),
         swapEvent.chainFrom.toString(),
         swapEvent.amount,
         swapEvent.recipient,
-        sing.v, sing.r, sing.s,
+        sing.v,
+        sing.r,
+        sing.s,
         swapEvent.symbol,
       ],
     });

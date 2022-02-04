@@ -1,27 +1,31 @@
-import {literal, Op} from "sequelize";
-import {addSendSmsJob} from '../jobs/sendSms';
-import {getRandomCodeNumber, output} from '../utils';
-import {UserController} from "../controllers/user/controller.user";
-import {transformToGeoPostGIS} from "../utils/postGIS";
-import {MediaController} from "../controllers/controller.media";
-import {SkillsFiltersController} from "../controllers/controller.skillsFilters";
+import { literal, Op } from 'sequelize';
+import { addSendSmsJob } from '../jobs/sendSms';
+import { error, getRandomCodeNumber, output } from "../utils";
+import { UserController } from '../controllers/user/controller.user';
+import { transformToGeoPostGIS } from '../utils/postGIS';
+import { MediaController } from '../controllers/controller.media';
+import { SkillsFiltersController } from '../controllers/controller.skillsFilters';
+import { addUpdateReviewStatisticsJob } from '../jobs/updateReviewStatistics';
 import {
   User,
+  Wallet,
   UserRole,
+  ChatsStatistic,
   RatingStatistic,
-  UserSpecializationFilter, Wallet
+  QuestsStatistic, UserStatus
 } from "@workquest/database-models/lib/models";
-import { addUpdateReviewStatisticsJob } from "../jobs/updateReviewStatistics";
+import { Errors } from "../utils/errors";
 
 export const searchFields = [
   "firstName",
   "lastName",
+  "locationPlaceName",
 ];
 
 export async function getMe(r) {
   const user = await User.findByPk(r.auth.credentials.id, {
     attributes: { include: ['tempPhone'] },
-    include: [{ model: Wallet, as: 'wallet', attributes: ['address'] }]
+    include: [{ model: Wallet, as: 'wallet', attributes: ['address'] }],
   });
 
   return output(user);
@@ -30,14 +34,15 @@ export async function getMe(r) {
 export async function getUser(r) {
   const userController = new UserController(await User.findByPk(r.params.userId));
 
-  userController.
-    checkNotSeeYourself(r.auth.credentials.id)
+  userController
+    .checkNotSeeYourself(r.auth.credentials.id)
+    .userMustHaveStatus(UserStatus.Confirmed)
 
   return output(userController.user);
 }
 
 export async function getAllUsers(r) {
-  const where = {};
+  const where = { status: UserStatus.Confirmed };
 
   if (r.query.q) {
     where[Op.or] = searchFields.map(
@@ -61,18 +66,28 @@ export function getUsers(role: UserRole) {
     const entersAreaLiteral = literal(
       'st_within("User"."locationPostGIS", st_makeenvelope(:northLng, :northLat, :southLng, :southLat, 4326))'
     );
+    const userSpecializationOnlyPathsLiteral = literal(
+      '(1 = (CASE WHEN EXISTS (SELECT * FROM "UserSpecializationFilters" WHERE "userId" = "User"."id" AND "UserSpecializationFilters"."path" IN (:path)) THEN 1 END))'
+    );
+    const userSpecializationOnlyIndustryKeysLiteral = literal(
+      '(1 = (CASE WHEN EXISTS (SELECT * FROM "UserSpecializationFilters" WHERE "userId" = "User"."id" AND "UserSpecializationFilters"."industryKey" IN (:industryKey)) THEN 1 END))'
+    );
+    const userSpecializationIndustryKeysAndPathsLiteral = literal(
+      '(1 = (CASE WHEN EXISTS (SELECT * FROM "UserSpecializationFilters" WHERE "userId" = "User"."id" AND "UserSpecializationFilters"."path" IN (:path)) THEN 1 END))' +
+      'OR (1 = (CASE WHEN EXISTS (SELECT * FROM "UserSpecializationFilters" WHERE "userId" = "User"."id" AND "UserSpecializationFilters"."industryKey" IN (:industryKey)) THEN 1 END))'
+    );
 
     const order = [];
     const include = [];
+    const replacements = {};
     let distinctCol: '"User"."id"' | 'id' = '"User"."id"';
 
     const where = {
-      ...(r.query.north && r.query.south && { [Op.and]: entersAreaLiteral }), role,
-      ...(r.query.workplace && { workplace: r.query.workplace }),
-      ...(r.query.priority && {priority: r.query.priority}),
-      ...(r.query.betweenWagePerHour && { wagePerHour: {
-          [Op.between]: [r.query.betweenWagePerHour.from, r.query.betweenWagePerHour.to]
-      } }),
+      role, [Op.and]: [],
+      status: UserStatus.Confirmed,
+      ...(r.query.priorities && { priority: r.query.priorities }),
+      ...(r.query.workplaces && { workplace: r.query.workplaces }),
+      ...(r.query.betweenWagePerHour && { wagePerHour: { [Op.between]: [r.query.betweenWagePerHour.from, r.query.betweenWagePerHour.to] } }),
     };
 
     if (r.query.q) {
@@ -80,36 +95,41 @@ export function getUsers(role: UserRole) {
         field => ({ [field]: { [Op.iLike]: `%${r.query.q}%` }})
       );
     }
-    if (r.query.specialization && role === UserRole.Worker) {
-      const { industryKeys, specializationKeys } = SkillsFiltersController.splitSpecialisationAndIndustry(r.query.specialization);
-
-      include.push({
-        model: UserSpecializationFilter,
-        as: 'userIndustryForFiltering',
-        attributes: [],
-        where: { industryKey: { [Op.in]: industryKeys } },
-      })
-
-      if (specializationKeys.length > 0) {
-        include.push({
-          model: UserSpecializationFilter,
-          as: 'userSpecializationForFiltering',
-          attributes: [],
-          where: { specializationKey: { [Op.in]: specializationKeys } },
-        });
-      }
-
-      distinctCol = 'id';
-    }
-    if (r.query.ratingStatus) {
+    if (r.query.ratingStatuses) {
       include.push({
         model: RatingStatistic,
         as: 'ratingStatistic',
         required: true,
-        where: { status: r.query.ratingStatus },
+        where: { status: r.query.ratingStatuses },
       });
-
       distinctCol = 'id';
+    }
+    if (r.query.northAndSouthCoordinates) {
+      replacements['northLng'] = r.query.northAndSouthCoordinates.north.longitude;
+      replacements['northLat'] = r.query.northAndSouthCoordinates.north.latitude;
+      replacements['southLng'] = r.query.northAndSouthCoordinates.south.longitude;
+      replacements['southLat'] = r.query.northAndSouthCoordinates.south.latitude;
+
+      where[Op.and].push(entersAreaLiteral);
+    }
+    if (r.query.specializations && role === UserRole.Worker) {
+      const { paths, industryKeys } = SkillsFiltersController.splitPathsAndSingleKeysOfIndustry(r.query.specializations);
+
+      if (paths.length !== 0 && industryKeys.length === 0) {
+        replacements['path'] = paths;
+        where[Op.and].push(userSpecializationOnlyPathsLiteral);
+      }
+      if (paths.length === 0 && industryKeys.length !== 0) {
+        replacements['industryKey'] = industryKeys;
+        where[Op.and].push(userSpecializationOnlyIndustryKeysLiteral);
+      }
+      if (paths.length !== 0 && industryKeys.length !== 0) {
+        replacements['path'] = paths;
+        replacements['industryKey'] = industryKeys;
+        where[Op.and].push(userSpecializationIndustryKeysAndPathsLiteral);
+      }
+
+      distinctCol = '"User"."id"';
     }
 
     for (const [key, value] of Object.entries(r.query.sort)) {
@@ -122,18 +142,11 @@ export function getUsers(role: UserRole) {
       limit: r.query.limit,
       offset: r.query.offset,
       include, order, where,
-      replacements: {
-        ...(r.query.north && r.query.south && {
-          northLng: r.query.north.longitude,
-          northLat: r.query.north.latitude,
-          southLng: r.query.south.longitude,
-          southLat: r.query.south.latitude,
-        })
-      }
+      replacements,
     });
 
     return output({ count, users: rows });
-  }
+  };
 }
 
 export async function setRole(r) {
@@ -148,29 +161,47 @@ export async function setRole(r) {
 }
 
 export function editProfile(userRole: UserRole) {
-  return async function(r) {
+  return async function (r) {
     const user: User = r.auth.credentials;
     const userController = new UserController(user);
 
     await userController.userMustHaveRole(userRole);
 
+    const locationFields = { location: null, locationPostGIS: null, locationPlaceName: null };
     const avatarId = r.payload.avatarId ? (await MediaController.getMedia(r.payload.avatarId)).id : null;
+    const phonesFields = r.payload.phoneNumber ? { tempPhone: user.tempPhone, phone: user.phone } : { tempPhone: null, phone: null };
+
     const transaction = await r.server.app.db.transaction();
 
+    if (r.payload.phoneNumber) {
+      if (
+        (user.phone && user.phone.fullPhone !== r.payload.phoneNumber.fullPhone) ||
+        (user.tempPhone && user.tempPhone.fullPhone !== r.payload.phoneNumber.fullPhone) ||
+        (!user.phone && !user.tempPhone)
+      ) {
+        phonesFields.phone = null;
+        phonesFields.tempPhone = r.payload.phoneNumber;
+      }
+    }
+    if (r.payload.locationFull) {
+      locationFields.location = r.payload.locationFull.location;
+      locationFields.locationPlaceName = r.payload.locationFull.locationPlaceName;
+      locationFields.locationPostGIS = transformToGeoPostGIS(r.payload.locationFull.location);
+    }
     if (userRole === UserRole.Worker) {
       await userController.setUserSpecializations(r.payload.specializationKeys, transaction);
     }
 
     await user.update({
+      ...phonesFields,
+      ...locationFields,
       avatarId: avatarId,
       lastName: r.payload.lastName,
-      location: r.payload.location,
       firstName: r.payload.firstName,
       priority: r.payload.priority || null,
       workplace: r.payload.workplace || null,
       wagePerHour: r.payload.wagePerHour || null,
       additionalInfo: r.payload.additionalInfo,
-      locationPostGIS: r.payload.location ? transformToGeoPostGIS(r.payload.location) : null,
     }, transaction);
 
     await transaction.commit();
@@ -179,15 +210,13 @@ export function editProfile(userRole: UserRole) {
       userId: user.id,
     });
 
-    return output(
-      await User.findByPk(r.auth.credentials.id)
-    );
-  }
+    return output(await User.findByPk(r.auth.credentials.id));
+  };
 }
 
 export async function changePassword(r) {
-  const user = await User.scope("withPassword").findOne({
-    where: { id: r.auth.credentials.id }
+  const user = await User.scope('withPassword').findOne({
+    where: { id: r.auth.credentials.id },
   });
 
   const userController = new UserController(user);
@@ -205,41 +234,53 @@ export async function changePassword(r) {
 }
 
 export async function confirmPhoneNumber(r) {
-  const user = await User.scope("withPassword").findByPk(r.auth.credentials.id);
+  const user = await User.scope('withPassword').findByPk(r.auth.credentials.id);
 
   const userController = new UserController(user);
 
-  await userController.userMustHaveVerificationPhone();
-  await userController.checkPhoneConfirmationCode(r.payload.confirmCode);
-
-  await userController.confirmPhoneNumber();
+  await userController
+    .userMustHaveVerificationPhone()
+    .checkPhoneConfirmationCode(r.payload.confirmCode)
+    .confirmPhoneNumber()
 
   return output();
 }
 
 export async function sendCodeOnPhoneNumber(r) {
-  const userWithPassword = await User.scope("withPassword").findByPk(r.auth.credentials.id);
+  const userWithPassword = await User.scope('withPassword').findByPk(r.auth.credentials.id);
   const confirmCode = getRandomCodeNumber();
 
   const userController = new UserController(userWithPassword);
 
-  await userController.setUnverifiedPhoneNumber(r.payload.phoneNumber, confirmCode);
+  if (userWithPassword.phone) { //TODO Возможно что-то подобное есть
+    return error(Errors.PhoneNumberAlreadyConfirmed, 'Phone number already confirmed', {});
+  }
+  if (!userWithPassword.tempPhone) { // TODO -> userMustHaveVerificationPhone
+    return error(Errors.NotFound, 'Phone number for verification not found', {});
+  }
+
+  await userController.setConfirmCodeToVerifyCodeNumber(confirmCode);
 
   await addSendSmsJob({
-    toPhoneNumber: r.payload.phoneNumber,
+    toPhoneNumber: userWithPassword.tempPhone.fullPhone,
     message: 'Code to confirm your phone number on WorkQuest: ' + confirmCode,
   });
 
   return output();
 }
 
-export async function getInvestors(r) {
-  const users = await User.findAndCountAll({
-    distinct: true,
-    col: '"User"."id"',
-    limit: r.query.limit,
-    offset: r.query.offset,
+export async function getUserStatistics(r) {
+  const chatsStatistic = await ChatsStatistic.findOne({
+    where: { userId: r.auth.credentials.id },
   });
 
-  return output({count: users.count, users: users.rows});
+  const questsStatistic = await QuestsStatistic.findOne({
+    where: { userId: r.auth.credentials.id },
+  });
+
+  const ratingStatistic = await RatingStatistic.findOne({
+    where: { userId: r.auth.credentials.id },
+  });
+
+  return output({ chatsStatistic, questsStatistic, ratingStatistic });
 }

@@ -1,24 +1,18 @@
-import { error, output } from "../utils";
-import {addUpdateReviewStatisticsJob} from '../jobs/updateReviewStatistics';
-import {publishQuestNotifications, QuestNotificationActions} from "../websocket/websocket.quest";
-import {QuestController} from "../controllers/quest/controller.quest"
-import { Errors } from "../utils/errors";
-import {
-  User,
-  Quest,
-  Review,
-  UserRole,
-  QuestStatus,
-} from "@workquest/database-models/lib/models";
+import { error, output } from '../utils';
+import { addUpdateReviewStatisticsJob } from '../jobs/updateReviewStatistics';
+import { QuestNotificationActions } from '../controllers/controller.broker';
+import { QuestController } from '../controllers/quest/controller.quest';
+import { Errors } from '../utils/errors';
+import { User, Quest, Review, UserRole, QuestStatus } from '@workquest/database-models/lib/models';
+import { UserController } from '../controllers/user/controller.user';
 
 export async function sendReview(r) {
   const fromUser: User = r.auth.credentials;
+  const fromUserController = new UserController(fromUser);
 
   const questController = new QuestController(await Quest.findByPk(r.payload.questId));
 
-  questController
-    .questMustHaveStatus(QuestStatus.Done)
-    .userMustBelongToQuest(fromUser.id)
+  questController.questMustHaveStatus(QuestStatus.Done).userMustBelongToQuest(fromUser.id);
 
   const toUser: User = fromUser.role === UserRole.Worker ? questController.quest.user : questController.quest.assignedWorker;
 
@@ -27,11 +21,11 @@ export async function sendReview(r) {
       toUserId: toUser.id,
       fromUserId: fromUser.id,
       questId: questController.quest.id,
-    }
+    },
   });
 
   if (alreadyReview) {
-    return error(Errors.AlreadyExists, "You already valued this quest", {
+    return error(Errors.AlreadyExists, 'You already valued this quest', {
       yourReviewId: alreadyReview.id,
     });
   }
@@ -44,14 +38,16 @@ export async function sendReview(r) {
     mark: r.payload.mark,
   });
 
+  review.setDataValue('fromUser', fromUserController.shortCredentials);
+
   await addUpdateReviewStatisticsJob({
     userId: toUser.id,
   });
 
-  await publishQuestNotifications(r.server, {
-    data: review,
-    recipients: [toUser.id],
+  r.server.app.broker.sendQuestNotification({
     action: QuestNotificationActions.userLeftReviewAboutQuest,
+    recipients: [toUser.id],
+    data: review,
   });
 
   return output(review);
@@ -59,18 +55,22 @@ export async function sendReview(r) {
 
 export async function getReviewsOfUser(r) {
   const { count, rows } = await Review.findAndCountAll({
-    include: [{
-      model: User.scope('short'),
-      as: 'fromUser'
-    }, {
-      model: Quest, // TODO добавить short scope
-      as: 'quest',
-    }],
+    include: [
+      {
+        model: User.scope('short'),
+        as: 'fromUser',
+      },
+      {
+        model: Quest, // TODO добавить short scope
+        as: 'quest',
+      },
+    ],
     distinct: true,
-    where: { toUserId: r.params.userId },
     limit: r.query.limit,
     offset: r.query.offset,
+    where: { toUserId: r.params.userId },
+    order: [['createdAt', 'DESC']],
   });
 
-  return output({count, reviews: rows});
+  return output({ count, reviews: rows });
 }

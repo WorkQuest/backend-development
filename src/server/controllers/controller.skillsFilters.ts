@@ -1,9 +1,9 @@
-import {SpecializationFilter} from "@workquest/database-models/lib/models";
-import {error} from "../utils";
-import {Errors} from "../utils/errors";
+import { SpecializationFilter } from '@workquest/database-models/lib/models';
+import { error } from '../utils';
+import { Errors } from '../utils/errors';
 
 export type MapSpecialization = { [specialization: string]: string };
-export type MapIndustry = { [industry: string]: MapSpecialization }
+export type MapIndustry = { [industry: string]: MapSpecialization };
 export type MapIndustryAndSpecialization = { [industryWithSpecialization: string]: string };
 
 export type ModelRecord = {
@@ -11,18 +11,17 @@ export type ModelRecord = {
   industryKey: string;
   specializationKey: string;
   [alias: string]: string;
-}
+};
 
 abstract class SkillsFiltersHelper {
-
   protected mapSpecializations: MapIndustry | MapIndustryAndSpecialization;
-  protected mapSpecializationsForGet: { [industry: string]: { id: number, skills: MapSpecialization } }
+  protected mapSpecializationsForGet: { [industry: string]: { id: number; skills: MapSpecialization } };
 
-  public get mapIndustryAndSpecialization() { return this.mapSpecializationsForGet }
+  public get mapIndustryAndSpecialization() {
+    return this.mapSpecializationsForGet;
+  }
 
-  protected constructor(
-    protected specializationFilters: SpecializationFilter[]
-  ) {
+  protected constructor(protected specializationFilters: SpecializationFilter[]) {
     this.mapSpecializations = {};
     this.mapSpecializationsForGet = {};
 
@@ -30,16 +29,16 @@ abstract class SkillsFiltersHelper {
   }
 
   private initMap() {
-    this.specializationFilters.forEach(s => {
+    this.specializationFilters.forEach((s) => {
       if (!this.mapSpecializations[s.industryKey]) {
-        this.mapSpecializations[s.industryKey] = { };
+        this.mapSpecializations[s.industryKey] = {};
       }
 
       this.mapSpecializations[s.industryKey][s.key] = s.specialization;
       this.mapSpecializations[`${s.industryKey}.${s.key}`] = s.specialization;
 
       if (!this.mapSpecializationsForGet[s.industryFilter.industry]) {
-        this.mapSpecializationsForGet[s.industryFilter.industry] = { id: s.industryKey, skills: { } }
+        this.mapSpecializationsForGet[s.industryFilter.industry] = { id: s.industryKey, skills: {} };
       }
 
       this.mapSpecializationsForGet[s.industryFilter.industry]['skills'][s.specialization] = s.key;
@@ -48,7 +47,7 @@ abstract class SkillsFiltersHelper {
 
   public checkIndustryAndSpecializationKeyPair(pair: string /** Sample: "1.500" */) {
     if (!this.mapSpecializations[pair]) {
-      throw error(Errors.NotFound, "Keys pair path in specialization filters not found", {
+      throw error(Errors.NotFound, 'Keys pair path in specialization filters not found', {
         keysPair: pair,
       });
     }
@@ -65,7 +64,7 @@ abstract class SkillsFiltersHelper {
     for (const keysPair of keys) {
       const [industryKey, specializationKey] = keysPair.split(/\./) as [string, string];
 
-      this.checkIndustryAndSpecializationKeyPair(keysPair)
+      this.checkIndustryAndSpecializationKeyPair(keysPair);
 
       records.push({
         path: keysPair,
@@ -78,8 +77,9 @@ abstract class SkillsFiltersHelper {
     return records;
   }
 
-  public static splitSpecialisationAndIndustry(keys: string[]): { specializationKeys: number[], industryKeys: number[] } {
-    const industryKeys = []; const specializationKeys = [];
+  public static splitSpecialisationAndIndustry(keys: string[]): { specializationKeys: number[]; industryKeys: number[] } {
+    const industryKeys = [];
+    const specializationKeys = [];
 
     for (const key of keys) {
       const [industryKey, specializationKey] = key.split(/\./) as [string, string | null];
@@ -91,16 +91,32 @@ abstract class SkillsFiltersHelper {
       industryKeys.push(parseInt(industryKey));
     }
 
-    return { industryKeys, specializationKeys }
+    return { industryKeys, specializationKeys };
+  }
+
+  public static splitPathsAndSingleKeysOfIndustry(pathsAndIndustryKeys: string[]): { paths: string[]; industryKeys: number[] } {
+    const paths: string[] = [];
+    const industryKeys: number[] = [];
+
+    for (const pathOrIndustryKey of pathsAndIndustryKeys) {
+      const [industryKey, specializationKey] = pathOrIndustryKey.split(/\./) as [string, string | null];
+
+      if (industryKey && specializationKey) {
+        paths.push(pathOrIndustryKey);
+      }
+      if (industryKey && !specializationKey) {
+        industryKeys.push(parseInt(industryKey));
+      }
+    }
+
+    return { paths, industryKeys };
   }
 }
 
 export class SkillsFiltersController extends SkillsFiltersHelper {
   private static instance: SkillsFiltersController;
 
-  private constructor(
-    protected specializationFilters: SpecializationFilter[]
-  ) {
+  private constructor(protected specializationFilters: SpecializationFilter[]) {
     super(specializationFilters);
   }
 

@@ -23,6 +23,9 @@ npm-debug.log
 .env.bridge
 .env.liquidity
 .env.proposal
+.env.quest
+.env.WqtWbnb
+.env.pensionFund
 
 # build directory
 build/
