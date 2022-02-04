@@ -12,6 +12,7 @@ import {
   prioritySchema,
   questTitleSchema,
   questQuerySchema,
+  questsForGetSchema,
   locationFullSchema,
   questCategorySchema,
   questsWithCountSchema,
@@ -19,6 +20,7 @@ import {
   questDescriptionSchema,
   specializationKeysSchema,
   questsForGetWithCountSchema,
+  questQueryForMapPointsSchema,
 } from "@workquest/database-models/lib/schemes";
 
 export default [{
@@ -119,7 +121,7 @@ export default [{
 }, {
   method: "GET",
   path: "/v1/quests",
-  handler: handlers.getQuests,
+  handler: handlers.getQuests('list'),
   options: {
     auth: 'jwt-access',
     id: "v1.getQuests",
@@ -135,7 +137,7 @@ export default [{
 }, {
   method: "GET",
   path: "/v1/employer/{userId}/quests",
-  handler: handlers.getQuests,
+  handler: handlers.getQuests('list'),
   options: {
     auth: 'jwt-access',
     id: "v1.employer.quests",
@@ -154,7 +156,7 @@ export default [{
 }, {
   method: "GET",
   path: "/v1/worker/{workerId}/quests",
-  handler: handlers.getQuests,
+  handler: handlers.getQuests('list'),
   options: {
     auth: 'jwt-access',
     id: "v1.worker.quests",
@@ -168,6 +170,22 @@ export default [{
     },
     response: {
       schema: outputOkSchema(questsForGetWithCountSchema).label("WorkerGetQuestsResponse")
+    },
+  }
+}, {
+  method: "GET",
+  path: "/v1/quest/map/points",
+  handler: handlers.getQuests('points'),
+  options: {
+    auth: 'jwt-access',
+    id: "v1.quest.getMapPoints",
+    tags: ["api", "quest"],
+    description: "Get quest map points",
+    validate: {
+      query: questQueryForMapPointsSchema
+    },
+    response: {
+      schema: outputOkSchema(questsForGetSchema).label("GetQuestMapPointsResponse")
     },
   }
 }, {

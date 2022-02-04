@@ -380,179 +380,173 @@ export async function acceptCompletedWorkOnQuest(r) {
   return output();
 }
 
-export async function rejectCompletedWorkOnQuest(r) {
-  const employer: User = r.auth.credentials;
+// TODO отрефракторить!
+export function getQuests(type: 'list' | 'points') {
+  return async function(r) {
+    const user: User = r.auth.credentials;
 
-  const quest = await Quest.findByPk(r.params.questId);
-  const questController = new QuestController(quest);
+    const entersAreaLiteral = literal(
+      'st_within("Quest"."locationPostGIS", st_makeenvelope(:northLng, :northLat, :southLng, :southLat, 4326))'
+    );
+    const questChatLiteral = literal(
+      'CASE WHEN "questChat->quest" = NULL THEN NULL ELSE "questChat->quest"."id" END'
+    );
+    const questSpecializationOnlyPathsLiteral = literal(
+      '(1 = (CASE WHEN EXISTS (SELECT "id" FROM "QuestSpecializationFilters" WHERE "questId" = "Quest"."id" AND "QuestSpecializationFilters"."path" IN (:path)) THEN 1 END))'
+    );
+    const questSpecializationOnlyIndustryKeysLiteral = literal(
+      '(1 = (CASE WHEN EXISTS (SELECT * FROM "QuestSpecializationFilters" WHERE "questId" = "Quest"."id" AND "QuestSpecializationFilters"."industryKey" IN (:industryKey)) THEN 1 END))'
+    );
+    const questSpecializationIndustryKeysAndPathsLiteral = literal(
+      '(1 = (CASE WHEN EXISTS (SELECT * FROM "QuestSpecializationFilters" WHERE "questId" = "Quest"."id" AND "QuestSpecializationFilters"."path" IN (:path)) THEN 1 END))' +
+      'OR (1 = (CASE WHEN EXISTS (SELECT * FROM "QuestSpecializationFilters" WHERE "questId" = "Quest"."id" AND "QuestSpecializationFilters"."industryKey" IN (:industryKey)) THEN 1 END))'
+    );
+    const userSearchLiteral = literal(
+      // TODO добавь эти поля в replace типо так ILIKE '%:searchByFirstName%'`
+      `(SELECT "firstName" FROM "Users" WHERE "id" = "Quest"."userId") ILIKE '%${r.query.q}%'` +
+      `OR (SELECT "lastName" FROM "Users" WHERE "id" = "Quest"."userId") ILIKE '%${r.query.q}%'`
+    );
+    const questChatWorkerLiteral = literal(
+      '"questChat"."workerId" = "Quest"."assignedWorkerId"'
+    );
 
-  questController
-    .employerMustBeQuestCreator(employer.id)
-    .questMustHaveStatus(QuestStatus.WaitConfirm)
+    const order = [];
+    const include = [];
+    const replacements = {};
+    const where = {
+      [Op.and]: [],
+      ...(r.query.adType && { adType: r.query.adType }),
+      ...(r.query.filter && { filter: r.params.filter }),
+      ...(r.params.userId && { userId: r.params.userId }),
+      ...(r.params.workerId && { assignedWorkerId: r.params.workerId }),
+      ...(r.query.statuses && { status: { [Op.in]: r.query.statuses } }),
+      ...(r.query.performing && { assignedWorkerId: r.auth.credentials.id }),
+      ...(r.query.priorities && { priority: { [Op.in]: r.query.priorities } }),
+      ...(r.query.workplaces && { workplace: { [Op.in]: r.query.workplaces } }),
+      ...(r.query.employments && { employment: { [Op.in]: r.query.employments } }),
+      ...(r.query.priceBetween && { price: { [Op.between]: [r.query.priceBetween.from, r.query.priceBetween.to] } }),
+    };
 
-  await questController.rejectCompletedWork();
+    if (r.query.q) {
+      where[Op.or] = searchQuestFields.map(field => ({
+        [field]: { [Op.iLike]: `%${r.query.q}%` }
+      }));
 
-  r.server.app.broker.sendQuestNotification({
-    data: quest,
-    recipients: [quest.assignedWorkerId],
-    action: QuestNotificationActions.employerRejectedCompletedQuest,
-  });
-
-  return output();
-}
-
-export async function getQuests(r) {
-  const user: User = r.auth.credentials;
-
-  const entersAreaLiteral = literal(
-    'st_within("Quest"."locationPostGIS", st_makeenvelope(:northLng, :northLat, :southLng, :southLat, 4326))'
-  );
-  const questChatLiteral = literal(
-    'CASE WHEN "questChat->quest" = NULL THEN NULL ELSE "questChat->quest"."id" END'
-  );
-  const questSpecializationOnlyPathsLiteral = literal(
-    '(1 = (CASE WHEN EXISTS (SELECT "id" FROM "QuestSpecializationFilters" WHERE "questId" = "Quest"."id" AND "QuestSpecializationFilters"."path" IN (:path)) THEN 1 END))'
-  );
-  const questSpecializationOnlyIndustryKeysLiteral = literal(
-    '(1 = (CASE WHEN EXISTS (SELECT * FROM "QuestSpecializationFilters" WHERE "questId" = "Quest"."id" AND "QuestSpecializationFilters"."industryKey" IN (:industryKey)) THEN 1 END))'
-  );
-  const questSpecializationIndustryKeysAndPathsLiteral = literal(
-    '(1 = (CASE WHEN EXISTS (SELECT * FROM "QuestSpecializationFilters" WHERE "questId" = "Quest"."id" AND "QuestSpecializationFilters"."path" IN (:path)) THEN 1 END))' +
-    'OR (1 = (CASE WHEN EXISTS (SELECT * FROM "QuestSpecializationFilters" WHERE "questId" = "Quest"."id" AND "QuestSpecializationFilters"."industryKey" IN (:industryKey)) THEN 1 END))'
-  );
-  const userSearchLiteral = literal(
-    // TODO добавь эти поля в replace типо так ILIKE '%:searchByFirstName%'`
-    `(SELECT "firstName" FROM "Users" WHERE "id" = "Quest"."userId") ILIKE '%${r.query.q}%'` +
-    `OR (SELECT "lastName" FROM "Users" WHERE "id" = "Quest"."userId") ILIKE '%${r.query.q}%'`
-  );
-  const questChatWorkerLiteral = literal(
-    '"questChat"."workerId" = "Quest"."assignedWorkerId"'
-  );
-
-  const order = [];
-  const include = [];
-  const replacements = {};
-  const where = {
-    [Op.and]: [],
-    ...(r.query.adType && { adType: r.query.adType }),
-    ...(r.query.filter && { filter: r.params.filter }),
-    ...(r.params.userId && { userId: r.params.userId }),
-    ...(r.params.workerId && { assignedWorkerId: r.params.workerId }),
-    ...(r.query.statuses && { status: { [Op.in]: r.query.statuses } }),
-    ...(r.query.performing && { assignedWorkerId: r.auth.credentials.id }),
-    ...(r.query.priorities && { priority: { [Op.in]: r.query.priorities } }),
-    ...(r.query.workplaces && { workplace: { [Op.in]: r.query.workplaces } }),
-    ...(r.query.employments && { employment: { [Op.in]: r.query.employments } }),
-    ...(r.query.priceBetween && { price: { [Op.between]: [r.query.priceBetween.from, r.query.priceBetween.to] } }),
-  };
-
-  if (r.query.q) {
-    where[Op.or] = searchQuestFields.map(field => ({
-      [field]: { [Op.iLike]: `%${r.query.q}%` }
-    }));
-
-    where[Op.or].push(userSearchLiteral)
-  }
-  if (r.query.specializations) { // TODO r.query.specialization on r.query.specialization[s]
-    const { paths, industryKeys } = SkillsFiltersController.splitPathsAndSingleKeysOfIndustry(r.query.specializations);
-
-    if (paths.length !== 0 && industryKeys.length === 0) {
-      replacements['path'] = paths;
-      where[Op.and].push(questSpecializationOnlyPathsLiteral);
+      where[Op.or].push(userSearchLiteral)
     }
-    if (paths.length === 0 && industryKeys.length !== 0) {
-      replacements['industryKey'] = industryKeys;
-      where[Op.and].push(questSpecializationOnlyIndustryKeysLiteral);
-    }
-    if (paths.length !== 0 && industryKeys.length !== 0) {
-      replacements['path'] = paths;
-      replacements['industryKey'] = industryKeys;
-      where[Op.and].push(questSpecializationIndustryKeysAndPathsLiteral);
-    }
-  }
-  if (r.query.northAndSouthCoordinates) {
-    replacements['northLng'] = r.query.northAndSouthCoordinates.north.longitude;
-    replacements['northLat'] = r.query.northAndSouthCoordinates.north.latitude;
-    replacements['southLng'] = r.query.northAndSouthCoordinates.south.longitude;
-    replacements['southLat'] = r.query.northAndSouthCoordinates.south.latitude;
+    if (r.query.specializations) { // TODO r.query.specialization on r.query.specialization[s]
+      const {
+        paths,
+        industryKeys
+      } = SkillsFiltersController.splitPathsAndSingleKeysOfIndustry(r.query.specializations);
 
-    where[Op.and].push(entersAreaLiteral);
-  }
-  if (user.role === UserRole.Worker) {
-    include.push({
-      model: QuestChat.scope('idsOnly'),
-      where: { workerId: user.id },
-      as: 'questChat',
-      required: false,
-    });
-  }
-  if (user.role === UserRole.Employer) {
-    include.push({
-      model: QuestChat.scope('idsOnly'),
-      as: 'questChat',
-      attributes: {
-        include: [[questChatLiteral, 'id']],
-      },
-      where: { employerId: user.id, questChatWorkerLiteral },
-      required: false,
-      include: {
-        model: Quest.unscoped(),
-        as: 'quest',
-        attributes: ['id', 'status'],
-        where: {
-          status: [QuestStatus.Active, QuestStatus.Dispute, QuestStatus.WaitWorker, QuestStatus.WaitConfirm],
+      if (paths.length !== 0 && industryKeys.length === 0) {
+        replacements['path'] = paths;
+        where[Op.and].push(questSpecializationOnlyPathsLiteral);
+      }
+      if (paths.length === 0 && industryKeys.length !== 0) {
+        replacements['industryKey'] = industryKeys;
+        where[Op.and].push(questSpecializationOnlyIndustryKeysLiteral);
+      }
+      if (paths.length !== 0 && industryKeys.length !== 0) {
+        replacements['path'] = paths;
+        replacements['industryKey'] = industryKeys;
+        where[Op.and].push(questSpecializationIndustryKeysAndPathsLiteral);
+      }
+    }
+    if (r.query.northAndSouthCoordinates) {
+      replacements['northLng'] = r.query.northAndSouthCoordinates.north.longitude;
+      replacements['northLat'] = r.query.northAndSouthCoordinates.north.latitude;
+      replacements['southLng'] = r.query.northAndSouthCoordinates.south.longitude;
+      replacements['southLat'] = r.query.northAndSouthCoordinates.south.latitude;
+
+      where[Op.and].push(entersAreaLiteral);
+    }
+    if (user.role === UserRole.Worker) {
+      include.push({
+        model: QuestChat.scope('idsOnly'),
+        where: { workerId: user.id },
+        as: 'questChat',
+        required: false,
+      });
+    }
+    if (user.role === UserRole.Employer) {
+      include.push({
+        model: QuestChat.scope('idsOnly'),
+        as: 'questChat',
+        attributes: {
+          include: [[questChatLiteral, 'id']],
         },
+        where: { employerId: user.id, questChatWorkerLiteral },
+        required: false,
+        include: {
+          model: Quest.unscoped(),
+          as: 'quest',
+          attributes: ['id', 'status'],
+          where: {
+            status: [QuestStatus.Active, QuestStatus.Dispute, QuestStatus.WaitWorker, QuestStatus.WaitConfirm],
+          },
+          required: false,
+        },
+      });
+    }
+
+    include.push(
+      {
+        model: Review.unscoped(),
+        as: 'yourReview',
+        where: { fromUserId: r.auth.credentials.id },
         required: false,
       },
-    });
-  }
-
-  include.push(
-    {
-      model: Review.unscoped(),
-      as: 'yourReview',
-      where: { fromUserId: r.auth.credentials.id },
-      required: false,
-    },
-    {
-      model: StarredQuests.unscoped(),
-      as: 'star',
-      where: { userId: r.auth.credentials.id },
-      required: r.query.starred,
-    },
-    {
-      model: QuestsResponse.unscoped(),
-      as: 'invited',
-      required: r.query.invited,
-      where: {
-        [Op.and]: [{ workerId: r.auth.credentials.id }, { type: QuestsResponseType.Invite }],
+      {
+        model: StarredQuests.unscoped(),
+        as: 'star',
+        where: { userId: r.auth.credentials.id },
+        required: r.query.starred,
       },
-    },
-    {
-      model: QuestsResponse.unscoped(),
-      as: 'responded',
-      required: r.query.responded,
-      where: {
-        [Op.and]: [{ workerId: r.auth.credentials.id }, { type: QuestsResponseType.Response }],
+      {
+        model: QuestsResponse.unscoped(),
+        as: 'invited',
+        required: r.query.invited,
+        where: {
+          [Op.and]: [{ workerId: r.auth.credentials.id }, { type: QuestsResponseType.Invite }],
+        },
       },
-    },
-  );
+      {
+        model: QuestsResponse.unscoped(),
+        as: 'responded',
+        required: r.query.responded,
+        where: {
+          [Op.and]: [{ workerId: r.auth.credentials.id }, { type: QuestsResponseType.Response }],
+        },
+      },
+    );
 
-  for (const [key, value] of Object.entries(r.query.sort)) {
-    order.push([key, value]);
+    for (const [key, value] of Object.entries(r.query.sort || {})) {
+      order.push([key, value]);
+    }
+
+    // TODO !!!!
+    if (type === 'list') {
+      const { count, rows } = await Quest.findAndCountAll({
+        distinct: true,
+        limit: r.query.limit,
+        offset: r.query.offset,
+        include,
+        order,
+        where,
+        replacements,
+      });
+
+      return output({ count, quests: rows });
+    } else if (type === 'points') {
+      const quests = await Quest.findAll({
+        include, order, where, replacements,
+      });
+
+      return output({ quests });
+    }
   }
-
-  const { count, rows } = await Quest.findAndCountAll({
-    distinct: true,
-    limit: r.query.limit,
-    offset: r.query.offset,
-    include,
-    order,
-    where,
-    replacements,
-  });
-
-  return output({ count, quests: rows });
 }
 
 export async function setStar(r) {
