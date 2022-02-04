@@ -64,18 +64,18 @@ export default [{
   }
 }, {
   method: "GET",
-  path: "/v1/profile/user/map/points",
-  handler: handlers.getUsers(UserRole.Employer, 'points'),
+  path: "/v1/profile/worker/map/points",
+  handler: handlers.getUsers(UserRole.Worker, 'points'),
   options: {
     auth: 'jwt-access',
-    id: "v1.profile.getEmployerPoints",
+    id: "v1.profile.getWorkerPoints",
     tags: ["api", "profile"],
-    description: "Get employer points",
+    description: "Get worker points",
     validate: {
       query: workerQueryForMapPointsSchema,
     },
     response: {
-      schema: outputOkSchema(userEmployersSchema).label("GetEmployersResponse")
+      schema: outputOkSchema(userWorkersSchema).label("GetWorkerPointsResponse")
     },
   }
 }, {
@@ -260,6 +260,16 @@ export default [{
     response: {
       schema: outputOkSchema(userStatisticsSchema).label("GetUserStatisticsResponse")
     }
+  }
+}, {
+  method: 'PUT',
+  path: '/v1/profile/change-role',
+  handler: handlers.userChangeRole,
+  options: {
+    description: 'Change user role',
+    auth: 'jwt-access',
+    tags: ['api', 'profile'],
+    validate: { payload: userChangeRoleSchema },
   }
 }];
 
