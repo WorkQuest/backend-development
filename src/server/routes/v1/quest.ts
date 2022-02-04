@@ -1,25 +1,24 @@
 import * as Joi from 'joi';
 import * as handlers from '../../api/quest';
 import {
-  outputOkSchema,
   idSchema,
   idsSchema,
+  questSchema,
   emptyOkSchema,
-  locationSchema,
+  outputOkSchema,
   workPlaceSchema,
   questAdTypeSchema,
-  questCategorySchema,
-  questDescriptionSchema,
   questPriceSchema,
   prioritySchema,
-  questSchema,
   questTitleSchema,
   questQuerySchema,
-  questsForGetWithCountSchema,
-  locationPlaceNameSchema,
-  questEmploymentSchema,
-  specializationKeysSchema,
   locationFullSchema,
+  questCategorySchema,
+  questsWithCountSchema,
+  questEmploymentSchema,
+  questDescriptionSchema,
+  specializationKeysSchema,
+  questsForGetWithCountSchema,
 } from "@workquest/database-models/lib/schemes";
 
 export default [{
@@ -320,20 +319,20 @@ export default [{
   }
 }, {
   method: "GET",
-  path: "/v1/quest/{workerId}/responded",
-  handler: handlers.getRespondedQuest,
+  path: "/v1/worker/{workerId}/available-quests",
+  handler: handlers.getAvailableQuestsForWorker,
   options: {
     auth: 'jwt-access',
-    id: "v1.responded.quests",
+    id: "v1.quest.getAvailableQuestsForWorker",
     tags: ["api", "quest"],
-    description: "Get all quests of employer and add response if worker is already responded/invitee",
+    description: "Get available quests for worker ",
     validate: {
       params: Joi.object({
         workerId: idSchema.required(),
-      }).label("WorkerGetQuestsParams"),
+      }).label("GetAvailableQuestsForWorkerParams"),
     },
     response: {
-      schema: outputOkSchema(questsForGetWithCountSchema).label("WorkerGetQuestsResponse")
+      schema: outputOkSchema(questsWithCountSchema).label("GetAvailableQuestsForWorkerResponse")
     },
   }
 },];

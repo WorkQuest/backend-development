@@ -1,15 +1,15 @@
-import { literal, Op } from 'sequelize';
-import { Errors } from '../utils/errors';
-import { UserController } from '../controllers/user/controller.user';
-import { QuestController } from '../controllers/quest/controller.quest';
-import { transformToGeoPostGIS } from '../utils/postGIS';
-import { error, output } from '../utils';
-import { QuestNotificationActions } from '../controllers/controller.broker';
-import { QuestsResponseController } from '../controllers/quest/controller.questsResponse';
-import { MediaController } from '../controllers/controller.media';
-import { addUpdateReviewStatisticsJob } from '../jobs/updateReviewStatistics';
-import { updateQuestsStatisticJob } from '../jobs/updateQuestsStatistic';
-import { SkillsFiltersController } from '../controllers/controller.skillsFilters';
+import { literal, Op } from "sequelize";
+import { Errors } from "../utils/errors";
+import { UserController } from "../controllers/user/controller.user";
+import { QuestController } from "../controllers/quest/controller.quest";
+import { transformToGeoPostGIS } from "../utils/postGIS";
+import { error, output } from "../utils";
+import { QuestNotificationActions } from "../controllers/controller.broker";
+import { QuestsResponseController } from "../controllers/quest/controller.questsResponse";
+import { MediaController } from "../controllers/controller.media";
+import { addUpdateReviewStatisticsJob } from "../jobs/updateReviewStatistics";
+import { updateQuestsStatisticJob } from "../jobs/updateQuestsStatistic";
+import { SkillsFiltersController } from "../controllers/controller.skillsFilters";
 import {
   DisputeStatus,
   Quest,
@@ -573,18 +573,23 @@ export async function removeStar(r) {
   return output();
 }
 
-export async function getRespondedQuest(r) {
+export async function getAvailableQuestsForWorker(r) {
+  const employer: User = r.auth.credentials;
+  const employerController = new UserController(employer);
+
+  employerController
+    .userMustHaveRole(UserRole.Employer)
+
   const { count, rows } = await Quest.findAndCountAll({
-    where: {
-      userId: r.auth.credentials.id
-    },
+    where: { userId: r.auth.credentials.id },
     include: [{
       model: QuestsResponse,
       as: 'response',
-      where: { workerId: r.params.workerId },
-      required: false,
+      where: { workerId: { [Op.not]: r.params.workerId } },
+      required: true,
     }]
   });
-  return output({count, quests: rows});
+
+  return output({ count, quests: rows });
 }
 
