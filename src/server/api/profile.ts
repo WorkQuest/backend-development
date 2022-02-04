@@ -63,7 +63,7 @@ export async function getAllUsers(r) {
   return output({ count, users: rows });
 }
 
-export function getUsers(role: UserRole) {
+export function getUsers(role: UserRole, type: 'points' | 'list') {
   return async function(r) {
     const entersAreaLiteral = literal(
       'st_within("User"."locationPostGIS", st_makeenvelope(:northLng, :northLat, :southLng, :southLat, 4326))'
@@ -134,20 +134,28 @@ export function getUsers(role: UserRole) {
       distinctCol = '"User"."id"';
     }
 
-    for (const [key, value] of Object.entries(r.query.sort)) {
+    for (const [key, value] of Object.entries(r.query.sort || {})) {
       order.push([key, value]);
     }
 
-    const { count, rows } = await User.findAndCountAll({
-      distinct: true,
-      col: distinctCol, // so..., else not working
-      limit: r.query.limit,
-      offset: r.query.offset,
-      include, order, where,
-      replacements,
-    });
+    if (type === 'list') {
+      const { count, rows } = await User.findAndCountAll({
+        distinct: true,
+        col: distinctCol, // so..., else not working
+        limit: r.query.limit,
+        offset: r.query.offset,
+        include, order, where,
+        replacements,
+      });
 
-    return output({ count, users: rows });
+      return output({ count, users: rows });
+    } else if (type === 'points') {
+      const users = await User.findAll({
+        include, order, where, replacements,
+      });
+
+      return output({ users });
+    }
   };
 }
 

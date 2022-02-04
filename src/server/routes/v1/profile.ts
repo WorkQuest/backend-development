@@ -26,9 +26,10 @@ import {
   outputPaginationSchema,
   workerWagePerHourSchema,
   specializationKeysSchema,
+  workerQueryForMapPointsSchema,
   userAdditionalInfoWorkerSchema,
   userAdditionalInfoEmployerSchema,
-} from "@workquest/database-models/lib/schemes";
+} from '@workquest/database-models/lib/schemes';
 
 export default [{
   method: "GET",
@@ -63,8 +64,24 @@ export default [{
   }
 }, {
   method: "GET",
+  path: "/v1/profile/user/map/points",
+  handler: handlers.getUsers(UserRole.Employer, 'points'),
+  options: {
+    auth: 'jwt-access',
+    id: "v1.profile.getEmployerPoints",
+    tags: ["api", "profile"],
+    description: "Get employer points",
+    validate: {
+      query: workerQueryForMapPointsSchema,
+    },
+    response: {
+      schema: outputOkSchema(userEmployersSchema).label("GetEmployersResponse")
+    },
+  }
+}, {
+  method: "GET",
   path: "/v1/profile/employers",
-  handler: handlers.getUsers(UserRole.Employer),
+  handler: handlers.getUsers(UserRole.Employer, 'list'),
   options: {
     auth: 'jwt-access',
     id: "v1.profile.getEmployers",
@@ -80,7 +97,7 @@ export default [{
 }, {
   method: "GET",
   path: "/v1/profile/workers",
-  handler: handlers.getUsers(UserRole.Worker),
+  handler: handlers.getUsers(UserRole.Worker, 'list'),
   options: {
     auth: 'jwt-access',
     id: "v1.profile.getWorkers",
