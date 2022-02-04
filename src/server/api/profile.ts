@@ -1,11 +1,12 @@
 import { literal, Op } from 'sequelize';
 import { addSendSmsJob } from '../jobs/sendSms';
-import { error, getRandomCodeNumber, output } from "../utils";
+import { error, getRandomCodeNumber, output } from '../utils';
 import { UserController } from '../controllers/user/controller.user';
 import { transformToGeoPostGIS } from '../utils/postGIS';
 import { MediaController } from '../controllers/controller.media';
 import { SkillsFiltersController } from '../controllers/controller.skillsFilters';
 import { addUpdateReviewStatisticsJob } from '../jobs/updateReviewStatistics';
+import { Errors } from '../utils/errors';
 import {
   User,
   Wallet,
@@ -14,7 +15,6 @@ import {
   RatingStatistic,
   QuestsStatistic, UserStatus
 } from "@workquest/database-models/lib/models";
-import { Errors } from "../utils/errors";
 
 export const searchFields = [
   "firstName",
@@ -23,8 +23,10 @@ export const searchFields = [
 ];
 
 export async function getMe(r) {
+  const totpIsActiveLiteral = literal(`"User"."settings"->'security'->'TOTP'->'active'`);
+
   const user = await User.findByPk(r.auth.credentials.id, {
-    attributes: { include: ['tempPhone'] },
+    attributes: { include: [[totpIsActiveLiteral, 'totpIsActive']] },
     include: [{ model: Wallet, as: 'wallet', attributes: ['address'] }],
   });
 

@@ -8,6 +8,7 @@ import {
   phoneSchema,
   offsetSchema,
   searchSchema,
+  userMeSchema,
   emptyOkSchema,
   outputOkSchema,
   prioritySchema,
@@ -39,7 +40,7 @@ export default [{
     tags: ["api", "profile"],
     description: "Get info about current user",
     response: {
-      schema: outputOkSchema(userSchema).label("UserResponse")
+      schema: outputOkSchema(userMeSchema).label("GetMeResponse")
     }
   }
 }, {
