@@ -304,6 +304,7 @@ export async function getUserStatistics(r) {
 
 
 export async function userChangeRole(r): Promise<unknown> {
+
   const transaction = await r.server.app.db.transaction();
   const { id } = r.auth.credentials;
   const { role, totp } = r.payload
