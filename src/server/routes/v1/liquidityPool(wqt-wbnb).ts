@@ -31,6 +31,23 @@ export default [
   },
   {
     method: 'GET',
+    path: '/v1/pool-liquidity/wqt-wbnb/mints',
+    handler: handlers.getMints,
+    options: {
+      auth: false,
+      id: 'v1.liquidity.wqt-wbnb.getMints',
+      tags: ['api', 'pool-liquidity'],
+      description: 'Get mints on a pair by fetching Mint events',
+      validate: {
+        query: Joi.object({
+          offset: offsetSchema,
+          limit: limitSchema,
+        }).label('GetMintsWQTQuery'),
+      },
+    },
+  },
+  {
+    method: 'GET',
     path: '/v1/pool-liquidity/wqt-wbnb/tokenDay',
     handler: handlers.getTokenDayData,
     options: {
