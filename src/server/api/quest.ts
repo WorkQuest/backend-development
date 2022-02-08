@@ -583,7 +583,7 @@ export async function getAvailableQuestsForWorker(r) {
       model: QuestsResponse,
       as: 'response',
       where: { workerId: { [Op.not]: r.params.workerId } },
-      required: true,
+      required: false,
     }]
   });
 
