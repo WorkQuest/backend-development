@@ -569,7 +569,7 @@ export async function removeStar(r) {
 
 export async function getAvailableQuestsForWorker(r) {
   const workerResponseLiteral = literal(
-    '1 = (CASE WHEN NOT EXISTS (SELECT "id" FROM "QuestsResponses" WHERE "QuestsResponses"."workerId"=:workerId)'
+    '1 = (CASE WHEN NOT EXISTS (SELECT "id" FROM "QuestsResponses" WHERE "QuestsResponses"."workerId"=:workerId))'
   );
 
   const employer: User = r.auth.credentials;
