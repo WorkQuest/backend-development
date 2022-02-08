@@ -3,6 +3,7 @@ import { error, output } from '../utils';
 import { Errors } from '../utils/errors';
 import { QuestController } from '../controllers/quest/controller.quest';
 import { QuestNotificationActions } from '../controllers/controller.broker';
+import { UserController } from "../controllers/user/controller.user";
 import {
   User,
   Quest,
@@ -14,6 +15,7 @@ import {
 
 export async function openDispute(r) {
   const user: User = r.auth.credentials;
+  const userController = new UserController(user);
 
   const isDisputeExists = await QuestDispute.findOne({
     where: { questId: r.params.questId },
@@ -60,6 +62,8 @@ export async function openDispute(r) {
 
   await transaction.commit();
 
+  dispute.setDataValue('quest', quest);
+  dispute.setDataValue('openDisputeUser', userController.shortCredentials);
   r.server.app.broker.sendQuestNotification({
     action: QuestNotificationActions.openDispute,
     recipients: [opponentUserId],
