@@ -575,7 +575,10 @@ export async function getAvailableQuestsForWorker(r) {
     .userMustHaveRole(UserRole.Employer)
 
   const { count, rows } = await Quest.findAndCountAll({
+    distinct: true,
     where: { userId: r.auth.credentials.id },
+    limit: r.query.limit,
+    offset: r.query.offset,
     include: [{
       model: QuestsResponse,
       as: 'response',

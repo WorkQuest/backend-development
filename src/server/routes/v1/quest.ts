@@ -5,6 +5,8 @@ import {
   idsSchema,
   questSchema,
   emptyOkSchema,
+  limitSchema,
+  offsetSchema,
   outputOkSchema,
   workPlaceSchema,
   questAdTypeSchema,
@@ -348,6 +350,10 @@ export default [{
       params: Joi.object({
         workerId: idSchema.required(),
       }).label("GetAvailableQuestsForWorkerParams"),
+      payload: Joi.object({
+        limit: limitSchema,
+        offset: offsetSchema,
+      }).label('GetAvailableQuestsForWorkerPayload')
     },
     response: {
       schema: outputOkSchema(questsWithCountSchema).label("GetAvailableQuestsForWorkerResponse")
