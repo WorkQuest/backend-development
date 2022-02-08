@@ -568,6 +568,10 @@ export async function removeStar(r) {
 }
 
 export async function getAvailableQuestsForWorker(r) {
+  const workerResponseLiteral = literal(
+    '1 = (CASE WHEN NOT EXISTS (SELECT "id" FROM "QuestsResponses" WHERE "QuestsResponses"."workerId"=:workerId)'
+  );
+
   const employer: User = r.auth.credentials;
   const employerController = new UserController(employer);
 
@@ -576,17 +580,11 @@ export async function getAvailableQuestsForWorker(r) {
 
   const { count, rows } = await Quest.findAndCountAll({
     distinct: true,
-    where: { userId: r.auth.credentials.id },
+    where: { userId: r.auth.credentials.id, workerResponseLiteral },
     limit: r.query.limit,
     offset: r.query.offset,
-    include: [{
-      model: QuestsResponse,
-      as: 'response',
-      where: { workerId: { [Op.not]: r.params.workerId } },
-      required: false,
-    }]
+    replacements: { workerId: r.params.workerId }
   });
 
   return output({ count, quests: rows });
 }
-
