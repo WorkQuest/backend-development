@@ -17,18 +17,20 @@ export async function openDispute(r) {
   const user: User = r.auth.credentials;
   const userController = new UserController(user);
 
-  const isDisputeExists = await QuestDispute.findOne({
-    where: { questId: r.params.questId },
+  const isDisputeOpen = await QuestDispute.findOne({
+    where: { questId: r.params.questId, status: [DisputeStatus.pending, DisputeStatus.inProgress] },
   });
 
-  if (isDisputeExists) {
-    return error(Errors.AlreadyExists, 'Dispute for this quest already exists', {});
+  if (isDisputeOpen) {
+    return error(Errors.InvalidStatus, 'Dispute for this quest already open', {});
   }
 
   const quest = await Quest.findByPk(r.params.questId);
   const questController = new QuestController(quest);
 
-  questController.userMustBelongToQuest(user.id).questMustHaveStatus(QuestStatus.Active, QuestStatus.WaitConfirm);
+  questController
+    .userMustBelongToQuest(user.id)
+    .questMustHaveStatus(QuestStatus.Active, QuestStatus.WaitConfirm)
 
   // if (r.payload.reason === DisputeReason.poorlyDoneJob) {
   //   questController.questMustHaveStatus(QuestStatus.WaitConfirm);
