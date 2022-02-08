@@ -350,10 +350,10 @@ export default [{
       params: Joi.object({
         workerId: idSchema.required(),
       }).label("GetAvailableQuestsForWorkerParams"),
-      payload: Joi.object({
-        limit: limitSchema,
+      query: Joi.object({
         offset: offsetSchema,
-      }).label('GetAvailableQuestsForWorkerPayload')
+        limit: limitSchema,
+      }).label('GetAvailableQuestsForWorkerQuery'),
     },
     response: {
       schema: outputOkSchema(questsWithCountSchema).label("GetAvailableQuestsForWorkerResponse")
