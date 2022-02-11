@@ -1,15 +1,15 @@
-import { literal, Op } from "sequelize";
-import { Errors } from "../utils/errors";
-import { UserController } from "../controllers/user/controller.user";
-import { QuestController } from "../controllers/quest/controller.quest";
-import { transformToGeoPostGIS } from "../utils/postGIS";
-import { error, output } from "../utils";
-import { QuestNotificationActions } from "../controllers/controller.broker";
-import { QuestsResponseController } from "../controllers/quest/controller.questsResponse";
-import { MediaController } from "../controllers/controller.media";
-import { addUpdateReviewStatisticsJob } from "../jobs/updateReviewStatistics";
-import { updateQuestsStatisticJob } from "../jobs/updateQuestsStatistic";
-import { SkillsFiltersController } from "../controllers/controller.skillsFilters";
+import { literal, Op } from 'sequelize';
+import { Errors } from '../utils/errors';
+import { UserController } from '../controllers/user/controller.user';
+import { QuestController } from '../controllers/quest/controller.quest';
+import { transformToGeoPostGIS } from '../utils/postGIS';
+import { error, output } from '../utils';
+import { QuestNotificationActions } from '../controllers/controller.broker';
+import { QuestsResponseController } from '../controllers/quest/controller.questsResponse';
+import { MediaController } from '../controllers/controller.media';
+import { addUpdateReviewStatisticsJob } from '../jobs/updateReviewStatistics';
+import { updateQuestsStatisticJob } from '../jobs/updateQuestsStatistic';
+import { SkillsFiltersController } from '../controllers/controller.skillsFilters';
 import {
   DisputeStatus,
   Quest,
@@ -24,7 +24,7 @@ import {
   StarredQuests,
   User,
   UserRole
-} from "@workquest/database-models/lib/models";
+} from '@workquest/database-models/lib/models';
 
 export const searchQuestFields = [
   'title',
@@ -573,19 +573,29 @@ export async function getAvailableQuestsForWorker(r) {
       'AND "QuestsResponses"."questId" = "Quest"."id") THEN 1 END)'
   );
 
+  const worker = await User.findByPk(r.params.workerId);
+  const workerController = new UserController(worker);
+
   const employer: User = r.auth.credentials;
   const employerController = new UserController(employer);
 
   employerController
     .userMustHaveRole(UserRole.Employer)
 
+  workerController
+    .userMustHaveRole(UserRole.Worker)
+
   const { count, rows } = await Quest.findAndCountAll({
     distinct: true,
     col: '"Quest"."id"',
-    where: { userId: r.auth.credentials.id, workerResponseLiteral },
+    where: {
+      userId: employer.id,
+      workerResponseLiteral,
+      status: QuestStatus.Created,
+    },
     limit: r.query.limit,
     offset: r.query.offset,
-    replacements: { workerId: r.params.workerId }
+    replacements: { workerId: worker.id }
   });
 
   return output({ count, quests: rows });
