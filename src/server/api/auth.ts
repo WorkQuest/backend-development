@@ -9,9 +9,15 @@ import { addSendEmailJob } from '../jobs/sendEmail';
 import { generateJwt } from '../utils/auth';
 import { UserController } from '../controllers/user/controller.user';
 import converter from 'bech32-converting';
-import { Wallet } from '@workquest/database-models/lib/models';
 import { error, output, getGeo, getRealIp, getDevice, getRandomHexToken } from '../utils';
-import { User, Session, UserStatus, QuestsStatistic, defaultUserSettings } from '@workquest/database-models/lib/models';
+import {
+  User,
+  Wallet,
+  Session,
+  UserStatus,
+  defaultUserSettings,
+} from '@workquest/database-models/lib/models';
+import { totpValidate } from '@workquest/database-models/lib/utils';
 
 const confirmTemplatePath = path.join(__dirname, '..', '..', '..', 'templates', 'confirmEmail.html');
 const confirmTemplate = Handlebars.compile(
@@ -53,6 +59,7 @@ export function register(host: 'dao' | 'main') {
     const session = await Session.create({
       userId: user.id,
       invalidating: false,
+      isTotpPassed: true,
       place: getGeo(r),
       ip: getRealIp(r),
       device: getDevice(r),
@@ -80,6 +87,7 @@ export function getLoginViaSocialNetworkHandler(returnType: 'token' | 'redirect'
     const session = await Session.create({
       userId: user.id,
       invalidating: false,
+      isTotpPassed: true,
       place: getGeo(r),
       ip: getRealIp(r),
       device: getDevice(r),
@@ -137,16 +145,14 @@ export async function login(r) {
     ],
   });
   const userController = new UserController(user);
+  const userTotpActiveStatus: boolean = user.isTOTPEnabled();
 
   await userController.checkPassword(r.payload.password);
-
-  if (userController.user.isTOTPEnabled()) {
-    userController.checkTotpConfirmationCode(r.payload.totp);
-  }
 
   const session = await Session.create({
     userId: user.id,
     invalidating: false,
+    isTotpPassed: !userTotpActiveStatus,
     place: getGeo(r),
     ip: getRealIp(r),
     device: getDevice(r),
@@ -155,6 +161,7 @@ export async function login(r) {
   const result = {
     ...generateJwt({ id: session.id, userId: session.userId }),
     userStatus: user.status,
+    totpIsActive: userTotpActiveStatus,
     address: user.wallet ? user.wallet.address : null,
   };
 
@@ -165,6 +172,7 @@ export async function refreshTokens(r) {
   const newSession = await Session.create({
     userId: r.auth.credentials.id,
     invalidating: false,
+    isTotpPassed: true,
     place: getGeo(r),
     ip: getRealIp(r),
     device: getDevice(r),
@@ -225,7 +233,6 @@ export async function registerWallet(r) {
 
 export async function loginWallet(r) {
   const address = r.payload.address.toLowerCase();
-
   const wallet = await Wallet.findOne({
     where: { address },
     include: [
@@ -236,6 +243,8 @@ export async function loginWallet(r) {
       },
     ],
   });
+  const user = await User.scope('withPassword').findByPk(wallet.userId);
+  const userTotpActiveStatus: boolean = user.settings.security.TOTP.active;
 
   if (!wallet) {
     return error(Errors.NotFound, 'Wallet not found', { field: ['address'] });
@@ -250,6 +259,7 @@ export async function loginWallet(r) {
   const session = await Session.create({
     userId: wallet.user.id,
     invalidating: false,
+    isTotpPassed: !userTotpActiveStatus,
     place: getGeo(r),
     ip: getRealIp(r),
     device: getDevice(r),
@@ -257,6 +267,7 @@ export async function loginWallet(r) {
 
   const result = {
     ...generateJwt({ id: session.id, userId: wallet.user.id }),
+    totpIsActive: userTotpActiveStatus,
     userStatus: wallet.user.status,
     address: wallet.address,
   };
@@ -270,4 +281,16 @@ export async function validateUserPassword(r) {
   return output({
     isValid: await user.passwordCompare(r.payload.password),
   });
+}
+
+export async function validateUserTotp(r) {
+  const user: User = r.auth.credentials.id;
+  const userController = new UserController(user);
+
+  const isValid = userController.user.isTOTPEnabled() ?
+    totpValidate(r.payload.token, this.user.settings.security.TOTP.secret) : true;
+
+  await Session.update({ isTotpPassed: isValid }, { where: { id: r.auth.artifacts.sessionId } });
+
+  return output({ isValid });
 }
