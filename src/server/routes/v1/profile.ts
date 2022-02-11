@@ -27,8 +27,8 @@ import {
   workerWagePerHourSchema,
   specializationKeysSchema,
   userAdditionalInfoWorkerSchema,
-  userAdditionalInfoEmployerSchema, userChangeRoleSchema
-} from '@workquest/database-models/lib/schemes';
+  userAdditionalInfoEmployerSchema, totpSchema
+} from "@workquest/database-models/lib/schemes";
 
 export default [{
   method: "GET",
@@ -263,12 +263,19 @@ export default [{
 }, {
   method: 'PUT',
   path: '/v1/profile/change-role',
-  handler: handlers.userChangeRole,
+  handler: handlers.changeUserRole,
   options: {
     description: 'Change user role',
     auth: 'jwt-access',
     tags: ['api', 'profile'],
-    validate: { payload: userChangeRoleSchema },
+    validate: {
+      payload: Joi.object({
+        totp: totpSchema.required()
+      }).label('ChangeUserRolePayload')
+    },
+    response: {
+      schema: emptyOkSchema
+    }
   }
 }];
 

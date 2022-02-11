@@ -19,9 +19,10 @@ import {
   Quest,
   QuestsResponse,
   QuestsResponseStatus,
-  AdminChangeRole
+  UserChangeRoleData
 } from "@workquest/database-models/lib/models";
 import { updateQuestsStatisticJob } from '../jobs/updateQuestsStatistic';
+import { deleteUserFiltersJob } from "../jobs/deleteUserFilters";
 
 export const searchFields = [
   "firstName",
@@ -302,118 +303,108 @@ export async function getUserStatistics(r) {
   return output({ chatsStatistic, questsStatistic, ratingStatistic });
 }
 
-
-export async function userChangeRole(r): Promise<unknown> {
-
-  const transaction = await r.server.app.db.transaction();
-  const { id } = r.auth.credentials;
-  const { role, totp } = r.payload
-  let invalidQuestStatus = [];
-
-
-  const user = await User.scope('withPassword').findByPk(id)
+export async function changeUserRole(r) {
+  const user = await User.scope('withPassword').findByPk(r.auth.credentials.id);
   const userController = new UserController(user);
 
-  if (user.role === role) {
-    throw error(Errors.InvalidRole, "The user is already assigned this role", {
-      currentRole: user.role,
-      newRole: role,
+  const registrationDate = new Date(user.createdAt);
+
+  const allowedDateFrom = new Date();
+  allowedDateFrom.setMonth(allowedDateFrom.getMonth() - 1);
+
+  if (registrationDate > allowedDateFrom) {
+    registrationDate.setMonth(registrationDate.getMonth() + 1);
+    return error(Errors.Forbidden, 'More than a month must have passed since registration', {
+      canChangeRoleSince: registrationDate,
     });
   }
 
-  await userController.userMustHaveActiveStatusTOTP(false);
-  await userController.checkTotpConfirmationCode(totp);
-
-  if (user.role === UserRole.Employer) {
-    const {rows} = await Quest.scope('defaultScope').findAndCountAll({
-      where: {userId: user.id}
-    })
-    for (const quest of rows) {
-      if (!(quest.status === QuestStatus.Done || quest.status === QuestStatus.Closed || quest.status === QuestStatus.Blocked)) {
-        invalidQuestStatus.push({questId: quest.id, status: QuestStatus[quest.status]})
-      }
-    }
-    if (invalidQuestStatus.length !== 0) {
-      return error(Errors.InvalidStatus, "Quest status does not match, it should be disabled", {
-        invalidQuests: invalidQuestStatus
-      });
-    }
+  if (!user.role) {
+    return error(Errors.NoRole, 'Role not set', {});
   }
+
+  userController.userMustHaveActiveStatusTOTP(true);
+  userController.checkTotpConfirmationCode(r.payload.totp);
 
   if (user.role === UserRole.Worker) {
-    const {rows} = await QuestsResponse.scope('defaultScope').findAndCountAll({
-      where: {workerId: user.id}
-    })
-    for (const response of rows) {
-      if (!(response.status === QuestsResponseStatus.Rejected || response.status === QuestsResponseStatus.Closed)) {
-        invalidQuestStatus.push({questResponseId: response.id, responseStatus: QuestsResponseStatus[response.status]})
+    const questCount = await Quest.count({
+      where: {
+        assignedWorkerId: user.id,
+        status: { [Op.notIn]: [QuestStatus.Closed, QuestStatus.Done, QuestStatus.Blocked] }
       }
+    });
+    const questsResponseCount = await QuestsResponse.count({
+      where: {
+        workerId: user.id,
+        status: { [Op.notIn]: [QuestsResponseStatus.Closed, QuestsResponseStatus.Rejected] }
+      }
+    });
+
+    if (questCount !== 0) {
+      return error(Errors.HasActiveQuests, 'There are active quests', { questCount });
     }
-    if (invalidQuestStatus.length !== 0) {
-      return error(Errors.InvalidStatus, "The status of the response to the quest does not match, it should be changed", {
-        invalidQuests: invalidQuestStatus
-      });
+    if (questsResponseCount !== 0) {
+      return error(Errors.HasActiveResponses, 'There are active responses', { questsResponseCount });
     }
   }
 
-  const [changeRole, isCreated] = await AdminChangeRole.findOrCreate({
-    where: {userId: user.id},
-    defaults: {
-      adminId: r.auth.credentials.id,
-      userId: user.id,
-      role: user.role,
-      additionalInfo: user.additionalInfo,
-      wagePerHour: user.wagePerHour,
-      workplace: user.workplace,
-      priority: user.priority
-    }, transaction,
-  })
+  if (user.role === UserRole.Employer) {
+    const questCount = await Quest.count({
+      where: { userId: user.id, status: { [Op.notIn]: [QuestStatus.Closed, QuestStatus.Done] } }
+    });
 
-  if (!isCreated) {
-    const timeDiff = Math.abs((new Date).getTime() - (changeRole.updatedAt).getTime());
-    const diffDays = Math.ceil(timeDiff / (1000 * 3600 * 24));
-    if (diffDays < 31) {
-      return error(Errors.Forbidden, "Difference in days does not meet requirements", {
-        daysAgo: diffDays
-      });
+    if (questCount !== 0) {
+      return error(Errors.HasActiveQuests, 'There are active quests', { questCount });
     }
-    await user.update({
-      additionalInfo: changeRole.additionalInfo,
-      wagePerHour: changeRole.wagePerHour,
-      workplace: changeRole.workplace,
-      priority: changeRole.priority
-    }, {transaction})
-
-    await changeRole.update({
-      adminId: r.auth.credentials.id,
-      role: user.role,
-      additionalInfo: user.additionalInfo,
-      wagePerHour: user.wagePerHour,
-      workplace: user.workplace,
-      priority: user.priority
-    }, {transaction})
   }
 
-  if (isCreated) {
-    await userController.setRole(r.payload.role, transaction)
+  const transaction = await r.server.app.db.transaction();
+
+  const changeToRole = user.role === UserRole.Worker ? UserRole.Employer : UserRole.Worker;
+
+  const lastRoleChange = await UserChangeRoleData.findOne({
+    where: { userId: user.id, changedAdminId: null },
+    order: [['createdAt', 'DESC']]
+  });
+  const lastRoleChangeDate = lastRoleChange ? new Date(lastRoleChange.createdAt) : null;
+
+  if (lastRoleChange && lastRoleChangeDate > allowedDateFrom) {
+    await transaction.rollback();
+    lastRoleChangeDate.setMonth(lastRoleChangeDate.getMonth() + 1);
+    return error(Errors.Forbidden, 'More than a month must have passed since last role change', {
+      canChangeRoleSince: lastRoleChangeDate
+    })
   }
+
+  await UserChangeRoleData.create({
+    changedAdminId: null,
+    userId: user.id,
+    movedFromRole: user.role,
+    additionalInfo: user.additionalInfo,
+    wagePerHour: user.wagePerHour,
+    workplace: user.workplace,
+    priority: user.priority,
+  }, { transaction });
+
+  await user.update({
+    workplace: null,
+    wagePerHour: null,
+    role: changeToRole,
+    additionalInfo: UserController.getDefaultAdditionalInfo(changeToRole),
+  }, { transaction });
 
   await transaction.commit();
+
+  await deleteUserFiltersJob({ userId: user.id });
 
   await addUpdateReviewStatisticsJob({
     userId: user.id,
   });
+
   await updateQuestsStatisticJob({
     userId: user.id,
     role: user.role,
   });
 
-  await transaction.commit()
-
-  return output({
-    adminId: changeRole.adminId,
-    userId: changeRole.userId,
-    role: changeRole.role,
-    additionalInfo: changeRole.additionalInfo,
-  });
+  return output();
 }
