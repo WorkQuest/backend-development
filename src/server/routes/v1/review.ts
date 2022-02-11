@@ -9,7 +9,7 @@ import {
   reviewMessageSchema,
   outputPaginationSchema,
 } from '@workquest/database-models/lib/schemes';
-import { sendReview, getReviewsOfUser } from '../../api/review';
+import { sendReview, getReviewsOfUser, sendReviewAdmin } from '../../api/review';
 
 export default [
   {
@@ -22,6 +22,30 @@ export default [
       tags: ['api', 'review'],
       description: 'Send review for user',
       validate: {
+        payload: Joi.object({
+          questId: idSchema.required(),
+          message: reviewMessageSchema.required(),
+          mark: reviewMarkSchema.required(),
+        }).label('ReviewSendPayload'),
+      },
+      response: {
+        schema: outputOkSchema(reviewSchema).label('ReviewResponse'),
+      },
+    },
+  },
+  {
+    method: 'POST',
+    path: '/v1/review-admin/{idAdmin}',
+    handler: sendReviewAdmin,
+    options: {
+      auth: 'jwt-access',
+      id: 'v1.review.sendAdmin',
+      tags: ['api', 'review'],
+      description: 'Send review for admin',
+      validate: {
+        params: Joi.object({
+          idAdmin: idSchema.required()
+        }),
         payload: Joi.object({
           questId: idSchema.required(),
           message: reviewMessageSchema.required(),

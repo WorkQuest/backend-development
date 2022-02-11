@@ -3,8 +3,9 @@ import { addUpdateReviewStatisticsJob } from '../jobs/updateReviewStatistics';
 import { QuestNotificationActions } from '../controllers/controller.broker';
 import { QuestController } from '../controllers/quest/controller.quest';
 import { Errors } from '../utils/errors';
-import { User, Quest, Review, UserRole, QuestStatus } from '@workquest/database-models/lib/models';
+import { User, Quest, Review, UserRole, QuestStatus, Admin } from '@workquest/database-models/lib/models';
 import { UserController } from '../controllers/user/controller.user';
+import { ReviewAdmin } from '@workquest/database-models/lib/models/quest/ReviewAdmin';
 
 export async function sendReview(r) {
   const fromUser: User = r.auth.credentials;
@@ -74,3 +75,41 @@ export async function getReviewsOfUser(r) {
 
   return output({ count, reviews: rows });
 }
+
+export async function sendReviewAdmin(r) {
+  const { idAdmin } = r.params;
+  const { questId, message, mark } = r.payload ;
+  const fromUser: User = r.auth.credentials;
+
+  const admin = await Admin.findByPk(idAdmin)
+
+  if(!admin) {
+    return error(Errors.AlreadyExists, 'Admin not found', { idAdmin });
+  }
+
+  const available = await ReviewAdmin.findOne({
+    where: {
+      fromUserId: fromUser.id,
+      toAdminId: idAdmin,
+      questId: questId,
+    },
+  });
+
+  if (available) {
+    return error(Errors.AlreadyExists, 'You already valued this quest', {
+      yourReviewId: available.id,
+    });
+  }
+
+
+  const reviewAdmin = await ReviewAdmin.create({
+    fromUserId: fromUser.id,
+    toAdminId: idAdmin,
+    questId: questId,
+    message: message,
+    mark: mark,
+  });
+
+  return output(reviewAdmin)
+}
+
