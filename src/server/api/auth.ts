@@ -287,7 +287,7 @@ export async function validateUserTotp(r) {
   const user: User = r.auth.credentials.id;
   const userController = new UserController(user);
 
-  const isValid = userController.user.isTOTPEnabled() ?
+  const isValid = userController.user.isTOTPEnabled ?
     totpValidate(r.payload.token, this.user.settings.security.TOTP.secret) : true;
 
   await Session.update({ isTotpPassed: isValid }, { where: { id: r.auth.artifacts.sessionId } });
