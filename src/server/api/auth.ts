@@ -259,10 +259,10 @@ export async function loginWallet(r) {
   const session = await Session.create({
     userId: wallet.user.id,
     invalidating: false,
-    isTotpPassed: !userTotpActiveStatus,
     place: getGeo(r),
     ip: getRealIp(r),
     device: getDevice(r),
+    isTotpPassed: !userTotpActiveStatus,
   });
 
   const result = {
