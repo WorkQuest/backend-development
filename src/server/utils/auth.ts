@@ -44,7 +44,9 @@ export function tokenValidate(tokenType: 'access' | 'refresh', allowedUnconfirme
     if (session.user.status === UserStatus.Blocked) {
       throw error(Errors.BlockedUser, 'Blocked user', {});
     }
-    if (session.user.status === UserStatus.Unconfirmed && !allowedUnconfirmedRoutes.includes(r.route.path)) {
+    if (!session.isTotpPassed && r.route.path !== '/api/v1/auth/validate-totp') {
+      throw error(Errors.Forbidden, 'User must pass 2FA', {});
+    } else if (session.user.status === UserStatus.Unconfirmed && !allowedUnconfirmedRoutes.includes(r.route.path)) {
       throw error(Errors.UnconfirmedUser, 'Unconfirmed user', {});
     }
 

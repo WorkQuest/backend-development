@@ -524,7 +524,7 @@ export async function rejectResponseOnQuest(r) {
 
   r.server.app.broker.sendQuestNotification({
     action: QuestNotificationActions.employerRejectedWorkersResponse,
-    recipients: [questResponse.quest.userId],
+    recipients: [questResponse.workerId],
     data: questResponse,
   });
 

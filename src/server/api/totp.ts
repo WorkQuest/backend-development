@@ -59,8 +59,9 @@ export async function disableTOTP(r) {
   const user = await User.scope('withPassword').findByPk(r.auth.credentials.id);
   const userController = new UserController(user);
 
-  await userController.userMustHaveActiveStatusTOTP(false);
-  await userController.checkTotpConfirmationCode(r.payload.totp);
+  await userController
+    .userMustHaveActiveStatusTOTP(true)
+    .checkTotpConfirmationCode(r.payload.totp)
 
   await user.update({
     'settings.security.TOTP.active': false,
