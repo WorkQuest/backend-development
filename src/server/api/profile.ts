@@ -6,23 +6,23 @@ import { transformToGeoPostGIS } from '../utils/postGIS';
 import { MediaController } from '../controllers/controller.media';
 import { SkillsFiltersController } from '../controllers/controller.skillsFilters';
 import { addUpdateReviewStatisticsJob } from '../jobs/updateReviewStatistics';
+import { updateQuestsStatisticJob } from '../jobs/updateQuestsStatistic';
+import { deleteUserFiltersJob } from '../jobs/deleteUserFilters';
 import { Errors } from '../utils/errors';
 import {
   User,
   Wallet,
   UserRole,
+  Quest,
   ChatsStatistic,
   RatingStatistic,
   QuestsStatistic,
   UserStatus,
   QuestStatus,
-  Quest,
   QuestsResponse,
   QuestsResponseStatus,
-  UserChangeRoleData
-} from "@workquest/database-models/lib/models";
-import { updateQuestsStatisticJob } from '../jobs/updateQuestsStatistic';
-import { deleteUserFiltersJob } from "../jobs/deleteUserFilters";
+  UserChangeRoleData,
+} from '@workquest/database-models/lib/models';
 
 export const searchFields = [
   "firstName",
@@ -308,8 +308,8 @@ export async function changeUserRole(r) {
   const userController = new UserController(user);
 
   const registrationDate = new Date(user.createdAt);
-
   const allowedDateFrom = new Date();
+
   allowedDateFrom.setMonth(allowedDateFrom.getMonth() - 1);
 
   if (registrationDate > allowedDateFrom) {
@@ -323,8 +323,9 @@ export async function changeUserRole(r) {
     return error(Errors.NoRole, 'Role not set', {});
   }
 
-  userController.userMustHaveActiveStatusTOTP(true);
-  userController.checkTotpConfirmationCode(r.payload.totp);
+  userController
+    .userMustHaveActiveStatusTOTP(true)
+    .checkTotpConfirmationCode(r.payload.totp)
 
   if (user.role === UserRole.Worker) {
     const questCount = await Quest.count({
@@ -358,8 +359,6 @@ export async function changeUserRole(r) {
     }
   }
 
-  const transaction = await r.server.app.db.transaction();
-
   const changeToRole = user.role === UserRole.Worker ? UserRole.Employer : UserRole.Worker;
 
   const lastRoleChange = await UserChangeRoleData.findOne({
@@ -369,12 +368,13 @@ export async function changeUserRole(r) {
   const lastRoleChangeDate = lastRoleChange ? new Date(lastRoleChange.createdAt) : null;
 
   if (lastRoleChange && lastRoleChangeDate > allowedDateFrom) {
-    await transaction.rollback();
     lastRoleChangeDate.setMonth(lastRoleChangeDate.getMonth() + 1);
     return error(Errors.Forbidden, 'More than a month must have passed since last role change', {
       canChangeRoleSince: lastRoleChangeDate
     })
   }
+
+  const transaction = await r.server.app.db.transaction();
 
   await UserChangeRoleData.create({
     changedAdminId: null,
