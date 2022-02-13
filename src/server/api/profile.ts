@@ -6,15 +6,23 @@ import { transformToGeoPostGIS } from '../utils/postGIS';
 import { MediaController } from '../controllers/controller.media';
 import { SkillsFiltersController } from '../controllers/controller.skillsFilters';
 import { addUpdateReviewStatisticsJob } from '../jobs/updateReviewStatistics';
+import { updateQuestsStatisticJob } from '../jobs/updateQuestsStatistic';
+import { deleteUserFiltersJob } from '../jobs/deleteUserFilters';
 import { Errors } from '../utils/errors';
 import {
   User,
   Wallet,
   UserRole,
+  Quest,
   ChatsStatistic,
   RatingStatistic,
-  QuestsStatistic, UserStatus
-} from "@workquest/database-models/lib/models";
+  QuestsStatistic,
+  UserStatus,
+  QuestStatus,
+  QuestsResponse,
+  QuestsResponseStatus,
+  UserChangeRoleData,
+} from '@workquest/database-models/lib/models';
 
 export const searchFields = [
   "firstName",
@@ -293,4 +301,110 @@ export async function getUserStatistics(r) {
   });
 
   return output({ chatsStatistic, questsStatistic, ratingStatistic });
+}
+
+export async function changeUserRole(r) {
+  const user = await User.scope('withPassword').findByPk(r.auth.credentials.id);
+  const userController = new UserController(user);
+
+  const registrationDate = new Date(user.createdAt);
+  const allowedDateFrom = new Date();
+
+  allowedDateFrom.setMonth(allowedDateFrom.getMonth() - 1);
+
+  if (registrationDate > allowedDateFrom) {
+    registrationDate.setMonth(registrationDate.getMonth() + 1);
+    return error(Errors.Forbidden, 'More than a month must have passed since registration', {
+      canChangeRoleSince: registrationDate,
+    });
+  }
+
+  if (!user.role) {
+    return error(Errors.NoRole, 'Role not set', {});
+  }
+
+  userController
+    .userMustHaveActiveStatusTOTP(true)
+    .checkTotpConfirmationCode(r.payload.totp)
+
+  if (user.role === UserRole.Worker) {
+    const questCount = await Quest.count({
+      where: {
+        assignedWorkerId: user.id,
+        status: { [Op.notIn]: [QuestStatus.Closed, QuestStatus.Done, QuestStatus.Blocked] }
+      }
+    });
+    const questsResponseCount = await QuestsResponse.count({
+      where: {
+        workerId: user.id,
+        status: { [Op.notIn]: [QuestsResponseStatus.Closed, QuestsResponseStatus.Rejected] }
+      }
+    });
+
+    if (questCount !== 0) {
+      return error(Errors.HasActiveQuests, 'There are active quests', { questCount });
+    }
+    if (questsResponseCount !== 0) {
+      return error(Errors.HasActiveResponses, 'There are active responses', { questsResponseCount });
+    }
+  }
+
+  if (user.role === UserRole.Employer) {
+    const questCount = await Quest.count({
+      where: { userId: user.id, status: { [Op.notIn]: [QuestStatus.Closed, QuestStatus.Done] } }
+    });
+
+    if (questCount !== 0) {
+      return error(Errors.HasActiveQuests, 'There are active quests', { questCount });
+    }
+  }
+
+  const changeToRole = user.role === UserRole.Worker ? UserRole.Employer : UserRole.Worker;
+
+  const lastRoleChange = await UserChangeRoleData.findOne({
+    where: { userId: user.id, changedAdminId: null },
+    order: [['createdAt', 'DESC']]
+  });
+  const lastRoleChangeDate = lastRoleChange ? new Date(lastRoleChange.createdAt) : null;
+
+  if (lastRoleChange && lastRoleChangeDate > allowedDateFrom) {
+    lastRoleChangeDate.setMonth(lastRoleChangeDate.getMonth() + 1);
+    return error(Errors.Forbidden, 'More than a month must have passed since last role change', {
+      canChangeRoleSince: lastRoleChangeDate
+    })
+  }
+
+  const transaction = await r.server.app.db.transaction();
+
+  await UserChangeRoleData.create({
+    changedAdminId: null,
+    userId: user.id,
+    movedFromRole: user.role,
+    additionalInfo: user.additionalInfo,
+    wagePerHour: user.wagePerHour,
+    workplace: user.workplace,
+    priority: user.priority,
+  }, { transaction });
+
+  await user.update({
+    workplace: null,
+    wagePerHour: null,
+    role: changeToRole,
+    additionalInfo: UserController.getDefaultAdditionalInfo(changeToRole),
+  }, { transaction });
+
+  await transaction.commit();
+
+  await deleteUserFiltersJob({ userId: user.id });
+
+  await addUpdateReviewStatisticsJob({
+    userId: user.id,
+  });
+
+  await updateQuestsStatisticJob({
+    userId: user.id,
+    role: user.role,
+  });
+
+  return output();
 }

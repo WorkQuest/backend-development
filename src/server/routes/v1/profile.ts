@@ -26,10 +26,9 @@ import {
   outputPaginationSchema,
   workerWagePerHourSchema,
   specializationKeysSchema,
-  workerQueryForMapPointsSchema,
   userAdditionalInfoWorkerSchema,
-  userAdditionalInfoEmployerSchema,
-} from '@workquest/database-models/lib/schemes';
+  userAdditionalInfoEmployerSchema, totpSchema
+} from "@workquest/database-models/lib/schemes";
 
 export default [{
   method: "GET",
@@ -72,7 +71,7 @@ export default [{
     tags: ["api", "profile"],
     description: "Get worker points",
     validate: {
-      query: workerQueryForMapPointsSchema,
+      // query: workerQueryForMapPointsSchema,
     },
     response: {
       schema: outputOkSchema(userWorkersSchema).label("GetWorkerPointsResponse")
@@ -259,6 +258,23 @@ export default [{
     description: "Get all statistic about current user",
     response: {
       schema: outputOkSchema(userStatisticsSchema).label("GetUserStatisticsResponse")
+    }
+  }
+}, {
+  method: 'PUT',
+  path: '/v1/profile/change-role',
+  handler: handlers.changeUserRole,
+  options: {
+    description: 'Change user role',
+    auth: 'jwt-access',
+    tags: ['api', 'profile'],
+    validate: {
+      payload: Joi.object({
+        totp: totpSchema.required()
+      }).label('ChangeUserRolePayload')
+    },
+    response: {
+      schema: emptyOkSchema
     }
   }
 }];

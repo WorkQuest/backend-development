@@ -17,6 +17,9 @@ export enum Errors {
   WalletExists = 400012,
   BlockedUser = 400013,
   PhoneNumberAlreadyConfirmed = 400014,
+  HasActiveQuests = 400015,
+  HasActiveResponses = 400016,
+  NoRole = 400017,
   // Authorization errors (401)
   TokenExpired = 401001,
   TokenInvalid = 401002,
