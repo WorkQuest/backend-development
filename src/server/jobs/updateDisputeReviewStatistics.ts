@@ -2,8 +2,8 @@ import { col, fn } from 'sequelize';
 import { addJob } from '../utils/scheduler';
 import {
   Admin,
-  Review,
-  AdminRatingStatistic, QuestDisputeReview
+  QuestDisputeReview,
+  AdminRatingStatistic,
 } from "@workquest/database-models/lib/models";
 
 export interface StatisticPayload {

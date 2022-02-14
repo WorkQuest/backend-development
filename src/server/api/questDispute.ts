@@ -124,6 +124,7 @@ export async function sendQuestDisputeReview(r) {
   const fromUser: User = r.auth.credentials;
   const fromUserController = new UserController(fromUser);
   const dispute: QuestDispute = await QuestDispute.findByPk(r.params.disputeId);
+  fromUserController.userMustBeDisputeMember(dispute);
 
   if(!dispute) {
     return error(Errors.NotFound, 'Dispute not found', {disputeId: r.params.disputeId});
@@ -146,7 +147,7 @@ export async function sendQuestDisputeReview(r) {
   }
 
   if(dispute.status !== DisputeStatus.closed) {
-    return error(Errors.InvalidStatus, 'Dispute status does not match', {current: dispute.status, mustHave: DisputeStatus.closed });
+    return error(Errors.InvalidStatus, 'Dispute status does not match', [{current: dispute.status, mustHave: DisputeStatus.closed }]);
   }
 
   const review = await QuestDisputeReview.create({
