@@ -42,20 +42,17 @@ export async function getUserChats(r) {
   const where = {};
   const replacements = {};
 
-  const include: any[] = [
-    {
+  const include: any[] = [{
       model: ChatMember,
       where: { userId: r.auth.credentials.id },
       required: true,
       as: 'meMember',
-    },
-    {
+    }, {
       model: StarredChat,
       as: 'star',
       where: { userId: r.auth.credentials.id },
       required: r.query.starred,
-    },
-  ];
+    }];
 
   if (r.query.q) {
     where[Op.or] = searchChatFields.map(field => ({
