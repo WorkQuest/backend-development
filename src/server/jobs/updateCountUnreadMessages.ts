@@ -35,7 +35,7 @@ export default async function updateCountUnreadMessages(payload: MemberUnreadMes
     const unreadMessageCount = await Message.count({
       where: {
         id: { [Op.ne]: chatMember.lastReadMessageId },
-        senderUserId: { [Op.ne]: chatMember.userId },
+        senderMemberId: { [Op.ne]: chatMember.userId },
         number: {
           [Op.between]: [firstUnreadMessageNumber, payload.lastUnreadMessage.number],
         },

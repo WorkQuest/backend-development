@@ -86,7 +86,7 @@ export async function getChatMessages(r) {
   const chat = await Chat.findByPk(r.params.chatId, {
     include: {
       model: ChatMember,
-      where: { userId: r.auth.credentials.id },
+      where: { memberId: r.auth.credentials.id },
       required: false,
       as: 'meMember',
     },
@@ -101,7 +101,7 @@ export async function getChatMessages(r) {
       {
         model: StarredMessage,
         as: 'star',
-        where: { userId: r.auth.credentials.id },
+        where: { memberId: r.auth.credentials.id },
         required: r.query.starred,
       },
     ],
@@ -194,14 +194,14 @@ export async function createGroupChat(r) {
   const groupChat = await Chat.create(
     {
       name: r.payload.name,
-      ownerUserId: r.auth.credentials.id,
+      ownerMemberId: r.auth.credentials.id,
       type: ChatType.group,
     },
     { transaction },
   );
 
   const message = await Message.build({
-    senderUserId: r.auth.credentials.id,
+    senderMemberId: r.auth.credentials.id,
     chatId: groupChat.id,
     type: MessageType.info,
     number: 1 /** Because created */,
@@ -260,7 +260,7 @@ export async function sendMessageToUser(r) {
   const transaction = await r.server.app.db.transaction();
 
   const message = await Message.build({
-    senderUserId: r.auth.credentials.id,
+    senderMemberId: r.auth.credentials.id,
     type: MessageType.message,
     senderStatus: SenderMessageStatus.unread,
     text: r.payload.text,
@@ -273,14 +273,14 @@ export async function sendMessageToUser(r) {
       {
         model: ChatMember,
         as: 'firstMemberInPrivateChat',
-        where: { userId: r.params.userId },
+        where: { memberId: r.params.userId },
         required: true,
         attributes: [],
       },
       {
         model: ChatMember,
         as: 'secondMemberInPrivateChat',
-        where: { userId: r.auth.credentials.id },
+        where: { memberId: r.auth.credentials.id },
         required: true,
         attributes: [],
       },
@@ -310,14 +310,14 @@ export async function sendMessageToUser(r) {
         {
           unreadCountMessages: 0 /** Because created */,
           chatId: chat.id,
-          userId: r.auth.credentials.id,
+          memberId: r.auth.credentials.id,
           lastReadMessageId: message.id /** Because created */,
           lastReadMessageNumber: message.number,
         },
         {
           unreadCountMessages: 1 /** Because created */,
           chatId: chat.id,
-          userId: r.params.userId,
+          memberId: r.params.userId,
           lastReadMessageId: null /** Because created */,
           lastReadMessageNumber: null,
         },
@@ -390,7 +390,7 @@ export async function sendMessageToChat(r) {
 
   const message = await Message.create(
     {
-      senderUserId: r.auth.credentials.id,
+      senderMemberId: r.auth.credentials.id,
       chatId: chat.id,
       type: MessageType.message,
       text: r.payload.text,
@@ -413,7 +413,7 @@ export async function sendMessageToChat(r) {
   await transaction.commit();
 
   const membersWithoutSender = await ChatMember.scope('userIdsOnly').findAll({
-    where: { chatId: chat.id, userId: { [Op.ne]: r.auth.credentials.id } },
+    where: { chatId: chat.id, memberId: { [Op.ne]: r.auth.credentials.id } },
   });
   const userIdsWithoutSender = membersWithoutSender.map((member) => member.userId);
   const result = await Message.findByPk(message.id);
@@ -468,12 +468,12 @@ export async function addUsersInGroupChat(r) {
     const message = Message.build({
       chatId: groupChat.id,
       type: MessageType.info,
-      senderUserId: r.auth.credentials.id,
+      senderMemberId: r.auth.credentials.id,
       number: messageNumber,
       createdAt: Date.now() + i * 100,
     });
     const infoMessage = InfoMessage.build({
-      userId: userId,
+      memberId: userId,
       messageId: message.id,
       messageAction: MessageAction.groupChatAddUser,
     });
@@ -488,7 +488,7 @@ export async function addUsersInGroupChat(r) {
   const members = userIds.map((userId) => {
     return {
       chatId: groupChat.id,
-      userId: userId,
+      memberId: userId,
       unreadCountMessages: 1 /** Because info message */,
       lastReadMessageId: groupChat.lastMessage.id /** Because new member */,
     };
@@ -509,7 +509,7 @@ export async function addUsersInGroupChat(r) {
   await transaction.commit();
 
   const membersWithoutSender = await ChatMember.scope('userIdsOnly').findAll({
-    where: { chatId: groupChat.id, userId: { [Op.ne]: r.auth.credentials.id } },
+    where: { chatId: groupChat.id, memberId: { [Op.ne]: r.auth.credentials.id } },
   });
   const userIdsInChatWithoutSender = membersWithoutSender.map((member) => member.userId);
 
@@ -517,7 +517,7 @@ export async function addUsersInGroupChat(r) {
     const keysMessage: { [key: string]: any } = message.toJSON();
     const keysInfoMessage = infoMessagesResult.find((_) => _.messageId === message.id).toJSON() as InfoMessage;
 
-    keysInfoMessage.user = users.find((_) => _.id === keysInfoMessage.userId).toJSON() as User;
+    keysInfoMessage.member = users.find((_) => _.id === keysInfoMessage.memberId).toJSON() as User;
 
     keysMessage.infoMessage = keysInfoMessage;
 
@@ -564,14 +564,14 @@ export async function removeUserInGroupChat(r) {
   await ChatMember.destroy({
     where: {
       chatId: groupChat.id,
-      userId: r.params.userId,
+      memberId: r.params.userId,
     },
     transaction,
   });
 
   const message = await Message.create(
     {
-      senderUserId: r.auth.credentials.id,
+      senderMemberId: r.auth.credentials.id,
       chatId: groupChat.id,
       type: MessageType.info,
       number: groupChat.lastMessage.number + 1,
@@ -581,7 +581,7 @@ export async function removeUserInGroupChat(r) {
 
   await InfoMessage.create(
     {
-      userId: r.params.userId,
+      memberId: r.params.userId,
       messageId: message.id,
       messageAction: MessageAction.groupChatDeleteUser,
     },
@@ -600,7 +600,7 @@ export async function removeUserInGroupChat(r) {
 
   const result = await Message.findByPk(message.id);
   const membersWithoutSender = await ChatMember.scope('userIdsOnly').findAll({
-    where: { chatId: groupChat.id, userId: { [Op.ne]: r.auth.credentials.id } },
+    where: { chatId: groupChat.id, memberId: { [Op.ne]: r.auth.credentials.id } },
   });
   const userIdsWithoutSender = membersWithoutSender.map((member) => member.userId);
 
@@ -636,20 +636,20 @@ export async function leaveFromGroupChat(r) {
   await chatController.chatMustHaveType(ChatType.group);
   await chatController.chatMustHaveMember(r.auth.credentials.id);
 
-  if (groupChat.ownerUserId === r.auth.credentials.id) {
+  if (groupChat.ownerMemberId === r.auth.credentials.id) {
     return error(Errors.Forbidden, 'User is chat owner', {}); // TODO
   }
 
   const transaction = await r.server.app.db.transaction();
 
   await ChatMember.destroy({
-    where: { chatId: groupChat.id, userId: r.auth.credentials.id },
+    where: { chatId: groupChat.id, memberId: r.auth.credentials.id },
     transaction,
   });
 
   const message = await Message.create(
     {
-      senderUserId: r.auth.credentials.id,
+      senderMemberId: r.auth.credentials.id,
       chatId: groupChat.id,
       type: MessageType.info,
       number: groupChat.lastMessage.number + 1,
@@ -660,7 +660,7 @@ export async function leaveFromGroupChat(r) {
   await InfoMessage.create(
     {
       messageId: message.id,
-      // userId: r.auth.credentials.id,
+      // memberId: r.auth.credentials.id,
       messageAction: MessageAction.groupChatLeaveUser,
     },
     { transaction },
@@ -678,7 +678,7 @@ export async function leaveFromGroupChat(r) {
 
   const result = await Message.findByPk(message.id);
   const membersWithoutSender = await ChatMember.scope('userIdsOnly').findAll({
-    where: { chatId: groupChat.id, userId: { [Op.ne]: r.auth.credentials.id } },
+    where: { chatId: groupChat.id, memberId: { [Op.ne]: r.auth.credentials.id } },
   });
   const userIdsWithoutSender = membersWithoutSender.map((member) => member.userId);
 
@@ -713,14 +713,14 @@ export async function setMessagesAsRead(r) {
   }
 
   const otherSenders = await Message.unscoped().findAll({
-    attributes: ['senderUserId'],
+    attributes: ['senderMemberId'],
     where: {
       chatId: chatController.chat.id,
-      senderUserId: { [Op.ne]: r.auth.credentials.id },
+      senderMemberId: { [Op.ne]: r.auth.credentials.id },
       senderStatus: SenderMessageStatus.unread,
       number: { [Op.gte]: message.number },
     },
-    group: ['senderUserId'],
+    group: ['senderMemberId'],
   });
 
   await updateCountUnreadMessagesJob({
@@ -745,7 +745,7 @@ export async function setMessagesAsRead(r) {
 
   r.server.app.broker.sendChatNotification({
     action: ChatNotificationActions.messageReadByRecipient,
-    recipients: otherSenders.map((sender) => sender.senderUserId),
+    recipients: otherSenders.map((sender) => sender.senderMemberId),
     data: message,
   });
 
@@ -784,7 +784,7 @@ export async function markMessageStar(r) {
   await chatController.chatMustHaveMember(r.auth.credentials.id);
 
   await StarredMessage.create({
-    userId: r.auth.credentials.id,
+    memberId: r.auth.credentials.id,
     messageId: r.params.messageId,
   });
 
@@ -795,7 +795,7 @@ export async function removeStarFromMessage(r) {
   const starredMessage = await StarredMessage.findOne({
     where: {
       messageId: r.params.messageId,
-      userId: r.auth.credentials.id,
+      memberId: r.auth.credentials.id,
     },
   });
 
@@ -815,7 +815,7 @@ export async function markChatStar(r) {
   await chatController.chatMustHaveMember(r.auth.credentials.id);
 
   await StarredChat.create({
-    userId: r.auth.credentials.id,
+    memberId: r.auth.credentials.id,
     chatId: r.params.chatId,
   });
 
@@ -831,7 +831,7 @@ export async function removeStarFromChat(r) {
   await StarredChat.destroy({
     where: {
       chatId: r.params.chatId,
-      userId: r.auth.credentials.id,
+      memberId: r.auth.credentials.id,
     },
   });
 

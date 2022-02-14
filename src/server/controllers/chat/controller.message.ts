@@ -7,7 +7,7 @@ abstract class MessageHelper {
   public abstract message: Message;
 
   async messageMustBeSender(userId: string) {
-    if (this.message.senderUserId !== userId) {
+    if (this.message.senderMemberId !== userId) {
       throw error(Errors.Forbidden, "User isn't sender of the message", {
         messageId: this.message.id,
       });
