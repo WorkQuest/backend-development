@@ -8,8 +8,8 @@ import {
   questDisputeSchema,
   questDisputeReasonSchema,
   questDisputesWithCountSchema,
-  questDisputeProblemDescriptionSchema,
-} from '@workquest/database-models/lib/schemes';
+  questDisputeProblemDescriptionSchema, messageSchema, reviewMarkSchema, questDisputeReviewSchema, reviewMessageSchema
+} from "@workquest/database-models/lib/schemes";
 
 export default [
   {
@@ -71,6 +71,29 @@ export default [
       },
       response: {
         schema: questDisputesWithCountSchema.label('getDisputesResponse'),
+      },
+    },
+  },
+  {
+    method: 'POST',
+    path: '/v1/quest/dispute/{disputeId}/review/send',
+    handler: handlers.sendQuestDisputeReview,
+    options: {
+      id: 'v1.quest.disputes.review',
+      auth: 'jwt-access',
+      tags: ['api', 'quest-disputes'],
+      description: 'Send dispute review',
+      validate: {
+        params: Joi.object({
+          disputeId: idSchema
+        }).label('QuestDisputeReviewParams'),
+        payload: Joi.object({
+          message: reviewMessageSchema,
+          mark: reviewMarkSchema,
+        }).label('QuestDisputeReviewPayload')
+      },
+      response: {
+        schema: questDisputeReviewSchema.label('QuestDisputeReviewPayload'),
       },
     },
   },
