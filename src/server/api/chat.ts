@@ -59,14 +59,13 @@ export async function getUserChats(r) {
       [field]: { [Op.iLike]: `%${r.query.q}%` }
     }));
 
+    where[Op.or].push(searchByQuestNameLiteral, searchByFirstAndLastNameLiteral);
+
     replacements['query'] = `%${r.query.q}%`;
     replacements['chatType'] = ChatType.private;
     replacements['searcherId'] = r.auth.credentials.id;
 
-    where[Op.or] = [
-      searchByQuestNameLiteral,
-      searchByFirstAndLastNameLiteral,
-    ];
+
   }
 
   const { count, rows } = await Chat.findAndCountAll({
