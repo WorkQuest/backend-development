@@ -14,6 +14,7 @@ import {
   QuestStatus,
   User
 } from "@workquest/database-models/lib/models";
+import { addUpdateDisputeReviewStatisticsJob } from "../jobs/updateDisputeReviewStatistics";
 
 export async function openDispute(r) {
   const user: User = r.auth.credentials;
@@ -159,9 +160,9 @@ export async function sendQuestDisputeReview(r) {
   review.setDataValue('fromUser', fromUserController.shortCredentials);
 
   //TODO: add job for admin review
-  // await addUpdateReviewStatisticsJob({
-  //   userId: toUser.id,
-  // });
+  await addUpdateDisputeReviewStatisticsJob({
+    adminId: toAdmin.id,
+  });
 
   return output(review);
 }
