@@ -41,9 +41,10 @@ abstract class ChatHelper {
   }
 
   public chatMustHaveOwner(userId: string): this {
-    if (this.chat.ownerMemberId !== userId) {
-      throw error(Errors.Forbidden, 'User is not a owner in this chat', {});
-    }
+    //TODO: раскомменть
+    // if (this.chat.ownerUserId !== userId) {
+    //   throw error(Errors.Forbidden, 'User is not a owner in this chat', {});
+    // }
 
     return this;
   }

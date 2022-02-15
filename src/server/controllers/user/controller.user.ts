@@ -350,10 +350,6 @@ export class UserController extends UserHelper {
       where: { userId: userId },
       defaults: { userId: userId },
     });
-    await ChatsStatistic.findOrCreate({
-      where: { userId: userId },
-      defaults: { userId: userId },
-    });
     await QuestsStatistic.findOrCreate({
       where: { userId: userId },
       defaults: { userId: userId },
