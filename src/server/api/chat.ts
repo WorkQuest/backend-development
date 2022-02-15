@@ -64,8 +64,6 @@ export async function getUserChats(r) {
     replacements['query'] = `%${r.query.q}%`;
     replacements['chatType'] = ChatType.private;
     replacements['searcherId'] = r.auth.credentials.id;
-
-
   }
 
   const { count, rows } = await Chat.findAndCountAll({
