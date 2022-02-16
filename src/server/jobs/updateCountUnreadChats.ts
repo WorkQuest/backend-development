@@ -4,29 +4,24 @@ import { Op } from 'sequelize';
 
 export type UserUnreadChatsPayload = {
   userIds: string[];
-  chatId: string[];
 };
 
 export async function updateCountUnreadChatsJob(payload: UserUnreadChatsPayload) {
   return addJob('updateCountUnreadChats', payload);
 }
 
-//TODO: исправить джобу
-
 export default async function updateCountUnreadChats(payload: UserUnreadChatsPayload) {
-  for (const memberId of payload.userIds) {
+  for (const userId of payload.userIds) {
     const unreadChatsCounter = await ChatMember.unscoped().count({
       where: {
-        userId: memberId,
+        userId: userId,
         unreadCountMessages: { [Op.ne]: 0 },
       },
     });
 
-    const member = await ChatMember.findOne({where: { userId: memberId, chatId: chat.id } })
-
     const [chatsStatistic, isCreated] = await ChatsStatistic.findOrCreate({
-      where: { memberId },
-      defaults: { memberId, unreadCountChats: unreadChatsCounter },
+      where: { userId },
+      defaults: { userId, unreadCountChats: unreadChatsCounter },
     });
 
     if (!isCreated) {
