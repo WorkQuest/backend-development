@@ -286,10 +286,9 @@ export async function validateUserPassword(r) {
 
 export async function validateUserTotp(r) {
   const user = await User.scope('withPassword').findByPk(r.auth.credentials.id);
-  const userController = new UserController(user);
 
-  const isValid = userController.user.isTOTPEnabled() ?
-    totpValidate(r.payload.token, this.user.settings.security.TOTP.secret) : true;
+  const isValid = user.isTOTPEnabled() ?
+    totpValidate(r.payload.token, user.settings.security.TOTP.secret) : true;
 
   await Session.update({ isTotpPassed: isValid }, { where: { id: r.auth.artifacts.sessionId } });
 
