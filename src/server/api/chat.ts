@@ -34,9 +34,9 @@ export async function getUserChats(r) {
     `(SELECT "title" FROM "Quests" WHERE "id" = ` + `(SELECT "questId" FROM "QuestChats" WHERE "chatId" = "Chat"."id")) ` + `ILIKE :query`,
   );
   const searchByFirstAndLastNameLiteral = literal(
-    `(SELECT "firstName" || ' ' || "lastName" FROM "Users" WHERE "Users"."id" = ` +
-      `(SELECT "userId" FROM "ChatMembers" WHERE "Chat"."type" = :chatType AND "chatId" = "Chat"."id" AND "userId" != :searcherId)) ` +
-      `ILIKE :query`,
+    `1 = (CASE WHEN EXISTS (SELECT "firstName", "lastName" FROM "Users" as "userMember" ` +
+      `INNER JOIN "ChatMembers" AS "member" ON "userMember"."id" = "member"."userId" AND "member"."chatId" = "Chat"."id" ` +
+      `WHERE "userMember"."firstName" || ' ' || "userMember"."lastName" ILIKE :query AND "userMember"."id" <> :searcherId) THEN 1 ELSE 0 END ) `,
   );
 
   const where = {};
@@ -62,7 +62,6 @@ export async function getUserChats(r) {
     where[Op.or].push(searchByQuestNameLiteral, searchByFirstAndLastNameLiteral);
 
     replacements['query'] = `%${r.query.q}%`;
-    replacements['chatType'] = ChatType.private;
     replacements['searcherId'] = r.auth.credentials.id;
   }
 
