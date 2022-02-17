@@ -3,9 +3,8 @@ import configBridge from '../config/config.bridge';
 import { output } from '../utils';
 import { SwapEvents, BridgeSwapTokenEvent } from '@workquest/database-models/lib/models';
 
-// TODO to rpc provider
-const linkWsProvider = configBridge.debug ? configBridge.bscTestNetwork.webSocketProvider : configBridge.bscMainNetwork.webSocketProvider;
-const web3 = new Web3(new Web3.providers.WebsocketProvider(linkWsProvider));
+const linkRpcProvider = configBridge.debug ? configBridge.bscTestNetwork.rpcProviderLink : configBridge.bscMainNetwork.rpcProviderLink;
+const web3 = new Web3(new Web3.providers.HttpProvider(linkRpcProvider)); // TODO А зачем вообще провайдер?
 
 export async function getRecipientSwaps(r) {
   const recipient = r.params.recipient.toLowerCase();

@@ -285,7 +285,7 @@ export async function validateUserPassword(r) {
 }
 
 export async function validateUserTotp(r) {
-  const user: User = r.auth.credentials.id;
+  const user = await User.scope('withPassword').findByPk(r.auth.credentials.id);
   const userController = new UserController(user);
 
   const isValid = userController.user.isTOTPEnabled() ?
