@@ -436,7 +436,7 @@ export async function getPayloadQuests(r) {
     const {
       paths,
       industryKeys
-    } = SkillsFiltersController.splitPathsAndSingleKeysOfIndustry(r.query.specializations);
+    } = SkillsFiltersController.splitPathsAndSingleKeysOfIndustry(r.payload.specializations);
 
     if (paths.length !== 0 && industryKeys.length === 0) {
       replacements['path'] = paths;
