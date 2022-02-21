@@ -20,8 +20,8 @@ import {
   QuestsResponseStatus,
   QuestsResponseType,
   QuestStatus,
-  Review,
-  StarredQuests,
+  QuestsReview,
+  QuestsStarred,
   User,
   UserRole
 } from '@workquest/database-models/lib/models';
@@ -36,7 +36,7 @@ export async function getQuest(r) {
   const user: User = r.auth.credentials;
 
   const include = [{
-    model: StarredQuests,
+    model: QuestsStarred,
     as: "star",
     where: { userId: r.auth.credentials.id },
     required: false
@@ -63,7 +63,7 @@ export async function getQuest(r) {
     },
     required: false,
   }, {
-    model: Review.unscoped(),
+    model: QuestsReview.unscoped(),
     as: 'yourReview',
     where: { fromUserId: r.auth.credentials.id },
     required: false,
@@ -493,13 +493,13 @@ export function getQuests(type: 'list' | 'points') {
 
     include.push(
       {
-        model: Review.unscoped(),
+        model: QuestsReview.unscoped(),
         as: 'yourReview',
         where: { fromUserId: r.auth.credentials.id },
         required: false,
       },
       {
-        model: StarredQuests.unscoped(),
+        model: QuestsStarred.unscoped(),
         as: 'star',
         where: { userId: r.auth.credentials.id },
         required: r.query.starred,

@@ -3,10 +3,10 @@ import {
   idSchema,
   limitSchema,
   offsetSchema,
-  reviewSchema,
+  questReviewSchema,
   outputOkSchema,
-  reviewMarkSchema,
-  reviewMessageSchema,
+  questReviewMarkSchema,
+  questReviewMessageSchema,
   outputPaginationSchema,
 } from '@workquest/database-models/lib/schemes';
 import { sendReview, getReviewsOfUser } from '../../api/review';
@@ -24,12 +24,12 @@ export default [
       validate: {
         payload: Joi.object({
           questId: idSchema.required(),
-          message: reviewMessageSchema.required(),
-          mark: reviewMarkSchema.required(),
+          message: questReviewMessageSchema.required(),
+          mark: questReviewMarkSchema.required(),
         }).label('ReviewSendPayload'),
       },
       response: {
-        schema: outputOkSchema(reviewSchema).label('ReviewResponse'),
+        schema: outputOkSchema(questReviewSchema).label('ReviewResponse'),
       },
     },
   },
@@ -52,7 +52,7 @@ export default [
         }).label('ReviewsQuery'),
       },
       response: {
-        schema: outputPaginationSchema('reviews', reviewSchema).label('ReviewsResponse'),
+        schema: outputPaginationSchema('reviews', questReviewSchema).label('ReviewsResponse'),
       },
     },
   },

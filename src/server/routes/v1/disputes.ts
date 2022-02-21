@@ -5,9 +5,9 @@ import {
   limitSchema,
   offsetSchema,
   outputOkSchema,
-  reviewMarkSchema,
+  questReviewMarkSchema,
   questDisputeSchema,
-  reviewMessageSchema,
+  questReviewMessageSchema,
   questDisputeReviewSchema,
   questDisputeReasonSchema,
   questDisputesWithCountSchema,
@@ -91,8 +91,8 @@ export default [
           disputeId: idSchema.required(),
         }).label('QuestDisputeSendReviewParams'),
         payload: Joi.object({
-          mark: reviewMarkSchema.required(),
-          message: reviewMessageSchema.required(),
+          mark: questReviewMarkSchema.required(),
+          message: questReviewMessageSchema.required(),
         }).label('QuestDisputeSendReviewPayload'),
       },
       response: {
