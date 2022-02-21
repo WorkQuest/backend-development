@@ -2,20 +2,20 @@ import { error } from '../../utils';
 import { Transaction } from 'sequelize';
 import { Errors } from '../../utils/errors';
 import { SkillsFiltersController } from '../controller.skillsFilters';
-import { User, Quest, QuestChat, QuestStatus, StarredQuests, QuestsResponse, QuestSpecializationFilter } from '@workquest/database-models/lib/models';
+import { User, Quest, QuestChat, QuestStatus, QuestsStarred, QuestsResponse, QuestSpecializationFilter } from '@workquest/database-models/lib/models';
 
 abstract class QuestHelper {
   public abstract quest: Quest;
 
   public setStar(user: User) {
-    return StarredQuests.findOrCreate({
+    return QuestsStarred.findOrCreate({
       where: { userId: user.id, questId: this.quest.id },
       defaults: { userId: user.id, questId: this.quest.id },
     });
   }
 
   public removeStar(user: User) {
-    return StarredQuests.destroy({
+    return QuestsStarred.destroy({
       where: { userId: user.id, questId: this.quest.id },
     });
   }
