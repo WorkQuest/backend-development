@@ -6,8 +6,11 @@ import {
   offsetSchema,
   outputOkSchema,
   questDisputeSchema,
+  questDisputeReviewSchema,
   questDisputeReasonSchema,
   questDisputesWithCountSchema,
+  questDisputeReviewMarkSchema,
+  questDisputeReviewMessageTextSchema,
   questDisputeProblemDescriptionSchema,
 } from '@workquest/database-models/lib/schemes';
 
@@ -71,6 +74,29 @@ export default [
       },
       response: {
         schema: questDisputesWithCountSchema.label('getDisputesResponse'),
+      },
+    },
+  },
+  {
+    method: 'POST',
+    path: '/v1/quest/dispute/{disputeId}/review/send',
+    handler: handlers.sendQuestDisputeReview,
+    options: {
+      id: 'v1.quest.dispute.sendReview',
+      auth: 'jwt-access',
+      tags: ['api', 'quest-disputes'],
+      description: 'Send dispute review on admin',
+      validate: {
+        params: Joi.object({
+          disputeId: idSchema.required(),
+        }).label('QuestDisputeSendReviewParams'),
+        payload: Joi.object({
+          mark: questDisputeReviewMarkSchema.required(),
+          message: questDisputeReviewMessageTextSchema.required(),
+        }).label('QuestDisputeSendReviewPayload'),
+      },
+      response: {
+        schema: questDisputeReviewSchema.label('QuestDisputeSendReviewResponse'),
       },
     },
   },
