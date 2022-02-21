@@ -24,7 +24,6 @@ import {
   questsForGetWithCountSchema,
   questQueryForMapPointsSchema,
 } from "@workquest/database-models/lib/schemes";
-import { getPayloadQuests } from '../../api/quest';
 
 export default [{
   method: "GET",

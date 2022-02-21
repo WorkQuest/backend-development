@@ -9,12 +9,12 @@ import {
   questReviewMessageSchema,
   outputPaginationSchema,
 } from '@workquest/database-models/lib/schemes';
-import { sendReview, getReviewsOfUser } from '../../api/review';
+import { sendReview, getReviewsOfUser } from '../../api/questReview';
 
 export default [
   {
     method: 'POST',
-    path: '/v1/review/send',
+    path: '/v1/review/send', //TODO -> /v1/quest/{questId}/review/send
     handler: sendReview,
     options: {
       auth: 'jwt-access',
@@ -35,7 +35,7 @@ export default [
   },
   {
     method: 'GET',
-    path: '/v1/user/{userId}/reviews',
+    path: '/v1/user/{userId}/reviews', //TODO -> /v1/user/{userId}/quest/reviews
     handler: getReviewsOfUser,
     options: {
       auth: 'jwt-access',

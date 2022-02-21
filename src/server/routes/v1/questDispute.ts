@@ -12,7 +12,7 @@ import {
   questDisputeReviewMarkSchema,
   questDisputeReviewMessageTextSchema,
   questDisputeProblemDescriptionSchema,
-} from "@workquest/database-models/lib/schemes";
+} from '@workquest/database-models/lib/schemes';
 
 export default [
   {

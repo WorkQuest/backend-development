@@ -4,7 +4,7 @@ import quest from './quest';
 import questsResponse from './questsResponse';
 import identityVerification from './sumsub';
 import storageService from './storageService';
-import review from './review';
+import review from './questReview';
 import restorePassword from './restorePassword';
 import portfolio from './portfolio';
 import totp from './totp';
