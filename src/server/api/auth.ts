@@ -2,7 +2,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 import * as querystring from 'querystring';
 import Handlebars = require('handlebars');
-import { Op } from 'sequelize';
+import { Op, where } from 'sequelize';
 import config from '../config/config';
 import { Errors } from '../utils/errors';
 import { addSendEmailJob } from '../jobs/sendEmail';
@@ -14,8 +14,11 @@ import {
   User,
   Wallet,
   Session,
+  Referral,
   UserStatus,
-  defaultUserSettings,
+  AffiliateStatus,
+  ReferrerAffiliate,
+  defaultUserSettings
 } from '@workquest/database-models/lib/models';
 import { totpValidate } from '@workquest/database-models/lib/utils';
 
@@ -55,6 +58,21 @@ export function register(host: 'dao' | 'main') {
         emailConfirm: emailConfirmCode,
       },
     });
+
+    if (r.payload.referralId) {
+      const addAffiliate = await Referral.scope('referral').findOne({where: {referralId:r.payload.referralId}})
+
+      if (!addAffiliate){
+        return error(Errors.LiquidityError, 'Referral id don`t exist', {});
+      }
+      await ReferrerAffiliate.create({
+        affiliateId: user.id,
+        userReferral: addAffiliate.referralId,
+        affiliateStatus: AffiliateStatus.New
+      })
+    }
+
+    await Referral.create({ userId: user.id })
 
     const session = await Session.create({
       userId: user.id,
