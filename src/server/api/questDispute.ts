@@ -123,12 +123,17 @@ export async function getDisputes(r) {
 export async function sendQuestDisputeReview(r) {
   const fromUser: User = r.auth.credentials;
   const fromUserController = new UserController(fromUser);
-  const dispute: QuestDispute = await QuestDispute.findByPk(r.params.disputeId);
-  fromUserController.userMustBeDisputeMember(dispute);
+  const dispute = await QuestDispute.findByPk(r.params.disputeId);
 
-  if(!dispute) {
-    return error(Errors.NotFound, 'Dispute not found', {disputeId: r.params.disputeId});
+  if (!dispute) {
+    return error(Errors.NotFound, 'Dispute not found', { disputeId: r.params.disputeId });
   }
+  if (dispute.status !== DisputeStatus.closed) {
+    return error(Errors.InvalidStatus, 'Dispute status does not match', [{ current: dispute.status, mustHave: DisputeStatus.closed }]);
+  }
+
+  fromUserController
+    .userMustBeDisputeMember(dispute)
 
   const toAdmin: Admin = await Admin.findByPk(dispute.assignedAdminId);
 
@@ -144,10 +149,6 @@ export async function sendQuestDisputeReview(r) {
     return error(Errors.AlreadyExists, 'You already valued this dispute', {
       yourReviewId: alreadyReview.id,
     });
-  }
-
-  if(dispute.status !== DisputeStatus.closed) {
-    return error(Errors.InvalidStatus, 'Dispute status does not match', [{current: dispute.status, mustHave: DisputeStatus.closed }]);
   }
 
   const review = await QuestDisputeReview.create({

@@ -5,11 +5,14 @@ import {
   limitSchema,
   offsetSchema,
   outputOkSchema,
+  reviewMarkSchema,
   questDisputeSchema,
+  reviewMessageSchema,
+  questDisputeReviewSchema,
   questDisputeReasonSchema,
   questDisputesWithCountSchema,
-  questDisputeProblemDescriptionSchema, messageSchema, reviewMarkSchema, questDisputeReviewSchema, reviewMessageSchema
-} from "@workquest/database-models/lib/schemes";
+  questDisputeProblemDescriptionSchema,
+} from '@workquest/database-models/lib/schemes';
 
 export default [
   {
@@ -79,21 +82,21 @@ export default [
     path: '/v1/quest/dispute/{disputeId}/review/send',
     handler: handlers.sendQuestDisputeReview,
     options: {
-      id: 'v1.quest.disputes.review',
+      id: 'v1.quest.dispute.sendReview',
       auth: 'jwt-access',
       tags: ['api', 'quest-disputes'],
-      description: 'Send dispute review',
+      description: 'Send dispute review on admin',
       validate: {
         params: Joi.object({
-          disputeId: idSchema
-        }).label('QuestDisputeReviewParams'),
+          disputeId: idSchema.required(),
+        }).label('QuestDisputeSendReviewParams'),
         payload: Joi.object({
-          message: reviewMessageSchema,
-          mark: reviewMarkSchema,
-        }).label('QuestDisputeReviewPayload')
+          mark: reviewMarkSchema.required(),
+          message: reviewMessageSchema.required(),
+        }).label('QuestDisputeSendReviewPayload'),
       },
       response: {
-        schema: questDisputeReviewSchema.label('QuestDisputeReviewPayload'),
+        schema: questDisputeReviewSchema.label('QuestDisputeSendReviewResponse'),
       },
     },
   },
