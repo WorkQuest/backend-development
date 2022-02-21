@@ -101,7 +101,8 @@ export function getLoginViaSocialNetworkHandler(returnType: 'token' | 'redirect'
     if (returnType === 'redirect') {
       const qs = querystring.stringify(result);
       return h.redirect(
-        config.baseUrl  + '/sign-in?' + qs
+        // config.baseUrl TODO для тестов
+        'http://localhost:3000' + '/sign-in?' + qs
       );
     }
     return output(result);
@@ -284,11 +285,10 @@ export async function validateUserPassword(r) {
 }
 
 export async function validateUserTotp(r) {
-  const user: User = r.auth.credentials.id;
-  const userController = new UserController(user);
+  const user = await User.scope('withPassword').findByPk(r.auth.credentials.id);
 
-  const isValid = userController.user.isTOTPEnabled ?
-    totpValidate(r.payload.token, this.user.settings.security.TOTP.secret) : true;
+  const isValid = user.isTOTPEnabled() ?
+    totpValidate(r.payload.token, user.settings.security.TOTP.secret) : true;
 
   await Session.update({ isTotpPassed: isValid }, { where: { id: r.auth.artifacts.sessionId } });
 

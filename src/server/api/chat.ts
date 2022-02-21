@@ -33,49 +33,36 @@ export async function getUserChats(r) {
   const searchByQuestNameLiteral = literal(
     `(SELECT "title" FROM "Quests" WHERE "id" = ` + `(SELECT "questId" FROM "QuestChats" WHERE "chatId" = "Chat"."id")) ` + `ILIKE :query`,
   );
-  const searchByFirstNameLiteral = literal(
-    `(SELECT "firstName" FROM "Users" WHERE "Users"."id" = ` +
-      `(SELECT "userId" FROM "ChatMembers" WHERE "Chat"."type" = :chatType AND "chatId" = "Chat"."id" AND "userId" != :searcherId)) ` +
-      `ILIKE :query`,
-  );
-  const searchByLastNameLiteral = literal(
-    `(SELECT "lastName" FROM "Users" WHERE "Users"."id" = ` +
-      `(SELECT "userId" FROM "ChatMembers" WHERE  "Chat"."type" = :chatType AND "chatId" = "Chat"."id" AND "userId" != :searcherId)) ` +
-      `ILIKE :query`,
+  const searchByFirstAndLastNameLiteral = literal(
+    `1 = (CASE WHEN EXISTS (SELECT "firstName", "lastName" FROM "Users" as "userMember" ` +
+      `INNER JOIN "ChatMembers" AS "member" ON "userMember"."id" = "member"."userId" AND "member"."chatId" = "Chat"."id" ` +
+      `WHERE "userMember"."firstName" || ' ' || "userMember"."lastName" ILIKE :query AND "userMember"."id" <> :searcherId) THEN 1 ELSE 0 END ) `,
   );
 
   const where = {};
   const replacements = {};
 
-  const include: any[] = [
-    {
+  const include: any[] = [{
       model: ChatMember,
       where: { userId: r.auth.credentials.id },
       required: true,
       as: 'meMember',
-    },
-    {
+    }, {
       model: StarredChat,
       as: 'star',
       where: { userId: r.auth.credentials.id },
       required: r.query.starred,
-    },
-  ];
+    }];
 
   if (r.query.q) {
     where[Op.or] = searchChatFields.map(field => ({
       [field]: { [Op.iLike]: `%${r.query.q}%` }
     }));
 
-    replacements['query'] = `%${r.query.q}%`;
-    replacements['chatType'] = ChatType.private;
-    replacements['searcherId'] = r.auth.credentials.id;
+    where[Op.or].push(searchByQuestNameLiteral, searchByFirstAndLastNameLiteral);
 
-    where[Op.or] = [
-      searchByLastNameLiteral,
-      searchByQuestNameLiteral,
-      searchByFirstNameLiteral,
-    ];
+    replacements['query'] = `%${r.query.q}%`;
+    replacements['searcherId'] = r.auth.credentials.id;
   }
 
   const { count, rows } = await Chat.findAndCountAll({

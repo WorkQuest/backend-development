@@ -24,6 +24,7 @@ import {
   questsForGetWithCountSchema,
   questQueryForMapPointsSchema,
 } from "@workquest/database-models/lib/schemes";
+import { getPayloadQuests } from '../../api/quest';
 
 export default [{
   method: "GET",
@@ -131,6 +132,22 @@ export default [{
     description: "Get quests",
     validate: {
       query: questQuerySchema
+    },
+    response: {
+      schema: outputOkSchema(questsForGetWithCountSchema).label("GetQuestsResponse")
+    },
+  }
+},{
+  method: "POST",
+  path: "/v1/quests(payload)",
+  handler: handlers.getPayloadQuests,
+  options: {
+    auth: 'jwt-access',
+    id: "v1.getPayloadQuests",
+    tags: ["api", "quest"],
+    description: "Get quests",
+    validate: {
+      payload: questQuerySchema,
     },
     response: {
       schema: outputOkSchema(questsForGetWithCountSchema).label("GetQuestsResponse")
