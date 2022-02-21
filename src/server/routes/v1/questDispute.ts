@@ -5,14 +5,14 @@ import {
   limitSchema,
   offsetSchema,
   outputOkSchema,
-  questReviewMarkSchema,
   questDisputeSchema,
-  questReviewMessageSchema,
   questDisputeReviewSchema,
   questDisputeReasonSchema,
   questDisputesWithCountSchema,
+  questDisputeReviewMarkSchema,
+  questDisputeReviewMessageTextSchema,
   questDisputeProblemDescriptionSchema,
-} from '@workquest/database-models/lib/schemes';
+} from "@workquest/database-models/lib/schemes";
 
 export default [
   {
@@ -91,8 +91,8 @@ export default [
           disputeId: idSchema.required(),
         }).label('QuestDisputeSendReviewParams'),
         payload: Joi.object({
-          mark: questReviewMarkSchema.required(),
-          message: questReviewMessageSchema.required(),
+          mark: questDisputeReviewMarkSchema.required(),
+          message: questDisputeReviewMessageTextSchema.required(),
         }).label('QuestDisputeSendReviewPayload'),
       },
       response: {
