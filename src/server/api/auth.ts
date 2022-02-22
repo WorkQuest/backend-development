@@ -67,7 +67,7 @@ export function register(host: 'dao' | 'main') {
       }
       await ReferrerAffiliate.create({
         affiliateId: user.id,
-        userReferral: addAffiliate.referralId,
+        userReferralId: addAffiliate.referralId,
         affiliateStatus: AffiliateStatus.New
       })
     }
