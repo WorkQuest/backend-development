@@ -320,8 +320,8 @@ export async function changeUserRole(r) {
   const lastRoleChangeDate: Date | null = lastRoleChangeData ? lastRoleChangeData.createdAt : null;
 
   const allowedChangeRoleFromDateInMilliseconds = lastRoleChangeData ?
-    lastRoleChangeDate.getMilliseconds() + roleChangeTimeLimitInMilliseconds :
-    userRegistrationDate.getMilliseconds() + roleChangeTimeLimitInMilliseconds
+    lastRoleChangeDate.getTime() + roleChangeTimeLimitInMilliseconds :
+    userRegistrationDate.getTime() + roleChangeTimeLimitInMilliseconds
 
   userController
     .userMustHaveStatus(UserStatus.Confirmed)
