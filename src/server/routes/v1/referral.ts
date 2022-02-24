@@ -4,7 +4,7 @@ import {
   outputOkSchema,
   tokensWithStatus
 } from '@workquest/database-models/lib/schemes';
-import { addAffiliates, referralInfo } from '../../api/referral';
+import { addAffiliates, myAffiliates } from '../../api/referral';
 import {
   referralAddAffiliatesSchemas,
   referralAffiliatesSchema
@@ -13,13 +13,13 @@ import {
 export default [
   {
     method: 'GET',
-    path: '/v1/referral/info',
-    handler: referralInfo,
+    path: '/v1/referral/affiliates',
+    handler: myAffiliates,
     options: {
       auth: false,// jwt-access
-      id: 'v1.getReferral',
+      id: 'v1.myAffiliates',
       tags: ['api', 'referral'],
-      description: 'Get my referral',
+      description: 'Get my affiliates',
       response: {
         schema: emptyOkSchema
       }
@@ -29,7 +29,7 @@ export default [
     path: '/v1/referral/addAffiliates',
     handler: addAffiliates,
     options: {
-      auth: false,// jwt-access
+      auth: 'jwt-access',
       id: 'v1.referral.addAffiliates',
       tags: ['api', 'referral'],
       description: 'Register new affiliate user',
