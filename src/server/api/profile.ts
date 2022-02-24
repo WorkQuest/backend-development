@@ -10,18 +10,18 @@ import { updateQuestsStatisticJob } from '../jobs/updateQuestsStatistic';
 import { deleteUserFiltersJob } from '../jobs/deleteUserFilters';
 import { Errors } from '../utils/errors';
 import {
-  User,
-  Wallet,
-  UserRole,
-  Quest,
   ChatsStatistic,
-  RatingStatistic,
-  QuestsStatistic,
-  UserStatus,
-  QuestStatus,
+  Quest,
   QuestsResponse,
   QuestsResponseStatus,
+  QuestsStatistic,
+  QuestStatus,
+  RatingStatistic,
+  User,
   UserChangeRoleData,
+  UserRole,
+  UserStatus,
+  Wallet
 } from '@workquest/database-models/lib/models';
 
 export const searchFields = [
@@ -304,28 +304,35 @@ export async function getUserStatistics(r) {
 }
 
 export async function changeUserRole(r) {
+  const roleChangeTimeLimitInMilliseconds = 60000; /** 1 Mount - 2592000000, for DEBUG - 1 minute */
+
   const user = await User.scope('withPassword').findByPk(r.auth.credentials.id);
   const userController = new UserController(user);
 
-  const registrationDate = new Date(user.createdAt);
-  const allowedDateFrom = new Date();
+  const changeToRole = user.role === UserRole.Worker ? UserRole.Employer : UserRole.Worker;
 
-  allowedDateFrom.setMonth(allowedDateFrom.getMonth() - 1);
+  const lastRoleChangeData = await UserChangeRoleData.findOne({
+    where: { userId: user.id },
+    order: [['createdAt', 'DESC']],
+  });
 
-  if (registrationDate > allowedDateFrom) {
-    registrationDate.setMonth(registrationDate.getMonth() + 1);
-    return error(Errors.Forbidden, 'More than a month must have passed since registration', {
-      canChangeRoleSince: registrationDate,
-    });
-  }
+  const userRegistrationDate: Date = user.createdAt;
+  const lastRoleChangeDate: Date | null = lastRoleChangeData ? lastRoleChangeData.createdAt : null;
 
-  if (!user.role) {
-    return error(Errors.NoRole, 'Role not set', {});
-  }
+  const allowedChangeRoleFromDateInMilliseconds = lastRoleChangeData ?
+    lastRoleChangeDate.getMilliseconds() + roleChangeTimeLimitInMilliseconds :
+    userRegistrationDate.getMilliseconds() + roleChangeTimeLimitInMilliseconds
 
   userController
+    .userMustHaveStatus(UserStatus.Confirmed)
     .userMustHaveActiveStatusTOTP(true)
     .checkTotpConfirmationCode(r.payload.totp)
+
+  if (Date.now() < allowedChangeRoleFromDateInMilliseconds) {
+    return error(Errors.Forbidden, 'Role change timeout has not passed yet', {
+      endDateOfTimeout: new Date(allowedChangeRoleFromDateInMilliseconds),
+    });
+  }
 
   if (user.role === UserRole.Worker) {
     const questCount = await Quest.count({
@@ -348,7 +355,6 @@ export async function changeUserRole(r) {
       return error(Errors.HasActiveResponses, 'There are active responses', { questsResponseCount });
     }
   }
-
   if (user.role === UserRole.Employer) {
     const questCount = await Quest.count({
       where: { userId: user.id, status: { [Op.notIn]: [QuestStatus.Closed, QuestStatus.Done] } }
@@ -357,21 +363,6 @@ export async function changeUserRole(r) {
     if (questCount !== 0) {
       return error(Errors.HasActiveQuests, 'There are active quests', { questCount });
     }
-  }
-
-  const changeToRole = user.role === UserRole.Worker ? UserRole.Employer : UserRole.Worker;
-
-  const lastRoleChange = await UserChangeRoleData.findOne({
-    where: { userId: user.id, changedAdminId: null },
-    order: [['createdAt', 'DESC']]
-  });
-  const lastRoleChangeDate = lastRoleChange ? new Date(lastRoleChange.createdAt) : null;
-
-  if (lastRoleChange && lastRoleChangeDate > allowedDateFrom) {
-    lastRoleChangeDate.setMonth(lastRoleChangeDate.getMonth() + 1);
-    return error(Errors.Forbidden, 'More than a month must have passed since last role change', {
-      canChangeRoleSince: lastRoleChangeDate
-    })
   }
 
   const transaction = await r.server.app.db.transaction();
@@ -395,12 +386,12 @@ export async function changeUserRole(r) {
 
   await transaction.commit();
 
-  await deleteUserFiltersJob({ userId: user.id });
-
+  await deleteUserFiltersJob({
+    userId: user.id
+  });
   await addUpdateReviewStatisticsJob({
     userId: user.id,
   });
-
   await updateQuestsStatisticJob({
     userId: user.id,
     role: user.role,
