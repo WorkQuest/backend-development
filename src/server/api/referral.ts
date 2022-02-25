@@ -4,6 +4,7 @@ import { error, output } from '../utils';
 import { AffiliateStatus, Referral, ReferrerAffiliate } from '@workquest/database-models/lib/models';
 import { Errors } from '../utils/errors';
 import configReferral from '../config/config.referral';
+import { ReferralEventRewardClaimed } from '@workquest/database-models/src/models/referral/ReferralEventRewardClaimed';
 
 
 const linkWsProvider = configReferral.wssProviderLink;
@@ -11,24 +12,22 @@ const linkWsProvider = configReferral.wssProviderLink;
 const web3 = new Web3(new Web3.providers.WebsocketProvider(linkWsProvider));
 
 export async function myAffiliates(r) {
-  const referral = await Referral.scope('referral').findOne({where:{userId: 'a2ec96c7-8946-41f2-8a2a-3b2426ed544d'}});
+  const referral = await Referral.scope('referral').findOne({ where: { userId: r.params.userId } });
 
   if (!referral) {
     return error(Errors.LiquidityError, 'Referral not found', {});
   }
-  const myAffiliates = await ReferrerAffiliate.scope('defaultScope').findAndCountAll({
+  const affiliatesInfo = await ReferrerAffiliate.scope('shortAffiliate').findAndCountAll({
     where: {
       userReferralId: referral.referralId
     }
-  })
-  console.log(myAffiliates);
-
-  return output(myAffiliates);
+  });
+  return output(affiliatesInfo);
 }
 
 export async function addAffiliates(r) {
 
-  const referralId = await Referral.scope('referral').findByPk(r.auth.credentials.id)
+  const referralId = await Referral.scope('referral').findByPk(r.auth.credentials.id);
 
   const affiliates = await ReferrerAffiliate.scope('defaultScope').findAndCountAll({
     where: {
@@ -64,3 +63,17 @@ export async function addAffiliates(r) {
     }
   });
 }
+
+export async function referralRewardEvents(r) {
+
+  const referral = await Referral.scope('referral').findOne({ where: { userId: r.params.userId } });
+
+  const events = await ReferralEventRewardClaimed.findAndCountAll({
+    where: {
+//TODO add takes events (ClaimRewards)
+    }
+  });
+  const referralId = await Referral.scope('referral').findByPk(r.auth.credentials.id);
+
+}
+
