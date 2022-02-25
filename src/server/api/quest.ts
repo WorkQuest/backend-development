@@ -103,7 +103,6 @@ export async function createQuest(r) {
   const quest = await Quest.create({
     userId: employer.id,
     status: QuestStatus.Created,
-    category: r.payload.category,
     workplace: r.payload.workplace,
     employment: r.payload.employment,
     priority: r.payload.priority,
@@ -153,7 +152,6 @@ export async function editQuest(r) {
     title: r.payload.title,
     adType: r.payload.adType,
     priority: r.payload.priority,
-    category: r.payload.category,
     workplace: r.payload.workplace,
     employment: r.payload.employment,
     description: r.payload.description,
