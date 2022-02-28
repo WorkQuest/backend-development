@@ -14,10 +14,10 @@ import {
   User,
   Wallet,
   Session,
-  Referral,
+  ReferralProgram,
   UserStatus,
   AffiliateStatus,
-  ReferrerAffiliate,
+  ReferrerAffiliateUser,
   defaultUserSettings
 } from '@workquest/database-models/lib/models';
 import { totpValidate } from '@workquest/database-models/lib/utils';
@@ -60,19 +60,19 @@ export function register(host: 'dao' | 'main') {
     });
 
     if (r.payload.referralId) {
-      const addAffiliate = await Referral.scope('referral').findOne({where: {referralId:r.payload.referralId}})
+      const addAffiliate = await ReferralProgram.scope('referral').findOne({where: {referralId:r.payload.referralId}})
 
       if (!addAffiliate){
         return error(Errors.LiquidityError, 'Referral id don`t exist', {});
       }
-      await ReferrerAffiliate.create({
+      await ReferrerAffiliateUser.create({
         affiliateId: user.id,
         userReferralId: addAffiliate.referralId,
-        affiliateStatus: AffiliateStatus.New
+        affiliateStatus: AffiliateStatus.Created
       })
     }
 
-    await Referral.create({ userId: user.id })
+    await ReferralProgram.create({ userId: user.id })
 
     const session = await Session.create({
       userId: user.id,

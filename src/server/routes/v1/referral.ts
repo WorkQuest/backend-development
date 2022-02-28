@@ -3,10 +3,10 @@ import {
   idSchema,
   outputOkSchema
 } from '@workquest/database-models/lib/schemes';
-import { addAffiliates, myAffiliates, referralRewardEvents } from '../../api/referral';
+import { addAffiliates, myAffiliates } from '../../api/referral';
 import {
-  referralAddAffiliatesSchemas,
-  referralAffiliatesSchema
+  referralAffiliatesSchema,
+  referralAddAffiliatesSchemas
 } from '@workquest/database-models/lib/schemes/referral';
 
 export default [
@@ -46,23 +46,24 @@ export default [
         schema: outputOkSchema(referralAddAffiliatesSchemas).label('ReferralAddAffiliates')
       }
     }
-  }, {
-    method: 'GET',
-    path: '/v1/referral/rewards',
-    handler: referralRewardEvents,
-    options: {
-      auth: false,// jwt-access
-      id: 'v1.referral.rewards',
-      tags: ['api', 'referral'],
-      description: 'Get all events in my rewards',
-      validate: {
-        params: Joi.object({
-          userId: idSchema.required()
-        }).label('GetEventsReferralParams')
-      },
-      response: {
-        schema: outputOkSchema
-      }
-    }
   }
+  // , {
+  //   method: 'GET',
+  //   path: '/v1/referral/rewards',
+  //   handler: referralRewardEvents,
+  //   options: {
+  //     auth: false,// jwt-access
+  //     id: 'v1.referral.rewards',
+  //     tags: ['api', 'referral'],
+  //     description: 'Get all events in my rewards',
+  //     validate: {
+  //       params: Joi.object({
+  //         userId: idSchema.required()
+  //       }).label('GetEventsReferralParams')
+  //     },
+  //     response: {
+  //       schema: outputOkSchema
+  //     }
+  //   }
+  // }
 ];

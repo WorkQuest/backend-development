@@ -68,16 +68,16 @@ export async function addAffiliates(r) {
   });
 }
 
-export async function referralRewardEvents(r) {
-
-  const referral = await ReferralProgram.scope('referral').findOne({ where: { userId: r.params.userId } });
-
-  const events = await ReferralEventRewardClaimed.findAndCountAll({
-    where: {
-//TODO add takes events (ClaimRewards)
-    }
-  });
-  const referralId = await ReferralProgram.scope('referral').findByPk(r.auth.credentials.id);
-
-}
+// export async function referralRewardEvents(r) {
+//
+//   const referral = await ReferralProgram.scope('referral').findOne({ where: { userId: r.params.userId } });
+//
+//   const events = await ReferralEventRewardClaimed.findAndCountAll({
+//     where: {
+// //TODO add takes events (ClaimRewards)
+//     }
+//   });
+//   const referralId = await ReferralProgram.scope('referral').findByPk(r.auth.credentials.id);
+//
+// }
 
