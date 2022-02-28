@@ -1,10 +1,14 @@
 import Web3 from 'web3';
 import { Op } from 'sequelize';
 import { error, output } from '../utils';
-import { AffiliateStatus, Referral, ReferrerAffiliate } from '@workquest/database-models/lib/models';
+import {
+  AffiliateStatus,
+  ReferralProgram,
+  ReferrerAffiliateUser,
+  ReferralEventRewardClaimed
+} from '@workquest/database-models/lib/models';
 import { Errors } from '../utils/errors';
 import configReferral from '../config/config.referral';
-import { ReferralEventRewardClaimed } from '@workquest/database-models/src/models/referral/ReferralEventRewardClaimed';
 
 
 const linkWsProvider = configReferral.wssProviderLink;
@@ -12,12 +16,12 @@ const linkWsProvider = configReferral.wssProviderLink;
 const web3 = new Web3(new Web3.providers.WebsocketProvider(linkWsProvider));
 
 export async function myAffiliates(r) {
-  const referral = await Referral.scope('referral').findOne({ where: { userId: r.params.userId } });
+  const referral = await ReferralProgram.scope('referral').findOne({ where: { userId: r.params.userId } });
 
   if (!referral) {
     return error(Errors.LiquidityError, 'Referral not found', {});
   }
-  const affiliatesInfo = await ReferrerAffiliate.scope('shortAffiliate').findAndCountAll({
+  const affiliatesInfo = await ReferrerAffiliateUser.scope('shortAffiliate').findAndCountAll({
     where: {
       userReferralId: referral.referralId
     }
@@ -27,13 +31,13 @@ export async function myAffiliates(r) {
 
 export async function addAffiliates(r) {
 
-  const referralId = await Referral.scope('referral').findByPk(r.auth.credentials.id);
+  const referralId = await ReferralProgram.scope('referral').findByPk(r.auth.credentials.id);
 
-  const affiliates = await ReferrerAffiliate.scope('defaultScope').findAndCountAll({
+  const affiliates = await ReferrerAffiliateUser.scope('defaultScope').findAndCountAll({
     where: {
       userReferralId: referralId.referralId,
       affiliateId: { [Op.in]: r.payload.affiliates },
-      status: AffiliateStatus.New
+      status: AffiliateStatus.Created
     }
   });
   if (!affiliates) {
@@ -66,14 +70,14 @@ export async function addAffiliates(r) {
 
 export async function referralRewardEvents(r) {
 
-  const referral = await Referral.scope('referral').findOne({ where: { userId: r.params.userId } });
+  const referral = await ReferralProgram.scope('referral').findOne({ where: { userId: r.params.userId } });
 
   const events = await ReferralEventRewardClaimed.findAndCountAll({
     where: {
 //TODO add takes events (ClaimRewards)
     }
   });
-  const referralId = await Referral.scope('referral').findByPk(r.auth.credentials.id);
+  const referralId = await ReferralProgram.scope('referral').findByPk(r.auth.credentials.id);
 
 }
 
