@@ -20,8 +20,8 @@ import {
   QuestsResponseStatus,
   QuestsResponseType,
   QuestStatus,
-  Review,
-  StarredQuests,
+  QuestsReview,
+  QuestsStarred,
   User,
   UserRole
 } from '@workquest/database-models/lib/models';
@@ -36,7 +36,7 @@ export async function getQuest(r) {
   const user: User = r.auth.credentials;
 
   const include = [{
-    model: StarredQuests,
+    model: QuestsStarred,
     as: "star",
     where: { userId: r.auth.credentials.id },
     required: false
@@ -63,7 +63,7 @@ export async function getQuest(r) {
     },
     required: false,
   }, {
-    model: Review.unscoped(),
+    model: QuestsReview.unscoped(),
     as: 'yourReview',
     where: { fromUserId: r.auth.credentials.id },
     required: false,
@@ -103,7 +103,6 @@ export async function createQuest(r) {
   const quest = await Quest.create({
     userId: employer.id,
     status: QuestStatus.Created,
-    category: r.payload.category,
     workplace: r.payload.workplace,
     employment: r.payload.employment,
     priority: r.payload.priority,
@@ -153,7 +152,6 @@ export async function editQuest(r) {
     title: r.payload.title,
     adType: r.payload.adType,
     priority: r.payload.priority,
-    category: r.payload.category,
     workplace: r.payload.workplace,
     employment: r.payload.employment,
     description: r.payload.description,
@@ -491,13 +489,13 @@ export async function getPayloadQuests(r) {
 
   include.push(
     {
-      model: Review.unscoped(),
+      model: QuestsReview.unscoped(),
       as: 'yourReview',
       where: { fromUserId: r.auth.credentials.id },
       required: false,
     },
     {
-      model: StarredQuests.unscoped(),
+      model: QuestsStarred.unscoped(),
       as: 'star',
       where: { userId: r.auth.credentials.id },
       required: r.payload.starred,
@@ -650,13 +648,13 @@ export function getQuests(type: 'list' | 'points') {
 
     include.push(
       {
-        model: Review.unscoped(),
+        model: QuestsReview.unscoped(),
         as: 'yourReview',
         where: { fromUserId: r.auth.credentials.id },
         required: false,
       },
       {
-        model: StarredQuests.unscoped(),
+        model: QuestsStarred.unscoped(),
         as: 'star',
         where: { userId: r.auth.credentials.id },
         required: r.query.starred,

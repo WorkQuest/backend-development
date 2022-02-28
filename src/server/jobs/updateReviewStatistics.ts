@@ -1,6 +1,6 @@
 import { col, fn } from 'sequelize';
 import { addJob } from '../utils/scheduler';
-import { User, Quest, Review, UserRole, StatusKYC, QuestStatus, RatingStatus, RatingStatistic } from '@workquest/database-models/lib/models';
+import { User, Quest, QuestsReview, UserRole, StatusKYC, QuestStatus, RatingStatus, RatingStatistic } from '@workquest/database-models/lib/models';
 
 /**
  * 1 уровень Verified.
@@ -91,8 +91,8 @@ export default async function (payload: StatisticPayload) {
 
   const user: User = ratingStatistic.user;
 
-  const reviewCountPromise = Review.count({ where: { toUserId: user.id } });
-  const averageMarkResultPromise = Review.findOne({
+  const reviewCountPromise = QuestsReview.count({ where: { toUserId: user.id } });
+  const averageMarkResultPromise = QuestsReview.findOne({
     attributes: [[fn('AVG', col('mark')), 'avgMark']],
     where: { toUserId: ratingStatistic.userId },
   });

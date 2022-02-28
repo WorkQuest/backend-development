@@ -16,7 +16,6 @@ import {
   questQuerySchema,
   questsForGetSchema,
   locationFullSchema,
-  questCategorySchema,
   questsWithCountSchema,
   questEmploymentSchema,
   questDescriptionSchema,
@@ -24,7 +23,6 @@ import {
   questsForGetWithCountSchema,
   questQueryForMapPointsSchema,
 } from "@workquest/database-models/lib/schemes";
-import { getPayloadQuests } from '../../api/quest';
 
 export default [{
   method: "GET",
@@ -55,7 +53,6 @@ export default [{
     description: "Register new quest",
     validate: {
       payload: Joi.object({
-        category: questCategorySchema.required(),
         workplace: workPlaceSchema.required(),
         employment: questEmploymentSchema.required(),
         priority: prioritySchema.required(),
@@ -104,7 +101,6 @@ export default [{
         questId: idSchema.required(),
       }).label("EditQuestParams"),
       payload: Joi.object({
-        category: questCategorySchema.required(),
         workplace: workPlaceSchema.required(),
         employment: questEmploymentSchema.required(),
         priority: prioritySchema.required(),

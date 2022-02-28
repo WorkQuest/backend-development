@@ -1,24 +1,25 @@
 import * as Joi from 'joi';
+import * as handlers from '../../api/proposal';
 import {
   idsSchema,
-  isActiveSchema,
   limitSchema,
+  searchSchema,
   offsetSchema,
   outputOkSchema,
-  proposalNumberSchema,
-  proposalStatus,
-  proposerIdWalletSchema,
-  searchSchema,
+  proposalSchema,
   sortDirectionSchema,
+  proposalTitleSchema,
+  proposalStatusSchema,
+  proposalNumberSchema,
+  proposerIdWalletSchema,
+  proposalDescriptionSchema,
 } from '@workquest/database-models/lib/schemes';
-import { proposalDescriptionSchema, proposalSchema, proposalTitleSchema } from '@workquest/database-models/lib/schemes/proposal';
-import { createProposal, getProposal, getProposals, getVotingsProposal } from '../../api/proposal';
 
 export default [
   {
     method: 'POST',
     path: '/v1/proposal/create',
-    handler: createProposal,
+    handler: handlers.createProposal,
     options: {
       auth: 'jwt-access',
       id: 'v1.createProposal',
@@ -40,7 +41,7 @@ export default [
   {
     method: 'GET',
     path: '/v1/proposal',
-    handler: getProposals,
+    handler: handlers.getProposals,
     options: {
       auth: 'jwt-access',
       id: 'v1.getProposals',
@@ -52,7 +53,7 @@ export default [
           limit: limitSchema,
           offset: offsetSchema,
           createdAt: sortDirectionSchema.default('DESC'),
-          status: proposalStatus.default(null),
+          status: proposalStatusSchema.default(null),
         }).label('GetProposalsQuery'),
       },
       response: {
@@ -63,7 +64,7 @@ export default [
   {
     method: 'GET',
     path: '/v1/proposal/{proposalId}',
-    handler: getProposal,
+    handler: handlers.getProposal,
     options: {
       auth: 'jwt-access',
       id: 'v1.getProposal',
@@ -82,7 +83,7 @@ export default [
   {
     method: 'GET',
     path: '/v1/votings/{proposalId}',
-    handler: getVotingsProposal,
+    handler: handlers.getVotingsProposal,
     options: {
       auth: 'jwt-access',
       id: 'v1.getVotingsProposal',
@@ -96,7 +97,7 @@ export default [
           limit: limitSchema,
           offset: offsetSchema,
           createdAt: sortDirectionSchema.default('DESC'),
-          support: isActiveSchema,
+          support: Joi.boolean().label('VotingProposalSupport'),
         }).label('GetVotingsQuery'),
       },
       response: {
