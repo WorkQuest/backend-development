@@ -3,7 +3,7 @@ import { addJob } from '../utils/scheduler';
 import {
   Admin,
   QuestDisputeReview,
-  AdminRatingStatistic,
+  AdminQuestDisputesStatistic,
 } from "@workquest/database-models/lib/models";
 
 export interface StatisticPayload {
@@ -15,7 +15,7 @@ export async function addUpdateDisputeReviewStatisticsJob(payload: StatisticPayl
 }
 
 export default async function (payload: StatisticPayload) {
-  const [ratingStatistic] = await AdminRatingStatistic.findOrCreate({
+  const [ratingStatistic] = await AdminQuestDisputesStatistic.findOrCreate({
     include: { model: Admin, as: 'admin' },
     where: { adminId: payload.adminId },
     defaults: { adminId: payload.adminId },
