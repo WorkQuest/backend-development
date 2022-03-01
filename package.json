@@ -32,7 +32,7 @@
     "@types/validator": "^13.1.0",
     "@uniswap/sdk": "^3.0.3",
     "@uniswap/v2-core": "^1.0.1",
-    "@workquest/database-models": "git+https://github.com/WorkQuest/database-models.git#19a8ceb3507dc6895776bcd00cbfa243ba8ede52",
+    "@workquest/database-models": "git+https://github.com/WorkQuest/database-models.git#972ff2e0bf6bdbe891aac6c9305b72ccd39bfde9",
     "amqplib": "^0.8.0",
     "aws-sdk": "^2.918.0",
     "axios": "^0.21.1",

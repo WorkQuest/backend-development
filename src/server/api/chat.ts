@@ -25,7 +25,9 @@ import {
   MessageAction,
   StarredMessage,
   QuestChatStatuses,
-  SenderMessageStatus, MemberRole, ChatsStatistic
+  SenderMessageStatus,
+  MemberRole,
+  ChatsStatistic
 } from "@workquest/database-models/lib/models";
 
 export const searchChatFields = ['name'];
@@ -210,12 +212,12 @@ export async function createGroupChat(r) {
       lastReadMessageNumber: userId === r.auth.credentials.id ? message.number : null,
     };
   });
-  const members = await ChatMember.bulkCreate(chatMembers, { transaction });
 
-  const memberChatStatistic = members.map(member => { return { memberId: member.id } });
+  await ChatMember.bulkCreate(chatMembers, { transaction });
 
-  await ChatsStatistic.bulkCreate(memberChatStatistic, {transaction});
+  const memberChatStatistic = memberUserIds.map(userId => { return { userId } });
 
+  await ChatsStatistic.bulkCreate(memberChatStatistic, { transaction });
 
   const sender = await ChatMember.findOne({ where: { userId: r.auth.credentials.id, chatId: chat.id }, transaction });
 
@@ -248,6 +250,7 @@ export async function createGroupChat(r) {
   await transaction.commit();
 
   const result = await Chat.findByPk(chat.id);
+  console.log("here");
 
   await updateCountUnreadChatsJob({ userIds: memberUserIds });
 
