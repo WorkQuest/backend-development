@@ -3,18 +3,18 @@ import {
   idSchema,
   limitSchema,
   offsetSchema,
-  reviewSchema,
+  questReviewSchema,
   outputOkSchema,
-  reviewMarkSchema,
-  reviewMessageSchema,
+  questReviewMarkSchema,
+  questReviewMessageSchema,
   outputPaginationSchema,
 } from '@workquest/database-models/lib/schemes';
-import { sendReview, getReviewsOfUser } from '../../api/review';
+import { sendReview, getReviewsOfUser } from '../../api/questReview';
 
 export default [
   {
     method: 'POST',
-    path: '/v1/review/send',
+    path: '/v1/review/send', //TODO -> /v1/quest/{questId}/review/send
     handler: sendReview,
     options: {
       auth: 'jwt-access',
@@ -24,18 +24,18 @@ export default [
       validate: {
         payload: Joi.object({
           questId: idSchema.required(),
-          message: reviewMessageSchema.required(),
-          mark: reviewMarkSchema.required(),
+          message: questReviewMessageSchema.required(),
+          mark: questReviewMarkSchema.required(),
         }).label('ReviewSendPayload'),
       },
       response: {
-        schema: outputOkSchema(reviewSchema).label('ReviewResponse'),
+        schema: outputOkSchema(questReviewSchema).label('ReviewResponse'),
       },
     },
   },
   {
     method: 'GET',
-    path: '/v1/user/{userId}/reviews',
+    path: '/v1/user/{userId}/reviews', //TODO -> /v1/user/{userId}/quest/reviews
     handler: getReviewsOfUser,
     options: {
       auth: 'jwt-access',
@@ -52,7 +52,7 @@ export default [
         }).label('ReviewsQuery'),
       },
       response: {
-        schema: outputPaginationSchema('reviews', reviewSchema).label('ReviewsResponse'),
+        schema: outputPaginationSchema('reviews', questReviewSchema).label('ReviewsResponse'),
       },
     },
   },

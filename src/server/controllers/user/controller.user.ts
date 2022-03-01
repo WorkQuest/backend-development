@@ -13,8 +13,8 @@ import {
   QuestsStatistic,
   RatingStatistic,
   defaultUserSettings,
-  UserSpecializationFilter,
-} from '@workquest/database-models/lib/models';
+  UserSpecializationFilter, QuestDispute, QuestStatus
+} from "@workquest/database-models/lib/models";
 
 abstract class UserHelper {
   public abstract user: User;
@@ -227,6 +227,15 @@ abstract class UserHelper {
       throw error(Errors.InvalidPayload, 'Invalid confirmation code', [{ field: 'confirmCode', reason: 'invalid' }]);
     }
 
+    return this;
+  }
+
+  public userMustBeDisputeMember(dispute: QuestDispute): this {
+    const isUserDisputeMember = dispute.openDisputeUserId === this.user.id ? true : (dispute.opponentUserId === this.user.id);
+
+    if (!isUserDisputeMember) {
+      throw error(Errors.InvalidRole, 'User is not dispute member', [{userId: this.user.id}]);
+    }
     return this;
   }
 }

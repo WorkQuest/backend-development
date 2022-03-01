@@ -16,7 +16,6 @@ import {
   questQuerySchema,
   questsForGetSchema,
   locationFullSchema,
-  questCategorySchema,
   questsWithCountSchema,
   questEmploymentSchema,
   questDescriptionSchema,
@@ -54,7 +53,6 @@ export default [{
     description: "Register new quest",
     validate: {
       payload: Joi.object({
-        category: questCategorySchema.required(),
         workplace: workPlaceSchema.required(),
         employment: questEmploymentSchema.required(),
         priority: prioritySchema.required(),
@@ -103,7 +101,6 @@ export default [{
         questId: idSchema.required(),
       }).label("EditQuestParams"),
       payload: Joi.object({
-        category: questCategorySchema.required(),
         workplace: workPlaceSchema.required(),
         employment: questEmploymentSchema.required(),
         priority: prioritySchema.required(),
@@ -131,6 +128,22 @@ export default [{
     description: "Get quests",
     validate: {
       query: questQuerySchema
+    },
+    response: {
+      schema: outputOkSchema(questsForGetWithCountSchema).label("GetQuestsResponse")
+    },
+  }
+},{
+  method: "POST",
+  path: "/v1/quests(payload)",
+  handler: handlers.getPayloadQuests,
+  options: {
+    auth: 'jwt-access',
+    id: "v1.getPayloadQuests",
+    tags: ["api", "quest"],
+    description: "Get quests",
+    validate: {
+      payload: questQuerySchema,
     },
     response: {
       schema: outputOkSchema(questsForGetWithCountSchema).label("GetQuestsResponse")

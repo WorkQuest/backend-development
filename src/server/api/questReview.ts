@@ -3,7 +3,7 @@ import { addUpdateReviewStatisticsJob } from '../jobs/updateReviewStatistics';
 import { QuestNotificationActions } from '../controllers/controller.broker';
 import { QuestController } from '../controllers/quest/controller.quest';
 import { Errors } from '../utils/errors';
-import { User, Quest, Review, UserRole, QuestStatus } from '@workquest/database-models/lib/models';
+import { User, Quest, QuestsReview, UserRole, QuestStatus } from '@workquest/database-models/lib/models';
 import { UserController } from '../controllers/user/controller.user';
 
 export async function sendReview(r) {
@@ -16,7 +16,7 @@ export async function sendReview(r) {
 
   const toUser: User = fromUser.role === UserRole.Worker ? questController.quest.user : questController.quest.assignedWorker;
 
-  const alreadyReview = await Review.findOne({
+  const alreadyReview = await QuestsReview.findOne({
     where: {
       toUserId: toUser.id,
       fromUserId: fromUser.id,
@@ -30,7 +30,7 @@ export async function sendReview(r) {
     });
   }
 
-  const review = await Review.create({
+  const review = await QuestsReview.create({
     toUserId: toUser.id,
     fromUserId: fromUser.id,
     questId: questController.quest.id,
@@ -54,7 +54,7 @@ export async function sendReview(r) {
 }
 
 export async function getReviewsOfUser(r) {
-  const { count, rows } = await Review.findAndCountAll({
+  const { count, rows } = await QuestsReview.findAndCountAll({
     include: [
       {
         model: User.scope('short'),

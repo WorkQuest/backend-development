@@ -1,17 +1,20 @@
-import { Op, literal } from 'sequelize';
-import { error, output } from '../utils';
-import { Errors } from '../utils/errors';
-import { QuestController } from '../controllers/quest/controller.quest';
-import { QuestNotificationActions } from '../controllers/controller.broker';
+import { literal, Op } from "sequelize";
+import { error, output } from "../utils";
+import { Errors } from "../utils/errors";
+import { QuestController } from "../controllers/quest/controller.quest";
+import { QuestNotificationActions } from "../controllers/controller.broker";
 import { UserController } from "../controllers/user/controller.user";
 import {
-  User,
+  Admin,
+  DisputeStatus,
   Quest,
   QuestChat,
-  QuestStatus,
   QuestDispute,
-  DisputeStatus,
-} from '@workquest/database-models/lib/models';
+  QuestDisputeReview,
+  QuestStatus,
+  User
+} from "@workquest/database-models/lib/models";
+import { addUpdateDisputeReviewStatisticsJob } from "../jobs/updateDisputeReviewStatistics";
 
 export async function openDispute(r) {
   const user: User = r.auth.credentials;
@@ -115,4 +118,53 @@ export async function getDisputes(r) {
   });
 
   return output({ count: count, disputes: rows });
+}
+
+export async function sendQuestDisputeReview(r) {
+  const fromUser: User = r.auth.credentials;
+  const fromUserController = new UserController(fromUser);
+  const dispute = await QuestDispute.findByPk(r.params.disputeId);
+
+  if (!dispute) {
+    return error(Errors.NotFound, 'Dispute not found', { disputeId: r.params.disputeId });
+  }
+  if (dispute.status !== DisputeStatus.closed) {
+    return error(Errors.InvalidStatus, 'Dispute status does not match', [{ current: dispute.status, mustHave: DisputeStatus.closed }]);
+  }
+
+  fromUserController
+    .userMustBeDisputeMember(dispute)
+
+  const toAdmin: Admin = await Admin.findByPk(dispute.assignedAdminId);
+
+  const alreadyReview = await QuestDisputeReview.findOne({
+    where: {
+      toAdminId: toAdmin.id,
+      fromUserId: fromUser.id,
+      disputeId: dispute.id,
+    },
+  });
+
+  if (alreadyReview) {
+    return error(Errors.AlreadyExists, 'You already valued this dispute', {
+      yourReviewId: alreadyReview.id,
+    });
+  }
+
+  const review = await QuestDisputeReview.create({
+    toAdminId: toAdmin.id,
+    fromUserId: fromUser.id,
+    disputeId: dispute.id,
+    message: r.payload.message,
+    mark: r.payload.mark,
+  });
+
+  review.setDataValue('fromUser', fromUserController.shortCredentials);
+
+  //TODO: add job for admin review
+  await addUpdateDisputeReviewStatisticsJob({
+    adminId: toAdmin.id,
+  });
+
+  return output(review);
 }

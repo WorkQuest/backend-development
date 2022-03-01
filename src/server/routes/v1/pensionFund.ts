@@ -4,6 +4,7 @@ import {
   limitSchema,
   offsetSchema,
   outputOkSchema,
+  sortDirectionSchema,
   pensionFundsEventsScheme,
 } from '@workquest/database-models/lib/schemes';
 
@@ -21,6 +22,10 @@ export default [
         query: Joi.object({
           offset: offsetSchema,
           limit: limitSchema,
+          userAddress: Joi.string().default(null).label('GetClaimUserAddressQuery'),
+          sort: Joi.object({
+            timestamp: sortDirectionSchema.default('DESC'),
+          }).default({ timestamp: 'DESC' }).label('SortClaimQuery'),
         }).label('GetClaimQuery'),
       },
       response: {
@@ -40,6 +45,10 @@ export default [
         query: Joi.object({
           offset: offsetSchema,
           limit: limitSchema,
+          userAddress: Joi.string().default(null).label('SortReceiveUserAddressQuery'),
+          sort: Joi.object({
+            timestamp: sortDirectionSchema.default('DESC'),
+          }).default({ timestamp: 'DESC' }).label('SortReceiveQuery'),
         }).label('GetReceiveQuery'),
       },
       response: {
@@ -59,6 +68,10 @@ export default [
         query: Joi.object({
           offset: offsetSchema,
           limit: limitSchema,
+          userAddress: Joi.string().default(null).label('GetWithdrawUserAddressQuery'),
+          sort: Joi.object({
+            timestamp: sortDirectionSchema.default('DESC'),
+          }).default({ timestamp: 'DESC' }).label('SortWithdrawQuery'),
         }).label('GetWithdrawQuery'),
       },
       response: {
