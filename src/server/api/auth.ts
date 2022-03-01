@@ -58,13 +58,14 @@ export function register(host: 'dao' | 'main') {
         emailConfirm: emailConfirmCode,
       },
     });
-
+//TODO перенести в job
     if (r.payload.referralId) {
       const addAffiliate = await ReferralProgram.scope('referral').findOne({where: {referralId:r.payload.referralId}})
 
       if (!addAffiliate){
         return error(Errors.LiquidityError, 'Referral id don`t exist', {});
       }
+      // TODO добавить проверку на наличие теккущего аффилиата, он может быть только один
       await ReferrerAffiliateUser.create({
         affiliateId: user.id,
         userReferralId: addAffiliate.referralId,
@@ -73,7 +74,7 @@ export function register(host: 'dao' | 'main') {
     }
 
     await ReferralProgram.create({ userId: user.id })
-
+//
     const session = await Session.create({
       userId: user.id,
       invalidating: false,
