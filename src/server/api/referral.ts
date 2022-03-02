@@ -2,42 +2,50 @@ import Web3 from 'web3';
 import { Op } from 'sequelize';
 import { error, output } from '../utils';
 import {
-  AffiliateStatus,
+  ReferralStatus,
   ReferralProgram,
-  ReferrerAffiliateUser,
-  ReferralEventRewardClaimed
+  ReferralProgramAffiliate
 } from '@workquest/database-models/lib/models';
 import { Errors } from '../utils/errors';
 import configReferral from '../config/config.referral';
 
-
-const linkWsProvider = configReferral.wssProviderLink;
-
-const web3 = new Web3(new Web3.providers.WebsocketProvider(linkWsProvider));
-
 export async function myAffiliates(r) {
-  const referral = await ReferralProgram.scope('referral').findOne({ where: { userId: r.params.userId } });
+  const user = r.auth.credentials.id
 
-  if (!referral) {
-    return error(Errors.LiquidityError, 'Referral not found', {});
-  }
-  const affiliatesInfo = await ReferrerAffiliateUser.scope('shortAffiliate').findAndCountAll({
+  const userReferralProgram = await ReferralProgram.unscoped().findOne({
     where: {
-      userReferralId: referral.referralId
+      referrerUserId: user
     }
   });
-  return output(affiliatesInfo);
+
+  if (!userReferralProgram) {
+    return error(Errors.LiquidityError, 'Referral not found', {});
+  }
+
+  const { count, rows } = await ReferralProgramAffiliate.scope('shortAffiliate').findAndCountAll({
+    where: {
+      referralProgramId: userReferralProgram.id
+    }
+  });
+  return output({
+    referralProgramId: userReferralProgram.id,
+    referralId: userReferralProgram.referralId,
+    count,
+    rows
+  });
 }
 
 export async function addAffiliates(r) {
+  const linkWsProvider = configReferral.wssProviderLink;
+  const web3 = new Web3(new Web3.providers.WebsocketProvider(linkWsProvider));
 
   const referralId = await ReferralProgram.scope('referral').findByPk(r.auth.credentials.id);
 
-  const affiliates = await ReferrerAffiliateUser.scope('defaultScope').findAndCountAll({
+  const affiliates = await ReferralProgramAffiliate.scope('defaultScope').findAndCountAll({
     where: {
       userReferralId: referralId.referralId,
       affiliateId: { [Op.in]: r.payload.affiliates },
-      status: AffiliateStatus.Created
+      status: ReferralStatus.Created
     }
   });
   if (!affiliates) {
@@ -68,16 +76,26 @@ export async function addAffiliates(r) {
   });
 }
 
-// export async function referralRewardEvents(r) {
+// export async function referralClaimedEvents(r) {
+//   const referral = await ReferralProgram.scope('referral').findOne({ where: { userId: r.auth.credentials.id } });
 //
-//   const referral = await ReferralProgram.scope('referral').findOne({ where: { userId: r.params.userId } });
-//
-//   const events = await ReferralEventRewardClaimed.findAndCountAll({
-//     where: {
-// //TODO add takes events (ClaimRewards)
-//     }
+//   const { count, rows } = await ReferralProgramAffiliate.scope('defaultScope').findAndCountAll({
+//     where: { referralId: referral.referralId }
 //   });
-//   const referralId = await ReferralProgram.scope('referral').findByPk(r.auth.credentials.id);
+//   console.log(count, rows);
 //
+//   //TODO Добавление списка всех транзакций и вывод начисленных наград
+//
+//   // const events = await ReferralEventRewardClaimed.findAndCountAll({
+//   //   where: {}
+//   // });
+//   // const referralId = await ReferralProgram.scope('referral').findByPk(r.auth.credentials.id);
+//
+//   // const { count, rows } = await ProposalVoteCastEvent.findAndCountAll({
+//   //   limit: r.query.limit,
+//   //   offset: r.query.offset,
+//   //   order: [['createdAt', r.query.createdAt]],
+//   //   where,
+//   // });
 // }
 

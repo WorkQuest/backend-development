@@ -16,11 +16,10 @@ import {
   Session,
   ReferralProgram,
   UserStatus,
-  AffiliateStatus,
-  ReferrerAffiliateUser,
-  defaultUserSettings
+  defaultUserSettings, ReferralProgramAffiliate
 } from '@workquest/database-models/lib/models';
 import { totpValidate } from '@workquest/database-models/lib/utils';
+import { ReferralStatus } from '@workquest/database-models/src/models/referral-program/ReferralProgramAffiliate';
 
 const confirmTemplatePath = path.join(__dirname, '..', '..', '..', 'templates', 'confirmEmail.html');
 const confirmTemplate = Handlebars.compile(
@@ -58,18 +57,23 @@ export function register(host: 'dao' | 'main') {
         emailConfirm: emailConfirmCode,
       },
     });
-//TODO перенести в job
+    //TODO перенести в job
     if (r.payload.referralId) {
       const addAffiliate = await ReferralProgram.scope('referral').findOne({where: {referralId:r.payload.referralId}})
 
       if (!addAffiliate){
-        return error(Errors.LiquidityError, 'Referral id don`t exist', {});
+        return error(Errors.LiquidityError, 'There is no user with this referral code', {});
       }
-      // TODO добавить проверку на наличие теккущего аффилиата, он может быть только один
-      await ReferrerAffiliateUser.create({
-        affiliateId: user.id,
-        userReferralId: addAffiliate.referralId,
-        affiliateStatus: AffiliateStatus.Created
+      const isCreated = await ReferralProgramAffiliate.findOne({
+        where: { affiliateUserId: user.id }
+      })
+      if (isCreated) {
+        return error(Errors.LiquidityError, 'You are already participating in the referral program', {});
+      }
+      await ReferralProgramAffiliate.create({
+        affiliateUserId: user.id,
+        referralProgramId: addAffiliate.id,
+        referralStatus: ReferralStatus.Created
       })
     }
 
