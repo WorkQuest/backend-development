@@ -1,13 +1,11 @@
 import * as Joi from 'joi';
 import {
-  idSchema,
-  outputOkSchema
+  outputOkSchema,
+  idsSchema,
+  offsetSchema,
+  limitSchema
 } from '@workquest/database-models/lib/schemes';
-import { addAffiliates, myAffiliates } from '../../api/referral';
-import {
-  referralAffiliatesSchema,
-  referralAddAffiliatesSchemas
-} from '@workquest/database-models/lib/schemes/referral';
+import { addAffiliates, myAffiliates, referralRewardEvents } from '../../api/referral';
 
 export default [
   {
@@ -20,9 +18,10 @@ export default [
       tags: ['api', 'referral'],
       description: 'Get my affiliates',
       validate: {
-        params: Joi.object({
-          userId: idSchema.required()
-        }).label('GetAffiliatesParams')
+        query: Joi.object({
+          offset: offsetSchema,
+          limit: limitSchema
+        }).label('GetMyAffiliatesAndReferralInfo')
       },
       response: {
         schema: outputOkSchema
@@ -39,31 +38,31 @@ export default [
       description: 'Register new affiliate user',
       validate: {
         payload: Joi.object({
-          affiliates: referralAffiliatesSchema.required()
+          affiliates: idsSchema.required()
         }).label('ReferralAddAffiliates')
       },
       response: {
-        schema: outputOkSchema(referralAddAffiliatesSchemas).label('ReferralAddAffiliates')
+        schema: outputOkSchema
+      }
+    }
+  }, {
+    method: 'GET',
+    path: '/v1/referral/claim/{userId}',
+    handler: referralRewardEvents,
+    options: {
+      auth: 'jwt-access',
+      id: 'v1.referral.affiliates',
+      tags: ['api', 'referral'],
+      description: 'Get all events paid or claimed',
+      validate: {
+        query: Joi.object({
+          offset: offsetSchema,
+          limit: limitSchema
+        }).label('GetReferralRewardClaimEvents')
+      },
+      response: {
+        schema: outputOkSchema
       }
     }
   }
-  // , {
-  //   method: 'GET',
-  //   path: '/v1/referral/rewards',
-  //   handler: referralRewardEvents,
-  //   options: {
-  //     auth: false,// jwt-access
-  //     id: 'v1.referral.rewards',
-  //     tags: ['api', 'referral'],
-  //     description: 'Get all events in my rewards',
-  //     validate: {
-  //       params: Joi.object({
-  //         userId: idSchema.required()
-  //       }).label('GetEventsReferralParams')
-  //     },
-  //     response: {
-  //       schema: outputOkSchema
-  //     }
-  //   }
-  // }
 ];

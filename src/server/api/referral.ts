@@ -2,15 +2,16 @@ import Web3 from 'web3';
 import { Op } from 'sequelize';
 import { error, output } from '../utils';
 import {
+  RewardStatus,
   ReferralStatus,
   ReferralProgram,
-  ReferralProgramAffiliate
+  ReferralProgramAffiliate, ReferralEventRewardClaimed
 } from '@workquest/database-models/lib/models';
 import { Errors } from '../utils/errors';
 import configReferral from '../config/config.referral';
 
 export async function myAffiliates(r) {
-  const user = r.auth.credentials.id
+  const user = r.auth.credentials.id;
 
   const userReferralProgram = await ReferralProgram.unscoped().findOne({
     where: {
@@ -23,15 +24,17 @@ export async function myAffiliates(r) {
   }
 
   const { count, rows } = await ReferralProgramAffiliate.scope('shortAffiliate').findAndCountAll({
-    where: {
-      referralProgramId: userReferralProgram.id
-    }
+    distinct: true,
+    limit: r.query.limit,
+    offset: r.query.offset,
+    where: { referralProgramId: userReferralProgram.id },
+    order: [['createdAt', 'DESC']]
   });
   return output({
     referralProgramId: userReferralProgram.id,
     referralId: userReferralProgram.referralId,
     count,
-    rows
+    referralProgramAffiliates: rows
   });
 }
 
@@ -39,23 +42,27 @@ export async function addAffiliates(r) {
   const linkWsProvider = configReferral.wssProviderLink;
   const web3 = new Web3(new Web3.providers.WebsocketProvider(linkWsProvider));
 
-  const referralId = await ReferralProgram.scope('referral').findByPk(r.auth.credentials.id);
-
-  const affiliates = await ReferralProgramAffiliate.scope('defaultScope').findAndCountAll({
+  const referralId = await ReferralProgram.unscoped().findOne({
     where: {
-      userReferralId: referralId.referralId,
+      referrerUserId: r.auth.credentials.id
+    }
+  });
+
+  const affiliatesReferralProgram = await ReferralProgramAffiliate.scope('defaultScope').findAndCountAll({
+    where: {
+      referralProgramId: referralId.id,
       affiliateId: { [Op.in]: r.payload.affiliates },
       status: ReferralStatus.Created
     }
   });
-  if (!affiliates) {
+  if (!affiliatesReferralProgram) {
     return error(Errors.NotFound, 'Affiliates does not exist', {});
   }
 
   const walletsAffiliate = [];
-  for (let i = 0; i < affiliates.count; i++) {
-    if (affiliates.rows[i].user.wallet !== null) {
-      walletsAffiliate.push(affiliates.rows[i].user.wallet.address);
+  for (let i = 0; i < affiliatesReferralProgram.count; i++) {
+    if (affiliatesReferralProgram.rows[i].user.wallet !== null) {
+      walletsAffiliate.push(affiliatesReferralProgram.rows[i].user.wallet.address);
     }
   }
 
@@ -76,26 +83,27 @@ export async function addAffiliates(r) {
   });
 }
 
-// export async function referralClaimedEvents(r) {
-//   const referral = await ReferralProgram.scope('referral').findOne({ where: { userId: r.auth.credentials.id } });
-//
-//   const { count, rows } = await ReferralProgramAffiliate.scope('defaultScope').findAndCountAll({
-//     where: { referralId: referral.referralId }
-//   });
-//   console.log(count, rows);
-//
-//   //TODO Добавление списка всех транзакций и вывод начисленных наград
-//
-//   // const events = await ReferralEventRewardClaimed.findAndCountAll({
-//   //   where: {}
-//   // });
-//   // const referralId = await ReferralProgram.scope('referral').findByPk(r.auth.credentials.id);
-//
-//   // const { count, rows } = await ProposalVoteCastEvent.findAndCountAll({
-//   //   limit: r.query.limit,
-//   //   offset: r.query.offset,
-//   //   order: [['createdAt', r.query.createdAt]],
-//   //   where,
-//   // });
-// }
+export async function referralRewardEvents(r) {
+  const referral = await ReferralProgram.scope('referral').findOne({
+    where: {
+      referrerUserId: r.auth.credentials.id
+    }
+  });
+
+  const { count, rows } = await ReferralProgramAffiliate.scope('defaultScope').findAndCountAll({
+
+    where: {
+      referralProgramId: referral.id,
+      rewardStatus: RewardStatus.Claimed
+    }
+  });
+
+  const events = await ReferralEventRewardClaimed.findAndCountAll({
+    distinct: true,
+    limit: r.query.limit,
+    offset: r.query.offset
+  });
+
+  return output();
+}
 

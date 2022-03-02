@@ -2,7 +2,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 import * as querystring from 'querystring';
 import Handlebars = require('handlebars');
-import { Op, where } from 'sequelize';
+import { Op } from 'sequelize';
 import config from '../config/config';
 import { Errors } from '../utils/errors';
 import { addSendEmailJob } from '../jobs/sendEmail';
@@ -16,10 +16,10 @@ import {
   Session,
   ReferralProgram,
   UserStatus,
-  defaultUserSettings, ReferralProgramAffiliate
+  defaultUserSettings,
 } from '@workquest/database-models/lib/models';
 import { totpValidate } from '@workquest/database-models/lib/utils';
-import { ReferralStatus } from '@workquest/database-models/src/models/referral-program/ReferralProgramAffiliate';
+import { createReferralProgram } from '../jobs/addReferralProgram';
 
 const confirmTemplatePath = path.join(__dirname, '..', '..', '..', 'templates', 'confirmEmail.html');
 const confirmTemplate = Handlebars.compile(
@@ -57,25 +57,11 @@ export function register(host: 'dao' | 'main') {
         emailConfirm: emailConfirmCode,
       },
     });
-    //TODO перенести в job
-    if (r.payload.referralId) {
-      const addAffiliate = await ReferralProgram.scope('referral').findOne({where: {referralId:r.payload.referralId}})
 
-      if (!addAffiliate){
-        return error(Errors.LiquidityError, 'There is no user with this referral code', {});
-      }
-      const isCreated = await ReferralProgramAffiliate.findOne({
-        where: { affiliateUserId: user.id }
-      })
-      if (isCreated) {
-        return error(Errors.LiquidityError, 'You are already participating in the referral program', {});
-      }
-      await ReferralProgramAffiliate.create({
-        affiliateUserId: user.id,
-        referralProgramId: addAffiliate.id,
-        referralStatus: ReferralStatus.Created
-      })
-    }
+    await createReferralProgram({
+      userId: user.id,
+      referralId: r.payload.referralId
+    });
 
     await ReferralProgram.create({ userId: user.id })
 //
