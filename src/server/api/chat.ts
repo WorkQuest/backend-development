@@ -355,7 +355,7 @@ export async function sendMessageToUser(r) {
     await resetUnreadCountMessagesOfMemberJob({
       chatId: chat.id,
       lastReadMessageId: message.id,
-      userId: sender.id,
+      userId: sender.userId,
       lastReadMessageNumber: message.number,
     });
 
@@ -403,9 +403,11 @@ export async function sendMessageToChat(r) {
     where: { chatId: chat.id },
   });
 
+  const sender = await ChatMember.findOne({ where: { chatId: chat.id, userId: r.auth.credentials.id } });
+
   const message = await Message.create(
     {
-      senderMemberId: r.auth.credentials.id,
+      senderMemberId: sender.id,
       chatId: chat.id,
       type: MessageType.message,
       text: r.payload.text,
@@ -430,6 +432,7 @@ export async function sendMessageToChat(r) {
   const membersWithoutSender = await ChatMember.scope('userIdsOnly').findAll({
     where: { chatId: chat.id, userId: { [Op.ne]: r.auth.credentials.id } },
   });
+
   const userIdsWithoutSender = membersWithoutSender.map((member) => member.userId);
   const result = await Message.findByPk(message.id);
 
@@ -448,7 +451,7 @@ export async function sendMessageToChat(r) {
   await setMessageAsReadJob({
     lastUnreadMessage: { id: message.id, number: message.number },
     chatId: r.params.chatId,
-    senderId: r.auth.credentials.id,
+    senderId: sender.id,
   });
 
   await updateCountUnreadChatsJob({
@@ -576,17 +579,11 @@ export async function removeUserInGroupChat(r) {
 
   const transaction = await r.server.app.db.transaction();
 
-  await ChatMember.destroy({
-    where: {
-      chatId: groupChat.id,
-      memberId: r.params.userId,
-    },
-    transaction,
-  });
+  const sender = await ChatMember.findOne({ where: { userId: r.auth.credentials.id } });
 
   const message = await Message.create(
     {
-      senderMemberId: r.auth.credentials.id,
+      senderMemberId: sender.id,
       chatId: groupChat.id,
       type: MessageType.info,
       number: groupChat.lastMessage.number + 1,
@@ -594,9 +591,17 @@ export async function removeUserInGroupChat(r) {
     { transaction },
   );
 
+  const chatMember = await ChatMember.findOne({
+    where: {
+      chatId: groupChat.id,
+      userId: r.params.userId,
+    },
+    transaction,
+  });
+
   await InfoMessage.create(
     {
-      memberId: r.params.userId,
+      memberId: chatMember.id,
       messageId: message.id,
       messageAction: MessageAction.groupChatDeleteUser,
     },
@@ -611,11 +616,13 @@ export async function removeUserInGroupChat(r) {
     { transaction },
   );
 
+  await chatMember.destroy({ transaction });
+
   await transaction.commit();
 
   const result = await Message.findByPk(message.id);
   const membersWithoutSender = await ChatMember.scope('userIdsOnly').findAll({
-    where: { chatId: groupChat.id, memberId: { [Op.ne]: r.auth.credentials.id } },
+    where: { chatId: groupChat.id, userId: { [Op.ne]: r.auth.credentials.id } },
   });
   const userIdsWithoutSender = membersWithoutSender.map((member) => member.userId);
 
@@ -719,6 +726,8 @@ export async function setMessagesAsRead(r) {
   const chat = await Chat.findByPk(r.params.chatId);
   const chatController = new ChatController(chat);
 
+  const sender = await ChatMember.findOne({ where: { chatId: chat.id, userId: r.auth.credentials.id } });
+
   await chatController.chatMustHaveMember(r.auth.credentials.id);
 
   const message = await Message.findByPk(r.payload.messageId);
@@ -731,7 +740,7 @@ export async function setMessagesAsRead(r) {
     attributes: ['senderMemberId'],
     where: {
       chatId: chatController.chat.id,
-      senderMemberId: { [Op.ne]: r.auth.credentials.id },
+      senderMemberId: { [Op.ne]: sender.id },
       senderStatus: SenderMessageStatus.unread,
       number: { [Op.gte]: message.number },
     },
@@ -751,7 +760,7 @@ export async function setMessagesAsRead(r) {
   await setMessageAsReadJob({
     lastUnreadMessage: { id: message.id, number: message.number },
     chatId: r.params.chatId,
-    senderId: r.auth.credentials.id,
+    senderId: sender.id,
   });
 
   await updateCountUnreadChatsJob({
@@ -798,9 +807,15 @@ export async function markMessageStar(r) {
 
   await chatController.chatMustHaveMember(r.auth.credentials.id);
 
-  await StarredMessage.create({
-    memberId: r.auth.credentials.id,
-    messageId: r.params.messageId,
+  await StarredMessage.findOrCreate({
+    where: {
+      memberId: r.auth.credentials.id,
+      messageId: r.params.messageId,
+    },
+    defaults: {
+      memberId: r.auth.credentials.id,
+      messageId: r.params.messageId,
+    }
   });
 
   return output();
@@ -829,9 +844,15 @@ export async function markChatStar(r) {
 
   await chatController.chatMustHaveMember(r.auth.credentials.id);
 
-  await StarredChat.create({
-    memberId: r.auth.credentials.id,
-    chatId: r.params.chatId,
+  await StarredChat.findOrCreate({
+    where: {
+      memberId: r.auth.credentials.id,
+      chatId: r.params.chatId,
+    },
+    defaults: {
+      memberId: r.auth.credentials.id,
+      chatId: r.params.chatId,
+    }
   });
 
   return output();
