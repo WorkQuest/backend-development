@@ -5,13 +5,13 @@ import {
   offsetSchema,
   limitSchema
 } from '@workquest/database-models/lib/schemes';
-import { addAffiliates, myAffiliates, referralRewardEvents } from '../../api/referral';
+import { addAffiliates, affiliatesInfos, referralRewardEvents } from '../../api/referral';
 
 export default [
   {
     method: 'GET',
-    path: '/v1/referral/{userId}',
-    handler: myAffiliates,
+    path: '/v1/referral/affiliatesInfo',
+    handler: affiliatesInfos,
     options: {
       auth: 'jwt-access',
       id: 'v1.referral.affiliates',
@@ -32,7 +32,7 @@ export default [
     path: '/v1/referral/addAffiliates',
     handler: addAffiliates,
     options: {
-      auth: 'jwt-access',
+      auth: false,//'jwt-access',
       id: 'v1.referral.addAffiliates',
       tags: ['api', 'referral'],
       description: 'Register new affiliate user',
@@ -47,11 +47,11 @@ export default [
     }
   }, {
     method: 'GET',
-    path: '/v1/referral/claim/{userId}',
+    path: '/v1/referral/claim',
     handler: referralRewardEvents,
     options: {
       auth: 'jwt-access',
-      id: 'v1.referral.affiliates',
+      id: 'v1.referral.claim',
       tags: ['api', 'referral'],
       description: 'Get all events paid or claimed',
       validate: {

@@ -10,31 +10,28 @@ import {
 import { Errors } from '../utils/errors';
 import configReferral from '../config/config.referral';
 
-export async function myAffiliates(r) {
+export async function affiliatesInfos(r) {
   const user = r.auth.credentials.id;
 
-  const userReferralProgram = await ReferralProgram.unscoped().findOne({
-    where: {
-      referrerUserId: user
-    }
+  const referral = await ReferralProgram.unscoped().findOne({
+    where: { referrerUserId: user }
   });
 
-  if (!userReferralProgram) {
+  const { count, rows } = await ReferralProgramAffiliate.scope('shortReferralProgramAffiliates').findAndCountAll({
+    where: { referralProgramId: referral.id },
+    limit: r.query.limit,
+    offset: r.query.offset
+  });
+
+  if (count === 0) {
     return error(Errors.LiquidityError, 'Referral not found', {});
   }
 
-  const { count, rows } = await ReferralProgramAffiliate.scope('shortAffiliate').findAndCountAll({
-    distinct: true,
-    limit: r.query.limit,
-    offset: r.query.offset,
-    where: { referralProgramId: userReferralProgram.id },
-    order: [['createdAt', 'DESC']]
-  });
   return output({
-    referralProgramId: userReferralProgram.id,
-    referralId: userReferralProgram.referralId,
+    paidRewards: referral.paidReward,
+    referralId: referral.referralId,
     count,
-    referralProgramAffiliates: rows
+    affiliates: rows
   });
 }
 
@@ -42,20 +39,22 @@ export async function addAffiliates(r) {
   const linkWsProvider = configReferral.wssProviderLink;
   const web3 = new Web3(new Web3.providers.WebsocketProvider(linkWsProvider));
 
+  const user = '391b9b5e-478f-4d98-9a24-6784fdc7435d'//r.auth.credentials.id
   const referralId = await ReferralProgram.unscoped().findOne({
     where: {
-      referrerUserId: r.auth.credentials.id
+      referrerUserId: user
     }
   });
 
   const affiliatesReferralProgram = await ReferralProgramAffiliate.scope('defaultScope').findAndCountAll({
     where: {
       referralProgramId: referralId.id,
-      affiliateId: { [Op.in]: r.payload.affiliates },
-      status: ReferralStatus.Created
+      affiliateUserId: { [Op.in]: r.payload.affiliates },
+      referralStatus: ReferralStatus.Created
     }
   });
-  if (!affiliatesReferralProgram) {
+
+  if (affiliatesReferralProgram.count === 0 ) {
     return error(Errors.NotFound, 'Affiliates does not exist', {});
   }
 
@@ -84,26 +83,42 @@ export async function addAffiliates(r) {
 }
 
 export async function referralRewardEvents(r) {
-  const referral = await ReferralProgram.scope('referral').findOne({
+  const user = r.auth.credentials.id;
+
+  const referral = await ReferralProgram.unscoped().findOne({
     where: {
-      referrerUserId: r.auth.credentials.id
+      referrerUserId: user
     }
   });
 
   const { count, rows } = await ReferralProgramAffiliate.scope('defaultScope').findAndCountAll({
-
     where: {
       referralProgramId: referral.id,
       rewardStatus: RewardStatus.Claimed
-    }
-  });
-
-  const events = await ReferralEventRewardClaimed.findAndCountAll({
-    distinct: true,
+    },
     limit: r.query.limit,
     offset: r.query.offset
   });
 
-  return output();
+  if (count === 0) {
+    return error(Errors.NotFound, 'Affiliate users not found', {});
+  }
+
+  const result = [];
+  for (const row of rows) {
+    const event = await ReferralEventRewardClaimed.findOne({
+      where: { affiliate: row.user.wallet.address }
+    });
+    result.push({
+      name: row.user.firstName + ' ' + row.user.lastName,
+      userId: row.user.id,
+      txHash: event.transactionHash,
+      createdAt: event.timestamp,
+      amount: event.amount,
+      status: row.rewardStatus
+    });
+  }
+
+  return output({count, rows: result});
 }
 
