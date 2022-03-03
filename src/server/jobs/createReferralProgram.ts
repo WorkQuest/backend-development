@@ -1,33 +1,39 @@
+import { addJob } from '../utils/scheduler';
 import {
   ReferralProgram,
   ReferralProgramAffiliate,
-  ReferralStatus
+  ReferralStatus, User
 } from '@workquest/database-models/lib/models';
-import { addJob } from '../utils/scheduler';
 
 export interface CreateReferralProgramPayload {
   userId: string;
-  referralId: string;
+  referralId?: string;
 }
 
 export async function createReferralProgram(payload: CreateReferralProgramPayload) {
-  return addJob('CreateReferralProgram', payload);
+  return addJob('createReferralProgram', payload);
 }
 
-export default async function(CreateReferralProgramPayload) {
+export default async function(payload: CreateReferralProgramPayload) {
+  const user = await User.findByPk(payload.userId);
 
-  const addAffiliate = await ReferralProgram.scope('referral').findOne({
-    where: { referralId: CreateReferralProgramPayload.referralId }
+  const referralProgram = await ReferralProgram.scope('referral').findOne({
+    where: { referralId: payload.referralId },
   });
 
-  await ReferralProgramAffiliate.findOne({
-    where: { affiliateUserId: CreateReferralProgramPayload.userId }
-  });
+  if (!user) {
+    return;
+  }
+  if (payload.referralId && !referralProgram) {
+    return;
+  }
+  if (payload.referralId) {
+    await ReferralProgramAffiliate.create({
+      affiliateUserId: payload.userId,
+      referralProgramId: referralProgram.id,
+      referralStatus: ReferralStatus.Created,
+    });
+  }
 
-  await ReferralProgramAffiliate.create({
-    affiliateUserId: CreateReferralProgramPayload.userId,
-    referralProgramId: addAffiliate.id,
-    referralStatus: ReferralStatus.Created
-  });
-
+  await ReferralProgram.create({ referrerUserId: user.id });
 }
