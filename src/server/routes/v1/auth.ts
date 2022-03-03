@@ -34,6 +34,7 @@ export default [
           lastName: userLastNameSchema.required(),
           email: userEmailSchema.required(),
           password: userPasswordSchema.required(),
+          referralId: idSchema
         }).label('AuthRegisterPayload'),
       },
       response: {

@@ -39,7 +39,7 @@ export async function addAffiliates(r) {
   const linkWsProvider = configReferral.wssProviderLink;
   const web3 = new Web3(new Web3.providers.WebsocketProvider(linkWsProvider));
 
-  const user = '391b9b5e-478f-4d98-9a24-6784fdc7435d'//r.auth.credentials.id
+  const user = r.auth.credentials.id
   const referralId = await ReferralProgram.unscoped().findOne({
     where: {
       referrerUserId: user
