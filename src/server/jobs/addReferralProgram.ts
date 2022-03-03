@@ -22,15 +22,10 @@ export default async function(CreateReferralProgramPayload) {
     where: { referralId: CreateReferralProgramPayload.referralId }
   });
 
-  if (!addAffiliate) {
-    return error(Errors.LiquidityError, 'There is no user with this referral code', {});
-  }
   const isCreated = await ReferralProgramAffiliate.findOne({
     where: { affiliateUserId: CreateReferralProgramPayload.userId }
   });
-  if (isCreated) {
-    return error(Errors.LiquidityError, 'You are already participating in the referral program', {});
-  }
+
   await ReferralProgramAffiliate.create({
     affiliateUserId: CreateReferralProgramPayload.userId,
     referralProgramId: addAffiliate.id,
