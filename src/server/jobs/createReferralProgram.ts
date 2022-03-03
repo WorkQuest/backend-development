@@ -4,8 +4,6 @@ import {
   ReferralStatus
 } from '@workquest/database-models/lib/models';
 import { addJob } from '../utils/scheduler';
-import { error } from '../utils';
-import { Errors } from '../utils/errors';
 
 export interface CreateReferralProgramPayload {
   userId: string;
@@ -13,7 +11,7 @@ export interface CreateReferralProgramPayload {
 }
 
 export async function createReferralProgram(payload: CreateReferralProgramPayload) {
-  return addJob('deleteUserFilters', payload);
+  return addJob('CreateReferralProgram', payload);
 }
 
 export default async function(CreateReferralProgramPayload) {
@@ -22,7 +20,7 @@ export default async function(CreateReferralProgramPayload) {
     where: { referralId: CreateReferralProgramPayload.referralId }
   });
 
-  const isCreated = await ReferralProgramAffiliate.findOne({
+  await ReferralProgramAffiliate.findOne({
     where: { affiliateUserId: CreateReferralProgramPayload.userId }
   });
 
