@@ -11,7 +11,7 @@ import {
 import { Errors } from '../utils/errors';
 import configReferral from '../config/config.referral';
 
-export async function affiliatesInfos(r) {
+export async function getReferralUserAffiliates(r) {
   const user = r.auth.credentials.id;
 
   const referral = await ReferralProgram.unscoped().findOne({
@@ -36,15 +36,15 @@ export async function affiliatesInfos(r) {
   });
 }
 
-export async function addAffiliates(r) {
-  const user = r.auth.credentials.id
+export async function signReferralUserAffiliates(r) {
+  const user = r.auth.credentials.id;
   const referralId = await ReferralProgram.unscoped().findOne({
     where: {
       referrerUserId: user
     }
   });
 
-  const affiliatesReferralProgram = await ReferralProgramAffiliate.scope('defaultScope').findAndCountAll({
+  const affiliatesReferralProgram = await ReferralProgramAffiliate.scope('defaultScope').findAll({
     where: {
       referralProgramId: referralId.id,
       affiliateUserId: { [Op.in]: r.payload.affiliates },
@@ -52,23 +52,18 @@ export async function addAffiliates(r) {
     }
   });
 
-  if (affiliatesReferralProgram.count === 0 ) {
+  if (!affiliatesReferralProgram) {
     return error(Errors.NotFound, 'Affiliates does not exist', {});
   }
 
-  const walletsAffiliate = [];
-  for (let i = 0; i < affiliatesReferralProgram.count; i++) {
-    if (affiliatesReferralProgram.rows[i].user.wallet !== null) {
-      walletsAffiliate.push(affiliatesReferralProgram.rows[i].user.wallet.address);
-    }
-  }
+  const wallets = affiliatesReferralProgram.map((value) => value.user.wallet.address)
 
-  if (walletsAffiliate.length === 0) {
-    return error(Errors.NotFound, 'Affiliates does not have wallets', {});
+  if (!wallets.length) {
+    return error(Errors.NotFound, 'Affiliates don`t have wallets', {});
   }
 
   const web3 = new Web3();
-  const data = web3.utils.soliditySha3(...walletsAffiliate);
+  const data = web3.utils.soliditySha3(...wallets);
   const signed = await web3.eth.accounts.sign(data, configReferral.privateKey);
 
   return output({
@@ -76,18 +71,16 @@ export async function addAffiliates(r) {
       v: signed.v,
       r: signed.r,
       s: signed.s,
-      referral: walletsAffiliate
+      referral: wallets
     }
   });
 }
 
-export async function referralRewardEvents(r) {
+export async function getReferralUserClaimedEvents(r) {
   const user = r.auth.credentials.id;
 
   const referral = await ReferralProgram.unscoped().findOne({
-    where: {
-      referrerUserId: user
-    }
+    where: { referrerUserId: user }
   });
 
   const { count, rows } = await ReferralProgramAffiliate.scope('defaultScope').findAndCountAll({
@@ -109,7 +102,8 @@ export async function referralRewardEvents(r) {
       where: { affiliate: row.user.wallet.address }
     });
     result.push({
-      name: row.user.firstName + ' ' + row.user.lastName,
+      firstName: row.user.firstName,
+      lastName: row.user.lastName,
       userId: row.user.id,
       txHash: event.transactionHash,
       createdAt: event.timestamp,
