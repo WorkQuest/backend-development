@@ -5,7 +5,8 @@ import {
   RewardStatus,
   ReferralStatus,
   ReferralProgram,
-  ReferralProgramAffiliate, ReferralEventRewardClaimed
+  ReferralProgramAffiliate,
+  ReferralEventRewardClaimed
 } from '@workquest/database-models/lib/models';
 import { Errors } from '../utils/errors';
 import configReferral from '../config/config.referral';
@@ -36,9 +37,6 @@ export async function affiliatesInfos(r) {
 }
 
 export async function addAffiliates(r) {
-  const linkWsProvider = configReferral.wssProviderLink;
-  const web3 = new Web3(new Web3.providers.WebsocketProvider(linkWsProvider));
-
   const user = r.auth.credentials.id
   const referralId = await ReferralProgram.unscoped().findOne({
     where: {
@@ -69,6 +67,7 @@ export async function addAffiliates(r) {
     return error(Errors.NotFound, 'Affiliates does not have wallets', {});
   }
 
+  const web3 = new Web3();
   const data = web3.utils.soliditySha3(...walletsAffiliate);
   const signed = await web3.eth.accounts.sign(data, configReferral.privateKey);
 

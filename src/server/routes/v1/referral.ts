@@ -32,7 +32,7 @@ export default [
     path: '/v1/referral/addAffiliates',
     handler: addAffiliates,
     options: {
-      auth: false,//'jwt-access',
+      auth: 'jwt-access',
       id: 'v1.referral.addAffiliates',
       tags: ['api', 'referral'],
       description: 'Register new affiliate user',
