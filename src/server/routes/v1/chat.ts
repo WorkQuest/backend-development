@@ -151,90 +151,90 @@ export default [
       },
     },
   },
-  {
-    method: 'POST',
-    path: '/v1/chat/{chatId}/send-message',
-    handler: handlers.sendMessageToChat,
-    options: {
-      auth: 'jwt-access',
-      id: 'v1.chat.sendMessageToChat',
-      description: 'Send message to chat',
-      tags: ['api', 'chat'],
-      validate: {
-        params: Joi.object({
-          chatId: idSchema.required(),
-        }).label('SendMessageToChatParams'),
-        payload: Joi.object({
-          text: messageTextSchema.allow('').default(''),
-          medias: idsSchema.required().unique(),
-        }).label('SendMessageToChatPayload'),
-      },
-      response: {
-        schema: outputOkSchema(messageSchema).label('SendMessageToChatResponse'),
-      },
-    },
-  },
-  {
-    method: 'POST',
-    path: '/v1/user/me/chat/group/{chatId}/add',
-    handler: handlers.addUsersInGroupChat,
-    options: {
-      auth: 'jwt-access',
-      id: 'v1.chat.group.addUsers',
-      description: 'Add users in group chat. For one or more users',
-      tags: ['api', 'chat'],
-      validate: {
-        params: Joi.object({
-          chatId: idSchema.required(),
-        }).label('AddUserInGroupChatParams'),
-        payload: Joi.object({
-          userIds: idsSchema.min(1).unique().required(),
-        }).label('AddUserInGroupChatPayload'),
-      },
-      response: {
-        schema: outputOkSchema(messageSchema).label('AddUserInGroupChatResponse'),
-      },
-    },
-  },
-  {
-    method: 'DELETE',
-    path: '/v1/user/me/chat/group/{chatId}/remove/{userId}',
-    handler: handlers.removeUserInGroupChat,
-    options: {
-      auth: 'jwt-access',
-      id: 'v1.chat.group.removeUser',
-      description: 'Remove user from group chat (only for owner)',
-      tags: ['api', 'chat'],
-      validate: {
-        params: Joi.object({
-          chatId: idSchema.required(),
-          userId: idSchema.required(),
-        }).label('RemoveUserInGroupChatParams'),
-      },
-      response: {
-        schema: outputOkSchema(messageSchema).label('RemoveUserInGroupChatResponse'),
-      },
-    },
-  },
-  {
-    method: 'POST',
-    path: '/v1/user/me/chat/group/{chatId}/leave',
-    handler: handlers.leaveFromGroupChat,
-    options: {
-      auth: 'jwt-access',
-      id: 'v1.chat.group.leave',
-      description: 'Leave from group chat',
-      tags: ['api', 'chat'],
-      validate: {
-        params: Joi.object({
-          chatId: idSchema.required(),
-        }).label('LeaveFromGroupChatParams'),
-      },
-      response: {
-        schema: outputOkSchema(messageSchema).label('LeaveFromGroupChatResponse'),
-      },
-    },
-  },
+  // {
+  //   method: 'POST',
+  //   path: '/v1/chat/{chatId}/send-message',
+  //   handler: handlers.sendMessageToChat,
+  //   options: {
+  //     auth: 'jwt-access',
+  //     id: 'v1.chat.sendMessageToChat',
+  //     description: 'Send message to chat',
+  //     tags: ['api', 'chat'],
+  //     validate: {
+  //       params: Joi.object({
+  //         chatId: idSchema.required(),
+  //       }).label('SendMessageToChatParams'),
+  //       payload: Joi.object({
+  //         text: messageTextSchema.allow('').default(''),
+  //         medias: idsSchema.required().unique(),
+  //       }).label('SendMessageToChatPayload'),
+  //     },
+  //     response: {
+  //       schema: outputOkSchema(messageSchema).label('SendMessageToChatResponse'),
+  //     },
+  //   },
+  // },
+  // {
+  //   method: 'POST',
+  //   path: '/v1/user/me/chat/group/{chatId}/add',
+  //   handler: handlers.addUsersInGroupChat,
+  //   options: {
+  //     auth: 'jwt-access',
+  //     id: 'v1.chat.group.addUsers',
+  //     description: 'Add users in group chat. For one or more users',
+  //     tags: ['api', 'chat'],
+  //     validate: {
+  //       params: Joi.object({
+  //         chatId: idSchema.required(),
+  //       }).label('AddUserInGroupChatParams'),
+  //       payload: Joi.object({
+  //         userIds: idsSchema.min(1).unique().required(),
+  //       }).label('AddUserInGroupChatPayload'),
+  //     },
+  //     response: {
+  //       schema: outputOkSchema(messageSchema).label('AddUserInGroupChatResponse'),
+  //     },
+  //   },
+  // },
+  // {
+  //   method: 'DELETE',
+  //   path: '/v1/user/me/chat/group/{chatId}/remove/{userId}',
+  //   handler: handlers.removeUserInGroupChat,
+  //   options: {
+  //     auth: 'jwt-access',
+  //     id: 'v1.chat.group.removeUser',
+  //     description: 'Remove user from group chat (only for owner)',
+  //     tags: ['api', 'chat'],
+  //     validate: {
+  //       params: Joi.object({
+  //         chatId: idSchema.required(),
+  //         userId: idSchema.required(),
+  //       }).label('RemoveUserInGroupChatParams'),
+  //     },
+  //     response: {
+  //       schema: outputOkSchema(messageSchema).label('RemoveUserInGroupChatResponse'),
+  //     },
+  //   },
+  // },
+  // {
+  //   method: 'POST',
+  //   path: '/v1/user/me/chat/group/{chatId}/leave',
+  //   handler: handlers.leaveFromGroupChat,
+  //   options: {
+  //     auth: 'jwt-access',
+  //     id: 'v1.chat.group.leave',
+  //     description: 'Leave from group chat',
+  //     tags: ['api', 'chat'],
+  //     validate: {
+  //       params: Joi.object({
+  //         chatId: idSchema.required(),
+  //       }).label('LeaveFromGroupChatParams'),
+  //     },
+  //     response: {
+  //       schema: outputOkSchema(messageSchema).label('LeaveFromGroupChatResponse'),
+  //     },
+  //   },
+  // },
   {
     method: 'GET',
     path: '/v1/user/me/chat/group/{chatId}/members',
@@ -258,123 +258,123 @@ export default [
       },
     },
   },
-  {
-    method: 'GET',
-    path: '/v1/user/me/chat/messages/star',
-    handler: handlers.getUserStarredMessages,
-    options: {
-      auth: 'jwt-access',
-      id: 'v1.chat.messages.getStarredMessages',
-      description: 'Get starred messages of the user',
-      tags: ['api', 'chat'],
-      validate: {
-        query: Joi.object({
-          offset: offsetSchema,
-          limit: limitSchema,
-        }).label('GetStarredMessagesQuery'),
-      },
-      response: {
-        schema: outputOkSchema(messagesWithCountSchema).label('GetUserStarredMessagesResponse'),
-      },
-    },
-  },
-  {
-    method: 'POST',
-    path: '/v1/user/me/chat/{chatId}/message/{messageId}/star',
-    handler: handlers.markMessageStar,
-    options: {
-      auth: 'jwt-access',
-      id: 'v1.chat.message.markMessageStar',
-      description: 'Mark message star',
-      tags: ['api', 'chat'],
-      validate: {
-        params: Joi.object({
-          messageId: idSchema,
-          chatId: idSchema,
-        }).label('MarkMessageStarParams'),
-      },
-      response: {
-        schema: emptyOkSchema,
-      },
-    },
-  },
-  {
-    method: 'DELETE',
-    path: '/v1/user/me/chat/message/{messageId}/star',
-    handler: handlers.removeStarFromMessage,
-    options: {
-      auth: 'jwt-access',
-      id: 'v1.chat.message.removeStar',
-      description: 'Remove star from message',
-      tags: ['api', 'chat'],
-      validate: {
-        params: Joi.object({
-          messageId: idSchema.required(),
-        }).label('RemoveStarFromMessageParams'),
-      },
-      response: {
-        schema: emptyOkSchema,
-      },
-    },
-  },
-  {
-    method: 'POST',
-    path: '/v1/user/me/chat/{chatId}/star',
-    handler: handlers.markChatStar,
-    options: {
-      auth: 'jwt-access',
-      id: 'v1.mark.chat',
-      description: 'Mark chat by star',
-      tags: ['api', 'chat'],
-      validate: {
-        params: Joi.object({
-          chatId: idSchema.required(),
-        }).label('MarkChatParams'),
-      },
-      response: {
-        schema: emptyOkSchema,
-      },
-    },
-  },
-  {
-    method: 'DELETE',
-    path: '/v1/user/me/chat/{chatId}/star',
-    handler: handlers.removeStarFromChat,
-    options: {
-      auth: 'jwt-access',
-      id: 'v1.remove.star.chat',
-      description: 'Remove star from chat',
-      tags: ['api', 'chat'],
-      validate: {
-        params: Joi.object({
-          chatId: idSchema.required(),
-        }).label('RemoveStarParams'),
-      },
-      response: {
-        schema: emptyOkSchema,
-      },
-    },
-  },
-  {
-    method: 'POST',
-    path: '/v1/read/message/{chatId}',
-    handler: handlers.setMessagesAsRead,
-    options: {
-      auth: 'jwt-access',
-      id: 'v1.set.message.read',
-      description: 'Set message as read',
-      tags: ['api', 'chat'],
-      validate: {
-        params: Joi.object({
-          chatId: idSchema.required(),
-        }).label('ReadMessageParams'),
-        payload: Joi.object({
-          messageId: idSchema.required(),
-        }).label('LeaveFromGroupChatParams'),
-      },
-      response: {
-        schema: emptyOkSchema,
-      },
-    },
-  },
+  // {
+  //   method: 'GET',
+  //   path: '/v1/user/me/chat/messages/star',
+  //   handler: handlers.getUserStarredMessages,
+  //   options: {
+  //     auth: 'jwt-access',
+  //     id: 'v1.chat.messages.getStarredMessages',
+  //     description: 'Get starred messages of the user',
+  //     tags: ['api', 'chat'],
+  //     validate: {
+  //       query: Joi.object({
+  //         offset: offsetSchema,
+  //         limit: limitSchema,
+  //       }).label('GetStarredMessagesQuery'),
+  //     },
+  //     response: {
+  //       schema: outputOkSchema(messagesWithCountSchema).label('GetUserStarredMessagesResponse'),
+  //     },
+  //   },
+  // },
+  // {
+  //   method: 'POST',
+  //   path: '/v1/user/me/chat/{chatId}/message/{messageId}/star',
+  //   handler: handlers.markMessageStar,
+  //   options: {
+  //     auth: 'jwt-access',
+  //     id: 'v1.chat.message.markMessageStar',
+  //     description: 'Mark message star',
+  //     tags: ['api', 'chat'],
+  //     validate: {
+  //       params: Joi.object({
+  //         messageId: idSchema,
+  //         chatId: idSchema,
+  //       }).label('MarkMessageStarParams'),
+  //     },
+  //     response: {
+  //       schema: emptyOkSchema,
+  //     },
+  //   },
+  // },
+  // {
+  //   method: 'DELETE',
+  //   path: '/v1/user/me/chat/message/{messageId}/star',
+  //   handler: handlers.removeStarFromMessage,
+  //   options: {
+  //     auth: 'jwt-access',
+  //     id: 'v1.chat.message.removeStar',
+  //     description: 'Remove star from message',
+  //     tags: ['api', 'chat'],
+  //     validate: {
+  //       params: Joi.object({
+  //         messageId: idSchema.required(),
+  //       }).label('RemoveStarFromMessageParams'),
+  //     },
+  //     response: {
+  //       schema: emptyOkSchema,
+  //     },
+  //   },
+  // },
+  // {
+  //   method: 'POST',
+  //   path: '/v1/user/me/chat/{chatId}/star',
+  //   handler: handlers.markChatStar,
+  //   options: {
+  //     auth: 'jwt-access',
+  //     id: 'v1.mark.chat',
+  //     description: 'Mark chat by star',
+  //     tags: ['api', 'chat'],
+  //     validate: {
+  //       params: Joi.object({
+  //         chatId: idSchema.required(),
+  //       }).label('MarkChatParams'),
+  //     },
+  //     response: {
+  //       schema: emptyOkSchema,
+  //     },
+  //   },
+  // },
+  // {
+  //   method: 'DELETE',
+  //   path: '/v1/user/me/chat/{chatId}/star',
+  //   handler: handlers.removeStarFromChat,
+  //   options: {
+  //     auth: 'jwt-access',
+  //     id: 'v1.remove.star.chat',
+  //     description: 'Remove star from chat',
+  //     tags: ['api', 'chat'],
+  //     validate: {
+  //       params: Joi.object({
+  //         chatId: idSchema.required(),
+  //       }).label('RemoveStarParams'),
+  //     },
+  //     response: {
+  //       schema: emptyOkSchema,
+  //     },
+  //   },
+  // },
+  // {
+  //   method: 'POST',
+  //   path: '/v1/read/message/{chatId}',
+  //   handler: handlers.setMessagesAsRead,
+  //   options: {
+  //     auth: 'jwt-access',
+  //     id: 'v1.set.message.read',
+  //     description: 'Set message as read',
+  //     tags: ['api', 'chat'],
+  //     validate: {
+  //       params: Joi.object({
+  //         chatId: idSchema.required(),
+  //       }).label('ReadMessageParams'),
+  //       payload: Joi.object({
+  //         messageId: idSchema.required(),
+  //       }).label('LeaveFromGroupChatParams'),
+  //     },
+  //     response: {
+  //       schema: emptyOkSchema,
+  //     },
+  //   },
+  // },
 ];
