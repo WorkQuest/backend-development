@@ -1,20 +1,21 @@
 import * as Joi from 'joi';
 import * as handlers from '../../api/auth';
 import {
-  outputOkSchema,
-  userEmailSchema,
-  userFirstNameSchema,
-  userLastNameSchema,
-  userPasswordSchema,
-  walletAddressSchema,
-  walletPublicKeySchema,
-  walletSignatureSchema,
-  userRoleSchema,
-  userStatusSchema,
+  idSchema,
+  totpSchema,
   emptyOkSchema,
   hexTokenSchema,
+  outputOkSchema,
+  userRoleSchema,
+  userEmailSchema,
   tokensWithStatus,
-  totpSchema,
+  userStatusSchema,
+  userPasswordSchema,
+  userLastNameSchema,
+  userFirstNameSchema,
+  walletAddressSchema,
+  walletPublicKeySchema,
+  walletSignatureSchema
 } from '@workquest/database-models/lib/schemes';
 
 export default [
@@ -33,6 +34,7 @@ export default [
           lastName: userLastNameSchema.required(),
           email: userEmailSchema.required(),
           password: userPasswordSchema.required(),
+          referralId: idSchema.default(null),
         }).label('AuthRegisterPayload'),
       },
       response: {
@@ -55,6 +57,7 @@ export default [
           lastName: userLastNameSchema.required(),
           email: userEmailSchema.required(),
           password: userPasswordSchema.required(),
+          referralId: idSchema
         }).label('AuthRegisterPayload'),
       },
       response: {
