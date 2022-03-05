@@ -187,7 +187,7 @@ export async function refreshTokens(r) {
   });
 
   const result = {
-    ...generateJwt({ id: newSession.id }),
+    ...generateJwt({ id: newSession.id, userId: newSession.userId }),
     userStatus: r.auth.credentials.status,
   };
 
