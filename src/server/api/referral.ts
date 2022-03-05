@@ -1,25 +1,26 @@
 import Web3 from 'web3';
-import { Op } from 'sequelize';
+import { Errors } from '../utils/errors';
 import { error, output } from '../utils';
+import configReferral from '../config/config.referral';
 import {
+  User,
   RewardStatus,
   ReferralStatus,
   ReferralProgram,
   ReferralProgramAffiliate,
   ReferralEventRewardClaimed
 } from '@workquest/database-models/lib/models';
-import { Errors } from '../utils/errors';
-import configReferral from '../config/config.referral';
 
 export async function getReferralUserAffiliates(r) {
-  const user = r.auth.credentials.id;
-
-  const referral = await ReferralProgram.unscoped().findOne({
-    where: { referrerUserId: user }
-  });
+  const user: User = r.auth.credentials;
 
   const { count, rows } = await ReferralProgramAffiliate.scope('shortReferralProgramAffiliates').findAndCountAll({
-    where: { referralProgramId: referral.id },
+    include: [{
+      model: ReferralProgram,
+      where: { referrerUserId: user.id },
+      as: 'referralProgram',
+      required: false
+    }],
     limit: r.query.limit,
     offset: r.query.offset
   });
@@ -29,38 +30,34 @@ export async function getReferralUserAffiliates(r) {
   }
 
   return output({
-    paidRewards: referral.paidReward,
-    referralId: referral.referralId,
+    paidRewards: rows[0].referralProgram.paidReward,
+    referralId: rows[0].referralProgram.referralId,
     count,
-    affiliates: rows
+    affiliates: rows.map((value) => value.user)
   });
 }
 
 export async function signReferralUserAffiliates(r) {
-  const user = r.auth.credentials.id;
-  const referralId = await ReferralProgram.unscoped().findOne({
-    where: {
-      referrerUserId: user
-    }
-  });
+  const user: User = r.auth.credentials;
 
   const affiliatesReferralProgram = await ReferralProgramAffiliate.scope('defaultScope').findAll({
+    include: [{
+      model: ReferralProgram,
+      where: { referrerUserId: user.id },
+      as: 'referralProgram',
+      required: false
+    }],
     where: {
-      referralProgramId: referralId.id,
-      affiliateUserId: { [Op.in]: r.payload.affiliates },
+      affiliateUserId: r.payload.affiliates,
       referralStatus: ReferralStatus.Created
     }
   });
 
-  if (!affiliatesReferralProgram) {
+  if (!affiliatesReferralProgram.length) {
     return error(Errors.NotFound, 'Affiliates does not exist', {});
   }
 
-  const wallets = affiliatesReferralProgram.map((value) => value.user.wallet.address)
-
-  if (!wallets.length) {
-    return error(Errors.NotFound, 'Affiliates don`t have wallets', {});
-  }
+  const wallets = affiliatesReferralProgram.map((value) => value.user.wallet.address);
 
   const web3 = new Web3();
   const data = web3.utils.soliditySha3(...wallets);
@@ -77,41 +74,41 @@ export async function signReferralUserAffiliates(r) {
 }
 
 export async function getReferralUserClaimedEvents(r) {
-  const user = r.auth.credentials.id;
-
-  const referral = await ReferralProgram.unscoped().findOne({
-    where: { referrerUserId: user }
-  });
+  const user: User = r.auth.credentials;
 
   const { count, rows } = await ReferralProgramAffiliate.scope('defaultScope').findAndCountAll({
+    include: [{
+      model: ReferralProgram,
+      where: { referrerUserId: user.id },
+      as: 'referralProgram',
+      required: false
+    }],
     where: {
-      referralProgramId: referral.id,
       rewardStatus: RewardStatus.Claimed
     },
     limit: r.query.limit,
     offset: r.query.offset
   });
 
-  if (count === 0) {
+  if (!rows.length) {
     return error(Errors.NotFound, 'Affiliate users not found', {});
   }
 
-  const result = [];
-  for (const row of rows) {
+  const result = await Promise.all(rows.map(async (value) => {
     const event = await ReferralEventRewardClaimed.findOne({
-      where: { affiliate: row.user.wallet.address }
+      where: { affiliate: value.user.wallet.address }
     });
-    result.push({
-      firstName: row.user.firstName,
-      lastName: row.user.lastName,
-      userId: row.user.id,
+    return {
+      firstName: value.user.firstName,
+      lastName: value.user.lastName,
+      userId: value.user.id,
       txHash: event.transactionHash,
       createdAt: event.timestamp,
       amount: event.amount,
-      status: row.rewardStatus
-    });
-  }
+      status: value.rewardStatus
+    };
+  }));
 
-  return output({count, rows: result});
+  return output({ count, rows: result });
 }
 
