@@ -196,45 +196,45 @@ export default [
   //     },
   //   },
   // },
-  // {
-  //   method: 'DELETE',
-  //   path: '/v1/user/me/chat/group/{chatId}/remove/{userId}',
-  //   handler: handlers.removeUserInGroupChat,
-  //   options: {
-  //     auth: 'jwt-access',
-  //     id: 'v1.chat.group.removeUser',
-  //     description: 'Remove user from group chat (only for owner)',
-  //     tags: ['api', 'chat'],
-  //     validate: {
-  //       params: Joi.object({
-  //         chatId: idSchema.required(),
-  //         userId: idSchema.required(),
-  //       }).label('RemoveUserInGroupChatParams'),
-  //     },
-  //     response: {
-  //       schema: outputOkSchema(messageSchema).label('RemoveUserInGroupChatResponse'),
-  //     },
-  //   },
-  // },
-  // {
-  //   method: 'POST',
-  //   path: '/v1/user/me/chat/group/{chatId}/leave',
-  //   handler: handlers.leaveFromGroupChat,
-  //   options: {
-  //     auth: 'jwt-access',
-  //     id: 'v1.chat.group.leave',
-  //     description: 'Leave from group chat',
-  //     tags: ['api', 'chat'],
-  //     validate: {
-  //       params: Joi.object({
-  //         chatId: idSchema.required(),
-  //       }).label('LeaveFromGroupChatParams'),
-  //     },
-  //     response: {
-  //       schema: outputOkSchema(messageSchema).label('LeaveFromGroupChatResponse'),
-  //     },
-  //   },
-  // },
+  {
+    method: 'DELETE',
+    path: '/v1/user/me/chat/group/{chatId}/remove/{userId}',
+    handler: handlers.removeUserFromGroupChat,
+    options: {
+      auth: 'jwt-access',
+      id: 'v1.chat.group.removeUser',
+      description: 'Remove user from group chat (only for owner)',
+      tags: ['api', 'chat'],
+      validate: {
+        params: Joi.object({
+          chatId: idSchema.required(),
+          userId: idSchema.required(),
+        }).label('RemoveUserInGroupChatParams'),
+      },
+      response: {
+        schema: outputOkSchema(messageSchema).label('RemoveUserInGroupChatResponse'),
+      },
+    },
+  },
+  {
+    method: 'POST',
+    path: '/v1/user/me/chat/group/{chatId}/leave',
+    handler: handlers.leaveFromGroupChat,
+    options: {
+      auth: 'jwt-access',
+      id: 'v1.chat.group.leave',
+      description: 'Leave from group chat',
+      tags: ['api', 'chat'],
+      validate: {
+        params: Joi.object({
+          chatId: idSchema.required(),
+        }).label('LeaveFromGroupChatParams'),
+      },
+      response: {
+        schema: outputOkSchema(messageSchema).label('LeaveFromGroupChatResponse'),
+      },
+    },
+  },
   {
     method: 'GET',
     path: '/v1/user/me/chat/group/{chatId}/members',

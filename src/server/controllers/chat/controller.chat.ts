@@ -2,12 +2,12 @@ import {
   Chat,
   ChatData,
   ChatMember,
-  ChatMemberData,
+  ChatMemberData, ChatMemberDeletionData,
   ChatType,
-  GroupChat,
+  GroupChat, InfoMessage,
   MemberStatus,
   MemberType,
-  Message,
+  Message, MessageAction, MessageType,
   QuestChatStatuses
 } from "@workquest/database-models/lib/models";
 import { error } from "../../utils";
@@ -61,10 +61,9 @@ abstract class ChatHelper {
   }
 
   public chatMustHaveOwner(userId: string): this {
-    //TODO: раскомменть
-    // if (this.chat.ownerUserId !== userId) {
-    //   throw error(Errors.Forbidden, 'User is not a owner in this chat', {});
-    // }
+    if (this.chat.groupChat.ownerId !== userId) {
+      throw error(Errors.Forbidden, 'User is not a owner in this chat', {});
+    }
 
     return this;
   }
@@ -104,62 +103,50 @@ export class ChatController extends ChatHelper {
 
     return chatController;
   }
-
+  /**TODO!!!*/
   static async createQuestChat() {
 
   }
 
-  // static async findOrCreatePrivateChat(senderMemberId: string, recipientMemberId: string, transaction?: Transaction): Promise<{chat: Chat, isChatCreated: boolean}> {
-  //   try {
-  //     const [chat, isChatCreated] = await Chat.findOrCreate({
-  //       where: { type: ChatType.private },
-  //       include: [
-  //         {
-  //           model: ChatMember,
-  //           as: 'firstMemberInPrivateChat',
-  //           where: { userId: senderMemberId },
-  //           required: true,
-  //           attributes: [],
-  //         },
-  //         {
-  //           model: ChatMember,
-  //           as: 'secondMemberInPrivateChat',
-  //           where: { userId: recipientMemberId },
-  //           required: true,
-  //           attributes: [],
-  //         },
-  //       ],
-  //       defaults: {
-  //         type: ChatType.private,
-  //       },
-  //       transaction,
-  //     });
-  //     if (isChatCreated) {
-  //       const newChatMembers = [
-  //         {
-  //           chatId: chat.id,
-  //           userId: senderMemberId,
-  //           type: MemberType.User,
-  //         },
-  //         {
-  //           chatId: chat.id,
-  //           userId: recipientMemberId,
-  //           type: MemberType.User,
-  //         },
-  //       ];
-  //       const chatMembers = await ChatController.createChatMembers(newChatMembers, transaction)
-  //       chat.setDataValue('members', chatMembers);
-  //     }
-  //     const controller = new ChatController(chat)
-  //     return controller;
-  //   } catch (error) {
-  //     if(transaction) {
-  //       await transaction.rollback();
-  //     }
-  //     throw error;
-  //   }
-  //
-  // }
+  static async findOrCreatePrivateChat(senderMemberId: string, recipientMemberId: string, transaction?: Transaction): Promise<{ controller: ChatController, isCreated: boolean }> {
+    try {
+      const [chat, isCreated] = await Chat.findOrCreate({
+        where: { type: ChatType.private },
+        include: [
+          {
+            model: ChatMember,
+            as: 'firstMemberInPrivateChat',
+            where: { userId: senderMemberId },
+            required: true,
+            attributes: [],
+          },
+          {
+            model: ChatMember,
+            as: 'secondMemberInPrivateChat',
+            where: { userId: recipientMemberId },
+            required: true,
+            attributes: [],
+          },
+        ],
+        defaults: {
+          type: ChatType.private,
+        },
+        transaction,
+      });
+      const controller = new ChatController(chat);
+      if (isCreated) {
+        const chatMembers = await controller.createChatMembers([senderMemberId, recipientMemberId],chat.id, transaction)
+        chat.setDataValue('members', chatMembers);
+      }
+      return {controller, isCreated};
+    } catch (error) {
+      if(transaction) {
+        await transaction.rollback();
+      }
+      throw error;
+    }
+
+  }
 
   public async createChatMembers(usersIds: string[], chatId, transaction?: Transaction): Promise<ChatMember[]> {
     try {
@@ -170,7 +157,7 @@ export class ChatController extends ChatHelper {
           type: MemberType.User,
         };
       });
-      return await ChatMember.bulkCreate(chatMembers, { transaction });
+      return ChatMember.bulkCreate(chatMembers, { transaction });
     } catch (error) {
       if(transaction) {
         await transaction.rollback();
@@ -212,5 +199,58 @@ export class ChatController extends ChatHelper {
     }
   }
 
+  public async createChatMemberDeletionData(chatMemberId: string, beforeDeletionMessageId: string, beforeDeletionMessageNumber: number, transaction?: Transaction) {
+    try {
+      await ChatMemberDeletionData.create({ chatMemberId, beforeDeletionMessageId, beforeDeletionMessageNumber }, { transaction });
+    } catch (error) {
+      if(transaction) {
+        await transaction.rollback();
+      }
+      throw error;
+    }
+  }
+
+  public async createMessage(chatId: string, senderMemberId: string, type: MessageType, messageNumber: number, transaction?: Transaction): Promise<Message> {
+    try {
+      return Message.create(
+        {
+          senderMemberId: senderMemberId,
+          chatId: chatId,
+          number: messageNumber,
+          type,
+        },
+        { transaction }
+      );
+    } catch (error) {
+      if(transaction) {
+        await transaction.rollback();
+      }
+      throw error;
+    }
+  }
+
+  public async createInfoMessage(memberId: string, messageId: string, messageAction: MessageAction, transaction?: Transaction) {
+    try {
+      await InfoMessage.create({ memberId, messageId, messageAction },
+        { transaction }
+      );
+    } catch (error) {
+      if(transaction) {
+        await transaction.rollback();
+      }
+      throw error;
+    }
+  }
+
+  public async updateChatData(chatId: string, lastMessageId: string, transaction?: Transaction) {
+    try {
+      await ChatData.update({ lastMessageId }, { where: { chatId }, transaction });
+    } catch (error) {
+      if(transaction) {
+        await transaction.rollback();
+      }
+      throw error;
+    }
+  }
 
 }
