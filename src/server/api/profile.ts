@@ -54,6 +54,12 @@ export async function getUser(r) {
 export async function getAllUsers(r) {
   const where = { status: UserStatus.Confirmed };
 
+  const userRatingStatisticLiteral = literal(
+    '(SELECT "status" FROM "RatingStatistics" WHERE "userId" = "User"."id")'
+  );
+
+  const order = [[userRatingStatisticLiteral, 'asc']] as any;
+
   if (r.query.q) {
     where[Op.or] = searchFields.map(
       field => ({ [field]: { [Op.iLike]: `%${r.query.q}%` }})
@@ -64,6 +70,7 @@ export async function getAllUsers(r) {
     where,
     distinct: true,
     col: '"User"."id"',
+    order,
     limit: r.query.limit,
     offset: r.query.offset,
   });
