@@ -1,32 +1,26 @@
-import { ChainId, Token, TokenAmount, Pair } from "@uniswap/sdk";
-import axios from "axios";
-import { error, output } from "../utils";
-import config from "../config/config";
-import { Errors } from "../utils/errors";
+import { ChainId, Token, TokenAmount, Pair } from '@uniswap/sdk';
+import axios from 'axios';
+import { error, output } from '../utils';
+import config from '../config/config';
+import { Errors } from '../utils/errors';
 
 const WQT = new Token(
   ChainId.MAINNET,
   config.token.WQT.ethereumNetwork.address,
-  config.token.WQT.ethereumNetwork.decimals,
-  config.token.WQT.ethereumNetwork.symbol,
-  config.token.WQT.ethereumNetwork.name,
+  18,
+  'WQT',
+  '2000000000000000000',
 );
 
-const WETH = new Token(
-  ChainId.MAINNET,
-  config.token.WETH.address,
-  config.token.WETH.decimals,
-  config.token.WETH.symbol,
-  config.token.WETH.name,
-);
+const WETH = new Token(ChainId.MAINNET, config.token.WETH.address, 18, 'WETH', 'Wrapped ETH');
 
 const pair = new Pair(
-  new TokenAmount(WQT, config.token.WQT.ethereumNetwork.amountMax),
-  new TokenAmount(WETH, config.token.WETH.amountMax),
+  new TokenAmount(WQT, '2000000000000000000'),
+  new TokenAmount(WETH, '2000000000000000000'),
 );
 
 const api = axios.create({
-  baseURL: 'https://api.thegraph.com/subgraphs/name/uniswap/uniswap-v2'
+  baseURL: 'https://api.thegraph.com/subgraphs/name/uniswap/uniswap-v2',
 });
 
 export async function getSwaps(r) {
@@ -36,7 +30,7 @@ export async function getSwaps(r) {
         swaps(first:${r.query.limit}, skip:${r.query.offset}, orderBy: timestamp, orderDirection: desc, 
         where: { pair: "${pair.liquidityToken.address.toLowerCase()}" } ) 
         { transaction { id timestamp } pair { txCount }
-        amount0In amount0Out amount1In amount1Out amountUSD to } }`
+        amount0In amount0Out amount1In amount1Out amountUSD to } }`,
     });
 
     if (result.data.errors) {
@@ -51,11 +45,12 @@ export async function getSwaps(r) {
 
 export async function getMints(r) {
   try {
-    const result = await api.post('', {query: `{ 
+    const result = await api.post('', {
+      query: `{ 
       mints(first:${r.query.limit}, skip:${r.query.offset}, orderBy: timestamp, orderDirection: desc, 
       where: { pair: "${pair.liquidityToken.address.toLowerCase()}" }) 
       { transaction { id timestamp } pair { txCount}
-      to liquidity amount0 amount1 amountUSD } }`
+      to liquidity amount0 amount1 amountUSD } }`,
     });
 
     if (result.data.errors) {
@@ -75,7 +70,7 @@ export async function getBurns(r) {
         burns(first:${r.query.limit}, skip:${r.query.offset}, orderBy: timestamp, orderDirection: desc, 
         where: { pair: "${pair.liquidityToken.address.toLowerCase()}" }) 
         { transaction { id timestamp } pair { txCount }
-        to liquidity amount0 amount1 amountUSD } }`
+        to liquidity amount0 amount1 amountUSD } }`,
     });
 
     if (result.data.errors) {
@@ -97,7 +92,7 @@ export async function getTokenDayData(r) {
         where: {pairAddress: "${pair.liquidityToken.address.toLowerCase()}"})
         { date reserve0 reserve1 totalSupply reserveUSD dailyVolumeToken0
           dailyVolumeToken1 dailyVolumeUSD dailyTxns 
-        }}`
+        }}`,
     });
 
     if (result.data.errors) {

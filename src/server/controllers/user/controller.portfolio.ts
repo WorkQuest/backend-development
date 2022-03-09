@@ -1,7 +1,7 @@
-import { Media, Portfolio } from "@workquest/database-models/lib/models";
-import {Transaction} from "sequelize";
-import {Errors} from "../../utils/errors";
-import {error} from "../../utils";
+import { Media, Portfolio } from '@workquest/database-models/lib/models';
+import { Transaction } from 'sequelize';
+import { Errors } from '../../utils/errors';
+import { error } from '../../utils';
 
 export interface PortfolioDTO {
   id?: string;
@@ -24,11 +24,11 @@ abstract class PortfolioHelper {
     }
   }
 
-  mustBeCaseCreator(userId: String): PortfolioHelper {
+  mustBeCaseCreator(userId: string): PortfolioHelper {
     if (this.portfolio.userId !== userId) {
-      throw error(Errors.Forbidden, "User is not portfolio creator", {
+      throw error(Errors.Forbidden, 'User is not portfolio creator', {
         current: this.portfolio.userId,
-        mustHave: userId
+        mustHave: userId,
       });
     }
 
@@ -37,14 +37,11 @@ abstract class PortfolioHelper {
 }
 
 export class PortfolioController extends PortfolioHelper {
-
-  constructor(
-    public portfolio: Portfolio
-  ) {
+  constructor(public portfolio: Portfolio) {
     super();
 
     if (!portfolio) {
-      throw error(Errors.NotFound, "Portfolio not found", {});
+      throw error(Errors.NotFound, 'Portfolio not found', {});
     }
   }
 

@@ -1,24 +1,31 @@
-import * as Joi from "joi";
+import * as Joi from 'joi';
 import * as handlers from '../../api/quest';
 import {
-  outputOkSchema,
   idSchema,
   idsSchema,
+  questSchema,
   emptyOkSchema,
-  locationSchema,
+  limitSchema,
+  offsetSchema,
+  outputOkSchema,
   workPlaceSchema,
-  questCategorySchema,
-  questDescriptionSchema,
   questPriceSchema,
   prioritySchema,
-  questSchema,
   questTitleSchema,
   questQuerySchema,
-  questsForGetWithCountSchema,
-  questLocationPlaceNameSchema,
+  questsForGetSchema,
+  locationFullSchema,
+  questsWithCountSchema,
   questEmploymentSchema,
+  questDescriptionSchema,
   specializationKeysSchema,
-  chatForGetSchema, questRaiseDurationSchema, questRaiseTypeScheme, questRaiseViewSchema, questRaisePayAmountSchema
+  questsForGetWithCountSchema,
+  questQueryForMapPointsSchema,
+  chatForGetSchema,
+  questRaiseDurationSchema,
+  questRaiseTypeScheme,
+  questRaiseViewSchema,
+  questRaisePayAmountSchema
 } from "@workquest/database-models/lib/schemes";
 
 export default [{
@@ -50,12 +57,10 @@ export default [{
     description: "Register new quest",
     validate: {
       payload: Joi.object({
-        category: questCategorySchema.required(),
         workplace: workPlaceSchema.required(),
         employment: questEmploymentSchema.required(),
         priority: prioritySchema.required(),
-        locationPlaceName: questLocationPlaceNameSchema.required(),
-        location: locationSchema.required(),
+        locationFull: locationFullSchema.required(),
         title: questTitleSchema.required(),
         description: questDescriptionSchema.required(),
         price: questPriceSchema.required(),
@@ -99,12 +104,10 @@ export default [{
         questId: idSchema.required(),
       }).label("EditQuestParams"),
       payload: Joi.object({
-        category: questCategorySchema.required(),
         workplace: workPlaceSchema.required(),
         employment: questEmploymentSchema.required(),
         priority: prioritySchema.required(),
-        location: locationSchema.required(),
-        locationPlaceName: questLocationPlaceNameSchema.required(),
+        locationFull: locationFullSchema.required(),
         title: questTitleSchema.required(),
         description: questDescriptionSchema.required(),
         price: questPriceSchema.required(),
@@ -119,7 +122,7 @@ export default [{
 }, {
   method: "GET",
   path: "/v1/quests",
-  handler: handlers.getQuests,
+  handler: handlers.getQuests('list'),
   options: {
     auth: 'jwt-access',
     id: "v1.getQuests",
@@ -132,10 +135,26 @@ export default [{
       schema: outputOkSchema(questsForGetWithCountSchema).label("GetQuestsResponse")
     },
   }
+},{
+  method: "POST",
+  path: "/v1/quests(payload)",
+  handler: handlers.getPayloadQuests,
+  options: {
+    auth: 'jwt-access',
+    id: "v1.getPayloadQuests",
+    tags: ["api", "quest"],
+    description: "Get quests",
+    validate: {
+      payload: questQuerySchema,
+    },
+    response: {
+      schema: outputOkSchema(questsForGetWithCountSchema).label("GetQuestsResponse")
+    },
+  }
 }, {
   method: "GET",
   path: "/v1/employer/{userId}/quests",
-  handler: handlers.getQuests,
+  handler: handlers.getQuests('list'),
   options: {
     auth: 'jwt-access',
     id: "v1.employer.quests",
@@ -154,7 +173,7 @@ export default [{
 }, {
   method: "GET",
   path: "/v1/worker/{workerId}/quests",
-  handler: handlers.getQuests,
+  handler: handlers.getQuests('list'),
   options: {
     auth: 'jwt-access',
     id: "v1.worker.quests",
@@ -168,6 +187,22 @@ export default [{
     },
     response: {
       schema: outputOkSchema(questsForGetWithCountSchema).label("WorkerGetQuestsResponse")
+    },
+  }
+}, {
+  method: "GET",
+  path: "/v1/quest/map/points",
+  handler: handlers.getQuests('points'),
+  options: {
+    auth: 'jwt-access',
+    id: "v1.quest.getMapPoints",
+    tags: ["api", "quest"],
+    description: "Get quest map points",
+    validate: {
+      query: questQueryForMapPointsSchema
+    },
+    response: {
+      schema: outputOkSchema(questsForGetSchema).label("GetQuestMapPointsResponse")
     },
   }
 }, {
@@ -315,6 +350,28 @@ export default [{
     },
     response: {
       schema: emptyOkSchema
+    },
+  }
+}, {
+  method: "GET",
+  path: "/v1/worker/{workerId}/available-quests",
+  handler: handlers.getAvailableQuestsForWorker,
+  options: {
+    auth: 'jwt-access',
+    id: "v1.quest.getAvailableQuestsForWorker",
+    tags: ["api", "quest"],
+    description: "Get available quests for worker ",
+    validate: {
+      params: Joi.object({
+        workerId: idSchema.required(),
+      }).label("GetAvailableQuestsForWorkerParams"),
+      query: Joi.object({
+        offset: offsetSchema,
+        limit: limitSchema,
+      }).label('GetAvailableQuestsForWorkerQuery'),
+    },
+    response: {
+      schema: outputOkSchema(questsWithCountSchema).label("GetAvailableQuestsForWorkerResponse")
     },
   }
 }, {

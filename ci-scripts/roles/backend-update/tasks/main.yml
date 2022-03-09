@@ -49,16 +49,6 @@
     src: ./{{ bridge_env }}.j2
     dest: '{{ backend_bin }}/{{ bridge_env }}'
 
-- name: Copy or generate liquidity env file
-  template:
-    src: ./{{ liquidity_env }}.j2
-    dest: '{{ backend_bin }}/{{ liquidity_env }}'
-
-- name: Copy or generate proposal env file
-  template:
-    src: ./{{ proposal_env }}.j2
-    dest: '{{ backend_bin }}/{{ proposal_env }}'
-
 - name: Generate pm2 app.json
   template:
     src: ./app.json.j2

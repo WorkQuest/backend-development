@@ -1,16 +1,18 @@
-import * as speakeasy from "speakeasy";
-import { getUUID, output } from "../utils";
-import { addSendEmailJob } from "../jobs/sendEmail";
-import * as path from "path";
-import * as fs from "fs";
-import Handlebars = require("handlebars");
-import { User } from "@workquest/database-models/lib/models";
-import {UserController} from "../controllers/user/controller.user";
+import * as speakeasy from 'speakeasy';
+import { getUUID, output } from '../utils';
+import { addSendEmailJob } from '../jobs/sendEmail';
+import * as path from 'path';
+import * as fs from 'fs';
+import Handlebars = require('handlebars');
+import { User } from '@workquest/database-models/lib/models';
+import { UserController } from '../controllers/user/controller.user';
 
-const confirmTemplatePath = path.join(__dirname, "..", "..", "..", "templates", "confirm2FA.html");
-const confirmTemplate = Handlebars.compile(fs.readFileSync(confirmTemplatePath, {
-  encoding: "utf-8"
-}));
+const confirmTemplatePath = path.join(__dirname, '..', '..', '..', 'templates', 'confirm2FA.html');
+const confirmTemplate = Handlebars.compile(
+  fs.readFileSync(confirmTemplatePath, {
+    encoding: 'utf-8',
+  }),
+);
 
 export async function enableTOTP(r) {
   const user = await User.scope('withPassword').findByPk(r.auth.credentials.id);
@@ -23,22 +25,22 @@ export async function enableTOTP(r) {
   const emailHtml = confirmTemplate({ confirmCode });
 
   await userController.user.update({
-    "settings.security.TOTP.confirmCode": confirmCode,
-    "settings.security.TOTP.secret": base32,
+    'settings.security.TOTP.confirmCode': confirmCode,
+    'settings.security.TOTP.secret': base32,
   });
 
   await addSendEmailJob({
     email: userController.user.email,
     text: `Confirmation code Google Authenticator: ${confirmCode}`,
-    subject: "WorkQuest | Google Authenticator confirmation",
-    html: emailHtml
+    subject: 'WorkQuest | Google Authenticator confirmation',
+    html: emailHtml,
   });
 
   return output(base32);
 }
 
 export async function confirmEnablingTOTP(r) {
-  const user = await User.scope("withPassword").findByPk(r.auth.credentials.id);
+  const user = await User.scope('withPassword').findByPk(r.auth.credentials.id);
   const userController = new UserController(user);
 
   await userController.userMustHaveActiveStatusTOTP(false);
@@ -46,8 +48,8 @@ export async function confirmEnablingTOTP(r) {
   await userController.checkTotpConfirmationCode(r.payload.totp);
 
   await user.update({
-    "settings.security.TOTP.confirmCode": null,
-    "settings.security.TOTP.active": true
+    'settings.security.TOTP.confirmCode': null,
+    'settings.security.TOTP.active': true,
   });
 
   return output();
@@ -57,12 +59,13 @@ export async function disableTOTP(r) {
   const user = await User.scope('withPassword').findByPk(r.auth.credentials.id);
   const userController = new UserController(user);
 
-  await userController.userMustHaveActiveStatusTOTP(false);
-  await userController.checkTotpConfirmationCode(r.payload.totp);
+  await userController
+    .userMustHaveActiveStatusTOTP(true)
+    .checkTotpConfirmationCode(r.payload.totp)
 
   await user.update({
-    "settings.security.TOTP.active": false,
-    "settings.security.TOTP.secret": null,
+    'settings.security.TOTP.active': false,
+    'settings.security.TOTP.secret': null,
   });
 
   return output();

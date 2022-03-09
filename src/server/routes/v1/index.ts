@@ -1,29 +1,28 @@
-import profile from "./profile";
-import auth from "./auth";
-import map from "./map";
-import quest from "./quest";
+import profile from './profile';
+import auth from './auth';
+import quest from './quest';
 import questsResponse from './questsResponse';
-import identityVerification from './sumsub'
+import identityVerification from './sumsub';
 import storageService from './storageService';
-import review from './review';
+import review from './questReview';
 import restorePassword from './restorePassword';
 import portfolio from './portfolio';
 import totp from './totp';
-import disputes from "./disputes";
-import chat from "./chat";
-import bridge from "./bridge";
-import liquidityPoolWETH from "./liquidityPool(wqt-weth)";
-import liquidityPoolWBNB from "./liquidityPool(wqt-wbnb)";
-import discussion from "./discussion";
-import skillFilters from "./skillFilters";
-import proposal from "./proposal";
+import disputes from './questDispute';
+import chat from './chat';
+import bridge from './bridge';
+import liquidityPoolWETH from './liquidityPool(wqt-weth)';
+import liquidityPoolWBNB from './liquidityPool(wqt-wbnb)';
+import discussion from './discussion';
+import skillFilters from './skillFilters';
+import proposal from './proposal';
+import pensionFund from './pensionFund';
 
 export default [
   ...liquidityPoolWETH,
   ...liquidityPoolWBNB,
   ...profile,
   ...auth,
-  ...map,
   ...quest,
   ...questsResponse,
   ...identityVerification,
@@ -38,4 +37,5 @@ export default [
   ...discussion,
   ...skillFilters,
   ...proposal,
+  ...pensionFund,
 ];

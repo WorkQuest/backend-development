@@ -1,9 +1,9 @@
-import { Op, Transaction } from "sequelize";
-import {error} from "../../utils";
-import {Errors} from '../../utils/errors';
-import config from "../../config/config";
-import {totpValidate} from "@workquest/database-models/lib/utils";
-import {SkillsFiltersController} from "../controller.skillsFilters";
+import { Op, Transaction } from 'sequelize';
+import { error } from '../../utils';
+import { Errors } from '../../utils/errors';
+import config from '../../config/config';
+import { totpValidate } from '@workquest/database-models/lib/utils';
+import { SkillsFiltersController } from '../controller.skillsFilters';
 import {
   User,
   Session,
@@ -13,49 +13,11 @@ import {
   QuestsStatistic,
   RatingStatistic,
   defaultUserSettings,
-  UserSpecializationFilter,
+  UserSpecializationFilter, QuestDispute, QuestStatus
 } from "@workquest/database-models/lib/models";
 
 abstract class UserHelper {
-  public abstract user: User
-
-  public async setUserSpecializations(keys: string[], transaction?: Transaction) {
-    try {
-      await UserSpecializationFilter.destroy({
-        where: { userId: this.user.id }, transaction,
-      });
-
-      if (keys.length <= 0) {
-        return;
-      }
-
-      const skillsFiltersController = await SkillsFiltersController.getInstance();
-      const userSpecializations = skillsFiltersController.keysToRecords(keys, 'userId', this.user.id);
-
-      await UserSpecializationFilter.bulkCreate(userSpecializations, { transaction });
-    } catch (e) {
-      if (transaction) {
-        await transaction.rollback();
-        throw e;
-      }
-    }
-  }
-
-  public async logoutAllSessions(transaction?: Transaction) {
-    try {
-      await Session.update({ invalidating: true }, {
-        where: {
-          userId: this.user.id,
-          createdAt: { [Op.gte]: Date.now() - config.auth.jwt.refresh.lifetime * 1000 },
-        }, transaction,
-      });
-    } catch (e) {
-      if (transaction) {
-        await transaction.rollback();
-      }
-      throw e;
-    }
-  }
+  public abstract user: User;
 
   public static getDefaultAdditionalInfo(role: UserRole) {
     let additionalInfo: object = {
@@ -66,8 +28,8 @@ abstract class UserHelper {
         instagram: null,
         twitter: null,
         linkedin: null,
-        facebook: null
-      }
+        facebook: null,
+      },
     };
 
     if (role === UserRole.Worker) {
@@ -75,14 +37,14 @@ abstract class UserHelper {
         ...additionalInfo,
         skills: [],
         educations: [],
-        workExperiences: []
+        workExperiences: [],
       };
     } else if (role === UserRole.Employer) {
       additionalInfo = {
         ...additionalInfo,
         company: null,
         CEO: null,
-        website: null
+        website: null,
       };
     }
 
@@ -118,8 +80,8 @@ abstract class UserHelper {
       status: UserStatus.NeedSetRole,
       email: profile.email.toLowerCase(),
       settings: Object.assign({}, defaultUserSettings, {
-        social: { [network]: socialInfo }
-      })
+        social: { [network]: socialInfo },
+      }),
     });
 
     await UserController.createStatistics(user.id);
@@ -137,20 +99,21 @@ abstract class UserHelper {
   }
 
   public static async userMustExist(userId: string) {
-    if (!await User.findByPk(userId)) {
-      throw error(Errors.NotFound, "User does not exist", { userId });
+    if (!(await User.findByPk(userId))) {
+      throw error(Errors.NotFound, 'User does not exist', { userId });
     }
   }
 
-  public static async usersMustExist(userIds: string[], scope: "defaultScope" | "short" | "shortWithAdditionalInfo" = "defaultScope"): Promise<User[]> {
-   const users = await User.scope(scope).findAll({
-      where: { id: userIds }
-   });
+  public static async usersMustExist(
+    userIds: string[],
+    scope: 'defaultScope' | 'short' | 'shortWithAdditionalInfo' = 'defaultScope',
+  ): Promise<User[]> {
+    const users = await User.scope(scope).findAll({
+      where: { id: userIds },
+    });
 
     if (users.length !== userIds.length) {
-      const notFoundIds = userIds.filter(userId =>
-        users.findIndex(user => userId === user.id) === -1
-      );
+      const notFoundIds = userIds.filter((userId) => users.findIndex((user) => userId === user.id) === -1);
 
       throw error(Errors.NotFound, 'Users is not found', { notFoundIds });
     }
@@ -162,14 +125,26 @@ abstract class UserHelper {
     const emailUsed = await User.findOne({ where: { email: { [Op.iLike]: email } } });
 
     if (emailUsed) {
-      throw error(Errors.InvalidPayload, "Email used", [{ field: "email", reason: "used" }]);
+      throw error(Errors.InvalidPayload, 'Email used', [{ field: 'email', reason: 'used' }]);
     }
   }
 
   public userMustHaveRole(role: UserRole): this {
     if (this.user.role !== role) {
       throw error(Errors.InvalidRole, "User isn't match role", {
-        current: this.user.role, mustHave: role,
+        current: this.user.role,
+        mustHave: role,
+      });
+    }
+
+    return this;
+  }
+
+  public userMustHaveStatus(...statuses: UserStatus[]): this {
+    if (!statuses.includes(this.user.status)) {
+      throw error(Errors.InvalidStatus, "User status doesn't match", {
+        current: this.user.status,
+        mustHave: statuses,
       });
     }
 
@@ -204,8 +179,7 @@ abstract class UserHelper {
 
   public userMustHaveActiveStatusTOTP(activeStatus: boolean): this {
     if (this.user.settings.security.TOTP.active !== activeStatus) {
-      throw error(Errors.InvalidActiveStatusTOTP,
-        `Active status TOTP is not ${activeStatus ? "enable" : "disable"}`, {});
+      throw error(Errors.InvalidActiveStatusTOTP, `Active status TOTP is not ${activeStatus ? 'enable' : 'disable'}`, {});
     }
 
     return this;
@@ -221,7 +195,7 @@ abstract class UserHelper {
 
   public checkTotpConfirmationCode(code): this {
     if (!totpValidate(code, this.user.settings.security.TOTP.secret)) {
-      throw error(Errors.InvalidPayload, "TOTP is invalid", [{ field: "totp", reason: "invalid" }]);
+      throw error(Errors.InvalidPayload, 'TOTP is invalid', [{ field: 'totp', reason: 'invalid' }]);
     }
 
     return this;
@@ -229,10 +203,12 @@ abstract class UserHelper {
 
   public checkActivationCodeTotp(code): this {
     if (this.user.settings.security.TOTP.confirmCode !== code) {
-      throw error(Errors.InvalidPayload, "Confirmation code is not correct", [{
-        field: "confirmCode",
-        reason: "invalid"
-      }]);
+      throw error(Errors.InvalidPayload, 'Confirmation code is not correct', [
+        {
+          field: 'confirmCode',
+          reason: 'invalid',
+        },
+      ]);
     }
 
     return this;
@@ -240,7 +216,7 @@ abstract class UserHelper {
 
   public checkUserAlreadyConfirmed(): this {
     if (!this.user.settings.emailConfirm) {
-      throw error(Errors.UserAlreadyConfirmed, "User already confirmed", {});
+      throw error(Errors.UserAlreadyConfirmed, 'User already confirmed', {});
     }
 
     return this;
@@ -248,10 +224,134 @@ abstract class UserHelper {
 
   public checkUserConfirmationCode(confirmCode): this {
     if (this.user.settings.emailConfirm.toLowerCase() !== confirmCode.toLowerCase()) {
-      throw error(Errors.InvalidPayload, "Invalid confirmation code", [{ field: "confirmCode", reason: "invalid" }]);
+      throw error(Errors.InvalidPayload, 'Invalid confirmation code', [{ field: 'confirmCode', reason: 'invalid' }]);
     }
 
     return this;
+  }
+
+  public userMustBeDisputeMember(dispute: QuestDispute): this {
+    const isUserDisputeMember = dispute.openDisputeUserId === this.user.id ? true : (dispute.opponentUserId === this.user.id);
+
+    if (!isUserDisputeMember) {
+      throw error(Errors.InvalidRole, 'User is not dispute member', [{userId: this.user.id}]);
+    }
+    return this;
+  }
+}
+
+export class UserController extends UserHelper {
+  constructor(public user: User) {
+    super();
+
+    if (!user) {
+      throw error(Errors.NotFound, 'User not found', {});
+    }
+  }
+
+  public async setRole(role: UserRole, transaction?: Transaction) {
+    try {
+      this.user = await this.user.update({
+        status: UserStatus.Confirmed,
+        role,
+        additionalInfo: UserController.getDefaultAdditionalInfo(role),
+      });
+    } catch (e) {
+      if (transaction) {
+        await transaction.rollback();
+      }
+      throw e;
+    }
+  }
+
+  public async setConfirmCodeToVerifyCodeNumber(confirmCode: number, transaction?: Transaction) {
+    try {
+      await this.user.update(
+        {
+          'settings.phoneConfirm': confirmCode,
+        },
+        { transaction },
+      );
+    } catch (e) {
+      if (transaction) {
+        await transaction.rollback();
+      }
+      throw e;
+    }
+  }
+
+  public async confirmPhoneNumber(transaction?: Transaction) {
+    try {
+      this.user = await this.user.update({
+        phone: this.user.tempPhone,
+        tempPhone: null,
+        'settings.phoneConfirm': null,
+      }, { transaction });
+    } catch (e) {
+      if (transaction) {
+        await transaction.rollback();
+      }
+      throw e;
+    }
+  }
+
+  public async changePassword(newPassword: string, transaction?: Transaction) {
+    try {
+      this.user = await this.user.update(
+        {
+          password: newPassword,
+        },
+        { transaction },
+      );
+    } catch (e) {
+      if (transaction) {
+        await transaction.rollback();
+      }
+      throw e;
+    }
+  }
+
+  public async logoutAllSessions(transaction?: Transaction) {
+    try {
+      await Session.update(
+        { invalidating: true },
+        {
+          where: {
+            userId: this.user.id,
+            createdAt: { [Op.gte]: Date.now() - config.auth.jwt.refresh.lifetime * 1000 },
+          },
+          transaction,
+        },
+      );
+    } catch (e) {
+      if (transaction) {
+        await transaction.rollback();
+      }
+      throw e;
+    }
+  }
+
+  public async setUserSpecializations(keys: string[], transaction?: Transaction) {
+    try {
+      await UserSpecializationFilter.destroy({
+        where: { userId: this.user.id },
+        transaction,
+      });
+
+      if (keys.length <= 0) {
+        return;
+      }
+
+      const skillsFiltersController = await SkillsFiltersController.getInstance();
+      const userSpecializations = skillsFiltersController.keysToRecords(keys, 'userId', this.user.id);
+
+      await UserSpecializationFilter.bulkCreate(userSpecializations, { transaction });
+    } catch (e) {
+      if (transaction) {
+        await transaction.rollback();
+        throw e;
+      }
+    }
   }
 
   public static async createStatistics(userId) {
@@ -268,73 +368,15 @@ abstract class UserHelper {
       defaults: { userId: userId },
     });
   }
-}
 
-export class UserController extends UserHelper {
-
-  constructor(
-    public user: User
-  ) {
-    super();
-
-    if (!user) {
-      throw error(Errors.NotFound, "User not found", {});
-    }
-  }
-
-  public async setRole(role: UserRole, transaction?: Transaction) {
-    try {
-      this.user = await this.user.update({
-        status: UserStatus.Confirmed, role,
-        additionalInfo: UserController.getDefaultAdditionalInfo(role),
-      });
-    } catch (e) {
-      if (transaction) {
-        await transaction.rollback();
-      }
-      throw e;
-    }
-  }
-
-  public async setUnverifiedPhoneNumber(phoneNumber: object, confirmCode: number, transaction?: Transaction) {
-    try {
-      await this.user.update({
-        tempPhone: phoneNumber,
-        'settings.phoneConfirm': confirmCode,
-      }, { transaction });
-    } catch (e) {
-      if (transaction) {
-        await transaction.rollback();
-      }
-      throw e;
-    }
-  }
-
-  public async confirmPhoneNumber(transaction?: Transaction) {
-    try {
-      this.user = await this.user.update({
-        phone: this.user.tempPhone,
-        tempPhone: null,
-        'settings.phoneConfirm': null,
-      });
-    } catch (e) {
-      if (transaction) {
-        await transaction.rollback();
-      }
-      throw e;
-    }
-  }
-
-  public async changePassword(newPassword: String, transaction?: Transaction) {
-    try {
-      this.user = await this.user.update({
-        password: newPassword
-      }, { transaction });
-    } catch (e) {
-      if (transaction) {
-        await transaction.rollback();
-      }
-      throw e;
-    }
+  public get shortCredentials() {
+    return {
+      id: this.user.id,
+      firstName: this.user.firstName,
+      lastName: this.user.lastName,
+      avatarId: this.user.avatarId,
+      avatar: this.user.avatar,
+      additionalInfo: this.user.additionalInfo,
+    };
   }
 }

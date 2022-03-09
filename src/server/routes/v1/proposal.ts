@@ -1,23 +1,25 @@
 import * as Joi from 'joi';
+import * as handlers from '../../api/proposal';
 import {
-  idsSchema, isActiveSchema,
+  idsSchema,
   limitSchema,
+  searchSchema,
   offsetSchema,
-  outputOkSchema, proposalNumberSchema, proposalStatus,
-  proposerIdWalletSchema, searchSchema, sortDirectionSchema
-} from '@workquest/database-models/lib/schemes';
-import {
-  proposalDescriptionSchema,
+  outputOkSchema,
   proposalSchema,
-  proposalTitleSchema
-} from '@workquest/database-models/lib/schemes/proposal';
-import { createProposal, getProposal, getProposals, getVotingsProposal } from '../../api/proposal';
+  sortDirectionSchema,
+  proposalTitleSchema,
+  proposalStatusSchema,
+  proposalNumberSchema,
+  proposerIdWalletSchema,
+  proposalDescriptionSchema,
+} from '@workquest/database-models/lib/schemes';
 
 export default [
   {
     method: 'POST',
     path: '/v1/proposal/create',
-    handler: createProposal,
+    handler: handlers.createProposal,
     options: {
       auth: 'jwt-access',
       id: 'v1.createProposal',
@@ -28,17 +30,18 @@ export default [
           proposer: proposerIdWalletSchema.required(),
           title: proposalTitleSchema.required(),
           description: proposalDescriptionSchema.required(),
-          medias: idsSchema.required().unique()
-        }).label('CreateProposalPayload')
+          medias: idsSchema.required().unique(),
+        }).label('CreateProposalPayload'),
       },
       response: {
-        schema: outputOkSchema(proposalSchema).label('CreateProposalResponse')
-      }
-    }
-  }, {
+        schema: outputOkSchema(proposalSchema).label('CreateProposalResponse'),
+      },
+    },
+  },
+  {
     method: 'GET',
     path: '/v1/proposal',
-    handler: getProposals,
+    handler: handlers.getProposals,
     options: {
       auth: 'jwt-access',
       id: 'v1.getProposals',
@@ -50,17 +53,18 @@ export default [
           limit: limitSchema,
           offset: offsetSchema,
           createdAt: sortDirectionSchema.default('DESC'),
-          status: proposalStatus.default(null),
-        }).label('GetProposalsQuery')
+          status: proposalStatusSchema.default(null),
+        }).label('GetProposalsQuery'),
       },
       response: {
-        schema: outputOkSchema(proposalSchema).label('GetProposalsResponse')
-      }
-    }
-  }, {
+        schema: outputOkSchema(proposalSchema).label('GetProposalsResponse'),
+      },
+    },
+  },
+  {
     method: 'GET',
     path: '/v1/proposal/{proposalId}',
-    handler: getProposal,
+    handler: handlers.getProposal,
     options: {
       auth: 'jwt-access',
       id: 'v1.getProposal',
@@ -68,17 +72,18 @@ export default [
       description: 'Get proposal',
       validate: {
         params: Joi.object({
-          proposalId: proposalNumberSchema.required()
-        }).label('GetProposalParams')
+          proposalId: proposalNumberSchema.required(),
+        }).label('GetProposalParams'),
       },
       response: {
-        schema: outputOkSchema(proposalSchema).label('GetProposalResponse')
-      }
-    }
-  }, {
+        schema: outputOkSchema(proposalSchema).label('GetProposalResponse'),
+      },
+    },
+  },
+  {
     method: 'GET',
     path: '/v1/votings/{proposalId}',
-    handler: getVotingsProposal,
+    handler: handlers.getVotingsProposal,
     options: {
       auth: 'jwt-access',
       id: 'v1.getVotingsProposal',
@@ -86,18 +91,18 @@ export default [
       description: 'Get voting in proposal',
       validate: {
         params: Joi.object({
-          proposalId: proposalNumberSchema.required()
+          proposalId: proposalNumberSchema.required(),
         }).label('GetProposalParams'),
         query: Joi.object({
           limit: limitSchema,
           offset: offsetSchema,
           createdAt: sortDirectionSchema.default('DESC'),
-          support: isActiveSchema
-        }).label('GetVotingsQuery')
+          support: Joi.boolean().label('VotingProposalSupport'),
+        }).label('GetVotingsQuery'),
       },
       response: {
-        schema: outputOkSchema(proposalSchema).label('GetVotingsProposalResponse')
-      }
-    }
-  }];
-
+        schema: outputOkSchema(proposalSchema).label('GetVotingsProposalResponse'),
+      },
+    },
+  },
+];

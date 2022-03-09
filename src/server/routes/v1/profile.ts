@@ -1,6 +1,6 @@
-import * as Joi from "joi";
-import * as handlers from "../../api/profile";
-import { UserRole } from "@workquest/database-models/lib/models";
+import * as Joi from 'joi';
+import * as handlers from '../../api/profile';
+import { UserRole } from '@workquest/database-models/lib/models';
 import {
   idSchema,
   userSchema,
@@ -8,14 +8,15 @@ import {
   phoneSchema,
   offsetSchema,
   searchSchema,
+  userMeSchema,
   emptyOkSchema,
   outputOkSchema,
-  locationSchema,
   prioritySchema,
   userRoleSchema,
   workPlaceSchema,
   userWorkersSchema,
   workerQuerySchema,
+  locationFullSchema,
   userLastNameSchema,
   userPasswordSchema,
   employerQuerySchema,
@@ -26,9 +27,8 @@ import {
   workerWagePerHourSchema,
   specializationKeysSchema,
   userAdditionalInfoWorkerSchema,
-  userAdditionalInfoEmployerSchema,
+  userAdditionalInfoEmployerSchema, totpSchema
 } from "@workquest/database-models/lib/schemes";
-import { getUserStatistics } from "../../api/profile";
 
 export default [{
   method: "GET",
@@ -40,7 +40,7 @@ export default [{
     tags: ["api", "profile"],
     description: "Get info about current user",
     response: {
-      schema: outputOkSchema(userSchema).label("UserResponse")
+      schema: outputOkSchema(userMeSchema).label("GetMeResponse")
     }
   }
 }, {
@@ -63,8 +63,24 @@ export default [{
   }
 }, {
   method: "GET",
+  path: "/v1/profile/worker/map/points",
+  handler: handlers.getUsers(UserRole.Worker, 'points'),
+  options: {
+    auth: 'jwt-access',
+    id: "v1.profile.getWorkerPoints",
+    tags: ["api", "profile"],
+    description: "Get worker points",
+    validate: {
+      // query: workerQueryForMapPointsSchema,
+    },
+    response: {
+      schema: outputOkSchema(userWorkersSchema).label("GetWorkerPointsResponse")
+    },
+  }
+}, {
+  method: "GET",
   path: "/v1/profile/employers",
-  handler: handlers.getUsers(UserRole.Employer),
+  handler: handlers.getUsers(UserRole.Employer, 'list'),
   options: {
     auth: 'jwt-access',
     id: "v1.profile.getEmployers",
@@ -80,7 +96,7 @@ export default [{
 }, {
   method: "GET",
   path: "/v1/profile/workers",
-  handler: handlers.getUsers(UserRole.Worker),
+  handler: handlers.getUsers(UserRole.Worker, 'list'),
   options: {
     auth: 'jwt-access',
     id: "v1.profile.getWorkers",
@@ -127,7 +143,8 @@ export default [{
         avatarId: idSchema.allow(null).required(),
         firstName: userFirstNameSchema.required(),
         lastName: userLastNameSchema.required(),
-        location: locationSchema.allow(null).required(),
+        phoneNumber: phoneSchema.allow(null).required(),
+        locationFull: locationFullSchema.allow(null).required(),
         additionalInfo: userAdditionalInfoEmployerSchema.required(),
       }).label("EditEmployerProfilePayload")
     },
@@ -149,8 +166,9 @@ export default [{
         lastName: userLastNameSchema.required(),
         firstName: userFirstNameSchema.required(),
         avatarId: idSchema.allow(null).required(),
+        phoneNumber: phoneSchema.allow(null).required(),
         priority: prioritySchema.allow(null).required(),
-        location: locationSchema.allow(null).required(),
+        locationFull: locationFullSchema.allow(null).required(),
         workplace: workPlaceSchema.allow(null).required(),
         additionalInfo: userAdditionalInfoWorkerSchema.required(),
         wagePerHour: workerWagePerHourSchema.allow(null).required(),
@@ -225,11 +243,6 @@ export default [{
     id: "v1.profile.phone.sendCode",
     tags: ["api", "profile"],
     description: "Send code for confirm phone number",
-    validate: {
-      payload: Joi.object({
-        phoneNumber: phoneSchema.required(),
-      }).label('PhoneSendCodePayload')
-    },
     response: {
       schema: emptyOkSchema
     }
@@ -245,6 +258,23 @@ export default [{
     description: "Get all statistic about current user",
     response: {
       schema: outputOkSchema(userStatisticsSchema).label("GetUserStatisticsResponse")
+    }
+  }
+}, {
+  method: 'PUT',
+  path: '/v1/profile/change-role',
+  handler: handlers.changeUserRole,
+  options: {
+    description: 'Change user role',
+    auth: 'jwt-access',
+    tags: ['api', 'profile'],
+    validate: {
+      payload: Joi.object({
+        totp: totpSchema.required()
+      }).label('ChangeUserRolePayload')
+    },
+    response: {
+      schema: emptyOkSchema
     }
   }
 }];
