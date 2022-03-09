@@ -69,7 +69,7 @@ export function getUsers(role: UserRole) {
         'OR (1 = (CASE WHEN EXISTS (SELECT * FROM "UserSpecializationFilters" WHERE "userId" = "User"."id" AND "UserSpecializationFilters"."industryKey" IN (:industryKey)) THEN 1 END))',
     );
     const userRaiseViewLiteral = literal(
-      '(SELECT "type" FROM "QuestRaiseViews" WHERE "questId" = "Quest"."id" AND "QuestRaiseViews"."status" = 0)'
+      '(SELECT "type" FROM "UserRaiseViews" WHERE "userId" = "User"."id" AND "UserRaiseViews"."status" = 0)'
     );
 
     const order = [[userRaiseViewLiteral, 'asc']] as any;
