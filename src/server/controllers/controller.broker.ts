@@ -1,15 +1,19 @@
 import { Buffer } from 'buffer';
 import amqp from 'amqplib/callback_api';
 import config from '../config/config';
+import { not } from "joi";
 
 export const enum MainBrokerQueues {
   Chat = 'chat',
   Quest = 'quest',
+  DAO = 'dao'
 }
 
 export const enum QuestNotificationActions {
   /** Quest flow */
-  questStarted = 'questStarted',
+  waitWorker = 'waitWorker',
+  questEdited = 'questEdited',
+  questEndSoon = 'questEndSoon',
   workerRejectedQuest = 'workerRejectedQuest',
   workerAcceptedQuest = 'workerAcceptedQuest',
   workerCompletedQuest = 'workerCompletedQuest',
@@ -23,6 +27,8 @@ export const enum QuestNotificationActions {
   employerRejectedWorkersResponse = 'employerRejectedWorkersResponse',
   /** Review */
   userLeftReviewAboutQuest = 'userLeftReviewAboutQuest',
+  /** Dispute */
+  openDispute = 'openDispute',
 }
 
 export const enum ChatNotificationActions {
@@ -36,10 +42,20 @@ export const enum ChatNotificationActions {
   newMessage = 'newMessage',
 }
 
+export const enum DaoNotificationActions {
+  /** Discussions */
+  newDiscussionLike = 'newDiscussionLike',
+  newCommentInDiscussion = 'newCommentInDiscussion',
+  commentLiked = 'commentLiked',
+  replyToComment = 'replyToComment',
+  /** Proposal */
+}
+
 type Notification<Action> = {
   action: Action;
   data: any;
   recipients: string[];
+  delay?: number;
 };
 
 export class ControllerBroker {
@@ -53,6 +69,7 @@ export class ControllerBroker {
     amqp.connect(config.notificationMessageBroker.link, (connectError, conn) => {
       if (connectError) {
         console.error(connectError.message);
+        return;
       }
 
       conn.on('error', (connectionError) => {
@@ -97,5 +114,13 @@ export class ControllerBroker {
     const convertedData = ControllerBroker.convertData(notification);
 
     this.channel.sendToQueue(MainBrokerQueues.Chat, convertedData);
+  }
+
+  public sendDaoNotification(notification: Notification<DaoNotificationActions>) {
+    if (!this.channel) return;
+
+    const convertedData = ControllerBroker.convertData(notification);
+
+    this.channel.sendToQueue(MainBrokerQueues.DAO, convertedData);
   }
 }

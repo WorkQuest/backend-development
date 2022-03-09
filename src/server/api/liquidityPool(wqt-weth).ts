@@ -7,14 +7,17 @@ import { Errors } from '../utils/errors';
 const WQT = new Token(
   ChainId.MAINNET,
   config.token.WQT.ethereumNetwork.address,
-  config.token.WQT.ethereumNetwork.decimals,
-  config.token.WQT.ethereumNetwork.symbol,
-  config.token.WQT.ethereumNetwork.name,
+  18,
+  'WQT',
+  '2000000000000000000',
 );
 
-const WETH = new Token(ChainId.MAINNET, config.token.WETH.address, config.token.WETH.decimals, config.token.WETH.symbol, config.token.WETH.name);
+const WETH = new Token(ChainId.MAINNET, config.token.WETH.address, 18, 'WETH', 'Wrapped ETH');
 
-const pair = new Pair(new TokenAmount(WQT, config.token.WQT.ethereumNetwork.amountMax), new TokenAmount(WETH, config.token.WETH.amountMax));
+const pair = new Pair(
+  new TokenAmount(WQT, '2000000000000000000'),
+  new TokenAmount(WETH, '2000000000000000000'),
+);
 
 const api = axios.create({
   baseURL: 'https://api.thegraph.com/subgraphs/name/uniswap/uniswap-v2',

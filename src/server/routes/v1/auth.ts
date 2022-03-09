@@ -1,15 +1,5 @@
 import * as Joi from 'joi';
-import {
-  confirmEmail,
-  getLoginViaSocialNetworkHandler,
-  login,
-  loginWallet,
-  logout,
-  refreshTokens,
-  register,
-  registerWallet,
-  validateUserPassword,
-} from '../../api/auth';
+import * as handlers from '../../api/auth';
 import {
   outputOkSchema,
   userEmailSchema,
@@ -31,7 +21,7 @@ export default [
   {
     method: 'POST',
     path: '/v1/auth/register',
-    handler: register('main'),
+    handler: handlers.register('main'),
     options: {
       auth: false,
       id: 'v1.auth.register',
@@ -53,7 +43,7 @@ export default [
   {
     method: 'POST',
     path: '/v1/auth/dao/register',
-    handler: register('dao'),
+    handler: handlers.register('dao'),
     options: {
       auth: false,
       id: 'v1.auth.register.dao',
@@ -75,7 +65,7 @@ export default [
   {
     method: 'POST',
     path: '/v1/auth/confirm-email',
-    handler: confirmEmail,
+    handler: handlers.confirmEmail,
     options: {
       auth: 'jwt-access',
       id: 'v1.auth.confirmEmail',
@@ -95,7 +85,7 @@ export default [
   {
     method: 'POST',
     path: '/v1/auth/login',
-    handler: login,
+    handler: handlers.login,
     options: {
       auth: false,
       id: 'v1.auth.login',
@@ -105,7 +95,6 @@ export default [
         payload: Joi.object({
           email: userEmailSchema.required(),
           password: userPasswordSchema.required(),
-          totp: totpSchema,
         }).label('AuthLoginPayload'),
       },
       response: {
@@ -116,7 +105,7 @@ export default [
   {
     method: 'GET',
     path: '/v1/auth/login/facebook',
-    handler: getLoginViaSocialNetworkHandler('redirect'),
+    handler: handlers.getLoginViaSocialNetworkHandler('redirect'),
     options: {
       auth: {
         strategy: 'facebook',
@@ -132,7 +121,7 @@ export default [
   {
     method: 'GET',
     path: '/v1/auth/login/google',
-    handler: getLoginViaSocialNetworkHandler('redirect'),
+    handler: handlers.getLoginViaSocialNetworkHandler('redirect'),
     options: {
       auth: {
         strategy: 'google',
@@ -148,7 +137,7 @@ export default [
   {
     method: 'GET',
     path: '/v1/auth/login/linkedin',
-    handler: getLoginViaSocialNetworkHandler('redirect'),
+    handler: handlers.getLoginViaSocialNetworkHandler('redirect'),
     options: {
       auth: {
         strategy: 'linkedin',
@@ -164,7 +153,7 @@ export default [
   {
     method: 'GET',
     path: '/v1/auth/login/twitter',
-    handler: getLoginViaSocialNetworkHandler('redirect'),
+    handler: handlers.getLoginViaSocialNetworkHandler('redirect'),
     options: {
       auth: {
         strategy: 'twitter',
@@ -180,7 +169,7 @@ export default [
   {
     method: 'GET',
     path: '/v1/auth/login/facebook/token',
-    handler: getLoginViaSocialNetworkHandler('token'),
+    handler: handlers.getLoginViaSocialNetworkHandler('token'),
     options: {
       auth: {
         strategy: 'facebook',
@@ -196,7 +185,7 @@ export default [
   {
     method: 'GET',
     path: '/v1/auth/login/google/token',
-    handler: getLoginViaSocialNetworkHandler('token'),
+    handler: handlers.getLoginViaSocialNetworkHandler('token'),
     options: {
       auth: {
         strategy: 'google',
@@ -212,7 +201,7 @@ export default [
   {
     method: 'GET',
     path: '/v1/auth/login/linkedin/token',
-    handler: getLoginViaSocialNetworkHandler('token'),
+    handler: handlers.getLoginViaSocialNetworkHandler('token'),
     options: {
       auth: {
         strategy: 'linkedin',
@@ -228,7 +217,7 @@ export default [
   {
     method: 'GET',
     path: '/v1/auth/login/twitter/token',
-    handler: getLoginViaSocialNetworkHandler('token'),
+    handler: handlers.getLoginViaSocialNetworkHandler('token'),
     options: {
       auth: {
         strategy: 'twitter',
@@ -244,7 +233,7 @@ export default [
   {
     method: 'POST',
     path: '/v1/auth/refresh-tokens',
-    handler: refreshTokens,
+    handler: handlers.refreshTokens,
     options: {
       auth: 'jwt-refresh',
       id: 'v1.auth.refreshTokens',
@@ -258,7 +247,7 @@ export default [
   {
     method: 'POST',
     path: '/v1/auth/logout',
-    handler: logout,
+    handler: handlers.logout,
     options: {
       auth: 'jwt-access',
       id: 'v1.auth.logout',
@@ -272,7 +261,7 @@ export default [
   {
     method: 'POST',
     path: '/v1/auth/register/wallet',
-    handler: registerWallet,
+    handler: handlers.registerWallet,
     options: {
       auth: 'jwt-access',
       id: 'v1.auth.walletRegister',
@@ -292,7 +281,7 @@ export default [
   {
     method: 'POST',
     path: '/v1/auth/login/wallet',
-    handler: loginWallet,
+    handler: handlers.loginWallet,
     options: {
       auth: false,
       id: 'v1.auth.walletLogin',
@@ -312,7 +301,7 @@ export default [
   {
     method: 'POST',
     path: '/v1/auth/validate-password',
-    handler: validateUserPassword,
+    handler: handlers.validateUserPassword,
     options: {
       auth: 'jwt-access',
       id: 'v1.auth.validatePassword',
@@ -329,6 +318,29 @@ export default [
             isValid: Joi.boolean(),
           }).label('ValidateUserPasswordSchema'),
         ).label('ValidateUserPasswordResponse'),
+      },
+    },
+  },
+  {
+    method: 'POST',
+    path: '/v1/auth/validate-totp',
+    handler: handlers.validateUserTotp,
+    options: {
+      auth: 'jwt-access',
+      id: 'v1.auth.validateTotp',
+      tags: ['api', 'auth'],
+      description: 'Validate totp',
+      validate: {
+        payload: Joi.object({
+          token: totpSchema.required(),
+        }).label('ValidateUserTotpPayload'),
+      },
+      response: {
+        schema: outputOkSchema(
+          Joi.object({
+            isValid: Joi.boolean(),
+          }).label('ValidateUserTotp'),
+        ).label('ValidateUserTotpResponse'),
       },
     },
   },

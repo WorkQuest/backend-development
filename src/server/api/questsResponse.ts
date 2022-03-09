@@ -5,25 +5,25 @@ import { ChatNotificationActions, QuestNotificationActions } from '../controller
 import { QuestsResponseController } from '../controllers/quest/controller.questsResponse';
 import { QuestController } from '../controllers/quest/controller.quest';
 import { UserController } from '../controllers/user/controller.user';
-import {
-  User,
-  Chat,
-  Quest,
-  Message,
-  ChatType,
-  UserRole,
-  QuestChat,
-  ChatMember,
-  MessageType,
-  InfoMessage,
-  QuestStatus,
-  MessageAction,
-  QuestsResponse,
-  QuestChatStatuses,
-  QuestsResponseType,
-  QuestsResponseStatus,
-} from '@workquest/database-models/lib/models';
 import { MediaController } from '../controllers/controller.media';
+import {
+  Chat,
+  ChatMember,
+  ChatType,
+  InfoMessage,
+  Message,
+  MessageAction,
+  MessageType,
+  Quest,
+  QuestChat,
+  QuestChatStatuses,
+  QuestsResponse,
+  QuestsResponseStatus,
+  QuestsResponseType,
+  QuestStatus,
+  User,
+  UserRole,
+} from '@workquest/database-models/lib/models';
 
 export async function responseOnQuest(r) {
   let questResponse: QuestsResponse;
@@ -142,6 +142,14 @@ export async function responseOnQuest(r) {
     data: await Message.findByPk(firstInfoMessage.id),
   });
 
+  questResponse.setDataValue('quest', quest);
+  questResponse.setDataValue('worker', workerController.shortCredentials);
+  r.server.app.broker.sendQuestNotification({
+    action: QuestNotificationActions.workerRespondedToQuest,
+    recipients: [quest.userId],
+    data: questResponse,
+  });
+
   return output(chat);
 }
 
@@ -253,10 +261,19 @@ export async function inviteOnQuest(r) {
 
   await transaction.commit();
 
+  questResponse.setDataValue('quest', questController.quest);
+  questResponse.setDataValue('employer', employerController.shortCredentials);
+
   r.server.app.broker.sendChatNotification({
     action: ChatNotificationActions.newMessage,
     recipients: [quest.userId],
     data: await Message.findByPk(firstInfoMessage.id),
+  });
+
+  r.server.app.broker.sendQuestNotification({
+    action: QuestNotificationActions.employerInvitedWorkerToQuest,
+    recipients: [invitedWorker.id],
+    data: questResponse,
   });
 
   return output({ chat });
@@ -507,7 +524,7 @@ export async function rejectResponseOnQuest(r) {
 
   r.server.app.broker.sendQuestNotification({
     action: QuestNotificationActions.employerRejectedWorkersResponse,
-    recipients: [questResponse.quest.userId],
+    recipients: [questResponse.workerId],
     data: questResponse,
   });
 

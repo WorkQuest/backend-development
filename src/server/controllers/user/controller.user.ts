@@ -9,58 +9,19 @@ import {
   Session,
   UserRole,
   UserStatus,
+  QuestStatus,
+  QuestDispute,
+  UserRaiseView,
   ChatsStatistic,
+  UserRaiseStatus,
   QuestsStatistic,
   RatingStatistic,
   defaultUserSettings,
-  UserSpecializationFilter, UserRaiseView, UserRaiseStatus
+  UserSpecializationFilter,
 } from "@workquest/database-models/lib/models";
 
 abstract class UserHelper {
   public abstract user: User;
-
-  public async setUserSpecializations(keys: string[], transaction?: Transaction) {
-    try {
-      await UserSpecializationFilter.destroy({
-        where: { userId: this.user.id },
-        transaction,
-      });
-
-      if (keys.length <= 0) {
-        return;
-      }
-
-      const skillsFiltersController = await SkillsFiltersController.getInstance();
-      const userSpecializations = skillsFiltersController.keysToRecords(keys, 'userId', this.user.id);
-
-      await UserSpecializationFilter.bulkCreate(userSpecializations, { transaction });
-    } catch (e) {
-      if (transaction) {
-        await transaction.rollback();
-        throw e;
-      }
-    }
-  }
-
-  public async logoutAllSessions(transaction?: Transaction) {
-    try {
-      await Session.update(
-        { invalidating: true },
-        {
-          where: {
-            userId: this.user.id,
-            createdAt: { [Op.gte]: Date.now() - config.auth.jwt.refresh.lifetime * 1000 },
-          },
-          transaction,
-        },
-      );
-    } catch (e) {
-      if (transaction) {
-        await transaction.rollback();
-      }
-      throw e;
-    }
-  }
 
   public static getDefaultAdditionalInfo(role: UserRole) {
     let additionalInfo: object = {
@@ -183,6 +144,17 @@ abstract class UserHelper {
     return this;
   }
 
+  public userMustHaveStatus(...statuses: UserStatus[]): this {
+    if (!statuses.includes(this.user.status)) {
+      throw error(Errors.InvalidStatus, "User status doesn't match", {
+        current: this.user.status,
+        mustHave: statuses,
+      });
+    }
+
+    return this;
+  }
+
   public userNeedsSetRole(): this {
     if (this.user.status !== UserStatus.NeedSetRole) {
       throw error(Errors.InvalidPayload, "User don't need to set role", {
@@ -262,19 +234,13 @@ abstract class UserHelper {
     return this;
   }
 
-  public static async createStatistics(userId) {
-    await RatingStatistic.findOrCreate({
-      where: { userId: userId },
-      defaults: { userId: userId },
-    });
-    await ChatsStatistic.findOrCreate({
-      where: { userId: userId },
-      defaults: { userId: userId },
-    });
-    await QuestsStatistic.findOrCreate({
-      where: { userId: userId },
-      defaults: { userId: userId },
-    });
+  public userMustBeDisputeMember(dispute: QuestDispute): this {
+    const isUserDisputeMember = dispute.openDisputeUserId === this.user.id ? true : (dispute.opponentUserId === this.user.id);
+
+    if (!isUserDisputeMember) {
+      throw error(Errors.InvalidRole, 'User is not dispute member', [{userId: this.user.id}]);
+    }
+    return this;
   }
 
   public async createRaiseView() {
@@ -308,11 +274,10 @@ export class UserController extends UserHelper {
     }
   }
 
-  public async setUnverifiedPhoneNumber(phoneNumber: object, confirmCode: number, transaction?: Transaction) {
+  public async setConfirmCodeToVerifyCodeNumber(confirmCode: number, transaction?: Transaction) {
     try {
       await this.user.update(
         {
-          tempPhone: phoneNumber,
           'settings.phoneConfirm': confirmCode,
         },
         { transaction },
@@ -331,7 +296,7 @@ export class UserController extends UserHelper {
         phone: this.user.tempPhone,
         tempPhone: null,
         'settings.phoneConfirm': null,
-      });
+      }, { transaction });
     } catch (e) {
       if (transaction) {
         await transaction.rollback();
@@ -354,6 +319,75 @@ export class UserController extends UserHelper {
       }
       throw e;
     }
+  }
+
+  public async logoutAllSessions(transaction?: Transaction) {
+    try {
+      await Session.update(
+        { invalidating: true },
+        {
+          where: {
+            userId: this.user.id,
+            createdAt: { [Op.gte]: Date.now() - config.auth.jwt.refresh.lifetime * 1000 },
+          },
+          transaction,
+        },
+      );
+    } catch (e) {
+      if (transaction) {
+        await transaction.rollback();
+      }
+      throw e;
+    }
+  }
+
+  public async setUserSpecializations(keys: string[], transaction?: Transaction) {
+    try {
+      await UserSpecializationFilter.destroy({
+        where: { userId: this.user.id },
+        transaction,
+      });
+
+      if (keys.length <= 0) {
+        return;
+      }
+
+      const skillsFiltersController = await SkillsFiltersController.getInstance();
+      const userSpecializations = skillsFiltersController.keysToRecords(keys, 'userId', this.user.id);
+
+      await UserSpecializationFilter.bulkCreate(userSpecializations, { transaction });
+    } catch (e) {
+      if (transaction) {
+        await transaction.rollback();
+        throw e;
+      }
+    }
+  }
+
+  public static async createStatistics(userId) {
+    await RatingStatistic.findOrCreate({
+      where: { userId: userId },
+      defaults: { userId: userId },
+    });
+    await ChatsStatistic.findOrCreate({
+      where: { userId: userId },
+      defaults: { userId: userId },
+    });
+    await QuestsStatistic.findOrCreate({
+      where: { userId: userId },
+      defaults: { userId: userId },
+    });
+  }
+
+  public get shortCredentials() {
+    return {
+      id: this.user.id,
+      firstName: this.user.firstName,
+      lastName: this.user.lastName,
+      avatarId: this.user.avatarId,
+      avatar: this.user.avatar,
+      additionalInfo: this.user.additionalInfo,
+    };
   }
 
   public async checkQuestRaiseViewStatus() {

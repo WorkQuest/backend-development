@@ -1,12 +1,10 @@
 import * as Joi from 'joi';
-import { getBurns, getMints, getSwaps, getTokenDayData, getDistribution } from '../../api/liquidityPool(wqt-wbnb)';
+import * as handlers from '../../api/liquidityPool(wqt-wbnb)';
 import {
   limitSchema,
   offsetSchema,
-  swapWQTSchema,
   outputOkSchema,
   dailyLiquiditySchema,
-  contractAmountSchema,
   wqtWbnbSwapEventsSchema,
 } from '@workquest/database-models/lib/schemes';
 
@@ -14,7 +12,7 @@ export default [
   {
     method: 'GET',
     path: '/v1/pool-liquidity/wqt-wbnb/swaps',
-    handler: getSwaps,
+    handler: handlers.getSwaps,
     options: {
       auth: false,
       id: 'v1.liquidity.wqt-wbnb.getSwaps',
@@ -33,48 +31,42 @@ export default [
   },
   {
     method: 'GET',
-    path: '/v1/pool-liquidity/wqt-wbnb/mints',
-    handler: getMints,
+    path: '/v1/pool-liquidity/wqt-wbnb/burns',
+    handler: handlers.getBurns,
     options: {
       auth: false,
-      id: 'v1.liquidity.wqt-wbnb.getMints',
+      id: 'v1.liquidity.wqt-wbnb.getBurns',
       tags: ['api', 'pool-liquidity'],
-      description: 'Get mints on a pair by fetching Mints events',
+      description: 'Get burns on a pair by fetching Burn events',
       validate: {
         query: Joi.object({
           offset: offsetSchema,
           limit: limitSchema,
-        }).label('GetMintsCounts'),
-      },
-      response: {
-        schema: outputOkSchema(swapWQTSchema).label('GetMintsWQTResponse'),
+        }).label('GetBurnsWQTQuery'),
       },
     },
   },
   {
     method: 'GET',
-    path: '/v1/pool-liquidity/wqt-wbnb/burns',
-    handler: getBurns,
+    path: '/v1/pool-liquidity/wqt-wbnb/mints',
+    handler: handlers.getMints,
     options: {
       auth: false,
-      id: 'v1.liquidity.wqt-wbnb.getSBurns',
+      id: 'v1.liquidity.wqt-wbnb.getMints',
       tags: ['api', 'pool-liquidity'],
-      description: 'Get burns on a pair by fetching Burns events',
+      description: 'Get mints on a pair by fetching Mint events',
       validate: {
         query: Joi.object({
           offset: offsetSchema,
           limit: limitSchema,
-        }).label('GetBurnsCounts'),
-      },
-      response: {
-        schema: outputOkSchema(swapWQTSchema).label('GetBurnsWQTResponse'),
+        }).label('GetMintsWQTQuery'),
       },
     },
   },
   {
     method: 'GET',
     path: '/v1/pool-liquidity/wqt-wbnb/tokenDay',
-    handler: getTokenDayData,
+    handler: handlers.getTokenDayData,
     options: {
       auth: false,
       id: 'v1.liquidity.wqt-wbnb.getTokenDayData',
@@ -88,20 +80,6 @@ export default [
       },
       response: {
         schema: outputOkSchema(dailyLiquiditySchema).label('GetTokenDayDataResponse'),
-      },
-    },
-  },
-  {
-    method: 'GET',
-    path: '/v1/pool-liquidity/wqt-wbnb/distribution',
-    handler: getDistribution,
-    options: {
-      auth: false,
-      id: 'v1.liquidity.wqt-wbnb.getDistribution',
-      tags: ['api', 'pool-liquidity'],
-      description: 'Distribution of the WQT to users',
-      response: {
-        schema: outputOkSchema(contractAmountSchema).label('GetTokenDayDataResponse'),
       },
     },
   },

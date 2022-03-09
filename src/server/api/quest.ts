@@ -11,58 +11,63 @@ import { addUpdateReviewStatisticsJob } from '../jobs/updateReviewStatistics';
 import { updateQuestsStatisticJob } from '../jobs/updateQuestsStatistic';
 import { SkillsFiltersController } from '../controllers/controller.skillsFilters';
 import {
+  DisputeStatus,
   Quest,
   QuestChat,
-  QuestDispute,
   QuestChatStatuses,
+  QuestDispute,
   QuestsResponse,
+  QuestsResponseStatus,
   QuestsResponseType,
   QuestStatus,
-  Review,
-  StarredQuests,
+  QuestsReview,
+  QuestsStarred,
   User,
-  UserRole,
-  DisputeStatus,
+  UserRole
 } from '@workquest/database-models/lib/models';
 
-export const searchFields = ['title', 'description'];
+export const searchQuestFields = [
+  'title',
+  'description',
+  'locationPlaceName'
+];
 
 export async function getQuest(r) {
   const user: User = r.auth.credentials;
 
   const include = [{
-      model: StarredQuests,
-      as: 'star',
-      where: { userId: r.auth.credentials.id },
-      required: false,
+    model: QuestsStarred,
+    as: "star",
+    where: { userId: r.auth.credentials.id },
+    required: false
+  }, {
+    model: QuestsResponse,
+    as: "response",
+    where: { workerId: r.auth.credentials.id },
+    required: false
+  }, {
+    model: User.scope('shortWithWallet'),
+    as: 'user'
+  }, {
+    model: User.scope('shortWithWallet'),
+    as: 'assignedWorker'
+  }, {
+    model: QuestDispute.unscoped(),
+    as: 'openDispute',
+    where: {
+      [Op.or]: [
+        { opponentUserId: r.auth.credentials.id },
+        { openDisputeUserId: r.auth.credentials.id },
+      ],
+      status: { [Op.in]: [DisputeStatus.pending, DisputeStatus.inProgress] },
     },
-    {
-      model: QuestsResponse,
-      as: 'response',
-      where: { workerId: r.auth.credentials.id },
-      required: false,
-    },
-    {
-      model: User.scope('shortWithWallet'),
-      as: 'user',
-    },
-    {
-      model: User.scope('shortWithWallet'),
-      as: 'assignedWorker',
-    },
-    {
-      model: QuestDispute.unscoped(),
-      as: 'openDispute',
-      where: {
-        [Op.or]: [
-          { opponentUserId: r.auth.credentials.id },
-          { openDisputeUserId: r.auth.credentials.id },
-        ],
-        status: { [Op.in]: [DisputeStatus.pending, DisputeStatus.inProgress] },
-      },
-      required: false,
-    },
-  ] as any[];
+    required: false,
+  }, {
+    model: QuestsReview.unscoped(),
+    as: 'yourReview',
+    where: { fromUserId: r.auth.credentials.id },
+    required: false,
+  }] as any[];
 
   if (user.role === UserRole.Worker) {
     include.push({
@@ -79,7 +84,7 @@ export async function getQuest(r) {
   });
 
   if (!quest) {
-    return error(Errors.NotFound, "Quest not found", { questId: r.params.questId });
+    return error(Errors.NotFound, 'Quest not found', { questId: r.params.questId });
   }
 
   return output(quest);
@@ -90,30 +95,26 @@ export async function createQuest(r) {
   const userController = new UserController(employer);
 
   await userController
-    .userMustHaveRole(UserRole.Employer);
+    .userMustHaveRole(UserRole.Employer)
 
   const medias = await MediaController.getMedias(r.payload.medias);
   const transaction = await r.server.app.db.transaction();
 
-  const quest = await Quest.create(
-    {
-      userId: employer.id,
-      status: QuestStatus.Created,
-      category: r.payload.category,
-      workplace: r.payload.workplace,
-      employment: r.payload.employment,
-      priority: r.payload.priority,
-      location: r.payload.location,
-      title: r.payload.title,
-      description: r.payload.description,
-      price: r.payload.price,
-      medias: r.payload.medias,
-      adType: r.payload.adType,
-      locationPlaceName: r.payload.locationPlaceName,
-      locationPostGIS: transformToGeoPostGIS(r.payload.location),
-    },
-    { transaction },
-  );
+  const quest = await Quest.create({
+    userId: employer.id,
+    status: QuestStatus.Created,
+    workplace: r.payload.workplace,
+    employment: r.payload.employment,
+    priority: r.payload.priority,
+    title: r.payload.title,
+    description: r.payload.description,
+    price: r.payload.price,
+    medias: r.payload.medias,
+    adType: r.payload.adType,
+    location: r.payload.locationFull.location,
+    locationPlaceName: r.payload.locationFull.locationPlaceName,
+    locationPostGIS: transformToGeoPostGIS(r.payload.locationFull.location),
+  }, { transaction });
 
   const questController = new QuestController(quest);
 
@@ -139,31 +140,39 @@ export async function editQuest(r) {
 
   questController
     .employerMustBeQuestCreator(employer.id)
-    .questMustHaveStatus(QuestStatus.Created);
+    .questMustHaveStatus(QuestStatus.Created)
 
   const transaction = await r.server.app.db.transaction();
 
   await questController.setMedias(medias, transaction);
   await questController.setQuestSpecializations(r.payload.specializationKeys, false, transaction);
 
-  questController.quest = await questController.quest.update(
-    {
-      price: r.payload.price,
-      title: r.payload.title,
-      adType: r.payload.adType,
-      priority: r.payload.priority,
-      category: r.payload.category,
-      workplace: r.payload.workplace,
-      employment: r.payload.employment,
-      description: r.payload.description,
-      location: r.payload.location,
-      locationPlaceName: r.payload.locationPlaceName,
-      locationPostGIS: transformToGeoPostGIS(r.payload.location),
-    },
-    { transaction },
-  );
+  questController.quest = await questController.quest.update({
+    price: r.payload.price,
+    title: r.payload.title,
+    adType: r.payload.adType,
+    priority: r.payload.priority,
+    workplace: r.payload.workplace,
+    employment: r.payload.employment,
+    description: r.payload.description,
+    location: r.payload.locationFull.location,
+    locationPlaceName: r.payload.locationFull.locationPlaceName,
+    locationPostGIS: transformToGeoPostGIS(r.payload.locationFull.location),
+  }, { transaction });
 
   await transaction.commit();
+
+  const responses = await QuestsResponse.findAll({
+    where: { questId: questController.quest.id, status: QuestsResponseStatus.Open },
+  });
+
+  if (responses.length !== 0) {
+    r.server.app.broker.sendQuestNotification({
+      action: QuestNotificationActions.questEdited,
+      recipients: responses.map(_ => _.workerId),
+      data: questController.quest,
+    });
+  }
 
   return output(questController.quest);
 }
@@ -175,7 +184,7 @@ export async function deleteQuest(r) {
 
   questController
     .employerMustBeQuestCreator(employer.id)
-    .questMustHaveStatus(QuestStatus.Created, QuestStatus.Closed);
+    .questMustHaveStatus(QuestStatus.Created, QuestStatus.Closed)
 
   const transaction = await r.server.app.db.transaction();
 
@@ -221,11 +230,9 @@ export async function startQuest(r) {
     .employerMustBeQuestCreator(employer.id)
     .questMustHaveStatus(QuestStatus.Created)
 
-  const questsResponseController = new QuestsResponseController(
-    await QuestsResponse.findOne({
-      where: { workerId: assignedWorkerController.user.id, questId: questController.quest.id },
-    }),
-  );
+  const questsResponseController = new QuestsResponseController(await QuestsResponse.findOne({
+    where: { workerId: assignedWorkerController.user.id, questId: questController.quest.id },
+  }));
 
   questsResponseController
     .checkActiveResponse()
@@ -235,20 +242,16 @@ export async function startQuest(r) {
   await questController.start(assignedWorkerController.user, transaction);
   await questsResponseController.closeOtherResponsesToQuest(questController.quest, transaction);
 
-  await QuestChat.update(
-    { status: QuestChatStatuses.Close },
-    {
-      where: { questId: questController.quest.id, workerId: { [Op.ne]: assignedWorkerController.user.id } },
-      transaction,
-    },
-  );
+  await QuestChat.update({ status: QuestChatStatuses.Close }, {
+    where: { questId: questController.quest.id, workerId: { [Op.ne]: assignedWorkerController.user.id } }, transaction,
+  });
 
   await transaction.commit();
 
   r.server.app.broker.sendQuestNotification({
     data: questController.quest,
     recipients: [assignedWorkerController.user.id],
-    action: QuestNotificationActions.questStarted,
+    action: QuestNotificationActions.waitWorker,
   });
 
   return output();
@@ -375,28 +378,7 @@ export async function acceptCompletedWorkOnQuest(r) {
   return output();
 }
 
-export async function rejectCompletedWorkOnQuest(r) {
-  const employer: User = r.auth.credentials;
-
-  const quest = await Quest.findByPk(r.params.questId);
-  const questController = new QuestController(quest);
-
-  questController
-    .employerMustBeQuestCreator(employer.id)
-    .questMustHaveStatus(QuestStatus.WaitConfirm)
-
-  await questController.rejectCompletedWork();
-
-  r.server.app.broker.sendQuestNotification({
-    data: quest,
-    recipients: [quest.assignedWorkerId],
-    action: QuestNotificationActions.employerRejectedCompletedQuest,
-  });
-
-  return output();
-}
-
-export async function getQuests(r) {
+export async function getPayloadQuests(r) {
   const user: User = r.auth.credentials;
 
   const entersAreaLiteral = literal(
@@ -415,31 +397,44 @@ export async function getQuests(r) {
     '(1 = (CASE WHEN EXISTS (SELECT * FROM "QuestSpecializationFilters" WHERE "questId" = "Quest"."id" AND "QuestSpecializationFilters"."path" IN (:path)) THEN 1 END))' +
     'OR (1 = (CASE WHEN EXISTS (SELECT * FROM "QuestSpecializationFilters" WHERE "questId" = "Quest"."id" AND "QuestSpecializationFilters"."industryKey" IN (:industryKey)) THEN 1 END))'
   );
+  const userSearchLiteral = literal(
+    // TODO добавь эти поля в replace типо так ILIKE '%:searchByFirstName%'`
+    `(SELECT "firstName" FROM "Users" WHERE "id" = "Quest"."userId") ILIKE '%${r.payload.q}%'` +
+    `OR (SELECT "lastName" FROM "Users" WHERE "id" = "Quest"."userId") ILIKE '%${r.payload.q}%'`
+  );
+  const questChatWorkerLiteral = literal(
+    '"questChat"."workerId" = "Quest"."assignedWorkerId"'
+  );
 
   const order = [];
   const include = [];
   const replacements = {};
   const where = {
     [Op.and]: [],
-    ...(r.query.adType && { adType: r.query.adType }),
-    ...(r.query.filter && { filter: r.params.filter }),
+    ...(r.payload.adType && { adType: r.payload.adType }),
+    ...(r.payload.filter && { filter: r.params.filter }),
     ...(r.params.userId && { userId: r.params.userId }),
     ...(r.params.workerId && { assignedWorkerId: r.params.workerId }),
-    ...(r.query.statuses && { status: { [Op.in]: r.query.statuses } }),
-    ...(r.query.performing && { assignedWorkerId: r.auth.credentials.id }),
-    ...(r.query.priorities && { priority: { [Op.in]: r.query.priorities } }),
-    ...(r.query.workplaces && { workplace: { [Op.in]: r.query.workplaces } }),
-    ...(r.query.employments && { employment: { [Op.in]: r.query.employments } }),
-    ...(r.query.priceBetween && { price: { [Op.between]: [r.query.priceBetween.from, r.query.priceBetween.to] } }),
+    ...(r.payload.statuses && { status: { [Op.in]: r.payload.statuses } }),
+    ...(r.payload.performing && { assignedWorkerId: r.auth.credentials.id }),
+    ...(r.payload.priorities && { priority: { [Op.in]: r.payload.priorities } }),
+    ...(r.payload.workplaces && { workplace: { [Op.in]: r.payload.workplaces } }),
+    ...(r.payload.employments && { employment: { [Op.in]: r.payload.employments } }),
+    ...(r.payload.priceBetween && { price: { [Op.between]: [r.payload.priceBetween.from, r.payload.priceBetween.to] } }),
   };
 
-  if (r.query.q) {
-    where[Op.or] = searchFields.map((field) => ({
-      [field]: { [Op.iLike]: `%${r.query.q}%` },
+  if (r.payload.q) {
+    where[Op.or] = searchQuestFields.map(field => ({
+      [field]: { [Op.iLike]: `%${r.payload.q}%` }
     }));
+
+    where[Op.or].push(userSearchLiteral)
   }
-  if (r.query.specializations) {    // TODO r.query.specialization on r.query.specialization[s]
-    const { paths, industryKeys } = SkillsFiltersController.splitPathsAndSingleKeysOfIndustry(r.query.specializations);
+  if (r.payload.specializations) { // TODO r.query.specialization on r.query.specialization[s]
+    const {
+      paths,
+      industryKeys
+    } = SkillsFiltersController.splitPathsAndSingleKeysOfIndustry(r.payload.specializations);
 
     if (paths.length !== 0 && industryKeys.length === 0) {
       replacements['path'] = paths;
@@ -455,11 +450,11 @@ export async function getQuests(r) {
       where[Op.and].push(questSpecializationIndustryKeysAndPathsLiteral);
     }
   }
-  if (r.query.north && r.query.south) {
-    replacements['northLng'] = r.query.north.longitude;
-    replacements['northLat'] = r.query.north.latitude;
-    replacements['southLng'] = r.query.south.longitude;
-    replacements['southLat'] = r.query.south.latitude;
+  if (r.payload.northAndSouthCoordinates) {
+    replacements['northLng'] = r.payload.northAndSouthCoordinates.north.longitude;
+    replacements['northLat'] = r.payload.northAndSouthCoordinates.north.latitude;
+    replacements['southLng'] = r.payload.northAndSouthCoordinates.south.longitude;
+    replacements['southLat'] = r.payload.northAndSouthCoordinates.south.latitude;
 
     where[Op.and].push(entersAreaLiteral);
   }
@@ -478,7 +473,7 @@ export async function getQuests(r) {
       attributes: {
         include: [[questChatLiteral, 'id']],
       },
-      where: { employerId: user.id },
+      where: { employerId: user.id, questChatWorkerLiteral },
       required: false,
       include: {
         model: Quest.unscoped(),
@@ -494,21 +489,21 @@ export async function getQuests(r) {
 
   include.push(
     {
-      model: Review.unscoped(),
+      model: QuestsReview.unscoped(),
       as: 'yourReview',
       where: { fromUserId: r.auth.credentials.id },
       required: false,
     },
     {
-      model: StarredQuests.unscoped(),
+      model: QuestsStarred.unscoped(),
       as: 'star',
       where: { userId: r.auth.credentials.id },
-      required: r.query.starred,
+      required: r.payload.starred,
     },
     {
       model: QuestsResponse.unscoped(),
       as: 'invited',
-      required: r.query.invited,
+      required: r.payload.invited,
       where: {
         [Op.and]: [{ workerId: r.auth.credentials.id }, { type: QuestsResponseType.Invite }],
       },
@@ -516,26 +511,21 @@ export async function getQuests(r) {
     {
       model: QuestsResponse.unscoped(),
       as: 'responded',
-      required: r.query.responded,
+      required: r.payload.responded,
       where: {
         [Op.and]: [{ workerId: r.auth.credentials.id }, { type: QuestsResponseType.Response }],
       },
     },
-    {
-      model: QuestChat.scope('idsOnly'),
-      as: 'questChat',
-      required: false,
-    },
   );
 
-  for (const [key, value] of Object.entries(r.query.sort)) {
+  for (const [key, value] of Object.entries(r.payload.sort || {})) {
     order.push([key, value]);
   }
 
   const { count, rows } = await Quest.findAndCountAll({
     distinct: true,
-    limit: r.query.limit,
-    offset: r.query.offset,
+    limit: r.payload.limit,
+    offset: r.payload.offset,
     include,
     order,
     where,
@@ -543,6 +533,175 @@ export async function getQuests(r) {
   });
 
   return output({ count, quests: rows });
+}
+
+// TODO отрефракторить!
+export function getQuests(type: 'list' | 'points') {
+  return async function(r) {
+    const user: User = r.auth.credentials;
+
+    const entersAreaLiteral = literal(
+      'st_within("Quest"."locationPostGIS", st_makeenvelope(:northLng, :northLat, :southLng, :southLat, 4326))'
+    );
+    const questChatLiteral = literal(
+      'CASE WHEN "questChat->quest" = NULL THEN NULL ELSE "questChat->quest"."id" END'
+    );
+    const questSpecializationOnlyPathsLiteral = literal(
+      '(1 = (CASE WHEN EXISTS (SELECT "id" FROM "QuestSpecializationFilters" WHERE "questId" = "Quest"."id" AND "QuestSpecializationFilters"."path" IN (:path)) THEN 1 END))'
+    );
+    const questSpecializationOnlyIndustryKeysLiteral = literal(
+      '(1 = (CASE WHEN EXISTS (SELECT * FROM "QuestSpecializationFilters" WHERE "questId" = "Quest"."id" AND "QuestSpecializationFilters"."industryKey" IN (:industryKey)) THEN 1 END))'
+    );
+    const questSpecializationIndustryKeysAndPathsLiteral = literal(
+      '(1 = (CASE WHEN EXISTS (SELECT * FROM "QuestSpecializationFilters" WHERE "questId" = "Quest"."id" AND "QuestSpecializationFilters"."path" IN (:path)) THEN 1 END))' +
+      'OR (1 = (CASE WHEN EXISTS (SELECT * FROM "QuestSpecializationFilters" WHERE "questId" = "Quest"."id" AND "QuestSpecializationFilters"."industryKey" IN (:industryKey)) THEN 1 END))'
+    );
+    const userSearchLiteral = literal(
+      // TODO добавь эти поля в replace типо так ILIKE '%:searchByFirstName%'`
+      `(SELECT "firstName" FROM "Users" WHERE "id" = "Quest"."userId") ILIKE '%${r.query.q}%'` +
+      `OR (SELECT "lastName" FROM "Users" WHERE "id" = "Quest"."userId") ILIKE '%${r.query.q}%'`
+    );
+    const questChatWorkerLiteral = literal(
+      '"questChat"."workerId" = "Quest"."assignedWorkerId"'
+    );
+
+    const order = [];
+    const include = [];
+    const replacements = {};
+    const where = {
+      [Op.and]: [],
+      ...(r.query.adType && { adType: r.query.adType }),
+      ...(r.query.filter && { filter: r.params.filter }),
+      ...(r.params.userId && { userId: r.params.userId }),
+      ...(r.params.workerId && { assignedWorkerId: r.params.workerId }),
+      ...(r.query.statuses && { status: { [Op.in]: r.query.statuses } }),
+      ...(r.query.performing && { assignedWorkerId: r.auth.credentials.id }),
+      ...(r.query.priorities && { priority: { [Op.in]: r.query.priorities } }),
+      ...(r.query.workplaces && { workplace: { [Op.in]: r.query.workplaces } }),
+      ...(r.query.employments && { employment: { [Op.in]: r.query.employments } }),
+      ...(r.query.priceBetween && { price: { [Op.between]: [r.query.priceBetween.from, r.query.priceBetween.to] } }),
+    };
+
+    if (r.query.q) {
+      where[Op.or] = searchQuestFields.map(field => ({
+        [field]: { [Op.iLike]: `%${r.query.q}%` }
+      }));
+
+      where[Op.or].push(userSearchLiteral)
+    }
+    if (r.query.specializations) { // TODO r.query.specialization on r.query.specialization[s]
+      const {
+        paths,
+        industryKeys
+      } = SkillsFiltersController.splitPathsAndSingleKeysOfIndustry(r.query.specializations);
+
+      if (paths.length !== 0 && industryKeys.length === 0) {
+        replacements['path'] = paths;
+        where[Op.and].push(questSpecializationOnlyPathsLiteral);
+      }
+      if (paths.length === 0 && industryKeys.length !== 0) {
+        replacements['industryKey'] = industryKeys;
+        where[Op.and].push(questSpecializationOnlyIndustryKeysLiteral);
+      }
+      if (paths.length !== 0 && industryKeys.length !== 0) {
+        replacements['path'] = paths;
+        replacements['industryKey'] = industryKeys;
+        where[Op.and].push(questSpecializationIndustryKeysAndPathsLiteral);
+      }
+    }
+    if (r.query.northAndSouthCoordinates) {
+      replacements['northLng'] = r.query.northAndSouthCoordinates.north.longitude;
+      replacements['northLat'] = r.query.northAndSouthCoordinates.north.latitude;
+      replacements['southLng'] = r.query.northAndSouthCoordinates.south.longitude;
+      replacements['southLat'] = r.query.northAndSouthCoordinates.south.latitude;
+
+      where[Op.and].push(entersAreaLiteral);
+    }
+    if (user.role === UserRole.Worker) {
+      include.push({
+        model: QuestChat.scope('idsOnly'),
+        where: { workerId: user.id },
+        as: 'questChat',
+        required: false,
+      });
+    }
+    if (user.role === UserRole.Employer) {
+      include.push({
+        model: QuestChat.scope('idsOnly'),
+        as: 'questChat',
+        attributes: {
+          include: [[questChatLiteral, 'id']],
+        },
+        where: { employerId: user.id, questChatWorkerLiteral },
+        required: false,
+        include: {
+          model: Quest.unscoped(),
+          as: 'quest',
+          attributes: ['id', 'status'],
+          where: {
+            status: [QuestStatus.Active, QuestStatus.Dispute, QuestStatus.WaitWorker, QuestStatus.WaitConfirm],
+          },
+          required: false,
+        },
+      });
+    }
+
+    include.push(
+      {
+        model: QuestsReview.unscoped(),
+        as: 'yourReview',
+        where: { fromUserId: r.auth.credentials.id },
+        required: false,
+      },
+      {
+        model: QuestsStarred.unscoped(),
+        as: 'star',
+        where: { userId: r.auth.credentials.id },
+        required: r.query.starred,
+      },
+      {
+        model: QuestsResponse.unscoped(),
+        as: 'invited',
+        required: r.query.invited,
+        where: {
+          [Op.and]: [{ workerId: r.auth.credentials.id }, { type: QuestsResponseType.Invite }],
+        },
+      },
+      {
+        model: QuestsResponse.unscoped(),
+        as: 'responded',
+        required: r.query.responded,
+        where: {
+          [Op.and]: [{ workerId: r.auth.credentials.id }, { type: QuestsResponseType.Response }],
+        },
+      },
+    );
+
+    for (const [key, value] of Object.entries(r.query.sort || {})) {
+      order.push([key, value]);
+    }
+
+    // TODO !!!!
+    if (type === 'list') {
+      const { count, rows } = await Quest.findAndCountAll({
+        distinct: true,
+        limit: r.query.limit,
+        offset: r.query.offset,
+        include,
+        order,
+        where,
+        replacements,
+      });
+
+      return output({ count, quests: rows });
+    } else if (type === 'points') {
+      const quests = await Quest.findAll({
+        include, order, where, replacements,
+      });
+
+      return output({ quests });
+    }
+  }
 }
 
 export async function setStar(r) {
@@ -561,4 +720,38 @@ export async function removeStar(r) {
   await questController.removeStar(user);
 
   return output();
+}
+
+export async function getAvailableQuestsForWorker(r) {
+  const workerResponseLiteral = literal(
+    '1 = (CASE WHEN NOT EXISTS (SELECT "id" FROM "QuestsResponses" WHERE "QuestsResponses"."workerId"=:workerId ' +
+      'AND "QuestsResponses"."questId" = "Quest"."id") THEN 1 END)'
+  );
+
+  const worker = await User.findByPk(r.params.workerId);
+  const workerController = new UserController(worker);
+
+  const employer: User = r.auth.credentials;
+  const employerController = new UserController(employer);
+
+  employerController
+    .userMustHaveRole(UserRole.Employer)
+
+  workerController
+    .userMustHaveRole(UserRole.Worker)
+
+  const { count, rows } = await Quest.findAndCountAll({
+    distinct: true,
+    col: '"Quest"."id"',
+    where: {
+      userId: employer.id,
+      workerResponseLiteral,
+      status: QuestStatus.Created,
+    },
+    limit: r.query.limit,
+    offset: r.query.offset,
+    replacements: { workerId: worker.id }
+  });
+
+  return output({ count, quests: rows });
 }
