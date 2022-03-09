@@ -68,8 +68,11 @@ export function getUsers(role: UserRole) {
       '(1 = (CASE WHEN EXISTS (SELECT * FROM "UserSpecializationFilters" WHERE "userId" = "User"."id" AND "UserSpecializationFilters"."path" IN (:path)) THEN 1 END))' +
         'OR (1 = (CASE WHEN EXISTS (SELECT * FROM "UserSpecializationFilters" WHERE "userId" = "User"."id" AND "UserSpecializationFilters"."industryKey" IN (:industryKey)) THEN 1 END))',
     );
+    const userRaiseViewLiteral = literal(
+      '(SELECT "type" FROM "QuestRaiseViews" WHERE "questId" = "Quest"."id" AND "QuestRaiseViews"."status" = 0)'
+    );
 
-    const order = [];
+    const order = [[userRaiseViewLiteral, 'asc']] as any;
     const include = [];
     const replacements = {};
     let distinctCol: '"User"."id"' | 'id' = '"User"."id"';
