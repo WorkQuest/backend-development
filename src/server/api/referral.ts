@@ -6,7 +6,7 @@ import {
   User,
   RewardStatus,
   ReferralStatus,
-  ReferralProgram,
+  ReferralProgramReferral,
   ReferralProgramAffiliate,
   ReferralEventRewardClaimed
 } from '@workquest/database-models/lib/models';
@@ -14,12 +14,12 @@ import {
 export async function getAffiliateUserReferrals(r) {
   const user: User = r.auth.credentials;
 
-  const { count, rows } = await ReferralProgramAffiliate.scope('shortReferralProgramAffiliates').findAndCountAll({
+  const { count, rows } = await ReferralProgramReferral.scope('shortReferralProgramAffiliates').findAndCountAll({
     include: [{
-      model: ReferralProgram,
-      where: { referrerUserId: user.id },
+      model: ReferralProgramAffiliate,
+      where: { affiliateUserId: user.id },
       as: 'referralProgram',
-      required: false
+      required: true
     }],
     limit: r.query.limit,
     offset: r.query.offset
@@ -31,7 +31,7 @@ export async function getAffiliateUserReferrals(r) {
 
   return output({
     paidRewards: rows[0].referralProgram.paidReward,
-    referralId: rows[0].referralProgram.referralId,
+    referralId: rows[0].referralProgram.referralCodeId,
     count,
     affiliates: rows.map((value) => value.user)
   });
@@ -40,24 +40,23 @@ export async function getAffiliateUserReferrals(r) {
 export async function signAffiliateUserReferrals(r) {
   const user: User = r.auth.credentials;
 
-  const affiliatesReferralProgram = await ReferralProgramAffiliate.scope('defaultScope').findAll({
+  const referralsInReferralProgram = await ReferralProgramReferral.scope('defaultScope').findAll({
     include: [{
-      model: ReferralProgram,
-      where: { referrerUserId: user.id },
+      model: ReferralProgramAffiliate,
+      where: { affiliateUserId: user.id },
       as: 'referralProgram',
-      required: false
+      required: true
     }],
     where: {
-      affiliateUserId: r.payload.affiliates,
       referralStatus: ReferralStatus.Created
     }
   });
 
-  if (!affiliatesReferralProgram.length) {
+  if (!referralsInReferralProgram.length) {
     return error(Errors.NotFound, 'Affiliates does not exist', {});
   }
 
-  const wallets = affiliatesReferralProgram.map((value) => value.user.wallet.address);
+  const wallets = referralsInReferralProgram.map((value) => value.user.wallet.address);
 
   const web3 = new Web3();
   const data = web3.utils.soliditySha3(...wallets);
@@ -73,15 +72,15 @@ export async function signAffiliateUserReferrals(r) {
   });
 }
 
-export async function getReferralUserClaimedEvents(r) {
+export async function getAffiliateUserClaimedEvents(r) {
   const user: User = r.auth.credentials;
 
-  const { count, rows } = await ReferralProgramAffiliate.scope('defaultScope').findAndCountAll({
+  const { count, rows } = await ReferralProgramReferral.scope('defaultScope').findAndCountAll({
     include: [{
-      model: ReferralProgram,
-      where: { referrerUserId: user.id },
+      model: ReferralProgramAffiliate,
+      where: { affiliateUserId: user.id },
       as: 'referralProgram',
-      required: false
+      required: true
     }],
     where: {
       rewardStatus: RewardStatus.Claimed

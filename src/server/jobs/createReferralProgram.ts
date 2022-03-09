@@ -1,8 +1,9 @@
 import { addJob } from '../utils/scheduler';
 import {
-  ReferralProgram,
-  ReferralProgramAffiliate,
-  ReferralStatus, User
+  User,
+  ReferralStatus,
+  ReferralProgramReferral,
+  ReferralProgramAffiliate
 } from '@workquest/database-models/lib/models';
 
 export interface CreateReferralProgramPayload {
@@ -17,8 +18,8 @@ export async function createReferralProgram(payload: CreateReferralProgramPayloa
 export default async function(payload: CreateReferralProgramPayload) {
   const user = await User.findByPk(payload.userId);
 
-  const referralProgram = await ReferralProgram.scope('referral').findOne({
-    where: { referralId: payload.referralId },
+  const referralProgram = await ReferralProgramAffiliate.scope('referral').findOne({
+    where: { referralCodeId: payload.referralId },
   });
 
   if (!user) {
@@ -28,12 +29,12 @@ export default async function(payload: CreateReferralProgramPayload) {
     return;
   }
   if (payload.referralId) {
-    await ReferralProgramAffiliate.create({
-      affiliateUserId: payload.userId,
+    await ReferralProgramReferral.create({
+      referralUserId: payload.userId,
       referralProgramId: referralProgram.id,
       referralStatus: ReferralStatus.Created,
     });
   }
 
-  await ReferralProgram.create({ referrerUserId: user.id });
+  await ReferralProgramAffiliate.create({ affiliateUserId: user.id });
 }

@@ -1,17 +1,16 @@
 import * as Joi from 'joi';
 import {
   outputOkSchema,
-  idsSchema,
   offsetSchema,
   limitSchema,
   referralUserAffiliatesSchema,
-  referralProgramUserAffiliatesScheme,
+  referralProgramUserReferralsScheme,
   referralProgramUsersClaimedEventsScheme
 } from '@workquest/database-models/lib/schemes';
 import {
   getAffiliateUserReferrals,
   signAffiliateUserReferrals,
-  getReferralUserClaimedEvents
+  getAffiliateUserClaimedEvents
 } from '../../api/referral';
 
 export default [
@@ -31,7 +30,7 @@ export default [
         }).label('GetMyReferralsAndReferralInfo')
       },
       response: {
-        schema: outputOkSchema(referralUserReferralsSchema)
+        schema: outputOkSchema(referralUserAffiliatesSchema)
           .label('getAffiliateUserReferralsResponse')
       }
     }
@@ -44,20 +43,15 @@ export default [
       id: 'v1.referral.addReferrals',
       tags: ['api', 'referral-program'],
       description: 'Register new referrals user',
-      validate: {
-        payload: Joi.object({
-          referrals: idsSchema.required()
-        }).label('ReferralAddReferrals')
-      },
       response: {
-        schema: outputOkSchema(referralProgramUserAffiliatesScheme)
+        schema: outputOkSchema(referralProgramUserReferralsScheme)
           .label('SignReferralUserAffiliatesResponse')
       }
     }
   }, {
     method: 'GET',
     path: '/v1/user/me/referral-program/affiliate/claimed-events',
-    handler: getReferralUserClaimedEvents,
+    handler: getAffiliateUserClaimedEvents,
     options: {
       auth: 'jwt-access',
       id: 'v1.referral.claim',
@@ -67,7 +61,7 @@ export default [
         query: Joi.object({
           offset: offsetSchema,
           limit: limitSchema
-        }).label('GetReferralRewardClaimEvents')
+        }).label('GetAffiliateUserClaimedEvents')
       },
       response: {
         schema: outputOkSchema(referralProgramUsersClaimedEventsScheme)
