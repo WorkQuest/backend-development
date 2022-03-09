@@ -11,7 +11,7 @@ import {
   ReferralEventRewardClaimed
 } from '@workquest/database-models/lib/models';
 
-export async function getReferralUserAffiliates(r) {
+export async function getAffiliateUserReferrals(r) {
   const user: User = r.auth.credentials;
 
   const { count, rows } = await ReferralProgramAffiliate.scope('shortReferralProgramAffiliates').findAndCountAll({
@@ -37,7 +37,7 @@ export async function getReferralUserAffiliates(r) {
   });
 }
 
-export async function signReferralUserAffiliates(r) {
+export async function signAffiliateUserReferrals(r) {
   const user: User = r.auth.credentials;
 
   const affiliatesReferralProgram = await ReferralProgramAffiliate.scope('defaultScope').findAll({
