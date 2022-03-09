@@ -57,11 +57,14 @@ export async function getUser(r) {
 export async function getAllUsers(r) {
   const where = { status: UserStatus.Confirmed };
 
+  const userRaiseViewLiteral = literal(
+    '(SELECT "type" FROM "UserRaiseViews" WHERE "userId" = "User"."id" AND "UserRaiseViews"."status" = 0)'
+  );
   const userRatingStatisticLiteral = literal(
     '(SELECT "status" FROM "RatingStatistics" WHERE "userId" = "User"."id")'
   );
 
-  const order = [[userRatingStatisticLiteral, 'asc']] as any;
+  const order = [[userRaiseViewLiteral, 'asc'], [userRatingStatisticLiteral, 'asc']] as any;
 
   if (r.query.q) {
     where[Op.or] = searchFields.map(
@@ -96,11 +99,11 @@ export function getUsers(role: UserRole, type: 'points' | 'list') {
       '(1 = (CASE WHEN EXISTS (SELECT * FROM "UserSpecializationFilters" WHERE "userId" = "User"."id" AND "UserSpecializationFilters"."path" IN (:path)) THEN 1 END))' +
       'OR (1 = (CASE WHEN EXISTS (SELECT * FROM "UserSpecializationFilters" WHERE "userId" = "User"."id" AND "UserSpecializationFilters"."industryKey" IN (:industryKey)) THEN 1 END))'
     );
-    const userRatingStatisticLiteral = literal(
-      '(SELECT "status" FROM "RatingStatistics" WHERE "userId" = "User"."id")'
-    );
     const userRaiseViewLiteral = literal(
       '(SELECT "type" FROM "UserRaiseViews" WHERE "userId" = "User"."id" AND "UserRaiseViews"."status" = 0)'
+    );
+    const userRatingStatisticLiteral = literal(
+      '(SELECT "status" FROM "RatingStatistics" WHERE "userId" = "User"."id")'
     );
 
     const order = [[userRaiseViewLiteral, 'asc'], [userRatingStatisticLiteral, 'asc']] as any;
