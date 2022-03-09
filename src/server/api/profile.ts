@@ -86,8 +86,12 @@ export function getUsers(role: UserRole, type: 'points' | 'list') {
       '(1 = (CASE WHEN EXISTS (SELECT * FROM "UserSpecializationFilters" WHERE "userId" = "User"."id" AND "UserSpecializationFilters"."path" IN (:path)) THEN 1 END))' +
       'OR (1 = (CASE WHEN EXISTS (SELECT * FROM "UserSpecializationFilters" WHERE "userId" = "User"."id" AND "UserSpecializationFilters"."industryKey" IN (:industryKey)) THEN 1 END))'
     );
+    const userRatingStatisticLiteral = literal(
+      '(SELECT "status" FROM "RatingStatistics" WHERE "userId" = "User"."id")'
+    );
 
-    const order = [];
+    const order = [[userRatingStatisticLiteral, 'asc']] as any;
+
     const include = [];
     const replacements = {};
     let distinctCol: '"User"."id"' | 'id' = '"User"."id"';
