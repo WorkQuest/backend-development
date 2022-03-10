@@ -4,9 +4,8 @@ import {
   limitSchema,
   offsetSchema,
   outputOkSchema,
-  referralUserAffiliatesSchema,
   referralProgramUserReferralsScheme,
-  referralProgramUsersClaimedEventsScheme,
+  referralProgramReferralsShortScheme, referralProgramUserClaimedEventScheme
 } from '@workquest/database-models/lib/schemes';
 
 export default [{
@@ -17,15 +16,15 @@ export default [{
     auth: 'jwt-access',
     id: 'v1.referralProgram.getMyReferrals',
     tags: ['api', 'referral-program'],
-    description: 'Get my affiliates',
+    description: 'Get my referrals',
     validate: {
       query: Joi.object({
         offset: offsetSchema,
-        limit: limitSchema,
+        limit: limitSchema
       }).label('GetMyReferralsQuery')
     },
     response: {
-      schema: outputOkSchema(referralUserAffiliatesSchema)
+      schema: outputOkSchema(referralProgramReferralsShortScheme)
         .label('GetMyReferralsResponse')
     }
   }
@@ -40,7 +39,7 @@ export default [{
     description: 'Get my signed created referrals',
     response: {
       schema: outputOkSchema(referralProgramUserReferralsScheme)
-        .label('')
+        .label('GetMySignedCreatedReferralsResponse')
     }
   }
 }, {
@@ -48,7 +47,7 @@ export default [{
   path: '/v1/user/me/referral-program/claimed-events',
   handler: handlers.getMyReferralProgramClaimedEvents,
   options: {
-    auth: 'jwt-access',
+    auth: false,//'jwt-access',
     id: 'v1.referral.claim',
     tags: ['api', 'referral-program'],
     description: 'Get all events paid or claimed',
@@ -56,11 +55,11 @@ export default [{
       query: Joi.object({
         offset: offsetSchema,
         limit: limitSchema
-      }).label('')
+      }).label('GetMyReferralProgramClaimedEvents')
     },
     response: {
-      schema: outputOkSchema(referralProgramUsersClaimedEventsScheme)
-        .label('')
+      schema: outputOkSchema(referralProgramUserClaimedEventScheme)
     }
   }
-}];
+}
+];

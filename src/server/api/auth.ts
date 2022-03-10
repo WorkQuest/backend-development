@@ -14,7 +14,6 @@ import {
   User,
   Wallet,
   Session,
-  ReferralProgram,
   UserStatus,
   defaultUserSettings,
 } from '@workquest/database-models/lib/models';

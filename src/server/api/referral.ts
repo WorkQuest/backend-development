@@ -6,21 +6,21 @@ import {
   ReferralStatus,
   ReferralProgramReferral,
   ReferralProgramAffiliate,
-  ReferralEventRewardClaimed,
+  ReferralEventRewardClaimed
 } from '@workquest/database-models/lib/models';
 
 export async function getMyReferrals(r) {
   const affiliateUser: User = r.auth.credentials;
 
-  const { count, rows } = await ReferralProgramReferral.scope('shortReferralProgramAffiliates').findAndCountAll({
+  const { count, rows } = await ReferralProgramReferral.scope('shortReferralProgramReferrals').findAndCountAll({
     include: {
       model: ReferralProgramAffiliate,
-      as: 'affiliate',
-      where: { referrerUserId: affiliateUser.id },
-      required: true,
+      as: 'referralProgramAffiliate',
+      where: { affiliateUserId: affiliateUser.id },
+      required: true
     },
     limit: r.query.limit,
-    offset: r.query.offset,
+    offset: r.query.offset
   });
 
   return output({ count, referrals: rows });
@@ -31,17 +31,15 @@ export async function getMySignedCreatedReferrals(r) {
 
   const referrals = await ReferralProgramReferral.findAll({
     include: {
-      attributes: [],
       model: ReferralProgramAffiliate,
-      where: { referrerUserId: affiliateUser.id },
-      as: 'affiliate',
-      required: true,
+      where: { affiliateUserId: affiliateUser.id },
+      as: 'referralProgramAffiliate',
+      required: true
     },
-    attributes: ['user'],
-    where: { referralStatus: ReferralStatus.Created },
+    where: { referralStatus: ReferralStatus.Created }
   });
 
-  const referralAddresses = referrals.map((value) => value.user.wallet.address);
+  const referralAddresses = referrals.map((value) => value.userAffiliate.wallet.address);
 
   const web3 = new Web3();
   const data = web3.utils.soliditySha3(...referralAddresses);
@@ -51,17 +49,24 @@ export async function getMySignedCreatedReferrals(r) {
     v: signed.v,
     r: signed.r,
     s: signed.s,
-    addresses: referralAddresses,
+    addresses: referralAddresses
   });
 }
 
 export async function getMyReferralProgramClaimedEvents(r) {
   const affiliateUser: User = r.auth.credentials;
 
-  // TODO: include wallet
-  const claimedEvents = await ReferralEventRewardClaimed.findAll({
-    where: { affiliate: /**  ???  */ },
+  const affiliateWallet = await ReferralProgramAffiliate.findOne({
+    where: { affiliateUserId: affiliateUser.id }
   });
 
-  return output({ count, events: claimedEvents });
+  const claimedEvents = await ReferralEventRewardClaimed.findAll({
+
+    where: { affiliate: affiliateWallet.affiliateUser.wallet.address },
+    limit: r.query.limit,
+    offset: r.query.offset,
+    order: [['createdAt', 'DESC']],
+  })
+
+  return output({events: claimedEvents });
 }
