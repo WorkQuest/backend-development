@@ -3,6 +3,7 @@ import * as handlers from '../../api/profile';
 import { UserRole } from '@workquest/database-models/lib/models';
 import {
   idSchema,
+  totpSchema,
   userSchema,
   limitSchema,
   phoneSchema,
@@ -19,15 +20,18 @@ import {
   locationFullSchema,
   userLastNameSchema,
   userPasswordSchema,
+  userRaiseViewSchema,
   employerQuerySchema,
   userEmployersSchema,
   userFirstNameSchema,
   userStatisticsSchema,
   outputPaginationSchema,
+  userRaiseViewTypeSchema,
   workerWagePerHourSchema,
   specializationKeysSchema,
+  userRaiseViewDurationSchema,
   userAdditionalInfoWorkerSchema,
-  userAdditionalInfoEmployerSchema, totpSchema
+  userAdditionalInfoEmployerSchema,
 } from "@workquest/database-models/lib/schemes";
 
 export default [{
@@ -277,5 +281,24 @@ export default [{
       schema: emptyOkSchema
     }
   }
+}, {
+  method: "POST",
+  path: "/v1/profile/worker/me/raise-view/pay",
+  handler: handlers.payForMyRaiseView,
+  options: {
+    auth: 'jwt-access',
+    id: "v1.profile.raiseView.pay",
+    tags: ["api", "profile"],
+    description: "Pay for user raise view",
+    validate: {
+      payload: Joi.object({
+        duration: userRaiseViewDurationSchema.required(),
+        type: userRaiseViewTypeSchema.required(),
+      }).label("UserRaiseViewSelectPayload")
+    },
+    response: {
+      schema: outputOkSchema(userRaiseViewSchema).label("UserPayRaiseViewPayResponse"),
+    },
+  },
 }];
 
