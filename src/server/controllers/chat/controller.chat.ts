@@ -59,9 +59,9 @@ abstract class ChatHelper {
 
     return this;
   }
-
-  public chatMustHaveOwner(userId: string): this {
-    if (this.chat.groupChat.ownerId !== userId) {
+/**TODO: исправить userId на memberId везде, где есть чаты*/
+  public chatMustHaveOwner(memberId: string): this {
+    if (this.chat.groupChat.ownerMemberId !== memberId) {
       throw error(Errors.Forbidden, 'User is not a owner in this chat', {});
     }
 
@@ -97,7 +97,7 @@ export class ChatController extends ChatHelper {
     const chatController = new ChatController(chat);
     const chatMembers = await chatController.createChatMembers(userIds, chat.id, transaction);
     const ownerChatMemberId = chatMembers.find(member => member.userId === ownerUserId).id
-    await GroupChat.create({ name, ownerId: ownerChatMemberId, chatId: chat.id }, { transaction });
+    await GroupChat.create({ name, ownerMemberId: ownerChatMemberId, chatId: chat.id }, { transaction });
 
     chat.setDataValue('members', chatMembers);
 
@@ -201,7 +201,11 @@ export class ChatController extends ChatHelper {
 
   public async createChatMemberDeletionData(chatMemberId: string, beforeDeletionMessageId: string, beforeDeletionMessageNumber: number, transaction?: Transaction) {
     try {
-      await ChatMemberDeletionData.create({ chatMemberId, beforeDeletionMessageId, beforeDeletionMessageNumber }, { transaction });
+      await ChatMemberDeletionData.findOrCreate({
+          where: { chatMemberId },
+          defaults: { chatMemberId, beforeDeletionMessageId, beforeDeletionMessageNumber },
+          transaction
+      });
     } catch (error) {
       if(transaction) {
         await transaction.rollback();

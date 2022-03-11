@@ -151,29 +151,29 @@ export default [
       },
     },
   },
-  // {
-  //   method: 'POST',
-  //   path: '/v1/chat/{chatId}/send-message',
-  //   handler: handlers.sendMessageToChat,
-  //   options: {
-  //     auth: 'jwt-access',
-  //     id: 'v1.chat.sendMessageToChat',
-  //     description: 'Send message to chat',
-  //     tags: ['api', 'chat'],
-  //     validate: {
-  //       params: Joi.object({
-  //         chatId: idSchema.required(),
-  //       }).label('SendMessageToChatParams'),
-  //       payload: Joi.object({
-  //         text: messageTextSchema.allow('').default(''),
-  //         medias: idsSchema.required().unique(),
-  //       }).label('SendMessageToChatPayload'),
-  //     },
-  //     response: {
-  //       schema: outputOkSchema(messageSchema).label('SendMessageToChatResponse'),
-  //     },
-  //   },
-  // },
+  {
+    method: 'POST',
+    path: '/v1/chat/{chatId}/send-message',
+    handler: handlers.sendMessageToChat,
+    options: {
+      auth: 'jwt-access',
+      id: 'v1.chat.sendMessageToChat',
+      description: 'Send message to chat',
+      tags: ['api', 'chat'],
+      validate: {
+        params: Joi.object({
+          chatId: idSchema.required(),
+        }).label('SendMessageToChatParams'),
+        payload: Joi.object({
+          text: messageTextSchema.allow('').default(''),
+          medias: idsSchema.required().unique(),
+        }).label('SendMessageToChatPayload'),
+      },
+      response: {
+        schema: outputOkSchema(messageSchema).label('SendMessageToChatResponse'),
+      },
+    },
+  },
   // {
   //   method: 'POST',
   //   path: '/v1/user/me/chat/group/{chatId}/add',
