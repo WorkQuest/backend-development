@@ -419,14 +419,14 @@ export async function changeUserRole(r) {
   return output();
 }
 
-export async function activateMyRaiseView(r) {
-  const userController = new UserController(await User.findByPk(r.params.userId));
+export async function selectMyRaiseView(r) {
+  const userController = new UserController(await User.findByPk(r.auth.credentials.id));
 
   await userController
     .userMustHaveRole(UserRole.Worker)
     .checkQuestRaiseViewStatus();
 
-  await UserRaiseView.update({ duration: r.payload.duration, type: r.payload.type, status: UserRaiseStatus.Unpaid }, { where: { userId: r.params.userId } });
+  await UserRaiseView.update({ duration: r.payload.duration, type: r.payload.type, status: UserRaiseStatus.Unpaid }, { where: { userId: r.auth.credentials.id } });
 
   return output();
 }
@@ -435,7 +435,7 @@ export async function payForMyRaiseView(r) {
 //TODO: логику оплаты
   const raiseView = await UserRaiseView.findOne({
     where: {
-      userId: r.params.userId
+      userId: r.auth.credentials.id
     }
   });
 
