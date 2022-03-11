@@ -13,7 +13,7 @@ export default [{
   path: '/v1/user/me/referral-program/referrals',
   handler: handlers.getMyReferrals,
   options: {
-    auth: 'jwt-access',
+    auth: false,//'jwt-access',
     id: 'v1.referralProgram.getMyReferrals',
     tags: ['api', 'referral-program'],
     description: 'Get my referrals',
@@ -33,7 +33,7 @@ export default [{
   path: '/v1/user/me/referral-program/referral/signature/created-referrals',
   handler: handlers.getMySignedCreatedReferrals,
   options: {
-    auth: 'jwt-access',
+    auth: false,//'jwt-access',
     id: 'v1.referralProgram.getMySignedCreatedReferrals',
     tags: ['api', 'referral-program'],
     description: 'Get my signed created referrals',
@@ -61,5 +61,4 @@ export default [{
       schema: outputOkSchema(referralProgramUserClaimedEventScheme)
     }
   }
-}
-];
+}];
