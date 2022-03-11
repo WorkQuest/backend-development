@@ -390,7 +390,7 @@ export class UserController extends UserHelper {
     };
   }
 
-  public async checkQuestRaiseViewStatus() {
+  public async checkUserRaiseViewStatus() {
     const raiseView = await UserRaiseView.findOne({
       where: {
         userId: this.user.id,

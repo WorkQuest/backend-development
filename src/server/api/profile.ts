@@ -419,36 +419,38 @@ export async function changeUserRole(r) {
   return output();
 }
 
-export async function selectMyRaiseView(r) {
-  const userController = new UserController(await User.findByPk(r.auth.credentials.id));
-
-  await userController
-    .userMustHaveRole(UserRole.Worker)
-    .checkQuestRaiseViewStatus();
-
-  await UserRaiseView.update({ duration: r.payload.duration, type: r.payload.type, status: UserRaiseStatus.Unpaid }, { where: { userId: r.auth.credentials.id } });
-
-  return output();
-}
-
 export async function payForMyRaiseView(r) {
 //TODO: логику оплаты
-  const raiseView = await UserRaiseView.findOne({
+  const userController = new UserController(await User.findByPk(r.auth.credentials.id));
+  await userController
+    .userMustHaveRole(UserRole.Worker)
+    .checkUserRaiseViewStatus();
+
+  const [raiseView, isCreated] = await UserRaiseView.findOrCreate({
     where: {
       userId: r.auth.credentials.id
+    },
+    defaults: {
+      userId: r.auth.credentials.id,
+      status: UserRaiseStatus.Paid, //TODO: сделать на воркере статус оплачено, тут сменить на Closed
+      duration: r.payload.duration,
+      type: r.payload.type,
     }
   });
 
-  const endOfRaiseView = new Date();
-  endOfRaiseView.setDate(endOfRaiseView.getDate() + raiseView.duration);
+  if (!isCreated) {
+    await raiseView.update({
+      status: UserRaiseStatus.Paid, //TODO: сделать на воркере статус оплачено, тут сменить на Closed
+      duration: r.payload.duration,
+      type: r.payload.type,
+    });
+  }
+
+  const endOfRaiseView = new Date(Date.now() + 86400000 * raiseView.duration);
 
   await updateUserRaiseViewStatusJob({
     questId: r.params.questId,
     runAt: endOfRaiseView
-  });
-
-  await raiseView.update({
-    status: UserRaiseStatus.Paid,
   });
 
   return output();

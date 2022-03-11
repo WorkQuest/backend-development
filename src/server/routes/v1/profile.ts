@@ -283,32 +283,19 @@ export default [{
   }
 }, {
   method: "POST",
-  path: "/v1/profile/me/raise-view/select",
-  handler: handlers.selectMyRaiseView,
-  options: {
-    auth: 'jwt-access',
-    id: "v1.profile.raiseView.select",
-    tags: ["api", "profile"],
-    description: "Select user raise view",
-    validate: {
-      payload: Joi.object({
-        duration: userRaiseViewDurationSchema.required(),
-        type: userRaiseViewTypeSchema.required(),
-      }).label("UserRaiseViewSelectPayload")
-    },
-    response: {
-      schema: outputOkSchema(userRaiseViewSchema).label("UserRaiseViewSelectResponse"),
-    },
-  },
-}, {
-  method: "POST",
-  path: "/v1/profile/me/raise-view/pay",
+  path: "/v1/profile/worker/me/raise-view/pay",
   handler: handlers.payForMyRaiseView,
   options: {
     auth: 'jwt-access',
     id: "v1.profile.raiseView.pay",
     tags: ["api", "profile"],
     description: "Pay for user raise view",
+    validate: {
+      payload: Joi.object({
+        duration: userRaiseViewDurationSchema.required(),
+        type: userRaiseViewTypeSchema.required(),
+      }).label("UserRaiseViewSelectPayload")
+    },
     response: {
       schema: outputOkSchema(userRaiseViewSchema).label("UserPayRaiseViewPayResponse"),
     },
