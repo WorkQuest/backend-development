@@ -23,7 +23,7 @@ import {
   QuestsReview,
   QuestsStarred,
   User,
-  UserRole
+  UserRole,
 } from '@workquest/database-models/lib/models';
 
 export const searchQuestFields = [

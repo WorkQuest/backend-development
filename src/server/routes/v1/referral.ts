@@ -5,7 +5,8 @@ import {
   offsetSchema,
   outputOkSchema,
   referralProgramUserReferralsScheme,
-  referralProgramReferralsShortScheme, referralProgramUserClaimedEventScheme
+  referralProgramReferralsShortScheme,
+  referralProgramUserClaimedEventScheme,
 } from '@workquest/database-models/lib/schemes';
 
 export default [{
@@ -54,7 +55,7 @@ export default [{
     validate: {
       query: Joi.object({
         offset: offsetSchema,
-        limit: limitSchema
+        limit: limitSchema,
       }).label('GetMyReferralProgramClaimedEvents')
     },
     response: {

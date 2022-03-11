@@ -20,7 +20,7 @@ export async function getMyReferrals(r) {
       required: true
     },
     limit: r.query.limit,
-    offset: r.query.offset
+    offset: r.query.offset,
   });
 
   return output({ count, referrals: rows });
