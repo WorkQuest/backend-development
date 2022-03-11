@@ -7,6 +7,7 @@ import {
   userLastNameSchema,
   userPasswordSchema,
   walletAddressSchema,
+  inputFromLoginSchema,
   walletPublicKeySchema,
   walletSignatureSchema,
   userRoleSchema,
@@ -113,6 +114,11 @@ export default [
       id: 'v1.auth.login.facebook',
       tags: ['api', 'auth'],
       description: 'Login user through Facebook',
+      validate: {
+        query: Joi.object({
+          inputFrom: inputFromLoginSchema.required(),
+        }).label('LoginByFacebookQuery'),
+      },
       response: {
         schema: emptyOkSchema,
       },
@@ -129,6 +135,11 @@ export default [
       id: 'v1.auth.login.google',
       tags: ['api', 'auth'],
       description: 'Login user through Google',
+      validate: {
+        query: Joi.object({
+          inputFrom: inputFromLoginSchema.required(),
+        }).label('LoginByGoogleQuery'),
+      },
       response: {
         schema: emptyOkSchema,
       },
@@ -145,6 +156,11 @@ export default [
       id: 'v1.auth.login.linkedin',
       tags: ['api', 'auth'],
       description: 'Login user through Linkedin',
+      validate: {
+        query: Joi.object({
+          inputFrom: inputFromLoginSchema.required(),
+        }).label('LoginByLinkedinQuery'),
+      },
       response: {
         schema: emptyOkSchema,
       },
@@ -161,6 +177,11 @@ export default [
       id: 'v1.auth.login.twitter',
       tags: ['api', 'auth'],
       description: 'Login user through Twitter',
+      validate: {
+        query: Joi.object({
+          inputFrom: inputFromLoginSchema.required(),
+        }).label('LoginByTwitterQuery'),
+      },
       response: {
         schema: emptyOkSchema,
       },
