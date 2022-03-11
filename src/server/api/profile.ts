@@ -419,7 +419,7 @@ export async function changeUserRole(r) {
   return output();
 }
 
-export async function activateRaiseView(r) {
+export async function activateMyRaiseView(r) {
   const userController = new UserController(await User.findByPk(r.params.userId));
 
   await userController
@@ -431,7 +431,7 @@ export async function activateRaiseView(r) {
   return output();
 }
 
-export async function payForRaiseView(r) {
+export async function payForMyRaiseView(r) {
 //TODO: логику оплаты
   const raiseView = await UserRaiseView.findOne({
     where: {

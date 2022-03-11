@@ -285,31 +285,31 @@ export default [{
 },
 {
   method: "POST",
-  path: "/v1/profile/{userId}/raise",
-  handler: handlers.activateRaiseView,
+  path: "/v1/profile/me/raise-view/select",
+  handler: handlers.activateMyRaiseView,
   options: {
     auth: 'jwt-access',
-    id: "v1.quest.raiseView.activate",
+    id: "v1.user.raiseView.select",
     tags: ["api", "profile"],
-    description: "Activate user raise view",
+    description: "Select user raise view",
     validate: {
       params: Joi.object({
         userId: idSchema.required(),
-      }).label("UserRaiseViewParams"),
+      }).label("UserRaiseViewSelectParams"),
       payload: Joi.object({
         duration: userRaiseDurationSchema.required(),
         type: userRaiseTypeSchema.required(),
-      }).label("UserRaiseViewPayload")
+      }).label("UserRaiseViewSelectPayload")
     },
     response: {
-      schema: outputOkSchema(userRaiseViewSchema).label("UserRaiseViewResponse"),
+      schema: outputOkSchema(userRaiseViewSchema).label("UserRaiseViewSelectResponse"),
     },
   },
 },
 {
   method: "POST",
-  path: "/v1/profile/{userId}/pay",
-  handler: handlers.payForRaiseView,
+  path: "/v1/profile/me/raise-view/pay",
+  handler: handlers.payForMyRaiseView,
   options: {
     auth: 'jwt-access',
     id: "v1.user.raiseView.pay",
@@ -318,13 +318,13 @@ export default [{
     validate: {
       params: Joi.object({
         userId: idSchema.required(),
-      }).label("UserPayRaiseViewParams"),
+      }).label("UserPayRaiseViewPayParams"),
       payload: Joi.object({
         amount: userRaisePayAmountSchema.required(),
-      }).label("UserPayRaiseViewPayload")
+      }).label("UserPayRaiseViewPayPayload")
     },
     response: {
-      schema: outputOkSchema(userRaiseViewSchema).label("UserPayRaiseViewResponse"),
+      schema: outputOkSchema(userRaiseViewSchema).label("UserPayRaiseViewPayResponse"),
     },
   },
 }
