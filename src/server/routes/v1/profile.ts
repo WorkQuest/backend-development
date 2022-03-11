@@ -20,17 +20,16 @@ import {
   locationFullSchema,
   userLastNameSchema,
   userPasswordSchema,
-  userRaiseTypeSchema,
   userRaiseViewSchema,
   employerQuerySchema,
   userEmployersSchema,
   userFirstNameSchema,
   userStatisticsSchema,
   outputPaginationSchema,
+  userRaiseViewTypeSchema,
   workerWagePerHourSchema,
-  userRaiseDurationSchema,
   specializationKeysSchema,
-  userRaisePayAmountSchema,
+  userRaiseViewDurationSchema,
   userAdditionalInfoWorkerSchema,
   userAdditionalInfoEmployerSchema,
 } from "@workquest/database-models/lib/schemes";
@@ -282,8 +281,7 @@ export default [{
       schema: emptyOkSchema
     }
   }
-},
-{
+}, {
   method: "POST",
   path: "/v1/profile/me/raise-view/select",
   handler: handlers.selectMyRaiseView,
@@ -294,16 +292,15 @@ export default [{
     description: "Select user raise view",
     validate: {
       payload: Joi.object({
-        duration: userRaiseDurationSchema.required(),
-        type: userRaiseTypeSchema.required(),
+        duration: userRaiseViewDurationSchema.required(),
+        type: userRaiseViewTypeSchema.required(),
       }).label("UserRaiseViewSelectPayload")
     },
     response: {
       schema: outputOkSchema(userRaiseViewSchema).label("UserRaiseViewSelectResponse"),
     },
   },
-},
-{
+}, {
   method: "POST",
   path: "/v1/profile/me/raise-view/pay",
   handler: handlers.payForMyRaiseView,
@@ -312,15 +309,9 @@ export default [{
     id: "v1.profile.raiseView.pay",
     tags: ["api", "profile"],
     description: "Pay for user raise view",
-    validate: {
-      payload: Joi.object({
-        amount: userRaisePayAmountSchema.required(),
-      }).label("UserPayRaiseViewPayPayload")
-    },
     response: {
       schema: outputOkSchema(userRaiseViewSchema).label("UserPayRaiseViewPayResponse"),
     },
   },
-}
-];
+}];
 
