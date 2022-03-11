@@ -9,11 +9,15 @@ import {
   Session,
   UserRole,
   UserStatus,
+  QuestStatus,
+  QuestDispute,
+  UserRaiseView,
   ChatsStatistic,
+  UserRaiseStatus,
   QuestsStatistic,
   RatingStatistic,
   defaultUserSettings,
-  UserSpecializationFilter, QuestDispute, QuestStatus
+  UserSpecializationFilter,
 } from "@workquest/database-models/lib/models";
 
 abstract class UserHelper {
@@ -238,6 +242,12 @@ abstract class UserHelper {
     }
     return this;
   }
+
+  public async createRaiseView() {
+    await UserRaiseView.create({
+      userId: this.user.id,
+    });
+  }
 }
 
 export class UserController extends UserHelper {
@@ -374,5 +384,20 @@ export class UserController extends UserHelper {
       avatar: this.user.avatar,
       additionalInfo: this.user.additionalInfo,
     };
+  }
+
+  public async checkUserRaiseViewStatus() {
+    const raiseView = await UserRaiseView.findOne({
+      where: {
+        userId: this.user.id,
+        status: UserRaiseStatus.Paid
+      }
+    });
+
+    if (raiseView) {
+      throw error(Errors.AlreadyExists, "Raise view in progress", {raiseViewId: raiseView.id});
+    }
+
+    return this;
   }
 }

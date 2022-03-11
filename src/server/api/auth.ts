@@ -83,6 +83,8 @@ export function getLoginViaSocialNetworkHandler(returnType: 'token' | 'redirect'
     }
 
     const user = await UserController.getUserByNetworkProfile(r.auth.strategy, profile);
+    const userController = new UserController(user);
+    await userController.createRaiseView();
 
     const session = await Session.create({
       userId: user.id,
@@ -101,8 +103,9 @@ export function getLoginViaSocialNetworkHandler(returnType: 'token' | 'redirect'
     if (returnType === 'redirect') {
       const qs = querystring.stringify(result);
       return h.redirect(
-        // config.baseUrl TODO для тестов
-        'http://localhost:3000' + '/sign-in?' + qs
+        r.params.platform === 'main' ?
+          config.baseUrl + '/sign-in?' + qs :
+          config.baseUrlDao + '/sign-in?' + qs,
       );
     }
     return output(result);
@@ -113,7 +116,7 @@ export async function confirmEmail(r) {
   const user = await User.scope('withPassword').findByPk(r.auth.credentials.id);
   const userController = new UserController(user);
 
-  await userController.checkUserAlreadyConfirmed().checkUserConfirmationCode(r.payload.confirmCode);
+  await userController.checkUserAlreadyConfirmed().checkUserConfirmationCode(r.payload.confirmCode).createRaiseView();
 
   await UserController.createStatistics(user.id);
 
