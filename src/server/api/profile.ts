@@ -65,6 +65,9 @@ export async function getAllUsers(r) {
 
   const { count, rows } = await User.findAndCountAll({
     where,
+    attributes: {
+      include: [[literal('(SELECT address FROM "Wallets" WHERE "Wallets"."userId" = "User"."id")'), 'wallet']]
+    },
     distinct: true,
     col: '"User"."id"',
     limit: r.query.limit,

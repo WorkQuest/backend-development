@@ -7,6 +7,7 @@ import {
   userLastNameSchema,
   userPasswordSchema,
   walletAddressSchema,
+  inputFromLoginSchema,
   walletPublicKeySchema,
   walletSignatureSchema,
   userRoleSchema,
@@ -104,7 +105,7 @@ export default [
   },
   {
     method: 'GET',
-    path: '/v1/auth/login/facebook',
+    path: '/v1/auth/login/{platform}/facebook',
     handler: handlers.getLoginViaSocialNetworkHandler('redirect'),
     options: {
       auth: {
@@ -113,6 +114,11 @@ export default [
       id: 'v1.auth.login.facebook',
       tags: ['api', 'auth'],
       description: 'Login user through Facebook',
+      validate: {
+        params: Joi.object({
+          platform: inputFromLoginSchema.required(),
+        }).label('LoginByFacebookParams'),
+      },
       response: {
         schema: emptyOkSchema,
       },
@@ -120,7 +126,7 @@ export default [
   },
   {
     method: 'GET',
-    path: '/v1/auth/login/google',
+    path: '/v1/auth/login/{platform}/google',
     handler: handlers.getLoginViaSocialNetworkHandler('redirect'),
     options: {
       auth: {
@@ -129,6 +135,11 @@ export default [
       id: 'v1.auth.login.google',
       tags: ['api', 'auth'],
       description: 'Login user through Google',
+      validate: {
+        params: Joi.object({
+          platform: inputFromLoginSchema.required(),
+        }).label('LoginByGoogleParams'),
+      },
       response: {
         schema: emptyOkSchema,
       },
@@ -136,7 +147,7 @@ export default [
   },
   {
     method: 'GET',
-    path: '/v1/auth/login/linkedin',
+    path: '/v1/auth/login/{platform}/linkedin',
     handler: handlers.getLoginViaSocialNetworkHandler('redirect'),
     options: {
       auth: {
@@ -145,6 +156,11 @@ export default [
       id: 'v1.auth.login.linkedin',
       tags: ['api', 'auth'],
       description: 'Login user through Linkedin',
+      validate: {
+        params: Joi.object({
+          platform: inputFromLoginSchema.required(),
+        }).label('LoginByLinkedinParams'),
+      },
       response: {
         schema: emptyOkSchema,
       },
@@ -152,7 +168,7 @@ export default [
   },
   {
     method: 'GET',
-    path: '/v1/auth/login/twitter',
+    path: '/v1/auth/login/{platform}/twitter',
     handler: handlers.getLoginViaSocialNetworkHandler('redirect'),
     options: {
       auth: {
@@ -161,6 +177,11 @@ export default [
       id: 'v1.auth.login.twitter',
       tags: ['api', 'auth'],
       description: 'Login user through Twitter',
+      validate: {
+        params: Joi.object({
+          platform: inputFromLoginSchema.required(),
+        }).label('LoginByTwitterParams'),
+      },
       response: {
         schema: emptyOkSchema,
       },
