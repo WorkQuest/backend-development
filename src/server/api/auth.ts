@@ -101,7 +101,7 @@ export function getLoginViaSocialNetworkHandler(returnType: 'token' | 'redirect'
     if (returnType === 'redirect') {
       const qs = querystring.stringify(result);
       return h.redirect(
-        r.query.inputFrom === 'main' ?
+        r.params.platform === 'main' ?
           config.baseUrl + '/sign-in?' + qs :
           config.baseUrlDao + '/sign-in?' + qs,
       );

@@ -105,7 +105,7 @@ export default [
   },
   {
     method: 'GET',
-    path: '/v1/auth/login/facebook',
+    path: '/v1/auth/login/{platform}/facebook',
     handler: handlers.getLoginViaSocialNetworkHandler('redirect'),
     options: {
       auth: {
@@ -115,9 +115,9 @@ export default [
       tags: ['api', 'auth'],
       description: 'Login user through Facebook',
       validate: {
-        query: Joi.object({
-          inputFrom: inputFromLoginSchema.required(),
-        }).label('LoginByFacebookQuery'),
+        params: Joi.object({
+          platform: inputFromLoginSchema.required(),
+        }).label('LoginByFacebookParams'),
       },
       response: {
         schema: emptyOkSchema,
@@ -126,7 +126,7 @@ export default [
   },
   {
     method: 'GET',
-    path: '/v1/auth/login/google',
+    path: '/v1/auth/login/{platform}/google',
     handler: handlers.getLoginViaSocialNetworkHandler('redirect'),
     options: {
       auth: {
@@ -136,9 +136,9 @@ export default [
       tags: ['api', 'auth'],
       description: 'Login user through Google',
       validate: {
-        query: Joi.object({
-          inputFrom: inputFromLoginSchema.required(),
-        }).label('LoginByGoogleQuery'),
+        params: Joi.object({
+          platform: inputFromLoginSchema.required(),
+        }).label('LoginByGoogleParams'),
       },
       response: {
         schema: emptyOkSchema,
@@ -147,7 +147,7 @@ export default [
   },
   {
     method: 'GET',
-    path: '/v1/auth/login/linkedin',
+    path: '/v1/auth/login/{platform}/linkedin',
     handler: handlers.getLoginViaSocialNetworkHandler('redirect'),
     options: {
       auth: {
@@ -157,9 +157,9 @@ export default [
       tags: ['api', 'auth'],
       description: 'Login user through Linkedin',
       validate: {
-        query: Joi.object({
-          inputFrom: inputFromLoginSchema.required(),
-        }).label('LoginByLinkedinQuery'),
+        params: Joi.object({
+          platform: inputFromLoginSchema.required(),
+        }).label('LoginByLinkedinParams'),
       },
       response: {
         schema: emptyOkSchema,
@@ -168,7 +168,7 @@ export default [
   },
   {
     method: 'GET',
-    path: '/v1/auth/login/twitter',
+    path: '/v1/auth/login/{platform}/twitter',
     handler: handlers.getLoginViaSocialNetworkHandler('redirect'),
     options: {
       auth: {
@@ -178,9 +178,9 @@ export default [
       tags: ['api', 'auth'],
       description: 'Login user through Twitter',
       validate: {
-        query: Joi.object({
-          inputFrom: inputFromLoginSchema.required(),
-        }).label('LoginByTwitterQuery'),
+        params: Joi.object({
+          platform: inputFromLoginSchema.required(),
+        }).label('LoginByTwitterParams'),
       },
       response: {
         schema: emptyOkSchema,
