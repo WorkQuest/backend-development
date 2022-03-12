@@ -15,8 +15,7 @@ export async function createProposal(r) {
 
   const proposal = await Proposal.create(
     {
-      userId: r.auth.credentials.id,
-      proposer: r.payload.proposer,
+      proposerUserId: r.auth.credentials.id,
       title: r.payload.title,
       description: r.payload.description,
       status: ProposalStatus.Pending,
@@ -28,15 +27,7 @@ export async function createProposal(r) {
 
   await transaction.commit();
 
-  return output({
-    id: proposal.id,
-    userId: proposal.userId,
-    proposer: proposal.proposer,
-    nonce: proposal.nonce,
-    title: proposal.title,
-    description: proposal.description,
-    status: proposal.status,
-  });
+  return output(proposal);
 }
 
 export async function getProposals(r) {
