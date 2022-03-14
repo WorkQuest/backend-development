@@ -1,4 +1,4 @@
-import { literal, Op } from 'sequelize';
+import { FindAttributeOptions, literal, Op } from "sequelize";
 import { addSendSmsJob } from '../jobs/sendSms';
 import { error, getRandomCodeNumber, output } from '../utils';
 import { UserController } from '../controllers/user/controller.user';
@@ -6,23 +6,26 @@ import { transformToGeoPostGIS } from '../utils/postGIS';
 import { MediaController } from '../controllers/controller.media';
 import { SkillsFiltersController } from '../controllers/controller.skillsFilters';
 import { addUpdateReviewStatisticsJob } from '../jobs/updateReviewStatistics';
+import { updateUserRaiseViewStatusJob } from '../jobs/updateUserRaiseViewStatus'
 import { updateQuestsStatisticJob } from '../jobs/updateQuestsStatistic';
 import { deleteUserFiltersJob } from '../jobs/deleteUserFilters';
 import { Errors } from '../utils/errors';
 import {
+  User,
+  Wallet,
+  UserRole,
+  UserRaiseView,
   ChatsStatistic,
   Quest,
   QuestsResponse,
   QuestsResponseStatus,
   QuestsStatistic,
   QuestStatus,
-  RatingStatistic,
-  User,
   UserChangeRoleData,
-  UserRole,
   UserStatus,
-  Wallet
-} from '@workquest/database-models/lib/models';
+  RatingStatistic,
+  UserRaiseStatus
+} from "@workquest/database-models/lib/models";
 
 export const searchFields = [
   "firstName",
@@ -62,8 +65,14 @@ export async function getAllUsers(r) {
 
   const { count, rows } = await User.findAndCountAll({
     where,
+    col: 'id',
     distinct: true,
-    col: '"User"."id"',
+    include: {
+      model: Wallet,
+      as: 'wallet',
+      attributes: ['address'],
+      required: r.query.walletRequired,
+    },
     limit: r.query.limit,
     offset: r.query.offset,
   });
@@ -86,8 +95,14 @@ export function getUsers(role: UserRole, type: 'points' | 'list') {
       '(1 = (CASE WHEN EXISTS (SELECT * FROM "UserSpecializationFilters" WHERE "userId" = "User"."id" AND "UserSpecializationFilters"."path" IN (:path)) THEN 1 END))' +
       'OR (1 = (CASE WHEN EXISTS (SELECT * FROM "UserSpecializationFilters" WHERE "userId" = "User"."id" AND "UserSpecializationFilters"."industryKey" IN (:industryKey)) THEN 1 END))'
     );
+    const userRaiseViewLiteral = literal(
+      '(SELECT "type" FROM "UserRaiseViews" WHERE "userId" = "User"."id" AND "UserRaiseViews"."status" = 0)'
+    );
+    const userRatingStatisticLiteral = literal(
+      '(SELECT "status" FROM "RatingStatistics" WHERE "userId" = "User"."id")'
+    );
 
-    const order = [];
+    const order = [[userRaiseViewLiteral, 'asc'], [userRatingStatisticLiteral, 'asc']] as any;
     const include = [];
     const replacements = {};
     let distinctCol: '"User"."id"' | 'id' = '"User"."id"';
@@ -395,6 +410,43 @@ export async function changeUserRole(r) {
   await updateQuestsStatisticJob({
     userId: user.id,
     role: user.role,
+  });
+
+  return output();
+}
+
+export async function payForMyRaiseView(r) {
+//TODO: логику оплаты
+  const userController = new UserController(await User.findByPk(r.auth.credentials.id));
+  await userController
+    .userMustHaveRole(UserRole.Worker)
+    .checkUserRaiseViewStatus();
+
+  const [raiseView, isCreated] = await UserRaiseView.findOrCreate({
+    where: {
+      userId: r.auth.credentials.id
+    },
+    defaults: {
+      userId: r.auth.credentials.id,
+      status: UserRaiseStatus.Paid, //TODO: сделать на воркере статус оплачено, тут сменить на Closed
+      duration: r.payload.duration,
+      type: r.payload.type,
+    }
+  });
+
+  if (!isCreated) {
+    await raiseView.update({
+      status: UserRaiseStatus.Paid, //TODO: сделать на воркере статус оплачено, тут сменить на Closed
+      duration: r.payload.duration,
+      type: r.payload.type,
+    });
+  }
+
+  const endOfRaiseView = new Date(Date.now() + 86400000 * raiseView.duration);
+
+  await updateUserRaiseViewStatusJob({
+    questId: r.params.questId,
+    runAt: endOfRaiseView
   });
 
   return output();

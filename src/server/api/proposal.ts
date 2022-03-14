@@ -1,77 +1,84 @@
+import { Op, literal } from 'sequelize';
 import { error, output } from '../utils';
-import { MediaController } from '../controllers/controller.media';
 import { Errors } from '../utils/errors';
-import { Proposal, ProposalStatus, ProposalVoteCastEvent } from '@workquest/database-models/lib/models';
-import { Op } from 'sequelize';
+import { MediaController } from '../controllers/controller.media';
+import {
+  User,
+  Wallet,
+  Proposal,
+  ProposalStatus,
+  ProposalVoteCastEvent,
+} from '@workquest/database-models/lib/models';
 
 const searchFields = ['title', 'description'];
-const searchFieldNumber = ['proposalId'];
 
-//TODO: improve userId to address of user's wallet
 export async function createProposal(r) {
+  const user: User = r.auth.credentials;
+
+  const userWaller = Wallet.findOne({
+    where: { userId: user.id },
+  });
+
+  if (!userWaller) {
+    return error(Errors.Forbidden, 'User does not have a wallet on the platform', {});
+  }
+
   const medias = await MediaController.getMedias(r.payload.medias);
 
   const transaction = await r.server.app.db.transaction();
 
-  const proposal = await Proposal.create(
-    {
-      userId: r.auth.credentials.id,
-      proposer: r.payload.proposer,
-      title: r.payload.title,
-      description: r.payload.description,
-      status: ProposalStatus.Pending,
-    },
-    { transaction },
-  );
+  const proposal = await Proposal.create({
+    proposerUserId: r.auth.credentials.id,
+    title: r.payload.title,
+    description: r.payload.description,
+    status: ProposalStatus.Pending,
+  }, { transaction });
 
   await proposal.$set('medias', medias, { transaction });
 
   await transaction.commit();
 
-  return output({
-    id: proposal.id,
-    userId: proposal.userId,
-    proposer: proposal.proposer,
-    nonce: proposal.nonce,
-    title: proposal.title,
-    description: proposal.description,
-    status: proposal.status,
-  });
+  return output(proposal);
 }
 
 export async function getProposals(r) {
+  const searchByProposalIdLiteral = literal(
+    `(SELECT "contractProposalId"::TEXT FROM "ProposalCreatedEvents" `
+    + `WHERE "proposalId" = "Proposal"."id") ILIKE :query`,
+  );
+
   const where = {
-    ...(r.query.status !== null && { status: r.query.status }),
+    ...(r.query.status && { status: r.query.status }),
   };
 
+  const order = [];
+
+  for (const [key, value] of Object.entries(r.query.sort || {})) {
+    order.push([key, value]);
+  }
+
   if (r.query.q) {
-    if (isNaN(Number(r.query.q))) {
-      where[Op.or] = searchFields.map((field) => ({
-        [field]: { [Op.iLike]: `%${r.query.q}%` },
-      }));
-    }
-    if (!isNaN(Number(r.query.q))) {
-      where[Op.or] = searchFieldNumber.map((field) => ({
-        [field]: { [Op.eq]: Number(r.query.q) },
-      }));
-    }
+    where[Op.or] = searchFields.map((field) => ({
+      [field]: { [Op.iLike]: `%${r.query.q}%` },
+    }));
+
+    where[Op.or].push(searchByProposalIdLiteral);
   }
 
   const { count, rows } = await Proposal.findAndCountAll({
     where,
+    order,
     // distinct: true,
     limit: r.query.limit,
     offset: r.query.offset,
-    order: [['createdAt', r.query.createdAt]],
+    replacements: { query: '%' + r.query.q + '%' },
   });
 
-  return { count, proposal: rows };
+  return { count, proposals: rows };
 }
 
 export async function getProposal(r) {
-  const proposal = await Proposal.findOne({
-    where: { proposalId: r.params.proposalId },
-  });
+  const proposal = await Proposal.findByPk(r.params.proposalId);
 
   if (!proposal) {
     return error(Errors.NotFound, 'Proposal does not exist', {});
@@ -80,21 +87,24 @@ export async function getProposal(r) {
   return output(proposal);
 }
 
-export async function getVotingsProposal(r) {
+export async function getVoteCastEventsProposal(r) {
   const where = {
-    ...(r.query.support !== undefined && { support: r.query.support }),
     ...(r.params.proposalId && { proposalId: r.params.proposalId }),
+    ...(typeof r.query.support === 'boolean' && { support: r.query.support }),
   };
-  const { count, rows } = await ProposalVoteCastEvent.findAndCountAll({
-    limit: r.query.limit,
-    offset: r.query.offset,
-    order: [['createdAt', r.query.createdAt]],
-    where,
-  });
 
-  if (!rows) {
-    return error(Errors.NotFound, 'Proposal does not exist', {});
+  const order = [];
+
+  for (const [key, value] of Object.entries(r.query.sort || {})) {
+    order.push([key, value]);
   }
 
-  return { count, voting: rows };
+  const { count, rows } = await ProposalVoteCastEvent.findAndCountAll({
+    where,
+    order,
+    limit: r.query.limit,
+    offset: r.query.offset,
+  });
+
+  return { count, votes: rows };
 }
