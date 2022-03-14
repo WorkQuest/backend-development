@@ -125,6 +125,7 @@ export default [{
     validate: {
       query: Joi.object({
         q: searchSchema,
+        walletRequired: Joi.boolean().default(false),
         limit: limitSchema,
         offset: offsetSchema,
       }).label('GetAllUsersQuery'),

@@ -1,4 +1,4 @@
-import { literal, Op } from 'sequelize';
+import { FindAttributeOptions, literal, Op } from "sequelize";
 import { addSendSmsJob } from '../jobs/sendSms';
 import { error, getRandomCodeNumber, output } from '../utils';
 import { UserController } from '../controllers/user/controller.user';
@@ -65,11 +65,14 @@ export async function getAllUsers(r) {
 
   const { count, rows } = await User.findAndCountAll({
     where,
-    attributes: {
-      include: [[literal('(SELECT address FROM "Wallets" WHERE "Wallets"."userId" = "User"."id")'), 'wallet']]
-    },
+    col: 'id',
     distinct: true,
-    col: '"User"."id"',
+    include: {
+      model: Wallet,
+      as: 'wallet',
+      attributes: ['address'],
+      required: r.query.walletRequired,
+    },
     limit: r.query.limit,
     offset: r.query.offset,
   });
