@@ -47,12 +47,12 @@ export async function getMySignedCreatedReferrals(r) {
       model: ReferralProgramAffiliate,
       where: { affiliateUserId: affiliateUser.id },
       as: 'referralProgramAffiliate',
-      required: true
+      required: true,
     },
-    where: { referralStatus: ReferralStatus.Created }
+    where: { referralStatus: ReferralStatus.Created },
   });
 
-  const referralAddresses = referrals.map((referrals) => referrals.referralProgramAffiliate.affiliateUser.wallet.address);
+  const referralAddresses = referrals.map((referral) => referral.referralUser.wallet.address);
 
   const web3 = new Web3();
   const data = web3.utils.soliditySha3(...referralAddresses);
