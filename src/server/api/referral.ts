@@ -1,4 +1,6 @@
+import fs from 'fs';
 import Web3 from 'web3';
+import path from 'path';
 import { output } from '../utils';
 import configReferral from '../config/config.referral';
 import {
@@ -6,15 +8,13 @@ import {
   ReferralStatus,
   ReferralProgramReferral,
   ReferralProgramAffiliate,
-  ReferralProgramEventRewardClaimed
 } from '@workquest/database-models/lib/models';
-import { literal } from 'sequelize';
-import path from 'path';
-import fs from 'fs';
 
 const referralProgramClaimAndPaidEventsPath = path.join(__dirname, '..', '..', '..', 'raw-queries', 'referralProgramClaimAndPaidEvents.sql');
+const referralProgramClaimAndPaidEventsCountPath = path.join(__dirname, '..', '..', '..', 'raw-queries', 'referralProgramClaimAndPaidEventsCount.sql');
 
 export const referralProgramClaimAndPaidEventsQuery = fs.readFileSync(referralProgramClaimAndPaidEventsPath).toString();
+export const referralProgramClaimAndPaidEventsCountQuery = fs.readFileSync(referralProgramClaimAndPaidEventsCountPath).toString();
 
 export async function getMyReferrals(r) {
   const affiliateUser: User = r.auth.credentials;
@@ -70,16 +70,19 @@ export async function getMyReferralProgramClaimedAndPaidEvents(r) {
   const affiliateUser: User = r.auth.credentials;
 
   const walletAffiliate = await ReferralProgramAffiliate.findOne({
-    where: { affiliateUserId: affiliateUser.id }
-  })
+    where: { affiliateUserId: affiliateUser.id },
+  });
 
-  const [result] = await r.server.app.db.query(referralProgramClaimAndPaidEventsQuery, {
+  const [countResults] = await r.server.app.db.query(referralProgramClaimAndPaidEventsCountQuery, {
+    replacements: { affiliate: walletAffiliate.affiliateUser.wallet.address },
+  });
+  const [eventsResult] = await r.server.app.db.query(referralProgramClaimAndPaidEventsQuery, {
     replacements: {
       limit: r.query.limit,
       offset: r.query.offset,
-      affiliate: walletAffiliate.affiliateUser.wallet.address
+      affiliate: walletAffiliate.affiliateUser.wallet.address,
     }
   })
 
-  return output (result);
+  return output ({ count: countResults, events: eventsResult });
 }

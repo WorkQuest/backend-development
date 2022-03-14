@@ -5,36 +5,11 @@ import {
   offsetSchema,
   referralSchema,
   outputOkSchema,
-  referralProgramUserReferralsScheme,
-  referralProgramReferralsShortScheme,
-  blockNumberSchema,
-  transactionHashSchema,
-  idSchema,
-  coinAmountSchema,
-  timestampSchema
-  referralProgramUserClaimedEventScheme,
   accountAddressSchema,
   outputPaginationSchema,
   accountAddressesSchema,
+  referralProgramClaimedAndPaidEventSchema,
 } from '@workquest/database-models/lib/schemes';
-
-enum eventName {
-  PaidReferral = "PaidReferral",
-  RewardClaimed = "RewardClaimed",
-}
-
-const referralProgramEventNameSchema = Joi.string().valid(...Object.values(eventName)).example(eventName.PaidReferral).label('ReferralProgramEventName');
-
-const referralProgramClaimOrPaidEventSchema = Joi.object({
-  blockNumber: blockNumberSchema,
-  transactionHash: transactionHashSchema,
-  referral: idSchema,
-  affiliate: idSchema,
-  amount: coinAmountSchema,
-  timestamp: timestampSchema,
-  event: referralProgramEventNameSchema
-})
-const getMyReferralProgramClaimedAndPaidEventsSchemas = Joi.array().items(referralProgramClaimOrPaidEventSchema).label('ReferralProgramClaimedAndPaidEvents')
 
 export default [{
   method: 'GET',
@@ -71,27 +46,29 @@ export default [{
           r: accountAddressSchema,
           s: accountAddressSchema,
           addresses: accountAddressesSchema,
-        }).label('SignedCreatedReferrals')
+        }).label('SignedCreatedReferrals'),
       ).label('GetMySignedCreatedReferralsResponse')
     }
   }
 }, {
   method: 'GET',
-  path: '/v1/user/me/referral-program/claimed-events',
+  path: '/v1/user/me/referral-program/claimed-paid-events',
   handler: handlers.getMyReferralProgramClaimedAndPaidEvents,
   options: {
     auth: 'jwt-access',
-    id: 'v1.referral.claim',
+    id: 'v1.referralProgram.getMyClaimedAndPaidEvents',
     tags: ['api', 'referral-program'],
-    description: 'Get all events paid or claimed',
+    description: 'Get all paid and claimed events',
     validate: {
       query: Joi.object({
         offset: offsetSchema,
         limit: limitSchema,
-      }).label('GetMyReferralProgramClaimedEvents')
+      }).label('GetMyClaimedAndPaidEventsQuery')
     },
     response: {
-      schema: outputOkSchema(getMyReferralProgramClaimedAndPaidEventsSchemas)
+      schema: outputOkSchema(
+        outputPaginationSchema('events', referralProgramClaimedAndPaidEventSchema)
+      ).label('GetMyClaimedAndPaidEventsResponse'),
     }
   }
 }];

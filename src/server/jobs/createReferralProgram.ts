@@ -18,7 +18,7 @@ export async function createReferralProgram(payload: CreateReferralProgramPayloa
 export default async function(payload: CreateReferralProgramPayload) {
   const user = await User.findByPk(payload.userId);
 
-  const referralProgram = await ReferralProgramAffiliate.scope('referral').findOne({
+  const referralProgram = await ReferralProgramAffiliate.findOne({
     where: { referralCodeId: payload.referralId },
   });
 

@@ -59,7 +59,7 @@ export function register(host: 'dao' | 'main') {
 
     await createReferralProgram({
       userId: user.id,
-      referralId: r.payload.referralId
+      referralId: r.payload.referralId,
     });
 
     const session = await Session.create({
