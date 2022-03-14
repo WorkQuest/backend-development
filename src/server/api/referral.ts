@@ -8,6 +8,13 @@ import {
   ReferralProgramAffiliate,
   ReferralProgramEventRewardClaimed
 } from '@workquest/database-models/lib/models';
+import { literal } from 'sequelize';
+import path from 'path';
+import fs from 'fs';
+
+const referralProgramClaimAndPaidEventsPath = path.join(__dirname, '..', '..', '..', 'raw-queries', 'referralProgramClaimAndPaidEvents.sql');
+
+export const referralProgramClaimAndPaidEventsQuery = fs.readFileSync(referralProgramClaimAndPaidEventsPath).toString();
 
 export async function getMyReferrals(r) {
   const affiliateUser: User = r.auth.credentials;
@@ -23,7 +30,7 @@ export async function getMyReferrals(r) {
         as: 'referralProgramAffiliate',
         where: { affiliateUserId: affiliateUser.id },
         required: true,
-        attributes: ["referralCodeId"],
+        attributes: ['referralCodeId']
       }]
     },
     limit: r.query.limit,
@@ -59,22 +66,20 @@ export async function getMySignedCreatedReferrals(r) {
   });
 }
 
-export async function getMyReferralProgramClaimedEvents(r) {
+export async function getMyReferralProgramClaimedAndPaidEvents(r) {
   const affiliateUser: User = r.auth.credentials;
 
-  const affiliateWallet = await ReferralProgramAffiliate.findOne({
-    where: { affiliateUserId: affiliateUser.id },
-    include: [{
-      model: ReferralProgramEventRewardClaimed
-    }]
-  });
-
-  const claimedEvents = await ReferralProgramEventRewardClaimed.findAll({
-    where: { affiliate: affiliateWallet.affiliateUser.wallet.address },
-    limit: r.query.limit,
-    offset: r.query.offset,
-    order: [['createdAt', 'DESC']],
+  const walletAffiliate = await ReferralProgramAffiliate.findOne({
+    where: { affiliateUserId: affiliateUser.id }
   })
 
-  return output({events: claimedEvents });
+  const [result] = await r.server.app.db.query(referralProgramClaimAndPaidEventsQuery, {
+    replacements: {
+      limit: r.query.limit,
+      offset: r.query.offset,
+      affiliate: walletAffiliate.affiliateUser.wallet.address
+    }
+  })
+
+  return output (result);
 }
