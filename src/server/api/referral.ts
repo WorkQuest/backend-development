@@ -23,14 +23,14 @@ export async function getMyReferrals(r) {
     include: {
       model: ReferralProgramReferral.unscoped(),
       as: 'referralUser',
-      required: true,
       attributes: ['id'],
+      required: true,
       include: [{
         model: ReferralProgramAffiliate.unscoped(),
         as: 'referralProgramAffiliate',
         where: { affiliateUserId: affiliateUser.id },
+        attributes: ["referralCodeId"],
         required: true,
-        attributes: ['referralCodeId']
       }]
     },
     limit: r.query.limit,
@@ -52,7 +52,7 @@ export async function getMySignedCreatedReferrals(r) {
     where: { referralStatus: ReferralStatus.Created }
   });
 
-  const referralAddresses = referrals.map((value) => value.referralProgramAffiliate.affiliateUser.wallet.address);
+  const referralAddresses = referrals.map((referrals) => referrals.referralProgramAffiliate.affiliateUser.wallet.address);
 
   const web3 = new Web3();
   const data = web3.utils.soliditySha3(...referralAddresses);

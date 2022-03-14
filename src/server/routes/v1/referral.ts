@@ -3,6 +3,7 @@ import * as handlers from '../../api/referral';
 import {
   limitSchema,
   offsetSchema,
+  referralSchema,
   outputOkSchema,
   referralProgramUserReferralsScheme,
   referralProgramReferralsShortScheme,
@@ -12,6 +13,9 @@ import {
   coinAmountSchema,
   timestampSchema
   referralProgramUserClaimedEventScheme,
+  accountAddressSchema,
+  outputPaginationSchema,
+  accountAddressesSchema,
 } from '@workquest/database-models/lib/schemes';
 
 enum eventName {
@@ -44,12 +48,11 @@ export default [{
     validate: {
       query: Joi.object({
         offset: offsetSchema,
-        limit: limitSchema
+        limit: limitSchema,
       }).label('GetMyReferralsQuery')
     },
     response: {
-      schema: outputOkSchema(referralProgramReferralsShortScheme)
-        .label('GetMyReferralsResponse')
+      schema: outputPaginationSchema('referrals', referralSchema).label('GetMyReferralsResponse')
     }
   }
 }, {
@@ -62,8 +65,14 @@ export default [{
     tags: ['api', 'referral-program'],
     description: 'Get my signed created referrals',
     response: {
-      schema: outputOkSchema(referralProgramUserReferralsScheme)
-        .label('GetMySignedCreatedReferralsResponse')
+      schema: outputOkSchema(
+        Joi.object({
+          v: accountAddressSchema,
+          r: accountAddressSchema,
+          s: accountAddressSchema,
+          addresses: accountAddressesSchema,
+        }).label('SignedCreatedReferrals')
+      ).label('GetMySignedCreatedReferralsResponse')
     }
   }
 }, {
