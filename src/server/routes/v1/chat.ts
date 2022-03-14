@@ -174,28 +174,28 @@ export default [
       },
     },
   },
-  // {
-  //   method: 'POST',
-  //   path: '/v1/user/me/chat/group/{chatId}/add',
-  //   handler: handlers.addUsersInGroupChat,
-  //   options: {
-  //     auth: 'jwt-access',
-  //     id: 'v1.chat.group.addUsers',
-  //     description: 'Add users in group chat. For one or more users',
-  //     tags: ['api', 'chat'],
-  //     validate: {
-  //       params: Joi.object({
-  //         chatId: idSchema.required(),
-  //       }).label('AddUserInGroupChatParams'),
-  //       payload: Joi.object({
-  //         userIds: idsSchema.min(1).unique().required(),
-  //       }).label('AddUserInGroupChatPayload'),
-  //     },
-  //     response: {
-  //       schema: outputOkSchema(messageSchema).label('AddUserInGroupChatResponse'),
-  //     },
-  //   },
-  // },
+  {
+    method: 'POST',
+    path: '/v1/user/me/chat/group/{chatId}/add',
+    handler: handlers.addUsersInGroupChat,
+    options: {
+      auth: 'jwt-access',
+      id: 'v1.chat.group.addUsers',
+      description: 'Add users in group chat. For one or more users',
+      tags: ['api', 'chat'],
+      validate: {
+        params: Joi.object({
+          chatId: idSchema.required(),
+        }).label('AddUserInGroupChatParams'),
+        payload: Joi.object({
+          userIds: idsSchema.min(1).unique().required(),
+        }).label('AddUserInGroupChatPayload'),
+      },
+      response: {
+        schema: outputOkSchema(messageSchema).label('AddUserInGroupChatResponse'),
+      },
+    },
+  },
   {
     method: 'DELETE',
     path: '/v1/user/me/chat/group/{chatId}/remove/{userId}',
