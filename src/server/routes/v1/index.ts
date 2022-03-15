@@ -17,6 +17,7 @@ import discussion from './discussion';
 import skillFilters from './skillFilters';
 import proposal from './proposal';
 import pensionFund from './pensionFund';
+import wqt from "./wqt";
 
 export default [
   ...liquidityPoolWETH,
@@ -38,4 +39,5 @@ export default [
   ...skillFilters,
   ...proposal,
   ...pensionFund,
+  ...wqt
 ];
