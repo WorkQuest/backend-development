@@ -10,10 +10,10 @@ import { listOfUsersByChatsCountQuery, listOfUsersByChatsQuery } from "../querie
 import {
   Chat,
   ChatData,
-  ChatMember,
+  ChatMember, ChatMemberData,
   ChatMemberDeletionData,
   ChatType,
-  GroupChat,
+  GroupChat, MemberType,
   Message,
   MessageAction,
   SenderMessageStatus,
@@ -96,7 +96,7 @@ export async function getUserChats(r) {
 
   return output({ count, chats: rows });
 }
-/**TODO: test*/
+
 export async function getChatMessages(r) {
   const chat = await Chat.findByPk(r.params.chatId, {
     include: {
@@ -252,7 +252,7 @@ export async function createGroupChat(r) {
 
   return output(result);
 }
-/**TODO: test*/
+
 export async function sendMessageToUser(r) {
   if (r.params.userId === r.auth.credentials.id) {
     return error(Errors.InvalidPayload, "You can't send a message to yourself", {});
@@ -272,12 +272,14 @@ export async function sendMessageToUser(r) {
 
   const messageNumber = lastMessage ? (lastMessage.number + 1) : 1;
 
-  const message = await chatController.controller.createMessage(chatController.controller.chat.id, chatController.controller.chat.meMember.id, messageNumber, r.payload.text, transaction);
+  const meMember = chatController.controller.chat.getDataValue('members').find(member => member.userId === r.auth.credentials.id);
+
+  const message = await chatController.controller.createMessage(chatController.controller.chat.id, meMember.id, messageNumber, r.payload.text, transaction);
 
   await message.$set('medias', medias, { transaction });
 
   if (chatController.isCreated) {
-    await chatController.controller.createChatMembersData(chatController.controller.chat.members, r.auth.credentials.id, message, transaction);
+    await chatController.controller.createChatMembersData(chatController.controller.chat.getDataValue('members'), r.auth.credentials.id, message, transaction);
     await chatController.controller.createChatData(chatController.controller.chat.id, message.id, transaction);
   } else {
     await ChatData.update({ lastMessageId: message.id }, { where: { chatId: chatController.controller.chat.id }, transaction });
@@ -423,7 +425,7 @@ export async function removeUserFromGroupChat(r) {
   const chatController = new ChatController(chat);
 
   await chatController
-    .chatMustHaveOwner(chat.getDataValue('members').id)
+    .chatMustHaveOwner(chat.getDataValue('meMember').id)
     .chatMustHaveType(ChatType.group)
     .chatMustHaveMember(r.params.userId);
 
@@ -490,7 +492,7 @@ export async function leaveFromGroupChat(r) {
     }, {
       model: ChatMember,
       as: 'meMember',
-      where: { userId: r.auth.credentials.id }
+      where: { userId: r.auth.credentials.id },
     }]
   });
   const chatController = new ChatController(chat);
@@ -538,7 +540,7 @@ export async function leaveFromGroupChat(r) {
 
   return output(result);
 }
-/**TODO: test - если юзер был удалён из чата, его могут повторно добавить?*/
+
 export async function addUsersInGroupChat(r) {
   const userIds: string[] = r.payload.userIds;
   const users = await UserController.usersMustExist(userIds, 'shortWithAdditionalInfo');
@@ -569,7 +571,7 @@ export async function addUsersInGroupChat(r) {
 
   await chatController
     .chatMustHaveType(ChatType.group)
-    .chatMustHaveOwner(r.auth.credentials.id)
+    .chatMustHaveOwner(chat.getDataValue('meMember').id)
     .usersNotExistInGroupChat(userIds);
 
   const transaction = await r.server.app.db.transaction();
@@ -578,6 +580,7 @@ export async function addUsersInGroupChat(r) {
     return {
       chatId: chat.id,
       userId,
+      type: MemberType.User,
     };
   });
   const newMembers = await ChatMember.bulkCreate(members, { transaction });
@@ -640,7 +643,7 @@ export async function addUsersInGroupChat(r) {
   //
   // return output(messagesResult);
 }
-/**TODO: test*/
+
 export async function setMessagesAsRead(r) {
   const chat = await Chat.findByPk(r.params.chatId);
   const chatController = new ChatController(chat);
@@ -694,7 +697,7 @@ export async function setMessagesAsRead(r) {
 
   return output();
 }
-/**TODO: test*/
+
 export async function getUserStarredMessages(r) {
   const { count, rows } = await Message.findAndCountAll({
     distinct: true,
@@ -716,7 +719,7 @@ export async function getUserStarredMessages(r) {
 
   return output({ count, messages: rows });
 }
-/**TODO: test*/
+
 export async function markMessageStar(r) {
   const chat = await Chat.findByPk(r.params.chatId);
   const message = await Message.findByPk(r.params.messageId);
@@ -739,7 +742,7 @@ export async function markMessageStar(r) {
 
   return output();
 }
-/**TODO: test*/
+
 export async function removeStarFromMessage(r) {
   const starredMessage = await StarredMessage.findOne({
     where: {
@@ -756,7 +759,7 @@ export async function removeStarFromMessage(r) {
 
   return output();
 }
-/**TODO: test*/
+
 export async function markChatStar(r) {
   const chat = await Chat.findByPk(r.params.chatId);
   const chatController = new ChatController(chat);
@@ -776,7 +779,7 @@ export async function markChatStar(r) {
 
   return output();
 }
-/**TODO: test*/
+
 export async function removeStarFromChat(r) {
   await ChatController.chatMustExists(r.params.chatId);
 

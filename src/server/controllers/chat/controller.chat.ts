@@ -12,7 +12,7 @@ import {
 } from "@workquest/database-models/lib/models";
 import { error } from "../../utils";
 import { Errors } from "../../utils/errors";
-import { Transaction } from "sequelize";
+import { Op, Transaction } from "sequelize";
 
 export interface IChatMembers {
   chatId: string,
@@ -73,8 +73,14 @@ abstract class ChatHelper {
       where: { userId: userIds, chatId: this.chat.id },
     });
 
-    if (members.length !== 0) {
-      const existsIds = userIds.filter((userId) => members.findIndex((member) => userId === member.userId) !== -1);
+    const membersIds = members.map(member => { return member.id });
+
+    const membersData = await ChatMemberData.unscoped().findAll({
+      where: { chatMemberId: membersIds },
+    });
+
+    if (membersData.length !== 0) {
+      const existsIds = membersIds.filter((memberId) => members.findIndex((member) => memberId === member.id) !== -1);
 
       throw error(Errors.AlreadyExists, 'Users already exists in group chat', { existsIds });
     }
@@ -106,7 +112,7 @@ export class ChatController extends ChatHelper {
 
   }
 
-  static async findOrCreatePrivateChat(senderMemberId: string, recipientMemberId: string, transaction?: Transaction): Promise<{ controller: ChatController, isCreated: boolean }> {
+  static async findOrCreatePrivateChat(senderUserId: string, recipientUserId: string, transaction?: Transaction): Promise<{ controller: ChatController, isCreated: boolean }> {
     try {
       const [chat, isCreated] = await Chat.findOrCreate({
         where: { type: ChatType.private },
@@ -114,14 +120,14 @@ export class ChatController extends ChatHelper {
           {
             model: ChatMember,
             as: 'firstMemberInPrivateChat',
-            where: { userId: senderMemberId },
+            where: { userId: senderUserId },
             required: true,
             attributes: [],
           },
           {
             model: ChatMember,
             as: 'secondMemberInPrivateChat',
-            where: { userId: recipientMemberId },
+            where: { userId: recipientUserId },
             required: true,
             attributes: [],
           },
@@ -131,7 +137,8 @@ export class ChatController extends ChatHelper {
           },
           {
             model: ChatMember,
-            as: 'meMember'
+            as: 'meMember',
+            where: { userId: senderUserId }
           }
         ],
         defaults: {
@@ -141,7 +148,7 @@ export class ChatController extends ChatHelper {
       });
       const controller = new ChatController(chat);
       if (isCreated) {
-        const chatMembers = await controller.createChatMembers([senderMemberId, recipientMemberId],chat.id, transaction)
+        const chatMembers = await controller.createChatMembers([senderUserId, recipientUserId],chat.id, transaction)
         chat.setDataValue('members', chatMembers);
       }
       return {controller, isCreated};
@@ -174,6 +181,8 @@ export class ChatController extends ChatHelper {
 
   public async createChatMembersData(chatMembers: ChatMember[], senderMemberId: string, message: Message, transaction?: Transaction) {
     try {
+      const chatMembersIds = chatMembers.map(member => { return member.id });
+      await ChatMemberDeletionData.destroy({ where: { id: { [Op.in]: chatMembersIds } } });
       const chatMembersData = chatMembers.map(member => {
         return {
           chatMemberId: member.id,
@@ -207,11 +216,20 @@ export class ChatController extends ChatHelper {
 
   public async createChatMemberDeletionData(chatMemberId: string, beforeDeletionMessageId: string, beforeDeletionMessageNumber: number, transaction?: Transaction) {
     try {
-      await ChatMemberDeletionData.findOrCreate({
+      const [deletionData, isCreated] = await ChatMemberDeletionData.findOrCreate({
           where: { chatMemberId },
           defaults: { chatMemberId, beforeDeletionMessageId, beforeDeletionMessageNumber },
           transaction
       });
+
+      if (!isCreated) {
+        throw error(Errors.Forbidden, 'User already not a member of this chat', {});
+      }
+
+      await ChatMemberData.destroy({ where: {chatMemberId: chatMemberId } });
+
+      await this.chat.getDataValue('meMember').chatMemberData.destroy();
+
     } catch (error) {
       if(transaction) {
         await transaction.rollback();
