@@ -25,9 +25,9 @@ export function getGeo(request) {
   const geo = geoip.lookup(ip);
 
   return {
-    country: geo.country,
-    city: geo.city,
-  };
+    country: geo ? geo.country : null,
+    city: geo ? geo.city : null,
+  }
 }
 
 export function getDevice(request): string {
