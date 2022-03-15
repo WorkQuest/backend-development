@@ -96,11 +96,9 @@ export class ChatController extends ChatHelper {
     const chat = await Chat.create({ type: ChatType.group }, { transaction });
     const chatController = new ChatController(chat);
     const chatMembers = await chatController.createChatMembers(userIds, chat.id, transaction);
-    const ownerChatMemberId = chatMembers.find(member => member.userId === ownerUserId).id
-    await GroupChat.create({ name, ownerMemberId: ownerChatMemberId, chatId: chat.id }, { transaction });
-
+    const ownerChatMember = chatMembers.find(member => member.userId === ownerUserId);
+    await GroupChat.create({ name, ownerMemberId: ownerChatMember.id, chatId: chat.id }, { transaction });
     chat.setDataValue('members', chatMembers);
-
     return chatController;
   }
   /**TODO!!!*/
@@ -127,6 +125,14 @@ export class ChatController extends ChatHelper {
             required: true,
             attributes: [],
           },
+          {
+            model: ChatMember,
+            as: 'members'
+          },
+          {
+            model: ChatMember,
+            as: 'meMember'
+          }
         ],
         defaults: {
           type: ChatType.private,
@@ -214,14 +220,15 @@ export class ChatController extends ChatHelper {
     }
   }
 
-  public async createMessage(chatId: string, senderMemberId: string, type: MessageType, messageNumber: number, transaction?: Transaction): Promise<Message> {
+  public async createMessage(chatId: string, senderMemberId: string, messageNumber: number, text: string, transaction?: Transaction): Promise<Message> {
     try {
       return Message.create(
         {
-          senderMemberId: senderMemberId,
-          chatId: chatId,
+          senderMemberId,
+          chatId,
+          text,
+          type: MessageType.message,
           number: messageNumber,
-          type,
         },
         { transaction }
       );
@@ -233,11 +240,19 @@ export class ChatController extends ChatHelper {
     }
   }
 
-  public async createInfoMessage(memberId: string, messageId: string, messageAction: MessageAction, transaction?: Transaction) {
+  public async createInfoMessage(senderMemberId: string, chatId: string, messageNumber: number, memberId: string, messageAction: MessageAction, transaction?: Transaction): Promise<Message> {
     try {
-      await InfoMessage.create({ memberId, messageId, messageAction },
+      const message = await Message.create(
+        {
+          senderMemberId,
+          chatId: chatId,
+          number: messageNumber,
+          type: MessageType.info,
+        },
         { transaction }
       );
+      await InfoMessage.create({ memberId, messageId: message.id, messageAction },{ transaction } );
+      return message;
     } catch (error) {
       if(transaction) {
         await transaction.rollback();
