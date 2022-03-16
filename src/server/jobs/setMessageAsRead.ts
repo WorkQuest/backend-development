@@ -5,7 +5,7 @@ import { Op } from 'sequelize';
 export interface MessageAsReadPayload {
   lastUnreadMessage: { id: string; number: number };
   chatId: string;
-  senderId: string;
+  senderMemberId: string;
 }
 
 export async function setMessageAsReadJob(payload: MessageAsReadPayload) {
@@ -21,7 +21,7 @@ export default async function setMessageAsRead(payload: MessageAsReadPayload) {
       where: {
         chatId: payload.chatId,
         senderStatus: SenderMessageStatus.unread,
-        senderMemberId: { [Op.ne]: payload.senderId },
+        senderMemberId: { [Op.ne]: payload.senderMemberId },
         number: { [Op.lte]: payload.lastUnreadMessage.number },
       },
     },

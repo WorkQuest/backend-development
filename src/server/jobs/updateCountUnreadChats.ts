@@ -1,5 +1,5 @@
 import { addJob } from '../utils/scheduler';
-import { ChatMember, ChatsStatistic } from '@workquest/database-models/lib/models';
+import { ChatMember, ChatMemberData, ChatsStatistic } from "@workquest/database-models/lib/models";
 import { Op } from 'sequelize';
 
 export type UserUnreadChatsPayload = {
@@ -12,20 +12,24 @@ export async function updateCountUnreadChatsJob(payload: UserUnreadChatsPayload)
 
 export default async function updateCountUnreadChats(payload: UserUnreadChatsPayload) {
   for (const userId of payload.userIds) {
-    const unreadChatsCounter = await ChatMember.unscoped().count({
+    const unreadChatsCounter = await ChatMember.unscoped().findAndCountAll({
       where: {
         userId: userId,
-        unreadCountMessages: { [Op.ne]: 0 },
       },
+      include: [{
+        model: ChatMemberData,
+        as: 'chatMemberData',
+        where: { unreadCountMessages: { [Op.ne]: 0 } }
+      }]
     });
 
     const [chatsStatistic, isCreated] = await ChatsStatistic.findOrCreate({
       where: { userId },
-      defaults: { userId, unreadCountChats: unreadChatsCounter },
+      defaults: { userId, unreadCountChats: unreadChatsCounter.count },
     });
 
     if (!isCreated) {
-      await chatsStatistic.update({ unreadCountChats: unreadChatsCounter });
+      await chatsStatistic.update({ unreadCountChats: unreadChatsCounter.count });
     }
   }
 }
