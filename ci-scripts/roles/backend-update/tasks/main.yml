@@ -49,6 +49,11 @@
     src: ./{{ bridge_env }}.j2
     dest: '{{ backend_bin }}/{{ bridge_env }}'
 
+- name: Copy or generate referral env file
+  template:
+    src: ./{{ referral_env }}.j2
+    dest: '{{ backend_bin }}/{{ referral_env }}'
+
 - name: Generate pm2 app.json
   template:
     src: ./app.json.j2

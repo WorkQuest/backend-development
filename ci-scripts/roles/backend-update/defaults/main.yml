@@ -7,11 +7,6 @@ backend_db_config_json: db-config.json
 # defaults file for bridge-update
 bridge_env: .env.bridge
 
-# defaults file for liquidity-update
-liquidity_env: .env.liquidity
+# defaults file for referral-update
+referral_env: .env.referral
 
-# defaults file for proposal-update
-proposal_env: .env.proposal
-
-# defaults file for WqtWbnb-update
-wqt_wbnb_env: .env.WqtWbnb

@@ -54,6 +54,10 @@ export async function getMySignedCreatedReferrals(r) {
 
   const referralAddresses = referrals.map((referral) => referral.referralUser.wallet.address);
 
+  if (referralAddresses.length === 0) {
+    return output(null);
+  }
+
   const web3 = new Web3();
   const data = web3.utils.soliditySha3(...referralAddresses);
   const signed = await web3.eth.accounts.sign(data, configReferral.privateKey);
