@@ -10,7 +10,7 @@ import { listOfUsersByChatsCountQuery, listOfUsersByChatsQuery } from "../querie
 import {
   Chat,
   ChatData,
-  ChatMember, ChatMemberData,
+  ChatMember,
   ChatMemberDeletionData,
   ChatType,
   GroupChat, MemberType,
