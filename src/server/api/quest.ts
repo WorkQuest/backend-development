@@ -192,6 +192,11 @@ export async function deleteQuest(r) {
 
   await transaction.commit();
 
+  await updateQuestsStatisticJob({
+    userId: employer.id,
+    role: UserRole.Employer,
+  });
+
   return output();
 }
 
