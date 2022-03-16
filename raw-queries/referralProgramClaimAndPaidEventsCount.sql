@@ -9,6 +9,4 @@ FROM (
     SELECT 'RewardClaimed' as "event"
     FROM "ReferralProgramEventRewardClaimeds"
     WHERE "affiliate" = :affiliate
-
-    ORDER BY "timestamp" DESC
 ) as events
