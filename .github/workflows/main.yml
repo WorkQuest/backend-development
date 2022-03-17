@@ -306,7 +306,7 @@ jobs:
             SUMSUB_APP_TOKEN=${{ secrets.SUMSUB_APP_TOKEN }} \
             SUMSUB_SECRET_KEY=${{ secrets.SUMSUB_SECRET_KEY }} \
             SUMSUB_BASE_URL=${{ secrets.SUMSUB_BASE_URL }} \
-            SUMSUB_ACCESS_TOKEN_TTL=${{ secrets.DEV_SUMSUB_ACCESS_TOKEN_TTL }} \
+            SUMSUB_ACCESS_TOKEN_TTL=${{ secrets.SUMSUB_ACCESS_TOKEN_TTL }} \
 
             TOKEN_WETH_ADDRESS=${{ secrets.TOKEN_WETH_ADDRESS }} \
             TOKEN_WBNB_ADDRESS=${{ secrets.TOKEN_WBNB_ADDRESS }} \
@@ -332,6 +332,6 @@ jobs:
             DEBUG=${{ secrets.DEBUG }} \
             BASE_URL=${{ secrets.BASE_URL }} \
             BASE_URL_DAO=${{ secrets.BASE_URL_DAO }} \
-            backend_bin=${{ secrets.backend_bin }} \
+            backend_bin=${{ secrets.BACKEND_BIN }} \
             PM2_SERVICE_NAME=${{ secrets.SERVICE_NAME }} \
             SRC_DIR=${{ github.workspace }}/" backend-update.yml;
