@@ -45,7 +45,10 @@ export async function getMe(r) {
 }
 
 export async function getUser(r) {
-  const userController = new UserController(await User.findByPk(r.params.userId));
+  const user = await User.findByPk(r.params.userId, {
+    include: [{ model: Wallet, as: 'wallet', attributes: ['address'] }],
+  });
+  const userController = new UserController(user);
 
   userController
     .checkNotSeeYourself(r.auth.credentials.id)
