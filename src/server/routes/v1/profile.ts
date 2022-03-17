@@ -31,7 +31,7 @@ import {
   specializationKeysSchema,
   userRaiseViewDurationSchema,
   userAdditionalInfoWorkerSchema,
-  userAdditionalInfoEmployerSchema,
+  userAdditionalInfoEmployerSchema, profileVisibilitySchema
 } from "@workquest/database-models/lib/schemes";
 
 export default [{
@@ -178,6 +178,7 @@ export default [{
         additionalInfo: userAdditionalInfoWorkerSchema.required(),
         wagePerHour: workerWagePerHourSchema.allow(null).required(),
         specializationKeys: specializationKeysSchema.allow(null).required().unique(),
+        profileVisibility: profileVisibilitySchema.allow(null).required(),
       }).label("EditWorkerProfilePayload")
     },
     response: {
