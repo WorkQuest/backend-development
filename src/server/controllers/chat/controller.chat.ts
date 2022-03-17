@@ -14,14 +14,6 @@ import { error } from "../../utils";
 import { Errors } from "../../utils/errors";
 import { Op, Transaction } from "sequelize";
 
-export interface IChatMembers {
-  chatId: string,
-  userId?: string,
-  adminId?: string,
-  type: MemberType,
-  status?: MemberStatus
-}
-
 abstract class ChatHelper {
   public abstract chat: Chat;
 
@@ -225,6 +217,8 @@ export class ChatController extends ChatHelper {
       if (!isCreated) {
         throw error(Errors.Forbidden, 'User already not a member of this chat', {});
       }
+
+      await ChatMember.update({ status: MemberStatus.Deleted }, { where: {id: chatMemberId} });
 
       await ChatMemberData.destroy({ where: {chatMemberId: chatMemberId } });
 
