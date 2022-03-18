@@ -24,9 +24,9 @@ import {
   UserChangeRoleData,
   UserStatus,
   RatingStatistic,
-  UserRaiseStatus
+  UserRaiseStatus,
+  ReferralProgramAffiliate
 } from "@workquest/database-models/lib/models";
-
 export const searchFields = [
   "firstName",
   "lastName",
@@ -38,7 +38,10 @@ export async function getMe(r) {
 
   const user = await User.findByPk(r.auth.credentials.id, {
     attributes: { include: [[totpIsActiveLiteral, 'totpIsActive']] },
-    include: [{ model: Wallet, as: 'wallet', attributes: ['address'] }],
+    include: [
+      { model: Wallet, as: 'wallet', attributes: ['address'] },
+      { model: ReferralProgramAffiliate.unscoped(), as: 'affiliateUser', attributes: ['referralCodeId'] }
+    ],
   });
 
   return output(user);
