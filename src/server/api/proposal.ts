@@ -9,6 +9,7 @@ import {
   ProposalStatus,
   ProposalVoteCastEvent,
 } from '@workquest/database-models/lib/models';
+import { ProposalCreatedEvent } from '@workquest/database-models/src/models/proposal/ProposalCreatedEvent';
 
 const searchFields = ['title', 'description'];
 
@@ -71,6 +72,10 @@ export async function getProposals(r) {
     // distinct: true,
     limit: r.query.limit,
     offset: r.query.offset,
+    include: {
+      model: ProposalCreatedEvent,
+      as: 'createdEvent',
+    },
     replacements: { query: '%' + r.query.q + '%' },
   });
 
