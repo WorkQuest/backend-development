@@ -225,6 +225,8 @@ jobs:
 
             BRIDGE_CONTRACT_PRIVAT_KEY=${{ secrets.DEV_BRIDGE_CONTRACT_PRIVAT_KEY }} \
 
+            REFERRAL_CONTRACT_PRIVAT_KEY=${{ secrets.DEV_REFERRAL_CONTRACT_PRIVAT_KEY }} \
+
             DEBUG=${{ secrets.DEV_DEBUG }} \
             BASE_URL=${{ secrets.DEV_BASE_URL }} \
             BASE_URL_DAO=${{ secrets.DEV_BASE_URL_DAO }} \
