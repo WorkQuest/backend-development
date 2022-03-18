@@ -1,20 +1,16 @@
-import fs from 'fs';
 import Web3 from 'web3';
-import path from 'path';
 import { output } from '../utils';
 import configReferral from '../config/config.referral';
+import {
+  referralProgramClaimAndPaidEventsQuery,
+  referralProgramClaimAndPaidEventsCountQuery,
+} from '../queries';
 import {
   User,
   ReferralStatus,
   ReferralProgramReferral,
   ReferralProgramAffiliate,
 } from '@workquest/database-models/lib/models';
-
-const referralProgramClaimAndPaidEventsPath = path.join(__dirname, '..', '..', '..', 'raw-queries', 'referralProgramClaimAndPaidEvents.sql');
-const referralProgramClaimAndPaidEventsCountPath = path.join(__dirname, '..', '..', '..', 'raw-queries', 'referralProgramClaimAndPaidEventsCount.sql');
-
-export const referralProgramClaimAndPaidEventsQuery = fs.readFileSync(referralProgramClaimAndPaidEventsPath).toString();
-export const referralProgramClaimAndPaidEventsCountQuery = fs.readFileSync(referralProgramClaimAndPaidEventsCountPath).toString();
 
 export async function getMyReferrals(r) {
   const affiliateUser: User = r.auth.credentials;
