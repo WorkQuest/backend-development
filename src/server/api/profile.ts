@@ -40,7 +40,7 @@ export async function getMe(r) {
     attributes: { include: [[totpIsActiveLiteral, 'totpIsActive']] },
     include: [
       { model: Wallet, as: 'wallet', attributes: ['address'] },
-      { model: ReferralProgramAffiliate.unscoped(), as: 'affiliateUser', attributes: ['referralCodeId'] }
+      { model: ReferralProgramAffiliate.unscoped(), as: 'affiliateUser', attributes: ['referralCodeId'] },
     ],
   });
 
