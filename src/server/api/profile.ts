@@ -24,7 +24,8 @@ import {
   UserChangeRoleData,
   UserStatus,
   RatingStatistic,
-  UserRaiseStatus
+  UserRaiseStatus,
+  ProfileVisibilitySetting
 } from "@workquest/database-models/lib/models";
 
 export const searchFields = [
@@ -50,6 +51,11 @@ export async function getUser(r) {
   userController
     .checkNotSeeYourself(r.auth.credentials.id)
     .userMustHaveStatus(UserStatus.Confirmed)
+
+  const profileVisibility = await ProfileVisibilitySetting.findOne({where: { userId: userController.user.id } });
+
+  await userController
+    .checkNetworkProfileVisibility(profileVisibility, r.auth.credentials);
 
   return output(userController.user);
 }
@@ -225,6 +231,17 @@ export function editProfile(userRole: UserRole) {
       await userController.setUserSpecializations(r.payload.specializationKeys, transaction);
     }
 
+    if (r.payload.profileVisibility) {
+      const [profileVisibility, isCreated] = await ProfileVisibilitySetting.findOrCreate({
+        where: {
+          userId: r.auth.credentials.id
+        },
+        defaults: { userId: r.auth.credentials.id }
+      });
+
+      await profileVisibility.update(r.payload.profileVisibility);
+    }
+
     await user.update({
       ...phonesFields,
       ...locationFields,
@@ -275,6 +292,7 @@ export async function confirmPhoneNumber(r) {
     .userMustHaveVerificationPhone()
     .checkPhoneConfirmationCode(r.payload.confirmCode)
     .confirmPhoneNumber()
+
 
   return output();
 }

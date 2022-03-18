@@ -151,6 +151,7 @@ export default [{
         phoneNumber: phoneSchema.allow(null).required(),
         locationFull: locationFullSchema.allow(null).required(),
         additionalInfo: userAdditionalInfoEmployerSchema.required(),
+        profileVisibility: profileVisibilitySchema.allow(null).required(),
       }).label("EditEmployerProfilePayload")
     },
     response: {

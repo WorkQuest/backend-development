@@ -1,24 +1,28 @@
-import { Op, Transaction } from 'sequelize';
-import { error } from '../../utils';
-import { Errors } from '../../utils/errors';
-import config from '../../config/config';
-import { totpValidate } from '@workquest/database-models/lib/utils';
-import { SkillsFiltersController } from '../controller.skillsFilters';
+import { literal, Op, Transaction } from "sequelize";
+import { error } from "../../utils";
+import { Errors } from "../../utils/errors";
+import config from "../../config/config";
+import { totpValidate } from "@workquest/database-models/lib/utils";
+import { SkillsFiltersController } from "../controller.skillsFilters";
 import {
-  User,
-  Session,
-  UserRole,
-  UserStatus,
-  QuestStatus,
-  QuestDispute,
-  UserRaiseView,
   ChatsStatistic,
-  UserRaiseStatus,
+  defaultUserSettings,
+  NetworkProfileVisibility,
+  ProfileVisibilitySetting, Quest,
+  QuestDispute, QuestsResponse,
   QuestsStatistic,
   RatingStatistic,
-  defaultUserSettings,
+  Session,
+  User,
+  UserRaiseStatus,
+  UserRaiseView,
+  UserRole,
   UserSpecializationFilter,
+  UserStatus
 } from "@workquest/database-models/lib/models";
+
+
+export const networkProfileVisibilityArray = [NetworkProfileVisibility.RegisteredUsers, NetworkProfileVisibility.SubmittingOffer]
 
 abstract class UserHelper {
   public abstract user: User;
@@ -248,6 +252,35 @@ abstract class UserHelper {
       userId: this.user.id,
     });
   }
+
+  public async checkNetworkProfileVisibility(visibility: ProfileVisibilitySetting, visitor: User | null): Promise<this> {
+    if (visibility.networkProfileVisibility in networkProfileVisibilityArray && visitor === null) {
+      throw error(Errors.Forbidden, 'User hide his profile', [{userId: this.user.id}]);
+    } else if (visibility.networkProfileVisibility === NetworkProfileVisibility.SubmittingOffer) {
+      if (visitor.role === UserRole.Employer) {
+        const quests = await Quest.findAll({where: { userId: visitor.id } });
+        const questsIds = quests.map(quest => { return quest.id });
+        const questResponse = await QuestsResponse.findOne({ where: { workerId: this.user.id, questId: questsIds } });
+
+        if (!questResponse) throw error(Errors.Forbidden, 'User hide his profile', [{userId: this.user.id}]);
+      } else {
+        const quests = await Quest.findAll({where: { userId: this.user.id } });
+        const questsIds = quests.map(quest => { return quest.id });
+        const questResponse = await QuestsResponse.findOne({ where: { workerId: visitor.id, questId: questsIds } });
+
+        if (!questResponse) throw error(Errors.Forbidden, 'User hide his profile', [{userId: this.user.id}]);
+      }
+    }
+
+    return this;
+  }
+
+  public async checkPriorityVisibility(visibility: ProfileVisibilitySetting, visitor: User | null): Promise<this> {
+
+
+    return this;
+  }
+
 }
 
 export class UserController extends UserHelper {
