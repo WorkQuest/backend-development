@@ -119,8 +119,7 @@ export async function getVoteCastEventsProposal(r) {
   }
 
   const { count, rows } = await ProposalVoteCastEvent.findAndCountAll({
-    where,
-    order,
+    where, order,
     limit: r.query.limit,
     offset: r.query.offset,
   });
