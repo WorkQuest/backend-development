@@ -7,9 +7,9 @@ import {
   Wallet,
   Proposal,
   ProposalStatus,
+  ProposalCreatedEvent,
   ProposalVoteCastEvent,
 } from '@workquest/database-models/lib/models';
-import { ProposalCreatedEvent } from '@workquest/database-models/src/models/proposal/ProposalCreatedEvent';
 
 const searchFields = ['title', 'description'];
 
