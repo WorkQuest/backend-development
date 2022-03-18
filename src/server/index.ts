@@ -31,7 +31,7 @@ function initAuthStrategiesOfSocialNetworks(server: Hapi.Server) {
     clientId: config.socialNetworks.facebook.id,
     password: config.socialNetworks.facebook.cookiePassword,
     clientSecret: config.socialNetworks.facebook.secretKey,
-    isSecure: !config.debug,
+    isSecure: false /** !config.debug */,
     location: config.baseUrl,
   });
   server.auth.strategy('google', 'bell', {
@@ -39,7 +39,7 @@ function initAuthStrategiesOfSocialNetworks(server: Hapi.Server) {
     clientId: config.socialNetworks.google.id,
     password: config.socialNetworks.google.cookiePassword,
     clientSecret: config.socialNetworks.google.secretKey,
-    isSecure: !config.debug,
+    isSecure: false /** !config.debug */,
     location: config.baseUrl,
   });
   server.auth.strategy('twitter', 'bell', {
@@ -47,7 +47,7 @@ function initAuthStrategiesOfSocialNetworks(server: Hapi.Server) {
     clientId: config.socialNetworks.twitter.id,
     password: config.socialNetworks.twitter.cookiePassword,
     clientSecret: config.socialNetworks.twitter.secretKey,
-    isSecure: !config.debug,
+    isSecure: false /** !config.debug */,
     location: config.baseUrl,
   });
   server.auth.strategy('linkedin', 'bell', {
@@ -55,7 +55,7 @@ function initAuthStrategiesOfSocialNetworks(server: Hapi.Server) {
     clientId: config.socialNetworks.linkedin.id,
     password: config.socialNetworks.linkedin.cookiePassword,
     clientSecret: config.socialNetworks.linkedin.secretKey,
-    isSecure: !config.debug,
+    isSecure: false /** !config.debug */,
     location: config.baseUrl,
   });
 }
