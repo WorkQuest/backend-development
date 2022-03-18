@@ -49,7 +49,7 @@ export async function getProposals(r) {
   );
 
   const where = {
-    ...(r.query.status && { status: r.query.status }),
+    ...(r.query.statuses && { status: r.query.statuses }),
   };
 
   const order = [];
@@ -75,6 +75,7 @@ export async function getProposals(r) {
     include: {
       model: ProposalCreatedEvent,
       as: 'createdEvent',
+      attributes: ['proposalId']
     },
     replacements: { query: '%' + r.query.q + '%' },
   });
@@ -83,7 +84,20 @@ export async function getProposals(r) {
 }
 
 export async function getProposal(r) {
-  const proposal = await Proposal.findByPk(r.params.proposalId);
+  const proposal = await Proposal.findByPk(r.params.proposalId, {
+    include: {
+      model: ProposalCreatedEvent,
+      as: 'createdEvent',
+      attributes: {
+        exclude: [
+          'id',
+          'network',
+          'createdAt',
+          'updatedAt',
+        ]
+      }
+    },
+  });
 
   if (!proposal) {
     return error(Errors.NotFound, 'Proposal does not exist', {});
