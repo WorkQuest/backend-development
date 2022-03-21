@@ -72,9 +72,9 @@ abstract class ChatHelper {
     });
 
     if (membersData.length !== 0) {
-      const existsIds = membersIds.filter((memberId) => members.findIndex((member) => memberId === member.id) !== -1);
-
-      throw error(Errors.AlreadyExists, 'Users already exists in group chat', { existsIds });
+      const existingMembers = members.filter((member) => (membersIds.findIndex((memberId) => member.id === memberId) !== -1));
+      const existingUsersIds = existingMembers.map(member => member.userId);
+      throw error(Errors.AlreadyExists, 'Users already exists in group chat', { existingUsersIds });
     }
 
     return this;
@@ -270,7 +270,8 @@ export class ChatController extends ChatHelper {
         },
         { transaction }
       );
-      await InfoMessage.create({ memberId: doingActionMemberId, messageId: message.id, messageAction },{ transaction } );
+      const infoMessage = await InfoMessage.create({ memberId: doingActionMemberId, messageId: message.id, messageAction },{ transaction } );
+      message.setDataValue('infoMessage', infoMessage);
       return message;
     } catch (error) {
       if(transaction) {

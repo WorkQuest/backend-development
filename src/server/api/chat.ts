@@ -13,7 +13,7 @@ import {
   ChatMember,
   ChatMemberDeletionData,
   ChatType,
-  GroupChat, InfoMessage, MemberType,
+  GroupChat, InfoMessage, MemberStatus, MemberType,
   Message,
   MessageAction, QuestChatStatuses,
   SenderMessageStatus,
@@ -552,10 +552,6 @@ export async function addUsersInGroupChat(r) {
     include: [
       {
         model: ChatMember,
-        as: 'members',
-      },
-      {
-        model: ChatMember,
         as: 'meMember',
         where: { userId: r.auth.credentials.id }
       },
@@ -579,14 +575,7 @@ export async function addUsersInGroupChat(r) {
 
   const transaction = await r.server.app.db.transaction();
 
-  const members = userIds.map((userId) => {
-    return {
-      chatId: chat.id,
-      userId,
-      type: MemberType.User,
-    };
-  });
-  const newMembers = await ChatMember.bulkCreate(members, { transaction });
+  const newMembers = await chatController.createChatMembers(userIds, chat.id, transaction);
 
   const messages: Message[] = [];
   for (let i = 0; i < newMembers.length; i++) {
@@ -599,7 +588,7 @@ export async function addUsersInGroupChat(r) {
   }
 
   const lastMessage = messages[messages.length - 1];
-  await chatController.createChatMembersData(chatController.chat.getDataValue('members'), r.auth.credentials.id, lastMessage, transaction);
+  await chatController.createChatMembersData(newMembers, r.auth.credentials.id, lastMessage, transaction);
 
   await chat.chatData.update({ lastMessageId: lastMessage.id }, { transaction } );
 
@@ -609,18 +598,21 @@ export async function addUsersInGroupChat(r) {
     where: { chatId: chat.id, userId: { [Op.ne]: r.auth.credentials.id } },
   });
 
+  const chatMembers = await ChatMember.findAll({ where: { chatId: chat.id, status: MemberStatus.Active }});
+
   const userIdsInChatWithoutSender = membersWithoutSender.map((member) => member.userId);
 
   const messagesResult = messages.map((message) => {
     const keysMessage: { [key: string]: any } = message.toJSON();
-    const keysInfoMessage = message.infoMessage.toJSON() as InfoMessage;
+    const keysInfoMessage = message.getDataValue('infoMessage').toJSON() as InfoMessage;
 
-    keysInfoMessage.member = users.find((_) => _.id === keysInfoMessage.memberId).toJSON() as ChatMember;
+    keysInfoMessage.member = chatMembers.find((_) => _.id === keysInfoMessage.memberId).toJSON() as ChatMember;
 
     keysMessage.infoMessage = keysInfoMessage;
 
     return keysMessage;
   }) as Message[];
+
 
   await resetUnreadCountMessagesOfMemberJob({
     chatId: chat.id,

@@ -184,7 +184,7 @@ export async function inviteOnQuest(r) {
 
   return output(chatController.chat);
 }
-/** TODO: test */
+
 export async function userResponsesToQuest(r) {
   const employer: User = r.auth.credentials;
 
@@ -212,7 +212,7 @@ export async function userResponsesToQuest(r) {
 
   return output({ count, responses: rows });
 }
-/** TODO: test */
+
 export async function responsesToQuestsForUser(r) {
   const worker: User = r.auth.credentials;
   const workerController = new UserController(worker);
