@@ -48,7 +48,9 @@ export async function getMySignedCreatedReferrals(r) {
     where: { referralStatus: ReferralStatus.Created },
   });
 
-  const referralAddresses = referrals.map((referral) => referral.referralUser.wallet.address);
+  const referralAddresses = referrals
+    .filter(referral => referral.referralUser.wallet)
+    .map((referral) => referral.referralUser.wallet.address);
 
   if (referralAddresses.length === 0) {
     return output(null);
