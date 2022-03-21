@@ -7,7 +7,7 @@ import {
   GroupChat, InfoMessage,
   MemberStatus,
   MemberType,
-  Message, MessageAction, MessageType,
+  Message, MessageAction, MessageType, QuestChat,
   QuestChatStatuses
 } from "@workquest/database-models/lib/models";
 import { error } from "../../utils";
@@ -99,9 +99,16 @@ export class ChatController extends ChatHelper {
     chat.setDataValue('members', chatMembers);
     return chatController;
   }
-  /**TODO!!!*/
-  static async createQuestChat() {
 
+  static async createQuestChat(employerId, workerId, questId, responseId, transaction?: Transaction) {
+    const chat = await Chat.create({ type: ChatType.quest }, { transaction });
+    const chatController = new ChatController(chat);
+    const chatMembers = await chatController.createChatMembers([employerId, workerId], chat.id, transaction);
+    const employerMemberId = chatMembers.find(member => member.userId === employerId).id;
+    const workerMemberId = chatMembers.find(member => member.userId === workerId).id;
+    await QuestChat.create({ employerMemberId, workerMemberId, questId, responseId, chatId: chat.id }, { transaction });
+    chat.setDataValue('members', chatMembers);
+    return chatController;
   }
 
   static async findOrCreatePrivateChat(senderUserId: string, recipientUserId: string, transaction?: Transaction): Promise<{ controller: ChatController, isCreated: boolean }> {
@@ -252,7 +259,7 @@ export class ChatController extends ChatHelper {
     }
   }
 
-  public async createInfoMessage(senderMemberId: string, chatId: string, messageNumber: number, memberId: string, messageAction: MessageAction, transaction?: Transaction): Promise<Message> {
+  public async createInfoMessage(senderMemberId: string, chatId: string, messageNumber: number, doingActionMemberId: string, messageAction: MessageAction, transaction?: Transaction): Promise<Message> {
     try {
       const message = await Message.create(
         {
@@ -263,7 +270,7 @@ export class ChatController extends ChatHelper {
         },
         { transaction }
       );
-      await InfoMessage.create({ memberId, messageId: message.id, messageAction },{ transaction } );
+      await InfoMessage.create({ memberId: doingActionMemberId, messageId: message.id, messageAction },{ transaction } );
       return message;
     } catch (error) {
       if(transaction) {
