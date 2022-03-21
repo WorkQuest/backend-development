@@ -376,29 +376,7 @@ export default [{
   }
 }, {
   method: "POST",
-  path: "/v1/quest/{questId}/raise",
-  handler: handlers.activateRaiseView,
-  options: {
-    auth: 'jwt-access',
-    id: "v1.quest.raiseView.activate",
-    tags: ["api", "quest"],
-    description: "Activate quest raise view",
-    validate: {
-      params: Joi.object({
-        questId: idSchema.required(),
-      }).label("QuestRaiseViewParams"),
-      payload: Joi.object({
-        duration: questRaiseDurationSchema.required(),
-        type: questRaiseTypeScheme.required(),
-      }).label("QuestRaiseViewPayload")
-    },
-    response: {
-      schema: outputOkSchema(questRaiseViewSchema).label("QuestRaiseViewResponse"),
-    },
-  },
-}, {
-  method: "POST",
-  path: "/v1/quest/{questId}/pay",
+  path: "/v1/quest/{questId}/raise-view/pay",
   handler: handlers.payForRaiseView,
   options: {
     auth: 'jwt-access',
@@ -410,7 +388,8 @@ export default [{
         questId: idSchema.required(),
       }).label("QuestPayRaiseViewParams"),
       payload: Joi.object({
-        amount: questRaisePayAmountSchema.required(),
+        duration: questRaiseDurationSchema.required(),
+        type: questRaiseTypeScheme.required(),
       }).label("QuestPayRaiseViewPayload")
     },
     response: {

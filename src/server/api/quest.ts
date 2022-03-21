@@ -764,7 +764,8 @@ export async function getAvailableQuestsForWorker(r) {
   return output({ count, quests: rows });
 }
 
-export async function activateRaiseView(r) {
+export async function payForRaiseView(r) {
+//TODO: логику оплаты
   const employer: User = r.auth.credentials;
   const userController = new UserController(employer);
   userController.userMustHaveRole(UserRole.Employer);
@@ -777,30 +778,31 @@ export async function activateRaiseView(r) {
 
   await questController.checkQuestRaiseViewStatus();
 
-
-  await QuestRaiseView.update({ duration: r.payload.duration, type: r.payload.type, status: QuestRaiseStatus.Unpaid }, { where: { questId: r.params.questId } });
-
-  return output();
-}
-
-export async function payForRaiseView(r) {
-//TODO: логику оплаты
-  const raiseView = await QuestRaiseView.findOne({
+  const [raiseView, isCreated] = await QuestRaiseView.findOrCreate({
     where: {
-      questId: r.params.questId
+      questId: r.params.questId,
+    },
+    defaults: {
+      questId: r.params.questId,
+      status: QuestRaiseStatus.Paid, //TODO: сделать на воркере статус оплачено, тут сменить на Closed
+      duration: r.payload.duration,
+      type: r.payload.type,
     }
   });
 
-  const endOfRaiseView = new Date();
-  endOfRaiseView.setDate(endOfRaiseView.getDate() + raiseView.duration);
+  if (!isCreated) {
+    await raiseView.update({
+      status: QuestRaiseStatus.Paid, //TODO: сделать на воркере статус оплачено, тут сменить на Closed
+      duration: r.payload.duration,
+      type: r.payload.type,
+    });
+  }
+
+  const endOfRaiseView = new Date(Date.now() + 86400000 * raiseView.duration);
 
   await  updateQuestRaiseViewStatusJob({
     questId: r.params.questId,
     runAt: endOfRaiseView
-  });
-
-  await raiseView.update({
-    status: QuestRaiseStatus.Paid,
   });
 
   return output();
