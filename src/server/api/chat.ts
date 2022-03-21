@@ -29,6 +29,8 @@ import { incrementUnreadCountMessageOfMembersJob }  from "../jobs/incrementUnrea
 
 export const searchChatFields = ['name'];
 
+//TODO: improve getDataValue('meMember) to meMember, do tests
+
 export async function getUserChats(r) {
   const searchByQuestNameLiteral = literal(
     `(SELECT "title" FROM "Quests" WHERE "id" = ` + `(SELECT "questId" FROM "QuestChats" WHERE "chatId" = "Chat"."id")) ` + `ILIKE :query`,
