@@ -121,6 +121,8 @@ jobs:
 
           BRIDGE_CONTRACT_PRIVAT_KEY=${{ secrets.PROD_BRIDGE_CONTRACT_PRIVAT_KEY }} \
 
+          REFERRAL_CONTRACT_PRIVAT_KEY=${{ secrets.PROD_REFERRAL_CONTRACT_PRIVAT_KEY }} \
+
           DEBUG=${{ secrets.PROD_DEBUG }} \
           BASE_URL=${{ secrets.PROD_BASE_URL }} \
           BASE_URL_DAO=${{ secrets.PROD_BASE_URL_DAO }} \
@@ -330,6 +332,8 @@ jobs:
             BRIDGE_RINKEBY_TESTNETWORK_RPC_PROVIDER=${{ secrets.BRIDGE_RINKEBY_TESTNETWORK_RPC_PROVIDER }} \
 
             BRIDGE_CONTRACT_PRIVAT_KEY=${{ secrets.BRIDGE_CONTRACT_PRIVAT_KEY }} \
+
+            REFERRAL_CONTRACT_PRIVAT_KEY=${{ secrets.REFERRAL_CONTRACT_PRIVAT_KEY }} \
 
             DEBUG=${{ secrets.DEBUG }} \
             BASE_URL=${{ secrets.BASE_URL }} \
