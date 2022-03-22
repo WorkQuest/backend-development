@@ -16,69 +16,6 @@ import {
 } from "@workquest/database-models/lib/models";
 import { addUpdateDisputeReviewStatisticsJob } from "../jobs/updateDisputeReviewStatistics";
 
-export async function openDispute(r) {
-  return output();
-  // const user: User = r.auth.credentials;
-  // const userController = new UserOldController(user);
-  //
-  // const isDisputeOpen = await QuestDispute.findOne({
-  //   where: { questId: r.params.questId, status: [DisputeStatus.pending, DisputeStatus.inProgress] },
-  // });
-  //
-  // if (isDisputeOpen) {
-  //   return error(Errors.InvalidStatus, 'Dispute for this quest already open', {});
-  // }
-  //
-  // const quest = await Quest.findByPk(r.params.questId);
-  // const questController = new QuestController(quest);
-  //
-  // questController
-  //   .userMustBelongToQuest(user.id)
-  //   .questMustHaveStatus(QuestStatus.Active, QuestStatus.WaitConfirm)
-  //
-  // // if (r.payload.reason === DisputeReason.poorlyDoneJob) {
-  // //   questController.questMustHaveStatus(QuestStatus.WaitConfirm);
-  // // }
-  //
-  // const dayInMilliseconds = 60000; // 86400000; TODO после тестов перевести в 86400000
-  // const allowDate = quest.startedAt.getTime() + dayInMilliseconds;
-  //
-  // if (allowDate > Date.now()) {
-  //   return error(Errors.InvalidDate, 'Can open dispute after 24 hours after creating quest', {});
-  // }
-  //
-  // const opponentUserId = quest.userId === user.id ? quest.assignedWorkerId : quest.userId;
-  //
-  // const transaction = await r.server.app.db.transaction();
-  //
-  // const dispute = await QuestDispute.create(
-  //   {
-  //     opponentUserId,
-  //     questId: quest.id,
-  //     openDisputeUserId: user.id,
-  //     status: DisputeStatus.pending,
-  //     openOnQuestStatus: quest.status,
-  //     reason: r.payload.reason,
-  //     problemDescription: r.payload.problemDescription,
-  //   },
-  //   { transaction },
-  // );
-  //
-  // await questController.openDispute(transaction);
-  //
-  // await transaction.commit();
-  //
-  // dispute.setDataValue('quest', quest);
-  // dispute.setDataValue('openDisputeUser', userController.shortCredentials);
-  // r.server.app.broker.sendQuestNotification({
-  //   action: QuestNotificationActions.openDispute,
-  //   recipients: [opponentUserId],
-  //   data: dispute,
-  // });
-  //
-  // return output(dispute);
-}
-
 export async function getDispute(r) {
   return output();
   // const user: User = r.auth.credentials;
