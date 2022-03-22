@@ -235,7 +235,7 @@ jobs:
             SRC_DIR=${{ github.workspace }}/" backend-update.yml;
 
   deploy-stage:
-    environment: staging
+    environment: Staging
 
     if: "github.ref == 'refs/heads/stage'"
     runs-on: ubuntu-latest
