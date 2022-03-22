@@ -75,7 +75,7 @@ export async function getProposals(r) {
     include: {
       model: ProposalCreatedEvent,
       as: 'createdEvent',
-      attributes: ['contractProposalId']
+      attributes: ['contractProposalId', 'votingPeriod', 'timestamp']
     },
     replacements: { query: '%' + r.query.q + '%' },
   });
