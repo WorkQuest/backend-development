@@ -1,5 +1,5 @@
 import Web3 from 'web3';
-import { output } from '../utils';
+import { error, output } from '../utils';
 import configReferral from '../config/config.referral';
 import {
   referralProgramClaimAndPaidEventsQuery,
@@ -11,6 +11,7 @@ import {
   ReferralProgramReferral,
   ReferralProgramAffiliate,
 } from '@workquest/database-models/lib/models';
+import { Errors } from '../utils/errors';
 
 export async function getMyReferrals(r) {
   const affiliateUser: User = r.auth.credentials;
@@ -19,7 +20,7 @@ export async function getMyReferrals(r) {
     include: {
       model: ReferralProgramReferral.unscoped(),
       as: 'referralUser',
-      attributes: ['id'],
+      attributes: ['id', 'referralStatus'],
       required: true,
       include: [{
         model: ReferralProgramAffiliate.unscoped(),
@@ -32,6 +33,7 @@ export async function getMyReferrals(r) {
     limit: r.query.limit,
     offset: r.query.offset,
   });
+  console.log(rows);
   return output({ count, referrals: rows });
 }
 
@@ -48,6 +50,14 @@ export async function getMySignedCreatedReferrals(r) {
     where: { referralStatus: ReferralStatus.Created },
   });
 
+  const affiliateAddress = await ReferralProgramAffiliate.findOne({
+    where: { affiliateUserId: affiliateUser.id }
+  })
+
+  if (!affiliateAddress.affiliateUser) {
+    return error(Errors.Forbidden, 'User don`t have wallet', {});
+  }
+
   const referralAddresses = referrals
     .filter(referral => referral.referralUser.wallet)
     .map((referral) => referral.referralUser.wallet.address);
@@ -57,7 +67,8 @@ export async function getMySignedCreatedReferrals(r) {
   }
 
   const web3 = new Web3();
-  const data = web3.utils.soliditySha3(...referralAddresses);
+  // @ts-ignore
+  const data = web3.utils.soliditySha3({ t:'address', v: affiliateAddress.affiliateUser.wallet.address }, { t: 'address', v: referralAddresses });
   const signed = await web3.eth.accounts.sign(data, configReferral.privateKey);
 
   return output({
