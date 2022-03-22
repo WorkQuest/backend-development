@@ -80,15 +80,16 @@ export function register(host: 'dao' | 'main') {
   };
 }
 
-export function getLoginViaSocialNetworkHandler(returnType: 'token' | 'redirect') {
+export function  getLoginViaSocialNetworkHandler(returnType: 'token' | 'redirect') {
   return async function loginThroughSocialNetwork(r, h) {
     const profile = r.auth.credentials.profile;
+    const query = r.query.referralId
 
     if (!profile.email) {
       return error(Errors.InvalidEmail, 'Field email was not returned', {});
     }
-
-    const user = await UserController.getUserByNetworkProfile(r.auth.strategy, profile);
+    //todo если пользователь создан, то реферралка не нужна, если нет пользователя, то создатся
+    const user = await UserController.getUserByNetworkProfile(r.auth.strategy, profile, query);
     const userController = new UserController(user);
     await userController.createRaiseView();
 
