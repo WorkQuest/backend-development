@@ -16,24 +16,25 @@ export class MediaController {
 
     return media;
   }
+
   static async getMedias(mediaIds: string[]): Promise<Media[]> {
     const medias = await Media.findAll({
       where: { id: mediaIds },
     });
 
-    // if (medias.length !== mediaIds.length) {
-    //   const notFoundIds = mediaIds.filter(id =>
-    //     medias.findIndex(media => id === media.id) === -1
-    //   );
-    //
-    //   throw error(Errors.NotFound, 'Medias is not found', { notFoundIds });
-    // }
-    //
-    // for (const media of medias) {
-    //   if (!await isMediaExists(media)) {
-    //     throw error(Errors.InvalidPayload, 'Media is not exists', { mediaId: media.id });
-    //   }
-    // }
+    if (medias.length !== mediaIds.length) {
+      const notFoundIds = mediaIds.filter(id =>
+        medias.findIndex(media => id === media.id) === -1
+      );
+
+      throw error(Errors.NotFound, 'Medias is not found', { notFoundIds });
+    }
+
+    for (const media of medias) {
+      if (!await isMediaExists(media)) {
+        throw error(Errors.InvalidPayload, 'Media is not exists', { mediaId: media.id });
+      }
+    }
 
     return medias;
   }

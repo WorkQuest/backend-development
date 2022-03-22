@@ -9,7 +9,6 @@ import {
   Session,
   UserRole,
   UserStatus,
-  QuestStatus,
   QuestDispute,
   UserRaiseView,
   ChatsStatistic,
@@ -18,7 +17,7 @@ import {
   RatingStatistic,
   defaultUserSettings,
   UserSpecializationFilter,
-} from "@workquest/database-models/lib/models";
+} from '@workquest/database-models/lib/models';
 
 abstract class UserHelper {
   public abstract user: User;
@@ -88,7 +87,7 @@ abstract class UserHelper {
       }),
     });
 
-    await UserController.createStatistics(user.id);
+    await UserOldController.createStatistics(user.id);
 
     return user;
   }
@@ -250,7 +249,7 @@ abstract class UserHelper {
   }
 }
 
-export class UserController extends UserHelper {
+export class UserOldController extends UserHelper {
   constructor(public user: User) {
     super();
 
@@ -264,7 +263,7 @@ export class UserController extends UserHelper {
       this.user = await this.user.update({
         status: UserStatus.Confirmed,
         role,
-        additionalInfo: UserController.getDefaultAdditionalInfo(role),
+        additionalInfo: UserOldController.getDefaultAdditionalInfo(role),
       });
     } catch (e) {
       if (transaction) {
@@ -403,5 +402,12 @@ export class UserController extends UserHelper {
     }
 
     return this;
+  }
+}
+
+export class UserController {
+  constructor(
+    public readonly user: User,
+  ) {
   }
 }

@@ -62,7 +62,7 @@ export default [
   {
     method: 'GET',
     path: '/v1/quest/{questId}/responses',
-    handler: handlers.userResponsesToQuest,
+    handler: handlers.getResponsesToQuest,
     options: {
       auth: 'jwt-access',
       id: 'v1.quest.responses',

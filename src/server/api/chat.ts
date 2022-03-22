@@ -10,7 +10,7 @@ import { ChatController } from '../controllers/chat/controller.chat';
 import { ChatNotificationActions } from '../controllers/controller.broker';
 import { MediaController } from '../controllers/controller.media';
 import { MessageController } from '../controllers/chat/controller.message';
-import { UserController } from '../controllers/user/controller.user';
+import { UserOldController } from '../controllers/user/controller.user';
 import { listOfUsersByChatsCountQuery, listOfUsersByChatsQuery } from '../queries';
 import {
   User,
@@ -183,7 +183,7 @@ export async function createGroupChat(r) {
     memberUserIds.push(r.auth.credentials.id);
   }
 
-  await UserController.usersMustExist(memberUserIds);
+  await UserOldController.usersMustExist(memberUserIds);
 
   const transaction = await r.server.app.db.transaction();
 
@@ -250,7 +250,7 @@ export async function sendMessageToUser(r) {
     return error(Errors.InvalidPayload, "You can't send a message to yourself", {});
   }
 
-  await UserController.userMustExist(r.params.userId);
+  await UserOldController.userMustExist(r.params.userId);
 
   const medias = await MediaController.getMedias(r.payload.medias);
   const transaction = await r.server.app.db.transaction();
@@ -447,7 +447,7 @@ export async function sendMessageToChat(r) {
 
 export async function addUsersInGroupChat(r) {
   const userIds: string[] = r.payload.userIds;
-  const users = await UserController.usersMustExist(userIds, 'shortWithAdditionalInfo');
+  const users = await UserOldController.usersMustExist(userIds, 'shortWithAdditionalInfo');
 
   const groupChat = await Chat.findByPk(r.params.chatId);
   const chatController = new ChatController(groupChat);
@@ -546,7 +546,7 @@ export async function addUsersInGroupChat(r) {
 }
 
 export async function removeUserInGroupChat(r) {
-  await UserController.userMustExist(r.params.userId);
+  await UserOldController.userMustExist(r.params.userId);
 
   const groupChat = await Chat.findByPk(r.params.chatId);
   const chatController = new ChatController(groupChat);
