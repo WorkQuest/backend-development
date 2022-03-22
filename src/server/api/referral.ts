@@ -1,10 +1,7 @@
 import Web3 from 'web3';
 import { error, output } from '../utils';
 import configReferral from '../config/config.referral';
-import {
-  referralProgramClaimAndPaidEventsQuery,
-  referralProgramClaimAndPaidEventsCountQuery,
-} from '../queries';
+import { referralProgramClaimAndPaidEventsQuery, referralProgramClaimAndPaidEventsCountQuery} from '../queries';
 import {
   User,
   ReferralStatus,
@@ -33,7 +30,6 @@ export async function getMyReferrals(r) {
     limit: r.query.limit,
     offset: r.query.offset,
   });
-  console.log(rows);
   return output({ count, referrals: rows });
 }
 
@@ -58,7 +54,7 @@ export async function getMySignedCreatedReferrals(r) {
     return error(Errors.Forbidden, 'User don`t have wallet', {});
   }
 
-  const referralAddresses = referrals
+  const referralAddresses: any = referrals
     .filter(referral => referral.referralUser.wallet)
     .map((referral) => referral.referralUser.wallet.address);
 
@@ -67,7 +63,6 @@ export async function getMySignedCreatedReferrals(r) {
   }
 
   const web3 = new Web3();
-  // @ts-ignore
   const data = web3.utils.soliditySha3({ t:'address', v: affiliateAddress.affiliateUser.wallet.address }, { t: 'address', v: referralAddresses });
   const signed = await web3.eth.accounts.sign(data, configReferral.privateKey);
 

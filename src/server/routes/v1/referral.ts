@@ -35,7 +35,7 @@ export default [{
   path: '/v1/user/me/referral-program/referral/signature/created-referrals',
   handler: handlers.getMySignedCreatedReferrals,
   options: {
-    auth: false,//'jwt-access',
+    auth: 'jwt-access',
     id: 'v1.referralProgram.getMySignedCreatedReferrals',
     tags: ['api', 'referral-program'],
     description: 'Get my signed created referrals',
