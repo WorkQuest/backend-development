@@ -7,7 +7,7 @@ import config from '../config/config';
 import { Errors } from '../utils/errors';
 import { addSendEmailJob } from '../jobs/sendEmail';
 import { generateJwt } from '../utils/auth';
-import { UserController } from '../controllers/user/controller.user';
+import { UserOldController } from '../controllers/user/controller.user';
 import converter from 'bech32-converting';
 import { error, output, getGeo, getRealIp, getDevice, getRandomHexToken } from '../utils';
 import {
@@ -29,7 +29,7 @@ const confirmTemplate = Handlebars.compile(
 
 export function register(host: 'dao' | 'main') {
   return async function (r) {
-    await UserController.checkEmail(r.payload.email);
+    await UserOldController.checkEmail(r.payload.email);
 
     const emailConfirmCode = getRandomHexToken().substring(0, 6).toUpperCase();
     const emailConfirmLink =
@@ -88,8 +88,8 @@ export function getLoginViaSocialNetworkHandler(returnType: 'token' | 'redirect'
       return error(Errors.InvalidEmail, 'Field email was not returned', {});
     }
 
-    const user = await UserController.getUserByNetworkProfile(r.auth.strategy, profile);
-    const userController = new UserController(user);
+    const user = await UserOldController.getUserByNetworkProfile(r.auth.strategy, profile);
+    const userController = new UserOldController(user);
     await userController.createRaiseView();
 
     const session = await Session.create({
@@ -120,18 +120,18 @@ export function getLoginViaSocialNetworkHandler(returnType: 'token' | 'redirect'
 
 export async function confirmEmail(r) {
   const user = await User.scope('withPassword').findByPk(r.auth.credentials.id);
-  const userController = new UserController(user);
+  const userController = new UserOldController(user);
 
   await userController.checkUserAlreadyConfirmed().checkUserConfirmationCode(r.payload.confirmCode).createRaiseView();
 
-  await UserController.createStatistics(user.id);
+  await UserOldController.createStatistics(user.id);
 
   if (r.payload.role) {
     await user.update({
       role: r.payload.role,
       status: UserStatus.Confirmed,
       'settings.emailConfirm': null,
-      additionalInfo: UserController.getDefaultAdditionalInfo(r.payload.role),
+      additionalInfo: UserOldController.getDefaultAdditionalInfo(r.payload.role),
     });
   } else {
     await user.update({
@@ -154,7 +154,7 @@ export async function login(r) {
       },
     ],
   });
-  const userController = new UserController(user);
+  const userController = new UserOldController(user);
   const userTotpActiveStatus: boolean = user.isTOTPEnabled();
 
   await userController.checkPassword(r.payload.password);
