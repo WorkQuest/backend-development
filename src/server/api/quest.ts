@@ -23,7 +23,7 @@ import {
   QuestsReview,
   QuestsStarred,
   User,
-  UserRole
+  UserRole,
 } from '@workquest/database-models/lib/models';
 
 export const searchQuestFields = [
@@ -191,6 +191,11 @@ export async function deleteQuest(r) {
   await questController.destroy(transaction);
 
   await transaction.commit();
+
+  await updateQuestsStatisticJob({
+    userId: employer.id,
+    role: UserRole.Employer,
+  });
 
   return output();
 }

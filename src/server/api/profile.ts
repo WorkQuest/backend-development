@@ -1,31 +1,33 @@
-import { literal, Op } from 'sequelize';
-import { addSendSmsJob } from '../jobs/sendSms';
-import { error, getRandomCodeNumber, output } from '../utils';
-import { UserController } from '../controllers/user/controller.user';
-import { transformToGeoPostGIS } from '../utils/postGIS';
-import { MediaController } from '../controllers/controller.media';
-import { SkillsFiltersController } from '../controllers/controller.skillsFilters';
-import { addUpdateReviewStatisticsJob } from '../jobs/updateReviewStatistics';
-import { updateUserRaiseViewStatusJob } from '../jobs/updateUserRaiseViewStatus'
-import { updateQuestsStatisticJob } from '../jobs/updateQuestsStatistic';
-import { deleteUserFiltersJob } from '../jobs/deleteUserFilters';
-import { Errors } from '../utils/errors';
+import { literal, Op } from "sequelize";
+import { addSendSmsJob } from "../jobs/sendSms";
+import { error, getRandomCodeNumber, output } from "../utils";
+import { UserController } from "../controllers/user/controller.user";
+import { transformToGeoPostGIS } from "../utils/postGIS";
+import { MediaController } from "../controllers/controller.media";
+import { SkillsFiltersController } from "../controllers/controller.skillsFilters";
+import { addUpdateReviewStatisticsJob } from "../jobs/updateReviewStatistics";
+import { updateUserRaiseViewStatusJob } from "../jobs/updateUserRaiseViewStatus";
+import { updateQuestsStatisticJob } from "../jobs/updateQuestsStatistic";
+import { deleteUserFiltersJob } from "../jobs/deleteUserFilters";
+import { Errors } from "../utils/errors";
 import {
-  User,
-  Wallet,
-  UserRole,
-  UserRaiseView,
   ChatsStatistic,
   Quest,
   QuestsResponse,
   QuestsResponseStatus,
   QuestsStatistic,
   QuestStatus,
-  UserChangeRoleData,
-  UserStatus,
   RatingStatistic,
-  UserRaiseStatus
+  ReferralProgramAffiliate,
+  User,
+  UserChangeRoleData,
+  UserRaiseStatus,
+  UserRaiseView,
+  UserRole,
+  UserStatus,
+  Wallet
 } from "@workquest/database-models/lib/models";
+import { convertAddressToHex } from "../utils/profile";
 
 export const searchFields = [
   "firstName",
@@ -38,18 +40,45 @@ export async function getMe(r) {
 
   const user = await User.findByPk(r.auth.credentials.id, {
     attributes: { include: [[totpIsActiveLiteral, 'totpIsActive']] },
-    include: [{ model: Wallet, as: 'wallet', attributes: ['address'] }],
+    include: [
+      { model: Wallet, as: 'wallet', attributes: ['address'] },
+      { model: ReferralProgramAffiliate.unscoped(), as: 'affiliateUser', attributes: ['referralCodeId'] },
+    ],
   });
 
   return output(user);
 }
 
 export async function getUser(r) {
-  const userController = new UserController(await User.findByPk(r.params.userId));
+  const user = await User.findByPk(r.params.userId, {
+    include: [{ model: Wallet, as: 'wallet', attributes: ['address'] }],
+  });
+  const userController = new UserController(user);
 
   userController
     .checkNotSeeYourself(r.auth.credentials.id)
     .userMustHaveStatus(UserStatus.Confirmed)
+
+  return output(userController.user);
+}
+
+export async function getUserByWallet(r) {
+  const address = convertAddressToHex(r.params.address);
+
+  const user = await User.findOne({
+    include: [{
+      model: Wallet,
+      as: 'wallet',
+      required: true,
+      where: { address },
+      attributes: ['address'],
+    }]
+  });
+  const userController = new UserController(user);
+
+  userController
+    .checkNotSeeYourself(r.auth.credentials.id)
+    .userMustHaveStatus(UserStatus.Confirmed);
 
   return output(userController.user);
 }
@@ -65,11 +94,14 @@ export async function getAllUsers(r) {
 
   const { count, rows } = await User.findAndCountAll({
     where,
-    attributes: {
-      include: [[literal('(SELECT address FROM "Wallets" WHERE "Wallets"."userId" = "User"."id")'), 'wallet']]
-    },
+    col: 'id',
     distinct: true,
-    col: '"User"."id"',
+    include: {
+      model: Wallet,
+      as: 'wallet',
+      attributes: ['address'],
+      required: r.query.walletRequired,
+    },
     limit: r.query.limit,
     offset: r.query.offset,
   });

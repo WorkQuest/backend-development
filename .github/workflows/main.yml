@@ -2,7 +2,7 @@ name: Node-CI
 
 on:
   push:
-    branches: [ master, develop ]
+    branches: [ master, stage, develop ]
 
 jobs:
   build:
@@ -12,10 +12,10 @@ jobs:
 
     steps:
       - name: Copy code files to container
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Install Node.js
-        uses: actions/setup-node@v1
+        uses: actions/setup-node@v3
         with:
           node-version: '14.x'
 
@@ -28,12 +28,12 @@ jobs:
   deploy-prod:
     environment: production
     if: "github.ref == 'refs/heads/master'"
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
     needs: [ build ]
 
     steps:
       - name: Copy code files to container
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Environment preparation
         run: |
@@ -132,12 +132,12 @@ jobs:
     environment: develop
 
     if: "github.ref == 'refs/heads/develop'"
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
     needs: [ build ]
 
     steps:
       - name: Copy code files to container
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Environment preparation
         run: |
@@ -225,9 +225,115 @@ jobs:
 
             BRIDGE_CONTRACT_PRIVAT_KEY=${{ secrets.DEV_BRIDGE_CONTRACT_PRIVAT_KEY }} \
 
+            REFERRAL_CONTRACT_PRIVAT_KEY=${{ secrets.DEV_REFERRAL_CONTRACT_PRIVAT_KEY }} \
+
             DEBUG=${{ secrets.DEV_DEBUG }} \
             BASE_URL=${{ secrets.DEV_BASE_URL }} \
             BASE_URL_DAO=${{ secrets.DEV_BASE_URL_DAO }} \
             backend_bin=${{ secrets.backend_bin }} \
             PM2_SERVICE_NAME=${{ secrets.PM2_SERVICE_NAME }} \
+            SRC_DIR=${{ github.workspace }}/" backend-update.yml;
+
+  deploy-stage:
+    environment: staging
+
+    if: "github.ref == 'refs/heads/stage'"
+    runs-on: ubuntu-latest
+    needs: [ build ]
+
+    steps:
+      - name: Copy code files to container
+        uses: actions/checkout@v3
+
+      - name: Environment preparation
+        run: |
+          mkdir -p ~/.ssh/
+          touch ~/.ssh/id_rsa
+          chmod -R go= ~/.ssh
+          chmod 600 ~/.ssh/id_rsa
+          echo "${{ secrets.SERVER_SSH_KEY }}" >> ~/.ssh/id_rsa
+          sudo apt-add-repository -y -u ppa:ansible/ansible
+          sudo apt-get install -y rsync
+          sudo apt-get install -y ansible
+
+      - name: Deploy to Server
+        run: |
+          chmod 700 ci-scripts
+          cd ci-scripts
+          ansible-playbook -i "${{ secrets.REMOTE_HOST }}" -e "ansible_user=${{ secrets.REMOTE_USER }} \
+            DB_LINK=${{ secrets.DB_LINK }} \
+            JWT_ACCESS_SECRET=${{ secrets.JWT_ACCESS_SECRET }} \
+            JWT_REFRESH_SECRET=${{ secrets.JWT_REFRESH_SECRET }} \
+            SERVER_HOST=${{ secrets.SERVER_HOST }} \
+            SERVER_PORT=${{ secrets.SERVER_PORT }} \
+
+            DB_HOST=${{ secrets.DB_HOST }} \
+            DB_USERNAME=${{ secrets.DB_USERNAME }} \
+            DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
+            DB_NAME=${{ secrets.DB_NAME }} \
+
+            NOTIFICATION_MESSAGE_BROKER_LINK=${{ secrets.NOTIFICATION_MESSAGE_BROKER_LINK }} \
+
+            SMTP_HOST=${{ secrets.SMTP_HOST }} \
+            SMTP_PORT=${{ secrets.SMTP_PORT }} \
+            SMTP_SECURE=${{ secrets.SMTP_SECURE }} \
+            SMTP_USER=${{ secrets.SMTP_USER }} \
+            SMTP_PASSWORD=${{ secrets.SMTP_PASSWORD }} \
+            SMTP_SENDER=${{ secrets.SMTP_SENDER }} \
+
+            FACEBOOK_CLIENT_ID=${{ secrets.FACEBOOK_CLIENT_ID }} \
+            FACEBOOK_SECRET_KEY=${{ secrets.FACEBOOK_SECRET_KEY }} \
+            FACEBOOK_COOKIE_PASSWORD=${{ secrets.FACEBOOK_COOKIE_PASSWORD }} \
+            GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }} \
+            GOOGLE_SECRET_KEY=${{ secrets.GOOGLE_SECRET_KEY }} \
+            GOOGLE_COOKIE_PASSWORD=${{ secrets.GOOGLE_COOKIE_PASSWORD }} \
+            LINKEDIN_CLIENT_ID=${{ secrets.LINKEDIN_CLIENT_ID }} \
+            LINKEDIN_SECRET_KEY=${{ secrets.LINKEDIN_SECRET_KEY }} \
+            LINKEDIN_COOKIE_PASSWORD=${{ secrets.LINKEDIN_COOKIE_PASSWORD }} \
+            TWITTER_CLIENT_ID=${{ secrets.TWITTER_CLIENT_ID }} \
+            TWITTER_SECRET_KEY=${{ secrets.TWITTER_SECRET_KEY }} \
+            TWITTER_COOKIE_PASSWORD=${{ secrets.TWITTER_COOKIE_PASSWORD }} \
+
+            TWILIO_ACCOUNT_SID=${{ secrets.TWILIO_ACCOUNT_SID }} \
+            TWILIO_AUTH_TOKEN=${{ secrets.TWILIO_AUTH_TOKEN }} \
+            TWILIO_PHONE_NUMBER_SENDER=${{ secrets.TWILIO_PHONE_NUMBER_SENDER }} \
+
+            CDN_ACCESS_KEY_ID=${{ secrets.CDN_ACCESS_KEY_ID }} \
+            CDN_SECRET_ACCESS_KEY=${{ secrets.CDN_SECRET_ACCESS_KEY }} \
+            CDN_END_POINT=${{ secrets.CDN_END_POINT }} \
+            CDN_BUCKET=${{ secrets.CDN_BUCKET }} \
+            CDN_PUB_END_POINT=${{ secrets.CDN_PUB_END_POINT }} \
+            CDN_EXPIRES_IN=${{ secrets.CDN_EXPIRES_IN }} \
+
+            SUMSUB_APP_TOKEN=${{ secrets.SUMSUB_APP_TOKEN }} \
+            SUMSUB_SECRET_KEY=${{ secrets.SUMSUB_SECRET_KEY }} \
+            SUMSUB_BASE_URL=${{ secrets.SUMSUB_BASE_URL }} \
+            SUMSUB_ACCESS_TOKEN_TTL=${{ secrets.SUMSUB_ACCESS_TOKEN_TTL }} \
+
+            TOKEN_WETH_ADDRESS=${{ secrets.TOKEN_WETH_ADDRESS }} \
+            TOKEN_WBNB_ADDRESS=${{ secrets.TOKEN_WBNB_ADDRESS }} \
+            TOKEN_WQT_BSC_NETWORK_ADDRESS=${{ secrets.TOKEN_WQT_BSC_NETWORK_ADDRESS }} \
+            TOKEN_WQT_ETHEREUM_NETWORK_ADDRESS=${{ secrets.TOKEN_WQT_ETHEREUM_NETWORK_ADDRESS }} \
+
+            BRIDGE_DEBUG=${{ secrets.BRIDGE_DEBUG }} \
+
+            BRIDGE_BSC_MAINNETWORK_CONTRACT=${{ secrets.BRIDGE_BSC_MAINNETWORK_CONTRACT }} \
+            BRIDGE_BSC_MAINNETWORK_RPC_PROVIDER=${{ secrets.BRIDGE_BSC_MAINNETWORK_RPC_PROVIDER }} \
+
+            BRIDGE_BSC_TESTNETWORK_CONTRACT=${{ secrets.BRIDGE_BSC_TESTNETWORK_CONTRACT }} \
+            BRIDGE_BSC_TESTNETWORK_RPC_PROVIDER=${{ secrets.BRIDGE_BSC_TESTNETWORK_RPC_PROVIDER }} \
+
+            BRIDGE_ETH_MAINNETWORK_CONTRACT=${{ secrets.BRIDGE_ETH_MAINNETWORK_CONTRACT }} \
+            BRIDGE_ETH_MAINNETWORK_RPC_PROVIDER=${{ secrets.BRIDGE_ETH_MAINNETWORK_RPC_PROVIDER }} \
+
+            BRIDGE_RINKEBY_TESTNETWORK_CONTRACT=${{ secrets.BRIDGE_RINKEBY_TESTNETWORK_CONTRACT }} \
+            BRIDGE_RINKEBY_TESTNETWORK_RPC_PROVIDER=${{ secrets.BRIDGE_RINKEBY_TESTNETWORK_RPC_PROVIDER }} \
+
+            BRIDGE_CONTRACT_PRIVAT_KEY=${{ secrets.BRIDGE_CONTRACT_PRIVAT_KEY }} \
+
+            DEBUG=${{ secrets.DEBUG }} \
+            BASE_URL=${{ secrets.BASE_URL }} \
+            BASE_URL_DAO=${{ secrets.BASE_URL_DAO }} \
+            backend_bin=${{ secrets.BACKEND_BIN }} \
+            PM2_SERVICE_NAME=${{ secrets.SERVICE_NAME }} \
             SRC_DIR=${{ github.workspace }}/" backend-update.yml;

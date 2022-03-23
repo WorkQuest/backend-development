@@ -1,18 +1,16 @@
 import * as Joi from 'joi';
 import * as handlers from '../../api/proposal';
 import {
+  idSchema,
   idsSchema,
-  limitSchema,
-  searchSchema,
-  offsetSchema,
   outputOkSchema,
   proposalSchema,
-  sortDirectionSchema,
+  proposalQuerySchema,
   proposalTitleSchema,
-  proposalStatusSchema,
-  proposalNumberSchema,
-  proposerIdWalletSchema,
+  outputPaginationSchema,
   proposalDescriptionSchema,
+  proposalVoteCastEventSchema,
+  proposalVoteCastEventQuerySchema,
 } from '@workquest/database-models/lib/schemes';
 
 export default [
@@ -22,12 +20,11 @@ export default [
     handler: handlers.createProposal,
     options: {
       auth: 'jwt-access',
-      id: 'v1.createProposal',
+      id: 'v1.proposal.createProposal',
       tags: ['api', 'proposal'],
       description: 'Create proposal',
       validate: {
         payload: Joi.object({
-          proposer: proposerIdWalletSchema.required(),
           title: proposalTitleSchema.required(),
           description: proposalDescriptionSchema.required(),
           medias: idsSchema.required().unique(),
@@ -40,24 +37,18 @@ export default [
   },
   {
     method: 'GET',
-    path: '/v1/proposal',
+    path: '/v1/proposals',
     handler: handlers.getProposals,
     options: {
       auth: 'jwt-access',
-      id: 'v1.getProposals',
+      id: 'v1.proposal.getProposals',
       tags: ['api', 'proposal'],
       description: 'Get proposal',
       validate: {
-        query: Joi.object({
-          q: searchSchema,
-          limit: limitSchema,
-          offset: offsetSchema,
-          createdAt: sortDirectionSchema.default('DESC'),
-          status: proposalStatusSchema.default(null),
-        }).label('GetProposalsQuery'),
+        query: proposalQuerySchema,
       },
       response: {
-        schema: outputOkSchema(proposalSchema).label('GetProposalsResponse'),
+        schema: outputPaginationSchema('proposals', proposalSchema).label("GetProposalsResponse")
       },
     },
   },
@@ -67,12 +58,12 @@ export default [
     handler: handlers.getProposal,
     options: {
       auth: 'jwt-access',
-      id: 'v1.getProposal',
+      id: 'v1.proposal.getProposal',
       tags: ['api', 'proposal'],
       description: 'Get proposal',
       validate: {
         params: Joi.object({
-          proposalId: proposalNumberSchema.required(),
+          proposalId: idSchema.required(),
         }).label('GetProposalParams'),
       },
       response: {
@@ -82,26 +73,21 @@ export default [
   },
   {
     method: 'GET',
-    path: '/v1/votings/{proposalId}',
-    handler: handlers.getVotingsProposal,
+    path: '/v1/proposal/{proposalId}/votes',
+    handler: handlers.getVoteCastEventsProposal,
     options: {
       auth: 'jwt-access',
-      id: 'v1.getVotingsProposal',
+      id: 'v1.proposal.getVoteCastEventsProposal',
       tags: ['api', 'proposal'],
-      description: 'Get voting in proposal',
+      description: 'Get vote in proposal',
       validate: {
         params: Joi.object({
-          proposalId: proposalNumberSchema.required(),
-        }).label('GetProposalParams'),
-        query: Joi.object({
-          limit: limitSchema,
-          offset: offsetSchema,
-          createdAt: sortDirectionSchema.default('DESC'),
-          support: Joi.boolean().label('VotingProposalSupport'),
-        }).label('GetVotingsQuery'),
+          proposalId: idSchema.required(),
+        }).label('GetVotesProposalParams'),
+        query: proposalVoteCastEventQuerySchema,
       },
       response: {
-        schema: outputOkSchema(proposalSchema).label('GetVotingsProposalResponse'),
+        schema: outputPaginationSchema('votes', proposalVoteCastEventSchema).label('GetVotesProposalResponse'),
       },
     },
   },
