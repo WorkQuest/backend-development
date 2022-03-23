@@ -258,7 +258,7 @@ export default [
       validate: {
         query: Joi.object({
           referralId: idSchema.allow(null).default(null),
-        }),
+        }).label('LoginByLinkedinParams'),
       },
       response: {
         schema: outputOkSchema(tokensWithStatus).label('TokensWithStatusResponse'),
@@ -279,7 +279,7 @@ export default [
       validate: {
         query: Joi.object({
           referralId: idSchema.allow(null).default(null),
-        }),
+        }).label('LoginByTwitterParams'),
       },
       response: {
         schema: outputOkSchema(tokensWithStatus).label('TokensWithStatusResponse'),

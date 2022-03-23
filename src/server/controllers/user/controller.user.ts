@@ -56,7 +56,7 @@ abstract class UserHelper {
     return additionalInfo;
   }
 
-  public static async getUserByNetworkProfile(network: string, profile, query): Promise<User> {
+  public static async getUserByNetworkProfile(network: string, profile,referralId ): Promise<User> {
     const foundUserBySocialId = await User.findWithSocialId(network, profile.id);
 
     if (foundUserBySocialId) {
@@ -86,14 +86,14 @@ abstract class UserHelper {
       email: profile.email.toLowerCase(),
       settings: Object.assign({}, defaultUserSettings, {
         social: { [network]: socialInfo },
-      }),
+      })
     });
 
     if (user) {
-    await createReferralProgram({
-      userId: user.id,
-      referralId: query.referralId,
-    });
+      await createReferralProgram({
+        userId: user.id,
+        referralId: referralId,
+      });
     }
 
     await UserController.createStatistics(user.id);
