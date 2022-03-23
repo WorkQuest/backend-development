@@ -113,6 +113,7 @@ abstract class UserHelper {
     scope: 'defaultScope' | 'short' | 'shortWithAdditionalInfo' = 'defaultScope',
   ): Promise<User[]> {
     const { count, rows } = await User.scope(scope).findAndCountAll({
+      col: '"User"."id"',
       distinct: true,
       where: { id: userIds },
     });
