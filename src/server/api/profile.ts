@@ -1,4 +1,4 @@
-import { FindAttributeOptions, literal, Op } from "sequelize";
+import { literal, Op } from "sequelize";
 import { addSendSmsJob } from '../jobs/sendSms';
 import { error, getRandomCodeNumber, output } from '../utils';
 import { UserOldController } from '../controllers/user/controller.user';
