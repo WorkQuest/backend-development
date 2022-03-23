@@ -376,19 +376,19 @@ export async function sendMessageToChat(r) {
   await resetUnreadCountMessagesOfMemberJob({
     chatId: chat.id,
     lastReadMessageId: message.id,
-    memberId: chatController.chat.getDataValue('meMember').id,
+    memberId: chatController.chat.meMember.id,
     lastReadMessageNumber: message.number,
   });
 
   await incrementUnreadCountMessageOfMembersJob({
     chatId: chat.id,
-    notifierMemberId: chatController.chat.getDataValue('meMember').id,
+    notifierMemberId: chatController.chat.meMember.id,
   });
 
   await setMessageAsReadJob({
     lastUnreadMessage: { id: message.id, number: message.number },
     chatId: r.params.chatId,
-    senderMemberId: chatController.chat.getDataValue('meMember').id,
+    senderMemberId: chatController.chat.meMember.id,
   });
 
   await updateCountUnreadChatsJob({
@@ -431,7 +431,7 @@ export async function removeUserFromGroupChat(r) {
   const chatController = new ChatController(chat);
 
   await chatController
-    .chatMustHaveOwner(chat.getDataValue('meMember').id)
+    .chatMustHaveOwner(chat.meMember.id)
     .chatMustHaveType(ChatType.group)
     .chatMustHaveMember(r.params.userId);
 
@@ -441,7 +441,7 @@ export async function removeUserFromGroupChat(r) {
 
   const messageNumber = chat.chatData.lastMessage.number + 1;
 
-  const message = await chatController.createInfoMessage(chat.getDataValue('meMember').id, chatController.chat.id, messageNumber, removedChatMember.id, MessageAction.groupChatDeleteUser, transaction);
+  const message = await chatController.createInfoMessage(chat.meMember.id, chatController.chat.id, messageNumber, removedChatMember.id, MessageAction.groupChatDeleteUser, transaction);
 
   await chat.chatData.update({ lastMessageId: message.id }, { transaction });
 
@@ -459,13 +459,13 @@ export async function removeUserFromGroupChat(r) {
   await resetUnreadCountMessagesOfMemberJob({
     chatId: chat.id,
     lastReadMessageId: message.id,
-    memberId: chat.getDataValue('meMember').id,
+    memberId: chat.meMember.id,
     lastReadMessageNumber: message.number,
   });
 
   await incrementUnreadCountMessageOfMembersJob({
     chatId: chat.id,
-    notifierMemberId: chat.getDataValue('meMember').id,
+    notifierMemberId: chat.meMember.id,
   });
 
   await updateCountUnreadChatsJob({
@@ -503,7 +503,7 @@ export async function leaveFromGroupChat(r) {
   });
   const chatController = new ChatController(chat);
 
-  if (chat.groupChat.ownerMemberId === chat.getDataValue('meMember').id) {
+  if (chat.groupChat.ownerMemberId === chat.meMember.id) {
     return error(Errors.Forbidden, 'User is chat owner', {});
   }
 
@@ -514,11 +514,11 @@ export async function leaveFromGroupChat(r) {
   const transaction = await r.server.app.db.transaction();
 
   const messageNumber = chat.chatData.lastMessage.number + 1;
-  const message = await chatController.createInfoMessage(chatController.chat.getDataValue('meMember').id, chatController.chat.id, messageNumber, chatController.chat.meMember.id, MessageAction.groupChatLeaveUser, transaction);
+  const message = await chatController.createInfoMessage(chatController.chat.meMember.id, chatController.chat.id, messageNumber, chatController.chat.meMember.id, MessageAction.groupChatLeaveUser, transaction);
 
   await chatController.chat.chatData.update({ lastMessageId: message.id }, { transaction });
 
-  await chatController.createChatMemberDeletionData(chat.getDataValue('meMember').id, message.id, message.number, transaction);
+  await chatController.createChatMemberDeletionData(chat.meMember.id, message.id, message.number, transaction);
 
   await transaction.commit();
 
@@ -530,7 +530,7 @@ export async function leaveFromGroupChat(r) {
 
   await incrementUnreadCountMessageOfMembersJob({
     chatId: chat.id,
-    notifierMemberId: chat.getDataValue('meMember').id,
+    notifierMemberId: chat.meMember.id,
   });
 
   await updateCountUnreadChatsJob({
@@ -572,7 +572,7 @@ export async function addUsersInGroupChat(r) {
 
   await chatController
     .chatMustHaveType(ChatType.group)
-    .chatMustHaveOwner(chat.getDataValue('meMember').id)
+    .chatMustHaveOwner(chat.meMember.id)
     .usersNotExistInGroupChat(userIds);
 
   const transaction = await r.server.app.db.transaction();
@@ -584,7 +584,7 @@ export async function addUsersInGroupChat(r) {
     const memberId = newMembers[i].id;
     const messageNumber = chat.chatData.lastMessage.number + 1;
 
-    const message = await chatController.createInfoMessage(chatController.chat.getDataValue('meMember').id, chatController.chat.id, messageNumber, memberId, MessageAction.groupChatAddUser, transaction);
+    const message = await chatController.createInfoMessage(chatController.chat.meMember.id, chatController.chat.id, messageNumber, memberId, MessageAction.groupChatAddUser, transaction);
 
     messages.push(message);
   }
@@ -619,13 +619,13 @@ export async function addUsersInGroupChat(r) {
   await resetUnreadCountMessagesOfMemberJob({
     chatId: chat.id,
     lastReadMessageId: lastMessage.id,
-    memberId: chatController.chat.getDataValue('meMember').id,
+    memberId: chatController.chat.meMember.id,
     lastReadMessageNumber: lastMessage.number,
   });
 
   await incrementUnreadCountMessageOfMembersJob({
     chatId: chat.id,
-    notifierMemberId: chatController.chat.getDataValue('meMember').id,
+    notifierMemberId: chatController.chat.meMember.id,
   });
 
   await updateCountUnreadChatsJob({
@@ -663,7 +663,7 @@ export async function setMessagesAsRead(r) {
     attributes: ['senderMemberId'],
     where: {
       chatId: chatController.chat.id,
-      senderMemberId: { [Op.ne]: chat.getDataValue('meMember').id },
+      senderMemberId: { [Op.ne]: chat.meMember.id },
       senderStatus: SenderMessageStatus.unread,
       number: { [Op.gte]: message.number },
     },
@@ -673,7 +673,7 @@ export async function setMessagesAsRead(r) {
   await updateCountUnreadMessagesJob({
     lastUnreadMessage: { id: message.id, number: message.number },
     chatId: chat.id,
-    readerUserId: chat.getDataValue('meMember').id,
+    readerUserId: chat.meMember.id,
   });
 
   if (otherSenders.length === 0) {
@@ -683,7 +683,7 @@ export async function setMessagesAsRead(r) {
   await setMessageAsReadJob({
     lastUnreadMessage: { id: message.id, number: message.number },
     chatId: r.params.chatId,
-    senderMemberId: chat.getDataValue('meMember').id,
+    senderMemberId: chat.meMember.id,
   });
 
   await updateCountUnreadChatsJob({
