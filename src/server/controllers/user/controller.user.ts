@@ -120,17 +120,19 @@ abstract class UserHelper {
     userIds: string[],
     scope: 'defaultScope' | 'short' | 'shortWithAdditionalInfo' = 'defaultScope',
   ): Promise<User[]> {
-    const users = await User.scope(scope).findAll({
+    const { count, rows } = await User.scope(scope).findAndCountAll({
+      col: '"User"."id"',
+      distinct: true,
       where: { id: userIds },
     });
 
-    if (users.length !== userIds.length) {
-      const notFoundIds = userIds.filter((userId) => users.findIndex((user) => userId === user.id) === -1);
+    if (count !== userIds.length) {
+      const notFoundIds = userIds.filter((userId) => rows.findIndex((user) => userId === user.id) === -1);
 
       throw error(Errors.NotFound, 'Users is not found', { notFoundIds });
     }
 
-    return users;
+    return rows;
   }
 
   public static async checkEmail(email: string) {
