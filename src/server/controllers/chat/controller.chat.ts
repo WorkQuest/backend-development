@@ -280,16 +280,4 @@ export class ChatController extends ChatHelper {
       throw error;
     }
   }
-
-  public async updateChatData(chatId: string, lastMessageId: string, transaction?: Transaction) {
-    try {
-      await ChatData.update({ lastMessageId }, { where: { chatId }, transaction });
-    } catch (error) {
-      if(transaction) {
-        await transaction.rollback();
-      }
-      throw error;
-    }
-  }
-
 }

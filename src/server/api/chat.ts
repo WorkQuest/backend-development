@@ -443,7 +443,7 @@ export async function removeUserFromGroupChat(r) {
 
   const message = await chatController.createInfoMessage(chat.getDataValue('meMember').id, chatController.chat.id, messageNumber, removedChatMember.id, MessageAction.groupChatDeleteUser, transaction);
 
-  await chatController.updateChatData(chat.id, message.id, transaction);
+  await chat.chatData.update({ lastMessageId: message.id }, { transaction });
 
   await chatController.createChatMemberDeletionData(removedChatMember.id, message.id, message.number, transaction);
 
@@ -516,7 +516,7 @@ export async function leaveFromGroupChat(r) {
   const messageNumber = chat.chatData.lastMessage.number + 1;
   const message = await chatController.createInfoMessage(chatController.chat.getDataValue('meMember').id, chatController.chat.id, messageNumber, chatController.chat.meMember.id, MessageAction.groupChatLeaveUser, transaction);
 
-  await chatController.updateChatData(chat.id, message.id, transaction);
+  await chatController.chat.chatData.update({ lastMessageId: message.id }, { transaction });
 
   await chatController.createChatMemberDeletionData(chat.getDataValue('meMember').id, message.id, message.number, transaction);
 

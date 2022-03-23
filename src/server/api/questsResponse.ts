@@ -82,7 +82,7 @@ export async function responseOnQuest(r) {
   if (r.payload.message !== '') {
     const responseWorkerMessage = await chatController.createMessage(chatController.chat.id, workerMember.id, 2, r.payload.message, transaction);
     await responseWorkerMessage.$set('medias', medias, { transaction });
-    await chatController.updateChatData(chatController.chat.id, responseWorkerMessage.id);
+    await chatController.chat.update({ lastMessageId: responseWorkerMessage.id }, { transaction });
   }
 
   await transaction.commit();
@@ -162,7 +162,7 @@ export async function inviteOnQuest(r) {
 
   if (r.payload.message !== '') {
     const inviteEmployerMessage = await chatController.createMessage(chatController.chat.id, employerMember.id, 2, r.payload.message, transaction);
-    await chatController.updateChatData(chatController.chat.id, inviteEmployerMessage.id);
+    await chatController.chat.chatData.update({ lastMessageId: inviteEmployerMessage.id }, { transaction });
   }
 
   await transaction.commit();
