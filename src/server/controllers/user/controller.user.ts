@@ -56,7 +56,7 @@ abstract class UserHelper {
     return additionalInfo;
   }
 
-  public static async getUserByNetworkProfile(network: string, profile,referralId ): Promise<User> {
+  public static async getUserByNetworkProfile(network: string, profile, referralId): Promise<User> {
     const foundUserBySocialId = await User.findWithSocialId(network, profile.id);
 
     if (foundUserBySocialId) {

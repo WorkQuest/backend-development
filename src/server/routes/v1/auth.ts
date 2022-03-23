@@ -120,7 +120,7 @@ export default [
       validate: {
         query: Joi.object({
           referralId: idSchema.allow(null).default(null),
-        }),
+        }).label('LoginByFacebookQuery'),
         params: Joi.object({
           platform: inputFromLoginSchema.required(),
         }).label('LoginByFacebookParams'),
@@ -144,7 +144,7 @@ export default [
       validate: {
         query: Joi.object({
           referralId: idSchema.allow(null).default(null),
-        }),
+        }).label('LoginByGoogleQuery'),
         params: Joi.object({
           platform: inputFromLoginSchema.required(),
         }).label('LoginByGoogleParams'),
@@ -168,7 +168,7 @@ export default [
       validate: {
         query: Joi.object({
           referralId: idSchema.allow(null).default(null),
-        }),
+        }).label('LoginByLinkedinQuery'),
         params: Joi.object({
           platform: inputFromLoginSchema.required(),
         }).label('LoginByLinkedinParams'),
@@ -192,7 +192,7 @@ export default [
       validate: {
         query: Joi.object({
           referralId: idSchema.allow(null).default(null),
-        }),
+        }).label('LoginByTwitterQuery'),
         params: Joi.object({
           platform: inputFromLoginSchema.required(),
         }).label('LoginByTwitterParams'),
@@ -216,7 +216,7 @@ export default [
       validate: {
         query: Joi.object({
           referralId: idSchema.allow(null).default(null),
-        }).label('LoginByFacebookToken'),
+        }).label('LoginByFacebookQuery'),
       },
       response: {
         schema: outputOkSchema(tokensWithStatus).label('TokensWithStatusResponse'),
@@ -237,7 +237,7 @@ export default [
       validate: {
         query: Joi.object({
           referralId: idSchema.allow(null).default(null),
-        }).label('LoginByTwitterParams'),
+        }).label('LoginByTwitterQuery'),
       },
       response: {
         schema: outputOkSchema(tokensWithStatus).label('TokensWithStatusResponse'),
@@ -258,7 +258,7 @@ export default [
       validate: {
         query: Joi.object({
           referralId: idSchema.allow(null).default(null),
-        }).label('LoginByLinkedinParams'),
+        }).label('LoginByLinkedinQuery'),
       },
       response: {
         schema: outputOkSchema(tokensWithStatus).label('TokensWithStatusResponse'),
@@ -279,7 +279,7 @@ export default [
       validate: {
         query: Joi.object({
           referralId: idSchema.allow(null).default(null),
-        }).label('LoginByTwitterParams'),
+        }).label('LoginByTwitterQuery'),
       },
       response: {
         schema: outputOkSchema(tokensWithStatus).label('TokensWithStatusResponse'),
