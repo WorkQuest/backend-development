@@ -178,23 +178,6 @@ export class QuestChatController {
       responseId,
     });
 
-    const membersBuild = ChatMember.bulkBuild([
-      {
-        unreadCountMessages: 0 /** Because created */,
-        chatId: questChatBuild.id,
-        userId: firstMemberPayload.userId,
-        lastReadMessageId: firstInfoMessageBuild.id /** Because created,  */,
-        lastReadMessageNumber: firstInfoMessageBuild.number,
-      },
-      {
-        unreadCountMessages: 1 /** Because created */,
-        chatId: questChatBuild.id,
-        userId: secondMemberPayload.userId,
-        lastReadMessageId: null /** Because created */,
-        lastReadMessageNumber: null,
-      },
-    ]);
-
     chatBuild.lastMessageId = responseWorkerMessageBuild.id;
     chatBuild.lastMessageDate = responseWorkerMessageBuild.createdAt;
 
@@ -204,8 +187,24 @@ export class QuestChatController {
       firstInfoMessageBuild.save({ transaction: options.tx }),
       infoMessageBuild.save({ transaction: options.tx }),
       responseWorkerMessageBuild.save({ transaction: options.tx }),
-      //...membersBuild.map((member) => member.save({ transaction: options.tx }))
-    ]) ;
+    ]);
+
+    const membersBuild = ChatMember.bulkBuild([
+      {
+        unreadCountMessages: 0 /** Because created */,
+        chatId: chat.id,
+        userId: firstMemberPayload.userId,
+        lastReadMessageId: firstInfoMessageBuild.id /** Because created,  */,
+        lastReadMessageNumber: firstInfoMessageBuild.number,
+      },
+      {
+        unreadCountMessages: 1 /** Because created */,
+        chatId: chat.id,
+        userId: secondMemberPayload.userId,
+        lastReadMessageId: null /** Because created */,
+        lastReadMessageNumber: null,
+      },
+    ]);
 
     await Promise.all([
       membersBuild[0].save({ transaction: options.tx }),

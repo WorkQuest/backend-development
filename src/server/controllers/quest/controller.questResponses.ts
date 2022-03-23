@@ -9,6 +9,8 @@ import {
   QuestsResponseType,
   QuestsResponseStatus,
 } from '@workquest/database-models/lib/models';
+import chat from "../../routes/v1/chat";
+import questsResponse from "../../routes/v1/questsResponse";
 
 interface SendBasePayload {
   readonly worker: User;
@@ -69,7 +71,7 @@ export class QuestsInviteController {
     });
 
     if (isCreatedQuestResponse) {
-      throw error(Errors.AlreadyAnswer, 'You already answered quest', { questResponse: isCreatedQuestResponse });
+      throw error(Errors.AlreadyAnswer, 'User already answered this quest', { questResponse: isCreatedQuestResponse });
     }
 
     const questInvite = await QuestsResponse.create({

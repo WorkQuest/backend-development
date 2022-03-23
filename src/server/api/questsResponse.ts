@@ -80,7 +80,7 @@ export async function inviteOnQuest(r) {
   const { invitedUserId, message } = r.payload;
 
   const workerController = await WorkerControllerFactory.createById(invitedUserId);
-  const employerController = await EmployerControllerFactory.createByUserModel(r.auth.credentials.id);
+  const employerController = await EmployerControllerFactory.createByUserModel(r.auth.credentials);
   const questController = await QuestControllerFactory.createById(r.params.questId);
 
   const checksListQuest = new ChecksListQuest(questController.quest);
