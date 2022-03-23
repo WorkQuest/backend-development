@@ -204,6 +204,10 @@ export class QuestChatController {
       firstInfoMessageBuild.save({ transaction: options.tx }),
       infoMessageBuild.save({ transaction: options.tx }),
       responseWorkerMessageBuild.save({ transaction: options.tx }),
+      //...membersBuild.map((member) => member.save({ transaction: options.tx }))
+    ]) ;
+
+    await Promise.all([
       membersBuild[0].save({ transaction: options.tx }),
       membersBuild[1].save({ transaction: options.tx }),
     ]);

@@ -98,7 +98,6 @@ export async function createQuest(r) {
 
     await questController.setMedias(mediaModels, { tx });
     await questController.setQuestSpecializations(r.payload.specializationKeys, { tx });
-
     return questController
   }) as QuestController;
 
@@ -305,7 +304,7 @@ export async function removeStar(r) {
 
 export async function getAvailableQuestsForWorker(r) {
   const workerResponseLiteral = literal(
-    '1 = (CASE WHEN NOT EXISTS (SELECT "id" FROM "QuestsResponses" WHERE "QuestsResponses"."workerId"=:workerId ' +
+    '1 = (CASE WHEN NOT EXISTS (SELECT "QuestsResponses"."id" FROM "QuestsResponses" WHERE "QuestsResponses"."workerId"=:workerId ' +
       'AND "QuestsResponses"."questId" = "Quest"."id") THEN 1 END)'
   );
 

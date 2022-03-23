@@ -37,8 +37,8 @@ export class QuestController {
   ) {
   }
 
-  public setMedias(medias, options: { tx?: Transaction } = {}): Promise<void> {
-    return void this.quest.$set('medias', medias,  {
+  public async setMedias(medias, options: { tx?: Transaction } = {}): Promise<void> {
+    await this.quest.$set('medias', medias,  {
       transaction: options.tx,
     });
   }
@@ -63,7 +63,7 @@ export class QuestController {
 
     const questSpecializations = skillsFiltersController.keysToRecords(keys, 'questId', questId);
 
-    return void QuestSpecializationFilter.bulkCreate(questSpecializations, {
+    await QuestSpecializationFilter.bulkCreate(questSpecializations, {
       transaction: options.tx,
     });
   }
@@ -76,8 +76,8 @@ export class QuestController {
     });
   }
 
-  public removeStar(user: User, options: { tx?: Transaction } = {}): Promise<void> {
-    return void QuestsStarred.destroy({
+  public async removeStar(user: User, options: { tx?: Transaction } = {}): Promise<void> {
+    await QuestsStarred.destroy({
       transaction: options.tx,
       where: { userId: user.id, questId: this.quest.id },
     });
