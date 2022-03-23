@@ -139,7 +139,7 @@ export async function getResponsesToQuest(r) {
   const checksListEmployer = new ChecksListUser(employerController.user);
 
   checksListEmployer
-    .checkUserRole(UserRole.Worker)
+    .checkUserRole(UserRole.Employer)
   checksListQuest
     .checkOwner(employerController.user);
 
