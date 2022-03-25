@@ -790,19 +790,21 @@ export async function payForRaiseView(r) {
     }
   });
 
+  const endOfRaiseView = new Date(Date.now() + 86400000 * raiseView.duration);
+
   if (!isCreated) {
     await raiseView.update({
       status: QuestRaiseStatus.Paid, //TODO: сделать на воркере статус оплачено, тут сменить на Closed
       duration: r.payload.duration,
       type: r.payload.type,
+      endedAt: endOfRaiseView
     });
-  }
+  } else { await raiseView.update({ endedAt: endOfRaiseView }) }
 
-  const endOfRaiseView = new Date(Date.now() + 86400000 * raiseView.duration);
-
+  const temporaryEndingOfRaiseView = new Date(Date.now() + 60000);
   await  updateQuestRaiseViewStatusJob({
     questId: r.params.questId,
-    runAt: endOfRaiseView
+    runAt: temporaryEndingOfRaiseView, /**TODO*/ //endOfRaiseView
   });
 
   return output();
