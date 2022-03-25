@@ -11,7 +11,7 @@ export interface CreateReferralProgramPayload {
   referralId?: string;
 }
 
-export async function createReferralProgram(payload: CreateReferralProgramPayload) {
+export async function createReferralProgramJob(payload: CreateReferralProgramPayload) {
   return addJob('createReferralProgram', payload);
 }
 
