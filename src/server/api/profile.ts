@@ -474,9 +474,10 @@ export async function payForMyRaiseView(r) {
     });
   } else { await raiseView.update({ endedAt: endOfRaiseView }) }
 
+  const temporaryEndingOfRaiseView = new Date(Date.now() + 60000);
   await updateUserRaiseViewStatusJob({
     userId: r.auth.credentials.id,
-    runAt: endOfRaiseView
+    runAt: temporaryEndingOfRaiseView, /**TODO*/ //endOfRaiseView
   });
 
   return output();
