@@ -9,6 +9,7 @@ import { QuestsResponseController } from '../controllers/quest/controller.quests
 import { MediaController } from '../controllers/controller.media';
 import { addUpdateReviewStatisticsJob } from '../jobs/updateReviewStatistics';
 import { updateQuestsStatisticJob } from '../jobs/updateQuestsStatistic';
+import { updateQuestRaiseViewStatusJob } from '../jobs/updateQuestRaiseViewStatus';
 import { SkillsFiltersController } from '../controllers/controller.skillsFilters';
 import {
   DisputeStatus,
@@ -20,7 +21,9 @@ import {
   QuestsResponseStatus,
   QuestsResponseType,
   QuestStatus,
+  QuestRaiseView,
   QuestsReview,
+  QuestRaiseStatus,
   QuestsStarred,
   User,
   UserRole,
@@ -110,7 +113,6 @@ export async function createQuest(r) {
     description: r.payload.description,
     price: r.payload.price,
     medias: r.payload.medias,
-    adType: r.payload.adType,
     location: r.payload.locationFull.location,
     locationPlaceName: r.payload.locationFull.locationPlaceName,
     locationPostGIS: transformToGeoPostGIS(r.payload.locationFull.location),
@@ -119,6 +121,7 @@ export async function createQuest(r) {
   const questController = new QuestController(quest);
 
   await questController.setMedias(medias, transaction);
+  await questController.createRaiseView(r.auth.credentials.id, transaction);
   await questController.setQuestSpecializations(r.payload.specializationKeys, true, transaction);
 
   await transaction.commit();
@@ -150,7 +153,6 @@ export async function editQuest(r) {
   questController.quest = await questController.quest.update({
     price: r.payload.price,
     title: r.payload.title,
-    adType: r.payload.adType,
     priority: r.payload.priority,
     workplace: r.payload.workplace,
     employment: r.payload.employment,
@@ -569,10 +571,13 @@ export function getQuests(type: 'list' | 'points') {
     const questChatWorkerLiteral = literal(
       '"questChat"."workerId" = "Quest"."assignedWorkerId"'
     );
+    const questRaiseViewLiteral = literal(
+      '(SELECT "type" FROM "QuestRaiseViews" WHERE "questId" = "Quest"."id" AND "QuestRaiseViews"."status" = 0)'
+    );
 
-    const order = [];
     const include = [];
     const replacements = {};
+    const order = [[questRaiseViewLiteral, 'asc']] as any[];
     const where = {
       [Op.and]: [],
       ...(r.query.adType && { adType: r.query.adType }),
@@ -759,4 +764,46 @@ export async function getAvailableQuestsForWorker(r) {
   });
 
   return output({ count, quests: rows });
+}
+
+export async function payForRaiseView(r) {
+  const employer: User = r.auth.credentials;
+  const userController = new UserController(employer);
+
+  userController.userMustHaveRole(UserRole.Employer);
+
+  const questController = new QuestController(await Quest.findByPk(r.params.questId));
+
+  await questController
+    .employerMustBeQuestCreator(employer.id)
+    .questMustHaveStatus(QuestStatus.Created)
+
+  await questController.checkQuestRaiseViewStatus();
+
+  const [raiseView, isCreated] = await QuestRaiseView.findOrCreate({
+    where: { questId: r.params.questId },
+    defaults: {
+      questId: r.params.questId,
+      status: QuestRaiseStatus.Paid, //TODO: сделать на воркере статус оплачено, тут сменить на Closed
+      duration: r.payload.duration,
+      type: r.payload.type,
+    }
+  });
+
+  if (!isCreated) {
+    await raiseView.update({
+      status: QuestRaiseStatus.Paid, //TODO: сделать на воркере статус оплачено, тут сменить на Closed
+      duration: r.payload.duration,
+      type: r.payload.type,
+    });
+  }
+
+  const endOfRaiseView = new Date(Date.now() + 86400000 * raiseView.duration);
+
+  await  updateQuestRaiseViewStatusJob({
+    questId: r.params.questId,
+    runAt: endOfRaiseView
+  });
+
+  return output();
 }

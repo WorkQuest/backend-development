@@ -9,16 +9,18 @@ import {
   offsetSchema,
   outputOkSchema,
   workPlaceSchema,
-  questAdTypeSchema,
   questPriceSchema,
   prioritySchema,
   questTitleSchema,
   questQuerySchema,
   questsForGetSchema,
   locationFullSchema,
+  questRaiseTypeScheme,
   questsWithCountSchema,
   questEmploymentSchema,
+  questRaiseViewSchema,
   questDescriptionSchema,
+  questRaiseDurationSchema,
   specializationKeysSchema,
   questsForGetWithCountSchema,
   questQueryForMapPointsSchema,
@@ -61,7 +63,6 @@ export default [{
         description: questDescriptionSchema.required(),
         price: questPriceSchema.required(),
         medias: idsSchema.required().unique(),
-        adType: questAdTypeSchema.required(),
         specializationKeys: specializationKeysSchema.required().unique(),
       }).label("CreateQuestPayload")
     },
@@ -108,7 +109,6 @@ export default [{
         title: questTitleSchema.required(),
         description: questDescriptionSchema.required(),
         price: questPriceSchema.required(),
-        adType: questAdTypeSchema.required(),
         medias: idsSchema.unique().required(),
         specializationKeys: specializationKeysSchema.unique().required(),
       }).label("EditQuestPayload"),
@@ -372,4 +372,26 @@ export default [{
       schema: outputOkSchema(questsWithCountSchema).label("GetAvailableQuestsForWorkerResponse")
     },
   }
-},];
+}, {
+  method: "POST",
+  path: "/v1/quest/{questId}/raise-view/pay",
+  handler: handlers.payForRaiseView,
+  options: {
+    auth: 'jwt-access',
+    id: "v1.quest.raiseView.pay",
+    tags: ["api", "quest"],
+    description: "Pay for quest raise view",
+    validate: {
+      params: Joi.object({
+        questId: idSchema.required(),
+      }).label("QuestPayRaiseViewParams"),
+      payload: Joi.object({
+        duration: questRaiseDurationSchema.required(),
+        type: questRaiseTypeScheme.required(),
+      }).label("QuestPayRaiseViewPayload")
+    },
+    response: {
+      schema: emptyOkSchema,
+    },
+  }
+}];
