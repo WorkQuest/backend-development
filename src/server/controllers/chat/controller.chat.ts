@@ -225,11 +225,9 @@ export class ChatController extends ChatHelper {
         throw error(Errors.Forbidden, 'User already not a member of this chat', {});
       }
 
-      await ChatMember.update({ status: MemberStatus.Deleted }, { where: {id: chatMemberId} });
+      await ChatMember.update({ status: MemberStatus.Deleted }, { where: {id: chatMemberId}, transaction });
 
-      await ChatMemberData.destroy({ where: {chatMemberId: chatMemberId } });
-
-      await this.chat.getDataValue('meMember').chatMemberData.destroy();
+      await ChatMemberData.destroy({ where: {chatMemberId: chatMemberId }, transaction });
 
     } catch (error) {
       if(transaction) {
