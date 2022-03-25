@@ -18,7 +18,7 @@ import {
   defaultUserSettings,
 } from '@workquest/database-models/lib/models';
 import { totpValidate } from '@workquest/database-models/lib/utils';
-import { createReferralProgram } from '../jobs/createReferralProgram';
+import { createReferralProgramJob } from '../jobs/createReferralProgram';
 
 const confirmTemplatePath = path.join(__dirname, '..', '..', '..', 'templates', 'confirmEmail.html');
 const confirmTemplate = Handlebars.compile(
@@ -57,7 +57,7 @@ export function register(host: 'dao' | 'main') {
       },
     });
 
-    await createReferralProgram({
+    await createReferralProgramJob({
       userId: user.id,
       referralId: r.payload.referralId,
     });

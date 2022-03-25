@@ -19,7 +19,7 @@ import {
   defaultUserSettings,
   UserSpecializationFilter,
 } from "@workquest/database-models/lib/models";
-import { createReferralProgram } from '../../jobs/createReferralProgram';
+import { createReferralProgramJob } from '../../jobs/createReferralProgram';
 
 abstract class UserHelper {
   public abstract user: User;
@@ -89,12 +89,10 @@ abstract class UserHelper {
       })
     });
 
-    if (user) {
-      await createReferralProgram({
-        userId: user.id,
-        referralId: referralId,
-      });
-    }
+    await createReferralProgramJob({
+      userId: user.id,
+      referralId: referralId,
+    });
 
     await UserController.createStatistics(user.id);
 
