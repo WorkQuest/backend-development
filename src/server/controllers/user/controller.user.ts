@@ -18,6 +18,7 @@ import {
   defaultUserSettings,
   UserSpecializationFilter,
 } from "@workquest/database-models/lib/models";
+import { createReferralProgram } from '../../jobs/createReferralProgram';
 
 abstract class UserHelper {
   public abstract user: User;
@@ -54,7 +55,7 @@ abstract class UserHelper {
     return additionalInfo;
   }
 
-  public static async getUserByNetworkProfile(network: string, profile): Promise<User> {
+  public static async getUserByNetworkProfile(network: string, profile, referralId): Promise<User> {
     const foundUserBySocialId = await User.findWithSocialId(network, profile.id);
 
     if (foundUserBySocialId) {
@@ -84,8 +85,15 @@ abstract class UserHelper {
       email: profile.email.toLowerCase(),
       settings: Object.assign({}, defaultUserSettings, {
         social: { [network]: socialInfo },
-      }),
+      })
     });
+
+    if (user) {
+      await createReferralProgram({
+        userId: user.id,
+        referralId: referralId,
+      });
+    }
 
     await UserController.createStatistics(user.id);
 

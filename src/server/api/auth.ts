@@ -83,12 +83,12 @@ export function register(host: 'dao' | 'main') {
 export function getLoginViaSocialNetworkHandler(returnType: 'token' | 'redirect') {
   return async function loginThroughSocialNetwork(r, h) {
     const profile = r.auth.credentials.profile;
+    const referralId = r.query.referralId
 
     if (!profile.email) {
       return error(Errors.InvalidEmail, 'Field email was not returned', {});
     }
-
-    const user = await UserController.getUserByNetworkProfile(r.auth.strategy, profile);
+    const user = await UserController.getUserByNetworkProfile(r.auth.strategy, profile, referralId);
     const userController = new UserController(user);
     await userController.createRaiseView();
 
