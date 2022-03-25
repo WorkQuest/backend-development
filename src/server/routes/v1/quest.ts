@@ -72,7 +72,7 @@ export default [{
   },
 }, {
   method: "POST",
-  path: "/v1/quests",
+  path: "/v1/get-quests",
   handler: handlers.getQuests('list'),
   options: {
     auth: 'jwt-access',
@@ -89,7 +89,7 @@ export default [{
   }
 }, {
   method: "POST",
-  path: "/v1/employer/{userId}/quests",
+  path: "/v1/employer/{userId}/get-quests",
   handler: handlers.getQuests('list'),
   options: {
     auth: 'jwt-access',
@@ -109,7 +109,7 @@ export default [{
   }
 }, {
   method: "POST",
-  path: "/v1/worker/{workerId}/quests",
+  path: "/v1/worker/{workerId}/get-quests",
   handler: handlers.getQuests('list'),
   options: {
     auth: 'jwt-access',
@@ -129,7 +129,7 @@ export default [{
   }
 }, {
   method: "POST",
-  path: "/v1/quest/map/points",
+  path: "/v1/quest/map/get-points",
   handler: handlers.getQuests('points'),
   options: {
     auth: 'jwt-access',
