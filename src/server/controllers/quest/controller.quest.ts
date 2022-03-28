@@ -2,7 +2,17 @@ import { error } from '../../utils';
 import { Transaction } from 'sequelize';
 import { Errors } from '../../utils/errors';
 import { SkillsFiltersController } from '../controller.skillsFilters';
-import { User, Quest, QuestChat, QuestStatus, QuestsStarred, QuestsResponse, QuestSpecializationFilter } from '@workquest/database-models/lib/models';
+import {
+  User,
+  Quest,
+  QuestChat,
+  QuestStatus,
+  QuestsStarred,
+  QuestsResponse,
+  QuestRaiseView,
+  QuestRaiseStatus,
+  QuestSpecializationFilter,
+} from '@workquest/database-models/lib/models';
 
 abstract class QuestHelper {
   public abstract quest: Quest;
@@ -103,6 +113,30 @@ export class QuestController extends QuestHelper {
     if (!quest) {
       throw error(Errors.NotFound, 'Quest not found', {});
     }
+  }
+
+  public async createRaiseView(userId: string, transaction: Transaction) {
+    await QuestRaiseView.create({
+      questId: this.quest.id,
+      userId: userId,
+    }, {transaction});
+
+    return this;
+  }
+
+  public async checkQuestRaiseViewStatus() {
+    const raiseView = await QuestRaiseView.findOne({
+      where: {
+        questId: this.quest.id,
+        status: QuestRaiseStatus.Paid
+      }
+    });
+
+    if (raiseView) {
+      throw error(Errors.AlreadyExists, "Raise view in progress", {raiseViewId: raiseView.id});
+    }
+
+    return this;
   }
 
   public async start(assignedWorker: User, transaction?: Transaction) {

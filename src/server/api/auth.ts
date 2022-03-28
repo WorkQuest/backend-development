@@ -18,7 +18,7 @@ import {
   defaultUserSettings,
 } from '@workquest/database-models/lib/models';
 import { totpValidate } from '@workquest/database-models/lib/utils';
-import { createReferralProgram } from '../jobs/createReferralProgram';
+import { createReferralProgramJob } from '../jobs/createReferralProgram';
 
 const confirmTemplatePath = path.join(__dirname, '..', '..', '..', 'templates', 'confirmEmail.html');
 const confirmTemplate = Handlebars.compile(
@@ -57,7 +57,7 @@ export function register(host: 'dao' | 'main') {
       },
     });
 
-    await createReferralProgram({
+    await createReferralProgramJob({
       userId: user.id,
       referralId: r.payload.referralId,
     });
@@ -83,12 +83,12 @@ export function register(host: 'dao' | 'main') {
 export function getLoginViaSocialNetworkHandler(returnType: 'token' | 'redirect') {
   return async function loginThroughSocialNetwork(r, h) {
     const profile = r.auth.credentials.profile;
+    const referralId = r.query.referralId
 
     if (!profile.email) {
       return error(Errors.InvalidEmail, 'Field email was not returned', {});
     }
-
-    const user = await UserController.getUserByNetworkProfile(r.auth.strategy, profile);
+    const user = await UserController.getUserByNetworkProfile(r.auth.strategy, profile, referralId);
     const userController = new UserController(user);
     await userController.createRaiseView();
 

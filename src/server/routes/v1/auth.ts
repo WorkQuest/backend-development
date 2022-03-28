@@ -118,6 +118,9 @@ export default [
       tags: ['api', 'auth'],
       description: 'Login user through Facebook',
       validate: {
+        query: Joi.object({
+          referralId: idSchema.allow(null).default(null),
+        }).label('LoginByFacebookQuery'),
         params: Joi.object({
           platform: inputFromLoginSchema.required(),
         }).label('LoginByFacebookParams'),
@@ -139,6 +142,9 @@ export default [
       tags: ['api', 'auth'],
       description: 'Login user through Google',
       validate: {
+        query: Joi.object({
+          referralId: idSchema.allow(null).default(null),
+        }).label('LoginByGoogleQuery'),
         params: Joi.object({
           platform: inputFromLoginSchema.required(),
         }).label('LoginByGoogleParams'),
@@ -160,6 +166,9 @@ export default [
       tags: ['api', 'auth'],
       description: 'Login user through Linkedin',
       validate: {
+        query: Joi.object({
+          referralId: idSchema.allow(null).default(null),
+        }).label('LoginByLinkedinQuery'),
         params: Joi.object({
           platform: inputFromLoginSchema.required(),
         }).label('LoginByLinkedinParams'),
@@ -181,6 +190,9 @@ export default [
       tags: ['api', 'auth'],
       description: 'Login user through Twitter',
       validate: {
+        query: Joi.object({
+          referralId: idSchema.allow(null).default(null),
+        }).label('LoginByTwitterQuery'),
         params: Joi.object({
           platform: inputFromLoginSchema.required(),
         }).label('LoginByTwitterParams'),
@@ -201,6 +213,11 @@ export default [
       id: 'v1.auth.login.facebookTokens',
       tags: ['api', 'auth'],
       description: 'Login user through Facebook (returns tokens)',
+      validate: {
+        query: Joi.object({
+          referralId: idSchema.allow(null).default(null),
+        }).label('LoginByFacebookQuery'),
+      },
       response: {
         schema: outputOkSchema(tokensWithStatus).label('TokensWithStatusResponse'),
       },
@@ -217,6 +234,11 @@ export default [
       id: 'v1.auth.login.googleTokens',
       tags: ['api', 'auth'],
       description: 'Login user through Google (returns tokens)',
+      validate: {
+        query: Joi.object({
+          referralId: idSchema.allow(null).default(null),
+        }).label('LoginByTwitterQuery'),
+      },
       response: {
         schema: outputOkSchema(tokensWithStatus).label('TokensWithStatusResponse'),
       },
@@ -233,6 +255,11 @@ export default [
       id: 'v1.auth.login.linkedinTokens',
       tags: ['api', 'auth'],
       description: 'Login user through Linkedin (returns tokens)',
+      validate: {
+        query: Joi.object({
+          referralId: idSchema.allow(null).default(null),
+        }).label('LoginByLinkedinQuery'),
+      },
       response: {
         schema: outputOkSchema(tokensWithStatus).label('TokensWithStatusResponse'),
       },
@@ -249,6 +276,11 @@ export default [
       id: 'v1.auth.login.twitterTokens',
       tags: ['api', 'auth'],
       description: 'Login user through Twitter (returns tokens)',
+      validate: {
+        query: Joi.object({
+          referralId: idSchema.allow(null).default(null),
+        }).label('LoginByTwitterQuery'),
+      },
       response: {
         schema: outputOkSchema(tokensWithStatus).label('TokensWithStatusResponse'),
       },
