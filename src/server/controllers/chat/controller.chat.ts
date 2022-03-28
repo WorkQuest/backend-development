@@ -162,6 +162,12 @@ export class ChatController extends ChatHelper {
 
   public async createChatMembers(usersIds: string[], chatId, transaction?: Transaction): Promise<ChatMember[]> {
     try {
+      const members = await ChatMember.findAll({ where: { chatId } });
+      const existingMembers = members.filter((member) => (usersIds.findIndex((userId) => member.userId === userId) !== -1));
+      const existingMembersIds = existingMembers.map(member => { return member.userId });
+      const newUsersIds = [];
+      usersIds.map(userId => {if (!existingMembersIds.includes(userId)) newUsersIds.push(userId) });
+
       const chatMembers = usersIds.map((userId) => {
         return {
           userId,
@@ -169,7 +175,11 @@ export class ChatController extends ChatHelper {
           type: MemberType.User,
         };
       });
-      return ChatMember.bulkCreate(chatMembers, { transaction });
+      await ChatMember.update({status: MemberStatus.Active}, { where: { userId: existingMembersIds } });
+
+      const newMembers = await ChatMember.bulkCreate(chatMembers, { transaction });
+      existingMembers.push(...newMembers);
+      return existingMembers;
     } catch (error) {
       if(transaction) {
         await transaction.rollback();

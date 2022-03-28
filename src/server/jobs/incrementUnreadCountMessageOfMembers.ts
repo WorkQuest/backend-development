@@ -4,7 +4,7 @@ import { literal, Op } from "sequelize";
 
 export type UnreadMessageIncrementPayload = {
   chatId: string;
-  notifierMemberId?: string;
+  notifierMemberId?: string[];
 };
 
 export async function incrementUnreadCountMessageOfMembersJob(payload: UnreadMessageIncrementPayload) {
