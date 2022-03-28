@@ -13,7 +13,7 @@ import {
   ChatMember,
   ChatMemberDeletionData,
   ChatType,
-  GroupChat, InfoMessage, MemberStatus, MemberType,
+  GroupChat, InfoMessage, MemberStatus,
   Message,
   MessageAction, QuestChatStatuses,
   SenderMessageStatus,
@@ -673,7 +673,7 @@ export async function setMessagesAsRead(r) {
   await updateCountUnreadMessagesJob({
     lastUnreadMessage: { id: message.id, number: message.number },
     chatId: chat.id,
-    readerUserId: chat.meMember.id,
+    readerMemberId: chat.meMember.id,
   });
 
   if (otherSenders.length === 0) {
