@@ -323,8 +323,8 @@ abstract class UserHelper {
   private async checkWorkerPriorityVisibility(visitor) {
     const quests = await Quest.findAll({
       where: {
-        userId: visitor.priority,
-        priority: this.user.id,
+        userId: visitor.id,
+        priority: this.user.priority,
       }
     });
 

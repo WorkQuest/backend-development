@@ -25,7 +25,7 @@ import {
   UserRole,
   UserStatus,
   UserRaiseStatus,
-  ProfileVisibilitySetting
+  ProfileVisibilitySetting,
   Wallet
 } from "@workquest/database-models/lib/models";
 import { convertAddressToHex } from "../utils/profile";
