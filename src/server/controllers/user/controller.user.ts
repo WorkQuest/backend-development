@@ -295,6 +295,14 @@ abstract class UserHelper {
     return this;
   }
 
+  private async checkWorkerPriorityVisibility() {
+
+  }
+
+  private async checkEmployerPriorityVisibility() {
+
+  }
+
   public async checkPriorityVisibility(visibility: ProfileVisibilitySetting, visitor: User): Promise<this> {
 
 
