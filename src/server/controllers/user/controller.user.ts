@@ -1,4 +1,4 @@
-import { literal, Op, Transaction } from "sequelize";
+import { Op, Transaction } from "sequelize";
 import { error } from "../../utils";
 import { Errors } from "../../utils/errors";
 import config from "../../config/config";
@@ -8,8 +8,10 @@ import {
   ChatsStatistic,
   defaultUserSettings,
   NetworkProfileVisibility,
-  ProfileVisibilitySetting, Quest,
-  QuestDispute, QuestsResponse,
+  ProfileVisibilitySetting,
+  Quest,
+  QuestDispute,
+  QuestsResponse, QuestsResponseStatus,
   QuestsStatistic,
   RatingStatistic,
   Session,
@@ -22,7 +24,7 @@ import {
 } from "@workquest/database-models/lib/models";
 
 
-export const networkProfileVisibilityArray = [NetworkProfileVisibility.RegisteredUsers, NetworkProfileVisibility.SubmittingOffer]
+export const onlyRegisteredUsersVisibility = [NetworkProfileVisibility.RegisteredUsers, NetworkProfileVisibility.SubmittingOffer]
 
 abstract class UserHelper {
   public abstract user: User;
@@ -253,29 +255,47 @@ abstract class UserHelper {
     });
   }
 
-  public async checkNetworkProfileVisibility(visibility: ProfileVisibilitySetting, visitor: User | null): Promise<this> {
-    if (visibility.networkProfileVisibility in networkProfileVisibilityArray && visitor === null) {
-      throw error(Errors.Forbidden, 'User hide his profile', [{userId: this.user.id}]);
-    } else if (visibility.networkProfileVisibility === NetworkProfileVisibility.SubmittingOffer) {
-      if (visitor.role === UserRole.Employer) {
-        const quests = await Quest.findAll({where: { userId: visitor.id } });
-        const questsIds = quests.map(quest => { return quest.id });
-        const questResponse = await QuestsResponse.findOne({ where: { workerId: this.user.id, questId: questsIds } });
+  private async checkWorkerProfileVisibility(visitor: User) {
+    const quests = await Quest.findAll({
+      where: { userId: visitor.id },
+      include: [{
+        model: QuestsResponse,
+        as: 'response',
+        where: { workerId: this.user.id, status: { [Op.ne]: QuestsResponseStatus.Rejected } },
+        required: true,
+      }]
+    });
 
-        if (!questResponse) throw error(Errors.Forbidden, 'User hide his profile', [{userId: this.user.id}]);
-      } else {
-        const quests = await Quest.findAll({where: { userId: this.user.id } });
-        const questsIds = quests.map(quest => { return quest.id });
-        const questResponse = await QuestsResponse.findOne({ where: { workerId: visitor.id, questId: questsIds } });
+    if (quests.length === 0) throw error(Errors.Forbidden, 'User hide its profile', [{userId: this.user.id}]);
+  }
 
-        if (!questResponse) throw error(Errors.Forbidden, 'User hide his profile', [{userId: this.user.id}]);
-      }
-    }
+  private async checkEmployerProfileVisibility(visitor: User) {
+    const quests = await Quest.findAll({
+      where: { userId: this.user.id, },
+      include: [{
+        model: QuestsResponse,
+        as: 'response',
+        where: { workerId: visitor.id, status: { [Op.ne]: QuestsResponseStatus.Rejected } },
+        required: true,
+      }]
+    });
+
+    if (quests.length === 0) throw error(Errors.Forbidden, 'User hide its profile', [{userId: this.user.id}]);
+  }
+
+  public async checkProfileVisibility(visibility: ProfileVisibilitySetting, visitor: User): Promise<this> {
+    if (visibility.networkProfileVisibility === NetworkProfileVisibility.SubmittingOffer && this.user.role === UserRole.Employer) {
+      await this.checkEmployerProfileVisibility(visitor);
+    };
+
+    if (visibility.networkProfileVisibility === NetworkProfileVisibility.SubmittingOffer && this.user.role === UserRole.Worker) {
+      await this.checkWorkerProfileVisibility(visitor);
+    };
 
     return this;
   }
 
-  public async checkPriorityVisibility(visibility: ProfileVisibilitySetting, visitor: User | null): Promise<this> {
+  public async checkPriorityVisibility(visibility: ProfileVisibilitySetting, visitor: User): Promise<this> {
 
 
     return this;

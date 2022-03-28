@@ -48,14 +48,13 @@ export async function getMe(r) {
 export async function getUser(r) {
   const userController = new UserController(await User.findByPk(r.params.userId));
 
+  const profileVisibility = await ProfileVisibilitySetting.findOne({where: { userId: userController.user.id } });
+
   userController
     .checkNotSeeYourself(r.auth.credentials.id)
     .userMustHaveStatus(UserStatus.Confirmed)
 
-  const profileVisibility = await ProfileVisibilitySetting.findOne({where: { userId: userController.user.id } });
-
-  await userController
-    .checkNetworkProfileVisibility(profileVisibility, r.auth.credentials);
+  await userController.checkProfileVisibility(profileVisibility, r.auth.credentials);
 
   return output(userController.user);
 }
