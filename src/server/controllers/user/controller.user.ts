@@ -23,6 +23,7 @@ import {
   UserSpecializationFilter,
   UserStatus
 } from "@workquest/database-models/lib/models";
+import { createReferralProgramJob } from '../../jobs/createReferralProgram';
 
 abstract class UserHelper {
   public abstract user: User;
@@ -59,7 +60,7 @@ abstract class UserHelper {
     return additionalInfo;
   }
 
-  public static async getUserByNetworkProfile(network: string, profile): Promise<User> {
+  public static async getUserByNetworkProfile(network: string, profile, referralId): Promise<User> {
     const foundUserBySocialId = await User.findWithSocialId(network, profile.id);
 
     if (foundUserBySocialId) {
@@ -89,7 +90,12 @@ abstract class UserHelper {
       email: profile.email.toLowerCase(),
       settings: Object.assign({}, defaultUserSettings, {
         social: { [network]: socialInfo },
-      }),
+      })
+    });
+
+    await createReferralProgramJob({
+      userId: user.id,
+      referralId: referralId,
     });
 
     await UserController.createStatistics(user.id);
@@ -116,17 +122,19 @@ abstract class UserHelper {
     userIds: string[],
     scope: 'defaultScope' | 'short' | 'shortWithAdditionalInfo' = 'defaultScope',
   ): Promise<User[]> {
-    const users = await User.scope(scope).findAll({
+    const { count, rows } = await User.scope(scope).findAndCountAll({
+      col: '"User"."id"',
+      distinct: true,
       where: { id: userIds },
     });
 
-    if (users.length !== userIds.length) {
-      const notFoundIds = userIds.filter((userId) => users.findIndex((user) => userId === user.id) === -1);
+    if (count !== userIds.length) {
+      const notFoundIds = userIds.filter((userId) => rows.findIndex((user) => userId === user.id) === -1);
 
       throw error(Errors.NotFound, 'Users is not found', { notFoundIds });
     }
 
-    return users;
+    return rows;
   }
 
   public static async checkEmail(email: string) {

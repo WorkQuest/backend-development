@@ -1,32 +1,34 @@
-import { FindAttributeOptions, literal, Op } from "sequelize";
-import { addSendSmsJob } from '../jobs/sendSms';
-import { error, getRandomCodeNumber, output } from '../utils';
-import { UserController } from '../controllers/user/controller.user';
-import { transformToGeoPostGIS } from '../utils/postGIS';
-import { MediaController } from '../controllers/controller.media';
-import { SkillsFiltersController } from '../controllers/controller.skillsFilters';
-import { addUpdateReviewStatisticsJob } from '../jobs/updateReviewStatistics';
-import { updateUserRaiseViewStatusJob } from '../jobs/updateUserRaiseViewStatus'
-import { updateQuestsStatisticJob } from '../jobs/updateQuestsStatistic';
-import { deleteUserFiltersJob } from '../jobs/deleteUserFilters';
-import { Errors } from '../utils/errors';
+import { literal, Op } from "sequelize";
+import { addSendSmsJob } from "../jobs/sendSms";
+import { error, getRandomCodeNumber, output } from "../utils";
+import { UserController } from "../controllers/user/controller.user";
+import { transformToGeoPostGIS } from "../utils/postGIS";
+import { MediaController } from "../controllers/controller.media";
+import { SkillsFiltersController } from "../controllers/controller.skillsFilters";
+import { addUpdateReviewStatisticsJob } from "../jobs/updateReviewStatistics";
+import { updateUserRaiseViewStatusJob } from "../jobs/updateUserRaiseViewStatus";
+import { updateQuestsStatisticJob } from "../jobs/updateQuestsStatistic";
+import { deleteUserFiltersJob } from "../jobs/deleteUserFilters";
+import { Errors } from "../utils/errors";
 import {
-  User,
-  Wallet,
-  UserRole,
-  UserRaiseView,
   ChatsStatistic,
   Quest,
   QuestsResponse,
   QuestsResponseStatus,
   QuestsStatistic,
   QuestStatus,
-  UserChangeRoleData,
-  UserStatus,
   RatingStatistic,
+  ReferralProgramAffiliate,
+  User,
+  UserChangeRoleData,
+  UserRaiseView,
+  UserRole,
+  UserStatus,
   UserRaiseStatus,
   ProfileVisibilitySetting
+  Wallet
 } from "@workquest/database-models/lib/models";
+import { convertAddressToHex } from "../utils/profile";
 
 export const searchFields = [
   "firstName",
@@ -39,14 +41,20 @@ export async function getMe(r) {
 
   const user = await User.findByPk(r.auth.credentials.id, {
     attributes: { include: [[totpIsActiveLiteral, 'totpIsActive']] },
-    include: [{ model: Wallet, as: 'wallet', attributes: ['address'] }],
+    include: [
+      { model: Wallet, as: 'wallet', attributes: ['address'] },
+      { model: ReferralProgramAffiliate.unscoped(), as: 'affiliateUser', attributes: ['referralCodeId'] },
+    ],
   });
 
   return output(user);
 }
 
 export async function getUser(r) {
-  const userController = new UserController(await User.findByPk(r.params.userId));
+  const user = await User.findByPk(r.params.userId, {
+    include: [{ model: Wallet, as: 'wallet', attributes: ['address'] }],
+  });
+  const userController = new UserController(user);
 
   const profileVisibility = await ProfileVisibilitySetting.findOne({where: { userId: userController.user.id } });
 
@@ -56,6 +64,27 @@ export async function getUser(r) {
 
   await userController.checkProfileVisibility(profileVisibility, r.auth.credentials);
   await userController.checkPriorityVisibility(profileVisibility, r.auth.credentials);
+
+  return output(userController.user);
+}
+
+export async function getUserByWallet(r) {
+  const address = convertAddressToHex(r.params.address);
+
+  const user = await User.findOne({
+    include: [{
+      model: Wallet,
+      as: 'wallet',
+      required: true,
+      where: { address },
+      attributes: ['address'],
+    }]
+  });
+  const userController = new UserController(user);
+
+  userController
+    .checkNotSeeYourself(r.auth.credentials.id)
+    .userMustHaveStatus(UserStatus.Confirmed);
 
   return output(userController.user);
 }
@@ -293,7 +322,6 @@ export async function confirmPhoneNumber(r) {
     .checkPhoneConfirmationCode(r.payload.confirmCode)
     .confirmPhoneNumber()
 
-
   return output();
 }
 
@@ -452,19 +480,21 @@ export async function payForMyRaiseView(r) {
     }
   });
 
+  const endOfRaiseView = new Date(Date.now() + 86400000 * raiseView.duration);
+
   if (!isCreated) {
     await raiseView.update({
       status: UserRaiseStatus.Paid, //TODO: сделать на воркере статус оплачено, тут сменить на Closed
       duration: r.payload.duration,
       type: r.payload.type,
+      endedAt: endOfRaiseView
     });
-  }
+  } else { await raiseView.update({ endedAt: endOfRaiseView }) }
 
-  const endOfRaiseView = new Date(Date.now() + 86400000 * raiseView.duration);
-
+  const temporaryEndingOfRaiseView = new Date(Date.now() + 60000);
   await updateUserRaiseViewStatusJob({
-    questId: r.params.questId,
-    runAt: endOfRaiseView
+    userId: r.auth.credentials.id,
+    runAt: temporaryEndingOfRaiseView, /**TODO*/ //endOfRaiseView
   });
 
   return output();

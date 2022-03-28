@@ -3,7 +3,7 @@ import {
   User,
   ReferralStatus,
   ReferralProgramReferral,
-  ReferralProgramAffiliate
+  ReferralProgramAffiliate,
 } from '@workquest/database-models/lib/models';
 
 export interface CreateReferralProgramPayload {
@@ -11,27 +11,27 @@ export interface CreateReferralProgramPayload {
   referralId?: string;
 }
 
-export async function createReferralProgram(payload: CreateReferralProgramPayload) {
+export async function createReferralProgramJob(payload: CreateReferralProgramPayload) {
   return addJob('createReferralProgram', payload);
 }
 
 export default async function(payload: CreateReferralProgramPayload) {
   const user = await User.findByPk(payload.userId);
 
-  const referralProgram = await ReferralProgramAffiliate.findOne({
+  const referralProgramAffiliate = await ReferralProgramAffiliate.findOne({
     where: { referralCodeId: payload.referralId },
   });
 
   if (!user) {
     return;
   }
-  if (payload.referralId && !referralProgram) {
+  if (payload.referralId && !referralProgramAffiliate) {
     return;
   }
   if (payload.referralId) {
     await ReferralProgramReferral.create({
       referralUserId: payload.userId,
-      referralProgramId: referralProgram.id,
+      affiliateId: referralProgramAffiliate.id,
       referralStatus: ReferralStatus.Created,
     });
   }

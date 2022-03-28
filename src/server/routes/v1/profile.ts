@@ -31,7 +31,9 @@ import {
   specializationKeysSchema,
   userRaiseViewDurationSchema,
   userAdditionalInfoWorkerSchema,
-  userAdditionalInfoEmployerSchema, profileVisibilitySchema
+  userAdditionalInfoEmployerSchema,
+  profileVisibilitySchema,
+  accountAddressSchema
 } from "@workquest/database-models/lib/schemes";
 
 export default [{
@@ -63,6 +65,24 @@ export default [{
     },
     response: {
       schema: outputOkSchema(userSchema).label("GetUserResponse")
+    }
+  }
+}, {
+  method: 'GET',
+  path: '/v1/profile/wallet/{address}',
+  handler: handlers.getUserByWallet,
+  options: {
+    auth: 'jwt-access',
+    id: 'v1.profile.getUserByWallet',
+    tags: ['api', 'profile'],
+    description: 'Get user profile by wallet address',
+    validate: {
+      params: Joi.object({
+        address: accountAddressSchema.required()
+      }).label('GetUserByWalletParams')
+    },
+    response: {
+      schema: outputOkSchema(userSchema).label('GetUserByWalletResponse')
     }
   }
 }, {
