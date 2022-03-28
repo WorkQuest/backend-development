@@ -418,7 +418,6 @@ export async function getPayloadQuests(r) {
   const replacements = {};
   const where = {
     [Op.and]: [],
-    ...(r.payload.adType && { adType: r.payload.adType }),
     ...(r.payload.filter && { filter: r.params.filter }),
     ...(r.params.userId && { userId: r.params.userId }),
     ...(r.params.workerId && { assignedWorkerId: r.params.workerId }),
@@ -580,7 +579,6 @@ export function getQuests(type: 'list' | 'points') {
     const order = [[questRaiseViewLiteral, 'asc']] as any[];
     const where = {
       [Op.and]: [],
-      ...(r.query.adType && { adType: r.query.adType }),
       ...(r.query.filter && { filter: r.params.filter }),
       ...(r.params.userId && { userId: r.params.userId }),
       ...(r.params.workerId && { assignedWorkerId: r.params.workerId }),
