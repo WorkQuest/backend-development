@@ -18,6 +18,7 @@ import skillFilters from './skillFilters';
 import proposal from './proposal';
 import pensionFund from './pensionFund';
 import referral from './referral';
+import borrowing from "./borrowing";
 
 export default [
   ...liquidityPoolWETH,
@@ -39,5 +40,6 @@ export default [
   ...skillFilters,
   ...proposal,
   ...pensionFund,
-  ...referral
+  ...referral,
+  ...borrowing
 ];
