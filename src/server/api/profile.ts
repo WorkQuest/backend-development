@@ -63,7 +63,6 @@ export async function getUser(r) {
     .userMustHaveStatus(UserStatus.Confirmed)
 
   await userController.checkProfileVisibility(profileVisibility, r.auth.credentials);
-  await userController.checkPriorityVisibility(profileVisibility, r.auth.credentials);
 
   return output(userController.user);
 }

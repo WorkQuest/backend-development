@@ -261,6 +261,32 @@ abstract class UserHelper {
     });
   }
 
+  private async checkEmployerPriorityVisibility(visitor: User) {
+    const quests = await Quest.findAll({
+      where: {
+        userId: this.user.id,
+        priority: visitor.priority,
+      }
+    });
+
+    if (quests.length === 0) {
+      throw error(Errors.Forbidden, 'User hide its profile', { userId: this.user.id });
+    }
+  }
+
+  private async checkWorkerPriorityVisibility(visitor) {
+    const quests = await Quest.findAll({
+      where: {
+        userId: visitor.id,
+        priority: this.user.priority,
+      }
+    });
+
+    if (quests.length === 0) {
+      throw error(Errors.Forbidden, 'User hide its profile', { userId: this.user.id });
+    }
+  }
+
   private async checkWorkerProfileVisibility(visitor: User) {
     const quests = await Quest.findAll({
       where: { userId: visitor.id },
@@ -298,51 +324,13 @@ abstract class UserHelper {
   public async checkProfileVisibility(visibility: ProfileVisibilitySetting, visitor: User): Promise<this> {
     if (visibility.networkProfileVisibility === NetworkProfileVisibility.SubmittingOffer && this.user.role === UserRole.Employer) {
       await this.checkEmployerProfileVisibility(visitor);
+      await this.checkEmployerPriorityVisibility(visitor);
     };
 
     if (visibility.networkProfileVisibility === NetworkProfileVisibility.SubmittingOffer && this.user.role === UserRole.Worker) {
       await this.checkWorkerProfileVisibility(visitor);
-    };
-
-    return this;
-  }
-
-  private async checkEmployerPriorityVisibility(visitor: User) {
-    const quests = await Quest.findAll({
-      where: {
-        userId: this.user.id,
-        priority: visitor.priority,
-      }
-    });
-
-    if (quests.length === 0) {
-      throw error(Errors.Forbidden, 'User hide its profile', { userId: this.user.id });
-    }
-  }
-
-  private async checkWorkerPriorityVisibility(visitor) {
-    const quests = await Quest.findAll({
-      where: {
-        userId: visitor.id,
-        priority: this.user.priority,
-      }
-    });
-
-    if (quests.length === 0) {
-      throw error(Errors.Forbidden, 'User hide its profile', { userId: this.user.id });
-    }
-  }
-
-  public async checkPriorityVisibility(visibility: ProfileVisibilitySetting, visitor: User): Promise<this> {
-    if (visitor.role === this.user.role) return this;
-
-    if (this.user.role === UserRole.Employer) {
-      await this.checkEmployerPriorityVisibility(visitor);
-    }
-
-    if (this.user.role === UserRole.Worker) {
       await this.checkWorkerPriorityVisibility(visitor);
-    }
+    };
 
     return this;
   }
