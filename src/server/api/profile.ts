@@ -188,7 +188,7 @@ export function getUsers(role: UserRole, type: 'points' | 'list') {
         where[Op.and].push(userSpecializationIndustryKeysAndPathsLiteral);
       }
 
-      distinctCol = '"User"."id"';
+      distinctCol = 'id';
     }
 
     for (const [key, value] of Object.entries(r.query.sort || {})) {
