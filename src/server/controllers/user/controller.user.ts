@@ -324,12 +324,10 @@ abstract class UserHelper {
   public async checkProfileVisibility(visibility: ProfileVisibilitySetting, visitor: User): Promise<this> {
     if (visibility.networkProfileVisibility === NetworkProfileVisibility.SubmittingOffer && this.user.role === UserRole.Employer) {
       await this.checkEmployerProfileVisibility(visitor);
-      await this.checkEmployerPriorityVisibility(visitor);
     };
 
     if (visibility.networkProfileVisibility === NetworkProfileVisibility.SubmittingOffer && this.user.role === UserRole.Worker) {
       await this.checkWorkerProfileVisibility(visitor);
-      await this.checkWorkerPriorityVisibility(visitor);
     };
 
     return this;
