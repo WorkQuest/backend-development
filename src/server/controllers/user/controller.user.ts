@@ -11,7 +11,6 @@ import {
   UserStatus,
   QuestDispute,
   UserRaiseView,
-  ChatsStatistic,
   UserRaiseStatus,
   QuestsStatistic,
   RatingStatistic,

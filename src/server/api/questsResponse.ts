@@ -13,7 +13,7 @@ import {
   Message,
   MessageAction,
   Quest,
-  QuestChat,
+  QuestChat, QuestChatStatuses,
   QuestsResponse,
   QuestsResponseStatus,
   QuestsResponseType,
@@ -341,6 +341,8 @@ export async function rejectInviteOnQuest(r) {
 
   await chatController.createInfoMessage(chat.meMember.id, chat.id, messageNumber, chat.meMember.id, MessageAction.workerRejectInviteOnQuest, transaction);
 
+  await chat.questChat.update({ status: QuestChatStatuses.Close }, { transaction });
+
   await transaction.commit();
 
   r.server.app.broker.sendQuestNotification({
@@ -393,6 +395,8 @@ export async function rejectResponseOnQuest(r) {
 
   const messageNumber = chat.chatData.lastMessage.number + 1;
   await chatController.createInfoMessage(chat.meMember.id, chat.id, messageNumber, chat.meMember.id, MessageAction.employerRejectResponseOnQuest, transaction);
+
+  await chat.questChat.update({ status: QuestChatStatuses.Close }, { transaction });
 
   await transaction.commit();
 

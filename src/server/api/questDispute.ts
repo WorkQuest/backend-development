@@ -43,7 +43,7 @@ export async function openDispute(r) {
   const allowDate = quest.startedAt.getTime() + dayInMilliseconds;
 
   if (allowDate > Date.now()) {
-    return error(Errors.InvalidDate, 'Can open dispute after 24 hours after creating quest', {});
+    return error(Errors.InvalidDate, 'Can open dispute after 24 hours after starting quest', {});
   }
 
   const opponentUserId = quest.userId === user.id ? quest.assignedWorkerId : quest.userId;

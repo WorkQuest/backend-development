@@ -11,7 +11,7 @@ import { updateQuestsStatisticJob } from "../jobs/updateQuestsStatistic";
 import { deleteUserFiltersJob } from "../jobs/deleteUserFilters";
 import { Errors } from "../utils/errors";
 import {
-  ChatsStatistic,
+  UserChatsStatistic,
   Quest,
   QuestsResponse,
   QuestsResponseStatus,
@@ -332,7 +332,7 @@ export async function sendCodeOnPhoneNumber(r) {
 }
 
 export async function getUserStatistics(r) {
-  const chatsStatistic = await ChatsStatistic.findOne({
+  const chatsStatistic = await UserChatsStatistic.findOne({
     where: { userId: r.auth.credentials.id },
   });
 

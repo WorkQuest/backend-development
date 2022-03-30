@@ -13,7 +13,7 @@ export async function incrementUnreadCountMessageOfMembersJob(payload: UnreadMes
 
 export default async function incrementUnreadCountMessageOfMembers(payload: UnreadMessageIncrementPayload) {
   const chatMemberData = await ChatMemberData.findAll({
-    where: { chatMemberId: { [Op.ne]: payload.notifierMemberId } },
+    where: { chatMemberId: { [Op.notIn]: payload.notifierMemberId } },
     include: [{
       model: ChatMember,
       where: { chatId: payload.chatId },

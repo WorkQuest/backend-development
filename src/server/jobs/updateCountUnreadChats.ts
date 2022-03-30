@@ -1,5 +1,5 @@
 import { addJob } from '../utils/scheduler';
-import { ChatMember, ChatMemberData, ChatsStatistic, MemberType } from "@workquest/database-models/lib/models";
+import { ChatMember, ChatMemberData, UserChatsStatistic, MemberType } from "@workquest/database-models/lib/models";
 import { Op } from 'sequelize';
 
 export type UserUnreadChatsPayload = {
@@ -23,7 +23,7 @@ export default async function updateCountUnreadChats(payload: UserUnreadChatsPay
       }]
     });
 
-    const [chatsStatistic, isCreated] = await ChatsStatistic.findOrCreate({
+    const [chatsStatistic, isCreated] = await UserChatsStatistic.findOrCreate({
       where: { userId },
       defaults: { userId, type: MemberType.User, unreadCountChats: unreadChatsCounter.count },
     });
