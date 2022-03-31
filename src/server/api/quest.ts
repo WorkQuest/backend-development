@@ -799,7 +799,7 @@ export async function payForRaiseView(r) {
     });
   } else { await raiseView.update({ endedAt: endOfRaiseView }) }
 
-  const temporaryEndingOfRaiseView = new Date(Date.now() + 60000);
+  const temporaryEndingOfRaiseView = new Date(Date.now() + 300000);
   await  updateQuestRaiseViewStatusJob({
     questId: r.params.questId,
     runAt: temporaryEndingOfRaiseView, /**TODO*/ //endOfRaiseView
