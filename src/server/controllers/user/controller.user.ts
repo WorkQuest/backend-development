@@ -167,6 +167,26 @@ abstract class UserHelper {
     return this;
   }
 
+  public async userMustHaveRating(invitedUserId: string): Promise<this> {
+    const invitedUserVisibility = await ProfileVisibilitySetting.findOne({ where: { userId: invitedUserId } });
+
+    if (invitedUserVisibility.statusProfileVisibility === 4) {
+      return this;
+    }
+
+    const rating = await RatingStatistic.findOne({
+      where: {
+        userId: this.user.id,
+      }
+    });
+
+    if (rating.status !== invitedUserVisibility.statusProfileVisibility) {
+      throw error(Errors.InvalidStatus, "Rating status doesn't match", { currentRatingStatus: rating.status, neededRatingStatus:  invitedUserVisibility.statusProfileVisibility });
+    }
+
+    return this
+  }
+
   public userNeedsSetRole(): this {
     if (this.user.status !== UserStatus.NeedSetRole) {
       throw error(Errors.InvalidPayload, "User don't need to set role", {
@@ -459,6 +479,10 @@ export class UserController extends UserHelper {
       defaults: { userId: userId },
     });
     await QuestsStatistic.findOrCreate({
+      where: { userId: userId },
+      defaults: { userId: userId },
+    });
+    await ProfileVisibilitySetting.findOrCreate({
       where: { userId: userId },
       defaults: { userId: userId },
     });

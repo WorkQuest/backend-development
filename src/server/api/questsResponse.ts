@@ -1,4 +1,4 @@
-import { Op } from 'sequelize';
+import { literal, Op } from "sequelize";
 import { error, output } from '../utils';
 import { Errors } from '../utils/errors';
 import { ChatNotificationActions, QuestNotificationActions } from '../controllers/controller.broker';
@@ -54,6 +54,8 @@ export async function responseOnQuest(r) {
     //   return error(Errors.AlreadyAnswer, "You already answered quest", { questResponse });
     // }
   }
+
+  await workerController.userMustHaveRating(questController.quest.userId);
 
   const transaction = await r.server.app.db.transaction();
 
@@ -187,6 +189,8 @@ export async function inviteOnQuest(r) {
     //   return error(Errors.AlreadyAnswer, "You have already been invited user to the quest", { questResponse });
     // }
   }
+
+  await employerController.userMustHaveRating(invitedWorker.id);
 
   const transaction = await r.server.app.db.transaction();
 
