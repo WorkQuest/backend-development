@@ -105,6 +105,7 @@ export async function createQuest(r) {
 
   const quest = await Quest.create({
     userId: employer.id,
+    avatarId: medias[0].id,
     status: QuestStatus.Created,
     workplace: r.payload.workplace,
     employment: r.payload.employment,
