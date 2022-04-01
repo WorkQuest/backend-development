@@ -89,7 +89,26 @@ export async function getUserByWallet(r) {
 }
 
 export async function getAllUsers(r) {
-  const where = { status: UserStatus.Confirmed };
+  const priorityVisibilityLiteral = literal(
+    `
+         (
+          CASE WHEN "User"."role" != '${ r.auth.credentials.role }' THEN
+            (
+              CASE WHEN EXISTS (SELECT "usr"."id" FROM "Users" as "usr"
+                INNER JOIN "ProfileVisibilitySettings" as "pvs" ON "pvs"."userId" = '${ r.auth.credentials.id }'
+                INNER JOIN "RatingStatistics" as rtn ON "rtn"."userId" = "User"."id"
+                  WHERE ("rtn"."status" = "pvs"."statusProfileVisibility" OR "pvs"."statusProfileVisibility" = 4)) THEN TRUE ELSE FALSE END
+            )
+          ELSE TRUE END
+         )
+       `
+  );
+
+  const where = {
+    status: UserStatus.Confirmed,
+    id: { [Op.ne]: r.auth.credentials.id }
+  };
+  const include = [];
 
   if (r.query.q) {
     where[Op.or] = searchFields.map(
@@ -97,16 +116,25 @@ export async function getAllUsers(r) {
     );
   }
 
+  include.push({
+    model: Wallet,
+    as: 'wallet',
+    attributes: ['address'],
+    required: r.query.walletRequired,
+  });
+
+  include.push({
+    model: ProfileVisibilitySetting,
+    as: 'profileVisibilitySetting',
+  });
+
+  where[Op.and] = [priorityVisibilityLiteral];
+
   const { count, rows } = await User.findAndCountAll({
     where,
     col: 'id',
     distinct: true,
-    include: {
-      model: Wallet,
-      as: 'wallet',
-      attributes: ['address'],
-      required: r.query.walletRequired,
-    },
+    include,
     limit: r.query.limit,
     offset: r.query.offset,
   });
@@ -135,11 +163,25 @@ export function getUsers(role: UserRole, type: 'points' | 'list') {
     const userRatingStatisticLiteral = literal(
       '(SELECT "status" FROM "RatingStatistics" WHERE "userId" = "User"."id")'
     );
+    const priorityVisibilityLiteral = literal(
+      `
+         (
+          CASE WHEN "User"."role" != '${ r.auth.credentials.role }' THEN
+            (
+              CASE WHEN EXISTS (SELECT "usr"."id" FROM "Users" as "usr"
+                INNER JOIN "ProfileVisibilitySettings" as "pvs" ON "pvs"."userId" = '${ r.auth.credentials.id }'
+                INNER JOIN "RatingStatistics" as rtn ON "rtn"."userId" = "User"."id"
+                  WHERE ("rtn"."status" = "pvs"."statusProfileVisibility" OR "pvs"."statusProfileVisibility" = 4)) THEN TRUE ELSE FALSE END
+            )
+          ELSE TRUE END
+         )
+       `
+    );
 
     const order = [[userRaiseViewLiteral, 'asc'], [userRatingStatisticLiteral, 'asc']] as any;
     const include = [];
     const replacements = {};
-    let distinctCol: '"User"."id"' | 'id' = '"User"."id"';
+    //let distinctCol: '"User"."id"' | 'id' = '"User"."id"';
 
     const where = {
       role, [Op.and]: [],
@@ -161,7 +203,7 @@ export function getUsers(role: UserRole, type: 'points' | 'list') {
         required: true,
         where: { status: r.query.ratingStatuses },
       });
-      distinctCol = 'id';
+      //distinctCol = 'id';
     }
     if (r.query.northAndSouthCoordinates) {
       replacements['northLng'] = r.query.northAndSouthCoordinates.north.longitude;
@@ -187,18 +229,23 @@ export function getUsers(role: UserRole, type: 'points' | 'list') {
         replacements['industryKey'] = industryKeys;
         where[Op.and].push(userSpecializationIndustryKeysAndPathsLiteral);
       }
-
-      distinctCol = 'id';
     }
 
     for (const [key, value] of Object.entries(r.query.sort || {})) {
       order.push([key, value]);
     }
 
+    include.push({
+      model: ProfileVisibilitySetting,
+      as: 'profileVisibilitySetting',
+    });
+
+    where[Op.and].push(priorityVisibilityLiteral);
+
     if (type === 'list') {
       const { count, rows } = await User.findAndCountAll({
         distinct: true,
-        col: distinctCol, // so..., else not working
+        col: 'id', //'distinctCol', // so..., else not working
         limit: r.query.limit,
         offset: r.query.offset,
         include, order, where,
