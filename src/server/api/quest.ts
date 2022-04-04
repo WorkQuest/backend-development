@@ -101,11 +101,12 @@ export async function createQuest(r) {
     .userMustHaveRole(UserRole.Employer)
 
   const medias = await MediaController.getMedias(r.payload.medias);
+  const avatarId = medias.length !== 0 ? medias[0].id : null;
   const transaction = await r.server.app.db.transaction();
 
   const quest = await Quest.create({
     userId: employer.id,
-    avatarId: medias[0].id,
+    avatarId,
     status: QuestStatus.Created,
     workplace: r.payload.workplace,
     employment: r.payload.employment,
