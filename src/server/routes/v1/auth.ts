@@ -142,9 +142,9 @@ export default [
       tags: ['api', 'auth'],
       description: 'Login user through Google',
       validate: {
-        query: Joi.object({
-          referralId: idSchema.allow(null).default(null),
-        }).label('LoginByGoogleQuery'),
+        // query: Joi.object({
+        //   referralId: idSchema.allow(null).default(null),
+        // }).label('LoginByGoogleQuery'),
         params: Joi.object({
           platform: inputFromLoginSchema.required(),
         }).label('LoginByGoogleParams'),
