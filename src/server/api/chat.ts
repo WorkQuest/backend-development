@@ -1,31 +1,34 @@
-import { literal, Op } from 'sequelize';
-import { error, output } from '../utils';
-import { Errors } from '../utils/errors';
-import { setMessageAsReadJob } from '../jobs/setMessageAsRead';
-import { updateCountUnreadMessagesJob } from '../jobs/updateCountUnreadMessages';
-import { resetUnreadCountMessagesOfMemberJob } from '../jobs/resetUnreadCountMessagesOfMember';
-import { incrementUnreadCountMessageOfMembersJob } from '../jobs/incrementUnreadCountMessageOfMembers';
-import { updateCountUnreadChatsJob } from '../jobs/updateCountUnreadChats';
-import { ChatController } from '../controllers/chat/controller.chat';
-import { ChatNotificationActions } from '../controllers/controller.broker';
-import { MediaController } from '../controllers/controller.media';
-import { MessageController } from '../controllers/chat/controller.message';
-import { UserController } from '../controllers/user/controller.user';
-import { listOfUsersByChatsCountQuery, listOfUsersByChatsQuery } from '../queries';
+import { literal, Op } from "sequelize";
+import { error, output } from "../utils";
+import { Errors } from "../utils/errors";
+import { setMessageAsReadJob } from "../jobs/setMessageAsRead";
+import { updateCountUnreadMessagesJob } from "../jobs/updateCountUnreadMessages";
+import { resetUnreadCountMessagesOfMemberJob } from "../jobs/resetUnreadCountMessagesOfMember";
+import { incrementUnreadCountMessageOfMembersJob } from "../jobs/incrementUnreadCountMessageOfMembers";
+import { updateCountUnreadChatsJob } from "../jobs/updateCountUnreadChats";
+import { ChatController } from "../controllers/chat/controller.chat";
+import { ChatNotificationActions } from "../controllers/controller.broker";
+import { MediaController } from "../controllers/controller.media";
+import { MessageController } from "../controllers/chat/controller.message";
+import { UserController } from "../controllers/user/controller.user";
+import { listOfUsersByChatsCountQuery, listOfUsersByChatsQuery } from "../queries";
 import {
-  User,
   Chat,
-  Message,
-  ChatType,
-  QuestChat,
   ChatMember,
-  StarredChat,
-  MessageType,
+  ChatType,
+  DisputeStatus,
   InfoMessage,
+  Message,
   MessageAction,
-  StarredMessage,
+  MessageType,
+  Quest,
+  QuestChat,
   QuestChatStatuses,
-  SenderMessageStatus, QuestDispute
+  QuestDispute,
+  SenderMessageStatus,
+  StarredChat,
+  StarredMessage,
+  User
 } from "@workquest/database-models/lib/models";
 
 export const searchChatFields = ['name'];
@@ -120,8 +123,15 @@ export async function getUserChat(r) {
     }, {
       model: QuestChat,
       include: [{
-        model: QuestDispute,
-        as: 'dispute'
+        model: Quest,
+        include: [{
+          model: QuestDispute,
+          as: 'openDispute',
+          where: {
+            status: { [Op.or]: [ DisputeStatus.pending, DisputeStatus.inProgress ]}
+          }
+        }],
+        as: 'quest',
       }],
       as: 'questChat',
       required: false,
