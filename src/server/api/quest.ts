@@ -101,10 +101,12 @@ export async function createQuest(r) {
     .userMustHaveRole(UserRole.Employer)
 
   const medias = await MediaController.getMedias(r.payload.medias);
+  const avatarId = medias.length !== 0 ? medias[0].id : null;
   const transaction = await r.server.app.db.transaction();
 
   const quest = await Quest.create({
     userId: employer.id,
+    avatarId,
     status: QuestStatus.Created,
     workplace: r.payload.workplace,
     employment: r.payload.employment,
@@ -141,6 +143,8 @@ export async function editQuest(r) {
 
   const medias = await MediaController.getMedias(r.payload.medias);
 
+  const avatarId = medias.length !== 0 ? medias[0].id : null;
+
   questController
     .employerMustBeQuestCreator(employer.id)
     .questMustHaveStatus(QuestStatus.Created)
@@ -153,6 +157,7 @@ export async function editQuest(r) {
   questController.quest = await questController.quest.update({
     price: r.payload.price,
     title: r.payload.title,
+    avatarId: avatarId ? avatarId : questController.quest.avatarId,
     priority: r.payload.priority,
     workplace: r.payload.workplace,
     employment: r.payload.employment,

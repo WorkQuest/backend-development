@@ -253,12 +253,13 @@ export async function loginWallet(r) {
       },
     ],
   });
-  const user = await User.scope('withPassword').findByPk(wallet.userId);
-  const userTotpActiveStatus: boolean = user.settings.security.TOTP.active;
 
   if (!wallet) {
     return error(Errors.NotFound, 'Wallet not found', { field: ['address'] });
   }
+
+  const user = await User.scope('withPassword').findByPk(wallet.userId);
+  const userTotpActiveStatus: boolean = user.settings.security.TOTP.active;
 
   const decryptedSignAddress = r.server.app.web3.eth.accounts.recover(address, '0x' + r.payload.signature);
 
