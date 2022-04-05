@@ -170,7 +170,7 @@ abstract class UserHelper {
   public async userMustHaveRating(invitedUserId: string): Promise<this> {
     const invitedUserVisibility = await ProfileVisibilitySetting.findOne({ where: { userId: invitedUserId } });
 
-    if (invitedUserVisibility.status === 4) {
+    if (invitedUserVisibility.ratingStatus === 4) {
       return this;
     }
 
@@ -180,8 +180,8 @@ abstract class UserHelper {
       }
     });
 
-    if (rating.status !== invitedUserVisibility.status) {
-      throw error(Errors.InvalidStatus, "Rating status doesn't match", { currentRatingStatus: rating.status, neededRatingStatus:  invitedUserVisibility.status });
+    if (rating.status !== invitedUserVisibility.ratingStatus) {
+      throw error(Errors.InvalidStatus, "Rating status doesn't match", { currentRatingStatus: rating.status, neededRatingStatus:  invitedUserVisibility.ratingStatus });
     }
 
     return this
