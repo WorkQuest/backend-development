@@ -124,28 +124,6 @@ export async function getUserChat(r) {
       model: QuestChat,
       as: 'questChat',
       required: false,
-      include: [{
-        model: Quest,
-        as: 'quest',
-        attributes: ['status', 'openDispute'],
-        include: [{
-          model: QuestDispute,
-          as: 'openDispute',
-          attributes: [
-            'openDisputeUser',
-            'opponentUser',
-            'status',
-          ],
-          where: {
-            status: {
-              [Op.or]: [
-                DisputeStatus.pending,
-                DisputeStatus.inProgress,
-              ],
-            },
-          },
-        }],
-      }],
     }],
   });
   const chatController = new ChatController(chat);
