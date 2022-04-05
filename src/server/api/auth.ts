@@ -83,7 +83,7 @@ export function register(host: 'dao' | 'main') {
 export function getLoginViaSocialNetworkHandler(returnType: 'token' | 'redirect') {
   return async function loginThroughSocialNetwork(r, h) {
     const profile = r.auth.credentials.profile;
-    const referralId = r.query.referralId
+    const { referralId } = r.auth.credentials.query;
 
     if (!profile.email) {
       return error(Errors.InvalidEmail, 'Field email was not returned', {});
