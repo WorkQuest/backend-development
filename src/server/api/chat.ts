@@ -13,22 +13,19 @@ import { MessageController } from "../controllers/chat/controller.message";
 import { UserController } from "../controllers/user/controller.user";
 import { listOfUsersByChatsCountQuery, listOfUsersByChatsQuery } from "../queries";
 import {
+  User,
   Chat,
-  ChatMember,
-  ChatType,
-  DisputeStatus,
-  InfoMessage,
   Message,
-  MessageAction,
-  MessageType,
-  Quest,
+  ChatType,
   QuestChat,
-  QuestChatStatuses,
-  QuestDispute,
-  SenderMessageStatus,
+  ChatMember,
+  InfoMessage,
+  MessageType,
   StarredChat,
+  MessageAction,
   StarredMessage,
-  User
+  QuestChatStatuses,
+  SenderMessageStatus,
 } from "@workquest/database-models/lib/models";
 
 export const searchChatFields = ['name'];

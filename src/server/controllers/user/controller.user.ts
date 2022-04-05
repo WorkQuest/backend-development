@@ -4,6 +4,7 @@ import { Errors } from '../../utils/errors';
 import config from '../../config/config';
 import { totpValidate } from '@workquest/database-models/lib/utils';
 import { SkillsFiltersController } from '../controller.skillsFilters';
+import { createReferralProgramJob } from '../../jobs/createReferralProgram';
 import {
   User,
   Session,
@@ -18,7 +19,6 @@ import {
   defaultUserSettings,
   UserSpecializationFilter,
 } from "@workquest/database-models/lib/models";
-import { createReferralProgramJob } from '../../jobs/createReferralProgram';
 
 abstract class UserHelper {
   public abstract user: User;
