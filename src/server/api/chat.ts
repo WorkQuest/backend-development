@@ -17,15 +17,16 @@ import {
   Chat,
   Message,
   ChatType,
+  QuestChat,
   ChatMember,
+  StarredChat,
   MessageType,
   InfoMessage,
-  StarredChat,
   MessageAction,
   StarredMessage,
   QuestChatStatuses,
-  SenderMessageStatus,
-} from '@workquest/database-models/lib/models';
+  SenderMessageStatus, QuestDispute
+} from "@workquest/database-models/lib/models";
 
 export const searchChatFields = ['name'];
 
@@ -112,11 +113,18 @@ export async function getChatMessages(r) {
 
 export async function getUserChat(r) {
   const chat = await Chat.findByPk(r.params.chatId, {
-    include: {
+    include: [{
       model: StarredChat,
       as: 'star',
       required: false,
-    },
+    }, {
+      model: QuestChat,
+      include: [{
+        model: QuestDispute,
+        as: 'dispute'
+      }],
+      as: 'questChat'
+    }],
   });
   const chatController = new ChatController(chat);
 
