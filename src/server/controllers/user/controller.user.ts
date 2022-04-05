@@ -170,7 +170,7 @@ abstract class UserHelper {
   public async userMustHaveRating(invitedUserId: string): Promise<this> {
     const invitedUserVisibility = await ProfileVisibilitySetting.findOne({ where: { userId: invitedUserId } });
 
-    if (invitedUserVisibility.statusProfileVisibility === 4) {
+    if (invitedUserVisibility.status === 4) {
       return this;
     }
 
@@ -180,8 +180,8 @@ abstract class UserHelper {
       }
     });
 
-    if (rating.status !== invitedUserVisibility.statusProfileVisibility) {
-      throw error(Errors.InvalidStatus, "Rating status doesn't match", { currentRatingStatus: rating.status, neededRatingStatus:  invitedUserVisibility.statusProfileVisibility });
+    if (rating.status !== invitedUserVisibility.status) {
+      throw error(Errors.InvalidStatus, "Rating status doesn't match", { currentRatingStatus: rating.status, neededRatingStatus:  invitedUserVisibility.status });
     }
 
     return this
@@ -281,32 +281,6 @@ abstract class UserHelper {
     });
   }
 
-  private async checkEmployerPriorityVisibility(visitor: User) {
-    const quests = await Quest.findAll({
-      where: {
-        userId: this.user.id,
-        priority: visitor.priority,
-      }
-    });
-
-    if (quests.length === 0) {
-      throw error(Errors.Forbidden, 'User hide its profile', { userId: this.user.id });
-    }
-  }
-
-  private async checkWorkerPriorityVisibility(visitor) {
-    const quests = await Quest.findAll({
-      where: {
-        userId: visitor.id,
-        priority: this.user.priority,
-      }
-    });
-
-    if (quests.length === 0) {
-      throw error(Errors.Forbidden, 'User hide its profile', { userId: this.user.id });
-    }
-  }
-
   private async checkWorkerProfileVisibility(visitor: User) {
     const quests = await Quest.findAll({
       where: { userId: visitor.id },
@@ -342,11 +316,11 @@ abstract class UserHelper {
   }
 
   public async checkProfileVisibility(visibility: ProfileVisibilitySetting, visitor: User): Promise<this> {
-    if (visibility.networkProfileVisibility === NetworkProfileVisibility.SubmittingOffer && this.user.role === UserRole.Employer) {
+    if (visibility.network === NetworkProfileVisibility.SubmittingOffer && this.user.role === UserRole.Employer) {
       await this.checkEmployerProfileVisibility(visitor);
     };
 
-    if (visibility.networkProfileVisibility === NetworkProfileVisibility.SubmittingOffer && this.user.role === UserRole.Worker) {
+    if (visibility.network === NetworkProfileVisibility.SubmittingOffer && this.user.role === UserRole.Worker) {
       await this.checkWorkerProfileVisibility(visitor);
     };
 

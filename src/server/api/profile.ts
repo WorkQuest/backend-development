@@ -97,7 +97,7 @@ export async function getAllUsers(r) {
               CASE WHEN EXISTS (SELECT "usr"."id" FROM "Users" as "usr"
                 INNER JOIN "ProfileVisibilitySettings" as "pvs" ON "pvs"."userId" = '${ r.auth.credentials.id }'
                 INNER JOIN "RatingStatistics" as rtn ON "rtn"."userId" = "User"."id"
-                  WHERE ("rtn"."status" = "pvs"."statusProfileVisibility" OR "pvs"."statusProfileVisibility" = 4)) THEN TRUE ELSE FALSE END
+                  WHERE ("rtn"."status" = "pvs"."status" OR "pvs"."status" = 4)) THEN TRUE ELSE FALSE END
             )
           ELSE TRUE END
          )
@@ -171,7 +171,7 @@ export function getUsers(role: UserRole, type: 'points' | 'list') {
               CASE WHEN EXISTS (SELECT "usr"."id" FROM "Users" as "usr"
                 INNER JOIN "ProfileVisibilitySettings" as "pvs" ON "pvs"."userId" = '${ r.auth.credentials.id }'
                 INNER JOIN "RatingStatistics" as rtn ON "rtn"."userId" = "User"."id"
-                  WHERE ("rtn"."status" = "pvs"."statusProfileVisibility" OR "pvs"."statusProfileVisibility" = 4)) THEN TRUE ELSE FALSE END
+                  WHERE ("rtn"."status" = "pvs"."status" OR "pvs"."status" = 4)) THEN TRUE ELSE FALSE END
             )
           ELSE TRUE END
          )
@@ -181,7 +181,7 @@ export function getUsers(role: UserRole, type: 'points' | 'list') {
     const order = [[userRaiseViewLiteral, 'asc'], [userRatingStatisticLiteral, 'asc']] as any;
     const include = [];
     const replacements = {};
-    //let distinctCol: '"User"."id"' | 'id' = '"User"."id"';
+    let distinctCol: '"User"."id"' | 'id' = '"User"."id"';
 
     const where = {
       role, [Op.and]: [],
