@@ -229,6 +229,8 @@ export function getUsers(role: UserRole, type: 'points' | 'list') {
         replacements['industryKey'] = industryKeys;
         where[Op.and].push(userSpecializationIndustryKeysAndPathsLiteral);
       }
+
+      //distinctCol = '"User"."id"';
     }
 
     for (const [key, value] of Object.entries(r.query.sort || {})) {
@@ -537,7 +539,7 @@ export async function payForMyRaiseView(r) {
     });
   } else { await raiseView.update({ endedAt: endOfRaiseView }) }
 
-  const temporaryEndingOfRaiseView = new Date(Date.now() + 60000);
+  const temporaryEndingOfRaiseView = new Date(Date.now() + 300000);
   await updateUserRaiseViewStatusJob({
     userId: r.auth.credentials.id,
     runAt: temporaryEndingOfRaiseView, /**TODO*/ //endOfRaiseView
