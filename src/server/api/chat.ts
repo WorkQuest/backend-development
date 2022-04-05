@@ -123,7 +123,8 @@ export async function getUserChat(r) {
         model: QuestDispute,
         as: 'dispute'
       }],
-      as: 'questChat'
+      as: 'questChat',
+      required: false,
     }],
   });
   const chatController = new ChatController(chat);
