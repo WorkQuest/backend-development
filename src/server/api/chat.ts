@@ -27,7 +27,6 @@ import {
   QuestChatStatuses,
   SenderMessageStatus,
 } from "@workquest/database-models/lib/models";
-var cron = require('node-cron')
 
 export const searchChatFields = ['name'];
 
