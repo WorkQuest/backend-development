@@ -297,6 +297,8 @@ export async function sendMessageToUser(r) {
   const lastMessage = await Message.findOne({
     order: [['createdAt', 'DESC']],
     where: { chatId: chat.id },
+    lock: 'UPDATE' as any,
+    transaction,
   });
 
   message.chatId = chat.id;
@@ -384,9 +386,11 @@ export async function sendMessageToChat(r) {
 
   const transaction = await r.server.app.db.transaction();
 
-  const lastMessage = await Message.findOne({
+  const lastMessage = await Message.unscoped().findOne({
     order: [['createdAt', 'DESC']],
     where: { chatId: chat.id },
+    lock: 'UPDATE' as any,
+    transaction,
   });
 
   const message = await Message.create(
