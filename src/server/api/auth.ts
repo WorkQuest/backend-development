@@ -80,7 +80,7 @@ export function register(host: 'dao' | 'main') {
   };
 }
 
-export function getLoginViaSocialNetworkHandler(returnType: 'token' | 'redirect') {
+export function getLoginViaSocialNetworkHandler(returnType: 'token' | 'redirect', platform: 'main' | 'dao') {
   return async function loginThroughSocialNetwork(r, h) {
     const profile = r.auth.credentials.profile;
     const { referralId } = r.auth.credentials.query;
@@ -108,12 +108,14 @@ export function getLoginViaSocialNetworkHandler(returnType: 'token' | 'redirect'
 
     if (returnType === 'redirect') {
       const qs = querystring.stringify(result);
+
       return h.redirect(
-        r.params.platform === 'main' ?
-          config.baseUrl + '/sign-in?' + qs :
-          config.baseUrlDao + '/sign-in?' + qs,
+        platform === 'main'
+          ? config.baseUrl + '/sign-in?' + qs
+          : config.baseUrlDao + '/sign-in?' + qs,
       );
     }
+
     return output(result);
   };
 }

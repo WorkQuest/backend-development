@@ -227,10 +227,10 @@ export default [
     [
       'dao',
       'main',
-    ].map(platform => ([{
+    ].map((platform: 'dao' | 'main')  => ([{
       method: 'GET',
       path: `/v1/auth/login/${platform}/${strategy}`,
-      handler: handlers.getLoginViaSocialNetworkHandler('redirect'),
+      handler: handlers.getLoginViaSocialNetworkHandler('redirect', platform),
       options: {
         auth: { strategy: strategy },
         id: `v1.auth.${platform}.login.${strategy}`,
@@ -243,7 +243,7 @@ export default [
     }, {
       method: 'GET',
       path: `/v1/auth/login/${platform}/${strategy}/token`,
-      handler: handlers.getLoginViaSocialNetworkHandler('token'),
+      handler: handlers.getLoginViaSocialNetworkHandler('token', platform),
       options: {
         auth: { strategy: strategy },
         id: `v1.auth.${platform}.login.${strategy}Tokens`,
