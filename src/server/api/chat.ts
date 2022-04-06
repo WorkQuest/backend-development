@@ -27,6 +27,7 @@ import {
   QuestChatStatuses,
   SenderMessageStatus,
 } from "@workquest/database-models/lib/models";
+var cron = require('node-cron')
 
 export const searchChatFields = ['name'];
 
@@ -294,7 +295,7 @@ export async function sendMessageToUser(r) {
     transaction,
   });
 
-  const lastMessage = await Message.findOne({
+  const lastMessage = await Message.unscoped().findOne({
     order: [['createdAt', 'DESC']],
     where: { chatId: chat.id },
     lock: 'UPDATE' as any,
