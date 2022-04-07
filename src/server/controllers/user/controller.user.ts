@@ -279,7 +279,7 @@ abstract class UserHelper {
     const quests = await Quest.unscoped().findAll({
       where: { userId: visitorUserController.user.id },
       include: [{
-        model: QuestsResponse,
+        model: QuestsResponse.unscoped(),
         as: 'response',
         where: {
           workerId: this.user.id,
@@ -295,10 +295,10 @@ abstract class UserHelper {
   }
 
   private async checkEmployerSubmittingJobOffer(visitorUserController: UserController) {
-    const quests = await Quest.findAll({
+    const quests = await Quest.unscoped().findAll({
       where: { userId: this.user.id, },
       include: [{
-        model: QuestsResponse,
+        model: QuestsResponse.unscoped(),
         as: 'response',
         where: {
           workerId: visitorUserController.user.id,
