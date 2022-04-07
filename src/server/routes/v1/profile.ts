@@ -25,6 +25,7 @@ import {
   userEmployersSchema,
   userFirstNameSchema,
   userStatisticsSchema,
+  accountAddressSchema,
   outputPaginationSchema,
   userRaiseViewTypeSchema,
   workerWagePerHourSchema,
@@ -33,7 +34,6 @@ import {
   userAdditionalInfoWorkerSchema,
   userAdditionalInfoEmployerSchema,
   profileVisibilitySettingsSchema,
-  accountAddressSchema
 } from "@workquest/database-models/lib/schemes";
 
 export default [{

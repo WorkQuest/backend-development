@@ -1,9 +1,9 @@
-import { Op, Transaction } from "sequelize";
-import { error } from "../../utils";
-import { Errors } from "../../utils/errors";
-import config from "../../config/config";
-import { totpValidate } from "@workquest/database-models/lib/utils";
-import { SkillsFiltersController } from "../controller.skillsFilters";
+import { Op, Transaction } from 'sequelize';
+import { error } from '../../utils';
+import { Errors } from '../../utils/errors';
+import config from '../../config/config';
+import { totpValidate } from '@workquest/database-models/lib/utils';
+import { SkillsFiltersController } from '../controller.skillsFilters';
 import { createReferralProgramJob } from '../../jobs/createReferralProgram';
 import { RatingStatus } from '@workquest/database-models/src/models/types';
 import {
