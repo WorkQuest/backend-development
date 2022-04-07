@@ -27,8 +27,6 @@ import {
   User
 } from "@workquest/database-models/lib/models";
 
-var cron = require('node-cron');
-
 export const searchChatFields = ['name'];
 
 export async function getUserChats(r) {
@@ -369,86 +367,84 @@ export async function sendMessageToUser(r) {
 }
 
 export async function sendMessageToChat(r) {
-  cron.schedule('52 13 * * *', async () => {
-    const medias = await MediaController.getMedias(r.payload.medias);
-    const chat = await Chat.findByPk(r.params.chatId);
-    const chatController = new ChatController(chat);
+  const medias = await MediaController.getMedias(r.payload.medias);
+  const chat = await Chat.findByPk(r.params.chatId);
+  const chatController = new ChatController(chat);
 
-    await chatController.chatMustHaveMember(r.auth.credentials.id);
+  await chatController.chatMustHaveMember(r.auth.credentials.id);
 
-    if (chat.type === ChatType.quest) {
-      chatController.questChatMastHaveStatus(QuestChatStatuses.Open);
-    }
+  if (chat.type === ChatType.quest) {
+    chatController.questChatMastHaveStatus(QuestChatStatuses.Open);
+  }
 
-    const transaction = await r.server.app.db.transaction();
+  const transaction = await r.server.app.db.transaction();
 
-    const lastMessage = await Message.unscoped().findOne({
-      order: [['createdAt', 'DESC']],
-      where: { chatId: chat.id },
-      lock: 'UPDATE' as any,
-      transaction,
-    });
-
-    const message = await Message.create(
-      {
-        senderUserId: r.auth.credentials.id,
-        chatId: chat.id,
-        type: MessageType.message,
-        text: r.payload.text,
-        senderStatus: SenderMessageStatus.unread,
-        number: lastMessage.number + 1,
-      },
-      { transaction },
-    );
-
-    await message.$set('medias', medias, { transaction });
-
-    await chat.update(
-      {
-        lastMessageId: message.id,
-        lastMessageDate: message.createdAt,
-      },
-      { transaction },
-    );
-
-    await transaction.commit();
-
-    const membersWithoutSender = await ChatMember.scope('userIdsOnly').findAll({
-      where: { chatId: chat.id, userId: { [Op.ne]: r.auth.credentials.id } },
-    });
-    const userIdsWithoutSender = membersWithoutSender.map((member) => member.userId);
-    const result = await Message.findByPk(message.id);
-
-    await resetUnreadCountMessagesOfMemberJob({
-      chatId: chat.id,
-      lastReadMessageId: message.id,
-      userId: r.auth.credentials.id,
-      lastReadMessageNumber: message.number,
-    });
-
-    await incrementUnreadCountMessageOfMembersJob({
-      chatId: chat.id,
-      notifierUserId: r.auth.credentials.id,
-    });
-
-    await setMessageAsReadJob({
-      lastUnreadMessage: { id: message.id, number: message.number },
-      chatId: r.params.chatId,
-      senderId: r.auth.credentials.id,
-    });
-
-    await updateCountUnreadChatsJob({
-      userIds: [r.auth.credentials.id, ...userIdsWithoutSender],
-    });
-
-    r.server.app.broker.sendChatNotification({
-      action: ChatNotificationActions.newMessage,
-      recipients: userIdsWithoutSender,
-      data: result,
-    });
-
-    return output(result);
+  const lastMessage = await Message.unscoped().findOne({
+    order: [['createdAt', 'DESC']],
+    where: { chatId: chat.id },
+    lock: 'UPDATE' as any,
+    transaction,
   });
+
+  const message = await Message.create(
+    {
+      senderUserId: r.auth.credentials.id,
+      chatId: chat.id,
+      type: MessageType.message,
+      text: r.payload.text,
+      senderStatus: SenderMessageStatus.unread,
+      number: lastMessage.number + 1,
+    },
+    { transaction },
+  );
+
+  await message.$set('medias', medias, { transaction });
+
+  await chat.update(
+    {
+      lastMessageId: message.id,
+      lastMessageDate: message.createdAt,
+    },
+    { transaction },
+  );
+
+  await transaction.commit();
+
+  const membersWithoutSender = await ChatMember.scope('userIdsOnly').findAll({
+    where: { chatId: chat.id, userId: { [Op.ne]: r.auth.credentials.id } },
+  });
+  const userIdsWithoutSender = membersWithoutSender.map((member) => member.userId);
+  const result = await Message.findByPk(message.id);
+
+  await resetUnreadCountMessagesOfMemberJob({
+    chatId: chat.id,
+    lastReadMessageId: message.id,
+    userId: r.auth.credentials.id,
+    lastReadMessageNumber: message.number,
+  });
+
+  await incrementUnreadCountMessageOfMembersJob({
+    chatId: chat.id,
+    notifierUserId: r.auth.credentials.id,
+  });
+
+  await setMessageAsReadJob({
+    lastUnreadMessage: { id: message.id, number: message.number },
+    chatId: r.params.chatId,
+    senderId: r.auth.credentials.id,
+  });
+
+  await updateCountUnreadChatsJob({
+    userIds: [r.auth.credentials.id, ...userIdsWithoutSender],
+  });
+
+  r.server.app.broker.sendChatNotification({
+    action: ChatNotificationActions.newMessage,
+    recipients: userIdsWithoutSender,
+    data: result,
+  });
+
+  return output(result);
 }
 
 export async function addUsersInGroupChat(r) {
