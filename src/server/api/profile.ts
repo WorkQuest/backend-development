@@ -89,12 +89,12 @@ export async function getUserByWallet(r) {
 export async function getAllUsers(r) {
   const user = r.auth.credentials;
   const priorityVisibilityLiteral = literal(
-    `( CASE WHEN "User"."role" != '${ user.role }' THEN` +
-    '(CASE WHEN EXISTS (SELECT "usr"."id" FROM "Users" as "usr"' +
-    `INNER JOIN "ProfileVisibilitySettings" as "pvs" ON "pvs"."userId" = '${ r.auth.credentials.id }'` +
-    'INNER JOIN "RatingStatistics" as rtn ON "rtn"."userId" = "User"."id"' +
-    'WHERE ("rtn"."status" = "pvs"."ratingStatus" OR "pvs"."ratingStatus" = 4)) THEN TRUE ELSE FALSE END)' +
-    'ELSE TRUE END)'
+    `( CASE WHEN "User"."role" != '${ user.role }' THEN ` +
+    '(CASE WHEN EXISTS (SELECT "usr"."id" FROM "Users" as "usr" ' +
+    `INNER JOIN "ProfileVisibilitySettings" as "pvs" ON "pvs"."userId" = '${ r.auth.credentials.id }' ` +
+    'INNER JOIN "RatingStatistics" as rtn ON "rtn"."userId" = "User"."id" ' +
+    'WHERE ("rtn"."status" = "pvs"."ratingStatus" OR "pvs"."ratingStatus" = 4)) THEN TRUE ELSE FALSE END) ' +
+    'ELSE TRUE END) '
   );
 
   const where = {
@@ -154,12 +154,12 @@ export function getUsers(role: UserRole, type: 'points' | 'list') {
       '(SELECT "status" FROM "RatingStatistics" WHERE "userId" = "User"."id")'
     );
     const priorityVisibilityLiteral = literal(
-      `( CASE WHEN "User"."role" != '${ user.role }' THEN` +
-      '(CASE WHEN EXISTS (SELECT "usr"."id" FROM "Users" as "usr"' +
-      `INNER JOIN "ProfileVisibilitySettings" as "pvs" ON "pvs"."userId" = '${ r.auth.credentials.id }'` +
-      'INNER JOIN "RatingStatistics" as rtn ON "rtn"."userId" = "User"."id"' +
-      'WHERE ("rtn"."status" = "pvs"."ratingStatus" OR "pvs"."ratingStatus" = 4)) THEN TRUE ELSE FALSE END)' +
-      'ELSE TRUE END)'
+      `( CASE WHEN "User"."role" != '${ user.role }' THEN ` +
+      '(CASE WHEN EXISTS (SELECT "usr"."id" FROM "Users" as "usr" ' +
+      `INNER JOIN "ProfileVisibilitySettings" as "pvs" ON "pvs"."userId" = '${ r.auth.credentials.id }' ` +
+      'INNER JOIN "RatingStatistics" as rtn ON "rtn"."userId" = "User"."id" ' +
+      'WHERE ("rtn"."status" = "pvs"."ratingStatus" OR "pvs"."ratingStatus" = 4)) THEN TRUE ELSE FALSE END) ' +
+      'ELSE TRUE END) '
     );
 
     const order = [[userRaiseViewLiteral, 'asc'], [userRatingStatisticLiteral, 'asc']] as any;
