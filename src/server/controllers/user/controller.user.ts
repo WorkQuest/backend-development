@@ -1,23 +1,29 @@
-import { Op, Transaction } from 'sequelize';
-import { error } from '../../utils';
-import { Errors } from '../../utils/errors';
-import config from '../../config/config';
-import { totpValidate } from '@workquest/database-models/lib/utils';
-import { SkillsFiltersController } from '../controller.skillsFilters';
-import { createReferralProgramJob } from '../../jobs/createReferralProgram';
+import { Op, Transaction } from "sequelize";
+import { error } from "../../utils";
+import { Errors } from "../../utils/errors";
+import config from "../../config/config";
+import { totpValidate } from "@workquest/database-models/lib/utils";
+import { SkillsFiltersController } from "../controller.skillsFilters";
+import { createReferralProgramJob } from "../../jobs/createReferralProgram";
 import {
-  User,
-  Session,
-  UserRole,
-  UserStatus,
-  QuestDispute,
-  UserRaiseView,
   ChatsStatistic,
-  UserRaiseStatus,
+  defaultUserSettings,
+  NetworkProfileVisibility,
+  ProfileVisibilitySetting,
+  Quest,
+  QuestDispute,
+  QuestsResponse,
+  QuestsResponseStatus,
   QuestsStatistic,
   RatingStatistic,
-  defaultUserSettings,
+  RatingStatus,
+  Session,
+  User,
+  UserRaiseStatus,
+  UserRaiseView,
+  UserRole,
   UserSpecializationFilter,
+  UserStatus
 } from "@workquest/database-models/lib/models";
 
 abstract class UserHelper {
@@ -136,7 +142,7 @@ abstract class UserHelper {
     const emailUsed = await User.findOne({ where: { email: { [Op.iLike]: email } } });
 
     if (emailUsed) {
-      throw error(Errors.InvalidPayload, 'Email used', [{ field: 'email', reason: 'used' }]);
+      throw error(Errors.InvalidPayload, 'Email used', { field: 'email', reason: 'used' });
     }
   }
 
@@ -156,6 +162,23 @@ abstract class UserHelper {
       throw error(Errors.InvalidStatus, "User status doesn't match", {
         current: this.user.status,
         mustHave: statuses,
+      });
+    }
+
+    return this;
+  }
+
+  public async ratingShouldCoincide(comparableUserController: UserController): Promise<this> {
+    const profileVisibility = await comparableUserController.getProfileVisibilitySettings();
+
+    if (profileVisibility.ratingStatus === RatingStatus.AllStatuses) {
+      return this;
+    }
+    if (this.user.ratingStatistic.status !== profileVisibility.ratingStatus) {
+      throw error(Errors.InvalidStatus, `User rating doesn't coincide to profile visibility setting of ${comparableUserController.user.id}`, {
+        userId: this.user.id,
+        currentRatingStatus: this.user.ratingStatistic.status,
+        coincideUserRatingStatus: profileVisibility.ratingStatus,
       });
     }
 
@@ -206,7 +229,7 @@ abstract class UserHelper {
 
   public checkTotpConfirmationCode(code): this {
     if (!totpValidate(code, this.user.settings.security.TOTP.secret)) {
-      throw error(Errors.InvalidPayload, 'TOTP is invalid', [{ field: 'totp', reason: 'invalid' }]);
+      throw error(Errors.InvalidPayload, 'TOTP is invalid', { field: 'totp', reason: 'invalid' });
     }
 
     return this;
@@ -214,12 +237,12 @@ abstract class UserHelper {
 
   public checkActivationCodeTotp(code): this {
     if (this.user.settings.security.TOTP.confirmCode !== code) {
-      throw error(Errors.InvalidPayload, 'Confirmation code is not correct', [
+      throw error(Errors.InvalidPayload, 'Confirmation code is not correct',
         {
           field: 'confirmCode',
           reason: 'invalid',
         },
-      ]);
+      );
     }
 
     return this;
@@ -235,7 +258,7 @@ abstract class UserHelper {
 
   public checkUserConfirmationCode(confirmCode): this {
     if (this.user.settings.emailConfirm.toLowerCase() !== confirmCode.toLowerCase()) {
-      throw error(Errors.InvalidPayload, 'Invalid confirmation code', [{ field: 'confirmCode', reason: 'invalid' }]);
+      throw error(Errors.InvalidPayload, 'Invalid confirmation code', { field: 'confirmCode', reason: 'invalid' });
     }
 
     return this;
@@ -245,7 +268,7 @@ abstract class UserHelper {
     const isUserDisputeMember = dispute.openDisputeUserId === this.user.id ? true : (dispute.opponentUserId === this.user.id);
 
     if (!isUserDisputeMember) {
-      throw error(Errors.InvalidRole, 'User is not dispute member', [{userId: this.user.id}]);
+      throw error(Errors.InvalidRole, 'User is not dispute member', { userId: this.user.id });
     }
     return this;
   }
@@ -254,6 +277,71 @@ abstract class UserHelper {
     await UserRaiseView.create({
       userId: this.user.id,
     });
+  }
+
+  private async checkWorkerSubmittingJobOffer(visitorUserController: UserController) {
+    if (visitorUserController.user.role === UserRole.Worker) {
+      throw error(Errors.Forbidden, 'User hide its profile', { userId: this.user.id });
+    }
+
+    const quests = await Quest.unscoped().findAll({
+      where: { userId: visitorUserController.user.id },
+      include: [{
+        model: QuestsResponse.unscoped(),
+        as: 'response',
+        where: {
+          workerId: this.user.id,
+          status: { [Op.notIn]: [
+            QuestsResponseStatus.Closed,
+            QuestsResponseStatus.Rejected,
+          ] },
+        },
+        required: true,
+      }]
+    });
+
+    if (quests.length === 0) {
+      throw error(Errors.Forbidden, 'User hide its profile', { userId: this.user.id });
+    }
+  }
+
+  private async checkEmployerSubmittingJobOffer(visitorUserController: UserController) {
+    if (visitorUserController.user.role === UserRole.Employer) {
+      throw error(Errors.Forbidden, 'User hide its profile', { userId: this.user.id });
+    }
+
+    const quests = await Quest.unscoped().findAll({
+      where: { userId: this.user.id, },
+      include: [{
+        model: QuestsResponse.unscoped(),
+        as: 'response',
+        where: {
+          workerId: visitorUserController.user.id,
+          status: { [Op.notIn]: [
+            QuestsResponseStatus.Closed,
+            QuestsResponseStatus.Rejected,
+          ] },
+        },
+        required: true,
+      }]
+    });
+
+    if (quests.length === 0) {
+      throw error(Errors.Forbidden, 'User hide its profile', { userId: this.user.id });
+    }
+  }
+
+  public async canVisitMyProfile(visitorUserController: UserController): Promise<this> {
+    const profileVisibility = await ProfileVisibilitySetting.findOne({where: { userId: this.user.id } });
+
+    if (profileVisibility.network === NetworkProfileVisibility.SubmittingOffer && this.user.role === UserRole.Employer) {
+      await this.checkEmployerSubmittingJobOffer(visitorUserController);
+    }
+    if (profileVisibility.network === NetworkProfileVisibility.SubmittingOffer && this.user.role === UserRole.Worker) {
+      await this.checkWorkerSubmittingJobOffer(visitorUserController);
+    }
+
+    return this;
   }
 }
 
@@ -264,6 +352,10 @@ export class UserController extends UserHelper {
     if (!user) {
       throw error(Errors.NotFound, 'User not found', {});
     }
+  }
+
+  public async getProfileVisibilitySettings(): Promise<ProfileVisibilitySetting> {
+    return ProfileVisibilitySetting.findOne({ where: { userId: this.user.id } });
   }
 
   public async setRole(role: UserRole, transaction?: Transaction) {
@@ -381,6 +473,10 @@ export class UserController extends UserHelper {
       defaults: { userId: userId },
     });
     await QuestsStatistic.findOrCreate({
+      where: { userId: userId },
+      defaults: { userId: userId },
+    });
+    await ProfileVisibilitySetting.findOrCreate({
       where: { userId: userId },
       defaults: { userId: userId },
     });

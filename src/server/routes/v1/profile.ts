@@ -33,6 +33,7 @@ import {
   userRaiseViewDurationSchema,
   userAdditionalInfoWorkerSchema,
   userAdditionalInfoEmployerSchema,
+  profileVisibilitySettingsSchema,
 } from "@workquest/database-models/lib/schemes";
 
 export default [{
@@ -170,6 +171,7 @@ export default [{
         phoneNumber: phoneSchema.allow(null).required(),
         locationFull: locationFullSchema.allow(null).required(),
         additionalInfo: userAdditionalInfoEmployerSchema.required(),
+        profileVisibility: profileVisibilitySettingsSchema.required(),
       }).label("EditEmployerProfilePayload")
     },
     response: {
@@ -197,6 +199,7 @@ export default [{
         additionalInfo: userAdditionalInfoWorkerSchema.required(),
         wagePerHour: workerWagePerHourSchema.allow(null).required(),
         specializationKeys: specializationKeysSchema.allow(null).required().unique(),
+        profileVisibility: profileVisibilitySettingsSchema.required(),
       }).label("EditWorkerProfilePayload")
     },
     response: {
