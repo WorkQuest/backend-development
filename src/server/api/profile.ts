@@ -56,13 +56,13 @@ export async function getUser(r) {
   });
   const userController = new UserController(user);
 
-  const profileVisibility = await ProfileVisibilitySetting.findOne({where: { userId: userController.user.id } });
-
   userController
     .checkNotSeeYourself(r.auth.credentials.id)
     .userMustHaveStatus(UserStatus.Confirmed)
 
-  await userController.checkProfileVisibility(profileVisibility, r.auth.credentials);
+  const visitorController = new UserController(r.auth.credentials)
+
+  await visitorController.canVisitProfile(userController);
 
   return output(userController.user);
 }

@@ -55,7 +55,8 @@ export async function responseOnQuest(r) {
     // }
   }
 
-  await workerController.userMustHaveRating(questController.quest.userId);
+  const employerController = new UserController(quest.user);
+  await workerController.ratingShouldCoincide(employerController);
 
   const transaction = await r.server.app.db.transaction();
 
@@ -190,7 +191,8 @@ export async function inviteOnQuest(r) {
     // }
   }
 
-  await employerController.userMustHaveRating(invitedWorker.id);
+  const workerController = new UserController(quest.assignedWorker);
+  await employerController.ratingShouldCoincide(workerController);
 
   const transaction = await r.server.app.db.transaction();
 

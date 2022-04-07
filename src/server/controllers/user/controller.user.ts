@@ -168,24 +168,17 @@ abstract class UserHelper {
     return this;
   }
 
-  public async userMustHaveRating(invitedUserId: string): Promise<this> {
-    const invitedUserVisibility = await ProfileVisibilitySetting.findOne({ where: { userId: invitedUserId } });
+  public async ratingShouldCoincide(comparableUserController: UserController): Promise<this> {
+    const profileVisibility = await comparableUserController.getProfileVisibilitySettings();
 
-    if (invitedUserVisibility.ratingStatus === 4) {
-      return this;
+    if (profileVisibility.ratingStatus === RatingStatus.AllStatuses) { return this }
+
+    if (this.user.ratingStatistic.status !== profileVisibility.ratingStatus) {
+      throw error(Errors.InvalidStatus, `User rating doesn't coincide to profile visibility setting of ${comparableUserController.user.id}`,
+        { userId: this.user.id, currentRatingStatus: this.user.ratingStatistic.status, coincideUserRatingStatus:  profileVisibility.ratingStatus });
     }
 
-    const rating = await RatingStatistic.findOne({
-      where: {
-        userId: this.user.id,
-      }
-    });
-
-    if (rating.status !== invitedUserVisibility.ratingStatus) {
-      throw error(Errors.InvalidStatus, "Rating status doesn't match", { currentRatingStatus: rating.status, neededRatingStatus:  invitedUserVisibility.ratingStatus });
-    }
-
-    return this
+    return this;
   }
 
   public userNeedsSetRole(): this {
@@ -316,14 +309,16 @@ abstract class UserHelper {
     if (quests.length === 0) throw error(Errors.Forbidden, 'User hide its profile', [{userId: this.user.id}]);
   }
 
-  public async checkProfileVisibility(visibility: ProfileVisibilitySetting, visitor: User): Promise<this> {
-    if (visibility.network === NetworkProfileVisibility.SubmittingOffer && this.user.role === UserRole.Employer) {
-      await this.checkEmployerProfileVisibility(visitor);
-    };
+  public async canVisitProfile(visitedUser: UserController): Promise<this> {
+    const profileVisibility = await ProfileVisibilitySetting.findOne({where: { userId: visitedUser.user.id } });
 
-    if (visibility.network === NetworkProfileVisibility.SubmittingOffer && this.user.role === UserRole.Worker) {
-      await this.checkWorkerProfileVisibility(visitor);
-    };
+    if (profileVisibility.network === NetworkProfileVisibility.SubmittingOffer && visitedUser.user.role === UserRole.Employer) {
+      await visitedUser.checkEmployerProfileVisibility(this.user);
+    }
+
+    if (profileVisibility.network === NetworkProfileVisibility.SubmittingOffer && visitedUser.user.role === UserRole.Worker) {
+      await visitedUser.checkWorkerProfileVisibility(this.user);
+    }
 
     return this;
   }
@@ -337,6 +332,10 @@ export class UserController extends UserHelper {
     if (!user) {
       throw error(Errors.NotFound, 'User not found', {});
     }
+  }
+
+  public async getProfileVisibilitySettings(): Promise<ProfileVisibilitySetting> {
+    return ProfileVisibilitySetting.findOne({ where: { userId: this.user.id } });
   }
 
   public async setRole(role: UserRole, transaction?: Transaction) {
