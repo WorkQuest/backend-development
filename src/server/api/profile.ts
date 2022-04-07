@@ -55,14 +55,12 @@ export async function getUser(r) {
     include: [{ model: Wallet, as: 'wallet', attributes: ['address'] }],
   });
   const userController = new UserController(user);
-
-  userController
-    .checkNotSeeYourself(r.auth.credentials.id)
-    .userMustHaveStatus(UserStatus.Confirmed)
-
   const visitorController = new UserController(r.auth.credentials)
 
-  await visitorController.canVisitProfile(userController);
+  await userController
+    .checkNotSeeYourself(r.auth.credentials.id)
+    .userMustHaveStatus(UserStatus.Confirmed)
+    .canVisitMyProfile(visitorController)
 
   return output(userController.user);
 }

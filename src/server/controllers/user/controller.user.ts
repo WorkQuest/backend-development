@@ -275,9 +275,9 @@ abstract class UserHelper {
     });
   }
 
-  private async checkWorkerProfileVisibility(visitor: User) {
+  private async checkWorkerProfileVisibility(visitorUserId: string) {
     const quests = await Quest.findAll({
-      where: { userId: visitor.id },
+      where: { userId: visitorUserId },
       include: [{
         model: QuestsResponse,
         as: 'response',
@@ -292,14 +292,14 @@ abstract class UserHelper {
     if (quests.length === 0) throw error(Errors.Forbidden, 'User hide its profile', [{userId: this.user.id}]);
   }
 
-  private async checkEmployerProfileVisibility(visitor: User) {
+  private async checkEmployerProfileVisibility(visitorUserId: string) {
     const quests = await Quest.findAll({
       where: { userId: this.user.id, },
       include: [{
         model: QuestsResponse,
         as: 'response',
         where: {
-          workerId: visitor.id,
+          workerId: visitorUserId,
           status: { [Op.ne]: QuestsResponseStatus.Rejected },
         },
         required: true,
@@ -309,15 +309,15 @@ abstract class UserHelper {
     if (quests.length === 0) throw error(Errors.Forbidden, 'User hide its profile', [{userId: this.user.id}]);
   }
 
-  public async canVisitProfile(visitedUser: UserController): Promise<this> {
-    const profileVisibility = await ProfileVisibilitySetting.findOne({where: { userId: visitedUser.user.id } });
+  public async canVisitMyProfile(visitorUserController: UserController): Promise<this> {
+    const profileVisibility = await ProfileVisibilitySetting.findOne({where: { userId: this.user.id } });
 
-    if (profileVisibility.network === NetworkProfileVisibility.SubmittingOffer && visitedUser.user.role === UserRole.Employer) {
-      await visitedUser.checkEmployerProfileVisibility(this.user);
+    if (profileVisibility.network === NetworkProfileVisibility.SubmittingOffer && this.user.role === UserRole.Employer) {
+      await this.checkEmployerProfileVisibility(visitorUserController.user.id);
     }
 
-    if (profileVisibility.network === NetworkProfileVisibility.SubmittingOffer && visitedUser.user.role === UserRole.Worker) {
-      await visitedUser.checkWorkerProfileVisibility(this.user);
+    if (profileVisibility.network === NetworkProfileVisibility.SubmittingOffer && this.user.role === UserRole.Worker) {
+      await this.checkWorkerProfileVisibility(visitorUserController.user.id);
     }
 
     return this;
