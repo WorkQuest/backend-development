@@ -292,19 +292,22 @@ export function editProfile(userRole: UserRole) {
       await userController.setUserSpecializations(r.payload.specializationKeys, transaction);
     }
 
-    await ProfileVisibilitySetting.update(r.payload.profileVisibility, { where: { userId: r.auth.credentials.id } });
-
-    await user.update({
-      ...phonesFields,
-      ...locationFields,
-      avatarId: avatarId,
-      lastName: r.payload.lastName,
-      firstName: r.payload.firstName,
-      priority: r.payload.priority || null,
-      workplace: r.payload.workplace || null,
-      wagePerHour: r.payload.wagePerHour || null,
-      additionalInfo: r.payload.additionalInfo,
-    }, transaction);
+    await Promise.all([
+      ProfileVisibilitySetting.update(r.payload.profileVisibility, {
+        where: { userId: r.auth.credentials.id }, transaction,
+      }),
+      user.update({
+        ...phonesFields,
+        ...locationFields,
+        avatarId: avatarId,
+        lastName: r.payload.lastName,
+        firstName: r.payload.firstName,
+        priority: r.payload.priority || null,
+        workplace: r.payload.workplace || null,
+        wagePerHour: r.payload.wagePerHour || null,
+        additionalInfo: r.payload.additionalInfo,
+      }, transaction),
+    ]);
 
     await transaction.commit();
 
