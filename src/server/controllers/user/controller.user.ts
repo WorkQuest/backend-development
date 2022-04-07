@@ -171,11 +171,15 @@ abstract class UserHelper {
   public async ratingShouldCoincide(comparableUserController: UserController): Promise<this> {
     const profileVisibility = await comparableUserController.getProfileVisibilitySettings();
 
-    if (profileVisibility.ratingStatus === RatingStatus.AllStatuses) { return this }
-
+    if (profileVisibility.ratingStatus === RatingStatus.AllStatuses) {
+      return this;
+    }
     if (this.user.ratingStatistic.status !== profileVisibility.ratingStatus) {
-      throw error(Errors.InvalidStatus, `User rating doesn't coincide to profile visibility setting of ${comparableUserController.user.id}`,
-        { userId: this.user.id, currentRatingStatus: this.user.ratingStatistic.status, coincideUserRatingStatus:  profileVisibility.ratingStatus });
+      throw error(Errors.InvalidStatus, `User rating doesn't coincide to profile visibility setting of ${comparableUserController.user.id}`, {
+        userId: this.user.id,
+        currentRatingStatus: this.user.ratingStatistic.status,
+        coincideUserRatingStatus: profileVisibility.ratingStatus,
+      });
     }
 
     return this;
@@ -277,7 +281,7 @@ abstract class UserHelper {
 
   private async checkWorkerSubmittingJobOffer(visitorUserController: UserController) {
     if (visitorUserController.user.role === UserRole.Worker) {
-      throw error(Errors.Forbidden, 'User hide its profile', [{ userId: this.user.id }]);
+      throw error(Errors.Forbidden, 'User hide its profile', { userId: this.user.id });
     }
 
     const quests = await Quest.unscoped().findAll({
@@ -287,19 +291,23 @@ abstract class UserHelper {
         as: 'response',
         where: {
           workerId: this.user.id,
-          status: { [Op.notIn]: [ QuestsResponseStatus.Rejected, QuestsResponseStatus.Closed ] },
+          status: { [Op.notIn]: [
+            QuestsResponseStatus.Closed,
+            QuestsResponseStatus.Rejected,
+          ] },
         },
         required: true,
       }]
     });
 
-    if (quests.length === 0) throw error(Errors.Forbidden, 'User hide its profile', [{ userId: this.user.id }]);
-
+    if (quests.length === 0) {
+      throw error(Errors.Forbidden, 'User hide its profile', { userId: this.user.id });
+    }
   }
 
   private async checkEmployerSubmittingJobOffer(visitorUserController: UserController) {
     if (visitorUserController.user.role === UserRole.Employer) {
-      throw error(Errors.Forbidden, 'User hide its profile', [{ userId: this.user.id }]);
+      throw error(Errors.Forbidden, 'User hide its profile', { userId: this.user.id });
     }
 
     const quests = await Quest.unscoped().findAll({
@@ -309,14 +317,18 @@ abstract class UserHelper {
         as: 'response',
         where: {
           workerId: visitorUserController.user.id,
-          status: { [Op.notIn]: [ QuestsResponseStatus.Rejected, QuestsResponseStatus.Closed ] },
+          status: { [Op.notIn]: [
+            QuestsResponseStatus.Closed,
+            QuestsResponseStatus.Rejected,
+          ] },
         },
         required: true,
       }]
     });
 
-    if (quests.length === 0) throw error(Errors.Forbidden, 'User hide its profile', [{ userId: this.user.id }]);
-
+    if (quests.length === 0) {
+      throw error(Errors.Forbidden, 'User hide its profile', { userId: this.user.id });
+    }
   }
 
   public async canVisitMyProfile(visitorUserController: UserController): Promise<this> {
@@ -325,14 +337,12 @@ abstract class UserHelper {
     if (profileVisibility.network === NetworkProfileVisibility.SubmittingOffer && this.user.role === UserRole.Employer) {
       await this.checkEmployerSubmittingJobOffer(visitorUserController);
     }
-
     if (profileVisibility.network === NetworkProfileVisibility.SubmittingOffer && this.user.role === UserRole.Worker) {
       await this.checkWorkerSubmittingJobOffer(visitorUserController);
     }
 
     return this;
   }
-
 }
 
 export class UserController extends UserHelper {
