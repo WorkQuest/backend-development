@@ -292,16 +292,7 @@ export function editProfile(userRole: UserRole) {
       await userController.setUserSpecializations(r.payload.specializationKeys, transaction);
     }
 
-    if (r.payload.profileVisibility) {
-      const [profileVisibility, isCreated] = await ProfileVisibilitySetting.findOrCreate({
-        where: {
-          userId: r.auth.credentials.id
-        },
-        defaults: { userId: r.auth.credentials.id }
-      });
-
-      await profileVisibility.update(r.payload.profileVisibility);
-    }
+    await ProfileVisibilitySetting.update(r.payload.profileVisibility, { where: { userId: r.auth.credentials.id } });
 
     await user.update({
       ...phonesFields,
