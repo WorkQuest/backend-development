@@ -87,44 +87,35 @@ export async function getUserByWallet(r) {
 }
 
 export async function getAllUsers(r) {
+  const user = r.auth.credentials;
   const priorityVisibilityLiteral = literal(
-    `
-         (
-          CASE WHEN "User"."role" != '${ r.auth.credentials.role }' THEN
-            (
-              CASE WHEN EXISTS (SELECT "usr"."id" FROM "Users" as "usr"
-                INNER JOIN "ProfileVisibilitySettings" as "pvs" ON "pvs"."userId" = '${ r.auth.credentials.id }'
-                INNER JOIN "RatingStatistics" as rtn ON "rtn"."userId" = "User"."id"
-                  WHERE ("rtn"."status" = "pvs"."status" OR "pvs"."status" = 4)) THEN TRUE ELSE FALSE END
-            )
-          ELSE TRUE END
-         )
-       `
+    `( CASE WHEN "User"."role" != '${ user.role }' THEN` +
+    '(CASE WHEN EXISTS (SELECT "usr"."id" FROM "Users" as "usr"' +
+    `INNER JOIN "ProfileVisibilitySettings" as "pvs" ON "pvs"."userId" = '${ r.auth.credentials.id }'` +
+    'INNER JOIN "RatingStatistics" as rtn ON "rtn"."userId" = "User"."id"' +
+    'WHERE ("rtn"."status" = "pvs"."ratingStatus" OR "pvs"."ratingStatus" = 4)) THEN TRUE ELSE FALSE END)' +
+    'ELSE TRUE END)'
   );
 
   const where = {
     status: UserStatus.Confirmed,
     id: { [Op.ne]: r.auth.credentials.id }
   };
-  const include = [];
+  const include = [{
+    model: Wallet,
+    as: 'wallet',
+    attributes: ['address'],
+    required: r.query.walletRequired,
+  }, {
+    model: ProfileVisibilitySetting,
+    as: 'profileVisibilitySetting',
+  }];
 
   if (r.query.q) {
     where[Op.or] = searchFields.map(
       field => ({ [field]: { [Op.iLike]: `%${r.query.q}%` }})
     );
   }
-
-  include.push({
-    model: Wallet,
-    as: 'wallet',
-    attributes: ['address'],
-    required: r.query.walletRequired,
-  });
-
-  include.push({
-    model: ProfileVisibilitySetting,
-    as: 'profileVisibilitySetting',
-  });
 
   where[Op.and] = [priorityVisibilityLiteral];
 
@@ -142,6 +133,7 @@ export async function getAllUsers(r) {
 
 export function getUsers(role: UserRole, type: 'points' | 'list') {
   return async function(r) {
+    const user = r.auth.credentials;
     const entersAreaLiteral = literal(
       'st_within("User"."locationPostGIS", st_makeenvelope(:northLng, :northLat, :southLng, :southLat, 4326))'
     );
@@ -162,18 +154,12 @@ export function getUsers(role: UserRole, type: 'points' | 'list') {
       '(SELECT "status" FROM "RatingStatistics" WHERE "userId" = "User"."id")'
     );
     const priorityVisibilityLiteral = literal(
-      `
-         (
-          CASE WHEN "User"."role" != '${ r.auth.credentials.role }' THEN
-            (
-              CASE WHEN EXISTS (SELECT "usr"."id" FROM "Users" as "usr"
-                INNER JOIN "ProfileVisibilitySettings" as "pvs" ON "pvs"."userId" = '${ r.auth.credentials.id }'
-                INNER JOIN "RatingStatistics" as rtn ON "rtn"."userId" = "User"."id"
-                  WHERE ("rtn"."status" = "pvs"."status" OR "pvs"."status" = 4)) THEN TRUE ELSE FALSE END
-            )
-          ELSE TRUE END
-         )
-       `
+      `( CASE WHEN "User"."role" != '${ user.role }' THEN` +
+      '(CASE WHEN EXISTS (SELECT "usr"."id" FROM "Users" as "usr"' +
+      `INNER JOIN "ProfileVisibilitySettings" as "pvs" ON "pvs"."userId" = '${ r.auth.credentials.id }'` +
+      'INNER JOIN "RatingStatistics" as rtn ON "rtn"."userId" = "User"."id"' +
+      'WHERE ("rtn"."status" = "pvs"."ratingStatus" OR "pvs"."ratingStatus" = 4)) THEN TRUE ELSE FALSE END)' +
+      'ELSE TRUE END)'
     );
 
     const order = [[userRaiseViewLiteral, 'asc'], [userRatingStatisticLiteral, 'asc']] as any;

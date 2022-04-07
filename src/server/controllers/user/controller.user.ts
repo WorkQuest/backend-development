@@ -5,7 +5,6 @@ import config from '../../config/config';
 import { totpValidate } from '@workquest/database-models/lib/utils';
 import { SkillsFiltersController } from '../controller.skillsFilters';
 import { createReferralProgramJob } from '../../jobs/createReferralProgram';
-import { RatingStatus } from '@workquest/database-models/src/models/types';
 import {
   User,
   Quest,
@@ -13,6 +12,7 @@ import {
   UserRole,
   UserStatus,
   QuestDispute,
+  RatingStatus,
   UserRaiseView,
   ChatsStatistic,
   QuestsResponse,
