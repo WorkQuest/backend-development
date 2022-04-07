@@ -276,6 +276,10 @@ abstract class UserHelper {
   }
 
   private async checkWorkerSubmittingJobOffer(visitorUserController: UserController) {
+    if (visitorUserController.user.role === UserRole.Worker) {
+      throw error(Errors.Forbidden, 'User hide its profile', [{ userId: this.user.id }]);
+    }
+
     const quests = await Quest.unscoped().findAll({
       where: { userId: visitorUserController.user.id },
       include: [{
@@ -289,12 +293,15 @@ abstract class UserHelper {
       }]
     });
 
-    if (visitorUserController.user.role === UserRole.Worker || quests.length === 0) {
-      throw error(Errors.Forbidden, 'User hide its profile', [{ userId: this.user.id }]);
-    }
+    if (quests.length === 0) throw error(Errors.Forbidden, 'User hide its profile', [{ userId: this.user.id }]);
+
   }
 
   private async checkEmployerSubmittingJobOffer(visitorUserController: UserController) {
+    if (visitorUserController.user.role === UserRole.Employer) {
+      throw error(Errors.Forbidden, 'User hide its profile', [{ userId: this.user.id }]);
+    }
+
     const quests = await Quest.unscoped().findAll({
       where: { userId: this.user.id, },
       include: [{
@@ -308,9 +315,8 @@ abstract class UserHelper {
       }]
     });
 
-    if (visitorUserController.user.role === UserRole.Employer || quests.length === 0) {
-      throw error(Errors.Forbidden, 'User hide its profile', [{ userId: this.user.id }]);
-    }
+    if (quests.length === 0) throw error(Errors.Forbidden, 'User hide its profile', [{ userId: this.user.id }]);
+
   }
 
   public async canVisitMyProfile(visitorUserController: UserController): Promise<this> {
