@@ -1,29 +1,29 @@
-import { Op, Transaction } from 'sequelize';
-import { error } from '../../utils';
-import { Errors } from '../../utils/errors';
-import config from '../../config/config';
-import { totpValidate } from '@workquest/database-models/lib/utils';
-import { SkillsFiltersController } from '../controller.skillsFilters';
-import { createReferralProgramJob } from '../../jobs/createReferralProgram';
+import { Op, Transaction } from "sequelize";
+import { error } from "../../utils";
+import { Errors } from "../../utils/errors";
+import config from "../../config/config";
+import { totpValidate } from "@workquest/database-models/lib/utils";
+import { SkillsFiltersController } from "../controller.skillsFilters";
+import { createReferralProgramJob } from "../../jobs/createReferralProgram";
 import {
-  User,
-  Quest,
-  Session,
-  UserRole,
-  UserStatus,
-  QuestDispute,
-  RatingStatus,
-  UserRaiseView,
   ChatsStatistic,
+  defaultUserSettings,
+  NetworkProfileVisibility,
+  ProfileVisibilitySetting,
+  Quest,
+  QuestDispute,
   QuestsResponse,
+  QuestsResponseStatus,
   QuestsStatistic,
   RatingStatistic,
+  RatingStatus,
+  Session,
+  User,
   UserRaiseStatus,
-  defaultUserSettings,
-  QuestsResponseStatus,
-  ProfileVisibilitySetting,
-  NetworkProfileVisibility,
+  UserRaiseView,
+  UserRole,
   UserSpecializationFilter,
+  UserStatus
 } from "@workquest/database-models/lib/models";
 
 abstract class UserHelper {
@@ -275,49 +275,53 @@ abstract class UserHelper {
     });
   }
 
-  private async checkWorkerProfileVisibility(visitorUserId: string) {
-    const quests = await Quest.findAll({
-      where: { userId: visitorUserId },
+  private async checkWorkerSubmittingJobOffer(visitorUserController: UserController) {
+    const quests = await Quest.unscoped().findAll({
+      where: { userId: visitorUserController.user.id },
       include: [{
         model: QuestsResponse,
         as: 'response',
         where: {
           workerId: this.user.id,
-          status: { [Op.ne]: QuestsResponseStatus.Rejected },
+          status: { [Op.notIn]: [ QuestsResponseStatus.Rejected, QuestsResponseStatus.Closed ] },
         },
         required: true,
       }]
     });
 
-    if (quests.length === 0) throw error(Errors.Forbidden, 'User hide its profile', [{userId: this.user.id}]);
+    if (visitorUserController.user.role === UserRole.Worker || quests.length === 0) {
+      throw error(Errors.Forbidden, 'User hide its profile', [{ userId: this.user.id }]);
+    }
   }
 
-  private async checkEmployerProfileVisibility(visitorUserId: string) {
+  private async checkEmployerSubmittingJobOffer(visitorUserController: UserController) {
     const quests = await Quest.findAll({
       where: { userId: this.user.id, },
       include: [{
         model: QuestsResponse,
         as: 'response',
         where: {
-          workerId: visitorUserId,
-          status: { [Op.ne]: QuestsResponseStatus.Rejected },
+          workerId: visitorUserController.user.id,
+          status: { [Op.notIn]: [ QuestsResponseStatus.Rejected, QuestsResponseStatus.Closed ] },
         },
         required: true,
       }]
     });
 
-    if (quests.length === 0) throw error(Errors.Forbidden, 'User hide its profile', [{userId: this.user.id}]);
+    if (visitorUserController.user.role === UserRole.Employer || quests.length === 0) {
+      throw error(Errors.Forbidden, 'User hide its profile', [{ userId: this.user.id }]);
+    }
   }
 
   public async canVisitMyProfile(visitorUserController: UserController): Promise<this> {
     const profileVisibility = await ProfileVisibilitySetting.findOne({where: { userId: this.user.id } });
 
     if (profileVisibility.network === NetworkProfileVisibility.SubmittingOffer && this.user.role === UserRole.Employer) {
-      await this.checkEmployerProfileVisibility(visitorUserController.user.id);
+      await this.checkEmployerSubmittingJobOffer(visitorUserController);
     }
 
     if (profileVisibility.network === NetworkProfileVisibility.SubmittingOffer && this.user.role === UserRole.Worker) {
-      await this.checkWorkerProfileVisibility(visitorUserController.user.id);
+      await this.checkWorkerSubmittingJobOffer(visitorUserController);
     }
 
     return this;
