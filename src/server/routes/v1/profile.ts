@@ -152,7 +152,7 @@ export default [{
         workplace: workPlaceSchema.allow(null).required(),
         additionalInfo: userAdditionalInfoWorkerSchema.required(),
         wagePerHour: workerWagePerHourSchema.allow(null).required(),
-        specializationKeys: specializationKeysSchema.allow(null).required().unique(),
+        specializationKeys: specializationKeysSchema.required().unique(),
       }).label("EditWorkerProfilePayload")
     },
     response: {
