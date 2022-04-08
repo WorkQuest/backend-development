@@ -18,8 +18,10 @@ import {
   QuestStatus,
   QuestsReview,
   QuestsStarred,
-  UserRole,
-} from '@workquest/database-models/lib/models';
+  UserRole, QuestsResponseStatus
+} from "@workquest/database-models/lib/models";
+import { ChecksListQuest } from "../checks-list/checksList.quest";
+import { QuestNotificationActions } from "../controllers/controller.broker";
 
 export const searchQuestFields = [
   'title',
@@ -107,6 +109,39 @@ export async function createQuest(r) {
   });
 
   return output(questController.quest);
+}
+
+export async function editQuest(r) {
+  const employerController = EmployerControllerFactory.createByUserModel(r.auth.credentials);
+  const questController = await QuestControllerFactory.createById(r.params.questId);
+  const checksListQuest = new ChecksListQuest(questController.quest);
+  checksListQuest
+    .checkOwner(employerController.user)
+    .checkQuestStatuses(...[QuestStatus.Pending, QuestStatus.Recruitment])
+
+  const mediaModels = await MediaController.getMedias(r.payload.medias);
+  const avatarId = mediaModels.length !== 0 ? mediaModels[0].id : null;
+
+  const editQuestController = await r.server.app.db.transaction(async (tx) => {
+    await questController.setMedias(mediaModels, { tx });
+    await questController.setQuestSpecializations(r.payload.specializationKeys, { tx });
+    await questController.update({ avatarId, ...r.payload });
+    return questController;
+  }) as QuestController;
+
+  const responses = await QuestsResponse.findAll({
+    where: { questId: questController.quest.id, status: QuestsResponseStatus.Open },
+  });
+
+  if (responses.length !== 0) {
+    r.server.app.broker.sendQuestNotification({
+      action: QuestNotificationActions.questEdited,
+      recipients: responses.map(_ => _.workerId),
+      data: questController.quest,
+    });
+  }
+
+  return output(editQuestController.quest);
 }
 
 // TODO отрефракторить!

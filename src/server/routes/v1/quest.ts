@@ -24,6 +24,7 @@ import {
   questsForGetWithCountSchema,
   questQueryForMapPointsSchema,
 } from "@workquest/database-models/lib/schemes";
+import { editQuest } from "../../api/quest";
 
 export default [{
   method: "GET",
@@ -202,4 +203,31 @@ export default [{
       schema: outputOkSchema(questsWithCountSchema).label("GetAvailableQuestsForWorkerResponse")
     },
   }
-}];
+}, {
+  method: "PUT",
+  path: '/v1/quest/{questId}/edit',
+  handler: handlers.editQuest,
+  options: {
+    auth: 'jwt-access',
+    id: 'v1.quest.edit',
+    tags: ["api", "quest"],
+    description: 'Edit quest',
+    validate: {
+      params: Joi.object({
+        questId: idSchema.required(),
+      }).label("EditQuestParams"),
+      payload: Joi.object({
+        workplace: workPlaceSchema.required(),
+        employment: questEmploymentSchema.required(),
+        priority: prioritySchema.required(),
+        locationFull: locationFullSchema.required(),
+        //title: questTitleSchema.required(),
+        medias: idsSchema.unique().required(),
+        specializationKeys: specializationKeysSchema.unique().required(),
+      }).label("EditQuestPayload"),
+    },
+    response: {
+      schema: outputOkSchema(questSchema).label("EditQuestResponse"),
+    },
+  }
+},];
