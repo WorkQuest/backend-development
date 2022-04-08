@@ -6,14 +6,10 @@ import {
   BridgeSwapTokenEvent,
 } from "@workquest/database-models/lib/models";
 
-const linkWsProvider = configBridge.debug ?
-  configBridge.bscTestNetwork.webSocketProvider : configBridge.bscMainNetwork.webSocketProvider;
-
-const web3 = new Web3(new Web3.providers.WebsocketProvider(linkWsProvider));
-
 export async function getRecipientSwaps(r) {
-  const recipient = r.params.recipient.toLowerCase();
   const swaps = [];
+  const web3 = new Web3();
+  const recipient = r.params.recipient.toLowerCase();
 
   const redeemedEvents = await BridgeSwapTokenEvent.findAll({
     where: {
