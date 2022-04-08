@@ -4,6 +4,7 @@ import { QuestController } from '../controllers/quest/controller.quest';
 import { error, output } from '../utils';
 import { MediaController } from '../controllers/controller.media';
 import { updateQuestsStatisticJob } from '../jobs/updateQuestsStatistic';
+import { updateQuestRaiseViewStatusJob } from '../jobs/updateQuestRaiseViewStatus';
 import { SkillsFiltersController } from '../controllers/controller.skillsFilters';
 import { EmployerControllerFactory, WorkerControllerFactory } from '../factories/factory.userController';
 import { QuestControllerFactory } from '../factories/factory.questController';
@@ -16,7 +17,9 @@ import {
   QuestsResponseType,
   DisputeStatus,
   QuestStatus,
+  QuestRaiseView,
   QuestsReview,
+  QuestRaiseStatus,
   QuestsStarred,
   UserRole,
 } from '@workquest/database-models/lib/models';
@@ -90,14 +93,21 @@ export async function createQuest(r) {
 
   const mediaModels = await MediaController.getMedias(r.payload.medias);
 
+  const avatarId = mediaModels.length !== 0
+    ? mediaModels[0].id
+    : null
+
   const questController = await r.server.app.db.transaction(async (tx) => {
    const questController = await QuestController.create({
-      employer: employerController.user,
+     avatarId,
+     employer: employerController.user,
       ...r.payload,
     }, { tx });
 
     await questController.setMedias(mediaModels, { tx });
     await questController.setQuestSpecializations(r.payload.specializationKeys, { tx });
+    // createRaiseView(r.auth.credentials.id, transaction);
+
     return questController
   }) as QuestController;
 
@@ -138,13 +148,15 @@ export function getQuests(type: 'list' | 'points') {
     const questChatWorkerLiteral = literal(
       '"questChat"."workerId" = "Quest"."assignedWorkerId"'
     );
+    const questRaiseViewLiteral = literal(
+      '(SELECT "type" FROM "QuestRaiseViews" WHERE "questId" = "Quest"."id" AND "QuestRaiseViews"."status" = 0)'
+    );
 
-    const order = [];
     const include = [];
     const replacements = {};
+    const order = [[questRaiseViewLiteral, 'asc']] as any[];
     const where = {
       [Op.and]: [],
-      ...(r.query.adType && { adType: r.query.adType }),
       ...(r.query.filter && { filter: r.params.filter }),
       ...(r.params.userId && { userId: r.params.userId }),
       ...(r.params.workerId && { assignedWorkerId: r.params.workerId }),

@@ -25,6 +25,7 @@ import {
   userEmployersSchema,
   userFirstNameSchema,
   userStatisticsSchema,
+  accountAddressSchema,
   outputPaginationSchema,
   userRaiseViewTypeSchema,
   workerWagePerHourSchema,
@@ -32,6 +33,7 @@ import {
   userRaiseViewDurationSchema,
   userAdditionalInfoWorkerSchema,
   userAdditionalInfoEmployerSchema,
+  profileVisibilitySettingsSchema,
 } from "@workquest/database-models/lib/schemes";
 
 export default [{
@@ -63,6 +65,24 @@ export default [{
     },
     response: {
       schema: outputOkSchema(userSchema).label("GetUserResponse")
+    }
+  }
+}, {
+  method: 'GET',
+  path: '/v1/profile/wallet/{address}',
+  handler: handlers.getUserByWallet,
+  options: {
+    auth: 'jwt-access',
+    id: 'v1.profile.getUserByWallet',
+    tags: ['api', 'profile'],
+    description: 'Get user profile by wallet address',
+    validate: {
+      params: Joi.object({
+        address: accountAddressSchema.required()
+      }).label('GetUserByWalletParams')
+    },
+    response: {
+      schema: outputOkSchema(userSchema).label('GetUserByWalletResponse')
     }
   }
 }, {
@@ -151,6 +171,7 @@ export default [{
         phoneNumber: phoneSchema.allow(null).required(),
         locationFull: locationFullSchema.allow(null).required(),
         additionalInfo: userAdditionalInfoEmployerSchema.required(),
+        profileVisibility: profileVisibilitySettingsSchema.required(),
       }).label("EditEmployerProfilePayload")
     },
     response: {
@@ -177,7 +198,8 @@ export default [{
         workplace: workPlaceSchema.allow(null).required(),
         additionalInfo: userAdditionalInfoWorkerSchema.required(),
         wagePerHour: workerWagePerHourSchema.allow(null).required(),
-        specializationKeys: specializationKeysSchema.allow(null).required().unique(),
+        specializationKeys: specializationKeysSchema.required().unique(),
+        profileVisibility: profileVisibilitySettingsSchema.required(),
       }).label("EditWorkerProfilePayload")
     },
     response: {
@@ -302,4 +324,3 @@ export default [{
     },
   },
 }];
-

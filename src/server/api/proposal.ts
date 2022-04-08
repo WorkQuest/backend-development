@@ -7,6 +7,7 @@ import {
   Wallet,
   Proposal,
   ProposalStatus,
+  ProposalCreatedEvent,
   ProposalVoteCastEvent,
 } from '@workquest/database-models/lib/models';
 
@@ -48,7 +49,7 @@ export async function getProposals(r) {
   );
 
   const where = {
-    ...(r.query.status && { status: r.query.status }),
+    ...(r.query.statuses && { status: r.query.statuses }),
   };
 
   const order = [];
@@ -71,6 +72,11 @@ export async function getProposals(r) {
     // distinct: true,
     limit: r.query.limit,
     offset: r.query.offset,
+    include: {
+      model: ProposalCreatedEvent,
+      as: 'createdEvent',
+      attributes: ['contractProposalId', 'votingPeriod', 'timestamp']
+    },
     replacements: { query: '%' + r.query.q + '%' },
   });
 
@@ -78,7 +84,20 @@ export async function getProposals(r) {
 }
 
 export async function getProposal(r) {
-  const proposal = await Proposal.findByPk(r.params.proposalId);
+  const proposal = await Proposal.findByPk(r.params.proposalId, {
+    include: {
+      model: ProposalCreatedEvent,
+      as: 'createdEvent',
+      attributes: {
+        exclude: [
+          'id',
+          'network',
+          'createdAt',
+          'updatedAt',
+        ]
+      }
+    },
+  });
 
   if (!proposal) {
     return error(Errors.NotFound, 'Proposal does not exist', {});
@@ -100,8 +119,7 @@ export async function getVoteCastEventsProposal(r) {
   }
 
   const { count, rows } = await ProposalVoteCastEvent.findAndCountAll({
-    where,
-    order,
+    where, order,
     limit: r.query.limit,
     offset: r.query.offset,
   });

@@ -15,12 +15,12 @@ FROM "Users" AS "User"
     INNER JOIN "Chats" AS "chatMember->chat" ON "chatMember"."chatId" = "chatMember->chat"."id"
     AND "chatMember->chat"."type" IN ('private', 'quest')
 WHERE
-  ("User"."deletedAt" IS NULL)
+    ("User"."deletedAt" IS NULL)
   AND "User".id != :currentUserId
   AND "chatMember->chat"."id" IN (
     SELECT "chatId" FROM "ChatMembers" WHERE "ChatMembers"."userId"=:currentUserId
-  )
+    )
   AND "User"."id" NOT IN (
     SELECT "ChatMembers"."userId" FROM "ChatMembers" WHERE "ChatMembers"."chatId"=:excludeUsersFromChatId
-  )
-LIMIT :limitValue OFFSET :offsetValue;
+    )
+    LIMIT :limitValue OFFSET :offsetValue;
