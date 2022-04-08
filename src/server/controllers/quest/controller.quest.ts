@@ -118,7 +118,6 @@ export class QuestController extends QuestHelper {
   public async createRaiseView(userId: string, transaction: Transaction) {
     await QuestRaiseView.create({
       questId: this.quest.id,
-      userId: userId,
     }, {transaction});
 
     return this;
