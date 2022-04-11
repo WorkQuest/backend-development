@@ -92,5 +92,5 @@ export async function getMyReferralProgramClaimedAndPaidEvents(r) {
     }
   })
 
-  return output ({ count: countResults, events: eventsResult });
+  return output ({ count: countResults[0].count, events: eventsResult });
 }

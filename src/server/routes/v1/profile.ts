@@ -25,13 +25,15 @@ import {
   userEmployersSchema,
   userFirstNameSchema,
   userStatisticsSchema,
+  accountAddressSchema,
   outputPaginationSchema,
   userRaiseViewTypeSchema,
   workerWagePerHourSchema,
   specializationKeysSchema,
   userRaiseViewDurationSchema,
   userAdditionalInfoWorkerSchema,
-  userAdditionalInfoEmployerSchema, accountAddressSchema
+  userAdditionalInfoEmployerSchema,
+  profileVisibilitySettingsSchema,
 } from "@workquest/database-models/lib/schemes";
 
 export default [{
@@ -169,6 +171,7 @@ export default [{
         phoneNumber: phoneSchema.allow(null).required(),
         locationFull: locationFullSchema.allow(null).required(),
         additionalInfo: userAdditionalInfoEmployerSchema.required(),
+        profileVisibility: profileVisibilitySettingsSchema.required(),
       }).label("EditEmployerProfilePayload")
     },
     response: {
@@ -195,7 +198,8 @@ export default [{
         workplace: workPlaceSchema.allow(null).required(),
         additionalInfo: userAdditionalInfoWorkerSchema.required(),
         wagePerHour: workerWagePerHourSchema.allow(null).required(),
-        specializationKeys: specializationKeysSchema.allow(null).required().unique(),
+        specializationKeys: specializationKeysSchema.required().unique(),
+        profileVisibility: profileVisibilitySettingsSchema.required(),
       }).label("EditWorkerProfilePayload")
     },
     response: {
@@ -320,4 +324,3 @@ export default [{
     },
   },
 }];
-
