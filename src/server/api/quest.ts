@@ -2,6 +2,8 @@ import { literal, Op } from 'sequelize';
 import { Errors } from '../utils/errors';
 import { QuestController } from '../controllers/quest/controller.quest';
 import { error, output } from '../utils';
+import { ChecksListQuest } from "../checks-list/checksList.quest";
+import { QuestNotificationActions } from "../controllers/controller.broker";
 import { MediaController } from '../controllers/controller.media';
 import { updateQuestsStatisticJob } from '../jobs/updateQuestsStatistic';
 import { updateQuestRaiseViewStatusJob } from '../jobs/updateQuestRaiseViewStatus';
@@ -20,6 +22,7 @@ import {
   QuestRaiseView,
   QuestsReview,
   QuestRaiseStatus,
+  QuestsResponseStatus,
   QuestsStarred,
   UserRole,
 } from '@workquest/database-models/lib/models';
@@ -116,6 +119,49 @@ export async function createQuest(r) {
     userId: employerController.user.id,
     role: UserRole.Employer,
   });
+
+  return output(questController.quest);
+}
+
+export async function editQuest(r) {
+  const employerController = EmployerControllerFactory.createByUserModel(r.auth.credentials);
+  const questController = await QuestControllerFactory.createById(r.params.questId);
+
+  const checksListQuest = new ChecksListQuest(questController.quest);
+
+  checksListQuest
+    .checkOwner(employerController.user)
+    .checkQuestStatuses(QuestStatus.Pending, QuestStatus.Recruitment)
+
+  const mediaModels = await MediaController.getMedias(r.payload.medias);
+
+  const avatarId = mediaModels.length === 0
+    ? null
+    : mediaModels[0].id
+
+  await r.server.app.db.transaction(async (tx) => {
+    await Promise.all([
+      questController.setMedias(mediaModels, { tx }),
+      questController.setQuestSpecializations(r.payload.specializationKeys, { tx }),
+      questController.update({ avatarId, ...r.payload }, { tx }),
+    ]);
+  });
+
+  const questsResponseWorkerIds = await QuestsResponse.findAll({
+    attributes: ['workerId'],
+    where: {
+      questId: questController.quest.id,
+      status: QuestsResponseStatus.Open,
+    },
+  });
+
+  if (questsResponseWorkerIds.length !== 0) {
+    r.server.app.broker.sendQuestNotification({
+      action: QuestNotificationActions.questEdited,
+      recipients: questsResponseWorkerIds.map(_ => _.workerId),
+      data: questController.quest,
+    });
+  }
 
   return output(questController.quest);
 }

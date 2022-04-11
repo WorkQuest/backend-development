@@ -15,6 +15,18 @@ import {
   QuestSpecializationFilter,
 } from '@workquest/database-models/lib/models';
 
+export interface EditedQuestPayload {
+  //title: r.payload.title,
+  avatarId: string,
+  priority: Priority,
+  workplace: WorkPlace,
+  employment: QuestEmployment,
+  locationFull: {
+    location: LocationType;
+    locationPlaceName: string;
+  }
+}
+
 export interface CreatedQuestPayload {
   employer: User;
 
@@ -108,5 +120,20 @@ export class QuestController {
     }, { transaction: options.tx });
 
     return new QuestController(quest);
+  }
+
+  public async update(payload: EditedQuestPayload, options: { tx?: Transaction } = {}) {
+    await Quest.update({
+      avatarId: payload.avatarId,
+      priority: payload.priority,
+      workplace: payload.workplace,
+      employment: payload.employment,
+      location: payload.locationFull.location,
+      locationPlaceName: payload.locationFull.locationPlaceName,
+      locationPostGIS: transformToGeoPostGIS(payload.locationFull.location),
+    }, {
+      where: { id: this.quest.id },
+      transaction: options.tx,
+    });
   }
 }
