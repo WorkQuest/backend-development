@@ -191,8 +191,7 @@ export async function inviteOnQuest(r) {
     // }
   }
 
-  const workerController = new UserController(quest.assignedWorker);
-  await employerController.ratingShouldCoincide(workerController);
+  await employerController.ratingShouldCoincide(invitedWorkerController);
 
   const transaction = await r.server.app.db.transaction();
 
