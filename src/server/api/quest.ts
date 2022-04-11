@@ -2,8 +2,11 @@ import { literal, Op } from 'sequelize';
 import { Errors } from '../utils/errors';
 import { QuestController } from '../controllers/quest/controller.quest';
 import { error, output } from '../utils';
+import { ChecksListQuest } from "../checks-list/checksList.quest";
+import { QuestNotificationActions } from "../controllers/controller.broker";
 import { MediaController } from '../controllers/controller.media';
 import { updateQuestsStatisticJob } from '../jobs/updateQuestsStatistic';
+import { updateQuestRaiseViewStatusJob } from '../jobs/updateQuestRaiseViewStatus';
 import { SkillsFiltersController } from '../controllers/controller.skillsFilters';
 import { EmployerControllerFactory, WorkerControllerFactory } from '../factories/factory.userController';
 import { QuestControllerFactory } from '../factories/factory.questController';
@@ -16,12 +19,13 @@ import {
   QuestsResponseType,
   DisputeStatus,
   QuestStatus,
+  QuestRaiseView,
   QuestsReview,
+  QuestRaiseStatus,
+  QuestsResponseStatus,
   QuestsStarred,
-  UserRole, QuestsResponseStatus
-} from "@workquest/database-models/lib/models";
-import { ChecksListQuest } from "../checks-list/checksList.quest";
-import { QuestNotificationActions } from "../controllers/controller.broker";
+  UserRole,
+} from '@workquest/database-models/lib/models';
 
 export const searchQuestFields = [
   'title',
@@ -51,6 +55,7 @@ export async function getQuest(r) {
   }, {
     model: QuestDispute.unscoped(),
     as: 'openDispute',
+    required: false,
     where: {
       [Op.or]: [
         { opponentUserId: r.auth.credentials.id },
@@ -58,7 +63,6 @@ export async function getQuest(r) {
       ],
       status: { [Op.in]: [DisputeStatus.pending, DisputeStatus.inProgress] },
     },
-    required: false,
   }, {
     model: QuestsReview.unscoped(),
     as: 'yourReview',
@@ -88,20 +92,27 @@ export async function getQuest(r) {
 }
 
 export async function createQuest(r) {
+  const mediaModels = await MediaController.getMedias(r.payload.medias);
   const employerController = EmployerControllerFactory.createByUserModel(r.auth.credentials);
 
-  const mediaModels = await MediaController.getMedias(r.payload.medias);
+  const avatarModel = mediaModels.length === 0
+    ? null
+    : mediaModels[0]
 
   const questController = await r.server.app.db.transaction(async (tx) => {
    const questController = await QuestController.create({
-      employer: employerController.user,
+     avatar: avatarModel,
+     employer: employerController.user,
       ...r.payload,
     }, { tx });
 
-    await questController.setMedias(mediaModels, { tx });
-    await questController.setQuestSpecializations(r.payload.specializationKeys, { tx });
+   await Promise.all([
+     questController.createRaiseView({ tx }),
+     questController.setMedias(mediaModels, { tx }),
+     questController.setQuestSpecializations(r.payload.specializationKeys, { tx }),
+   ]);
 
-    return questController
+    return questController;
   }) as QuestController;
 
   await updateQuestsStatisticJob({
@@ -184,13 +195,15 @@ export function getQuests(type: 'list' | 'points') {
     const questChatWorkerLiteral = literal(
       '"questChat"."workerId" = "Quest"."assignedWorkerId"'
     );
+    const questRaiseViewLiteral = literal(
+      '(SELECT "type" FROM "QuestRaiseViews" WHERE "questId" = "Quest"."id" AND "QuestRaiseViews"."status" = 0)'
+    );
 
-    const order = [];
     const include = [];
     const replacements = {};
+    const order = [[questRaiseViewLiteral, 'asc']] as any[];
     const where = {
       [Op.and]: [],
-      ...(r.query.adType && { adType: r.query.adType }),
       ...(r.query.filter && { filter: r.params.filter }),
       ...(r.params.userId && { userId: r.params.userId }),
       ...(r.params.workerId && { assignedWorkerId: r.params.workerId }),

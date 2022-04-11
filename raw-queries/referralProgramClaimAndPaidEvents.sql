@@ -6,6 +6,7 @@ FROM (SELECT "event"."blockNumber"                AS "blockNumber",
              "event"."amount"                     AS "amount",
              "event"."timestamp"                  AS "timestamp",
              'PaidReferral'                       AS "event",
+             "referralUser"."id"                  AS "referralUser.id",
              "referralUser"."firstName"           AS "referralUser.firstName",
              "referralUser"."lastName"            AS "referralUser.lastName",
              "referralUser->avatar"."url"         AS "referralUser.avatar.url",
@@ -23,6 +24,7 @@ FROM (SELECT "event"."blockNumber"                AS "blockNumber",
              "event"."amount"                      AS "amount",
              "event"."timestamp"                   AS "timestamp",
              'RewardClaimed'                       AS "event",
+             "affiliateUser"."id"                  AS "affiliateUser.id",
              "affiliateUser"."firstName"           AS "affiliateUser.firstName",
              "affiliateUser"."lastName"            AS "affiliateUser.lastName",
              "affiliateUser->avatar"."url"         AS "affiliateUser.avatar.url",
@@ -34,4 +36,4 @@ FROM (SELECT "event"."blockNumber"                AS "blockNumber",
       WHERE "event"."affiliate" = :affiliate
       ORDER BY "timestamp" DESC
      ) as events
-    LIMIT :limit OFFSET :offset;
+LIMIT :limit OFFSET :offset;

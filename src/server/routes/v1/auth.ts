@@ -14,7 +14,6 @@ import {
   userLastNameSchema,
   userFirstNameSchema,
   walletAddressSchema,
-  inputFromLoginSchema,
   walletPublicKeySchema,
   walletSignatureSchema
 } from '@workquest/database-models/lib/schemes';
@@ -101,154 +100,6 @@ export default [
           password: userPasswordSchema.required(),
         }).label('AuthLoginPayload'),
       },
-      response: {
-        schema: outputOkSchema(tokensWithStatus).label('TokensWithStatusResponse'),
-      },
-    },
-  },
-  {
-    method: 'GET',
-    path: '/v1/auth/login/{platform}/facebook',
-    handler: handlers.getLoginViaSocialNetworkHandler('redirect'),
-    options: {
-      auth: {
-        strategy: 'facebook',
-      },
-      id: 'v1.auth.login.facebook',
-      tags: ['api', 'auth'],
-      description: 'Login user through Facebook',
-      validate: {
-        params: Joi.object({
-          platform: inputFromLoginSchema.required(),
-        }).label('LoginByFacebookParams'),
-      },
-      response: {
-        schema: emptyOkSchema,
-      },
-    },
-  },
-  {
-    method: 'GET',
-    path: '/v1/auth/login/{platform}/google',
-    handler: handlers.getLoginViaSocialNetworkHandler('redirect'),
-    options: {
-      auth: {
-        strategy: 'google',
-      },
-      id: 'v1.auth.login.google',
-      tags: ['api', 'auth'],
-      description: 'Login user through Google',
-      validate: {
-        params: Joi.object({
-          platform: inputFromLoginSchema.required(),
-        }).label('LoginByGoogleParams'),
-      },
-      response: {
-        schema: emptyOkSchema,
-      },
-    },
-  },
-  {
-    method: 'GET',
-    path: '/v1/auth/login/{platform}/linkedin',
-    handler: handlers.getLoginViaSocialNetworkHandler('redirect'),
-    options: {
-      auth: {
-        strategy: 'linkedin',
-      },
-      id: 'v1.auth.login.linkedin',
-      tags: ['api', 'auth'],
-      description: 'Login user through Linkedin',
-      validate: {
-        params: Joi.object({
-          platform: inputFromLoginSchema.required(),
-        }).label('LoginByLinkedinParams'),
-      },
-      response: {
-        schema: emptyOkSchema,
-      },
-    },
-  },
-  {
-    method: 'GET',
-    path: '/v1/auth/login/{platform}/twitter',
-    handler: handlers.getLoginViaSocialNetworkHandler('redirect'),
-    options: {
-      auth: {
-        strategy: 'twitter',
-      },
-      id: 'v1.auth.login.twitter',
-      tags: ['api', 'auth'],
-      description: 'Login user through Twitter',
-      validate: {
-        params: Joi.object({
-          platform: inputFromLoginSchema.required(),
-        }).label('LoginByTwitterParams'),
-      },
-      response: {
-        schema: emptyOkSchema,
-      },
-    },
-  },
-  {
-    method: 'GET',
-    path: '/v1/auth/login/facebook/token',
-    handler: handlers.getLoginViaSocialNetworkHandler('token'),
-    options: {
-      auth: {
-        strategy: 'facebook',
-      },
-      id: 'v1.auth.login.facebookTokens',
-      tags: ['api', 'auth'],
-      description: 'Login user through Facebook (returns tokens)',
-      response: {
-        schema: outputOkSchema(tokensWithStatus).label('TokensWithStatusResponse'),
-      },
-    },
-  },
-  {
-    method: 'GET',
-    path: '/v1/auth/login/google/token',
-    handler: handlers.getLoginViaSocialNetworkHandler('token'),
-    options: {
-      auth: {
-        strategy: 'google',
-      },
-      id: 'v1.auth.login.googleTokens',
-      tags: ['api', 'auth'],
-      description: 'Login user through Google (returns tokens)',
-      response: {
-        schema: outputOkSchema(tokensWithStatus).label('TokensWithStatusResponse'),
-      },
-    },
-  },
-  {
-    method: 'GET',
-    path: '/v1/auth/login/linkedin/token',
-    handler: handlers.getLoginViaSocialNetworkHandler('token'),
-    options: {
-      auth: {
-        strategy: 'linkedin',
-      },
-      id: 'v1.auth.login.linkedinTokens',
-      tags: ['api', 'auth'],
-      description: 'Login user through Linkedin (returns tokens)',
-      response: {
-        schema: outputOkSchema(tokensWithStatus).label('TokensWithStatusResponse'),
-      },
-    },
-  },
-  {
-    method: 'GET',
-    path: '/v1/auth/login/twitter/token',
-    handler: handlers.getLoginViaSocialNetworkHandler('token'),
-    options: {
-      auth: {
-        strategy: 'twitter',
-      },
-      id: 'v1.auth.login.twitterTokens',
-      tags: ['api', 'auth'],
-      description: 'Login user through Twitter (returns tokens)',
       response: {
         schema: outputOkSchema(tokensWithStatus).label('TokensWithStatusResponse'),
       },
@@ -368,4 +219,40 @@ export default [
       },
     },
   },
+  ...[
+    'google',
+    'linkedin',
+    'twitter',
+  ].map(strategy => (
+    [
+      'dao',
+      'main',
+    ].map((platform: 'dao' | 'main')  => ([{
+      method: 'GET',
+      path: `/v1/auth/login/${platform}/${strategy}`,
+      handler: handlers.getLoginViaSocialNetworkHandler('redirect', platform),
+      options: {
+        auth: { strategy: strategy },
+        id: `v1.auth.${platform}.login.${strategy}`,
+        tags: ['api', 'auth'],
+        description: `Login user through ${platform}`,
+        response: {
+          schema: emptyOkSchema,
+        },
+      },
+    }, {
+      method: 'GET',
+      path: `/v1/auth/login/${platform}/${strategy}/token`,
+      handler: handlers.getLoginViaSocialNetworkHandler('token', platform),
+      options: {
+        auth: { strategy: strategy },
+        id: `v1.auth.${platform}.login.${strategy}Tokens`,
+        tags: ['api', 'auth'],
+        description: `Login user through ${platform} (returns tokens)`,
+        response: {
+          schema: outputOkSchema(tokensWithStatus).label('TokensWithStatusResponse'),
+        },
+      },
+    }])))
+  ).flat(2),
 ];

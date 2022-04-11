@@ -9,7 +9,6 @@ import {
   offsetSchema,
   outputOkSchema,
   workPlaceSchema,
-  questAdTypeSchema,
   questPriceSchema,
   prioritySchema,
   questTitleSchema,
@@ -62,7 +61,6 @@ export default [{
         description: questDescriptionSchema.required(),
         price: questPriceSchema.required(),
         medias: idsSchema.required().unique(),
-        adType: questAdTypeSchema.required(),
         specializationKeys: specializationKeysSchema.required().unique(),
       }).label("CreateQuestPayload")
     },

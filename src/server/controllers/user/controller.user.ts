@@ -4,18 +4,24 @@ import { Errors } from '../../utils/errors';
 import config from '../../config/config';
 import { totpValidate } from '@workquest/database-models/lib/utils';
 import { SkillsFiltersController } from '../controller.skillsFilters';
+import { createReferralProgramJob } from "../../jobs/createReferralProgram";
 import {
   User,
+  Quest,
   Session,
   UserRole,
   UserStatus,
   QuestDispute,
+  QuestsResponse,
   UserRaiseView,
   ChatsStatistic,
   UserRaiseStatus,
   QuestsStatistic,
   RatingStatistic,
   defaultUserSettings,
+  QuestsResponseStatus,
+  ProfileVisibilitySetting,
+  NetworkProfileVisibility,
   UserSpecializationFilter,
 } from '@workquest/database-models/lib/models';
 
@@ -54,7 +60,7 @@ abstract class UserHelper {
     return additionalInfo;
   }
 
-  public static async getUserByNetworkProfile(network: string, profile): Promise<User> {
+  public static async getUserByNetworkProfile(network: string, profile, referralId): Promise<User> {
     const foundUserBySocialId = await User.findWithSocialId(network, profile.id);
 
     if (foundUserBySocialId) {
@@ -85,6 +91,11 @@ abstract class UserHelper {
       settings: Object.assign({}, defaultUserSettings, {
         social: { [network]: socialInfo },
       }),
+    });
+
+    await createReferralProgramJob({
+      userId: user.id,
+      referralId: referralId,
     });
 
     await UserOldController.createStatistics(user.id);
@@ -246,6 +257,71 @@ abstract class UserHelper {
     await UserRaiseView.create({
       userId: this.user.id,
     });
+  }
+
+  private async checkWorkerSubmittingJobOffer(visitorUserController: UserController) {
+    if (visitorUserController.user.role === UserRole.Worker) {
+      throw error(Errors.Forbidden, 'User hide its profile', { userId: this.user.id });
+    }
+
+    const quests = await Quest.unscoped().findAll({
+      where: { userId: visitorUserController.user.id },
+      include: [{
+        model: QuestsResponse.unscoped(),
+        as: 'response',
+        where: {
+          workerId: this.user.id,
+          status: { [Op.notIn]: [
+              QuestsResponseStatus.Closed,
+              QuestsResponseStatus.Rejected,
+            ] },
+        },
+        required: true,
+      }]
+    });
+
+    if (quests.length === 0) {
+      throw error(Errors.Forbidden, 'User hide its profile', { userId: this.user.id });
+    }
+  }
+
+  private async checkEmployerSubmittingJobOffer(visitorUserController: UserController) {
+    if (visitorUserController.user.role === UserRole.Employer) {
+      throw error(Errors.Forbidden, 'User hide its profile', { userId: this.user.id });
+    }
+
+    const quests = await Quest.unscoped().findAll({
+      where: { userId: this.user.id, },
+      include: [{
+        model: QuestsResponse.unscoped(),
+        as: 'response',
+        where: {
+          workerId: visitorUserController.user.id,
+          status: { [Op.notIn]: [
+              QuestsResponseStatus.Closed,
+              QuestsResponseStatus.Rejected,
+            ] },
+        },
+        required: true,
+      }]
+    });
+
+    if (quests.length === 0) {
+      throw error(Errors.Forbidden, 'User hide its profile', { userId: this.user.id });
+    }
+  }
+
+  public async canVisitMyProfile(visitorUserController: UserController): Promise<this> {
+    const profileVisibility = await ProfileVisibilitySetting.findOne({where: { userId: this.user.id } });
+
+    if (profileVisibility.network === NetworkProfileVisibility.SubmittingOffer && this.user.role === UserRole.Employer) {
+      await this.checkEmployerSubmittingJobOffer(visitorUserController);
+    }
+    if (profileVisibility.network === NetworkProfileVisibility.SubmittingOffer && this.user.role === UserRole.Worker) {
+      await this.checkWorkerSubmittingJobOffer(visitorUserController);
+    }
+
+    return this;
   }
 }
 

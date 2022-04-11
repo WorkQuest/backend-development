@@ -1,14 +1,16 @@
-import * as path from 'path';
 import * as fs from 'fs';
+import * as path from 'path';
+import { Op } from 'sequelize';
 import * as querystring from 'querystring';
 import Handlebars = require('handlebars');
-import { Op } from 'sequelize';
 import config from '../config/config';
 import { Errors } from '../utils/errors';
 import { addSendEmailJob } from '../jobs/sendEmail';
 import { generateJwt } from '../utils/auth';
 import { UserOldController } from '../controllers/user/controller.user';
 import converter from 'bech32-converting';
+import { totpValidate } from '@workquest/database-models/lib/utils';
+import { createReferralProgramJob } from '../jobs/createReferralProgram';
 import { error, output, getGeo, getRealIp, getDevice, getRandomHexToken } from '../utils';
 import {
   User,
@@ -17,10 +19,9 @@ import {
   UserStatus,
   defaultUserSettings,
 } from '@workquest/database-models/lib/models';
-import { totpValidate } from '@workquest/database-models/lib/utils';
-import { createReferralProgram } from '../jobs/createReferralProgram';
 
 const confirmTemplatePath = path.join(__dirname, '..', '..', '..', 'templates', 'confirmEmail.html');
+
 const confirmTemplate = Handlebars.compile(
   fs.readFileSync(confirmTemplatePath, {
     encoding: 'utf-8',
@@ -57,7 +58,7 @@ export function register(host: 'dao' | 'main') {
       },
     });
 
-    await createReferralProgram({
+    await createReferralProgramJob({
       userId: user.id,
       referralId: r.payload.referralId,
     });
@@ -80,15 +81,16 @@ export function register(host: 'dao' | 'main') {
   };
 }
 
-export function getLoginViaSocialNetworkHandler(returnType: 'token' | 'redirect') {
+export function getLoginViaSocialNetworkHandler(returnType: 'token' | 'redirect', platform: 'main' | 'dao') {
   return async function loginThroughSocialNetwork(r, h) {
     const profile = r.auth.credentials.profile;
+    const { referralId } = r.auth.credentials.query;
 
     if (!profile.email) {
       return error(Errors.InvalidEmail, 'Field email was not returned', {});
     }
 
-    const user = await UserOldController.getUserByNetworkProfile(r.auth.strategy, profile);
+    const user = await UserOldController.getUserByNetworkProfile(r.auth.strategy, profile, referralId);
     const userController = new UserOldController(user);
     await userController.createRaiseView();
 
@@ -108,12 +110,14 @@ export function getLoginViaSocialNetworkHandler(returnType: 'token' | 'redirect'
 
     if (returnType === 'redirect') {
       const qs = querystring.stringify(result);
+
       return h.redirect(
-        r.params.platform === 'main' ?
-          config.baseUrl + '/sign-in?' + qs :
-          config.baseUrlDao + '/sign-in?' + qs,
+        platform === 'main'
+          ? config.baseUrl + '/sign-in?' + qs
+          : config.baseUrlDao + '/sign-in?' + qs,
       );
     }
+
     return output(result);
   };
 }
@@ -253,12 +257,13 @@ export async function loginWallet(r) {
       },
     ],
   });
-  const user = await User.scope('withPassword').findByPk(wallet.userId);
-  const userTotpActiveStatus: boolean = user.settings.security.TOTP.active;
 
   if (!wallet) {
     return error(Errors.NotFound, 'Wallet not found', { field: ['address'] });
   }
+
+  const user = await User.scope('withPassword').findByPk(wallet.userId);
+  const userTotpActiveStatus: boolean = user.settings.security.TOTP.active;
 
   const decryptedSignAddress = r.server.app.web3.eth.accounts.recover(address, '0x' + r.payload.signature);
 

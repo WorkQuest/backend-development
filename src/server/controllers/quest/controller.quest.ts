@@ -4,12 +4,13 @@ import { SkillsFiltersController } from '../controller.skillsFilters';
 import {
   User,
   Quest,
-  QuestsStarred,
-  QuestStatus,
-  WorkPlace,
+  Media,
   Priority,
-  AdType,
+  WorkPlace,
+  QuestStatus,
   LocationType,
+  QuestsStarred,
+  QuestRaiseView,
   QuestEmployment,
   QuestSpecializationFilter,
 } from '@workquest/database-models/lib/models';
@@ -28,6 +29,8 @@ export interface EditedQuestPayload {
 
 export interface CreatedQuestPayload {
   employer: User;
+
+  avatar: Media | null;
 
   title: string;
   price: string;
@@ -79,23 +82,30 @@ export class QuestController {
     });
   }
 
-  public setStar(user: User, options: { tx?: Transaction } = {}): Promise<void> {
-    return void QuestsStarred.findOrCreate({
+  public setStar(user: User, options: { tx?: Transaction } = {}): Promise<any> {
+    return QuestsStarred.findOrCreate({
       transaction: options.tx,
       where: { userId: user.id, questId: this.quest.id },
       defaults: { userId: user.id, questId: this.quest.id },
     });
   }
 
-  public async removeStar(user: User, options: { tx?: Transaction } = {}): Promise<void> {
-    await QuestsStarred.destroy({
+  public removeStar(user: User, options: { tx?: Transaction } = {}): Promise<any> {
+    return  QuestsStarred.destroy({
       transaction: options.tx,
       where: { userId: user.id, questId: this.quest.id },
     });
   }
 
+  public createRaiseView(options: { tx?: Transaction } = {}) {
+    return QuestRaiseView.create({
+      questId: this.quest.id,
+    }, { transaction: options.tx });
+  }
+
   public static async create(payload: CreatedQuestPayload, options: { tx?: Transaction } = {}): Promise<QuestController> {
     const quest = await Quest.create({
+      avatarId: payload.avatar?.id,
       userId: payload.employer.id,
       status: QuestStatus.Pending,
       workplace: payload.workplace,
