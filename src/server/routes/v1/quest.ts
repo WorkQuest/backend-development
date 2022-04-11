@@ -227,4 +227,4 @@ export default [{
       schema: outputOkSchema(questSchema).label("EditQuestResponse"),
     },
   }
-},];
+}];
