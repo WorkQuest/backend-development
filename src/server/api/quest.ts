@@ -52,6 +52,7 @@ export async function getQuest(r) {
   }, {
     model: QuestDispute.unscoped(),
     as: 'openDispute',
+    required: false,
     where: {
       [Op.or]: [
         { opponentUserId: r.auth.credentials.id },
@@ -59,7 +60,6 @@ export async function getQuest(r) {
       ],
       status: { [Op.in]: [DisputeStatus.pending, DisputeStatus.inProgress] },
     },
-    required: false,
   }, {
     model: QuestsReview.unscoped(),
     as: 'yourReview',
@@ -89,26 +89,27 @@ export async function getQuest(r) {
 }
 
 export async function createQuest(r) {
+  const mediaModels = await MediaController.getMedias(r.payload.medias);
   const employerController = EmployerControllerFactory.createByUserModel(r.auth.credentials);
 
-  const mediaModels = await MediaController.getMedias(r.payload.medias);
-
-  const avatarId = mediaModels.length !== 0
-    ? mediaModels[0].id
-    : null
+  const avatarModel = mediaModels.length === 0
+    ? null
+    : mediaModels[0]
 
   const questController = await r.server.app.db.transaction(async (tx) => {
    const questController = await QuestController.create({
-     avatarId,
+     avatar: avatarModel,
      employer: employerController.user,
       ...r.payload,
     }, { tx });
 
-    await questController.setMedias(mediaModels, { tx });
-    await questController.setQuestSpecializations(r.payload.specializationKeys, { tx });
-    // createRaiseView(r.auth.credentials.id, transaction);
+   await Promise.all([
+     questController.createRaiseView({ tx }),
+     questController.setMedias(mediaModels, { tx }),
+     questController.setQuestSpecializations(r.payload.specializationKeys, { tx }),
+   ]);
 
-    return questController
+    return questController;
   }) as QuestController;
 
   await updateQuestsStatisticJob({

@@ -16,7 +16,7 @@ abstract class BaseChecksListQuestResponse {
   public checkStatuses(...statuses: QuestsResponseStatus[]): this | never {
     if (!statuses.includes(this.questResponse.status)) {
       throw error(Errors.InvalidStatus, "Quest response status doesn't match", {
-        current: status,
+        current: this.questResponse.status,
         mustHave: statuses,
       });
     }

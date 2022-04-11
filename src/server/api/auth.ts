@@ -1,14 +1,16 @@
-import * as path from 'path';
 import * as fs from 'fs';
+import * as path from 'path';
+import { Op } from 'sequelize';
 import * as querystring from 'querystring';
 import Handlebars = require('handlebars');
-import { Op } from 'sequelize';
 import config from '../config/config';
 import { Errors } from '../utils/errors';
 import { addSendEmailJob } from '../jobs/sendEmail';
 import { generateJwt } from '../utils/auth';
 import { UserOldController } from '../controllers/user/controller.user';
 import converter from 'bech32-converting';
+import { totpValidate } from '@workquest/database-models/lib/utils';
+import { createReferralProgramJob } from '../jobs/createReferralProgram';
 import { error, output, getGeo, getRealIp, getDevice, getRandomHexToken } from '../utils';
 import {
   User,
@@ -17,10 +19,9 @@ import {
   UserStatus,
   defaultUserSettings,
 } from '@workquest/database-models/lib/models';
-import { totpValidate } from '@workquest/database-models/lib/utils';
-import { createReferralProgramJob } from '../jobs/createReferralProgram';
 
 const confirmTemplatePath = path.join(__dirname, '..', '..', '..', 'templates', 'confirmEmail.html');
+
 const confirmTemplate = Handlebars.compile(
   fs.readFileSync(confirmTemplatePath, {
     encoding: 'utf-8',
