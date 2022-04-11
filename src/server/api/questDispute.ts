@@ -15,35 +15,38 @@ import {
   User
 } from "@workquest/database-models/lib/models";
 import { addUpdateDisputeReviewStatisticsJob } from "../jobs/updateDisputeReviewStatistics";
+import { QuestControllerFactory } from '../factories/factory.questController';
+import { ChecksListQuest } from '../checks-list/checksList.quest';
 
 export async function getDispute(r) {
-  return output();
-  // const user: User = r.auth.credentials;
-  // const questChatWorkerLiteral = literal('"quest->questChat"."workerId" = "quest"."assignedWorkerId"');
-  //
-  // const dispute = await QuestDispute.findByPk(r.params.disputeId, {
-  //   include: [
-  //     {
-  //       model: Quest,
-  //       include: [
-  //         {
-  //           model: QuestChat.unscoped(),
-  //           where: { questChatWorkerLiteral },
-  //         },
-  //       ],
-  //     },
-  //   ],
-  // });
-  //
-  // if (!dispute) {
-  //   return error(Errors.NotFound, 'Dispute is not found', {});
-  // }
-  //
-  // const questController = new QuestController(dispute.quest);
-  //
-  // questController.userMustBelongToQuest(user.id);
-  //
-  // return output(dispute);
+  const user: User = r.auth.credentials;
+  const questChatWorkerLiteral = literal('"quest->questChat"."workerId" = "quest"."assignedWorkerId"');
+
+  const dispute = await QuestDispute.findByPk(r.params.disputeId, {
+    include: [
+      {
+        model: Quest,
+        include: [
+          {
+            model: QuestChat.unscoped(),
+            where: { questChatWorkerLiteral },
+          },
+        ],
+      },
+    ],
+  });
+
+  if (!dispute) {
+    return error(Errors.NotFound, 'Dispute is not found', {});
+  }
+
+  const questController = QuestControllerFactory.createByModel(dispute.quest);
+  const checksListQuest =  new ChecksListQuest(questController.quest);
+
+  checksListQuest
+    .checkUserMustBelongToQuest(user);
+
+  return output(dispute);
 }
 
 export async function getDisputes(r) {

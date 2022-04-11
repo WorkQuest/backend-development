@@ -14,7 +14,7 @@ export class QuestControllerFactory {
     return new QuestController(quest);
   }
 
-  public static async createByModel(quest: Quest): Promise<QuestController> {
+  public static createByModel(quest: Quest): QuestController {
     return new QuestController(quest);
   }
 
