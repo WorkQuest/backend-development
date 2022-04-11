@@ -5,6 +5,7 @@ import {
   User,
   UserRole
 } from "@workquest/database-models/lib/models";
+import { RatingStatistic } from '@workquest/database-models/src/models/user/RatingStatistic';
 
 export class ChecksListUser {
   constructor(
@@ -23,17 +24,25 @@ export class ChecksListUser {
     return this;
   }
 
-  public async ratingShouldCoincide(comparableUser: User): Promise<this> {
-    const profileVisibility = await ProfileVisibilitySetting.findOne({ where: { userId: this.user.id } });
+  public async checkRatingMustMatchVisibilitySettings(comparableUser: User): Promise<this> {
+    const [thisUserRatingStatistic, comparableUserVisibilitySetting] = await Promise.all([
+      RatingStatistic.findOne({ where: { userId: this.user.id } }),
+      ProfileVisibilitySetting.findOne({ where: { userId: comparableUser.id } }),
+    ]);
 
-    if (profileVisibility.ratingStatus === RatingStatus.AllStatuses) {
+    if (comparableUserVisibilitySetting.ratingStatus === RatingStatus.AllStatuses) {
       return this;
     }
-    if (this.user.ratingStatistic.status !== profileVisibility.ratingStatus) {
-      throw error(Errors.InvalidStatus, `User rating doesn't coincide to profile visibility setting of ${comparableUser.id}`, {
-        userId: this.user.id,
-        currentRatingStatus: this.user.ratingStatistic.status,
-        coincideUserRatingStatus: profileVisibility.ratingStatus,
+    if (thisUserRatingStatistic.status !== comparableUserVisibilitySetting.ratingStatus) {
+      throw error(Errors.InvalidStatus, "User rating does not match comparable user's profile visibility setting", {
+        comparableUserSettings: {
+          userId: comparableUser.id,
+          ratingStatus: comparableUserVisibilitySetting.ratingStatus,
+        },
+        userRating: {
+          userId: this.user.id,
+          status: thisUserRatingStatistic.status,
+        },
       });
     }
 

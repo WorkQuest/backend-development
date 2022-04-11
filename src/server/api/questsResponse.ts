@@ -38,7 +38,7 @@ export async function responseOnQuest(r) {
 
   await checksListWorker
     .checkUserRole(UserRole.Worker)
-    .ratingShouldCoincide(questController.quest.user)
+    .checkRatingMustMatchVisibilitySettings(questController.quest.user)
   checksListQuest
     .checkQuestStatuses(QuestStatus.Recruitment)
 
@@ -91,7 +91,7 @@ export async function inviteOnQuest(r) {
 
   await checksListEmployer
     .checkUserRole(UserRole.Employer)
-    .ratingShouldCoincide(workerController.user)
+    .checkRatingMustMatchVisibilitySettings(workerController.user)
   checksListWorker
     .checkUserRole(UserRole.Worker)
   checksListQuest
