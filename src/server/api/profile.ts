@@ -19,8 +19,10 @@ export const searchFields = [
 ];
 
 export async function getMe(r) {
+  const totpIsActiveLiteral = literal(`"User"."settings"->'security'->'TOTP'->'active'`);
+
   const user = await User.findByPk(r.auth.credentials.id, {
-    attributes: { include: ['tempPhone'] },
+    attributes: { include: ['tempPhone', [totpIsActiveLiteral, 'totpIsActive']] },
     include: [{ model: Wallet, as: 'wallet', attributes: ['address'] }]
   });
 
