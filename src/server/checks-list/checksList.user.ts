@@ -1,11 +1,12 @@
 import { error } from '../utils';
 import { Errors } from '../utils/errors';
 import {
-  ProfileVisibilitySetting, RatingStatus,
   User,
-  UserRole
+  UserRole,
+  RatingStatus,
+  RatingStatistic,
+  ProfileVisibilitySetting,
 } from "@workquest/database-models/lib/models";
-import { RatingStatistic } from '@workquest/database-models/src/models/user/RatingStatistic';
 
 export class ChecksListUser {
   constructor(
