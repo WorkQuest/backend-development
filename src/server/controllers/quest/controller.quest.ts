@@ -133,7 +133,6 @@ export class QuestController {
       locationPlaceName: payload.locationFull.locationPlaceName,
       locationPostGIS: transformToGeoPostGIS(payload.locationFull.location),
     }, {
-      where: { id: this.quest.id },
       transaction: options.tx,
     });
   }
