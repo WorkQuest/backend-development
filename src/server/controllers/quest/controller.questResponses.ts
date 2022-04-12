@@ -9,8 +9,6 @@ import {
   QuestsResponseType,
   QuestsResponseStatus,
 } from '@workquest/database-models/lib/models';
-import chat from "../../routes/v1/chat";
-import questsResponse from "../../routes/v1/questsResponse";
 
 interface SendBasePayload {
   readonly worker: User;

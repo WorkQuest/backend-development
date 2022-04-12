@@ -123,7 +123,7 @@ export class QuestController {
   }
 
   public async update(payload: EditedQuestPayload, options: { tx?: Transaction } = {}) {
-    await Quest.update({
+    await this.quest.update({
       title: payload.title,
       avatarId: payload.avatarId,
       priority: payload.priority,
