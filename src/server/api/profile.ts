@@ -199,8 +199,8 @@ export function getUsers(role: UserRole, type: 'points' | 'list') {
 
       where[Op.and].push(entersAreaLiteral);
     }
-    if (r.query.specializations && role === UserRole.Worker) {
-      const { paths, industryKeys } = SkillsFiltersController.splitPathsAndSingleKeysOfIndustry(r.query.specializations);
+    if (r.payload.specializations && role === UserRole.Worker) {
+      const { paths, industryKeys } = SkillsFiltersController.splitPathsAndSingleKeysOfIndustry(r.payload.specializations);
 
       if (paths.length !== 0 && industryKeys.length === 0) {
         replacements['path'] = paths;
