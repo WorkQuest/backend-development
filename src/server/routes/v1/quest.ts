@@ -218,7 +218,7 @@ export default [{
         employment: questEmploymentSchema.required(),
         priority: prioritySchema.required(),
         locationFull: locationFullSchema.required(),
-        //title: questTitleSchema.required(),
+        title: questTitleSchema.required(),
         medias: idsSchema.unique().required(),
         specializationKeys: specializationKeysSchema.unique().required(),
       }).label("EditQuestPayload"),
