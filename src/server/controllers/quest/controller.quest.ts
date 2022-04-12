@@ -16,7 +16,7 @@ import {
 } from '@workquest/database-models/lib/models';
 
 export interface EditedQuestPayload {
-  //title: r.payload.title,
+  title: string,
   avatarId: string,
   priority: Priority,
   workplace: WorkPlace,
@@ -124,6 +124,7 @@ export class QuestController {
 
   public async update(payload: EditedQuestPayload, options: { tx?: Transaction } = {}) {
     await Quest.update({
+      title: payload.title,
       avatarId: payload.avatarId,
       priority: payload.priority,
       workplace: payload.workplace,

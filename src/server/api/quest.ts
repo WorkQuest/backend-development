@@ -163,7 +163,7 @@ export async function editQuest(r) {
     });
   }
 
-  return output(questController.quest);
+  return output(await Quest.findByPk(questController.quest.id));
 }
 
 // TODO отрефракторить!
