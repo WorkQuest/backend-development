@@ -30,7 +30,7 @@ import {
   userRoleSchema,
   userSchema,
   userStatisticsSchema,
-  userWorkersSchema, workerPayloadSchema,
+  userWorkersSchema, workerPayloadSchema, workerQueryForMapPointsSchema,
   workerQuerySchema,
   workerWagePerHourSchema,
   workPlaceSchema
@@ -95,7 +95,7 @@ export default [{
     tags: ["api", "profile"],
     description: "Get worker points",
     validate: {
-      // query: workerQueryForMapPointsSchema,
+      query: workerQueryForMapPointsSchema,
     },
     response: {
       schema: outputOkSchema(userWorkersSchema).label("GetWorkerPointsResponse")
@@ -325,7 +325,7 @@ export default [{
   },
 }, {
   method: "POST",
-  path: "/v1/get-workers",
+  path: "/v1/profile/get-workers",
   handler: handlers.getUsers(UserRole.Worker,'list'),
   options: {
     auth: 'jwt-access',
@@ -338,6 +338,23 @@ export default [{
     },
     response: {
       schema: outputOkSchema(userWorkersSchema).label("GetWorkersResponse")
+    },
+  }
+}, {
+  method: "POST",
+  path: "/v1/profile/workers/map/get-points",
+  handler: handlers.getUsers(UserRole.Worker,'points'),
+  options: {
+    auth: 'jwt-access',
+    id: "v1.getWorkersMapPointsBySpecialisation",
+    tags: ["api", "profile"],
+    description: "Get workers map points with specialization",
+    validate: {
+      query: workerQuerySchema,
+      payload: workerPayloadSchema,
+    },
+    response: {
+      schema: outputOkSchema(userWorkersSchema).label("GetWorkersMapPointsResponse")
     },
   }
 },];
