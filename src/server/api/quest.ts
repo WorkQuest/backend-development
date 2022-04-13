@@ -28,6 +28,7 @@ import {
   User,
   UserRole,
 } from '@workquest/database-models/lib/models';
+import BigNumber from "bignumber.js";
 
 export const searchQuestFields = [
   'title',
@@ -549,6 +550,9 @@ export async function getPayloadQuests(r) {
 // TODO отрефракторить!
 export function getQuests(type: 'list' | 'points') {
   return async function(r) {
+    if(true) {
+      return new BigNumber('1649762700').dividedBy(86400).toString().split('.')[0]
+    }
     const user: User = r.auth.credentials;
 
     const entersAreaLiteral = literal(
