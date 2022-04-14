@@ -28,7 +28,7 @@ import {
   User,
   UserRole,
 } from '@workquest/database-models/lib/models';
-import BigNumber from "bignumber.js";
+
 
 export const searchQuestFields = [
   'title',
@@ -550,9 +550,6 @@ export async function getPayloadQuests(r) {
 // TODO отрефракторить!
 export function getQuests(type: 'list' | 'points') {
   return async function(r) {
-    if(true) {
-      return new BigNumber('1649762700').dividedBy(86400).toString().split('.')[0]
-    }
     const user: User = r.auth.credentials;
 
     const entersAreaLiteral = literal(
@@ -674,12 +671,12 @@ export function getQuests(type: 'list' | 'points') {
         model: QuestsStarred.unscoped(),
         as: 'star',
         where: { userId: r.auth.credentials.id },
-        required: r.query.starred,
+        required: !!(r.query.starred), /** Because there is request without this flag */
       },
       {
         model: QuestsResponse.unscoped(),
         as: 'invited',
-        required: r.query.invited,
+        required: !!(r.query.selectMyInvitation), /** Because there is request without this flag */
         where: {
           [Op.and]: [{ workerId: r.auth.credentials.id }, { type: QuestsResponseType.Invite }],
         },
@@ -687,7 +684,7 @@ export function getQuests(type: 'list' | 'points') {
       {
         model: QuestsResponse.unscoped(),
         as: 'responded',
-        required: r.query.responded,
+        required: !!(r.query.selectMyResponse), /** Because there is request without this flag */
         where: {
           [Op.and]: [{ workerId: r.auth.credentials.id }, { type: QuestsResponseType.Response }],
         },

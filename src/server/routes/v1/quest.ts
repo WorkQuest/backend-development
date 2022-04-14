@@ -18,13 +18,13 @@ import {
   questRaiseTypeScheme,
   questsWithCountSchema,
   questEmploymentSchema,
-  questRaiseViewSchema,
   questDescriptionSchema,
   questRaiseDurationSchema,
   specializationKeysSchema,
   questsForGetWithCountSchema,
   questQueryForMapPointsSchema,
 } from "@workquest/database-models/lib/schemes";
+import { questForGetAnotherUserQuerySchema } from "@workquest/database-models/lib/schemes/quest";
 
 export default [{
   method: "GET",
@@ -162,7 +162,7 @@ export default [{
       params: Joi.object({
         userId: idSchema.required(),
       }).label("EmployerGetQuestsParams"),
-      query: questQuerySchema
+      query: questForGetAnotherUserQuerySchema
     },
     response: {
       schema: outputOkSchema(questsForGetWithCountSchema).label("EmployerGetQuestsResponse")
@@ -181,7 +181,7 @@ export default [{
       params: Joi.object({
         workerId: idSchema.required(),
       }).label("WorkerGetQuestsParams"),
-      query: questQuerySchema
+      query: questForGetAnotherUserQuerySchema
     },
     response: {
       schema: outputOkSchema(questsForGetWithCountSchema).label("WorkerGetQuestsResponse")
