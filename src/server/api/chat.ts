@@ -7,25 +7,28 @@ import { MediaController } from "../controllers/controller.media";
 import { UserController } from "../controllers/user/controller.user";
 import { MessageController } from "../controllers/chat/controller.message";
 import { listOfUsersByChatsCountQuery, listOfUsersByChatsQuery } from "../queries";
-import {
-  Chat,
-  ChatData,
-  ChatMember,
-  ChatMemberDeletionData,
-  ChatType,
-  GroupChat, InfoMessage, MemberStatus,
-  Message,
-  MessageAction, QuestChatStatuses,
-  SenderMessageStatus,
-  StarredChat,
-  StarredMessage,
-  User
-} from "@workquest/database-models/lib/models";
 import { setMessageAsReadJob }  from "../jobs/setMessageAsRead";
 import { updateCountUnreadChatsJob }  from "../jobs/updateCountUnreadChats";
 import { updateCountUnreadMessagesJob }  from "../jobs/updateCountUnreadMessages";
 import { resetUnreadCountMessagesOfMemberJob }  from "../jobs/resetUnreadCountMessagesOfMember";
 import { incrementUnreadCountMessageOfMembersJob }  from "../jobs/incrementUnreadCountMessageOfMembers";
+import {
+  User,
+  Chat,
+  Message,
+  ChatData,
+  ChatType,
+  GroupChat,
+  ChatMember,
+  InfoMessage,
+  StarredChat,
+  MemberStatus,
+  MessageAction,
+  StarredMessage,
+  QuestChatStatuses,
+  SenderMessageStatus,
+  ChatMemberDeletionData,
+} from "@workquest/database-models/lib/models";
 
 export const searchChatFields = ['name'];
 

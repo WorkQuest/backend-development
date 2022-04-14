@@ -1,18 +1,23 @@
-import {
-  Chat,
-  ChatData,
-  ChatMember,
-  ChatMemberData, ChatMemberDeletionData,
-  ChatType,
-  GroupChat, InfoMessage,
-  MemberStatus,
-  MemberType,
-  Message, MessageAction, MessageType, QuestChat,
-  QuestChatStatuses
-} from "@workquest/database-models/lib/models";
 import { error } from "../../utils";
 import { Errors } from "../../utils/errors";
 import { Op, Transaction } from "sequelize";
+import {
+  Chat,
+  ChatData,
+  ChatType,
+  Message,
+  GroupChat,
+  QuestChat,
+  ChatMember,
+  MemberType,
+  InfoMessage,
+  MessageType,
+  MemberStatus,
+  MessageAction,
+  ChatMemberData,
+  QuestChatStatuses,
+  ChatMemberDeletionData,
+} from "@workquest/database-models/lib/models";
 
 abstract class ChatHelper {
   public abstract chat: Chat;
