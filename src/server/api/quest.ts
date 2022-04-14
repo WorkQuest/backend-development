@@ -6,7 +6,6 @@ import { ChecksListQuest } from "../checks-list/checksList.quest";
 import { QuestNotificationActions } from "../controllers/controller.broker";
 import { MediaController } from '../controllers/controller.media';
 import { updateQuestsStatisticJob } from '../jobs/updateQuestsStatistic';
-import { updateQuestRaiseViewStatusJob } from '../jobs/updateQuestRaiseViewStatus';
 import { SkillsFiltersController } from '../controllers/controller.skillsFilters';
 import { EmployerControllerFactory, WorkerControllerFactory } from '../factories/factory.userController';
 import { QuestControllerFactory } from '../factories/factory.questController';
@@ -19,9 +18,7 @@ import {
   QuestsResponseType,
   DisputeStatus,
   QuestStatus,
-  QuestRaiseView,
   QuestsReview,
-  QuestRaiseStatus,
   QuestsResponseStatus,
   QuestsStarred,
   UserRole,
