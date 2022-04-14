@@ -17,24 +17,21 @@ export async function createReferralProgramJob(payload: CreateReferralProgramPay
 
 export default async function(payload: CreateReferralProgramPayload) {
   const user = await User.findByPk(payload.userId);
-
-  const referralProgramAffiliate = await ReferralProgramAffiliate.findOne({
-    where: { referralCodeId: payload.referralId },
-  });
-
   if (!user) {
     return;
   }
-  if (payload.referralId && !referralProgramAffiliate) {
-    return;
-  }
+  await ReferralProgramAffiliate.create({ affiliateUserId: user.id });
   if (payload.referralId) {
+    const referralProgramAffiliate = await ReferralProgramAffiliate.findOne({
+      where: { referralCodeId: payload.referralId },
+    });
+    if (!referralProgramAffiliate) {
+      return;
+    }
     await ReferralProgramReferral.create({
       referralUserId: payload.userId,
       affiliateId: referralProgramAffiliate.id,
       referralStatus: ReferralStatus.Created,
     });
   }
-
-  await ReferralProgramAffiliate.create({ affiliateUserId: user.id });
 }
