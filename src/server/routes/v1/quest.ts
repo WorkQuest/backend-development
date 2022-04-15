@@ -21,7 +21,8 @@ import {
   questDescriptionSchema,
   specializationKeysSchema,
   questsForGetWithCountSchema,
-  questQueryForMapPointsSchema, questForGetAnotherWorkerQuerySchema
+  questQueryForMapPointsSchema,
+  questQueryForGetWorkersSchema,
 } from "@workquest/database-models/lib/schemes";
 
 export default [{
@@ -118,7 +119,7 @@ export default [{
       params: Joi.object({
         workerId: idSchema.required(),
       }).label("WorkerGetQuestsParams"),
-      query: questForGetAnotherWorkerQuerySchema,
+      query: questQueryForGetWorkersSchema,
       payload: questsPayloadSchema,
     },
     response: {
