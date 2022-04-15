@@ -19,7 +19,7 @@ async function getWorkerQuestStatistic(workerId: string): Promise<Statistic> {
   const completedQuestsPromises = Quest.unscoped().count({
     where: {
       assignedWorkerId: workerId,
-      status: QuestStatus.Done,
+      status: QuestStatus.Completed,
     },
   });
   const openedQuestsPromises = Quest.unscoped().count({
@@ -38,7 +38,7 @@ async function getEmployerQuestStatistic(employerId: string): Promise<Statistic>
   const completedQuestsPromises = Quest.unscoped().count({
     where: {
       userId: employerId,
-      status: QuestStatus.Done,
+      status: QuestStatus.Completed,
     },
   });
   const openedQuestsPromises = Quest.unscoped().count({

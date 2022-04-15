@@ -1,7 +1,7 @@
 import { literal, Op } from "sequelize";
 import { addSendSmsJob } from "../jobs/sendSms";
 import { error, getRandomCodeNumber, output } from "../utils";
-import { UserController } from "../controllers/user/controller.user";
+import { UserOldController } from '../controllers/user/controller.user';
 import { transformToGeoPostGIS } from "../utils/postGIS";
 import { MediaController } from "../controllers/controller.media";
 import { SkillsFiltersController } from "../controllers/controller.skillsFilters";
@@ -55,8 +55,8 @@ export async function getUser(r) {
   const user = await User.findByPk(r.params.userId, {
     include: [{ model: Wallet, as: 'wallet', attributes: ['address'] }],
   });
-  const userController = new UserController(user);
-  const visitorController = new UserController(r.auth.credentials)
+  const userController = new UserOldController(user);
+  const visitorController = new UserOldController(r.auth.credentials)
 
   await userController
     .checkNotSeeYourself(r.auth.credentials.id)
@@ -78,7 +78,7 @@ export async function getUserByWallet(r) {
       attributes: ['address'],
     }]
   });
-  const userController = new UserController(user);
+  const userController = new UserOldController(user);
 
   userController
     .checkNotSeeYourself(r.auth.credentials.id)
@@ -135,6 +135,7 @@ export async function getAllUsers(r) {
 export function getUsers(role: UserRole, type: 'points' | 'list') {
   return async function(r) {
     const user = r.auth.credentials;
+
     const entersAreaLiteral = literal(
       'st_within("User"."locationPostGIS", st_makeenvelope(:northLng, :northLat, :southLng, :southLat, 4326))'
     );
@@ -198,8 +199,8 @@ export function getUsers(role: UserRole, type: 'points' | 'list') {
 
       where[Op.and].push(entersAreaLiteral);
     }
-    if (r.query.specializations && role === UserRole.Worker) {
-      const { paths, industryKeys } = SkillsFiltersController.splitPathsAndSingleKeysOfIndustry(r.query.specializations);
+    if (r.payload.specializations && role === UserRole.Worker) {
+      const { paths, industryKeys } = SkillsFiltersController.splitPathsAndSingleKeysOfIndustry(r.payload.specializations);
 
       if (paths.length !== 0 && industryKeys.length === 0) {
         replacements['path'] = paths;
@@ -252,7 +253,7 @@ export function getUsers(role: UserRole, type: 'points' | 'list') {
 
 export async function setRole(r) {
   const user: User = r.auth.credentials;
-  const userController = new UserController(user);
+  const userController = new UserOldController(user);
 
   await userController.userNeedsSetRole();
 
@@ -264,7 +265,7 @@ export async function setRole(r) {
 export function editProfile(userRole: UserRole) {
   return async function (r) {
     const user: User = r.auth.credentials;
-    const userController = new UserController(user);
+    const userController = new UserOldController(user);
 
     await userController.userMustHaveRole(userRole);
 
@@ -325,7 +326,7 @@ export async function changePassword(r) {
     where: { id: r.auth.credentials.id },
   });
 
-  const userController = new UserController(user);
+  const userController = new UserOldController(user);
 
   await userController.checkPassword(r.payload.oldPassword);
 
@@ -342,7 +343,7 @@ export async function changePassword(r) {
 export async function confirmPhoneNumber(r) {
   const user = await User.scope('withPassword').findByPk(r.auth.credentials.id);
 
-  const userController = new UserController(user);
+  const userController = new UserOldController(user);
 
   await userController
     .userMustHaveVerificationPhone()
@@ -356,7 +357,7 @@ export async function sendCodeOnPhoneNumber(r) {
   const userWithPassword = await User.scope('withPassword').findByPk(r.auth.credentials.id);
   const confirmCode = getRandomCodeNumber();
 
-  const userController = new UserController(userWithPassword);
+  const userController = new UserOldController(userWithPassword);
 
   if (userWithPassword.phone) { //TODO Возможно что-то подобное есть
     return error(Errors.PhoneNumberAlreadyConfirmed, 'Phone number already confirmed', {});
@@ -395,7 +396,7 @@ export async function changeUserRole(r) {
   const roleChangeTimeLimitInMilliseconds = 60000; /** 1 Mount - 2592000000, for DEBUG - 1 minute */
 
   const user = await User.scope('withPassword').findByPk(r.auth.credentials.id);
-  const userController = new UserController(user);
+  const userController = new UserOldController(user);
 
   const changeToRole = user.role === UserRole.Worker ? UserRole.Employer : UserRole.Worker;
 
@@ -426,7 +427,7 @@ export async function changeUserRole(r) {
     const questCount = await Quest.count({
       where: {
         assignedWorkerId: user.id,
-        status: { [Op.notIn]: [QuestStatus.Closed, QuestStatus.Done, QuestStatus.Blocked] }
+        status: { [Op.notIn]: [QuestStatus.Closed, QuestStatus.Completed, QuestStatus.Blocked] }
       }
     });
     const questsResponseCount = await QuestsResponse.count({
@@ -445,7 +446,7 @@ export async function changeUserRole(r) {
   }
   if (user.role === UserRole.Employer) {
     const questCount = await Quest.count({
-      where: { userId: user.id, status: { [Op.notIn]: [QuestStatus.Closed, QuestStatus.Done] } }
+      where: { userId: user.id, status: { [Op.notIn]: [QuestStatus.Closed, QuestStatus.Completed] } }
     });
 
     if (questCount !== 0) {
@@ -469,7 +470,7 @@ export async function changeUserRole(r) {
     workplace: null,
     wagePerHour: null,
     role: changeToRole,
-    additionalInfo: UserController.getDefaultAdditionalInfo(changeToRole),
+    additionalInfo: UserOldController.getDefaultAdditionalInfo(changeToRole),
   }, { transaction });
 
   await transaction.commit();
@@ -490,7 +491,7 @@ export async function changeUserRole(r) {
 
 export async function payForMyRaiseView(r) {
 //TODO: логику оплаты
-  const userController = new UserController(await User.findByPk(r.auth.credentials.id));
+  const userController = new UserOldController(await User.findByPk(r.auth.credentials.id));
   await userController
     .userMustHaveRole(UserRole.Worker)
     .checkUserRaiseViewStatus();

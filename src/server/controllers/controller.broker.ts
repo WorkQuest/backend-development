@@ -1,7 +1,6 @@
 import { Buffer } from 'buffer';
-import amqp from 'amqplib/callback_api';
 import config from '../config/config';
-import { not } from "joi";
+import amqp from 'amqplib/callback_api';
 
 export const enum MainBrokerQueues {
   Chat = 'chat',
