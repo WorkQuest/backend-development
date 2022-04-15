@@ -1,12 +1,12 @@
 import { output } from '../utils';
 import { MediaController } from '../controllers/controller.media';
-import { UserController } from '../controllers/user/controller.user';
+import { UserOldController } from '../controllers/user/controller.user';
 import { PortfolioController } from '../controllers/user/controller.portfolio';
 import { User, UserRole, Portfolio } from '@workquest/database-models/lib/models';
 
 export async function addCase(r) {
   const medias = await MediaController.getMedias(r.payload.medias);
-  const userController = new UserController(r.auth.credentials);
+  const userController = new UserOldController(r.auth.credentials);
 
   await userController.userMustHaveRole(UserRole.Worker);
 
@@ -29,7 +29,7 @@ export async function addCase(r) {
 }
 
 export async function getCases(r) {
-  const workerController = new UserController(await User.findByPk(r.params.userId));
+  const workerController = new UserOldController(await User.findByPk(r.params.userId));
 
   const { count, rows } = await Portfolio.findAndCountAll({
     where: { userId: workerController.user.id },
