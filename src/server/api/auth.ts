@@ -1,14 +1,16 @@
-import * as path from 'path';
 import * as fs from 'fs';
+import * as path from 'path';
+import { Op } from 'sequelize';
 import * as querystring from 'querystring';
 import Handlebars = require('handlebars');
-import { Op } from 'sequelize';
 import config from '../config/config';
 import { Errors } from '../utils/errors';
 import { addSendEmailJob } from '../jobs/sendEmail';
 import { generateJwt } from '../utils/auth';
-import { UserController } from '../controllers/user/controller.user';
+import { UserOldController } from '../controllers/user/controller.user';
 import converter from 'bech32-converting';
+import { totpValidate } from '@workquest/database-models/lib/utils';
+import { createReferralProgramJob } from '../jobs/createReferralProgram';
 import { error, output, getGeo, getRealIp, getDevice, getRandomHexToken } from '../utils';
 import {
   User,
@@ -17,10 +19,9 @@ import {
   UserStatus,
   defaultUserSettings,
 } from '@workquest/database-models/lib/models';
-import { totpValidate } from '@workquest/database-models/lib/utils';
-import { createReferralProgramJob } from '../jobs/createReferralProgram';
 
 const confirmTemplatePath = path.join(__dirname, '..', '..', '..', 'templates', 'confirmEmail.html');
+
 const confirmTemplate = Handlebars.compile(
   fs.readFileSync(confirmTemplatePath, {
     encoding: 'utf-8',
@@ -29,7 +30,7 @@ const confirmTemplate = Handlebars.compile(
 
 export function register(host: 'dao' | 'main') {
   return async function (r) {
-    await UserController.checkEmail(r.payload.email);
+    await UserOldController.checkEmail(r.payload.email);
 
     const emailConfirmCode = getRandomHexToken().substring(0, 6).toUpperCase();
     const emailConfirmLink =
@@ -88,8 +89,9 @@ export function getLoginViaSocialNetworkHandler(returnType: 'token' | 'redirect'
     if (!profile.email) {
       return error(Errors.InvalidEmail, 'Field email was not returned', {});
     }
-    const user = await UserController.getUserByNetworkProfile(r.auth.strategy, profile, referralId);
-    const userController = new UserController(user);
+
+    const user = await UserOldController.getUserByNetworkProfile(r.auth.strategy, profile, referralId);
+    const userController = new UserOldController(user);
     await userController.createRaiseView();
 
     const session = await Session.create({
@@ -122,18 +124,18 @@ export function getLoginViaSocialNetworkHandler(returnType: 'token' | 'redirect'
 
 export async function confirmEmail(r) {
   const user = await User.scope('withPassword').findByPk(r.auth.credentials.id);
-  const userController = new UserController(user);
+  const userController = new UserOldController(user);
 
   await userController.checkUserAlreadyConfirmed().checkUserConfirmationCode(r.payload.confirmCode).createRaiseView();
 
-  await UserController.createStatistics(user.id);
+  await UserOldController.createStatistics(user.id);
 
   if (r.payload.role) {
     await user.update({
       role: r.payload.role,
       status: UserStatus.Confirmed,
       'settings.emailConfirm': null,
-      additionalInfo: UserController.getDefaultAdditionalInfo(r.payload.role),
+      additionalInfo: UserOldController.getDefaultAdditionalInfo(r.payload.role),
     });
   } else {
     await user.update({
@@ -156,7 +158,7 @@ export async function login(r) {
       },
     ],
   });
-  const userController = new UserController(user);
+  const userController = new UserOldController(user);
   const userTotpActiveStatus: boolean = user.isTOTPEnabled();
 
   await userController.checkPassword(r.payload.password);

@@ -1,39 +1,39 @@
-import * as Joi from 'joi';
-import * as handlers from '../../api/profile';
-import { UserRole } from '@workquest/database-models/lib/models';
+import * as Joi from "joi";
+import * as handlers from "../../api/profile";
+import { UserRole } from "@workquest/database-models/lib/models";
 import {
-  idSchema,
-  totpSchema,
-  userSchema,
-  limitSchema,
-  phoneSchema,
-  offsetSchema,
-  searchSchema,
-  userMeSchema,
-  emptyOkSchema,
-  outputOkSchema,
-  prioritySchema,
-  userRoleSchema,
-  workPlaceSchema,
-  userWorkersSchema,
-  workerQuerySchema,
-  locationFullSchema,
-  userLastNameSchema,
-  userPasswordSchema,
-  userRaiseViewSchema,
+  accountAddressSchema,
   employerQuerySchema,
+  emptyOkSchema,
+  idSchema,
+  limitSchema,
+  locationFullSchema,
+  offsetSchema,
+  outputOkSchema,
+  outputPaginationSchema,
+  phoneSchema,
+  prioritySchema,
+  profileVisibilitySettingsSchema,
+  searchSchema,
+  specializationKeysSchema,
+  totpSchema,
+  userAdditionalInfoEmployerSchema,
+  userAdditionalInfoWorkerSchema,
   userEmployersSchema,
   userFirstNameSchema,
-  userStatisticsSchema,
-  accountAddressSchema,
-  outputPaginationSchema,
-  userRaiseViewTypeSchema,
-  workerWagePerHourSchema,
-  specializationKeysSchema,
+  userLastNameSchema,
+  userMeSchema,
+  userPasswordSchema,
   userRaiseViewDurationSchema,
-  userAdditionalInfoWorkerSchema,
-  userAdditionalInfoEmployerSchema,
-  profileVisibilitySettingsSchema,
+  userRaiseViewSchema,
+  userRaiseViewTypeSchema,
+  userRoleSchema,
+  userSchema,
+  userStatisticsSchema,
+  userWorkersSchema, workerPayloadSchema, workerQueryForMapPointsSchema,
+  workerQuerySchema,
+  workerWagePerHourSchema,
+  workPlaceSchema
 } from "@workquest/database-models/lib/schemes";
 
 export default [{
@@ -95,7 +95,7 @@ export default [{
     tags: ["api", "profile"],
     description: "Get worker points",
     validate: {
-      // query: workerQueryForMapPointsSchema,
+      query: workerQueryForMapPointsSchema,
     },
     response: {
       schema: outputOkSchema(userWorkersSchema).label("GetWorkerPointsResponse")
@@ -323,4 +323,38 @@ export default [{
       schema: outputOkSchema(userRaiseViewSchema).label("UserPayRaiseViewPayResponse"),
     },
   },
-}];
+}, {
+  method: "POST",
+  path: "/v1/profile/get-workers",
+  handler: handlers.getUsers(UserRole.Worker,'list'),
+  options: {
+    auth: 'jwt-access',
+    id: "v1.getWorkersBySpecialisation",
+    tags: ["api", "profile"],
+    description: "Get workers with specialization",
+    validate: {
+      query: workerQuerySchema,
+      payload: workerPayloadSchema,
+    },
+    response: {
+      schema: outputOkSchema(userWorkersSchema).label("GetWorkersResponse")
+    },
+  }
+}, {
+  method: "POST",
+  path: "/v1/profile/workers/map/get-points",
+  handler: handlers.getUsers(UserRole.Worker,'points'),
+  options: {
+    auth: 'jwt-access',
+    id: "v1.getWorkersMapPointsBySpecialisation",
+    tags: ["api", "profile"],
+    description: "Get workers map points with specialization",
+    validate: {
+      query: workerQuerySchema,
+      payload: workerPayloadSchema,
+    },
+    response: {
+      schema: outputOkSchema(userWorkersSchema).label("GetWorkersMapPointsResponse")
+    },
+  }
+},];

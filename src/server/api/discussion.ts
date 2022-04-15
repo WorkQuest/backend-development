@@ -2,7 +2,7 @@ import { Op } from 'sequelize';
 import { error, output } from '../utils';
 import { Errors } from '../utils/errors';
 import { MediaController } from '../controllers/controller.media';
-import { UserController } from '../controllers/user/controller.user';
+import { UserOldController } from '../controllers/user/controller.user';
 import { DaoNotificationActions } from '../controllers/controller.broker';
 import {
   User,
@@ -157,7 +157,7 @@ export async function createDiscussion(r) {
 
 export async function sendComment(r) {
   const user: User = r.auth.credentials;
-  const userController = new UserController(user);
+  const userController = new UserOldController(user);
 
   let commentLevel = 0;
   let rootComment: DiscussionComment = null;
@@ -223,7 +223,7 @@ export async function sendComment(r) {
 
 export async function putDiscussionLike(r) {
   const user: User = r.auth.credentials;
-  const userController = new UserController(user);
+  const userController = new UserOldController(user);
 
   const discussion = await Discussion.findByPk(r.params.discussionId);
 
@@ -282,7 +282,7 @@ export async function removeDiscussionLike(r) {
 
 export async function putCommentLike(r) {
   const user: User = r.auth.credentials;
-  const userController = new UserController(user);
+  const userController = new UserOldController(user);
 
   const comment = await DiscussionComment.findByPk(r.params.commentId);
 

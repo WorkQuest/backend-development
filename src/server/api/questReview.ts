@@ -1,18 +1,25 @@
 import { error, output } from '../utils';
 import { addUpdateReviewStatisticsJob } from '../jobs/updateReviewStatistics';
 import { QuestNotificationActions } from '../controllers/controller.broker';
-import { QuestController } from '../controllers/quest/controller.quest';
+import { ChecksListQuest } from '../checks-list/checksList.quest';
 import { Errors } from '../utils/errors';
 import { User, Quest, QuestsReview, UserRole, QuestStatus } from '@workquest/database-models/lib/models';
-import { UserController } from '../controllers/user/controller.user';
+import { UserOldController } from '../controllers/user/controller.user';
+import { QuestControllerFactory } from '../factories/factory.questController';
 
 export async function sendReview(r) {
+  const { questId } = r.payload;
+
   const fromUser: User = r.auth.credentials;
-  const fromUserController = new UserController(fromUser);
+  const fromUserController = new UserOldController(fromUser);
 
-  const questController = new QuestController(await Quest.findByPk(r.payload.questId));
+  const questController = await QuestControllerFactory.createById(questId);
 
-  questController.questMustHaveStatus(QuestStatus.Done).userMustBelongToQuest(fromUser.id);
+  const checksListQuest = new ChecksListQuest(questController.quest);
+
+  checksListQuest
+    .checkQuestStatuses(QuestStatus.Completed)
+    .checkUserMustBelongToQuest(fromUser)
 
   const toUser: User = fromUser.role === UserRole.Worker ? questController.quest.user : questController.quest.assignedWorker;
 
