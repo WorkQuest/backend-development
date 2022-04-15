@@ -119,22 +119,6 @@ export default [{
   }
 }, {
   method: "GET",
-  path: "/v1/profile/workers",
-  handler: handlers.getUsers(UserRole.Worker, 'list'),
-  options: {
-    auth: 'jwt-access',
-    id: "v1.profile.getWorkers",
-    tags: ["api", "profile"],
-    description: "Get workers",
-    validate: {
-      query: workerQuerySchema,
-    },
-    response: {
-      schema: outputOkSchema(userWorkersSchema).label("GetWorkersResponse")
-    },
-  }
-}, {
-  method: "GET",
   path: "/v1/profile/users",
   handler: handlers.getAllUsers,
   options: {
