@@ -24,6 +24,7 @@ import {
   UserRole,
 } from '@workquest/database-models/lib/models';
 
+
 export const searchQuestFields = [
   'title',
   'description',
@@ -291,12 +292,12 @@ export function getQuests(type: 'list' | 'points') {
         model: QuestsStarred.unscoped(),
         as: 'star',
         where: { userId: r.auth.credentials.id },
-        required: r.query.starred,
+        required: !!(r.query.starred), /** Because there is request without this flag */
       },
       {
         model: QuestsResponse.unscoped(),
         as: 'invited',
-        required: r.query.invited,
+        required: !!(r.query.invited), /** Because there is request without this flag */
         where: {
           [Op.and]: [{ workerId: r.auth.credentials.id }, { type: QuestsResponseType.Invite }],
         },
@@ -304,7 +305,7 @@ export function getQuests(type: 'list' | 'points') {
       {
         model: QuestsResponse.unscoped(),
         as: 'responded',
-        required: r.query.responded,
+        required: !!(r.query.responded), /** Because there is request without this flag */
         where: {
           [Op.and]: [{ workerId: r.auth.credentials.id }, { type: QuestsResponseType.Response }],
         },
