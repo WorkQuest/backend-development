@@ -297,7 +297,7 @@ export function getQuests(type: 'list' | 'points') {
       {
         model: QuestsResponse.unscoped(),
         as: 'invited',
-        required: !!(r.query.selectMyInvitation), /** Because there is request without this flag */
+        required: !!(r.query.invited), /** Because there is request without this flag */
         where: {
           [Op.and]: [{ workerId: r.auth.credentials.id }, { type: QuestsResponseType.Invite }],
         },
@@ -305,7 +305,7 @@ export function getQuests(type: 'list' | 'points') {
       {
         model: QuestsResponse.unscoped(),
         as: 'responded',
-        required: !!(r.query.selectMyResponse), /** Because there is request without this flag */
+        required: !!(r.query.responded), /** Because there is request without this flag */
         where: {
           [Op.and]: [{ workerId: r.auth.credentials.id }, { type: QuestsResponseType.Response }],
         },
