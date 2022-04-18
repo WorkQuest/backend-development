@@ -4,8 +4,8 @@ import {
   limitSchema,
   offsetSchema,
   outputOkSchema,
-  dailyLiquiditySchema,
-  wqtWbnbSwapEventsSchema,
+  wqtSwapEventsSchema,
+  dailyLiquidityWqtWbnbSchema,
 } from '@workquest/database-models/lib/schemes';
 
 export default [
@@ -25,7 +25,7 @@ export default [
         }).label('GetSwapsWQTQuery'),
       },
       response: {
-        schema: outputOkSchema(wqtWbnbSwapEventsSchema).label('GetSwapsWQTResponse'),
+        schema: outputOkSchema(wqtSwapEventsSchema).label('GetSwapsWQTResponse'),
       },
     },
   },
@@ -79,7 +79,7 @@ export default [
         }).label('GetTokenDayDataQuery'),
       },
       response: {
-        schema: outputOkSchema(dailyLiquiditySchema).label('GetTokenDayDataResponse'),
+        schema: outputOkSchema(dailyLiquidityWqtWbnbSchema).label('GetTokenDayDataResponse'),
       },
     },
   },

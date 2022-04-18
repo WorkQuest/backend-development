@@ -1,6 +1,6 @@
 import { output } from '../utils';
 import {
-  DailyLiquidity,
+  DailyLiquidityWqtWbnb,
   WqtWbnbMintEvent,
   WqtWbnbBurnEvent,
   WqtWbnbSwapEvent,
@@ -37,7 +37,7 @@ export async function getSwaps(r) {
 }
 
 export async function getTokenDayData(r) {
-  const { count, rows } = await DailyLiquidity.findAndCountAll({
+  const { count, rows } = await DailyLiquidityWqtWbnb.findAndCountAll({
     limit: r.query.limit,
     offset: r.query.offset,
     order: [['date', 'DESC']],
