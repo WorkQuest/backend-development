@@ -6,30 +6,35 @@ import { ChatNotificationActions } from "../controllers/controller.broker";
 import { MediaController } from "../controllers/controller.media";
 import { MessageController } from "../controllers/chat/controller.message";
 import { UserOldController } from '../controllers/user/controller.user';
-import { listOfUsersByChatsCountQuery, listOfUsersByChatsQuery } from "../queries";
-import {
-  Chat,
-  ChatData,
-  ChatMemberDeletionData,
-  GroupChat, MemberStatus,
-  Message,
-  ChatType,
-  QuestChat,
-  ChatMember,
-  InfoMessage,
-  MessageType,
-  MessageAction,
-  StarredChat,
-  StarredMessage,
-  QuestChatStatuses,
-  SenderMessageStatus,
-  User
-} from "@workquest/database-models/lib/models";
 import { setMessageAsReadJob }  from "../jobs/setMessageAsRead";
 import { updateCountUnreadChatsJob }  from "../jobs/updateCountUnreadChats";
 import { updateCountUnreadMessagesJob }  from "../jobs/updateCountUnreadMessages";
 import { resetUnreadCountMessagesOfMemberJob }  from "../jobs/resetUnreadCountMessagesOfMember";
 import { incrementUnreadCountMessageOfMembersJob }  from "../jobs/incrementUnreadCountMessageOfMembers";
+import {
+  listOfUsersByChatsQuery,
+  listOfUsersByChatsCountQuery,
+} from "../queries";
+import {
+  User,
+  Chat,
+  Message,
+  ChatData,
+  ChatType,
+  QuestChat,
+  GroupChat,
+  ChatMember,
+  InfoMessage,
+  MessageType,
+  StarredChat,
+  MemberStatus,
+  MessageAction,
+  StarredMessage,
+  QuestChatStatuses,
+  SenderMessageStatus,
+  ChatMemberDeletionData,
+} from "@workquest/database-models/lib/models";
+import { UserControllerFactory } from '../factories/factory.userController';
 
 export const searchChatFields = ['name'];
 
@@ -37,7 +42,9 @@ export const searchChatFields = ['name'];
 
 export async function getUserChats(r) {
   const searchByQuestNameLiteral = literal(
-    `(SELECT "title" FROM "Quests" WHERE "id" = ` + `(SELECT "questId" FROM "QuestChats" WHERE "chatId" = "Chat"."id")) ` + `ILIKE :query`,
+    `(SELECT "title" FROM "Quests" WHERE "id" = ` +
+    `(SELECT "questId" FROM "QuestChats" WHERE "chatId" = "Chat"."id")) ` +
+    ` ILIKE :query`,
   );
   const searchByFirstAndLastNameLiteral = literal(
     `1 = (CASE WHEN EXISTS (SELECT "firstName", "lastName" FROM "Users" as "userMember" ` +
@@ -81,8 +88,7 @@ export async function getUserChats(r) {
       model: Message,
       as: 'lastMessage'
     }]
-  }
-  ];
+  }];
 
   if (r.query.q) {
     where[Op.or] = searchChatFields.map(field => ({
@@ -235,15 +241,17 @@ export async function getChatMembers(r) {
 }
 
 export async function createGroupChat(r) {
-  const userIds: string[] = r.payload.userIds;
+  const userMemberIds: string[] = r.payload.userIds;
 
-  if (!userIds.includes(r.auth.credentials.id)) {
-    userIds.push(r.auth.credentials.id);
+  if (!userMemberIds.includes(r.auth.credentials.id)) {
+    userMemberIds.push(r.auth.credentials.id);
   }
 
-  await UserOldController.usersMustExist(memberUserIds);
+  const userControllerMembers = await UserControllerFactory.createByIds(userMemberIds);
 
-  const transaction = await r.server.app.db.transaction();
+  await r.server.app.db.transaction(async (tx) => {
+
+  });
 
   const chatController = await ChatController.createGroupChat(userIds, r.payload.name, r.auth.credentials.id, transaction);
 
@@ -252,8 +260,6 @@ export async function createGroupChat(r) {
   const message = await chatController.createInfoMessage(meMember.id, chatController.chat.id, 1, meMember.id, MessageAction.groupChatCreate, transaction);
   await chatController.createChatMembersData(chatController.chat.getDataValue('members'), r.auth.credentials.id, message, transaction);
   await chatController.createChatData(chatController.chat.id, message.id, transaction);
-
-  await transaction.commit();
 
   const result = await Chat.findByPk(chatController.chat.id);
 

@@ -1,14 +1,20 @@
 import { error } from "../../utils";
 import { Errors } from "../../utils/errors";
 import { Op, Transaction } from "sequelize";
+import { CreateGroupChatPayload, CreateQuestChatPayload } from './types';
 import {
+  User,
+  Quest,
   Chat,
   ChatData,
   ChatType,
   Message,
+  UserRole,
   GroupChat,
   QuestChat,
   ChatMember,
+  QuestsResponse,
+  QuestsResponseType,
   MemberType,
   InfoMessage,
   MessageType,
@@ -18,6 +24,8 @@ import {
   QuestChatStatuses,
   ChatMemberDeletionData,
 } from "@workquest/database-models/lib/models";
+
+/**
 
 abstract class ChatHelper {
   public abstract chat: Chat;
@@ -56,7 +64,7 @@ abstract class ChatHelper {
 
     return this;
   }
-/**TODO: исправить userId на memberId везде, где есть чаты*/
+
   public chatMustHaveOwner(memberId: string): this {
     if (this.chat.groupChat.ownerMemberId !== memberId) {
       throw error(Errors.Forbidden, 'User is not a owner in this chat', {});
@@ -292,5 +300,238 @@ export class ChatController extends ChatHelper {
       }
       throw error;
     }
+  }
+}
+
+*/
+
+export class ChatController {
+  constructor(
+    public readonly chat: Chat,
+  ) {
+  }
+
+  public lastMessage(): Promise<Message> {
+    return Message.findOne({
+      where: { chatId: this.chat.id },
+      order: [['number', 'DESC']],
+    });
+  }
+
+  public firstMessage(): Promise<Message> {
+    return Message.findOne({
+      where: { chatId: this.chat.id },
+      order: [['number', 'ASC']],
+    });
+  }
+
+  protected async sendInfoMessage(payload: { senderMember: ChatMember, infoMessageMember: ChatMember, action: MessageAction }, options: { tx?: Transaction }): Promise<[message: Message, infoMessage: InfoMessage]> {
+    const lastMessage = await this.lastMessage();
+
+    // TODO: добавить LOCK
+    const message = Message.build({
+      senderMemberId: payload.senderMember.id,
+      chatId: this.chat.id,
+      type: MessageType.info,
+      number: lastMessage.number + 1,
+      createdAt: Date.now(),
+    });
+    const infoMessage = InfoMessage.build({
+      messageId: message.id,
+      memberId: payload.infoMessageMember.id,
+      messageAction: payload.action,
+    });
+
+    return Promise.all([
+      message.save({ transaction: options.tx }),
+      infoMessage.save({ transaction: options.tx }),
+    ]);
+  }
+
+  // public addUserTo
+}
+
+export class QuestChatController extends ChatController {
+  constructor(
+    public readonly chat: Chat,
+    public readonly questChat: QuestChat,
+    public readonly members: { employer: ChatMember, worker: ChatMember },
+  ) {
+    super(chat);
+  }
+
+  public toDto(): object {
+    const chat = this.chat.toJSON();
+
+    chat['questChat'] = this.questChat.toJSON();
+
+    return chat;
+  }
+
+  public closeQuestChat(options: { tx?: Transaction } = {}): Promise<any> {
+    return this.questChat.update({ status: QuestChatStatuses.Close }, { transaction: options.tx });
+  }
+
+  public async sendInfoMessageAboutAcceptInvite(options: { tx?: Transaction } = {}): Promise<[message: Message, infoMessage: InfoMessage]> {
+    return this.sendInfoMessage({
+      senderMember: this.members.worker,
+      infoMessageMember: this.members.employer,
+      action: MessageAction.workerAcceptInviteOnQuest,
+    }, options);
+  }
+
+  public async sendInfoMessageAboutRejectInvite(options: { tx?: Transaction } = {}): Promise<[message: Message, infoMessage: InfoMessage]> {
+    return this.sendInfoMessage({
+      senderMember: this.members.worker,
+      infoMessageMember: this.members.employer,
+      action: MessageAction.workerRejectInviteOnQuest,
+    }, options);
+  }
+
+  public async sendInfoMessageAboutRejectResponse(options: { tx?: Transaction } = {}): Promise<[message: Message, infoMessage: InfoMessage]> {
+    return this.sendInfoMessage({
+      senderMember: this.members.employer,
+      infoMessageMember: this.members.worker,
+      action: MessageAction.employerRejectResponseOnQuest,
+    }, options);
+  }
+
+  static async create(payload: CreateQuestChatPayload, options: { tx?: Transaction } = {}): Promise<QuestChatController> {
+    const chat = await Chat.create({ type: ChatType.quest }, { transaction: options.tx });
+
+    const workerId = payload.worker.id;
+    const employerId = payload.quest.userId;
+
+    const questId = payload.quest.id;
+    const responseId = payload.questResponse.id;
+
+    const [employerChatMemberBuild, workerChatMemberBuild] = ChatMember.bulkBuild([{
+      userId: employerId,
+      chatId: chat.id,
+      type: MemberType.User,
+    }, {
+      userId: workerId,
+      chatId: chat.id,
+      type: MemberType.User,
+    }]);
+
+    const firstMessagePayload = payload.questResponse.type === QuestsResponseType.Invite
+      ? { senderMemberId: employerChatMemberBuild.id }
+      : { senderMemberId: workerChatMemberBuild.id }
+
+    const firstInfoMessagePayload = payload.questResponse.type === QuestsResponseType.Invite
+      ? { messageAction: MessageAction.employerInviteOnQuest, memberId: workerChatMemberBuild.id }
+      : { messageAction: MessageAction.workerResponseOnQuest, memberId: employerChatMemberBuild.id }
+
+    const responseMessagePayload = payload.questResponse.type === QuestsResponseType.Invite
+      ? { memberId: employerChatMemberBuild.id }
+      : { memberId: workerChatMemberBuild.id }
+
+    const firstMessageBuild = Message.build({
+      senderMemberId: firstMessagePayload.senderMemberId,
+      chatId: chat.id,
+      type: MessageType.info,
+      number: 1 /** Because create */,
+      createdAt: Date.now(),
+    });
+
+    const firstInfoMessageBuild = InfoMessage.build({
+      messageId: firstMessageBuild.id,
+      memberId: firstInfoMessagePayload.memberId,
+      messageAction: firstInfoMessagePayload.messageAction,
+    });
+
+    const responseMessageBuild = Message.build({
+      senderMemberId: responseMessagePayload.memberId,
+      chatId: chat.id,
+      text: payload.message,
+      type: MessageType.message,
+      number: 2 /** Because create */,
+      createdAt: Date.now() + 100,
+    });
+
+    const employerChatMemberDataPayload = payload.questResponse.type === QuestsResponseType.Invite
+      ? { unreadCountMessages: 0, lastReadMessageId: responseMessageBuild.id, lastReadMessageNumber: responseMessageBuild.number }
+      : { unreadCountMessages: 2, lastReadMessageId: null, lastReadMessageNumber: null }
+
+    const workerChatMemberDataPayload = payload.questResponse.type === QuestsResponseType.Invite
+      ? { unreadCountMessages: 2, lastReadMessageId: null, lastReadMessageNumber: null }
+      : { unreadCountMessages: 0, lastReadMessageId: responseMessageBuild.id, lastReadMessageNumber: responseMessageBuild.number }
+
+    const [employerChatMemberDataBuild, workerChatMemberDataBuild] = ChatMemberData.bulkBuild([{
+      chatMemberId: employerChatMemberBuild.id,
+      lastReadMessageId: employerChatMemberDataPayload.lastReadMessageId,
+      unreadCountMessages: employerChatMemberDataPayload.unreadCountMessages,
+      lastReadMessageNumber: employerChatMemberDataPayload.lastReadMessageNumber,
+    }, {
+      chatMemberId: workerChatMemberBuild.id,
+      lastReadMessageId: workerChatMemberDataPayload.lastReadMessageId,
+      unreadCountMessages: workerChatMemberDataPayload.unreadCountMessages,
+      lastReadMessageNumber: workerChatMemberDataPayload.lastReadMessageNumber,
+    }]);
+
+    const chatDataBuild = ChatData.build({
+      chatId: chat.id,
+      lastMessageId: responseMessageBuild.id,
+    });
+
+    const questChatBuild = QuestChat.build({
+      chatId: chat.id,
+      questId,
+      workerId,
+      employerId,
+      responseId,
+    });
+
+    const [questChat, workerChatMember, employerChatMember] = await Promise.all([
+      questChatBuild.save({ transaction: options.tx }),
+      workerChatMemberBuild.save({ transaction: options.tx }),
+      employerChatMemberBuild.save({ transaction: options.tx }),
+    ]);
+
+    const [] = await Promise.all([
+      firstMessageBuild.save({ transaction: options.tx }),
+      firstInfoMessageBuild.save({ transaction: options.tx }),
+      responseMessageBuild.save({ transaction: options.tx }),
+    ]);
+
+    const [] = await Promise.all([
+      chatDataBuild.save({ transaction: options.tx }),
+      workerChatMemberDataBuild.save({ transaction: options.tx }),
+      employerChatMemberDataBuild.save({ transaction: options.tx }),
+    ]);
+
+    return new QuestChatController(chat, questChat, {
+      worker: workerChatMember,
+      employer: employerChatMember,
+    });
+  }
+}
+
+export class GroupChatController extends ChatController {
+  constructor(
+    public readonly chat: Chat,
+  ) {
+    super(chat);
+  }
+
+  static async create(payload: CreateGroupChatPayload, options: { tx?: Transaction } = {}) {
+    const chat = Chat.build({ type: ChatType.group });
+
+    const members = ChatMember.bulkBuild(payload.users.map())
+
+    const groupChat = GroupChat.build({
+      name: payload.name,
+      ownerMemberId: ,
+      chatId: chat.id,
+    })
+  }
+}
+
+export class PrivateChatController extends ChatController {
+  constructor(
+    public readonly chat: Chat,
+  ) {
+    super(chat);
   }
 }

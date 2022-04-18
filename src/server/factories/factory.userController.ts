@@ -56,3 +56,19 @@ export class EmployerControllerFactory {
 
   }
 }
+
+export class UserControllerFactory {
+  public static async createByIds(ids: string[]): Promise<UserController[] | never> {
+    const users = await User.findAll({ where: { id: ids } });
+
+    if (users.length !== ids.length) {
+      const notFoundIds = ids.filter(id =>
+        users.findIndex(media => id === media.id) === -1
+      );
+
+      throw error(Errors.NotFound, 'User(s) not found', { notFoundIds });
+    }
+
+    return users.map(user => new UserController(user));
+  }
+}

@@ -1,6 +1,6 @@
 import { output } from '../utils';
 import { MediaController } from '../controllers/controller.media';
-import { QuestChatController } from '../controllers/chat/controller.questChat';
+import { QuestChatController } from '../controllers/chat/controller.chat';
 import { ChatNotificationActions, QuestNotificationActions } from '../controllers/controller.broker';
 import { QuestResponseController, QuestsInviteController } from '../controllers/quest/controller.questResponses';
 import { ChecksListQuest } from '../checks-list/checksList.quest';
