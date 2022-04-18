@@ -24,7 +24,7 @@ export async function getRecipientSwaps(r) {
   });
 
   for (const swapEvent of rows) {
-    const data = r.app.web3.utils.soliditySha3(
+    const data = r.server.app.web3.utils.soliditySha3(
       swapEvent.nonce,
       swapEvent.amount,
       swapEvent.recipient,
@@ -32,7 +32,7 @@ export async function getRecipientSwaps(r) {
       swapEvent.chainTo,
       swapEvent.symbol,
     );
-    const sing = await r.app.web3.eth.accounts.sign(data, configBridge.privateKey);
+    const sing = await r.server.app.web3.eth.accounts.sign(data, configBridge.privateKey);
     const redeemedRowIndex = redeemedEvents.findIndex((row) => row.messageHash === swapEvent.messageHash);
 
     swaps.push({

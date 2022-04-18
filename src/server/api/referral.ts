@@ -64,9 +64,8 @@ export async function getMySignedCreatedReferrals(r) {
     return output(null);
   }
 
-
-  const data = r.app.web3.utils.soliditySha3({ t:'address', v: affiliateAddress.affiliateUser.wallet.address }, { t: 'address', v: referralAddresses });
-  const signed = await r.app.web3.eth.accounts.sign(data, configReferral.privateKey);
+  const data = r.server.app.web3.utils.soliditySha3({ t:'address', v: affiliateAddress.affiliateUser.wallet.address }, { t: 'address', v: referralAddresses });
+  const signed = await r.server.app.web3.eth.accounts.sign(data, configReferral.privateKey);
 
   return output({
     v: signed.v,
