@@ -1,37 +1,39 @@
-import * as Joi from 'joi';
-import * as handlers from '../../api/profile';
-import { UserRole } from '@workquest/database-models/lib/models';
+import * as Joi from "joi";
+import * as handlers from "../../api/profile";
+import { UserRole } from "@workquest/database-models/lib/models";
 import {
-  idSchema,
-  totpSchema,
-  userSchema,
-  limitSchema,
-  phoneSchema,
-  offsetSchema,
-  searchSchema,
-  userMeSchema,
-  emptyOkSchema,
-  outputOkSchema,
-  prioritySchema,
-  userRoleSchema,
-  workPlaceSchema,
-  userWorkersSchema,
-  workerQuerySchema,
-  locationFullSchema,
-  userLastNameSchema,
-  userPasswordSchema,
-  userRaiseViewSchema,
+  accountAddressSchema,
   employerQuerySchema,
+  emptyOkSchema,
+  idSchema,
+  limitSchema,
+  locationFullSchema,
+  offsetSchema,
+  outputOkSchema,
+  outputPaginationSchema,
+  phoneSchema,
+  prioritySchema,
+  profileVisibilitySettingsSchema,
+  searchSchema,
+  specializationKeysSchema,
+  totpSchema,
+  userAdditionalInfoEmployerSchema,
+  userAdditionalInfoWorkerSchema,
   userEmployersSchema,
   userFirstNameSchema,
-  userStatisticsSchema,
-  outputPaginationSchema,
-  userRaiseViewTypeSchema,
-  workerWagePerHourSchema,
-  specializationKeysSchema,
+  userLastNameSchema,
+  userMeSchema,
+  userPasswordSchema,
   userRaiseViewDurationSchema,
-  userAdditionalInfoWorkerSchema,
-  userAdditionalInfoEmployerSchema, accountAddressSchema
+  userRaiseViewSchema,
+  userRaiseViewTypeSchema,
+  userRoleSchema,
+  userSchema,
+  userStatisticsSchema,
+  userWorkersSchema, workerPayloadSchema, workerQueryForMapPointsSchema,
+  workerQuerySchema,
+  workerWagePerHourSchema,
+  workPlaceSchema
 } from "@workquest/database-models/lib/schemes";
 
 export default [{
@@ -93,7 +95,7 @@ export default [{
     tags: ["api", "profile"],
     description: "Get worker points",
     validate: {
-      // query: workerQueryForMapPointsSchema,
+      query: workerQueryForMapPointsSchema,
     },
     response: {
       schema: outputOkSchema(userWorkersSchema).label("GetWorkerPointsResponse")
@@ -113,22 +115,6 @@ export default [{
     },
     response: {
       schema: outputOkSchema(userEmployersSchema).label("GetEmployersResponse")
-    },
-  }
-}, {
-  method: "GET",
-  path: "/v1/profile/workers",
-  handler: handlers.getUsers(UserRole.Worker, 'list'),
-  options: {
-    auth: 'jwt-access',
-    id: "v1.profile.getWorkers",
-    tags: ["api", "profile"],
-    description: "Get workers",
-    validate: {
-      query: workerQuerySchema,
-    },
-    response: {
-      schema: outputOkSchema(userWorkersSchema).label("GetWorkersResponse")
     },
   }
 }, {
@@ -169,6 +155,7 @@ export default [{
         phoneNumber: phoneSchema.allow(null).required(),
         locationFull: locationFullSchema.allow(null).required(),
         additionalInfo: userAdditionalInfoEmployerSchema.required(),
+        profileVisibility: profileVisibilitySettingsSchema.required(),
       }).label("EditEmployerProfilePayload")
     },
     response: {
@@ -195,7 +182,8 @@ export default [{
         workplace: workPlaceSchema.allow(null).required(),
         additionalInfo: userAdditionalInfoWorkerSchema.required(),
         wagePerHour: workerWagePerHourSchema.allow(null).required(),
-        specializationKeys: specializationKeysSchema.allow(null).required().unique(),
+        specializationKeys: specializationKeysSchema.required().unique(),
+        profileVisibility: profileVisibilitySettingsSchema.required(),
       }).label("EditWorkerProfilePayload")
     },
     response: {
@@ -319,5 +307,38 @@ export default [{
       schema: outputOkSchema(userRaiseViewSchema).label("UserPayRaiseViewPayResponse"),
     },
   },
-}];
-
+}, {
+  method: "POST",
+  path: "/v1/profile/get-workers",
+  handler: handlers.getUsers(UserRole.Worker,'list'),
+  options: {
+    auth: 'jwt-access',
+    id: "v1.getWorkersBySpecialisation",
+    tags: ["api", "profile"],
+    description: "Get workers with specialization",
+    validate: {
+      query: workerQuerySchema,
+      payload: workerPayloadSchema,
+    },
+    response: {
+      schema: outputOkSchema(userWorkersSchema).label("GetWorkersResponse")
+    },
+  }
+}, {
+  method: "POST",
+  path: "/v1/profile/workers/map/get-points",
+  handler: handlers.getUsers(UserRole.Worker,'points'),
+  options: {
+    auth: 'jwt-access',
+    id: "v1.getWorkersMapPointsBySpecialisation",
+    tags: ["api", "profile"],
+    description: "Get workers map points with specialization",
+    validate: {
+      query: workerQuerySchema,
+      payload: workerPayloadSchema,
+    },
+    response: {
+      schema: outputOkSchema(userWorkersSchema).label("GetWorkersMapPointsResponse")
+    },
+  }
+},];

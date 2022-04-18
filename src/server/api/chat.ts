@@ -1,24 +1,33 @@
 import { literal, Op } from "sequelize";
 import { error, output } from "../utils";
 import { Errors } from "../utils/errors";
+import { setMessageAsReadJob } from "../jobs/setMessageAsRead";
+import { updateCountUnreadMessagesJob } from "../jobs/updateCountUnreadMessages";
+import { resetUnreadCountMessagesOfMemberJob } from "../jobs/resetUnreadCountMessagesOfMember";
+import { incrementUnreadCountMessageOfMembersJob } from "../jobs/incrementUnreadCountMessageOfMembers";
+import { updateCountUnreadChatsJob } from "../jobs/updateCountUnreadChats";
 import { ChatController } from "../controllers/chat/controller.chat";
 import { ChatNotificationActions } from "../controllers/controller.broker";
 import { MediaController } from "../controllers/controller.media";
-import { UserController } from "../controllers/user/controller.user";
 import { MessageController } from "../controllers/chat/controller.message";
+import { UserOldController } from '../controllers/user/controller.user';
 import { listOfUsersByChatsCountQuery, listOfUsersByChatsQuery } from "../queries";
 import {
   Chat,
   ChatData,
-  ChatMember,
   ChatMemberDeletionData,
-  ChatType,
-  GroupChat, InfoMessage, MemberStatus,
+  GroupChat, MemberStatus,
   Message,
-  MessageAction, QuestChatStatuses,
-  SenderMessageStatus,
+  ChatType,
+  QuestChat,
+  ChatMember,
+  InfoMessage,
+  MessageType,
+  MessageAction,
   StarredChat,
   StarredMessage,
+  QuestChatStatuses,
+  SenderMessageStatus,
   User
 } from "@workquest/database-models/lib/models";
 import { setMessageAsReadJob }  from "../jobs/setMessageAsRead";
@@ -151,11 +160,15 @@ export async function getChatMessages(r) {
 
 export async function getUserChat(r) {
   const chat = await Chat.findByPk(r.params.chatId, {
-    include: {
+    include: [{
       model: StarredChat,
       as: 'star',
       required: false,
-    },
+    }, {
+      model: QuestChat,
+      as: 'questChat',
+      required: false,
+    }],
   });
   const chatController = new ChatController(chat);
 
@@ -233,7 +246,7 @@ export async function createGroupChat(r) {
     userIds.push(r.auth.credentials.id);
   }
 
-  await UserController.usersMustExist(userIds);
+  await UserOldController.usersMustExist(memberUserIds);
 
   const transaction = await r.server.app.db.transaction();
 
@@ -271,16 +284,18 @@ export async function sendMessageToUser(r) {
     return error(Errors.InvalidPayload, "You can't send a message to yourself", {});
   }
 
-  await UserController.userMustExist(r.params.userId);
+  await UserOldController.userMustExist(r.params.userId);
 
   const medias = await MediaController.getMedias(r.payload.medias);
   const transaction = await r.server.app.db.transaction();
 
   const chatController = await ChatController.findOrCreatePrivateChat(r.auth.credentials.id, r.params.userId, transaction);
 
-  const lastMessage = await Message.findOne({
+  const lastMessage = await Message.unscoped().findOne({
     order: [['createdAt', 'DESC']],
     where: { chatId: chatController.controller.chat.id },
+    lock: 'UPDATE' as any,
+    transaction,
   });
 
   const messageNumber = lastMessage ? (lastMessage.number + 1) : 1;
@@ -360,6 +375,13 @@ export async function sendMessageToChat(r) {
   }
 
   const transaction = await r.server.app.db.transaction();
+
+  const lastMessage = await Message.unscoped().findOne({
+    order: [['createdAt', 'DESC']],
+    where: { chatId: chat.id },
+    lock: 'UPDATE' as any,
+    transaction,
+  });
 
   const messageNumber = chat.chatData.lastMessage.number + 1;
 

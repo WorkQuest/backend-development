@@ -1,7 +1,7 @@
 import { literal, Op } from "sequelize";
 import { addSendSmsJob } from "../jobs/sendSms";
 import { error, getRandomCodeNumber, output } from "../utils";
-import { UserController } from "../controllers/user/controller.user";
+import { UserOldController } from '../controllers/user/controller.user';
 import { transformToGeoPostGIS } from "../utils/postGIS";
 import { MediaController } from "../controllers/controller.media";
 import { SkillsFiltersController } from "../controllers/controller.skillsFilters";
@@ -21,10 +21,11 @@ import {
   ReferralProgramAffiliate,
   User,
   UserChangeRoleData,
-  UserRaiseStatus,
   UserRaiseView,
   UserRole,
   UserStatus,
+  UserRaiseStatus,
+  ProfileVisibilitySetting,
   Wallet
 } from "@workquest/database-models/lib/models";
 import { convertAddressToHex } from "../utils/profile";
@@ -43,6 +44,7 @@ export async function getMe(r) {
     include: [
       { model: Wallet, as: 'wallet', attributes: ['address'] },
       { model: ReferralProgramAffiliate.unscoped(), as: 'affiliateUser', attributes: ['referralCodeId'] },
+      { model: ProfileVisibilitySetting, as: 'profileVisibilitySetting' }
     ],
   });
 
@@ -53,11 +55,13 @@ export async function getUser(r) {
   const user = await User.findByPk(r.params.userId, {
     include: [{ model: Wallet, as: 'wallet', attributes: ['address'] }],
   });
-  const userController = new UserController(user);
+  const userController = new UserOldController(user);
+  const visitorController = new UserOldController(r.auth.credentials)
 
-  userController
+  await userController
     .checkNotSeeYourself(r.auth.credentials.id)
     .userMustHaveStatus(UserStatus.Confirmed)
+    .canVisitMyProfile(visitorController)
 
   return output(userController.user);
 }
@@ -74,7 +78,7 @@ export async function getUserByWallet(r) {
       attributes: ['address'],
     }]
   });
-  const userController = new UserController(user);
+  const userController = new UserOldController(user);
 
   userController
     .checkNotSeeYourself(r.auth.credentials.id)
@@ -84,7 +88,29 @@ export async function getUserByWallet(r) {
 }
 
 export async function getAllUsers(r) {
-  const where = { status: UserStatus.Confirmed };
+  const user = r.auth.credentials;
+  const priorityVisibilityLiteral = literal(
+    `( CASE WHEN "User"."role" != '${ user.role }' THEN ` +
+    '(CASE WHEN EXISTS (SELECT "usr"."id" FROM "Users" as "usr" ' +
+    `INNER JOIN "ProfileVisibilitySettings" as "pvs" ON "pvs"."userId" = '${ r.auth.credentials.id }' ` +
+    'INNER JOIN "RatingStatistics" as rtn ON "rtn"."userId" = "User"."id" ' +
+    'WHERE ("rtn"."status" = "pvs"."ratingStatus" OR "pvs"."ratingStatus" = 4)) THEN TRUE ELSE FALSE END) ' +
+    'ELSE TRUE END) '
+  );
+
+  const where = {
+    status: UserStatus.Confirmed,
+    id: { [Op.ne]: r.auth.credentials.id }
+  };
+  const include = [{
+    model: Wallet,
+    as: 'wallet',
+    attributes: ['address'],
+    required: r.query.walletRequired,
+  }, {
+    model: ProfileVisibilitySetting,
+    as: 'profileVisibilitySetting',
+  }];
 
   if (r.query.q) {
     where[Op.or] = searchFields.map(
@@ -92,16 +118,13 @@ export async function getAllUsers(r) {
     );
   }
 
+  where[Op.and] = [priorityVisibilityLiteral];
+
   const { count, rows } = await User.findAndCountAll({
     where,
     col: 'id',
     distinct: true,
-    include: {
-      model: Wallet,
-      as: 'wallet',
-      attributes: ['address'],
-      required: r.query.walletRequired,
-    },
+    include,
     limit: r.query.limit,
     offset: r.query.offset,
   });
@@ -111,6 +134,8 @@ export async function getAllUsers(r) {
 
 export function getUsers(role: UserRole, type: 'points' | 'list') {
   return async function(r) {
+    const user = r.auth.credentials;
+
     const entersAreaLiteral = literal(
       'st_within("User"."locationPostGIS", st_makeenvelope(:northLng, :northLat, :southLng, :southLat, 4326))'
     );
@@ -129,6 +154,14 @@ export function getUsers(role: UserRole, type: 'points' | 'list') {
     );
     const userRatingStatisticLiteral = literal(
       '(SELECT "status" FROM "RatingStatistics" WHERE "userId" = "User"."id")'
+    );
+    const priorityVisibilityLiteral = literal(
+      `( CASE WHEN "User"."role" != '${ user.role }' THEN ` +
+      '(CASE WHEN EXISTS (SELECT "usr"."id" FROM "Users" as "usr" ' +
+      `INNER JOIN "ProfileVisibilitySettings" as "pvs" ON "pvs"."userId" = '${ r.auth.credentials.id }' ` +
+      'INNER JOIN "RatingStatistics" as rtn ON "rtn"."userId" = "User"."id" ' +
+      'WHERE ("rtn"."status" = "pvs"."ratingStatus" OR "pvs"."ratingStatus" = 4)) THEN TRUE ELSE FALSE END) ' +
+      'ELSE TRUE END) '
     );
 
     const order = [[userRaiseViewLiteral, 'asc'], [userRatingStatisticLiteral, 'asc']] as any;
@@ -156,7 +189,7 @@ export function getUsers(role: UserRole, type: 'points' | 'list') {
         required: true,
         where: { status: r.query.ratingStatuses },
       });
-      distinctCol = 'id';
+      //distinctCol = 'id';
     }
     if (r.query.northAndSouthCoordinates) {
       replacements['northLng'] = r.query.northAndSouthCoordinates.north.longitude;
@@ -166,8 +199,8 @@ export function getUsers(role: UserRole, type: 'points' | 'list') {
 
       where[Op.and].push(entersAreaLiteral);
     }
-    if (r.query.specializations && role === UserRole.Worker) {
-      const { paths, industryKeys } = SkillsFiltersController.splitPathsAndSingleKeysOfIndustry(r.query.specializations);
+    if (r.payload.specializations && role === UserRole.Worker) {
+      const { paths, industryKeys } = SkillsFiltersController.splitPathsAndSingleKeysOfIndustry(r.payload.specializations);
 
       if (paths.length !== 0 && industryKeys.length === 0) {
         replacements['path'] = paths;
@@ -183,17 +216,24 @@ export function getUsers(role: UserRole, type: 'points' | 'list') {
         where[Op.and].push(userSpecializationIndustryKeysAndPathsLiteral);
       }
 
-      distinctCol = '"User"."id"';
+      //distinctCol = '"User"."id"';
     }
 
     for (const [key, value] of Object.entries(r.query.sort || {})) {
       order.push([key, value]);
     }
 
+    include.push({
+      model: ProfileVisibilitySetting,
+      as: 'profileVisibilitySetting',
+    });
+
+    where[Op.and].push(priorityVisibilityLiteral);
+
     if (type === 'list') {
       const { count, rows } = await User.findAndCountAll({
         distinct: true,
-        col: distinctCol, // so..., else not working
+        col: 'id', //'distinctCol', // so..., else not working
         limit: r.query.limit,
         offset: r.query.offset,
         include, order, where,
@@ -213,7 +253,7 @@ export function getUsers(role: UserRole, type: 'points' | 'list') {
 
 export async function setRole(r) {
   const user: User = r.auth.credentials;
-  const userController = new UserController(user);
+  const userController = new UserOldController(user);
 
   await userController.userNeedsSetRole();
 
@@ -225,7 +265,7 @@ export async function setRole(r) {
 export function editProfile(userRole: UserRole) {
   return async function (r) {
     const user: User = r.auth.credentials;
-    const userController = new UserController(user);
+    const userController = new UserOldController(user);
 
     await userController.userMustHaveRole(userRole);
 
@@ -254,17 +294,22 @@ export function editProfile(userRole: UserRole) {
       await userController.setUserSpecializations(r.payload.specializationKeys, transaction);
     }
 
-    await user.update({
-      ...phonesFields,
-      ...locationFields,
-      avatarId: avatarId,
-      lastName: r.payload.lastName,
-      firstName: r.payload.firstName,
-      priority: r.payload.priority || null,
-      workplace: r.payload.workplace || null,
-      wagePerHour: r.payload.wagePerHour || null,
-      additionalInfo: r.payload.additionalInfo,
-    }, transaction);
+    await Promise.all([
+      ProfileVisibilitySetting.update(r.payload.profileVisibility, {
+        where: { userId: r.auth.credentials.id }, transaction,
+      }),
+      user.update({
+        ...phonesFields,
+        ...locationFields,
+        avatarId: avatarId,
+        lastName: r.payload.lastName,
+        firstName: r.payload.firstName,
+        priority: r.payload.priority || null,
+        workplace: r.payload.workplace || null,
+        wagePerHour: r.payload.wagePerHour || null,
+        additionalInfo: r.payload.additionalInfo,
+      }, transaction),
+    ]);
 
     await transaction.commit();
 
@@ -281,7 +326,7 @@ export async function changePassword(r) {
     where: { id: r.auth.credentials.id },
   });
 
-  const userController = new UserController(user);
+  const userController = new UserOldController(user);
 
   await userController.checkPassword(r.payload.oldPassword);
 
@@ -298,7 +343,7 @@ export async function changePassword(r) {
 export async function confirmPhoneNumber(r) {
   const user = await User.scope('withPassword').findByPk(r.auth.credentials.id);
 
-  const userController = new UserController(user);
+  const userController = new UserOldController(user);
 
   await userController
     .userMustHaveVerificationPhone()
@@ -312,7 +357,7 @@ export async function sendCodeOnPhoneNumber(r) {
   const userWithPassword = await User.scope('withPassword').findByPk(r.auth.credentials.id);
   const confirmCode = getRandomCodeNumber();
 
-  const userController = new UserController(userWithPassword);
+  const userController = new UserOldController(userWithPassword);
 
   if (userWithPassword.phone) { //TODO Возможно что-то подобное есть
     return error(Errors.PhoneNumberAlreadyConfirmed, 'Phone number already confirmed', {});
@@ -351,7 +396,7 @@ export async function changeUserRole(r) {
   const roleChangeTimeLimitInMilliseconds = 60000; /** 1 Mount - 2592000000, for DEBUG - 1 minute */
 
   const user = await User.scope('withPassword').findByPk(r.auth.credentials.id);
-  const userController = new UserController(user);
+  const userController = new UserOldController(user);
 
   const changeToRole = user.role === UserRole.Worker ? UserRole.Employer : UserRole.Worker;
 
@@ -382,7 +427,7 @@ export async function changeUserRole(r) {
     const questCount = await Quest.count({
       where: {
         assignedWorkerId: user.id,
-        status: { [Op.notIn]: [QuestStatus.Closed, QuestStatus.Done, QuestStatus.Blocked] }
+        status: { [Op.notIn]: [QuestStatus.Closed, QuestStatus.Completed, QuestStatus.Blocked] }
       }
     });
     const questsResponseCount = await QuestsResponse.count({
@@ -401,7 +446,7 @@ export async function changeUserRole(r) {
   }
   if (user.role === UserRole.Employer) {
     const questCount = await Quest.count({
-      where: { userId: user.id, status: { [Op.notIn]: [QuestStatus.Closed, QuestStatus.Done] } }
+      where: { userId: user.id, status: { [Op.notIn]: [QuestStatus.Closed, QuestStatus.Completed] } }
     });
 
     if (questCount !== 0) {
@@ -425,7 +470,7 @@ export async function changeUserRole(r) {
     workplace: null,
     wagePerHour: null,
     role: changeToRole,
-    additionalInfo: UserController.getDefaultAdditionalInfo(changeToRole),
+    additionalInfo: UserOldController.getDefaultAdditionalInfo(changeToRole),
   }, { transaction });
 
   await transaction.commit();
@@ -446,7 +491,7 @@ export async function changeUserRole(r) {
 
 export async function payForMyRaiseView(r) {
 //TODO: логику оплаты
-  const userController = new UserController(await User.findByPk(r.auth.credentials.id));
+  const userController = new UserOldController(await User.findByPk(r.auth.credentials.id));
   await userController
     .userMustHaveRole(UserRole.Worker)
     .checkUserRaiseViewStatus();
@@ -474,7 +519,7 @@ export async function payForMyRaiseView(r) {
     });
   } else { await raiseView.update({ endedAt: endOfRaiseView }) }
 
-  const temporaryEndingOfRaiseView = new Date(Date.now() + 60000);
+  const temporaryEndingOfRaiseView = new Date(Date.now() + 300000);
   await updateUserRaiseViewStatusJob({
     userId: r.auth.credentials.id,
     runAt: temporaryEndingOfRaiseView, /**TODO*/ //endOfRaiseView
