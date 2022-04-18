@@ -5,7 +5,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 import Handlebars = require('handlebars');
 import { User } from '@workquest/database-models/lib/models';
-import { UserController } from '../controllers/user/controller.user';
+import { UserOldController } from '../controllers/user/controller.user';
 
 const confirmTemplatePath = path.join(__dirname, '..', '..', '..', 'templates', 'confirm2FA.html');
 const confirmTemplate = Handlebars.compile(
@@ -16,7 +16,7 @@ const confirmTemplate = Handlebars.compile(
 
 export async function enableTOTP(r) {
   const user = await User.scope('withPassword').findByPk(r.auth.credentials.id);
-  const userController = new UserController(user);
+  const userController = new UserOldController(user);
 
   await userController.userMustHaveActiveStatusTOTP(false);
 
@@ -41,7 +41,7 @@ export async function enableTOTP(r) {
 
 export async function confirmEnablingTOTP(r) {
   const user = await User.scope('withPassword').findByPk(r.auth.credentials.id);
-  const userController = new UserController(user);
+  const userController = new UserOldController(user);
 
   await userController.userMustHaveActiveStatusTOTP(false);
   await userController.checkActivationCodeTotp(r.payload.confirmCode);
@@ -57,7 +57,7 @@ export async function confirmEnablingTOTP(r) {
 
 export async function disableTOTP(r) {
   const user = await User.scope('withPassword').findByPk(r.auth.credentials.id);
-  const userController = new UserController(user);
+  const userController = new UserOldController(user);
 
   await userController
     .userMustHaveActiveStatusTOTP(true)

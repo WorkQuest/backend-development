@@ -1,197 +1,149 @@
-import { Op } from 'sequelize';
-import { error, output } from '../utils';
-import { Errors } from '../utils/errors';
-import { ChatNotificationActions, QuestNotificationActions } from '../controllers/controller.broker';
-import { QuestsResponseController } from '../controllers/quest/controller.questsResponse';
-import { QuestController } from '../controllers/quest/controller.quest';
-import { UserController } from '../controllers/user/controller.user';
+import { output } from '../utils';
 import { MediaController } from '../controllers/controller.media';
-import { ChatController } from '../controllers/chat/controller.chat';
+import { QuestChatController } from '../controllers/chat/controller.questChat';
+import { ChatNotificationActions, QuestNotificationActions } from '../controllers/controller.broker';
+import { QuestResponseController, QuestsInviteController } from '../controllers/quest/controller.questResponses';
+import { ChecksListQuest } from '../checks-list/checksList.quest';
+import { ChecksListUser } from '../checks-list/checksList.user';
+import { ChecksListQuestInvite, ChecksListQuestResponse } from '../checks-list/checksList.questResponse';
+import { QuestControllerFactory } from '../factories/factory.questController';
+import { QuestChatControllerFactory } from '../factories/factory.chatController';
+import { EmployerControllerFactory, WorkerControllerFactory } from '../factories/factory.userController';
 import {
-  Chat, ChatData,
-  ChatMember,
-  Message,
-  MessageAction,
-  Quest,
-  QuestChat, QuestChatStatuses,
-  QuestsResponse,
-  QuestsResponseStatus,
-  QuestsResponseType,
-  QuestStatus,
+  QuestInviteControllerFactory,
+  QuestResponseControllerFactory,
+} from '../factories/factory.questsResponsesController';
+import {
   User,
-  UserRole
-} from "@workquest/database-models/lib/models";
+  Quest,
+  UserRole,
+  QuestChat,
+  QuestStatus,
+  QuestsResponse,
+  QuestsResponseType,
+  QuestsResponseStatus,
+} from '@workquest/database-models/lib/models';
 
 export async function responseOnQuest(r) {
-  let questResponse: QuestsResponse;
-  const worker: User = r.auth.credentials;
-  const workerController = new UserController(worker);
+  const { message, medias } = r.payload;
 
-  const quest = await Quest.findByPk(r.params.questId);
-  const questController = new QuestController(quest);
+  const mediaModels = await MediaController.getMedias(medias);
 
-  await questController.questMustHaveStatus(QuestStatus.Created);
-  await workerController.userMustHaveRole(UserRole.Worker);
+  const workerController = WorkerControllerFactory.createByUserModel(r.auth.credentials);
+  const questController = await QuestControllerFactory.createById(r.params.questId);
 
-  questResponse = await QuestsResponse.findOne({
-    where: {
-      workerId: worker.id,
-      questId: questController.quest.id,
-      status: { [Op.ne]: QuestsResponseStatus.Accepted },
-    },
-  });
+  const checksListQuest = new ChecksListQuest(questController.quest);
+  const checksListWorker = new ChecksListUser(workerController.user);
 
-  if (questResponse) {
-    return error(Errors.AlreadyAnswer, 'You already answered quest', { questResponse });
+  await checksListWorker
+    .checkUserRole(UserRole.Worker)
+    .checkRatingMustMatchVisibilitySettings(questController.quest.user)
+  checksListQuest
+    .checkQuestStatuses(QuestStatus.Recruitment)
 
-    // if (questResponse.previousStatus === QuestsResponseStatus.Rejected) {
-    //   return error(Errors.Forbidden, "Client already rejected your response on quest", { questResponse });
-    // }
-    // if (questResponse.status === QuestsResponseStatus.Open) {
-    //   return error(Errors.AlreadyAnswer, "You already answered quest", { questResponse });
-    // }
-  }
+  const [questResponseController, questChatController] = await r.server.app.db.transaction(async (tx) => {
+    const questResponseController = await QuestResponseController.sendRequest({
+      message,
+      quest: questController.quest,
+      worker: workerController.user,
+    }, { tx });
 
-  const transaction = await r.server.app.db.transaction();
+    await questResponseController.setMedias(mediaModels, { tx })
 
-  const medias = await MediaController.getMedias(r.payload.medias);
+    const questChatController = await QuestChatController.create({
+      message,
+      quest: questController.quest,
+      worker: workerController.user,
+      questResponse: questResponseController.questResponse,
+    }, { tx });
 
-  questResponse = await QuestsResponse.create(
-    {
-      workerId: worker.id,
-      questId: quest.id,
-      message: r.payload.message,
-      status: QuestsResponseStatus.Open,
-      type: QuestsResponseType.Response,
-    },
-    { transaction },
-  );
-
-  const questResponseController = new QuestsResponseController(questResponse);
-
-  await questResponseController.setMedias(medias, transaction);
-
-  const chatController = await ChatController.createQuestChat(quest.userId, worker.id, quest.id, questResponse.id, transaction);
-  const workerMember = chatController.chat.getDataValue('members').find(member => member.userId === r.auth.credentials.id);
-
-  const message = await chatController.createInfoMessage(workerMember.id, chatController.chat.id, 1, workerMember.id, MessageAction.workerResponseOnQuest, transaction);
-
-  await chatController.createChatMembersData(chatController.chat.getDataValue('members'), r.auth.credentials.id, message, transaction);
-  await chatController.createChatData(chatController.chat.id, message.id, transaction);
-
-  if (r.payload.message !== '') {
-    const responseWorkerMessage = await chatController.createMessage(chatController.chat.id, workerMember.id, 2, r.payload.message, transaction);
-    await responseWorkerMessage.$set('medias', medias, { transaction });
-    await chatController.chat.update({ lastMessageId: responseWorkerMessage.id }, { transaction });
-  }
-
-  await transaction.commit();
+    return [questResponseController, questChatController];
+  }) as [QuestResponseController, QuestChatController];
 
   r.server.app.broker.sendChatNotification({
     action: ChatNotificationActions.newMessage,
-    recipients: [quest.userId],
-    data: await Message.findByPk(message.id),
+    recipients: [questController.quest.userId],
+    data: await questChatController.firstMessage(),
   });
 
-  questResponse.setDataValue('quest', quest);
-  questResponse.setDataValue('worker', workerController.shortCredentials);
   r.server.app.broker.sendQuestNotification({
     action: QuestNotificationActions.workerRespondedToQuest,
-    recipients: [quest.userId],
-    data: questResponse,
+    recipients: [questController.quest.userId],
+    data: questResponseController.toDto(),
   });
 
-  return output(chatController.chat);
+  return(
+    questChatController.toDto()
+  );
 }
 
 export async function inviteOnQuest(r) {
-  let questResponse: QuestsResponse;
-  const employer: User = r.auth.credentials;
-  const employerController = new UserController(employer);
+  const { invitedUserId, message } = r.payload;
 
-  const invitedWorker = await User.findByPk(r.payload.invitedUserId);
-  const invitedWorkerController = new UserController(invitedWorker);
+  const workerController = await WorkerControllerFactory.createById(invitedUserId);
+  const employerController = await EmployerControllerFactory.createByUserModel(r.auth.credentials);
+  const questController = await QuestControllerFactory.createById(r.params.questId);
 
-  const quest = await Quest.findByPk(r.params.questId);
-  const questController = new QuestController(quest);
+  const checksListQuest = new ChecksListQuest(questController.quest);
+  const checksListWorker = new ChecksListUser(workerController.user);
+  const checksListEmployer = new ChecksListUser(employerController.user);
 
-  await employerController.userMustHaveRole(UserRole.Employer);
-  await invitedWorkerController.userMustHaveRole(UserRole.Worker);
+  await checksListEmployer
+    .checkUserRole(UserRole.Employer)
+    .checkRatingMustMatchVisibilitySettings(workerController.user)
+  checksListWorker
+    .checkUserRole(UserRole.Worker)
+  checksListQuest
+    .checkOwner(employerController.user)
+    .checkQuestStatuses(QuestStatus.Recruitment)
 
-  await questController.questMustHaveStatus(QuestStatus.Created);
-  await questController.employerMustBeQuestCreator(employer.id);
+  const [inviteController, questChatController] = await r.server.app.db.transaction(async (tx) => {
+    const inviteController = await QuestsInviteController.sendInvite({
+      message,
+      quest: questController.quest,
+      worker: workerController.user,
+    }, { tx });
 
-  questResponse = await QuestsResponse.findOne({
-    where: {
-      questId: questController.quest.id,
-      workerId: invitedWorkerController.user.id,
-      status: { [Op.ne]: QuestsResponseStatus.Accepted },
-    },
-  });
+    const questChatController = await QuestChatController.create({
+      message,
+      quest: questController.quest,
+      worker: workerController.user,
+      questResponse: inviteController.questInvite,
+    }, { tx });
 
-  if (questResponse) {
-    return error(Errors.AlreadyAnswer, 'You have already been invited user to the quest', { questResponse });
-    // if(questResponse.previousStatus === QuestsResponseStatus.Rejected) {
-    //   return error(Errors.Forbidden, 'Person reject quest invitation', {});
-    // }
-    // if (questResponse.status === QuestsResponseStatus.Open) {
-    //   return error(Errors.AlreadyAnswer, "You have already been invited user to the quest", { questResponse });
-    // }
-  }
-
-  const transaction = await r.server.app.db.transaction();
-
-  questResponse = await QuestsResponse.create(
-    {
-      workerId: invitedWorkerController.user.id,
-      questId: questController.quest.id,
-      message: r.payload.message,
-      status: QuestsResponseStatus.Open,
-      previousStatus: QuestsResponseStatus.Open,
-      type: QuestsResponseType.Invite,
-    },
-    { transaction },
-  );
-
-  const chatController = await ChatController.createQuestChat(employer.id, invitedWorker.id, quest.id, questResponse.id, transaction);
-  const employerMember = chatController.chat.getDataValue('members').find(member => member.userId === r.auth.credentials.id);
-
-  const message = await chatController.createInfoMessage(employerMember.id, chatController.chat.id, 1, employerMember.id, MessageAction.employerInviteOnQuest, transaction);
-  await chatController.createChatMembersData(chatController.chat.getDataValue('members'), r.auth.credentials.id, message, transaction);
-  await chatController.createChatData(chatController.chat.id, message.id, transaction);
-
-  if (r.payload.message !== '') {
-    const inviteEmployerMessage = await chatController.createMessage(chatController.chat.id, employerMember.id, 2, r.payload.message, transaction);
-    await chatController.chat.chatData.update({ lastMessageId: inviteEmployerMessage.id }, { transaction });
-  }
-
-  await transaction.commit();
-
-  questResponse.setDataValue('quest', questController.quest);
-  questResponse.setDataValue('employer', employerController.shortCredentials);
+    return [inviteController, questChatController];
+  }) as [QuestsInviteController, QuestChatController];
 
   r.server.app.broker.sendChatNotification({
     action: ChatNotificationActions.newMessage,
-    recipients: [quest.userId],
-    data: await Message.findByPk(message.id),
+    recipients: [employerController.user.id],
+    data: await questChatController.firstMessage(),
   });
 
   r.server.app.broker.sendQuestNotification({
     action: QuestNotificationActions.employerInvitedWorkerToQuest,
-    recipients: [invitedWorker.id],
-    data: questResponse,
+    recipients: [workerController.user.id],
+    data: inviteController.toDto(),
   });
 
-  return output(chatController.chat);
+  return output(
+    questChatController.toDto()
+  );
 }
 
-export async function userResponsesToQuest(r) {
-  const employer: User = r.auth.credentials;
+export async function getResponsesToQuest(r) {
+  const { questId } = r.params;
 
-  const quest = await Quest.findByPk(r.params.questId);
-  const questController = new QuestController(quest);
+  const employerController = EmployerControllerFactory.createByUserModel(r.auth.credentials);
+  const questController = await QuestControllerFactory.createById(questId);
 
-  await questController.employerMustBeQuestCreator(employer.id);
+  const checksListQuest = new ChecksListQuest(questController.quest);
+  const checksListEmployer = new ChecksListUser(employerController.user);
+
+  checksListEmployer
+    .checkUserRole(UserRole.Employer)
+  checksListQuest
+    .checkOwner(employerController.user);
 
   const { rows, count } = await QuestsResponse.findAndCountAll({
     include: [
@@ -214,13 +166,15 @@ export async function userResponsesToQuest(r) {
 }
 
 export async function responsesToQuestsForUser(r) {
-  const worker: User = r.auth.credentials;
-  const workerController = new UserController(worker);
+  const workerController = WorkerControllerFactory.createByUserModel(r.auth.credentials);
 
-  await workerController.userMustHaveRole(UserRole.Worker);
+  const checksListWorker = new ChecksListUser(workerController.user);
+
+  checksListWorker
+    .checkUserRole(UserRole.Worker)
 
   const { rows, count } = await QuestsResponse.findAndCountAll({
-    where: { workerId: worker.id },
+    where: { workerId: workerController.user.id },
     include: [
       {
         model: Quest,
@@ -240,170 +194,90 @@ export async function responsesToQuestsForUser(r) {
 }
 
 export async function acceptInviteOnQuest(r) {
-  let questResponse: QuestsResponse;
-  const worker: User = r.auth.credentials;
+  const { responseId } = r.params;
 
-  questResponse = await QuestsResponse.findOne({
-    where: { id: r.params.responseId },
-    include: { model: Quest, as: 'quest' },
+  const questInviteController = await QuestInviteControllerFactory.createById(responseId);
+  const workerController = WorkerControllerFactory.createByUserModel(r.auth.credentials);
+  const questChatController = await QuestChatControllerFactory.createByQuestResponseId(responseId);
+
+  const checksListQuestInvite = new ChecksListQuestInvite(questInviteController.questInvite);
+
+  checksListQuestInvite
+    .checkWorkerMustBeInvitedToQuest(workerController.user)
+    .checkQuestsResponseMustHaveType(QuestsResponseType.Invite)
+    .checkStatuses(QuestsResponseStatus.Open)
+
+  await r.server.app.db.transaction(async (tx) => {
+    await questInviteController.acceptInvitation({ tx });
+    await questChatController.sendInfoMessageAboutAcceptInvite({ tx });
   });
-  const questsResponseController = new QuestsResponseController(questResponse);
-
-  questsResponseController
-    .workerMustBeInvitedToQuest(worker.id)
-    .questsResponseMustHaveType(QuestsResponseType.Invite)
-    .questsResponseMustHaveStatus(QuestsResponseStatus.Open);
-
-  const transaction = await r.server.app.db.transaction();
-
-  questResponse = await questResponse.update(
-    {
-      status: QuestsResponseStatus.Accepted,
-    },
-    { transaction },
-  );
-  questsResponseController.questsResponse = questResponse;
-
-  const chat = await Chat.findOne({
-    include: [{
-      model: QuestChat,
-      as: 'questChat',
-      where: { responseId: questResponse.id }
-    }, {
-      model: ChatMember,
-      as: 'meMember',
-      where: { userId: r.auth.credentials.id },
-    }, {
-      model: ChatData,
-      as: 'chatData',
-    }],
-  });
-  const chatController = new ChatController(chat);
-
-  const messageNumber = chat.chatData.lastMessage.number + 1;
-
-  await chatController.createInfoMessage(chat.meMember.id, chat.id, messageNumber, chat.meMember.id, MessageAction.workerAcceptInviteOnQuest, transaction);
-
-
-  await transaction.commit();
 
   r.server.app.broker.sendQuestNotification({
     action: QuestNotificationActions.workerAcceptedInvitationToQuest,
-    recipients: [questResponse.quest.userId],
-    data: questResponse,
+    recipients: [questInviteController.quest.userId],
+    data: questInviteController.toDto(),
   });
 
   return output();
 }
 
 export async function rejectInviteOnQuest(r) {
-  let questResponse: QuestsResponse;
-  const worker: User = r.auth.credentials;
+  const { responseId } = r.params;
 
-  questResponse = await QuestsResponse.findOne({
-    where: { id: r.params.responseId },
-    include: { model: Quest, as: 'quest' },
+  const questInviteController = await QuestInviteControllerFactory.createById(responseId);
+  const workerController = WorkerControllerFactory.createByUserModel(r.auth.credentials);
+  const questChatController = await QuestChatControllerFactory.createByQuestResponseId(responseId);
+
+  const checksListQuestInvite = new ChecksListQuestInvite(questInviteController.questInvite);
+
+  checksListQuestInvite
+    .checkWorkerMustBeInvitedToQuest(workerController.user)
+    .checkQuestsResponseMustHaveType(QuestsResponseType.Invite)
+    .checkStatuses(QuestsResponseStatus.Open)
+
+  await r.server.app.db.transaction(async (tx) => {
+    await questInviteController.rejectInvitation({ tx });
+    await questChatController.sendInfoMessageAboutRejectInvite({ tx });
+    await questChatController.closeQuestChat({ tx });
   });
-  const questsResponseController = new QuestsResponseController(questResponse);
-
-  questsResponseController
-    .workerMustBeInvitedToQuest(worker.id)
-    .questsResponseMustHaveType(QuestsResponseType.Invite)
-    .questsResponseMustHaveStatus(QuestsResponseStatus.Open);
-
-  const transaction = await r.server.app.db.transaction();
-
-  questResponse = await questResponse.update(
-    {
-      status: QuestsResponseStatus.Rejected,
-    },
-    { transaction },
-  );
-  questsResponseController.questsResponse = questResponse;
-
-  const chat = await Chat.findOne({
-    include: [{
-      model: QuestChat,
-      as: 'questChat',
-      where: { responseId: questResponse.id }
-    }, {
-      model: ChatMember,
-      as: 'meMember',
-      where: { userId: r.auth.credentials.id },
-    }, {
-      model: ChatData,
-      as: 'chatData',
-    }],
-  });
-  const chatController = new ChatController(chat);
-
-  const messageNumber = chat.chatData.lastMessage.number + 1;
-
-  await chatController.createInfoMessage(chat.meMember.id, chat.id, messageNumber, chat.meMember.id, MessageAction.workerRejectInviteOnQuest, transaction);
-
-  await chat.questChat.update({ status: QuestChatStatuses.Close }, { transaction });
-
-  await transaction.commit();
 
   r.server.app.broker.sendQuestNotification({
     action: QuestNotificationActions.workerRejectedInvitationToQuest,
-    recipients: [questResponse.quest.userId],
-    data: questResponse,
+    recipients: [questInviteController.quest.userId],
+    data: questInviteController.toDto(),
   });
 
   return output();
 }
 
 export async function rejectResponseOnQuest(r) {
-  let questResponse: QuestsResponse;
-  const employer: User = r.auth.credentials;
+  const { responseId } = r.params;
 
-  questResponse = await QuestsResponse.findByPk(r.params.responseId, { include: { model: Quest, as: 'quest' } });
-  const questsResponseController = new QuestsResponseController(questResponse);
+  const questResponseController = await QuestResponseControllerFactory.createById(responseId);
+  const employerController = EmployerControllerFactory.createByUserModel(r.auth.credentials);
+  const questChatController = await QuestChatControllerFactory.createByQuestResponseId(responseId);
 
-  const questController = new QuestController(questResponse.quest); // TODO проверить
+  const checksListQuest = new ChecksListQuest(questResponseController.quest);
+  const checksListQuestResponse = new ChecksListQuestResponse(questResponseController.questResponse);
 
-  await questController.employerMustBeQuestCreator(employer.id);
+  checksListQuest
+    .checkOwner(employerController.user)
+    .checkQuestStatuses(QuestStatus.Recruitment)
+  checksListQuestResponse
+    .checkQuestsResponseMustHaveType(QuestsResponseType.Response)
+    .checkStatuses(QuestsResponseStatus.Open)
 
-  questsResponseController.questsResponseMustHaveType(QuestsResponseType.Response).questsResponseMustHaveStatus(QuestsResponseStatus.Open);
 
-  const transaction = await r.server.app.db.transaction();
-
-  questResponse = await questResponse.update(
-    {
-      status: QuestsResponseStatus.Rejected,
-    },
-    { transaction },
-  );
-  questsResponseController.questsResponse = questResponse;
-
-  const chat = await Chat.findOne({
-    include: [{
-      model: QuestChat,
-      as: 'questChat',
-      where: { responseId: questResponse.id }
-    }, {
-      model: ChatMember,
-      as: 'meMember',
-      where: { userId: r.auth.credentials.id }
-    }, {
-      model: ChatData,
-      as: 'chatData',
-    }],
+  await r.server.app.db.transaction(async (tx) => {
+    await questResponseController.rejectRequest({ tx });
+    await questChatController.sendInfoMessageAboutRejectResponse({ tx });
+    await questChatController.closeQuestChat({ tx });
   });
-  const chatController = new ChatController(chat);
-
-  const messageNumber = chat.chatData.lastMessage.number + 1;
-  await chatController.createInfoMessage(chat.meMember.id, chat.id, messageNumber, chat.meMember.id, MessageAction.employerRejectResponseOnQuest, transaction);
-
-  await chat.questChat.update({ status: QuestChatStatuses.Close }, { transaction });
-
-  await transaction.commit();
 
   r.server.app.broker.sendQuestNotification({
     action: QuestNotificationActions.employerRejectedWorkersResponse,
-    recipients: [questResponse.workerId],
-    data: questResponse,
+    recipients: [questResponseController.questResponse.workerId],
+    data: questResponseController.toDto(),
   });
 
   return output();

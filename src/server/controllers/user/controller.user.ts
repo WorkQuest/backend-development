@@ -4,20 +4,25 @@ import { Errors } from '../../utils/errors';
 import config from '../../config/config';
 import { totpValidate } from '@workquest/database-models/lib/utils';
 import { SkillsFiltersController } from '../controller.skillsFilters';
+import { createReferralProgramJob } from "../../jobs/createReferralProgram";
 import {
   User,
+  Quest,
   Session,
   UserRole,
   UserStatus,
   QuestDispute,
+  QuestsResponse,
   UserRaiseView,
   UserRaiseStatus,
   QuestsStatistic,
   RatingStatistic,
   defaultUserSettings,
+  QuestsResponseStatus,
+  ProfileVisibilitySetting,
+  NetworkProfileVisibility,
   UserSpecializationFilter,
-} from "@workquest/database-models/lib/models";
-import { createReferralProgramJob } from '../../jobs/createReferralProgram';
+} from '@workquest/database-models/lib/models';
 
 abstract class UserHelper {
   public abstract user: User;
@@ -84,7 +89,7 @@ abstract class UserHelper {
       email: profile.email.toLowerCase(),
       settings: Object.assign({}, defaultUserSettings, {
         social: { [network]: socialInfo },
-      })
+      }),
     });
 
     await createReferralProgramJob({
@@ -92,7 +97,7 @@ abstract class UserHelper {
       referralId: referralId,
     });
 
-    await UserController.createStatistics(user.id);
+    await UserOldController.createStatistics(user.id);
 
     return user;
   }
@@ -116,19 +121,17 @@ abstract class UserHelper {
     userIds: string[],
     scope: 'defaultScope' | 'short' | 'shortWithAdditionalInfo' = 'defaultScope',
   ): Promise<User[]> {
-    const { count, rows } = await User.scope(scope).findAndCountAll({
-      col: '"User"."id"',
-      distinct: true,
+    const users = await User.scope(scope).findAll({
       where: { id: userIds },
     });
 
-    if (count !== userIds.length) {
-      const notFoundIds = userIds.filter((userId) => rows.findIndex((user) => userId === user.id) === -1);
+    if (users.length !== userIds.length) {
+      const notFoundIds = userIds.filter((userId) => users.findIndex((user) => userId === user.id) === -1);
 
       throw error(Errors.NotFound, 'Users is not found', { notFoundIds });
     }
 
-    return rows;
+    return users;
   }
 
   public static async checkEmail(email: string) {
@@ -254,9 +257,74 @@ abstract class UserHelper {
       userId: this.user.id,
     });
   }
+
+  private async checkWorkerSubmittingJobOffer(visitorUserController: UserController) {
+    if (visitorUserController.user.role === UserRole.Worker) {
+      throw error(Errors.Forbidden, 'User hide its profile', { userId: this.user.id });
+    }
+
+    const quests = await Quest.unscoped().findAll({
+      where: { userId: visitorUserController.user.id },
+      include: [{
+        model: QuestsResponse.unscoped(),
+        as: 'response',
+        where: {
+          workerId: this.user.id,
+          status: { [Op.notIn]: [
+              QuestsResponseStatus.Closed,
+              QuestsResponseStatus.Rejected,
+            ] },
+        },
+        required: true,
+      }]
+    });
+
+    if (quests.length === 0) {
+      throw error(Errors.Forbidden, 'User hide its profile', { userId: this.user.id });
+    }
+  }
+
+  private async checkEmployerSubmittingJobOffer(visitorUserController: UserController) {
+    if (visitorUserController.user.role === UserRole.Employer) {
+      throw error(Errors.Forbidden, 'User hide its profile', { userId: this.user.id });
+    }
+
+    const quests = await Quest.unscoped().findAll({
+      where: { userId: this.user.id, },
+      include: [{
+        model: QuestsResponse.unscoped(),
+        as: 'response',
+        where: {
+          workerId: visitorUserController.user.id,
+          status: { [Op.notIn]: [
+              QuestsResponseStatus.Closed,
+              QuestsResponseStatus.Rejected,
+            ] },
+        },
+        required: true,
+      }]
+    });
+
+    if (quests.length === 0) {
+      throw error(Errors.Forbidden, 'User hide its profile', { userId: this.user.id });
+    }
+  }
+
+  public async canVisitMyProfile(visitorUserController: UserController): Promise<this> {
+    const profileVisibility = await ProfileVisibilitySetting.findOne({where: { userId: this.user.id } });
+
+    if (profileVisibility.network === NetworkProfileVisibility.SubmittingOffer && this.user.role === UserRole.Employer) {
+      await this.checkEmployerSubmittingJobOffer(visitorUserController);
+    }
+    if (profileVisibility.network === NetworkProfileVisibility.SubmittingOffer && this.user.role === UserRole.Worker) {
+      await this.checkWorkerSubmittingJobOffer(visitorUserController);
+    }
+
+    return this;
+  }
 }
 
-export class UserController extends UserHelper {
+export class UserOldController extends UserHelper {
   constructor(public user: User) {
     super();
 
@@ -270,7 +338,7 @@ export class UserController extends UserHelper {
       this.user = await this.user.update({
         status: UserStatus.Confirmed,
         role,
-        additionalInfo: UserController.getDefaultAdditionalInfo(role),
+        additionalInfo: UserOldController.getDefaultAdditionalInfo(role),
       });
     } catch (e) {
       if (transaction) {
@@ -405,5 +473,12 @@ export class UserController extends UserHelper {
     }
 
     return this;
+  }
+}
+
+export class UserController {
+  constructor(
+    public readonly user: User,
+  ) {
   }
 }

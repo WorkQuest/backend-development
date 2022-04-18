@@ -100,7 +100,7 @@ export default async function (payload: StatisticPayload) {
     where: {
       ...(user.role === UserRole.Employer && { userId: user.id }),
       ...(user.role === UserRole.Worker && { assignedWorkerId: user.id }),
-      status: QuestStatus.Done,
+      status: QuestStatus.Completed,
     },
   });
 

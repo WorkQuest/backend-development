@@ -21,7 +21,9 @@ abstract class SkillsFiltersHelper {
     return this.mapSpecializationsForGet;
   }
 
-  protected constructor(protected specializationFilters: SpecializationFilter[]) {
+  protected constructor(
+    protected specializationFilters: SpecializationFilter[]
+  ) {
     this.mapSpecializations = {};
     this.mapSpecializationsForGet = {};
 
@@ -116,7 +118,9 @@ abstract class SkillsFiltersHelper {
 export class SkillsFiltersController extends SkillsFiltersHelper {
   private static instance: SkillsFiltersController;
 
-  private constructor(protected specializationFilters: SpecializationFilter[]) {
+  private constructor(
+    protected specializationFilters: SpecializationFilter[]
+  ) {
     super(specializationFilters);
   }
 
