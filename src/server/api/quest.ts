@@ -165,7 +165,7 @@ export async function editQuest(r) {
 }
 
 // TODO отрефракторить!
-export function getQuests(type: 'list' | 'points') {
+export function getQuests(type: 'list' | 'points', requester?: 'worker' | 'employer') {
   return async function(r) {
     const user: User = r.auth.credentials;
 
@@ -281,6 +281,31 @@ export function getQuests(type: 'list' | 'points') {
       });
     }
 
+    if (requester === 'worker') {
+      include.push(
+        {
+          model: QuestsResponse.unscoped(),
+          as: 'invited',
+          required: !!(r.query.invited), /** Because there is request without this flag */
+          where: {
+            [Op.and]: [{ workerId: r.auth.credentials.id }, { type: QuestsResponseType.Invite }],
+          },
+        },
+        {
+          model: QuestsResponse.unscoped(),
+          as: 'responded',
+          required: !!(r.query.responded), /** Because there is request without this flag */
+          where: {
+            [Op.and]: [{ workerId: r.auth.credentials.id }, { type: QuestsResponseType.Response }],
+          },
+        },
+      );
+    }
+
+    if (requester === 'employer') {
+      where.assign()
+    }
+
     include.push(
       {
         model: QuestsReview.unscoped(),
@@ -293,22 +318,6 @@ export function getQuests(type: 'list' | 'points') {
         as: 'star',
         where: { userId: r.auth.credentials.id },
         required: !!(r.query.starred), /** Because there is request without this flag */
-      },
-      {
-        model: QuestsResponse.unscoped(),
-        as: 'invited',
-        required: !!(r.query.invited), /** Because there is request without this flag */
-        where: {
-          [Op.and]: [{ workerId: r.auth.credentials.id }, { type: QuestsResponseType.Invite }],
-        },
-      },
-      {
-        model: QuestsResponse.unscoped(),
-        as: 'responded',
-        required: !!(r.query.responded), /** Because there is request without this flag */
-        where: {
-          [Op.and]: [{ workerId: r.auth.credentials.id }, { type: QuestsResponseType.Response }],
-        },
       },
     );
 
