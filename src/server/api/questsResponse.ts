@@ -23,7 +23,6 @@ import {
   QuestsResponseType,
   QuestsResponseStatus,
 } from '@workquest/database-models/lib/models';
-import { UserController } from "../controllers/user/controller.user";
 
 export async function responseOnQuest(r) {
   const { message, medias } = r.payload;

@@ -1,11 +1,6 @@
 import { literal, Op } from "sequelize";
 import { error, output } from "../utils";
 import { Errors } from "../utils/errors";
-import { setMessageAsReadJob } from "../jobs/setMessageAsRead";
-import { updateCountUnreadMessagesJob } from "../jobs/updateCountUnreadMessages";
-import { resetUnreadCountMessagesOfMemberJob } from "../jobs/resetUnreadCountMessagesOfMember";
-import { incrementUnreadCountMessageOfMembersJob } from "../jobs/incrementUnreadCountMessageOfMembers";
-import { updateCountUnreadChatsJob } from "../jobs/updateCountUnreadChats";
 import { ChatController } from "../controllers/chat/controller.chat";
 import { ChatNotificationActions } from "../controllers/controller.broker";
 import { MediaController } from "../controllers/controller.media";
