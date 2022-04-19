@@ -140,7 +140,7 @@ export default [{
       payload: questsPayloadSchema,
     },
     response: {
-      schema: outputOkSchema(questsForGetWithCountSchema).label("WorkerGetQuestsResponse")
+      schema: outputOkSchema(questsForGetWithCountSchema).label("EmployerGetQuestsResponse")
     },
   }
 }, {
