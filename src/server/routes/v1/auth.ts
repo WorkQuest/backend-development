@@ -17,6 +17,7 @@ import {
   walletPublicKeySchema,
   walletSignatureSchema
 } from '@workquest/database-models/lib/schemes';
+import { resendEmail } from "../../api/auth";
 
 export default [
   {
@@ -44,6 +45,24 @@ export default [
   },
   {
     method: 'POST',
+    path: '/v1/auth/resend-email',
+    handler: handlers.resendEmail('main'),
+    options: {
+      id: 'v1.auth.resendEmail',
+      tags: ['api', 'auth'],
+      description: 'ResendEmail',
+      validate: {
+        payload: Joi.object({
+          email: userEmailSchema.required(),
+        }).label('ResendEmailPayload'),
+      },
+      response: {
+        schema: emptyOkSchema,
+      },
+    },
+  },
+  {
+    method: 'POST',
     path: '/v1/auth/dao/register',
     handler: handlers.register('dao'),
     options: {
@@ -62,6 +81,24 @@ export default [
       },
       response: {
         schema: outputOkSchema(tokensWithStatus).label('TokensWithStatusResponse'),
+      },
+    },
+  },
+  {
+    method: 'POST',
+    path: '/v1/auth/dao/resend-email',
+    handler: handlers.resendEmail('dao'),
+    options: {
+      id: 'v1.auth.dao.resendEmail',
+      tags: ['api', 'auth'],
+      description: 'ResendEmail',
+      validate: {
+        payload: Joi.object({
+          email: userEmailSchema.required(),
+        }).label('ResendEmailPayload'),
+      },
+      response: {
+        schema: emptyOkSchema,
       },
     },
   },

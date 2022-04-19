@@ -81,6 +81,27 @@ export function register(host: 'dao' | 'main') {
   };
 }
 
+export function resendEmail(host: 'dao' | 'main') {
+  return async function (r) {
+    const emailConfirmCode = getRandomHexToken().substring(0, 6).toUpperCase();
+    const emailConfirmLink =
+      host === 'main' ? `${config.baseUrl}/confirm?token=${emailConfirmCode}` : `${config.baseUrlDao}/confirm?token=${emailConfirmCode}`;
+    const emailHtml = confirmTemplate({
+      confirmLink: emailConfirmLink,
+      confirmCode: emailConfirmCode,
+    });
+
+    await addSendEmailJob({
+      email: r.payload.email,
+      subject: 'Work Quest | Confirmation code',
+      text: `Your confirmation code is ${emailConfirmCode}. Follow this link ${config.baseUrl}/confirm?token=${emailConfirmCode}`,
+      html: emailHtml,
+    });
+
+    return output();
+  }
+}
+
 export function getLoginViaSocialNetworkHandler(returnType: 'token' | 'redirect', platform: 'main' | 'dao') {
   return async function loginThroughSocialNetwork(r, h) {
     const profile = r.auth.credentials.profile;
