@@ -1,7 +1,7 @@
 import { literal, Op } from "sequelize";
 import { error, output } from "../utils";
 import { Errors } from "../utils/errors";
-import { ChatController } from "../controllers/chat/controller.chat";
+import { ChatController, GroupChatController } from '../controllers/chat/controller.chat';
 import { ChatNotificationActions } from "../controllers/controller.broker";
 import { MediaController } from "../controllers/controller.media";
 import { MessageController } from "../controllers/chat/controller.message";
@@ -241,6 +241,9 @@ export async function getChatMembers(r) {
 }
 
 export async function createGroupChat(r) {
+  const userChatOwner = r.auth.credentials;
+
+  const chatName = r.payload.name;
   const userMemberIds: string[] = r.payload.userIds;
 
   if (!userMemberIds.includes(r.auth.credentials.id)) {
@@ -249,35 +252,41 @@ export async function createGroupChat(r) {
 
   const userControllerMembers = await UserControllerFactory.createByIds(userMemberIds);
 
-  await r.server.app.db.transaction(async (tx) => {
+  const groupChatController = await r.server.app.db.transaction(async (tx) => {
+    return GroupChatController.create({
+      users: userControllerMembers.map(userController => userController.user),
+      userOwner: userChatOwner,
+      name: chatName,
+    }, { tx });
+  }) as GroupChatController;
 
-  });
 
-  const chatController = await ChatController.createGroupChat(userIds, r.payload.name, r.auth.credentials.id, transaction);
 
-  const meMember = chatController.chat.getDataValue('members').find(member => member.userId === r.auth.credentials.id);
-
-  const message = await chatController.createInfoMessage(meMember.id, chatController.chat.id, 1, meMember.id, MessageAction.groupChatCreate, transaction);
-  await chatController.createChatMembersData(chatController.chat.getDataValue('members'), r.auth.credentials.id, message, transaction);
-  await chatController.createChatData(chatController.chat.id, message.id, transaction);
-
-  const result = await Chat.findByPk(chatController.chat.id);
-
-  await setMessageAsReadJob({
-    lastUnreadMessage: { id: message.id, number: message.number },
-    chatId: chatController.chat.id,
-    senderMemberId: meMember.id,
-  });
-
-  await updateCountUnreadChatsJob({ userIds: userIds });
-
-  r.server.app.broker.sendChatNotification({
-    recipients: userIds.filter((userId) => userId !== r.auth.credentials.id),
-    action: ChatNotificationActions.groupChatCreate,
-    data: result, // TODO lastReadMessageId: message.id
-  });
-
-  return output(result);
+  // const chatController = await ChatController.createGroupChat(userIds, r.payload.name, r.auth.credentials.id, transaction);
+  //
+  // const meMember = chatController.chat.getDataValue('members').find(member => member.userId === r.auth.credentials.id);
+  //
+  // const message = await chatController.createInfoMessage(meMember.id, chatController.chat.id, 1, meMember.id, MessageAction.groupChatCreate, transaction);
+  // await chatController.createChatMembersData(chatController.chat.getDataValue('members'), r.auth.credentials.id, message, transaction);
+  // await chatController.createChatData(chatController.chat.id, message.id, transaction);
+  //
+  // const result = await Chat.findByPk(chatController.chat.id);
+  //
+  // await setMessageAsReadJob({
+  //   lastUnreadMessage: { id: message.id, number: message.number },
+  //   chatId: chatController.chat.id,
+  //   senderMemberId: meMember.id,
+  // });
+  //
+  // await updateCountUnreadChatsJob({ userIds: userIds });
+  //
+  // r.server.app.broker.sendChatNotification({
+  //   recipients: userIds.filter((userId) => userId !== r.auth.credentials.id),
+  //   action: ChatNotificationActions.groupChatCreate,
+  //   data: result, // TODO lastReadMessageId: message.id
+  // });
+  //
+  // return output(result);
 }
 
 export async function sendMessageToUser(r) {

@@ -511,20 +511,52 @@ export class QuestChatController extends ChatController {
 export class GroupChatController extends ChatController {
   constructor(
     public readonly chat: Chat,
+    public readonly groupChat: GroupChat,
+    public readonly ownerMember: ChatMember,
   ) {
     super(chat);
   }
 
   static async create(payload: CreateGroupChatPayload, options: { tx?: Transaction } = {}) {
-    const chat = Chat.build({ type: ChatType.group });
+    const chat = await Chat.create({ type: ChatType.group });
 
-    const members = ChatMember.bulkBuild(payload.users.map())
-
-    const groupChat = GroupChat.build({
-      name: payload.name,
-      ownerMemberId: ,
+    const membersBuild = ChatMember.bulkBuild(payload.users.map(user => ({
       chatId: chat.id,
-    })
+      userId: user.id,
+      type: MemberType.User,
+    })));
+
+    const members = await Promise.all(
+      membersBuild
+        .map(async member => member
+          .save({ transaction: options.tx })
+        )
+    );
+
+    const memberCreator = members
+      .find(member => member.userId === payload.userOwner.id)
+
+    const groupChat = await GroupChat.create({
+      name: payload.name,
+      ownerMemberId: memberCreator.id,
+      chatId: chat.id,
+    });
+
+    const firstMessageBuild = await Message.create({
+      senderMemberId: memberCreator.id,
+      chatId: chat.id,
+      type: MessageType.info,
+      number: 1 /** Because create */,
+      createdAt: Date.now(),
+    });
+
+    await InfoMessage.create({
+      messageId: firstMessageBuild.id,
+      memberId: null,
+      messageAction: MessageAction.groupChatCreate,
+    });
+
+    return new GroupChatController(chat, groupChat, memberCreator);
   }
 }
 

@@ -14,6 +14,7 @@ export interface CreateQuestChatPayload {
 
 export interface CreateGroupChatPayload {
   readonly users: User[];
+  readonly userOwner: User;
 
   readonly name: string;
 }
