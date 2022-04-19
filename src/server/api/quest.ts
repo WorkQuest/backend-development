@@ -300,10 +300,18 @@ export function getQuests(type: 'list' | 'points', requester?: 'worker' | 'emplo
           },
         },
       );
+
+      if (r.query.performing) {
+        where[Op.and].push({
+          assignedWorkerId: r.auth.credentials.id
+        });
+      }
     }
 
     if (requester === 'employer') {
-      where.assign()
+      where[Op.and].push({
+        userId: r.auth.credentials.id
+      });
     }
 
     include.push(

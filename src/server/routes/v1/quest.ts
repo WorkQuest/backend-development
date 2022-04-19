@@ -128,6 +128,40 @@ export default [{
   }
 }, {
   method: "POST",
+  path: "/v1/me/employer/get-quests",
+  handler: handlers.getQuests('list', 'employer'),
+  options: {
+    auth: 'jwt-access',
+    id: "v1.me.employer.quests",
+    tags: ["api", "quest"],
+    description: "Get quests for me as employer (created by me)",
+    validate: {
+      query: questQuerySchema,
+      payload: questsPayloadSchema,
+    },
+    response: {
+      schema: outputOkSchema(questsForGetWithCountSchema).label("WorkerGetQuestsResponse")
+    },
+  }
+}, {
+  method: "POST",
+  path: "/v1/me/worker/get-quests",
+  handler: handlers.getQuests('list', 'worker'),
+  options: {
+    auth: 'jwt-access',
+    id: "v1.me.worker.quests",
+    tags: ["api", "quest"],
+    description: "Get quests for me as worker (executed by me)",
+    validate: {
+      query: questQuerySchema,
+      payload: questsPayloadSchema,
+    },
+    response: {
+      schema: outputOkSchema(questsForGetWithCountSchema).label("WorkerGetQuestsResponse")
+    },
+  }
+}, {
+  method: "POST",
   path: "/v1/quest/map/get-points",
   handler: handlers.getQuests('points'),
   options: {
