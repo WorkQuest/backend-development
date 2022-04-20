@@ -42,10 +42,13 @@ export default [
       },
     },
   },
-  {
+  ...[
+    'dao',
+    'main',
+  ].map((platform: 'dao' | 'main')  => ({
     method: 'POST',
-    path: '/v1/auth/resend-email',
-    handler: handlers.resendConfirmCodeEmail('main'),
+    path: `/v1/auth/${platform}/resend-email`,
+    handler: handlers.resendConfirmCodeEmail(platform),
     options: {
       id: 'v1.auth.resendEmail',
       tags: ['api', 'auth'],
@@ -59,7 +62,7 @@ export default [
         schema: emptyOkSchema,
       },
     },
-  },
+  })).flat(),
   {
     method: 'POST',
     path: '/v1/auth/dao/register',
@@ -80,24 +83,6 @@ export default [
       },
       response: {
         schema: outputOkSchema(tokensWithStatus).label('TokensWithStatusResponse'),
-      },
-    },
-  },
-  {
-    method: 'POST',
-    path: '/v1/auth/dao/resend-email',
-    handler: handlers.resendConfirmCodeEmail('dao'),
-    options: {
-      id: 'v1.auth.dao.resendEmail',
-      tags: ['api', 'auth'],
-      description: 'ResendEmail',
-      validate: {
-        payload: Joi.object({
-          email: userEmailSchema.required(),
-        }).label('ResendEmailPayload'),
-      },
-      response: {
-        schema: emptyOkSchema,
       },
     },
   },
