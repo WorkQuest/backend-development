@@ -34,7 +34,7 @@ export function register(host: 'dao' | 'main') {
 
     const emailConfirmCode = getRandomHexToken().substring(0, 6).toUpperCase();
     const emailConfirmLink =
-      host === 'main' ? `${config.baseUrl}/confirm?token=${emailConfirmCode}` : `${config.baseUrlDao}/confirm?token=${emailConfirmCode}`;
+      host === 'main' ? `${config.baseUrl}/sing-in?token=${emailConfirmCode}` : `${config.baseUrlDao}/sing-in?token=${emailConfirmCode}`;
     const emailHtml = confirmTemplate({
       confirmLink: emailConfirmLink,
       confirmCode: emailConfirmCode,
@@ -43,7 +43,7 @@ export function register(host: 'dao' | 'main') {
     await addSendEmailJob({
       email: r.payload.email,
       subject: 'Work Quest | Confirmation code',
-      text: `Your confirmation code is ${emailConfirmCode}. Follow this link ${config.baseUrl}/confirm?token=${emailConfirmCode}`,
+      text: `Your confirmation code is ${emailConfirmCode}. Follow this link ${config.baseUrl}/sing-in?token=${emailConfirmCode}`,
       html: emailHtml,
     });
 
