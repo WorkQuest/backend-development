@@ -19,6 +19,7 @@ import {
   UserStatus,
   defaultUserSettings,
 } from '@workquest/database-models/lib/models';
+import { ChecksListUser } from "../checks-list/checksList.user";
 
 const confirmTemplatePath = path.join(__dirname, '..', '..', '..', 'templates', 'confirmEmail.html');
 
@@ -81,7 +82,7 @@ export function register(host: 'dao' | 'main') {
   };
 }
 
-export function resendEmail(host: 'dao' | 'main') {
+export function resendConfirmCodeEmail(host: 'dao' | 'main') {
   return async function (r) {
     const emailConfirmCode = getRandomHexToken().substring(0, 6).toUpperCase();
     const emailConfirmLink =
@@ -90,6 +91,10 @@ export function resendEmail(host: 'dao' | 'main') {
       confirmLink: emailConfirmLink,
       confirmCode: emailConfirmCode,
     });
+
+    const user = await User.scope('withPassword').findByPk(r.auth.credentials.id);
+    const userChecker = new ChecksListUser(user);
+    await userChecker.checkEmailConfirmCode(emailConfirmCode);
 
     await addSendEmailJob({
       email: r.payload.email,

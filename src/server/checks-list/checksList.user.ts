@@ -49,4 +49,12 @@ export class ChecksListUser {
 
     return this;
   }
+
+  public async checkEmailConfirmCode(emailConfirmCode: string) {
+    if (this.user.settings.emailConfirm) {
+      await this.user.update({
+        emailConfirm: emailConfirmCode,
+      });
+    }
+  }
 }

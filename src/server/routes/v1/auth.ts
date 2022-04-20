@@ -17,7 +17,6 @@ import {
   walletPublicKeySchema,
   walletSignatureSchema
 } from '@workquest/database-models/lib/schemes';
-import { resendEmail } from "../../api/auth";
 
 export default [
   {
@@ -46,7 +45,7 @@ export default [
   {
     method: 'POST',
     path: '/v1/auth/resend-email',
-    handler: handlers.resendEmail('main'),
+    handler: handlers.resendConfirmCodeEmail('main'),
     options: {
       id: 'v1.auth.resendEmail',
       tags: ['api', 'auth'],
@@ -87,7 +86,7 @@ export default [
   {
     method: 'POST',
     path: '/v1/auth/dao/resend-email',
-    handler: handlers.resendEmail('dao'),
+    handler: handlers.resendConfirmCodeEmail('dao'),
     options: {
       id: 'v1.auth.dao.resendEmail',
       tags: ['api', 'auth'],
