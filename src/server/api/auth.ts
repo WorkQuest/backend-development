@@ -93,8 +93,11 @@ export function resendConfirmCodeEmail(host: 'dao' | 'main') {
     });
 
     const user = await User.scope('withPassword').findByPk(r.auth.credentials.id);
-    const userChecker = new ChecksListUser(user);
-    await userChecker.checkEmailConfirmCode(emailConfirmCode);
+
+    const userCheckList = new ChecksListUser(user);
+    await userCheckList.checkEmailConfirmCode(emailConfirmCode);
+
+    await user.update({ settings: { emailConfirm: emailConfirmCode } });
 
     await addSendEmailJob({
       email: r.payload.email,

@@ -50,11 +50,9 @@ export class ChecksListUser {
     return this;
   }
 
-  public async checkEmailConfirmCode(emailConfirmCode: string) {
+  public checkEmailConfirmCode(emailConfirmCode: string) {
     if (this.user.settings.emailConfirm) {
-      await this.user.update({
-        emailConfirm: emailConfirmCode,
-      });
+      throw error(Errors.NotFound, 'User already confirm its email', { userId: this.user.id });
     }
   }
 }
