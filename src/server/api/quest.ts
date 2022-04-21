@@ -314,6 +314,27 @@ export function getQuests(type: 'list' | 'points', requester?: 'worker' | 'emplo
       });
     }
 
+    if (!requester) {
+      include.push(
+        {
+          model: QuestsResponse.unscoped(),
+          as: 'invited',
+          required: false,
+          where: {
+            [Op.and]: [{ workerId: r.auth.credentials.id }, { type: QuestsResponseType.Invite }],
+          },
+        },
+        {
+          model: QuestsResponse.unscoped(),
+          as: 'responded',
+          required: false,
+          where: {
+            [Op.and]: [{ workerId: r.auth.credentials.id }, { type: QuestsResponseType.Response }],
+          },
+        },
+      );
+    }
+
     include.push(
       {
         model: QuestsReview.unscoped(),
