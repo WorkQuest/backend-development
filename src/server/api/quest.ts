@@ -206,7 +206,7 @@ export function getQuests(type: 'list' | 'points', requester?: 'worker' | 'emplo
       ...(r.params.userId && { userId: r.params.userId }),
       ...(r.params.workerId && { assignedWorkerId: r.params.workerId }),
       ...(r.query.statuses && { status: { [Op.in]: r.query.statuses } }),
-      ...(r.query.performing && { assignedWorkerId: r.auth.credentials.id }),
+      ...(r.query.performing && requester && requester === 'worker' && { assignedWorkerId: r.auth.credentials.id }),
       ...(r.query.priorities && { priority: { [Op.in]: r.query.priorities } }),
       ...(r.query.workplaces && { workplace: { [Op.in]: r.query.workplaces } }),
       ...(r.query.employments && { employment: { [Op.in]: r.query.employments } }),
@@ -300,12 +300,6 @@ export function getQuests(type: 'list' | 'points', requester?: 'worker' | 'emplo
           },
         },
       );
-
-      if (r.query.performing) {
-        where[Op.and].push({
-          assignedWorkerId: r.auth.credentials.id
-        });
-      }
     }
 
     if (requester && requester === 'employer') {
