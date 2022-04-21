@@ -45,7 +45,8 @@ export async function getMe(r) {
     include: [
       { model: Wallet, as: 'wallet', attributes: ['address'] },
       { model: ReferralProgramAffiliate.unscoped(), as: 'affiliateUser', attributes: ['referralCodeId'] },
-      { model: ProfileVisibilitySetting, as: 'profileVisibilitySetting' }
+      { model: ProfileVisibilitySetting, as: 'employerProfileVisibilitySetting' }
+      { model: ProfileVisibilitySetting, as: 'workerProfileVisibilitySetting' }
     ],
   });
 
