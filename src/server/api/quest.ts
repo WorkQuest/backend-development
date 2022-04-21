@@ -281,7 +281,7 @@ export function getQuests(type: 'list' | 'points', requester?: 'worker' | 'emplo
       });
     }
 
-    if (requester === 'worker') {
+    if (requester && requester === 'worker') {
       include.push(
         {
           model: QuestsResponse.unscoped(),
@@ -308,7 +308,7 @@ export function getQuests(type: 'list' | 'points', requester?: 'worker' | 'emplo
       }
     }
 
-    if (requester === 'employer') {
+    if (requester && requester === 'employer') {
       where[Op.and].push({
         userId: r.auth.credentials.id
       });
