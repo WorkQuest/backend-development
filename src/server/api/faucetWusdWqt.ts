@@ -25,9 +25,9 @@ export async function sentFaucetWusd(r) {
   if (transferWallet) {
     return error(Errors.Forbidden, 'Test coin WUSD have already been sent before', {});
   }
-  const faucetWalletInfo = await ethers.utils.HDNode.fromMnemonic(config.faucet.mnemonic).derivePath(config.faucet.derivePath);
+  const faucetWalletInfo = await ethers.utils.HDNode.fromMnemonic(config.faucet.mnemonic).derivePath('m/44\'/60\'/0\'/0/0');
 
-  const web3 = new Web3(new Web3.providers.HttpProvider(config.faucet.rpcProvider));
+  const web3 = new Web3(new Web3.providers.HttpProvider('https://dev-node-ams3.workquest.co/'));
 
   const account = web3.eth.accounts.privateKeyToAccount(faucetWalletInfo.privateKey);
   web3.eth.accounts.wallet.add(account);
@@ -38,7 +38,7 @@ export async function sentFaucetWusd(r) {
   });
 
   const gasEstimate = await web3.eth.estimateGas({
-    from: config.faucet.faucetWallet,
+    from: '0xaec41239f499458362c9317b3b82dd587c6a74a6',
     to: userWallet.wallet.address,
     value: FaucetAmount.WUSD
   }).then(value => {
@@ -46,7 +46,7 @@ export async function sentFaucetWusd(r) {
   });
 
   const response = await web3.eth.sendTransaction({
-    from: config.faucet.faucetWallet,
+    from: '0xaec41239f499458362c9317b3b82dd587c6a74a6',
     gasPrice: gasPrice,
     gas: gasEstimate,
     to: userWallet.wallet.address,
@@ -86,11 +86,11 @@ export async function sentFaucetWqt(r) {
   if (transferWallet) {
     return error(Errors.Forbidden, 'Test coin WQT have already been sent before', {});
   }
-  const faucetWalletInfo = await ethers.utils.HDNode.fromMnemonic(config.faucet.mnemonic).derivePath(config.faucet.derivePath);
+  const faucetWalletInfo = await ethers.utils.HDNode.fromMnemonic(config.faucet.mnemonic).derivePath('m/44\'/60\'/0\'/0/0');
 
-  const web3 = new Web3(new Web3.providers.HttpProvider(config.faucet.rpcProvider));
+  const web3 = new Web3(new Web3.providers.HttpProvider('https://dev-node-ams3.workquest.co/'));
 
-  const contract = new web3.eth.Contract(abi, config.faucet.token, { from: config.faucet.faucetWallet });
+  const contract = new web3.eth.Contract(abi, '0x917dc1a9E858deB0A5bDCb44C7601F655F728DfE', { from: '0xaec41239f499458362c9317b3b82dd587c6a74a6' });
 
   const account = web3.eth.accounts.privateKeyToAccount(faucetWalletInfo.privateKey);
   web3.eth.accounts.wallet.add(account);
@@ -101,10 +101,10 @@ export async function sentFaucetWqt(r) {
   });
 
   const sendTrans = await web3.eth.sendTransaction({
-    from: config.faucet.faucetWallet,
+    from: '0xaec41239f499458362c9317b3b82dd587c6a74a6',
     gasPrice: gasPrice,
     gas: 216450,
-    to: config.faucet.token,
+    to: '0x917dc1a9E858deB0A5bDCb44C7601F655F728DfE',
     value: '0x0',
     data: contract.methods.transfer(userWallet.wallet.address, FaucetAmount.WQT).encodeABI()
   }).then(response => {

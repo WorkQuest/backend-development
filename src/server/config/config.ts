@@ -104,10 +104,6 @@ export default {
     },
   },
   faucet: {
-    faucetWallet: process.env.FAUCET_ADDRESS_WALLET_WQT_NETWORK,
     mnemonic: process.env.FAUCET_MNEMONIC_WALLET,
-    derivePath: process.env.FAUCET_DERIVE_PATH,
-    rpcProvider: process.env.WORK_QUEST_DEV_NETWORK_RPC_PROVIDER,
-    token: process.env.WQT_TOKEN
   }
 };
