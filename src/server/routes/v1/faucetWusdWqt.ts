@@ -2,7 +2,7 @@ import * as Joi from 'joi';
 import * as handlers from '../../api/faucetWusdWqt';
 import {
   outputPaginationSchema,
-  faucetSendWusdResponseSchemas
+  faucetSendWusdWqtResponseSchemas
 } from '@workquest/database-models/lib/schemes';
 
 export default [{
@@ -15,7 +15,7 @@ export default [{
     tags: ['api', 'faucet'],
     description: 'Get coins for testing from the faucet',
     response: {
-      schema: outputPaginationSchema('faucet', faucetSendWusdResponseSchemas).label('FaucetSendWusdResponse')
+      schema: outputPaginationSchema('faucet-wusd', faucetSendWusdWqtResponseSchemas).label('FaucetSendWusdWqtResponse')
     }
   }
 }, {
@@ -23,12 +23,12 @@ export default [{
   path: '/v1/user/me/faucet/wqt',
   handler: handlers.sentFaucetWqt,
   options: {
-    auth: false,//'jwt-access',
+    auth: 'jwt-access',
     id: 'v1.faucet.getFaucetWqt',
     tags: ['api', 'faucet'],
     description: 'Get coins for testing from the faucet',
     response: {
-      schema: outputPaginationSchema('faucet', faucetSendWusdResponseSchemas).label('FaucetSendWusdResponse')
+      schema: outputPaginationSchema('faucet-wqt', faucetSendWusdWqtResponseSchemas).label('FaucetSendWusdWqtResponse')
     }
   }
 }, ]

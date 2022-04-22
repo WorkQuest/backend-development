@@ -13,7 +13,7 @@ const abi: any[] = JSON.parse(fs.readFileSync(abiFilePath).toString()).abi;
 export async function sentFaucetWusd(r) {
   const user: User = r.auth.credentials;
 
-  const userWallet = await User.scope('shortWithWallet').findByPk(user.id);//r.auth.credentials.id)
+  const userWallet = await User.scope('shortWithWallet').findByPk(user.id);
 
   const transferWallet = await FaucetWusdWqt.findOne({
     where: {
@@ -72,7 +72,7 @@ export async function sentFaucetWusd(r) {
 }
 
 export async function sentFaucetWqt(r) {
-  const user = { id: 'd7cbc315-dc56-488f-a8a7-dafa75c7a9a4' };//r.auth.credentials;
+  const user: User = r.auth.credentials;
 
   const userWallet = await User.scope('shortWithWallet').findByPk(user.id);//r.auth.credentials.id)
 
