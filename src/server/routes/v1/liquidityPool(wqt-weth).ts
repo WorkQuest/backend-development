@@ -1,6 +1,12 @@
 import * as Joi from 'joi';
 import * as handlers from '../../api/liquidityPool(wqt-weth)';
-import { limitSchema, offsetSchema, swapWQTSchema, outputOkSchema, tokensDayWQTSchema } from '@workquest/database-models/lib/schemes';
+import {
+  limitSchema,
+  offsetSchema,
+  outputOkSchema,
+  wqtSwapEventsSchema,
+  dailyLiquidityWqtWethSchema,
+} from '@workquest/database-models/lib/schemes';
 
 export default [
   {
@@ -19,7 +25,7 @@ export default [
         }).label('GetSwapsWQTQuery'),
       },
       response: {
-        schema: outputOkSchema(swapWQTSchema).label('GetSwapsWQTResponse'),
+        schema: outputOkSchema(wqtSwapEventsSchema).label('GetSwapsWQTResponse'),
       },
     },
   },
@@ -38,9 +44,6 @@ export default [
           offset: offsetSchema,
         }).label('GetMintsWQTQuery'),
       },
-      response: {
-        schema: outputOkSchema(swapWQTSchema).label('GetMintsWQTResponse'),
-      },
     },
   },
   {
@@ -57,9 +60,6 @@ export default [
           limit: limitSchema,
           offset: offsetSchema,
         }).label('GetBurnsWQTQuery'),
-      },
-      response: {
-        schema: outputOkSchema(swapWQTSchema).label('GetBurnsWQTResponse'),
       },
     },
   },
@@ -79,7 +79,7 @@ export default [
         }).label('GetTokenDayDataQuery'),
       },
       response: {
-        schema: outputOkSchema(tokensDayWQTSchema).label('GetTokenDayDataResponse'),
+        schema: outputOkSchema(dailyLiquidityWqtWethSchema).label('GetTokenDayDataResponse'),
       },
     },
   },
