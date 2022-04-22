@@ -1,9 +1,9 @@
 import { output } from '../utils';
 import {
-  DailyLiquidityWqtWbnb,
   WqtWbnbMintEvent,
   WqtWbnbBurnEvent,
   WqtWbnbSwapEvent,
+  DailyLiquidityWqtWbnb,
 } from '@workquest/database-models/lib/models';
 
 export async function getMints(r) {
@@ -33,7 +33,7 @@ export async function getSwaps(r) {
     order: [['timestamp', 'DESC']],
   });
 
-  return output({ count, swaps: rows });
+  return output({ count, data: rows });
 }
 
 export async function getTokenDayData(r) {
@@ -43,5 +43,5 @@ export async function getTokenDayData(r) {
     order: [['date', 'DESC']],
   });
 
-  return output({ count, infoPer10Days: rows });
+  return output({ count, data: rows });
 }
