@@ -65,7 +65,7 @@ export default [
   },
   {
     method: 'GET',
-    path: '/v1/pool-liquidity/wqt-weth/tokenDay',
+    path: '/v1/pool-liquidity/wqt-weth/token-day',
     handler: handlers.getTokenDayData,
     options: {
       auth: false,
