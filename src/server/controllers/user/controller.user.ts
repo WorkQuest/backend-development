@@ -20,9 +20,8 @@ import {
   RatingStatistic,
   defaultUserSettings,
   QuestsResponseStatus,
-  ProfileVisibilitySetting,
-  NetworkProfileVisibility,
   UserSpecializationFilter,
+  WorkerProfileVisibilitySetting
 } from '@workquest/database-models/lib/models';
 
 abstract class UserHelper {
@@ -312,14 +311,14 @@ abstract class UserHelper {
   }
 
   public async canVisitMyProfile(visitorUserController: UserController): Promise<this> {
-    const profileVisibility = await ProfileVisibilitySetting.findOne({where: { userId: this.user.id } });
+    const profileVisibility = await WorkerProfileVisibilitySetting.findOne({where: { userId: this.user.id } });
 
-    if (profileVisibility.network === NetworkProfileVisibility.SubmittingOffer && this.user.role === UserRole.Employer) {
-      await this.checkEmployerSubmittingJobOffer(visitorUserController);
-    }
-    if (profileVisibility.network === NetworkProfileVisibility.SubmittingOffer && this.user.role === UserRole.Worker) {
-      await this.checkWorkerSubmittingJobOffer(visitorUserController);
-    }
+    // if (profileVisibility.network === NetworkProfileVisibility.SubmittingOffer && this.user.role === UserRole.Employer) {
+    //   await this.checkEmployerSubmittingJobOffer(visitorUserController);
+    // }
+    // if (profileVisibility.network === NetworkProfileVisibility.SubmittingOffer && this.user.role === UserRole.Worker) {
+    //   await this.checkWorkerSubmittingJobOffer(visitorUserController);
+    // }
 
     return this;
   }

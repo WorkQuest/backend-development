@@ -40,14 +40,24 @@ export const searchFields = [
 export async function getMe(r) {
   const totpIsActiveLiteral = literal(`"User"."settings"->'security'->'TOTP'->'active'`);
 
+  const include = [
+    { model: Wallet, as: 'wallet', attributes: ['address'] },
+    { model: ReferralProgramAffiliate.unscoped(), as: 'affiliateUser', attributes: ['referralCodeId'] },
+  ] as any;
+
+  if (r.auth.credentials.role === UserRole.Employer) {
+    include.push({
+      model: EmployerProfileVisibilitySetting, as: 'employerProfileVisibilitySetting'
+    });
+  } else {
+    include.push({
+      model: WorkerProfileVisibilitySetting, as: 'workerProfileVisibilitySetting'
+    });
+  }
+
   const user = await User.findByPk(r.auth.credentials.id, {
     attributes: { include: [[totpIsActiveLiteral, 'totpIsActive']] },
-    include: [
-      { model: Wallet, as: 'wallet', attributes: ['address'] },
-      { model: ReferralProgramAffiliate.unscoped(), as: 'affiliateUser', attributes: ['referralCodeId'] },
-      { model: ProfileVisibilitySetting, as: 'employerProfileVisibilitySetting' }
-      { model: ProfileVisibilitySetting, as: 'workerProfileVisibilitySetting' }
-    ],
+    include,
   });
 
   return output(user);
@@ -90,13 +100,21 @@ export async function getUserByWallet(r) {
 }
 
 export async function getAllUsers(r) {
-  const user = r.auth.credentials;
-  const priorityVisibilityLiteral = literal(
-    `( CASE WHEN "User"."role" != '${ user.role }' THEN ` +
+  const workerProfileVisibilitySearchLiteral = literal(
+    `( CASE WHEN "User"."role" = 'employer' THEN ` +
     '(CASE WHEN EXISTS (SELECT "usr"."id" FROM "Users" as "usr" ' +
-    `INNER JOIN "ProfileVisibilitySettings" as "pvs" ON "pvs"."userId" = '${ r.auth.credentials.id }' ` +
+    `INNER JOIN "WorkerProfileVisibilitySettings" as "pvs" ON "pvs"."userId" = '${ r.auth.credentials.id }' ` +
     'INNER JOIN "RatingStatistics" as rtn ON "rtn"."userId" = "User"."id" ' +
-    'WHERE ("rtn"."status" = "pvs"."ratingStatus" OR "pvs"."ratingStatus" = 4)) THEN TRUE ELSE FALSE END) ' +
+    'WHERE ("rtn"."status" = "pvs"."ratingStatusInMySearch" OR "pvs"."ratingStatusInMySearch" = 4)) THEN TRUE ELSE FALSE END) ' +
+    'ELSE TRUE END) '
+  );
+
+  const employerProfileVisibilitySearchLiteral = literal(
+    `( CASE WHEN "User"."role" = 'worker' THEN ` +
+    '(CASE WHEN EXISTS (SELECT "usr"."id" FROM "Users" as "usr" ' +
+    `INNER JOIN "EmployerProfileVisibilitySettings" as "pvs" ON "pvs"."userId" = '${ r.auth.credentials.id }' ` +
+    'INNER JOIN "RatingStatistics" as rtn ON "rtn"."userId" = "User"."id" ' +
+    'WHERE ("rtn"."status" = "pvs"."ratingStatusInMySearch" OR "pvs"."ratingStatusInMySearch" = 4)) THEN TRUE ELSE FALSE END) ' +
     'ELSE TRUE END) '
   );
 
@@ -104,15 +122,20 @@ export async function getAllUsers(r) {
     status: UserStatus.Confirmed,
     id: { [Op.ne]: r.auth.credentials.id }
   };
+  where[Op.and] = [];
+
   const include = [{
     model: Wallet,
     as: 'wallet',
     attributes: ['address'],
     required: r.query.walletRequired,
   }, {
-    model: ProfileVisibilitySetting,
-    as: 'profileVisibilitySetting',
-  }];
+    model: EmployerProfileVisibilitySetting,
+    as: 'employerProfileVisibilitySetting',
+  }, {
+    model: WorkerProfileVisibilitySetting,
+    as: 'workerProfileVisibilitySetting',
+  },];
 
   if (r.query.q) {
     where[Op.or] = searchFields.map(
@@ -120,7 +143,9 @@ export async function getAllUsers(r) {
     );
   }
 
-  where[Op.and] = [priorityVisibilityLiteral];
+  r.auth.credentials.role === 'worker' ?
+    where[Op.and].push(workerProfileVisibilitySearchLiteral) :
+    where[Op.and].push(employerProfileVisibilitySearchLiteral);
 
   const { count, rows } = await User.findAndCountAll({
     where,
@@ -226,7 +251,7 @@ export function getUsers(role: UserRole, type: 'points' | 'list') {
     }
 
     include.push({
-      model: ProfileVisibilitySetting,
+      model: WorkerProfileVisibilitySetting,
       as: 'profileVisibilitySetting',
     });
 
@@ -297,9 +322,9 @@ export function editProfile(userRole: UserRole) {
     }
 
     await Promise.all([
-      ProfileVisibilitySetting.update(r.payload.profileVisibility, {
-        where: { userId: r.auth.credentials.id }, transaction,
-      }),
+      // WorkerProfileVisibilitySetting.update(r.payload.profileVisibility, {
+      //   where: { userId: r.auth.credentials.id }, transaction,
+      // }),
       user.update({
         ...phonesFields,
         ...locationFields,
