@@ -5,6 +5,7 @@ import {
   offsetSchema,
   outputOkSchema,
   wqtSwapEventsSchema,
+  outputPaginationSchema,
   dailyLiquidityWqtWethSchema,
 } from '@workquest/database-models/lib/schemes';
 
@@ -22,10 +23,10 @@ export default [
         query: Joi.object({
           offset: offsetSchema,
           limit: limitSchema,
-        }).label('GetSwapsWQTQuery'),
+        }).label('GetWqtWethSwapsQuery'),
       },
       response: {
-        schema: outputOkSchema(wqtSwapEventsSchema).label('GetSwapsWQTResponse'),
+        schema: outputOkSchema(wqtSwapEventsSchema).label('GetWqtWethSwapsResponse'),
       },
     },
   },
@@ -42,7 +43,7 @@ export default [
         query: Joi.object({
           limit: limitSchema,
           offset: offsetSchema,
-        }).label('GetMintsWQTQuery'),
+        }).label('GetWqtWethMintsQuery'),
       },
     },
   },
@@ -59,7 +60,7 @@ export default [
         query: Joi.object({
           limit: limitSchema,
           offset: offsetSchema,
-        }).label('GetBurnsWQTQuery'),
+        }).label('GetWqtWethBurnsQuery'),
       },
     },
   },
@@ -76,10 +77,10 @@ export default [
         query: Joi.object({
           offset: offsetSchema,
           limit: limitSchema,
-        }).label('GetTokenDayDataQuery'),
+        }).label('GetWqtWethTokenDayDataQuery'),
       },
       response: {
-        schema: outputOkSchema(dailyLiquidityWqtWethSchema).label('GetTokenDayDataResponse'),
+        schema: outputPaginationSchema('data', dailyLiquidityWqtWethSchema).label('GetWqtWethTokenDayDataResponse'),
       },
     },
   },

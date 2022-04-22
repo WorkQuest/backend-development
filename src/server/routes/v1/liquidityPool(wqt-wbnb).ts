@@ -23,10 +23,10 @@ export default [
         query: Joi.object({
           offset: offsetSchema,
           limit: limitSchema,
-        }).label('GetSwapsWQTQuery'),
+        }).label('GetWqtWbnbSwapsQuery'),
       },
       response: {
-        schema: outputOkSchema(wqtSwapEventsSchema).label('GetSwapsWQTResponse'),
+        schema: outputOkSchema(wqtSwapEventsSchema).label('GetWqtWbnbSwapsResponse'),
       },
     },
   },
@@ -43,7 +43,7 @@ export default [
         query: Joi.object({
           offset: offsetSchema,
           limit: limitSchema,
-        }).label('GetBurnsWQTQuery'),
+        }).label('GetWqtWbnbBurnsQuery'),
       },
     },
   },
@@ -60,7 +60,7 @@ export default [
         query: Joi.object({
           offset: offsetSchema,
           limit: limitSchema,
-        }).label('GetMintsWQTQuery'),
+        }).label('GetWqtWbnbMintsQuery'),
       },
     },
   },
@@ -77,10 +77,10 @@ export default [
         query: Joi.object({
           offset: offsetSchema,
           limit: limitSchema,
-        }).label('GetTokenDayDataQuery'),
+        }).label('GetWqtWbnbTokenDayDataQuery'),
       },
       response: {
-        schema: outputPaginationSchema('data', dailyLiquidityWqtWbnbSchema).label('GetTokenDayDataResponse'),
+        schema: outputPaginationSchema('data', dailyLiquidityWqtWbnbSchema).label('GetWqtWbnbTokenDayDataResponse'),
       },
     },
   },
