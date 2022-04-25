@@ -137,6 +137,7 @@ export async function confirmEmail(r) {
       'settings.emailConfirm': null,
       additionalInfo: UserOldController.getDefaultAdditionalInfo(r.payload.role),
     });
+    await UserOldController.createProfileVisibility({ userId: user.id, role: r.payload.role });
   } else {
     await user.update({
       status: UserStatus.NeedSetRole,

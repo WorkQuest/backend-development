@@ -127,13 +127,7 @@ export async function getAllUsers(r) {
     as: 'wallet',
     attributes: ['address'],
     required: r.query.walletRequired,
-  }, {
-    model: EmployerProfileVisibilitySetting,
-    as: 'employerProfileVisibilitySetting',
-  }, {
-    model: WorkerProfileVisibilitySetting,
-    as: 'workerProfileVisibilitySetting',
-  },];
+  }] as any;
 
   if (r.query.q) {
     where[Op.or] = searchFields.map(
@@ -141,9 +135,17 @@ export async function getAllUsers(r) {
     );
   }
 
-  r.auth.credentials.role === 'worker' ?
-    where[Op.and].push(workerProfileVisibilitySearchLiteral) :
-    where[Op.and].push(employerProfileVisibilitySearchLiteral);
+  if (r.auth.credentials.role) {
+    r.auth.credentials.role === 'worker' ?
+      include.push({
+        model: WorkerProfileVisibilitySetting,
+        as: 'workerProfileVisibilitySetting',
+      }) && where[Op.and].push(workerProfileVisibilitySearchLiteral) :
+      include.push({
+        model: EmployerProfileVisibilitySetting,
+        as: 'employerProfileVisibilitySetting',
+      }) && where[Op.and].push(employerProfileVisibilitySearchLiteral);
+  }
 
   const { count, rows } = await User.findAndCountAll({
     where,
@@ -231,7 +233,7 @@ export function getUsers(role: UserRole, type: 'points' | 'list') {
 
       where[Op.and].push(entersAreaLiteral);
     }
-    if (r.payload.specializations && role === UserRole.Worker) {
+    if (role === UserRole.Worker && r.payload.specializations) {
       const { paths, industryKeys } = SkillsFiltersController.splitPathsAndSingleKeysOfIndustry(r.payload.specializations);
 
       if (paths.length !== 0 && industryKeys.length === 0) {
@@ -255,15 +257,17 @@ export function getUsers(role: UserRole, type: 'points' | 'list') {
       order.push([key, value]);
     }
 
-    r.auth.credentials.role === 'worker' ?
-      include.push({
-        model: WorkerProfileVisibilitySetting,
-        as: 'workerProfileVisibilitySetting',
-      }) && where[Op.and].push(workerProfileVisibilitySearchLiteral) :
-      include.push({
-        model: EmployerProfileVisibilitySetting,
-        as: 'employerProfileVisibilitySetting',
-      }) && where[Op.and].push(employerProfileVisibilitySearchLiteral);
+    if (r.auth.credentials.role) {
+      r.auth.credentials.role === 'worker' ?
+        include.push({
+          model: WorkerProfileVisibilitySetting,
+          as: 'workerProfileVisibilitySetting',
+        }) && where[Op.and].push(workerProfileVisibilitySearchLiteral) :
+        include.push({
+          model: EmployerProfileVisibilitySetting,
+          as: 'employerProfileVisibilitySetting',
+        }) && where[Op.and].push(employerProfileVisibilitySearchLiteral);
+    }
 
     if (type === 'list') {
       const { count, rows } = await User.findAndCountAll({
@@ -293,6 +297,8 @@ export async function setRole(r) {
   await userController.userNeedsSetRole();
 
   await userController.setRole(r.payload.role);
+
+  await UserOldController.createProfileVisibility({ userId: user.id, role: r.payload.role });
 
   return output();
 }

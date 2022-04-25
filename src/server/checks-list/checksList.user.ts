@@ -36,7 +36,7 @@ export class ChecksListUser {
       return this;
     }
 
-    if (employerVisibilitySetting.ratingStatusCanRespondToQuest.includes(workerRatingStatistic.status)) {
+    if (!employerVisibilitySetting.ratingStatusCanRespondToQuest.includes(workerRatingStatistic.status)) {
       throw error(Errors.InvalidStatus, "Worker rating does not match employer's profile visibility setting", {
         employerSettings: {
           userId: employer.id,
@@ -62,7 +62,7 @@ export class ChecksListUser {
       return this;
     }
 
-    if (workerVisibilitySetting.ratingStatusCanInviteMeOnQuest.includes(employerRatingStatistic.status)) {
+    if (!workerVisibilitySetting.ratingStatusCanInviteMeOnQuest.includes(employerRatingStatistic.status)) {
       throw error(Errors.InvalidStatus, "Employer rating does not match worker's profile visibility setting", {
         workerSettings: {
           userId: worker.id,
@@ -77,6 +77,4 @@ export class ChecksListUser {
 
     return this;
   }
-
-
 }

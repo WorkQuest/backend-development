@@ -19,8 +19,13 @@ import {
   QuestsStatistic,
   RatingStatistic,
   defaultUserSettings,
-  UserSpecializationFilter,
-} from '@workquest/database-models/lib/models';
+  UserSpecializationFilter, EmployerProfileVisibilitySetting, WorkerProfileVisibilitySetting
+} from "@workquest/database-models/lib/models";
+
+export interface CreateProfileVisibility {
+  userId: string,
+  role: UserRole,
+}
 
 abstract class UserHelper {
   public abstract user: User;
@@ -384,6 +389,18 @@ export class UserOldController extends UserHelper {
       where: { userId: userId },
       defaults: { userId: userId },
     });
+  }
+
+  public static async createProfileVisibility(payload: CreateProfileVisibility) {
+    payload.role === 'employer' ?
+      await EmployerProfileVisibilitySetting.findOrCreate({
+        where: { userId: payload.userId },
+        defaults: { userId: payload.userId },
+      }) :
+      await WorkerProfileVisibilitySetting.findOrCreate({
+        where: { userId: payload.userId },
+        defaults: { userId: payload.userId },
+      });
   }
 
   public get shortCredentials() {
