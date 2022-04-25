@@ -1,7 +1,7 @@
 import { literal, Op } from "sequelize";
 import { addSendSmsJob } from "../jobs/sendSms";
 import { error, getRandomCodeNumber, output } from "../utils";
-import { UserOldController } from '../controllers/user/controller.user';
+import { UserOldController } from "../controllers/user/controller.user";
 import { transformToGeoPostGIS } from "../utils/postGIS";
 import { MediaController } from "../controllers/controller.media";
 import { SkillsFiltersController } from "../controllers/controller.skillsFilters";
@@ -12,6 +12,7 @@ import { deleteUserFiltersJob } from "../jobs/deleteUserFilters";
 import { Errors } from "../utils/errors";
 import {
   ChatsStatistic,
+  EmployerProfileVisibilitySetting,
   Quest,
   QuestsResponse,
   QuestsResponseStatus,
@@ -21,13 +22,12 @@ import {
   ReferralProgramAffiliate,
   User,
   UserChangeRoleData,
+  UserRaiseStatus,
   UserRaiseView,
   UserRole,
   UserStatus,
-  UserRaiseStatus,
-  EmployerProfileVisibilitySetting,
-  WorkerProfileVisibilitySetting,
-  Wallet
+  Wallet,
+  WorkerProfileVisibilitySetting
 } from "@workquest/database-models/lib/models";
 import { convertAddressToHex } from "../utils/profile";
 
@@ -255,14 +255,15 @@ export function getUsers(role: UserRole, type: 'points' | 'list') {
       order.push([key, value]);
     }
 
-    include.push({
-      model: WorkerProfileVisibilitySetting,
-      as: 'profileVisibilitySetting',
-    });
-
     r.auth.credentials.role === 'worker' ?
-      where[Op.and].push(workerProfileVisibilitySearchLiteral) :
-      where[Op.and].push(employerProfileVisibilitySearchLiteral);
+      include.push({
+        model: WorkerProfileVisibilitySetting,
+        as: 'workerProfileVisibilitySetting',
+      }) && where[Op.and].push(workerProfileVisibilitySearchLiteral) :
+      include.push({
+        model: EmployerProfileVisibilitySetting,
+        as: 'employerProfileVisibilitySetting',
+      }) && where[Op.and].push(employerProfileVisibilitySearchLiteral);
 
     if (type === 'list') {
       const { count, rows } = await User.findAndCountAll({
