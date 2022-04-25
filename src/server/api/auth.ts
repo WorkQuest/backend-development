@@ -12,6 +12,7 @@ import { UserOldController } from '../controllers/user/controller.user';
 import { ChecksListUser } from "../checks-list/checksList.user";
 import { totpValidate } from '@workquest/database-models/lib/utils';
 import { createReferralProgramJob } from '../jobs/createReferralProgram';
+import { UserControllerFactory } from "../factories/factory.userController";
 import { error, output, getGeo, getRealIp, getDevice, getRandomHexToken } from '../utils';
 import {
   User,
@@ -20,7 +21,7 @@ import {
   UserStatus,
   defaultUserSettings,
 } from '@workquest/database-models/lib/models';
-import { UserControllerFactory } from "../factories/factory.userController";
+
 
 const confirmTemplatePath = path.join(__dirname, '..', '..', '..', 'templates', 'confirmEmail.html');
 
@@ -102,7 +103,7 @@ export function resendConfirmCodeEmail(host: 'dao' | 'main') {
       confirmCode: emailConfirmCode,
     });
 
-    await userCheckList
+    userCheckList
       .checkEmailConfirmStatus('pending');
 
     await userControllerFactory.updateUserSettings(emailConfirmCode);
