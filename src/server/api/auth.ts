@@ -86,7 +86,7 @@ export function register(host: 'dao' | 'main') {
 
 export function resendConfirmCodeEmail(host: 'dao' | 'main') {
   return async function (r) {
-    const userControllerFactory = await UserControllerFactory.returnUserWithPasswordScope(r.auth.credentials.id);
+    const userControllerFactory = await UserControllerFactory.createByUserWithPassword(r.auth.credentials.id);
 
     const userCheckList = new ChecksListUser(userControllerFactory.user);
 
@@ -106,7 +106,7 @@ export function resendConfirmCodeEmail(host: 'dao' | 'main') {
     userCheckList
       .checkEmailConfirmStatus('pending');
 
-    await userControllerFactory.updateUserSettings(emailConfirmCode);
+    await userControllerFactory.updateUserEmailConfirmCode(emailConfirmCode);
 
     await addSendEmailJob({
       email: r.payload.email,
@@ -161,32 +161,34 @@ export function getLoginViaSocialNetworkHandler(returnType: 'token' | 'redirect'
 }
 
 export async function confirmEmail(r) {
-  const user = await User.scope('withPassword').findByPk(r.auth.credentials.id);
+  const userControllerFactory = await UserControllerFactory.createByUserWithPassword(r.auth.credentials.id);
 
-  const userController = new UserOldController(user);
+  const userController = new UserOldController(userControllerFactory.user);
 
   await userController
     .checkUserAlreadyConfirmed()
     .checkUserConfirmationCode(r.payload.confirmCode)
     .createRaiseView()
 
-  await UserOldController.createStatistics(user.id);
+  await UserOldController.createStatistics(userControllerFactory.user.id);
 
   if (r.payload.role) {
-    await user.update({
-      role: r.payload.role,
-      status: UserStatus.Confirmed,
-      'settings.emailConfirm': null,
-      additionalInfo: UserOldController.getDefaultAdditionalInfo(r.payload.role),
-    });
+    await Promise.all([
+      userControllerFactory.setNullEmailConfirmCode(),
+      userControllerFactory.user.update({
+        role: r.payload.role,
+        status: UserStatus.Confirmed,
+        additionalInfo: UserOldController.getDefaultAdditionalInfo(r.payload.role),
+      }),
+    ]);
   } else {
-    await user.update({
-      status: UserStatus.NeedSetRole,
-      'settings.emailConfirm': null,
-    });
+    await Promise.all([
+      userControllerFactory.setNullEmailConfirmCode(),
+      userControllerFactory.user.update({ status: UserStatus.NeedSetRole }),
+    ]);
   }
 
-  return output({ status: user.status });
+  return output({ status: userControllerFactory.user.status });
 }
 
 export async function login(r) {
@@ -333,18 +335,18 @@ export async function loginWallet(r) {
 }
 
 export async function validateUserPassword(r) {
-  const user = await User.scope('withPassword').findByPk(r.auth.credentials.id);
+  const userControllerFactory = await UserControllerFactory.createByUserWithPassword(r.auth.credentials.id);
 
   return output({
-    isValid: await user.passwordCompare(r.payload.password),
+    isValid: await userControllerFactory.user.passwordCompare(r.payload.password),
   });
 }
 
 export async function validateUserTotp(r) {
-  const user = await User.scope('withPassword').findByPk(r.auth.credentials.id);
+  const userControllerFactory = await UserControllerFactory.createByUserWithPassword(r.auth.credentials.id);
 
-  const isValid = user.isTOTPEnabled() ?
-    totpValidate(r.payload.token, user.settings.security.TOTP.secret) : true;
+  const isValid = userControllerFactory.user.isTOTPEnabled() ?
+    totpValidate(r.payload.token, userControllerFactory.user.settings.security.TOTP.secret) : true;
 
   await Session.update({ isTotpPassed: isValid }, { where: { id: r.auth.artifacts.sessionId } });
 

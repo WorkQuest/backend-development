@@ -487,7 +487,12 @@ export class UserController {
   ) {
   }
 
-  public async updateUserSettings(emailConfirmCode) {
+  public async updateUserEmailConfirmCode(emailConfirmCode) {
     await this.user.update({ settings: { emailConfirm: emailConfirmCode } });
   }
+
+  public async setNullEmailConfirmCode() {
+    await this.user.update({ settings: { emailConfirm: null } });
+  }
+
 }
