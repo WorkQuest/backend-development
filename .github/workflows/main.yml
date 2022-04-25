@@ -12,10 +12,10 @@ jobs:
 
     steps:
       - name: Copy code files to container
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Install Node.js
-        uses: actions/setup-node@v1
+        uses: actions/setup-node@v3
         with:
           node-version: '14.x'
 
@@ -28,12 +28,12 @@ jobs:
   deploy-prod:
     environment: production
     if: "github.ref == 'refs/heads/master'"
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
     needs: [ build ]
 
     steps:
       - name: Copy code files to container
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Environment preparation
         run: |
@@ -158,12 +158,12 @@ jobs:
     environment: develop
 
     if: "github.ref == 'refs/heads/develop'"
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
     needs: [ build ]
 
     steps:
       - name: Copy code files to container
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Environment preparation
         run: |
