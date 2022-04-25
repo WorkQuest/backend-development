@@ -20,6 +20,7 @@ import {
   UserStatus,
   defaultUserSettings,
 } from '@workquest/database-models/lib/models';
+import { UserControllerFactory } from "../factories/factory.userController";
 
 const confirmTemplatePath = path.join(__dirname, '..', '..', '..', 'templates', 'confirmEmail.html');
 
@@ -84,9 +85,9 @@ export function register(host: 'dao' | 'main') {
 
 export function resendConfirmCodeEmail(host: 'dao' | 'main') {
   return async function (r) {
-    const user = await User.scope('withPassword').findByPk(r.auth.credentials.id);
+    const userControllerFactory = await UserControllerFactory.returnUserWithPasswordScope(r.auth.credentials.id);
 
-    const userCheckList = new ChecksListUser(user);
+    const userCheckList = new ChecksListUser(userControllerFactory.user);
 
     const emailConfirmCode = getRandomHexToken()
       .substring(0, 6)
@@ -102,9 +103,9 @@ export function resendConfirmCodeEmail(host: 'dao' | 'main') {
     });
 
     await userCheckList
-      .checkEmailConfirmStatus('pending')
+      .checkEmailConfirmStatus('pending');
 
-    await user.update({ settings: { emailConfirm: emailConfirmCode } });
+    await userControllerFactory.updateUserSettings(emailConfirmCode);
 
     await addSendEmailJob({
       email: r.payload.email,

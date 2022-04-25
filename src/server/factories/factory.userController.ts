@@ -56,3 +56,10 @@ export class EmployerControllerFactory {
 
   }
 }
+
+export class UserControllerFactory {
+  public static async returnUserWithPasswordScope(userId: string): Promise<UserController> {
+    const user = await User.scope('withPassword').findByPk(userId);
+    return new UserController(user);
+  }
+}

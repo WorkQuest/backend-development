@@ -259,7 +259,7 @@ abstract class UserHelper {
     });
   }
 
-  private async checkWorkerSubmittingJobOffer(visitorUserController: UserController) {
+  private async checkWorkerSubmittingJobOffer(visitorUserController: UserOldController) {
     if (visitorUserController.user.role === UserRole.Worker) {
       throw error(Errors.Forbidden, 'User hide its profile', { userId: this.user.id });
     }
@@ -285,7 +285,7 @@ abstract class UserHelper {
     }
   }
 
-  private async checkEmployerSubmittingJobOffer(visitorUserController: UserController) {
+  private async checkEmployerSubmittingJobOffer(visitorUserController: UserOldController) {
     if (visitorUserController.user.role === UserRole.Employer) {
       throw error(Errors.Forbidden, 'User hide its profile', { userId: this.user.id });
     }
@@ -311,7 +311,7 @@ abstract class UserHelper {
     }
   }
 
-  public async canVisitMyProfile(visitorUserController: UserController): Promise<this> {
+  public async canVisitMyProfile(visitorUserController: UserOldController): Promise<this> {
     const profileVisibility = await ProfileVisibilitySetting.findOne({where: { userId: this.user.id } });
 
     if (profileVisibility.network === NetworkProfileVisibility.SubmittingOffer && this.user.role === UserRole.Employer) {
@@ -485,5 +485,9 @@ export class UserController {
   constructor(
     public readonly user: User,
   ) {
+  }
+
+  public async updateUserSettings(emailConfirmCode) {
+    await this.user.update({ settings: { emailConfirm: emailConfirmCode } });
   }
 }
