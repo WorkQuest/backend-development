@@ -145,7 +145,7 @@ jobs:
 
             BRIDGE_CONTRACT_PRIVAT_KEY=${{ secrets.PROD_BRIDGE_CONTRACT_PRIVAT_KEY }} \
 
-            PROD_FAUCET_MNEMONIC_WALLET=${{ secrets.PROD_FAUCET_MNEMONIC_WALLET }} \
+            FAUCET_MNEMONIC_WALLET=${{ secrets.PROD_FAUCET_MNEMONIC_WALLET }} \
 
             DEBUG=${{ secrets.PROD_DEBUG }} \
             BASE_URL=${{ secrets.PROD_BASE_URL }} \
