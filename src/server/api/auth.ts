@@ -175,16 +175,15 @@ export async function confirmEmail(r) {
   if (r.payload.role) {
     await Promise.all([
       userControllerFactory.setNullEmailConfirmCode(),
-      userControllerFactory.user.update({
+      userControllerFactory.setUserRole({
         role: r.payload.role,
         status: UserStatus.Confirmed,
-        additionalInfo: UserOldController.getDefaultAdditionalInfo(r.payload.role),
       }),
     ]);
   } else {
     await Promise.all([
       userControllerFactory.setNullEmailConfirmCode(),
-      userControllerFactory.user.update({ status: UserStatus.NeedSetRole }),
+      userControllerFactory.needSetRole(),
     ]);
   }
 

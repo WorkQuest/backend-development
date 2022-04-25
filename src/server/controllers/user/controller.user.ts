@@ -24,6 +24,7 @@ import {
   NetworkProfileVisibility,
   UserSpecializationFilter,
 } from '@workquest/database-models/lib/models';
+import { SetUserRolePayload } from "./types";
 
 abstract class UserHelper {
   public abstract user: User;
@@ -494,5 +495,18 @@ export class UserController {
   public async setNullEmailConfirmCode() {
     await this.user.update({ settings: { emailConfirm: null } });
   }
+
+  public async needSetRole() {
+    await this.user.update({ status: UserStatus.NeedSetRole });
+  }
+
+  public async setUserRole(payload: SetUserRolePayload) {
+    await this.user.update({
+      role: payload.role,
+      status: payload.status,
+      additionalInfo: UserOldController.getDefaultAdditionalInfo(payload.role),
+    });
+  }
+
 
 }
