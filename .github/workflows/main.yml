@@ -28,7 +28,7 @@ jobs:
   deploy-prod:
     environment: production
     if: "github.ref == 'refs/heads/master'"
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     needs: [ build ]
 
     steps:
