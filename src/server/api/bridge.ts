@@ -8,6 +8,7 @@ export async function getRecipientSwaps(r) {
 
   const redeemedEvents = await BridgeSwapTokenEvent.findAll({
     where: {
+      ...(r.query.symbol && { symbol: r.query.symbol }),
       event: SwapEvents.swapRedeemed,
       recipient,
     },
@@ -18,6 +19,7 @@ export async function getRecipientSwaps(r) {
     offset: r.query.offset,
     order: [['timestamp', 'DESC']],
     where: {
+      ...(r.query.symbol && { symbol: r.query.symbol }),
       event: SwapEvents.swapInitialized,
       recipient,
     },
