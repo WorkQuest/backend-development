@@ -86,7 +86,7 @@ export function register(host: 'dao' | 'main') {
 
 export function resendConfirmCodeEmail(host: 'dao' | 'main') {
   return async function (r) {
-    const userControllerFactory = await UserControllerFactory.createByUserWithPassword(r.auth.credentials.id);
+    const userControllerFactory = await UserControllerFactory.createByIdWithPassword(r.auth.credentials.id);
 
     const userCheckList = new ChecksListUser(userControllerFactory.user);
 
@@ -161,7 +161,7 @@ export function getLoginViaSocialNetworkHandler(returnType: 'token' | 'redirect'
 }
 
 export async function confirmEmail(r) {
-  const userControllerFactory = await UserControllerFactory.createByUserWithPassword(r.auth.credentials.id);
+  const userControllerFactory = await UserControllerFactory.createByIdWithPassword(r.auth.credentials.id);
 
   const userController = new UserOldController(userControllerFactory.user);
 
@@ -335,7 +335,7 @@ export async function loginWallet(r) {
 }
 
 export async function validateUserPassword(r) {
-  const userControllerFactory = await UserControllerFactory.createByUserWithPassword(r.auth.credentials.id);
+  const userControllerFactory = await UserControllerFactory.createByIdWithPassword(r.auth.credentials.id);
 
   return output({
     isValid: await userControllerFactory.user.passwordCompare(r.payload.password),
@@ -343,7 +343,7 @@ export async function validateUserPassword(r) {
 }
 
 export async function validateUserTotp(r) {
-  const userControllerFactory = await UserControllerFactory.createByUserWithPassword(r.auth.credentials.id);
+  const userControllerFactory = await UserControllerFactory.createByIdWithPassword(r.auth.credentials.id);
 
   const isValid = userControllerFactory.user.isTOTPEnabled() ?
     totpValidate(r.payload.token, userControllerFactory.user.settings.security.TOTP.secret) : true;
