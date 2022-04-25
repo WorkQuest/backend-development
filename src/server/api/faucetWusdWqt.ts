@@ -7,7 +7,7 @@ import { Errors } from '../utils/errors';
 import path from 'path';
 import fs from 'fs';
 
-const abiFilePath = path.join(__dirname, '../abi/WqtContract.json');
+const abiFilePath = path.join(__dirname, '../abi/WQToken.json');
 const abi: any[] = JSON.parse(fs.readFileSync(abiFilePath).toString()).abi;
 
 export async function sentFaucetWusd(r) {
