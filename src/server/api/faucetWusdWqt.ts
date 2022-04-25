@@ -15,6 +15,13 @@ export async function sentFaucetWusd(r) {
 
   const userWallet = await User.scope('shortWithWallet').findByPk(user.id);
 
+  if (userWallet) {
+    return error(Errors.WalletExists, 'Wallet already exists', {});
+  }
+  if (userWallet.wallet) {
+    return error(Errors.WalletExists, 'Wallet already exists', {});
+  }
+
   const transferWallet = await FaucetWusdWqt.findOne({
     where: {
       address: userWallet.wallet.address,
@@ -75,6 +82,13 @@ export async function sentFaucetWqt(r) {
   const user: User = r.auth.credentials;
 
   const userWallet = await User.scope('shortWithWallet').findByPk(user.id);
+
+  if (userWallet) {
+    return error(Errors.WalletExists, 'Wallet already exists', {});
+  }
+  if (userWallet.wallet) {
+    return error(Errors.WalletExists, 'Wallet already exists', {});
+  }
 
   const transferWallet = await FaucetWusdWqt.findOne({
     where: {
