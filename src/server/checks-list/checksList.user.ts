@@ -4,7 +4,9 @@ import {
   User,
   UserRole,
   RatingStatistic,
-  WorkerProfileVisibilitySetting
+  WorkerProfileVisibilitySetting,
+  EmployerProfileVisibilitySetting,
+  RatingStatus
 } from "@workquest/database-models/lib/models";
 
 export class ChecksListUser {
@@ -24,28 +26,57 @@ export class ChecksListUser {
     return this;
   }
 
-  public async checkRatingMustMatchVisibilitySettings(comparableUser: User): Promise<this> {
-    const [thisUserRatingStatistic, comparableUserVisibilitySetting] = await Promise.all([
+  public async checkWorkerRatingMustMatchEmployerVisibilitySettings(employer: User): Promise<this> {
+    const [workerRatingStatistic, employerVisibilitySetting] = await Promise.all([
       RatingStatistic.findOne({ where: { userId: this.user.id } }),
-      .findOne({ where: { userId: comparableUser.id } }),
+      EmployerProfileVisibilitySetting.findOne({ where: { userId: employer.id } }),
     ]);
 
-    if (comparableUserVisibilitySetting.ratingStatusCanInviteMeOnQuest === RatingStatus.AllStatuses) {
+    if (employerVisibilitySetting.ratingStatusCanRespondToQuest.includes(RatingStatus.AllStatuses)) {
       return this;
     }
-    if (thisUserRatingStatistic.status !== comparableUserVisibilitySetting.ratingStatusCanInviteMeOnQuest) {
-      throw error(Errors.InvalidStatus, "User rating does not match comparable user's profile visibility setting", {
-        comparableUserSettings: {
-          userId: comparableUser.id,
-          ratingStatus: comparableUserVisibilitySetting.ratingStatusCanInviteMeOnQuest,
+
+    if (employerVisibilitySetting.ratingStatusCanRespondToQuest.includes(workerRatingStatistic.status)) {
+      throw error(Errors.InvalidStatus, "Worker rating does not match employer's profile visibility setting", {
+        employerSettings: {
+          userId: employer.id,
+          ratingStatus: employerVisibilitySetting.ratingStatusCanRespondToQuest,
         },
-        userRating: {
+        workerRating: {
           userId: this.user.id,
-          status: thisUserRatingStatistic.status,
+          status: workerRatingStatistic.status,
         },
       });
     }
 
     return this;
   }
+
+  public async checkEmployerRatingMustMatchWorkerVisibilitySettings(worker: User): Promise<this> {
+    const [employerRatingStatistic, workerVisibilitySetting] = await Promise.all([
+      RatingStatistic.findOne({ where: { userId: this.user.id } }),
+      WorkerProfileVisibilitySetting.findOne({ where: { userId: worker.id } }),
+    ]);
+
+    if (workerVisibilitySetting.ratingStatusCanInviteMeOnQuest.includes(RatingStatus.AllStatuses)) {
+      return this;
+    }
+
+    if (workerVisibilitySetting.ratingStatusCanInviteMeOnQuest.includes(employerRatingStatistic.status)) {
+      throw error(Errors.InvalidStatus, "Employer rating does not match worker's profile visibility setting", {
+        workerSettings: {
+          userId: worker.id,
+          ratingStatus: workerVisibilitySetting.ratingStatusCanInviteMeOnQuest,
+        },
+        employerRating: {
+          userId: this.user.id,
+          status: employerRatingStatistic.status,
+        },
+      });
+    }
+
+    return this;
+  }
+
+
 }
