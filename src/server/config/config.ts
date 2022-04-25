@@ -121,5 +121,8 @@ export default {
       webSocketProvider: process.env.CONTRACT_LIQUIDITY_MINING_WEBSOCKET_PROVIDER,
       contract: process.env.CONTRACT_LIQUIDITY_MINING_ADDRESS,
     }
+  },
+  faucet: {
+    mnemonic: process.env.FAUCET_MNEMONIC_WALLET,
   }
 };
