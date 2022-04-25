@@ -50,9 +50,16 @@ export class ChecksListUser {
     return this;
   }
 
-  public checkEmailConfirmCode(emailConfirmCode: string) {
-    if (this.user.settings.emailConfirm) {
-      throw error(Errors.NotFound, 'User already confirm its email', { userId: this.user.id });
+  public checkEmailConfirmStatus(status: 'confirm' | 'pending') {
+    if (status === 'confirm') {
+      if (this.user.settings.emailConfirm) {
+        throw error(Errors.UnconfirmedUser, 'User not verified', {});
+      }
+    }
+    if (status === 'pending') {
+      if (!this.user.settings.emailConfirm) {
+        throw error(Errors.UserAlreadyConfirmed, 'User already confirmed', {});
+      }
     }
   }
 }

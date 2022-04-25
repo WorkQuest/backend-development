@@ -5,10 +5,11 @@ import * as querystring from 'querystring';
 import Handlebars = require('handlebars');
 import config from '../config/config';
 import { Errors } from '../utils/errors';
+import converter from 'bech32-converting';
 import { addSendEmailJob } from '../jobs/sendEmail';
 import { generateJwt } from '../utils/auth';
 import { UserOldController } from '../controllers/user/controller.user';
-import converter from 'bech32-converting';
+import { ChecksListUser } from "../checks-list/checksList.user";
 import { totpValidate } from '@workquest/database-models/lib/utils';
 import { createReferralProgramJob } from '../jobs/createReferralProgram';
 import { error, output, getGeo, getRealIp, getDevice, getRandomHexToken } from '../utils';
@@ -19,7 +20,6 @@ import {
   UserStatus,
   defaultUserSettings,
 } from '@workquest/database-models/lib/models';
-import { ChecksListUser } from "../checks-list/checksList.user";
 
 const confirmTemplatePath = path.join(__dirname, '..', '..', '..', 'templates', 'confirmEmail.html');
 
@@ -84,25 +84,32 @@ export function register(host: 'dao' | 'main') {
 
 export function resendConfirmCodeEmail(host: 'dao' | 'main') {
   return async function (r) {
-    const emailConfirmCode = getRandomHexToken().substring(0, 6).toUpperCase();
-    const emailConfirmLink =
-      host === 'main' ? `${config.baseUrl}/confirm?token=${emailConfirmCode}` : `${config.baseUrlDao}/confirm?token=${emailConfirmCode}`;
+    const user = await User.scope('withPassword').findByPk(r.auth.credentials.id);
+
+    const userCheckList = new ChecksListUser(user);
+
+    const emailConfirmCode = getRandomHexToken()
+      .substring(0, 6)
+      .toUpperCase()
+
+    const emailConfirmLink = host === 'main'
+      ? `${config.baseUrl}/confirm?token=${emailConfirmCode}`
+      : `${config.baseUrlDao}/confirm?token=${emailConfirmCode}`
+
     const emailHtml = confirmTemplate({
       confirmLink: emailConfirmLink,
       confirmCode: emailConfirmCode,
     });
 
-    const user = await User.scope('withPassword').findByPk(r.auth.credentials.id);
-
-    const userCheckList = new ChecksListUser(user);
-    await userCheckList.checkEmailConfirmCode(emailConfirmCode);
+    await userCheckList
+      .checkEmailConfirmStatus('pending')
 
     await user.update({ settings: { emailConfirm: emailConfirmCode } });
 
     await addSendEmailJob({
       email: r.payload.email,
       subject: 'Work Quest | Confirmation code',
-      text: `Your confirmation code is ${emailConfirmCode}. Follow this link ${config.baseUrl}/confirm?token=${emailConfirmCode}`,
+      text: `Your confirmation code is ${ emailConfirmCode }. Follow this link ${ config.baseUrl }/confirm?token=${ emailConfirmCode }`,
       html: emailHtml,
     });
 
@@ -153,9 +160,13 @@ export function getLoginViaSocialNetworkHandler(returnType: 'token' | 'redirect'
 
 export async function confirmEmail(r) {
   const user = await User.scope('withPassword').findByPk(r.auth.credentials.id);
+
   const userController = new UserOldController(user);
 
-  await userController.checkUserAlreadyConfirmed().checkUserConfirmationCode(r.payload.confirmCode).createRaiseView();
+  await userController
+    .checkUserAlreadyConfirmed()
+    .checkUserConfirmationCode(r.payload.confirmCode)
+    .createRaiseView()
 
   await UserOldController.createStatistics(user.id);
 
