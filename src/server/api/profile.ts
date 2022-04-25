@@ -68,12 +68,10 @@ export async function getUser(r) {
     include: [{ model: Wallet, as: 'wallet', attributes: ['address'] }],
   });
   const userController = new UserOldController(user);
-  const visitorController = new UserOldController(r.auth.credentials)
 
   await userController
     .checkNotSeeYourself(r.auth.credentials.id)
     .userMustHaveStatus(UserStatus.Confirmed)
-    .canVisitMyProfile(visitorController)
 
   return output(userController.user);
 }
@@ -105,7 +103,7 @@ export async function getAllUsers(r) {
     '(CASE WHEN EXISTS (SELECT "usr"."id" FROM "Users" as "usr" ' +
     `INNER JOIN "WorkerProfileVisibilitySettings" as "pvs" ON "pvs"."userId" = '${ r.auth.credentials.id }' ` +
     'INNER JOIN "RatingStatistics" as rtn ON "rtn"."userId" = "User"."id" ' +
-    'WHERE ("rtn"."status" = "pvs"."ratingStatusInMySearch" OR "pvs"."ratingStatusInMySearch" = 4)) THEN TRUE ELSE FALSE END) ' +
+    'WHERE ("rtn"."status" = ANY("pvs"."ratingStatusInMySearch") OR 4 = ANY("pvs"."ratingStatusInMySearch"))) THEN TRUE ELSE FALSE END) ' +
     'ELSE TRUE END) '
   );
 
@@ -114,7 +112,7 @@ export async function getAllUsers(r) {
     '(CASE WHEN EXISTS (SELECT "usr"."id" FROM "Users" as "usr" ' +
     `INNER JOIN "EmployerProfileVisibilitySettings" as "pvs" ON "pvs"."userId" = '${ r.auth.credentials.id }' ` +
     'INNER JOIN "RatingStatistics" as rtn ON "rtn"."userId" = "User"."id" ' +
-    'WHERE ("rtn"."status" = "pvs"."ratingStatusInMySearch" OR "pvs"."ratingStatusInMySearch" = 4)) THEN TRUE ELSE FALSE END) ' +
+    'WHERE ("rtn"."status" = ANY("pvs"."ratingStatusInMySearch") OR 4 = ANY("pvs"."ratingStatusInMySearch"))) THEN TRUE ELSE FALSE END) ' +
     'ELSE TRUE END) '
   );
 
@@ -161,8 +159,6 @@ export async function getAllUsers(r) {
 
 export function getUsers(role: UserRole, type: 'points' | 'list') {
   return async function(r) {
-    const user = r.auth.credentials;
-
     const entersAreaLiteral = literal(
       'st_within("User"."locationPostGIS", st_makeenvelope(:northLng, :northLat, :southLng, :southLat, 4326))'
     );
@@ -182,12 +178,21 @@ export function getUsers(role: UserRole, type: 'points' | 'list') {
     const userRatingStatisticLiteral = literal(
       '(SELECT "status" FROM "RatingStatistics" WHERE "userId" = "User"."id")'
     );
-    const priorityVisibilityLiteral = literal(
-      `( CASE WHEN "User"."role" != '${ user.role }' THEN ` +
+    const workerProfileVisibilitySearchLiteral = literal(
+      `( CASE WHEN "User"."role" = 'employer' THEN ` +
       '(CASE WHEN EXISTS (SELECT "usr"."id" FROM "Users" as "usr" ' +
-      `INNER JOIN "ProfileVisibilitySettings" as "pvs" ON "pvs"."userId" = '${ r.auth.credentials.id }' ` +
+      `INNER JOIN "WorkerProfileVisibilitySettings" as "pvs" ON "pvs"."userId" = '${ r.auth.credentials.id }' ` +
       'INNER JOIN "RatingStatistics" as rtn ON "rtn"."userId" = "User"."id" ' +
-      'WHERE ("rtn"."status" = "pvs"."ratingStatus" OR "pvs"."ratingStatus" = 4)) THEN TRUE ELSE FALSE END) ' +
+      'WHERE ("rtn"."status" = ANY("pvs"."ratingStatusInMySearch") OR 4 = ANY("pvs"."ratingStatusInMySearch"))) THEN TRUE ELSE FALSE END) ' +
+      'ELSE TRUE END) '
+    );
+
+    const employerProfileVisibilitySearchLiteral = literal(
+      `( CASE WHEN "User"."role" = 'worker' THEN ` +
+      '(CASE WHEN EXISTS (SELECT "usr"."id" FROM "Users" as "usr" ' +
+      `INNER JOIN "EmployerProfileVisibilitySettings" as "pvs" ON "pvs"."userId" = '${ r.auth.credentials.id }' ` +
+      'INNER JOIN "RatingStatistics" as rtn ON "rtn"."userId" = "User"."id" ' +
+      'WHERE ("rtn"."status" = ANY("pvs"."ratingStatusInMySearch") OR 4 = ANY("pvs"."ratingStatusInMySearch"))) THEN TRUE ELSE FALSE END) ' +
       'ELSE TRUE END) '
     );
 
@@ -255,7 +260,9 @@ export function getUsers(role: UserRole, type: 'points' | 'list') {
       as: 'profileVisibilitySetting',
     });
 
-    where[Op.and].push(priorityVisibilityLiteral);
+    r.auth.credentials.role === 'worker' ?
+      where[Op.and].push(workerProfileVisibilitySearchLiteral) :
+      where[Op.and].push(employerProfileVisibilitySearchLiteral);
 
     if (type === 'list') {
       const { count, rows } = await User.findAndCountAll({
@@ -322,9 +329,9 @@ export function editProfile(userRole: UserRole) {
     }
 
     await Promise.all([
-      // WorkerProfileVisibilitySetting.update(r.payload.profileVisibility, {
-      //   where: { userId: r.auth.credentials.id }, transaction,
-      // }),
+      WorkerProfileVisibilitySetting.update(r.payload.profileVisibility, {
+        where: { userId: r.auth.credentials.id }, transaction,
+      }),
       user.update({
         ...phonesFields,
         ...locationFields,

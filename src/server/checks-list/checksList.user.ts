@@ -3,7 +3,6 @@ import { Errors } from '../utils/errors';
 import {
   User,
   UserRole,
-  RatingStatus,
   RatingStatistic,
   WorkerProfileVisibilitySetting
 } from "@workquest/database-models/lib/models";
@@ -28,24 +27,24 @@ export class ChecksListUser {
   public async checkRatingMustMatchVisibilitySettings(comparableUser: User): Promise<this> {
     const [thisUserRatingStatistic, comparableUserVisibilitySetting] = await Promise.all([
       RatingStatistic.findOne({ where: { userId: this.user.id } }),
-      WorkerProfileVisibilitySetting.findOne({ where: { userId: comparableUser.id } }),
+      .findOne({ where: { userId: comparableUser.id } }),
     ]);
 
-    // if (comparableUserVisibilitySetting.ratingStatusCanInviteMeOnQuest === RatingStatus.AllStatuses) {
-    //   return this;
-    // }
-    // if (thisUserRatingStatistic.status !== comparableUserVisibilitySetting.ratingStatusCanInviteMeOnQuest) {
-    //   throw error(Errors.InvalidStatus, "User rating does not match comparable user's profile visibility setting", {
-    //     comparableUserSettings: {
-    //       userId: comparableUser.id,
-    //       ratingStatus: comparableUserVisibilitySetting.ratingStatusCanInviteMeOnQuest,
-    //     },
-    //     userRating: {
-    //       userId: this.user.id,
-    //       status: thisUserRatingStatistic.status,
-    //     },
-    //   });
-    // }
+    if (comparableUserVisibilitySetting.ratingStatusCanInviteMeOnQuest === RatingStatus.AllStatuses) {
+      return this;
+    }
+    if (thisUserRatingStatistic.status !== comparableUserVisibilitySetting.ratingStatusCanInviteMeOnQuest) {
+      throw error(Errors.InvalidStatus, "User rating does not match comparable user's profile visibility setting", {
+        comparableUserSettings: {
+          userId: comparableUser.id,
+          ratingStatus: comparableUserVisibilitySetting.ratingStatusCanInviteMeOnQuest,
+        },
+        userRating: {
+          userId: this.user.id,
+          status: thisUserRatingStatistic.status,
+        },
+      });
+    }
 
     return this;
   }
