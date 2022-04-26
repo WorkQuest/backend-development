@@ -10,43 +10,43 @@ export const enum MainBrokerQueues {
 
 export const enum QuestNotificationActions {
   /** Quest flow */
-  waitWorker = 'waitWorker',
-  questEdited = 'questEdited',
-  questEndSoon = 'questEndSoon',
-  workerRejectedQuest = 'workerRejectedQuest',
-  workerAcceptedQuest = 'workerAcceptedQuest',
-  workerCompletedQuest = 'workerCompletedQuest',
-  employerAcceptedCompletedQuest = 'employerAcceptedCompletedQuest',
-  employerRejectedCompletedQuest = 'employerRejectedCompletedQuest',
+  waitWorker = 'WaitWorker',
+  questEdited = 'QuestEdited',
+  questEndSoon = 'QuestEndSoon',
+  workerRejectedQuest = 'WorkerRejectedQuest',
+  workerAcceptedQuest = 'WorkerAcceptedQuest',
+  workerCompletedQuest = 'WorkerCompletedQuest',
+  employerAcceptedCompletedQuest = 'EmployerAcceptedCompletedQuest',
+  employerRejectedCompletedQuest = 'EmployerRejectedCompletedQuest',
   /** Quest Response */
-  workerRespondedToQuest = 'workerRespondedToQuest',
-  employerInvitedWorkerToQuest = 'employerInvitedWorkerToQuest',
-  workerAcceptedInvitationToQuest = 'workerAcceptedInvitationToQuest',
-  workerRejectedInvitationToQuest = 'workerRejectedInvitationToQuest',
-  employerRejectedWorkersResponse = 'employerRejectedWorkersResponse',
+  workerRespondedToQuest = 'WorkerRespondedToQuest',
+  employerInvitedWorkerToQuest = 'EmployerInvitedWorkerToQuest',
+  workerAcceptedInvitationToQuest = 'WorkerAcceptedInvitationToQuest',
+  workerRejectedInvitationToQuest = 'WorkerRejectedInvitationToQuest',
+  employerRejectedWorkersResponse = 'EmployerRejectedWorkersResponse',
   /** Review */
-  userLeftReviewAboutQuest = 'userLeftReviewAboutQuest',
+  userLeftReviewAboutQuest = 'UserLeftReviewAboutQuest',
   /** Dispute */
-  openDispute = 'openDispute',
+  openDispute = 'OpenDispute',
 }
 
 export const enum ChatNotificationActions {
   /** Group chat */
-  groupChatCreate = 'groupChatCreate',
-  groupChatAddUser = 'groupChatAddUser',
-  groupChatDeleteUser = 'groupChatDeleteUser',
-  groupChatLeaveUser = 'groupChatLeaveUser',
+  groupChatCreate = 'GroupChatCreate',
+  groupChatAddUser = 'GroupChatAddUser',
+  groupChatDeleteUser = 'GroupChatDeleteUser',
+  groupChatLeaveUser = 'GroupChatLeaveUser',
   /** */
-  messageReadByRecipient = 'messageReadByRecipient',
-  newMessage = 'newMessage',
+  messageReadByRecipient = 'MessageReadByRecipient',
+  newMessage = 'NewMessage',
 }
 
 export const enum DaoNotificationActions {
   /** Discussions */
-  newDiscussionLike = 'newDiscussionLike',
-  newCommentInDiscussion = 'newCommentInDiscussion',
-  commentLiked = 'commentLiked',
-  replyToComment = 'replyToComment',
+  newDiscussionLike = 'NewDiscussionLike',
+  newCommentInDiscussion = 'NewCommentInDiscussion',
+  commentLiked = 'CommentLiked',
+  replyToComment = 'ReplyToComment',
   /** Proposal */
 }
 
