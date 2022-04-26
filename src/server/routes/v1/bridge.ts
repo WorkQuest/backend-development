@@ -1,35 +1,34 @@
 import Joi = require('joi');
-import { getRecipientSwaps } from '../../api/bridge';
+import * as handlers from '../../api/bridge';
 import {
-  bridgeSymbolSchema,
-  outputOkSchema,
-  offsetSchema,
   limitSchema,
-  swapsSchema
-} from "@workquest/database-models/lib/schemes";
+  offsetSchema,
+  outputOkSchema,
+  accountAddressSchema,
+  bridgeSwapEventsSchema,
+  bridgeSwapEventSymbolSchema,
+} from '@workquest/database-models/lib/schemes';
 
-export default [
-  {
-    method: 'GET',
-    path: '/v1/bridge/recipient/{recipient}/swaps',
-    handler: getRecipientSwaps,
-    options: {
-      auth: false,
-      id: 'v1.bridge.getRecipientSwaps',
-      tags: ['api', 'bridge'],
-      validate: {
-        params: Joi.object({
-          recipient: Joi.string().required().label('RecipientHash'),
-        }).label('GetBridgeSwapsParams'),
-        query: Joi.object({
-          symbol: bridgeSymbolSchema,
-          limit: limitSchema,
-          offset: offsetSchema,
-        }).label('GetBridgeSwapsQuery'),
-      },
-      response: {
-        schema: outputOkSchema(swapsSchema).label('UserResponse'),
-      },
+export default [{
+  method: 'GET',
+  path: '/v1/bridge/recipient/{recipient}/swaps',
+  handler: handlers.getRecipientSwaps,
+  options: {
+    auth: false,
+    id: 'v1.bridge.getRecipientSwaps',
+    tags: ['api', 'bridge'],
+    validate: {
+      params: Joi.object({
+        recipient: accountAddressSchema,
+      }).label('GetBridgeRecipientSwapsParams'),
+      query: Joi.object({
+        limit: limitSchema,
+        offset: offsetSchema,
+        symbol: bridgeSwapEventSymbolSchema,
+      }).label('GetBridgeRecipientSwapsQuery'),
+    },
+    response: {
+      schema: outputOkSchema(bridgeSwapEventsSchema).label('GetBridgeRecipientSwapsResponse'),
     },
   },
-];
+}];
