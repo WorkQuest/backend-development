@@ -490,7 +490,7 @@ export class UserController {
 
   public updateUserEmailConfirmCode(emailConfirmCode: string, options: { tx?: Transaction } = {}) {
     return this.user.update({
-      settings: { emailConfirm: emailConfirmCode },
+      'settings.emailConfirm': emailConfirmCode,
     }, { transaction: options.tx });
   }
 
