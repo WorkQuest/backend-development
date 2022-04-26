@@ -3,6 +3,7 @@ import { Errors } from '../utils/errors';
 import {
   User,
   UserRole,
+  UserStatus,
   RatingStatus,
   RatingStatistic,
   ProfileVisibilitySetting,
@@ -50,16 +51,25 @@ export class ChecksListUser {
     return this;
   }
 
-  public checkEmailConfirmStatus(status: 'confirm' | 'pending') {
-    if (status === 'confirm') {
-      if (this.user.settings.emailConfirm) {
-        throw error(Errors.UnconfirmedUser, 'User not verified', {});
-      }
+  public checkUserStatus(...statuses: UserStatus[]): this {
+    if (!statuses.includes(this.user.status)) {
+      throw error(Errors.InvalidStatus, "User status doesn't match", {
+        current: this.user.status,
+        mustHave: statuses,
+      });
     }
-    if (status === 'pending') {
-      if (!this.user.settings.emailConfirm) {
-        throw error(Errors.UserAlreadyConfirmed, 'User already confirmed', {});
-      }
+
+    return this;
+  }
+
+  public checkEmailConfirmCode(confirmCode: string): this {
+    if (!this.user.settings.emailConfirm) {
+      throw error(Errors.InvalidDate, 'Email verification code is empty', {});
     }
+    if (this.user.settings.emailConfirm.toLowerCase() !== confirmCode.toLowerCase()) {
+      throw error(Errors.InvalidPayload, 'Invalid confirmation code', [{ field: 'confirmCode', reason: 'invalid' }]);
+    }
+
+    return this;
   }
 }

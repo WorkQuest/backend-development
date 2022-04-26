@@ -2,25 +2,19 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { Op } from 'sequelize';
 import * as querystring from 'querystring';
-import Handlebars = require('handlebars');
 import config from '../config/config';
 import { Errors } from '../utils/errors';
 import converter from 'bech32-converting';
 import { addSendEmailJob } from '../jobs/sendEmail';
 import { generateJwt } from '../utils/auth';
 import { UserOldController } from '../controllers/user/controller.user';
-import { ChecksListUser } from "../checks-list/checksList.user";
+import { ChecksListUser } from '../checks-list/checksList.user';
 import { totpValidate } from '@workquest/database-models/lib/utils';
 import { createReferralProgramJob } from '../jobs/createReferralProgram';
-import { UserControllerFactory } from "../factories/factory.userController";
-import { error, output, getGeo, getRealIp, getDevice, getRandomHexToken } from '../utils';
-import {
-  User,
-  Wallet,
-  Session,
-  UserStatus,
-  defaultUserSettings,
-} from '@workquest/database-models/lib/models';
+import { UserControllerFactory } from '../factories/factory.userController';
+import { error, getDevice, getGeo, getRandomHexToken, getRealIp, output } from '../utils';
+import { defaultUserSettings, Session, User, UserStatus, Wallet } from '@workquest/database-models/lib/models';
+import Handlebars = require('handlebars');
 
 
 const confirmTemplatePath = path.join(__dirname, '..', '..', '..', 'templates', 'confirmEmail.html');
@@ -35,9 +29,14 @@ export function register(host: 'dao' | 'main') {
   return async function (r) {
     await UserOldController.checkEmail(r.payload.email);
 
-    const emailConfirmCode = getRandomHexToken().substring(0, 6).toUpperCase();
-    const emailConfirmLink =
-      host === 'main' ? `${config.baseUrl}/confirm?token=${emailConfirmCode}` : `${config.baseUrlDao}/confirm?token=${emailConfirmCode}`;
+    const emailConfirmCode = getRandomHexToken()
+      .substring(0, 6)
+      .toUpperCase()
+
+    const emailConfirmLink = host === 'main'
+      ? `${config.baseUrl}/confirm?token=${emailConfirmCode}`
+      : `${config.baseUrlDao}/confirm?token=${emailConfirmCode}`
+
     const emailHtml = confirmTemplate({
       confirmLink: emailConfirmLink,
       confirmCode: emailConfirmCode,
@@ -86,9 +85,9 @@ export function register(host: 'dao' | 'main') {
 
 export function resendConfirmCodeEmail(host: 'dao' | 'main') {
   return async function (r) {
-    const userControllerFactory = await UserControllerFactory.createByIdWithPassword(r.auth.credentials.id);
+    const userController = await UserControllerFactory.createByIdWithPassword(r.auth.credentials.id);
 
-    const userCheckList = new ChecksListUser(userControllerFactory.user);
+    const userCheckList = new ChecksListUser(userController.user);
 
     const emailConfirmCode = getRandomHexToken()
       .substring(0, 6)
@@ -104,9 +103,9 @@ export function resendConfirmCodeEmail(host: 'dao' | 'main') {
     });
 
     userCheckList
-      .checkEmailConfirmStatus('pending');
+      .checkUserStatus(UserStatus.Unconfirmed)
 
-    await userControllerFactory.updateUserEmailConfirmCode(emailConfirmCode);
+    await userController.updateUserEmailConfirmCode(emailConfirmCode);
 
     await addSendEmailJob({
       email: r.payload.email,
@@ -161,33 +160,29 @@ export function getLoginViaSocialNetworkHandler(returnType: 'token' | 'redirect'
 }
 
 export async function confirmEmail(r) {
-  const userControllerFactory = await UserControllerFactory.createByIdWithPassword(r.auth.credentials.id);
+  const { confirmCode, role } = r.payload;
 
-  const userController = new UserOldController(userControllerFactory.user);
+  const userController = await UserControllerFactory.createByIdWithPassword(r.auth.credentials.id);
+  const userCheckList = new ChecksListUser(userController.user);
 
-  await userController
-    .checkUserAlreadyConfirmed()
-    .checkUserConfirmationCode(r.payload.confirmCode)
-    .createRaiseView()
+  userCheckList
+    .checkUserStatus(UserStatus.Unconfirmed)
+    .checkEmailConfirmCode(confirmCode)
 
-  await UserOldController.createStatistics(userControllerFactory.user.id);
-
-  if (r.payload.role) {
+  await r.server.app.db.transaction(async (tx) => {
     await Promise.all([
-      userControllerFactory.setNullEmailConfirmCode(),
-      userControllerFactory.setUserRole({
-        role: r.payload.role,
-        status: UserStatus.Confirmed,
-      }),
+      userController.createRaiseView({ tx }),
+      userController.createStatistics({ tx }),
     ]);
-  } else {
-    await Promise.all([
-      userControllerFactory.setNullEmailConfirmCode(),
-      userControllerFactory.needSetRole(),
-    ]);
-  }
 
-  return output({ status: userControllerFactory.user.status });
+    if (role) {
+      await userController.confirmUser(role, { tx });
+    } else {
+      await userController.confirmUserWithStatusNeedSetRole({ tx });
+    }
+  });
+
+  return output({ status: userController.user.status });
 }
 
 export async function login(r) {
