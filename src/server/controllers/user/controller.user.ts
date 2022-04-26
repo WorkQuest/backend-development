@@ -1,7 +1,8 @@
 import { Op, Transaction } from 'sequelize';
 import { error } from '../../utils';
-import { Errors } from '../../utils/errors';
 import config from '../../config/config';
+import { Errors } from '../../utils/errors';
+import { SetUserRolePayload } from "./types";
 import { totpValidate } from '@workquest/database-models/lib/utils';
 import { SkillsFiltersController } from '../controller.skillsFilters';
 import { createReferralProgramJob } from "../../jobs/createReferralProgram";
@@ -24,7 +25,6 @@ import {
   NetworkProfileVisibility,
   UserSpecializationFilter,
 } from '@workquest/database-models/lib/models';
-import { SetUserRolePayload } from "./types";
 
 abstract class UserHelper {
   public abstract user: User;
@@ -488,25 +488,85 @@ export class UserController {
   ) {
   }
 
-  public async updateUserEmailConfirmCode(emailConfirmCode) {
-    await this.user.update({ settings: { emailConfirm: emailConfirmCode } });
+  public updateUserEmailConfirmCode(emailConfirmCode: string, options: { tx?: Transaction } = {}) {
+    return this.user.update({
+      settings: { emailConfirm: emailConfirmCode },
+    }, { transaction: options.tx });
   }
 
-  public async setNullEmailConfirmCode() {
-    await this.user.update({ settings: { emailConfirm: null } });
+  public confirmUser(setRole: UserRole, options: { tx?: Transaction } = {}) {
+    return this.user.update({
+      role: setRole,
+      status: UserStatus.Confirmed,
+      'settings.emailConfirm': null,
+      additionalInfo: UserOldController.getDefaultAdditionalInfo(setRole),
+    }, { transaction: options.tx });
   }
 
-  public async needSetRole() {
-    await this.user.update({ status: UserStatus.NeedSetRole });
+  public confirmUserWithStatusNeedSetRole(options: { tx?: Transaction } = {}) {
+    return this.user.update({
+      'settings.emailConfirm': null,
+      status: UserStatus.NeedSetRole,
+    }, { transaction: options.tx });
   }
 
-  public async setUserRole(payload: SetUserRolePayload) {
-    await this.user.update({
-      role: payload.role,
-      status: payload.status,
-      additionalInfo: UserOldController.getDefaultAdditionalInfo(payload.role),
+  public createStatistics(options: { tx?: Transaction } = {}) {
+    return Promise.all([
+      RatingStatistic.findOrCreate({
+        where: { userId: this.user.id },
+        defaults: { userId: this.user.id },
+        transaction: options.tx,
+      }),
+      ChatsStatistic.findOrCreate({
+        where: { userId: this.user.id },
+        defaults: { userId: this.user.id },
+        transaction: options.tx,
+      }),
+      QuestsStatistic.findOrCreate({
+        where: { userId: this.user.id },
+        defaults: { userId: this.user.id },
+        transaction: options.tx,
+      }),
+    ]);
+  }
+
+  public async createRaiseView(options: { tx?: Transaction } = {}) {
+    return UserRaiseView.findOrCreate({
+      where: { userId: this.user.id },
+      defaults: { userId: this.user.id },
+      transaction: options.tx,
     });
   }
 
+  public static getDefaultAdditionalInfo(role: UserRole) {
+    let additionalInfo: object = {
+      description: null,
+      secondMobileNumber: null,
+      address: null,
+      socialNetwork: {
+        instagram: null,
+        twitter: null,
+        linkedin: null,
+        facebook: null,
+      },
+    };
 
+    if (role === UserRole.Worker) {
+      additionalInfo = {
+        ...additionalInfo,
+        skills: [],
+        educations: [],
+        workExperiences: [],
+      };
+    } else if (role === UserRole.Employer) {
+      additionalInfo = {
+        ...additionalInfo,
+        company: null,
+        CEO: null,
+        website: null,
+      };
+    }
+
+    return additionalInfo;
+  }
 }
