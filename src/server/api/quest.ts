@@ -169,6 +169,7 @@ export async function editQuest(r) {
 export function getQuests(type: 'list' | 'points', requester?: 'worker' | 'employer') {
   return async function(r) {
     const user: User = r.auth.credentials;
+    const checksListUser = new ChecksListUser(user);
 
     const entersAreaLiteral = literal(
       'st_within("Quest"."locationPostGIS", st_makeenvelope(:northLng, :northLat, :southLng, :southLat, 4326))'
@@ -220,30 +221,52 @@ export function getQuests(type: 'list' | 'points', requester?: 'worker' | 'emplo
 
       where[Op.or].push(userSearchLiteral)
     }
-    if (requester && requester === 'worker') {
-      const userController = new ChecksListUser(user);
-      userController.checkUserRole(UserRole.Worker);
+    if (!requester) {
+      // TODO проверка r.query.responded, r.query.invited на роль
 
-      where[Op.and].push({ assignedWorkerId: r.auth.credentials.id });
+      include.push({
+        model: QuestsResponse.unscoped(),
+        as: 'invited',
+        required: !!(r.query.invited),
+        where: {
+          [Op.and]: [{ workerId: user.id }, { type: QuestsResponseType.Invite }],
+        },
+      }, {
+        model: QuestsResponse.unscoped(),
+        as: 'responded',
+        required: !!(r.query.responded),
+        where: {
+          [Op.and]: [{ workerId: user.id }, { type: QuestsResponseType.Response }],
+        },
+      });
+    }
+    if (requester && requester === 'worker') {
+      checksListUser
+        .checkUserRole(UserRole.Worker)
+
+      where[Op.and].push({ assignedWorkerId: user.id });
 
       include.push({
         model: QuestsResponse.unscoped(),
         as: 'invited',
         required: !!(r.query.invited), /** Because there is request without this flag */
         where: {
-          [Op.and]: [{ workerId: r.auth.credentials.id }, { type: QuestsResponseType.Invite }],
+          [Op.and]: [{ workerId: user.id }, { type: QuestsResponseType.Invite }],
         },
       }, {
         model: QuestsResponse.unscoped(),
         as: 'responded',
         required: !!(r.query.responded), /** Because there is request without this flag */
         where: {
-          [Op.and]: [{ workerId: r.auth.credentials.id }, { type: QuestsResponseType.Response }],
+          [Op.and]: [{ workerId: user.id }, { type: QuestsResponseType.Response }],
         },
       });
     }
     if (requester && requester === 'employer') {
-      where[Op.and].push({ userId: r.auth.credentials.id });
+      checksListUser
+        .checkUserRole(UserRole.Employer)
+
+      where[Op.and].push({ userId: user.id });
     }
     if (r.payload.specializations) { // TODO r.query.specialization on r.query.specialization[s]
       const {
@@ -305,33 +328,16 @@ export function getQuests(type: 'list' | 'points', requester?: 'worker' | 'emplo
         },
       });
     }
-    if (!requester) {
-      include.push({
-        model: QuestsResponse.unscoped(),
-        as: 'invited',
-        required: false,
-        where: {
-          [Op.and]: [{ workerId: r.auth.credentials.id }, { type: QuestsResponseType.Invite }],
-        },
-      }, {
-        model: QuestsResponse.unscoped(),
-        as: 'responded',
-        required: false,
-        where: {
-          [Op.and]: [{ workerId: r.auth.credentials.id }, { type: QuestsResponseType.Response }],
-        },
-      });
-    }
 
     include.push({
       model: QuestsReview.unscoped(),
       as: 'yourReview',
-      where: { fromUserId: r.auth.credentials.id },
+      where: { fromUserId: user.id },
       required: false,
     }, {
       model: QuestsStarred.unscoped(),
       as: 'star',
-      where: { userId: r.auth.credentials.id },
+      where: { userId: user.id },
       required: !!(r.query.starred), /** Because there is request without this flag */
     });
 
