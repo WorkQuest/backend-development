@@ -34,8 +34,8 @@ export function register(host: 'dao' | 'main') {
       .toUpperCase()
 
     const emailConfirmLink = host === 'main'
-      ? `${config.baseUrl}/confirm?token=${emailConfirmCode}`
-      : `${config.baseUrlDao}/confirm?token=${emailConfirmCode}`
+      ? `${config.baseUrl}/sign-in?token=${emailConfirmCode}`
+      : `${config.baseUrlDao}/sign-in?token==${emailConfirmCode}`
 
     const emailHtml = confirmTemplate({
       confirmLink: emailConfirmLink,
@@ -45,7 +45,7 @@ export function register(host: 'dao' | 'main') {
     await addSendEmailJob({
       email: r.payload.email,
       subject: 'Work Quest | Confirmation code',
-      text: `Your confirmation code is ${emailConfirmCode}. Follow this link ${config.baseUrl}/confirm?token=${emailConfirmCode}`,
+      text: `Your confirmation code is ${emailConfirmCode}. Follow this link ${config.baseUrl}/sign-in?token=${emailConfirmCode}`,
       html: emailHtml,
     });
 
@@ -94,8 +94,8 @@ export function resendConfirmCodeEmail(host: 'dao' | 'main') {
       .toUpperCase()
 
     const emailConfirmLink = host === 'main'
-      ? `${ config.baseUrl }/confirm?token=${ emailConfirmCode }`
-      : `${ config.baseUrlDao }/confirm?token=${ emailConfirmCode }`
+      ? `${ config.baseUrl }/sign-in?token=${ emailConfirmCode }`
+      : `${ config.baseUrlDao }/sign-in?token=${ emailConfirmCode }`
 
     const emailHtml = confirmTemplate({
       confirmLink: emailConfirmLink,
@@ -110,7 +110,7 @@ export function resendConfirmCodeEmail(host: 'dao' | 'main') {
     await addSendEmailJob({
       email: r.payload.email,
       subject: 'Work Quest | Confirmation code',
-      text: `Your confirmation code is ${ emailConfirmCode }. Follow this link ${ config.baseUrl }/confirm?token=${ emailConfirmCode }`,
+      text: `Your confirmation code is ${ emailConfirmCode }. Follow this link ${ config.baseUrl }/sign-in?token=${ emailConfirmCode }`,
       html: emailHtml,
     });
 
