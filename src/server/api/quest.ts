@@ -1,28 +1,29 @@
-import { literal, Op } from 'sequelize';
-import { Errors } from '../utils/errors';
-import { QuestController } from '../controllers/quest/controller.quest';
-import { error, output } from '../utils';
+import { literal, Op } from "sequelize";
+import { Errors } from "../utils/errors";
+import { QuestController } from "../controllers/quest/controller.quest";
+import { error, output } from "../utils";
 import { ChecksListQuest } from "../checks-list/checksList.quest";
+import { ChecksListUser } from "../checks-list/checksList.user";
 import { QuestNotificationActions } from "../controllers/controller.broker";
-import { MediaController } from '../controllers/controller.media';
-import { updateQuestsStatisticJob } from '../jobs/updateQuestsStatistic';
-import { SkillsFiltersController } from '../controllers/controller.skillsFilters';
-import { EmployerControllerFactory, WorkerControllerFactory } from '../factories/factory.userController';
-import { QuestControllerFactory } from '../factories/factory.questController';
+import { MediaController } from "../controllers/controller.media";
+import { updateQuestsStatisticJob } from "../jobs/updateQuestsStatistic";
+import { SkillsFiltersController } from "../controllers/controller.skillsFilters";
+import { EmployerControllerFactory, WorkerControllerFactory } from "../factories/factory.userController";
+import { QuestControllerFactory } from "../factories/factory.questController";
 import {
-  User,
+  DisputeStatus,
   Quest,
   QuestChat,
   QuestDispute,
   QuestsResponse,
-  QuestsResponseType,
-  DisputeStatus,
-  QuestStatus,
-  QuestsReview,
   QuestsResponseStatus,
+  QuestsResponseType,
+  QuestsReview,
   QuestsStarred,
-  UserRole,
-} from '@workquest/database-models/lib/models';
+  QuestStatus,
+  User,
+  UserRole
+} from "@workquest/database-models/lib/models";
 
 
 export const searchQuestFields = [
@@ -165,9 +166,10 @@ export async function editQuest(r) {
 }
 
 // TODO отрефракторить!
-export function getQuests(type: 'list' | 'points') {
+export function getQuests(type: 'list' | 'points', requester?: 'worker' | 'employer') {
   return async function(r) {
     const user: User = r.auth.credentials;
+    const checksListUser = new ChecksListUser(user);
 
     const entersAreaLiteral = literal(
       'st_within("Quest"."locationPostGIS", st_makeenvelope(:northLng, :northLat, :southLng, :southLat, 4326))'
@@ -206,7 +208,6 @@ export function getQuests(type: 'list' | 'points') {
       ...(r.params.userId && { userId: r.params.userId }),
       ...(r.params.workerId && { assignedWorkerId: r.params.workerId }),
       ...(r.query.statuses && { status: { [Op.in]: r.query.statuses } }),
-      ...(r.query.performing && { assignedWorkerId: r.auth.credentials.id }),
       ...(r.query.priorities && { priority: { [Op.in]: r.query.priorities } }),
       ...(r.query.workplaces && { workplace: { [Op.in]: r.query.workplaces } }),
       ...(r.query.employments && { employment: { [Op.in]: r.query.employments } }),
@@ -220,10 +221,57 @@ export function getQuests(type: 'list' | 'points') {
 
       where[Op.or].push(userSearchLiteral)
     }
+    if (!requester) {
+      // TODO проверка r.query.responded, r.query.invited на роль
+
+      include.push({
+        model: QuestsResponse.unscoped(),
+        as: 'invited',
+        required: !!(r.query.invited),
+        where: {
+          [Op.and]: [{ workerId: user.id }, { type: QuestsResponseType.Invite }],
+        },
+      }, {
+        model: QuestsResponse.unscoped(),
+        as: 'responded',
+        required: !!(r.query.responded),
+        where: {
+          [Op.and]: [{ workerId: user.id }, { type: QuestsResponseType.Response }],
+        },
+      });
+    }
+    if (requester && requester === 'worker') {
+      checksListUser
+        .checkUserRole(UserRole.Worker)
+
+      where[Op.and].push({ assignedWorkerId: user.id });
+
+      include.push({
+        model: QuestsResponse.unscoped(),
+        as: 'invited',
+        required: !!(r.query.invited), /** Because there is request without this flag */
+        where: {
+          [Op.and]: [{ workerId: user.id }, { type: QuestsResponseType.Invite }],
+        },
+      }, {
+        model: QuestsResponse.unscoped(),
+        as: 'responded',
+        required: !!(r.query.responded), /** Because there is request without this flag */
+        where: {
+          [Op.and]: [{ workerId: user.id }, { type: QuestsResponseType.Response }],
+        },
+      });
+    }
+    if (requester && requester === 'employer') {
+      checksListUser
+        .checkUserRole(UserRole.Employer)
+
+      where[Op.and].push({ userId: user.id });
+    }
     if (r.payload.specializations) { // TODO r.query.specialization on r.query.specialization[s]
       const {
         paths,
-        industryKeys
+        industryKeys,
       } = SkillsFiltersController.splitPathsAndSingleKeysOfIndustry(r.payload.specializations);
 
       if (paths.length !== 0 && industryKeys.length === 0) {
@@ -281,36 +329,17 @@ export function getQuests(type: 'list' | 'points') {
       });
     }
 
-    include.push(
-      {
-        model: QuestsReview.unscoped(),
-        as: 'yourReview',
-        where: { fromUserId: r.auth.credentials.id },
-        required: false,
-      },
-      {
-        model: QuestsStarred.unscoped(),
-        as: 'star',
-        where: { userId: r.auth.credentials.id },
-        required: !!(r.query.starred), /** Because there is request without this flag */
-      },
-      {
-        model: QuestsResponse.unscoped(),
-        as: 'invited',
-        required: !!(r.query.invited), /** Because there is request without this flag */
-        where: {
-          [Op.and]: [{ workerId: r.auth.credentials.id }, { type: QuestsResponseType.Invite }],
-        },
-      },
-      {
-        model: QuestsResponse.unscoped(),
-        as: 'responded',
-        required: !!(r.query.responded), /** Because there is request without this flag */
-        where: {
-          [Op.and]: [{ workerId: r.auth.credentials.id }, { type: QuestsResponseType.Response }],
-        },
-      },
-    );
+    include.push({
+      model: QuestsReview.unscoped(),
+      as: 'yourReview',
+      where: { fromUserId: user.id },
+      required: false,
+    }, {
+      model: QuestsStarred.unscoped(),
+      as: 'star',
+      where: { userId: user.id },
+      required: !!(r.query.starred), /** Because there is request without this flag */
+    });
 
     for (const [key, value] of Object.entries(r.query.sort || {})) {
       order.push([key, value]);
