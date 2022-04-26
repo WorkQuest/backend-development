@@ -3,11 +3,12 @@ import configBridge from '../config/config.bridge';
 import { SwapEvents, BridgeSwapTokenEvent } from '@workquest/database-models/lib/models';
 
 export async function getRecipientSwaps(r) {
-  const recipient = r.params.recipient.toLowerCase();
   const swaps = [];
+  const recipient = r.params.recipient.toLowerCase();
 
   const redeemedEvents = await BridgeSwapTokenEvent.findAll({
     where: {
+      ...(r.query.symbol && { symbol: r.query.symbol }),
       event: SwapEvents.swapRedeemed,
       recipient,
     },
@@ -18,6 +19,7 @@ export async function getRecipientSwaps(r) {
     offset: r.query.offset,
     order: [['timestamp', 'DESC']],
     where: {
+      ...(r.query.symbol && { symbol: r.query.symbol }),
       event: SwapEvents.swapInitialized,
       recipient,
     },
