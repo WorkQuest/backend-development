@@ -104,6 +104,8 @@ const init = async () => {
       '/api/v1/profile/set-role',
       '/api/v1/auth/logout',
       '/api/v1/auth/register/wallet',
+      '/api/v1/auth/main/resend-email',
+      '/api/v1/auth/dao/resend-email',
     ]),
   });
   server.auth.strategy('jwt-refresh', 'bearer-access-token', {
