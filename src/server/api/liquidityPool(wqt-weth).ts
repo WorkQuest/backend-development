@@ -33,7 +33,7 @@ export async function getSwaps(r) {
     order: [['timestamp', 'DESC']],
   });
 
-  return output({ count, swaps: rows });
+  return output({ count, data: rows });
 }
 
 export async function getTokenDayData(r) {
