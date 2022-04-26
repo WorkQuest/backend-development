@@ -95,8 +95,8 @@ export function resendConfirmCodeEmail(host: 'dao' | 'main') {
       .toUpperCase()
 
     const emailConfirmLink = host === 'main'
-      ? `${config.baseUrl}/confirm?token=${emailConfirmCode}`
-      : `${config.baseUrlDao}/confirm?token=${emailConfirmCode}`
+      ? `${ config.baseUrl }/confirm?token=${ emailConfirmCode }`
+      : `${ config.baseUrlDao }/confirm?token=${ emailConfirmCode }`
 
     const emailHtml = confirmTemplate({
       confirmLink: emailConfirmLink,
