@@ -1,28 +1,29 @@
-import { literal, Op } from 'sequelize';
-import { Errors } from '../utils/errors';
-import { QuestController } from '../controllers/quest/controller.quest';
-import { error, output } from '../utils';
+import { literal, Op } from "sequelize";
+import { Errors } from "../utils/errors";
+import { QuestController } from "../controllers/quest/controller.quest";
+import { error, output } from "../utils";
 import { ChecksListQuest } from "../checks-list/checksList.quest";
+import { ChecksListUser } from "../checks-list/checksList.user";
 import { QuestNotificationActions } from "../controllers/controller.broker";
-import { MediaController } from '../controllers/controller.media';
-import { updateQuestsStatisticJob } from '../jobs/updateQuestsStatistic';
-import { SkillsFiltersController } from '../controllers/controller.skillsFilters';
-import { EmployerControllerFactory, WorkerControllerFactory } from '../factories/factory.userController';
-import { QuestControllerFactory } from '../factories/factory.questController';
+import { MediaController } from "../controllers/controller.media";
+import { updateQuestsStatisticJob } from "../jobs/updateQuestsStatistic";
+import { SkillsFiltersController } from "../controllers/controller.skillsFilters";
+import { EmployerControllerFactory, WorkerControllerFactory } from "../factories/factory.userController";
+import { QuestControllerFactory } from "../factories/factory.questController";
 import {
-  User,
+  DisputeStatus,
   Quest,
   QuestChat,
   QuestDispute,
   QuestsResponse,
-  QuestsResponseType,
-  DisputeStatus,
-  QuestStatus,
-  QuestsReview,
   QuestsResponseStatus,
+  QuestsResponseType,
+  QuestsReview,
   QuestsStarred,
-  UserRole,
-} from '@workquest/database-models/lib/models';
+  QuestStatus,
+  User,
+  UserRole
+} from "@workquest/database-models/lib/models";
 
 
 export const searchQuestFields = [
@@ -220,7 +221,10 @@ export function getQuests(type: 'list' | 'points', requester?: 'worker' | 'emplo
       where[Op.or].push(userSearchLiteral)
     }
     if (requester && requester === 'worker') {
-      where[Op.and].push({ userId: r.auth.credentials.id });
+      const userController = new ChecksListUser(user);
+      userController.checkUserRole(UserRole.Worker);
+
+      where[Op.and].push({ assignedWorkerId: r.auth.credentials.id });
 
       include.push({
         model: QuestsResponse.unscoped(),
