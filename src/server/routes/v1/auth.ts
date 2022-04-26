@@ -50,7 +50,7 @@ export default [
     path: `/v1/auth/${platform}/resend-email`,
     handler: handlers.resendConfirmCodeEmail(platform),
     options: {
-      id: 'v1.auth.resendEmail',
+      id: `v1.auth.${platform}.resendEmail`,
       tags: ['api', 'auth'],
       description: 'ResendEmail',
       validate: {
@@ -62,7 +62,7 @@ export default [
         schema: emptyOkSchema,
       },
     },
-  })).flat(),
+  })),
   {
     method: 'POST',
     path: '/v1/auth/dao/register',

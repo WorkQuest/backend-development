@@ -507,6 +507,4 @@ export class UserController {
       additionalInfo: UserOldController.getDefaultAdditionalInfo(payload.role),
     });
   }
-
-
 }
