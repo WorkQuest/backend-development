@@ -3,6 +3,7 @@ import { Errors } from '../utils/errors';
 import {
   User,
   UserRole,
+  UserStatus,
   RatingStatus,
   RatingStatistic,
   ProfileVisibilitySetting,
@@ -45,6 +46,28 @@ export class ChecksListUser {
           status: thisUserRatingStatistic.status,
         },
       });
+    }
+
+    return this;
+  }
+
+  public checkUserStatus(...statuses: UserStatus[]): this {
+    if (!statuses.includes(this.user.status)) {
+      throw error(Errors.InvalidStatus, "User status doesn't match", {
+        current: this.user.status,
+        mustHave: statuses,
+      });
+    }
+
+    return this;
+  }
+
+  public checkEmailConfirmCode(confirmCode: string): this {
+    if (!this.user.settings.emailConfirm) {
+      throw error(Errors.InvalidDate, 'Email verification code is empty', {});
+    }
+    if (this.user.settings.emailConfirm.toLowerCase() !== confirmCode.toLowerCase()) {
+      throw error(Errors.InvalidPayload, 'Invalid confirmation code', [{ field: 'confirmCode', reason: 'invalid' }]);
     }
 
     return this;
