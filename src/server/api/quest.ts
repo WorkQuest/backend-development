@@ -206,7 +206,6 @@ export function getQuests(type: 'list' | 'points', requester?: 'worker' | 'emplo
       ...(r.params.userId && { userId: r.params.userId }),
       ...(r.params.workerId && { assignedWorkerId: r.params.workerId }),
       ...(r.query.statuses && { status: { [Op.in]: r.query.statuses } }),
-      ...(requester && requester === 'worker' && { assignedWorkerId: r.auth.credentials.id }),
       ...(r.query.priorities && { priority: { [Op.in]: r.query.priorities } }),
       ...(r.query.workplaces && { workplace: { [Op.in]: r.query.workplaces } }),
       ...(r.query.employments && { employment: { [Op.in]: r.query.employments } }),
@@ -220,10 +219,32 @@ export function getQuests(type: 'list' | 'points', requester?: 'worker' | 'emplo
 
       where[Op.or].push(userSearchLiteral)
     }
+    if (requester && requester === 'worker') {
+      where[Op.and].push({ userId: r.auth.credentials.id });
+
+      include.push({
+        model: QuestsResponse.unscoped(),
+        as: 'invited',
+        required: !!(r.query.invited), /** Because there is request without this flag */
+        where: {
+          [Op.and]: [{ workerId: r.auth.credentials.id }, { type: QuestsResponseType.Invite }],
+        },
+      }, {
+        model: QuestsResponse.unscoped(),
+        as: 'responded',
+        required: !!(r.query.responded), /** Because there is request without this flag */
+        where: {
+          [Op.and]: [{ workerId: r.auth.credentials.id }, { type: QuestsResponseType.Response }],
+        },
+      });
+    }
+    if (requester && requester === 'employer') {
+      where[Op.and].push({ userId: r.auth.credentials.id });
+    }
     if (r.payload.specializations) { // TODO r.query.specialization on r.query.specialization[s]
       const {
         paths,
-        industryKeys
+        industryKeys,
       } = SkillsFiltersController.splitPathsAndSingleKeysOfIndustry(r.payload.specializations);
 
       if (paths.length !== 0 && industryKeys.length === 0) {
@@ -280,69 +301,35 @@ export function getQuests(type: 'list' | 'points', requester?: 'worker' | 'emplo
         },
       });
     }
-
-    if (requester && requester === 'worker') {
-      include.push(
-        {
-          model: QuestsResponse.unscoped(),
-          as: 'invited',
-          required: !!(r.query.invited), /** Because there is request without this flag */
-          where: {
-            [Op.and]: [{ workerId: r.auth.credentials.id }, { type: QuestsResponseType.Invite }],
-          },
+    if (!requester) {
+      include.push({
+        model: QuestsResponse.unscoped(),
+        as: 'invited',
+        required: false,
+        where: {
+          [Op.and]: [{ workerId: r.auth.credentials.id }, { type: QuestsResponseType.Invite }],
         },
-        {
-          model: QuestsResponse.unscoped(),
-          as: 'responded',
-          required: !!(r.query.responded), /** Because there is request without this flag */
-          where: {
-            [Op.and]: [{ workerId: r.auth.credentials.id }, { type: QuestsResponseType.Response }],
-          },
+      }, {
+        model: QuestsResponse.unscoped(),
+        as: 'responded',
+        required: false,
+        where: {
+          [Op.and]: [{ workerId: r.auth.credentials.id }, { type: QuestsResponseType.Response }],
         },
-      );
-    }
-
-    if (requester && requester === 'employer') {
-      where[Op.and].push({
-        userId: r.auth.credentials.id
       });
     }
 
-    if (!requester) {
-      include.push(
-        {
-          model: QuestsResponse.unscoped(),
-          as: 'invited',
-          required: false,
-          where: {
-            [Op.and]: [{ workerId: r.auth.credentials.id }, { type: QuestsResponseType.Invite }],
-          },
-        },
-        {
-          model: QuestsResponse.unscoped(),
-          as: 'responded',
-          required: false,
-          where: {
-            [Op.and]: [{ workerId: r.auth.credentials.id }, { type: QuestsResponseType.Response }],
-          },
-        },
-      );
-    }
-
-    include.push(
-      {
-        model: QuestsReview.unscoped(),
-        as: 'yourReview',
-        where: { fromUserId: r.auth.credentials.id },
-        required: false,
-      },
-      {
-        model: QuestsStarred.unscoped(),
-        as: 'star',
-        where: { userId: r.auth.credentials.id },
-        required: !!(r.query.starred), /** Because there is request without this flag */
-      },
-    );
+    include.push({
+      model: QuestsReview.unscoped(),
+      as: 'yourReview',
+      where: { fromUserId: r.auth.credentials.id },
+      required: false,
+    }, {
+      model: QuestsStarred.unscoped(),
+      as: 'star',
+      where: { userId: r.auth.credentials.id },
+      required: !!(r.query.starred), /** Because there is request without this flag */
+    });
 
     for (const [key, value] of Object.entries(r.query.sort || {})) {
       order.push([key, value]);

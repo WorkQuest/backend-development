@@ -1,7 +1,8 @@
 import { Op, Transaction } from 'sequelize';
 import { error } from '../../utils';
-import { Errors } from '../../utils/errors';
 import config from '../../config/config';
+import { Errors } from '../../utils/errors';
+import { SetUserRolePayload } from "./types";
 import { totpValidate } from '@workquest/database-models/lib/utils';
 import { SkillsFiltersController } from '../controller.skillsFilters';
 import { createReferralProgramJob } from "../../jobs/createReferralProgram";
@@ -259,7 +260,7 @@ abstract class UserHelper {
     });
   }
 
-  private async checkWorkerSubmittingJobOffer(visitorUserController: UserController) {
+  private async checkWorkerSubmittingJobOffer(visitorUserController: UserOldController) {
     if (visitorUserController.user.role === UserRole.Worker) {
       throw error(Errors.Forbidden, 'User hide its profile', { userId: this.user.id });
     }
@@ -285,7 +286,7 @@ abstract class UserHelper {
     }
   }
 
-  private async checkEmployerSubmittingJobOffer(visitorUserController: UserController) {
+  private async checkEmployerSubmittingJobOffer(visitorUserController: UserOldController) {
     if (visitorUserController.user.role === UserRole.Employer) {
       throw error(Errors.Forbidden, 'User hide its profile', { userId: this.user.id });
     }
@@ -311,7 +312,7 @@ abstract class UserHelper {
     }
   }
 
-  public async canVisitMyProfile(visitorUserController: UserController): Promise<this> {
+  public async canVisitMyProfile(visitorUserController: UserOldController): Promise<this> {
     const profileVisibility = await ProfileVisibilitySetting.findOne({where: { userId: this.user.id } });
 
     if (profileVisibility.network === NetworkProfileVisibility.SubmittingOffer && this.user.role === UserRole.Employer) {
@@ -485,5 +486,87 @@ export class UserController {
   constructor(
     public readonly user: User,
   ) {
+  }
+
+  public updateUserEmailConfirmCode(emailConfirmCode: string, options: { tx?: Transaction } = {}) {
+    return this.user.update({
+      'settings.emailConfirm': emailConfirmCode,
+    }, { transaction: options.tx });
+  }
+
+  public confirmUser(setRole: UserRole, options: { tx?: Transaction } = {}) {
+    return this.user.update({
+      role: setRole,
+      status: UserStatus.Confirmed,
+      'settings.emailConfirm': null,
+      additionalInfo: UserOldController.getDefaultAdditionalInfo(setRole),
+    }, { transaction: options.tx });
+  }
+
+  public confirmUserWithStatusNeedSetRole(options: { tx?: Transaction } = {}) {
+    return this.user.update({
+      'settings.emailConfirm': null,
+      status: UserStatus.NeedSetRole,
+    }, { transaction: options.tx });
+  }
+
+  public createStatistics(options: { tx?: Transaction } = {}) {
+    return Promise.all([
+      RatingStatistic.findOrCreate({
+        where: { userId: this.user.id },
+        defaults: { userId: this.user.id },
+        transaction: options.tx,
+      }),
+      ChatsStatistic.findOrCreate({
+        where: { userId: this.user.id },
+        defaults: { userId: this.user.id },
+        transaction: options.tx,
+      }),
+      QuestsStatistic.findOrCreate({
+        where: { userId: this.user.id },
+        defaults: { userId: this.user.id },
+        transaction: options.tx,
+      }),
+    ]);
+  }
+
+  public async createRaiseView(options: { tx?: Transaction } = {}) {
+    return UserRaiseView.findOrCreate({
+      where: { userId: this.user.id },
+      defaults: { userId: this.user.id },
+      transaction: options.tx,
+    });
+  }
+
+  public static getDefaultAdditionalInfo(role: UserRole) {
+    let additionalInfo: object = {
+      description: null,
+      secondMobileNumber: null,
+      address: null,
+      socialNetwork: {
+        instagram: null,
+        twitter: null,
+        linkedin: null,
+        facebook: null,
+      },
+    };
+
+    if (role === UserRole.Worker) {
+      additionalInfo = {
+        ...additionalInfo,
+        skills: [],
+        educations: [],
+        workExperiences: [],
+      };
+    } else if (role === UserRole.Employer) {
+      additionalInfo = {
+        ...additionalInfo,
+        company: null,
+        CEO: null,
+        website: null,
+      };
+    }
+
+    return additionalInfo;
   }
 }

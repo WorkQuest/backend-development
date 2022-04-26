@@ -98,9 +98,11 @@ export class QuestController {
   }
 
   public createRaiseView(options: { tx?: Transaction } = {}) {
-    return QuestRaiseView.create({
-      questId: this.quest.id,
-    }, { transaction: options.tx });
+    return QuestRaiseView.findOrCreate({
+      where: { questId: this.quest.id },
+      defaults: { questId: this.quest.id },
+      transaction: options.tx,
+    });
   }
 
   public static async create(payload: CreatedQuestPayload, options: { tx?: Transaction } = {}): Promise<QuestController> {
