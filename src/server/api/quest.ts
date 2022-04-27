@@ -199,7 +199,7 @@ export function getQuests(type: 'list' | 'points', requester?: 'worker' | 'emplo
       '(SELECT "type" FROM "QuestRaiseViews" WHERE "questId" = "Quest"."id" AND "QuestRaiseViews"."status" = 0)'
     );
     const requesterWorkerLiteral = literal(
-      `(1 = (CASE WHEN EXISTS (SELECT * FROM "QuestsResponses" WHERE "QuestsResponses"."questId" = "Quest"."id" AND ("QuestsResponses"."workerId"  = '${ user.id }' AND "QuestsResponses"."status" = ${ QuestsResponseStatus.Open })) THEN 1 END))`
+      `(1 = (CASE WHEN EXISTS (SELECT * FROM "QuestsResponses" WHERE "QuestsResponses"."questId" = "Quest"."id" AND ("QuestsResponses"."workerId"  = '${ user.id }' AND "QuestsResponses"."status" IN (${ QuestsResponseStatus.Open }, ${ QuestsResponseStatus.Accepted }))) THEN 1 END))`
     )
 
     const include = [];
@@ -229,10 +229,11 @@ export function getQuests(type: 'list' | 'points', requester?: 'worker' | 'emplo
       checksListUser
         .checkUserRole(UserRole.Worker)
 
-      if (r.query.responded || r.query.invited) {
-        where[Op.or].push(requesterWorkerLiteral)
-      } else {
-        where[Op.or].push({ assignedWorkerId: r.auth.credentials.id })
+      if (!(r.query.responded || r.query.invited)) {
+        where[Op.or].push(
+          requesterWorkerLiteral,
+          { assignedWorkerId: r.auth.credentials.id },
+        );
       }
     }
     if (requester && requester === 'employer') {
@@ -318,6 +319,7 @@ export function getQuests(type: 'list' | 'points', requester?: 'worker' | 'emplo
       required: !!(r.query.invited),
       where: {
         [Op.and]: [{ workerId: user.id }, { type: QuestsResponseType.Invite }],
+        status: {[Op.in]: [QuestsResponseStatus.Open, QuestsResponseStatus.Accepted]}
       },
     }, {
       model: QuestsResponse.unscoped(),
@@ -325,11 +327,19 @@ export function getQuests(type: 'list' | 'points', requester?: 'worker' | 'emplo
       required: !!(r.query.responded),
       where: {
         [Op.and]: [{ workerId: user.id }, { type: QuestsResponseType.Response }],
+        status: {[Op.in]: [QuestsResponseStatus.Open, QuestsResponseStatus.Accepted]}
       },
     });
 
     for (const [key, value] of Object.entries(r.query.sort || {})) {
       order.push([key, value]);
+    }
+
+    if (where[Op.or].length === 0) {
+      delete where[Op.or];
+    }
+    if (where[Op.and].length === 0) {
+      delete where[Op.and];
     }
 
     // TODO !!!!
