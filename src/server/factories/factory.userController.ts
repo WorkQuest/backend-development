@@ -58,6 +58,16 @@ export class EmployerControllerFactory {
 }
 
 export class UserControllerFactory {
+  public static async createById(id: string): Promise<UserController | never> {
+    const user = await User.findByPk(id);
+
+    if (!user) {
+      throw error(Errors.NotFound, 'User not found', { id });
+    }
+
+    return new UserController(user);
+  }
+
   public static async createByIds(ids: string[]): Promise<UserController[] | never> {
     const users = await User.findAll({ where: { id: ids } });
 

@@ -1,7 +1,7 @@
 import { error } from "../../utils";
 import { Errors } from "../../utils/errors";
 import { Op, Transaction } from "sequelize";
-import { CreateGroupChatPayload, CreateQuestChatPayload } from './types';
+import { CreateGroupChatPayload, CreateQuestChatPayload, FindOrCreatePrivateChatPayload } from './types';
 import {
   User,
   Quest,
@@ -517,7 +517,26 @@ export class GroupChatController extends ChatController {
     super(chat);
   }
 
-  static async create(payload: CreateGroupChatPayload, options: { tx?: Transaction } = {}) {
+  public getMembers(): Promise<Readonly<ChatMember>[]> {
+    return ChatMember.findAll({
+      where: { chatId: this.chat.id }
+    });
+  }
+
+  public async toDtoResult() {
+    if (!this.chat.groupChat) {
+      return (await Chat.findByPk(this.chat.id))
+        .toJSON()
+    }
+    if (!this.chat.chatData) {
+      return (await Chat.findByPk(this.chat.id))
+        .toJSON()
+    }
+
+    return this.chat.toJSON();
+  }
+
+  static async create(payload: CreateGroupChatPayload, options: { tx?: Transaction } = {}): Promise<GroupChatController> {
     const chat = await Chat.create({ type: ChatType.group });
 
     const membersBuild = ChatMember.bulkBuild(payload.users.map(user => ({
@@ -534,7 +553,7 @@ export class GroupChatController extends ChatController {
     );
 
     const memberCreator = members
-      .find(member => member.userId === payload.userOwner.id)
+      .find(m => m.userId === payload.userOwner.id)
 
     const groupChat = await GroupChat.create({
       name: payload.name,
@@ -556,6 +575,33 @@ export class GroupChatController extends ChatController {
       messageAction: MessageAction.groupChatCreate,
     });
 
+    const chatData = await ChatData.create({
+      chatId: chat.id,
+      lastMessageId: firstMessageBuild.id,
+    });
+
+    const chatMembersDataBuild = ChatMemberData.bulkBuild(members.map(m => {
+      if (m.id === memberCreator.id) {
+        return {
+          chatMemberId: m.id,
+          unreadCountMessages: 0,
+          lastReadMessageId: firstMessageBuild.id,
+          lastReadMessageNumber: firstMessageBuild.number,
+        }
+      }
+
+      return { chatMemberId: m.id }
+    }));
+
+    await Promise.all(chatMembersDataBuild
+      .map(async md => md
+        .save({ transaction: options.tx })
+      )
+    );
+
+    chat.setDataValue('groupChat', groupChat);
+    chat.setDataValue('chatData', chatData);
+
     return new GroupChatController(chat, groupChat, memberCreator);
   }
 }
@@ -563,7 +609,40 @@ export class GroupChatController extends ChatController {
 export class PrivateChatController extends ChatController {
   constructor(
     public readonly chat: Chat,
+    public readonly members: { senderMember: ChatMember, recipientMember: ChatMember }
   ) {
     super(chat);
+  }
+
+  // static async create(payload: FindOrCreatePrivateChatPayload, options: { tx?: Transaction } = {}) {
+  //
+  // }
+
+  static async findOrCreate(payload: FindOrCreatePrivateChatPayload, options: { tx?: Transaction } = {}) {
+    const [chat, isCreated] = await Chat.findOrCreate({
+      where: { type: ChatType.private },
+      include: [{
+        model: ChatMember,
+        as: 'firstMemberInPrivateChat',
+        where: { userId: payload.senderUser.id },
+        required: true,
+        attributes: [],
+      }, {
+        model: ChatMember,
+        as: 'secondMemberInPrivateChat',
+        where: { userId: payload.recipientUser.id },
+        required: true,
+        attributes: [],
+      }, {
+        model: ChatMember,
+        as: 'members'
+      }, {
+        model: ChatMember,
+        as: 'meMember',
+        where: { userId: payload.senderUser.id }
+      }],
+      defaults: { type: ChatType.private },
+      transaction,
+    });
   }
 }

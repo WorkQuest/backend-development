@@ -13,8 +13,13 @@ export interface CreateQuestChatPayload {
 }
 
 export interface CreateGroupChatPayload {
-  readonly users: User[];
+  readonly users: Readonly<User[]>;
   readonly userOwner: User;
 
   readonly name: string;
+}
+
+export interface FindOrCreatePrivateChatPayload {
+  readonly senderUser: User;
+  readonly recipientUser: User;
 }

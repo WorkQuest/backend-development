@@ -3,9 +3,9 @@ import { ChatMember, Message, SenderMessageStatus } from '@workquest/database-mo
 import { Op } from 'sequelize';
 
 export interface MessageAsReadPayload {
-  lastUnreadMessage: { id: string; number: number };
   chatId: string;
   senderMemberId: string;
+  lastUnreadMessage: { id: string; number: number };
 }
 
 export async function setMessageAsReadJob(payload: MessageAsReadPayload) {
