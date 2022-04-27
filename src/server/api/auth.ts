@@ -35,7 +35,7 @@ export function register(host: 'dao' | 'main') {
 
     const emailConfirmLink = host === 'main'
       ? `${config.baseUrl}/sign-in?token=${emailConfirmCode}`
-      : `${config.baseUrlDao}/sign-in?token==${emailConfirmCode}`
+      : `${config.baseUrlDao}/sign-in?token=${emailConfirmCode}`
 
     const emailHtml = confirmTemplate({
       confirmLink: emailConfirmLink,
