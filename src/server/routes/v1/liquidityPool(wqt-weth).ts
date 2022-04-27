@@ -1,6 +1,13 @@
 import * as Joi from 'joi';
 import * as handlers from '../../api/liquidityPool(wqt-weth)';
-import { limitSchema, offsetSchema, swapWQTSchema, outputOkSchema, tokensDayWQTSchema } from '@workquest/database-models/lib/schemes';
+import {
+  limitSchema,
+  offsetSchema,
+  outputOkSchema,
+  wqtSwapEventsSchema,
+  outputPaginationSchema,
+  dailyLiquidityWqtWethSchema,
+} from '@workquest/database-models/lib/schemes';
 
 export default [
   {
@@ -16,10 +23,10 @@ export default [
         query: Joi.object({
           offset: offsetSchema,
           limit: limitSchema,
-        }).label('GetSwapsWQTQuery'),
+        }).label('GetWqtWethSwapsQuery'),
       },
       response: {
-        schema: outputOkSchema(swapWQTSchema).label('GetSwapsWQTResponse'),
+        schema: outputOkSchema(wqtSwapEventsSchema).label('GetWqtWethSwapsResponse'),
       },
     },
   },
@@ -36,10 +43,7 @@ export default [
         query: Joi.object({
           limit: limitSchema,
           offset: offsetSchema,
-        }).label('GetMintsWQTQuery'),
-      },
-      response: {
-        schema: outputOkSchema(swapWQTSchema).label('GetMintsWQTResponse'),
+        }).label('GetWqtWethMintsQuery'),
       },
     },
   },
@@ -56,16 +60,13 @@ export default [
         query: Joi.object({
           limit: limitSchema,
           offset: offsetSchema,
-        }).label('GetBurnsWQTQuery'),
-      },
-      response: {
-        schema: outputOkSchema(swapWQTSchema).label('GetBurnsWQTResponse'),
+        }).label('GetWqtWethBurnsQuery'),
       },
     },
   },
   {
     method: 'GET',
-    path: '/v1/pool-liquidity/wqt-weth/tokenDay',
+    path: '/v1/pool-liquidity/wqt-weth/token-day',
     handler: handlers.getTokenDayData,
     options: {
       auth: false,
@@ -76,10 +77,10 @@ export default [
         query: Joi.object({
           offset: offsetSchema,
           limit: limitSchema,
-        }).label('GetTokenDayDataQuery'),
+        }).label('GetWqtWethTokenDayDataQuery'),
       },
       response: {
-        schema: outputOkSchema(tokensDayWQTSchema).label('GetTokenDayDataResponse'),
+        schema: outputPaginationSchema('data', dailyLiquidityWqtWethSchema).label('GetWqtWethTokenDayDataResponse'),
       },
     },
   },

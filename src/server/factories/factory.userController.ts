@@ -71,4 +71,14 @@ export class UserControllerFactory {
 
     return users.map(user => new UserController(user));
   }
+
+  public static async createByIdWithPassword(userId: string): Promise<UserController> {
+    const user = await User.scope('withPassword').findByPk(userId);
+
+    if (!user) {
+      throw error(Errors.NotFound, 'User not found', { userId });
+    }
+
+    return new UserController(user);
+  }
 }

@@ -2,23 +2,20 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { Op } from 'sequelize';
 import * as querystring from 'querystring';
-import Handlebars = require('handlebars');
 import config from '../config/config';
 import { Errors } from '../utils/errors';
+import converter from 'bech32-converting';
 import { addSendEmailJob } from '../jobs/sendEmail';
 import { generateJwt } from '../utils/auth';
 import { UserOldController } from '../controllers/user/controller.user';
-import converter from 'bech32-converting';
+import { ChecksListUser } from '../checks-list/checksList.user';
 import { totpValidate } from '@workquest/database-models/lib/utils';
 import { createReferralProgramJob } from '../jobs/createReferralProgram';
-import { error, output, getGeo, getRealIp, getDevice, getRandomHexToken } from '../utils';
-import {
-  User,
-  Wallet,
-  Session,
-  UserStatus,
-  defaultUserSettings,
-} from '@workquest/database-models/lib/models';
+import { UserControllerFactory } from '../factories/factory.userController';
+import { error, getDevice, getGeo, getRandomHexToken, getRealIp, output } from '../utils';
+import { defaultUserSettings, Session, User, UserStatus, Wallet } from '@workquest/database-models/lib/models';
+import Handlebars = require('handlebars');
+
 
 const confirmTemplatePath = path.join(__dirname, '..', '..', '..', 'templates', 'confirmEmail.html');
 
@@ -32,9 +29,14 @@ export function register(host: 'dao' | 'main') {
   return async function (r) {
     await UserOldController.checkEmail(r.payload.email);
 
-    const emailConfirmCode = getRandomHexToken().substring(0, 6).toUpperCase();
-    const emailConfirmLink =
-      host === 'main' ? `${config.baseUrl}/confirm?token=${emailConfirmCode}` : `${config.baseUrlDao}/confirm?token=${emailConfirmCode}`;
+    const emailConfirmCode = getRandomHexToken()
+      .substring(0, 6)
+      .toUpperCase()
+
+    const emailConfirmLink = host === 'main'
+      ? `${config.baseUrl}/sign-in?token=${emailConfirmCode}`
+      : `${config.baseUrlDao}/sign-in?token==${emailConfirmCode}`
+
     const emailHtml = confirmTemplate({
       confirmLink: emailConfirmLink,
       confirmCode: emailConfirmCode,
@@ -43,7 +45,7 @@ export function register(host: 'dao' | 'main') {
     await addSendEmailJob({
       email: r.payload.email,
       subject: 'Work Quest | Confirmation code',
-      text: `Your confirmation code is ${emailConfirmCode}. Follow this link ${config.baseUrl}/confirm?token=${emailConfirmCode}`,
+      text: `Your confirmation code is ${emailConfirmCode}. Follow this link ${config.baseUrl}/sign-in?token=${emailConfirmCode}`,
       html: emailHtml,
     });
 
@@ -79,6 +81,41 @@ export function register(host: 'dao' | 'main') {
 
     return output(result);
   };
+}
+
+export function resendConfirmCodeEmail(host: 'dao' | 'main') {
+  return async function (r) {
+    const userController = await UserControllerFactory.createByIdWithPassword(r.auth.credentials.id);
+
+    const userCheckList = new ChecksListUser(userController.user);
+
+    const emailConfirmCode = getRandomHexToken()
+      .substring(0, 6)
+      .toUpperCase()
+
+    const emailConfirmLink = host === 'main'
+      ? `${ config.baseUrl }/sign-in?token=${ emailConfirmCode }`
+      : `${ config.baseUrlDao }/sign-in?token=${ emailConfirmCode }`
+
+    const emailHtml = confirmTemplate({
+      confirmLink: emailConfirmLink,
+      confirmCode: emailConfirmCode,
+    });
+
+    userCheckList
+      .checkUserStatus(UserStatus.Unconfirmed)
+
+    await userController.updateUserEmailConfirmCode(emailConfirmCode);
+
+    await addSendEmailJob({
+      email: r.payload.email,
+      subject: 'Work Quest | Confirmation code',
+      text: `Your confirmation code is ${ emailConfirmCode }. Follow this link ${ config.baseUrl }/sign-in?token=${ emailConfirmCode }`,
+      html: emailHtml,
+    });
+
+    return output();
+  }
 }
 
 export function getLoginViaSocialNetworkHandler(returnType: 'token' | 'redirect', platform: 'main' | 'dao') {
@@ -123,28 +160,29 @@ export function getLoginViaSocialNetworkHandler(returnType: 'token' | 'redirect'
 }
 
 export async function confirmEmail(r) {
-  const user = await User.scope('withPassword').findByPk(r.auth.credentials.id);
-  const userController = new UserOldController(user);
+  const { confirmCode, role } = r.payload;
 
-  await userController.checkUserAlreadyConfirmed().checkUserConfirmationCode(r.payload.confirmCode).createRaiseView();
+  const userController = await UserControllerFactory.createByIdWithPassword(r.auth.credentials.id);
+  const userCheckList = new ChecksListUser(userController.user);
 
-  await UserOldController.createStatistics(user.id);
+  userCheckList
+    .checkUserStatus(UserStatus.Unconfirmed)
+    .checkEmailConfirmCode(confirmCode)
 
-  if (r.payload.role) {
-    await user.update({
-      role: r.payload.role,
-      status: UserStatus.Confirmed,
-      'settings.emailConfirm': null,
-      additionalInfo: UserOldController.getDefaultAdditionalInfo(r.payload.role),
-    });
-  } else {
-    await user.update({
-      status: UserStatus.NeedSetRole,
-      'settings.emailConfirm': null,
-    });
-  }
+  await r.server.app.db.transaction(async (tx) => {
+    await Promise.all([
+      userController.createRaiseView({ tx }),
+      userController.createStatistics({ tx }),
+    ]);
 
-  return output({ status: user.status });
+    if (role) {
+      await userController.confirmUser(role, { tx });
+    } else {
+      await userController.confirmUserWithStatusNeedSetRole({ tx });
+    }
+  });
+
+  return output({ status: userController.user.status });
 }
 
 export async function login(r) {
@@ -291,18 +329,18 @@ export async function loginWallet(r) {
 }
 
 export async function validateUserPassword(r) {
-  const user = await User.scope('withPassword').findByPk(r.auth.credentials.id);
+  const userControllerFactory = await UserControllerFactory.createByIdWithPassword(r.auth.credentials.id);
 
   return output({
-    isValid: await user.passwordCompare(r.payload.password),
+    isValid: await userControllerFactory.user.passwordCompare(r.payload.password),
   });
 }
 
 export async function validateUserTotp(r) {
-  const user = await User.scope('withPassword').findByPk(r.auth.credentials.id);
+  const userControllerFactory = await UserControllerFactory.createByIdWithPassword(r.auth.credentials.id);
 
-  const isValid = user.isTOTPEnabled() ?
-    totpValidate(r.payload.token, user.settings.security.TOTP.secret) : true;
+  const isValid = userControllerFactory.user.isTOTPEnabled() ?
+    totpValidate(r.payload.token, userControllerFactory.user.settings.security.TOTP.secret) : true;
 
   await Session.update({ isTotpPassed: isValid }, { where: { id: r.auth.artifacts.sessionId } });
 
