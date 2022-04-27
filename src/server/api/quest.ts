@@ -198,12 +198,16 @@ export function getQuests(type: 'list' | 'points', requester?: 'worker' | 'emplo
     const questRaiseViewLiteral = literal(
       '(SELECT "type" FROM "QuestRaiseViews" WHERE "questId" = "Quest"."id" AND "QuestRaiseViews"."status" = 0)'
     );
+    const requesterWorkerLiteral = literal(
+      `(1 = (CASE WHEN EXISTS (SELECT * FROM "QuestsResponses" WHERE "QuestsResponses"."questId" = "Quest"."id" AND ("QuestsResponses"."workerId"  = '${ user.id }' AND "QuestsResponses"."status" IN (${ QuestsResponseStatus.Open }, ${ QuestsResponseStatus.Accepted }))) THEN 1 END))`
+    )
 
     const include = [];
     const replacements = {};
     const order = [[questRaiseViewLiteral, 'asc']] as any[];
     const where = {
       [Op.and]: [],
+      [Op.or]: [],
       ...(r.query.filter && { filter: r.params.filter }),
       ...(r.params.userId && { userId: r.params.userId }),
       ...(r.params.workerId && { assignedWorkerId: r.params.workerId }),
@@ -215,52 +219,22 @@ export function getQuests(type: 'list' | 'points', requester?: 'worker' | 'emplo
     };
 
     if (r.query.q) {
-      where[Op.or] = searchQuestFields.map(field => ({
+      where[Op.or].push(searchQuestFields.map(field => ({
         [field]: { [Op.iLike]: `%${r.query.q}%` }
-      }));
+      })));
 
       where[Op.or].push(userSearchLiteral)
-    }
-    if (!requester) {
-      // TODO проверка r.query.responded, r.query.invited на роль
-
-      include.push({
-        model: QuestsResponse.unscoped(),
-        as: 'invited',
-        required: !!(r.query.invited),
-        where: {
-          [Op.and]: [{ workerId: user.id }, { type: QuestsResponseType.Invite }],
-        },
-      }, {
-        model: QuestsResponse.unscoped(),
-        as: 'responded',
-        required: !!(r.query.responded),
-        where: {
-          [Op.and]: [{ workerId: user.id }, { type: QuestsResponseType.Response }],
-        },
-      });
     }
     if (requester && requester === 'worker') {
       checksListUser
         .checkUserRole(UserRole.Worker)
 
-      where[Op.and].push({ assignedWorkerId: user.id });
-
-      include.push({
-        model: QuestsResponse.unscoped(),
-        as: 'invited',
-        required: !!(r.query.invited), /** Because there is request without this flag */
-        where: {
-          [Op.and]: [{ workerId: user.id }, { type: QuestsResponseType.Invite }],
-        },
-      }, {
-        model: QuestsResponse.unscoped(),
-        as: 'responded',
-        required: !!(r.query.responded), /** Because there is request without this flag */
-        where: {
-          [Op.and]: [{ workerId: user.id }, { type: QuestsResponseType.Response }],
-        },
-      });
+      if (!(r.query.responded || r.query.invited)) {
+        where[Op.or].push(
+          requesterWorkerLiteral,
+          { assignedWorkerId: r.auth.credentials.id },
+        );
+      }
     }
     if (requester && requester === 'employer') {
       checksListUser
@@ -339,10 +313,33 @@ export function getQuests(type: 'list' | 'points', requester?: 'worker' | 'emplo
       as: 'star',
       where: { userId: user.id },
       required: !!(r.query.starred), /** Because there is request without this flag */
+    }, {
+      model: QuestsResponse.unscoped(),
+      as: 'invited',
+      required: !!(r.query.invited),
+      where: {
+        [Op.and]: [{ workerId: user.id }, { type: QuestsResponseType.Invite }],
+        status: {[Op.in]: [QuestsResponseStatus.Open, QuestsResponseStatus.Accepted]}
+      },
+    }, {
+      model: QuestsResponse.unscoped(),
+      as: 'responded',
+      required: !!(r.query.responded),
+      where: {
+        [Op.and]: [{ workerId: user.id }, { type: QuestsResponseType.Response }],
+        status: {[Op.in]: [QuestsResponseStatus.Open, QuestsResponseStatus.Accepted]}
+      },
     });
 
     for (const [key, value] of Object.entries(r.query.sort || {})) {
       order.push([key, value]);
+    }
+
+    if (where[Op.or].length === 0) {
+      delete where[Op.or];
+    }
+    if (where[Op.and].length === 0) {
+      delete where[Op.and];
     }
 
     // TODO !!!!
