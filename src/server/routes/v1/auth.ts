@@ -42,6 +42,27 @@ export default [
       },
     },
   },
+  ...[
+    'dao',
+    'main',
+  ].map((platform: 'dao' | 'main')  => ({
+    method: 'POST',
+    path: `/v1/auth/${platform}/resend-email`,
+    handler: handlers.resendConfirmCodeEmail(platform),
+    options: {
+      id: `v1.auth.${platform}.resendEmail`,
+      tags: ['api', 'auth'],
+      description: 'ResendEmail',
+      validate: {
+        payload: Joi.object({
+          email: userEmailSchema.required(),
+        }).label('ResendEmailPayload'),
+      },
+      response: {
+        schema: emptyOkSchema,
+      },
+    },
+  })),
   {
     method: 'POST',
     path: '/v1/auth/dao/register',
