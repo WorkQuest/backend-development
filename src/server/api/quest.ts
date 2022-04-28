@@ -201,7 +201,7 @@ export function getQuests(type: 'list' | 'points', requester?: 'worker' | 'emplo
     const requesterWorkerLiteral = literal(
       `(1 = (CASE WHEN EXISTS (SELECT * FROM "QuestsResponses" as qResp ` +
       `WHERE qResp."questId" = "Quest"."id" AND (qResp."workerId"  = '${ user.id }' AND ` +
-        `qResp."status" IN (${ QuestsResponseStatus.Open }, ${ QuestsResponseStatus.Accepted }))) THEN 1 END))`
+        `qResp."status" IN (${ QuestsResponseStatus.Open }, ${ QuestsResponseStatus.Accepted }))) THEN 1 END)) `
     )
 
     const include = [];
