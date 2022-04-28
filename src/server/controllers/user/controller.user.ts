@@ -1,25 +1,28 @@
-import { Op, Transaction } from 'sequelize';
-import { error } from '../../utils';
-import config from '../../config/config';
-import { Errors } from '../../utils/errors';
-import { totpValidate } from '@workquest/database-models/lib/utils';
-import { SkillsFiltersController } from '../controller.skillsFilters';
+import { Op, Transaction } from "sequelize";
+import { error } from "../../utils";
+import config from "../../config/config";
+import { Errors } from "../../utils/errors";
+import { totpValidate } from "@workquest/database-models/lib/utils";
+import { SkillsFiltersController } from "../controller.skillsFilters";
 import { createReferralProgramJob } from "../../jobs/createReferralProgram";
 import {
-  User,
-  Quest,
-  Session,
-  UserRole,
-  UserStatus,
-  QuestDispute,
-  QuestsResponse,
-  UserRaiseView,
+  UpdateEmployerProfileVisibilityPayload,
+} from "./types";
+import {
   ChatsStatistic,
-  UserRaiseStatus,
+  defaultUserSettings,
+  EmployerProfileVisibilitySetting,
+  QuestDispute,
   QuestsStatistic,
   RatingStatistic,
-  defaultUserSettings,
-  UserSpecializationFilter, EmployerProfileVisibilitySetting, WorkerProfileVisibilitySetting
+  Session,
+  User,
+  UserRaiseStatus,
+  UserRaiseView,
+  UserRole,
+  UserSpecializationFilter,
+  UserStatus,
+  WorkerProfileVisibilitySetting
 } from "@workquest/database-models/lib/models";
 
 export interface CreateProfileVisibility {
@@ -391,18 +394,6 @@ export class UserOldController extends UserHelper {
     });
   }
 
-  public static async createProfileVisibility(payload: CreateProfileVisibility) {
-    payload.role === 'employer' ?
-      await EmployerProfileVisibilitySetting.findOrCreate({
-        where: { userId: payload.userId },
-        defaults: { userId: payload.userId },
-      }) :
-      await WorkerProfileVisibilitySetting.findOrCreate({
-        where: { userId: payload.userId },
-        defaults: { userId: payload.userId },
-      });
-  }
-
   public get shortCredentials() {
     return {
       id: this.user.id,
@@ -427,6 +418,17 @@ export class UserOldController extends UserHelper {
     }
 
     return this;
+  }
+
+  public async updateEmployerProfileVisibility(payload: UpdateEmployerProfileVisibilityPayload, options: { tx?: Transaction }): Promise<EmployerProfileVisibilitySetting> {
+    console.log(payload);
+    const ratingStatusCanRespondToQuest = payload.profileVisibility.ratingStatusCanRespondToQuest.map( (status) => {
+      let result = 0;
+      result |= status;
+      return result
+    });
+    console.log(ratingStatusCanRespondToQuest);
+    return EmployerProfileVisibilitySetting.findOne({where: {userId: this.user.id}})
   }
 }
 
@@ -517,4 +519,20 @@ export class UserController {
 
     return additionalInfo;
   }
+
+  public static async createProfileVisibility(payload: CreateProfileVisibility) {
+    payload.role === 'employer' ?
+      await EmployerProfileVisibilitySetting.findOrCreate({
+        where: { userId: payload.userId },
+        defaults: { userId: payload.userId },
+      }) :
+      await WorkerProfileVisibilitySetting.findOrCreate({
+        where: { userId: payload.userId },
+        defaults: { userId: payload.userId },
+      });
+  }
+
+  // public async updateWorkerProfileVisibility(payload: UpdateWorkerProfileVisibilityPayload, options: { tx?: Transaction }) {
+  //
+  // }
 }

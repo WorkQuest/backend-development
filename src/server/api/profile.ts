@@ -1,7 +1,7 @@
 import { literal, Op } from "sequelize";
 import { addSendSmsJob } from "../jobs/sendSms";
 import { error, getRandomCodeNumber, output } from "../utils";
-import { UserOldController } from "../controllers/user/controller.user";
+import { UserController, UserOldController } from "../controllers/user/controller.user";
 import { transformToGeoPostGIS } from "../utils/postGIS";
 import { MediaController } from "../controllers/controller.media";
 import { SkillsFiltersController } from "../controllers/controller.skillsFilters";
@@ -298,7 +298,7 @@ export async function setRole(r) {
 
   await userController.setRole(r.payload.role);
 
-  await UserOldController.createProfileVisibility({ userId: user.id, role: r.payload.role });
+  await UserController.createProfileVisibility({ userId: user.id, role: r.payload.role });
 
   return output();
 }
@@ -307,6 +307,7 @@ export function editProfile(userRole: UserRole) {
   return async function (r) {
     const user: User = r.auth.credentials;
     const userController = new UserOldController(user);
+    const userNewController = new UserController(user);
 
     await userController.userMustHaveRole(userRole);
 
@@ -334,6 +335,9 @@ export function editProfile(userRole: UserRole) {
     if (userRole === UserRole.Worker) {
       await userController.setUserSpecializations(r.payload.specializationKeys, transaction);
     }
+
+    const profileVisibility = r.payload.profileVisibility
+    await userController.updateEmployerProfileVisibility(profileVisibility, {});
 
     const a = await EmployerProfileVisibilitySetting.findByPk('4a035b5e-0f77-44db-93e6-8e7e417bd1b4');
     console.log(a.ratingStatusInMySearch & RatingStatus.verified);
