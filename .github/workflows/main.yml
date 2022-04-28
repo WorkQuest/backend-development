@@ -33,7 +33,7 @@ jobs:
 
     steps:
       - name: Copy code files to container
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Environment preparation
         run: |
