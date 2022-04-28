@@ -182,7 +182,7 @@ export async function confirmEmail(r) {
     }
   });
 
-  return output({ status: user.status });
+  return output({ status: userController.user.status });
 }
 
 export async function login(r) {

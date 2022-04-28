@@ -18,7 +18,7 @@ import {
   QuestsResponseStatus,
   QuestsStatistic,
   QuestStatus,
-  RatingStatistic,
+  RatingStatistic, RatingStatus,
   ReferralProgramAffiliate,
   User,
   UserChangeRoleData,
@@ -335,8 +335,13 @@ export function editProfile(userRole: UserRole) {
       await userController.setUserSpecializations(r.payload.specializationKeys, transaction);
     }
 
+    const a = await EmployerProfileVisibilitySetting.findByPk('4a035b5e-0f77-44db-93e6-8e7e417bd1b4');
+    console.log(a.ratingStatusInMySearch & RatingStatus.AllStatuses);
+
     await Promise.all([
-      WorkerProfileVisibilitySetting.update(r.payload.profileVisibility, {
+      EmployerProfileVisibilitySetting.update({
+        ratingStatusCanRespondToQuest: r.payload.profileVisibility.ratingStatusCanRespondToQuest[0] | r.payload.profileVisibility.ratingStatusCanRespondToQuest[1]
+      }, {
         where: { userId: r.auth.credentials.id }, transaction,
       }),
       user.update({
