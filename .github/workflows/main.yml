@@ -28,7 +28,7 @@ jobs:
   deploy-prod:
     environment: production
     if: "github.ref == 'refs/heads/master'"
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-18.04
     needs: [ build ]
 
     steps:
@@ -158,7 +158,7 @@ jobs:
     environment: develop
 
     if: "github.ref == 'refs/heads/develop'"
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-18.04
     needs: [ build ]
 
     steps:
