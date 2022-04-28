@@ -336,7 +336,7 @@ export function editProfile(userRole: UserRole) {
     }
 
     const a = await EmployerProfileVisibilitySetting.findByPk('4a035b5e-0f77-44db-93e6-8e7e417bd1b4');
-    console.log(a.ratingStatusInMySearch & RatingStatus.AllStatuses);
+    console.log(a.ratingStatusInMySearch & RatingStatus.verified);
 
     await Promise.all([
       EmployerProfileVisibilitySetting.update({
