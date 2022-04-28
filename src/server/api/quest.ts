@@ -231,7 +231,7 @@ export function getQuests(type: 'list' | 'points', requester?: 'worker' | 'emplo
       checksListUser
         .checkUserRole(UserRole.Worker)
 
-      if (!(r.query.responded || r.query.invited || r.query.starred)) {
+      if (!(r.query.responded || r.query.invited)) {
         where[Op.or].push(
           requesterWorkerLiteral,
           { assignedWorkerId: r.auth.credentials.id },
