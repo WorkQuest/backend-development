@@ -45,7 +45,7 @@ export async function sentFaucetWusd(r) {
   });
 
   const gasEstimate = await web3.eth.estimateGas({
-    from: '0xaec41239f499458362c9317b3b82dd587c6a74a6',
+    from: '0x3066dc5281A82e78Ba9c87321632334E9c65E4b3',
     to: userWallet.wallet.address,
     value: FaucetAmount.WUSD
   }).then(value => {
@@ -53,7 +53,7 @@ export async function sentFaucetWusd(r) {
   });
 
   const response = await web3.eth.sendTransaction({
-    from: '0xaec41239f499458362c9317b3b82dd587c6a74a6',
+    from: '0x3066dc5281A82e78Ba9c87321632334E9c65E4b3',
     gasPrice: gasPrice,
     gas: gasEstimate,
     to: userWallet.wallet.address,
@@ -104,7 +104,7 @@ export async function sentFaucetWqt(r) {
 
   const web3 = new Web3(new Web3.providers.HttpProvider('https://dev-node-ams3.workquest.co/'));
 
-  const contract = new web3.eth.Contract(abi, '0x917dc1a9E858deB0A5bDCb44C7601F655F728DfE', { from: '0xaec41239f499458362c9317b3b82dd587c6a74a6' });
+  const contract = new web3.eth.Contract(abi, '0x917dc1a9E858deB0A5bDCb44C7601F655F728DfE', { from: '0x3066dc5281A82e78Ba9c87321632334E9c65E4b3' });
 
   const account = web3.eth.accounts.privateKeyToAccount(faucetWalletInfo.privateKey);
   web3.eth.accounts.wallet.add(account);
@@ -115,7 +115,7 @@ export async function sentFaucetWqt(r) {
   });
 
   const sendTrans = await web3.eth.sendTransaction({
-    from: '0xaec41239f499458362c9317b3b82dd587c6a74a6',
+    from: '0x3066dc5281A82e78Ba9c87321632334E9c65E4b3',
     gasPrice: gasPrice,
     gas: 216450,
     to: '0x917dc1a9E858deB0A5bDCb44C7601F655F728DfE',
