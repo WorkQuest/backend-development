@@ -199,7 +199,7 @@ export function getQuests(type: 'list' | 'points', requester?: 'worker' | 'emplo
       '(SELECT "type" FROM "QuestRaiseViews" WHERE "questId" = "Quest"."id" AND "QuestRaiseViews"."status" = 0)'
     );
     const requesterWorkerLiteral = literal(
-      `(1 = (CASE WHEN EXISTS (SELECT * FROM "QuestsResponses" as qResp LEFT JOIN "QuestsStarred" ON "QuestsStarred"."questId" = qResp."questId" ` +
+      `(1 = (CASE WHEN EXISTS (SELECT * FROM "QuestsResponses" as qResp ` +
       `WHERE qResp."questId" = "Quest"."id" AND (qResp."workerId"  = '${ user.id }' AND ` +
         `qResp."status" IN (${ QuestsResponseStatus.Open }, ${ QuestsResponseStatus.Accepted }))) THEN 1 END))`
     )
