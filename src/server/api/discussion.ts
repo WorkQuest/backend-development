@@ -186,6 +186,7 @@ export async function sendComment(r) {
     }
 
     await rootComment.increment('amountSubComments', { transaction });
+    await discussion.increment('amountComments', { transaction });
 
     notificationRecipients.push(rootComment.authorId);
     commentLevel = rootComment.level + 1;
