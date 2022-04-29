@@ -419,17 +419,6 @@ export class UserOldController extends UserHelper {
 
     return this;
   }
-
-  public async updateEmployerProfileVisibility(payload: UpdateEmployerProfileVisibilityPayload, options: { tx?: Transaction }): Promise<EmployerProfileVisibilitySetting> {
-    console.log(payload);
-    const ratingStatusCanRespondToQuest = payload.profileVisibility.ratingStatusCanRespondToQuest.map( (status) => {
-      let result = 0;
-      result |= status;
-      return result
-    });
-    console.log(ratingStatusCanRespondToQuest);
-    return EmployerProfileVisibilitySetting.findOne({where: {userId: this.user.id}})
-  }
 }
 
 export class UserController {
@@ -532,7 +521,39 @@ export class UserController {
       });
   }
 
-  // public async updateWorkerProfileVisibility(payload: UpdateWorkerProfileVisibilityPayload, options: { tx?: Transaction }) {
-  //
-  // }
+  public async updateEmployerProfileVisibility(payload: UpdateEmployerProfileVisibilityPayload, options: { tx?: Transaction }) {
+    let ratingStatusCanRespondToQuest = 0;
+    let ratingStatusInMySearch = 0;
+
+    payload.profileVisibility.ratingStatusCanRespondToQuest.forEach(status => {
+      ratingStatusCanRespondToQuest |= status;
+    });
+    payload.profileVisibility.ratingStatusCanRespondToQuest.forEach(status => {
+      ratingStatusInMySearch |= status;
+    });
+
+    await EmployerProfileVisibilitySetting.update({
+      ratingStatusInMySearch, ratingStatusCanRespondToQuest
+    }, {
+      where: { userId: this.user.id }, transaction: options.tx
+    });
+  }
+
+  public async updateWorkerProfileVisibility(payload: UpdateEmployerProfileVisibilityPayload, options: { tx?: Transaction }) {
+    let ratingStatusCanInviteMeOnQuest = 0;
+    let ratingStatusInMySearch = 0;
+
+    payload.profileVisibility.ratingStatusCanRespondToQuest.forEach(status => {
+      ratingStatusCanInviteMeOnQuest |= status;
+    });
+    payload.profileVisibility.ratingStatusCanRespondToQuest.forEach(status => {
+      ratingStatusInMySearch |= status;
+    });
+
+    await WorkerProfileVisibilitySetting.update({
+      ratingStatusInMySearch, ratingStatusCanInviteMeOnQuest
+    }, {
+      where: { userId: this.user.id }, transaction: options.tx
+    });
+  }
 }

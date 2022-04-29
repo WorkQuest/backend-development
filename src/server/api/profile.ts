@@ -180,21 +180,38 @@ export function getUsers(role: UserRole, type: 'points' | 'list') {
     const userRatingStatisticLiteral = literal(
       '(SELECT "status" FROM "RatingStatistics" WHERE "userId" = "User"."id")'
     );
-    const workerProfileVisibilitySearchLiteral = literal(
-      `( CASE WHEN "User"."role" = 'employer' THEN ` +
-      '(CASE WHEN EXISTS (SELECT "usr"."id" FROM "Users" as "usr" ' +
-      `INNER JOIN "WorkerProfileVisibilitySettings" as "pvs" ON "pvs"."userId" = '${ r.auth.credentials.id }' ` +
-      'INNER JOIN "RatingStatistics" as rtn ON "rtn"."userId" = "User"."id" ' +
-      'WHERE ("rtn"."status" = ANY("pvs"."ratingStatusInMySearch") OR 4 = ANY("pvs"."ratingStatusInMySearch"))) THEN TRUE ELSE FALSE END) ' +
-      'ELSE TRUE END) '
-    );
+    // const workerProfileVisibilitySearchLiteral = literal(
+    //   `( CASE WHEN "User"."role" = 'employer' THEN ` +
+    //   '(CASE WHEN EXISTS (SELECT "usr"."id" FROM "Users" as "usr" ' +
+    //   `INNER JOIN "WorkerProfileVisibilitySettings" as "pvs" ON "pvs"."userId" = '${ r.auth.credentials.id }' ` +
+    //   'INNER JOIN "RatingStatistics" as rtn ON "rtn"."userId" = "User"."id" ' +
+    //   'WHERE ("rtn"."status" = ANY("pvs"."ratingStatusInMySearch") OR 4 = ANY("pvs"."ratingStatusInMySearch"))) THEN TRUE ELSE FALSE END) ' +
+    //   'ELSE TRUE END) '
+    // );
+    //
+    // const employerProfileVisibilitySearchLiteral = literal(
+    //   `( CASE WHEN "User"."role" = 'worker' THEN ` +
+    //   '(CASE WHEN EXISTS (SELECT "usr"."id" FROM "Users" as "usr" ' +
+    //   `INNER JOIN "EmployerProfileVisibilitySettings" as "pvs" ON "pvs"."userId" = '${ r.auth.credentials.id }' ` +
+    //   'INNER JOIN "RatingStatistics" as rtn ON "rtn"."userId" = "User"."id" ' +
+    //   'WHERE ("rtn"."status" = ANY("pvs"."ratingStatusInMySearch") OR 4 = ANY("pvs"."ratingStatusInMySearch"))) THEN TRUE ELSE FALSE END) ' +
+    //   'ELSE TRUE END) '
+    // );
 
     const employerProfileVisibilitySearchLiteral = literal(
       `( CASE WHEN "User"."role" = 'worker' THEN ` +
       '(CASE WHEN EXISTS (SELECT "usr"."id" FROM "Users" as "usr" ' +
       `INNER JOIN "EmployerProfileVisibilitySettings" as "pvs" ON "pvs"."userId" = '${ r.auth.credentials.id }' ` +
       'INNER JOIN "RatingStatistics" as rtn ON "rtn"."userId" = "User"."id" ' +
-      'WHERE ("rtn"."status" = ANY("pvs"."ratingStatusInMySearch") OR 4 = ANY("pvs"."ratingStatusInMySearch"))) THEN TRUE ELSE FALSE END) ' +
+      'WHERE ("rtn"."status" & "pvs"."ratingStatusInMySearch" > 0)) THEN TRUE ELSE FALSE END) ' +
+      'ELSE TRUE END) '
+    );
+    const workerProfileVisibilitySearchLiteral = literal(
+      `( CASE WHEN "User"."role" = 'worker' THEN ` +
+      '(CASE WHEN EXISTS (SELECT "usr"."id" FROM "Users" as "usr" ' +
+      `INNER JOIN "WorkerProfileVisibilitySettings" as "pvs" ON "pvs"."userId" = '${ r.auth.credentials.id }' ` +
+      'INNER JOIN "RatingStatistics" as rtn ON "rtn"."userId" = "User"."id" ' +
+      'WHERE ("rtn"."status" & "pvs"."ratingStatusInMySearch" > 0)) THEN TRUE ELSE FALSE END) ' +
       'ELSE TRUE END) '
     );
 
@@ -306,10 +323,10 @@ export async function setRole(r) {
 export function editProfile(userRole: UserRole) {
   return async function (r) {
     const user: User = r.auth.credentials;
-    const userController = new UserOldController(user);
-    const userNewController = new UserController(user);
+    const userOldController = new UserOldController(user);
+    const userController = new UserController(user);
 
-    await userController.userMustHaveRole(userRole);
+    await userOldController.userMustHaveRole(userRole);
 
     const locationFields = { location: null, locationPostGIS: null, locationPlaceName: null };
     const avatarId = r.payload.avatarId ? (await MediaController.getMedia(r.payload.avatarId)).id : null;
@@ -333,11 +350,15 @@ export function editProfile(userRole: UserRole) {
       locationFields.locationPostGIS = transformToGeoPostGIS(r.payload.locationFull.location);
     }
     if (userRole === UserRole.Worker) {
-      await userController.setUserSpecializations(r.payload.specializationKeys, transaction);
+      await userOldController.setUserSpecializations(r.payload.specializationKeys, transaction);
+      await userController.updateWorkerProfileVisibility({
+        profileVisibility: r.payload.profileVisibility
+      }, { tx: transaction });
     }
 
-    const profileVisibility = r.payload.profileVisibility
-    await userController.updateEmployerProfileVisibility(profileVisibility, {});
+    await userController.updateEmployerProfileVisibility({
+      profileVisibility: r.payload.profileVisibility,
+    }, { tx: transaction });
 
     const a = await EmployerProfileVisibilitySetting.findByPk('4a035b5e-0f77-44db-93e6-8e7e417bd1b4');
     console.log(a.ratingStatusInMySearch & RatingStatus.verified);
