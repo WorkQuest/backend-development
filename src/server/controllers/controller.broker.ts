@@ -10,14 +10,14 @@ export const enum MainBrokerQueues {
 
 export const enum QuestNotificationActions {
   /** Quest flow */
-  waitWorker = 'WaitWorker',
+  waitWorker = 'WaitWorker', // Not used now
   questEdited = 'QuestEdited',
-  questEndSoon = 'QuestEndSoon',
-  workerRejectedQuest = 'WorkerRejectedQuest',
-  workerAcceptedQuest = 'WorkerAcceptedQuest',
-  workerCompletedQuest = 'WorkerCompletedQuest',
-  employerAcceptedCompletedQuest = 'EmployerAcceptedCompletedQuest',
-  employerRejectedCompletedQuest = 'EmployerRejectedCompletedQuest',
+  questEndSoon = 'QuestEndSoon', // Not used now
+  workerRejectedQuest = 'WorkerRejectedQuest', // Not used now
+  workerAcceptedQuest = 'WorkerAcceptedQuest', // Not used now
+  workerCompletedQuest = 'WorkerCompletedQuest', // Not used now
+  employerAcceptedCompletedQuest = 'EmployerAcceptedCompletedQuest', // Not used now
+  employerRejectedCompletedQuest = 'EmployerRejectedCompletedQuest', // Not used now
   /** Quest Response */
   workerRespondedToQuest = 'WorkerRespondedToQuest',
   employerInvitedWorkerToQuest = 'EmployerInvitedWorkerToQuest',
