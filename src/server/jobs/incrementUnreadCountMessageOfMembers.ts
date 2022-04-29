@@ -4,8 +4,7 @@ import { incrementUnreadCountMessage } from "../queries";
 
 export type UnreadMessageIncrementPayload = {
   chatId: string;
-  notifierMemberId: string;
-  skipMemberIds?: string[]
+  skipMemberIds: string[]
 };
 
 export async function incrementUnreadCountMessageOfMembersJob(payload: UnreadMessageIncrementPayload) {
@@ -17,7 +16,7 @@ export default async function incrementUnreadCountMessageOfMembers(payload: Unre
   const options = {
     replacements: {
       chatId: payload.chatId,
-      skipMembersIds: [payload.notifierMemberId, ...payload.skipMemberIds],
+      skipMembersIds: payload.skipMemberIds,
     },
   };
   await db.query(incrementUnreadCountMessage, options);
