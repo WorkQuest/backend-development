@@ -1,7 +1,8 @@
 import {
   User,
+  Media,
   Quest,
-  QuestsResponse,
+  QuestsResponse, ChatMember, MessageAction
 } from '@workquest/database-models/lib/models';
 
 export interface CreateQuestChatPayload {
@@ -22,4 +23,16 @@ export interface CreateGroupChatPayload {
 export interface FindOrCreatePrivateChatPayload {
   readonly senderUser: User;
   readonly recipientUser: User;
+}
+
+export interface SendInfoMessageToChatPayload {
+  action: MessageAction,
+  senderMember: ChatMember,
+  infoMessageMember: ChatMember,
+}
+
+export interface SendMessageToChatPayload {
+  readonly text: string;
+  readonly senderMember: ChatMember;
+  readonly medias: Readonly<Media[]>;
 }

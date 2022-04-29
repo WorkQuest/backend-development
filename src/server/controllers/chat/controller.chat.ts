@@ -1,11 +1,14 @@
-import { error } from "../../utils";
-import { Errors } from "../../utils/errors";
-import { Op, Transaction } from "sequelize";
-import { CreateGroupChatPayload, CreateQuestChatPayload, FindOrCreatePrivateChatPayload } from './types';
+import { Transaction } from "sequelize";
 import {
-  User,
-  Quest,
+  CreateGroupChatPayload,
+  CreateQuestChatPayload,
+  SendMessageToChatPayload,
+  SendInfoMessageToChatPayload,
+  FindOrCreatePrivateChatPayload,
+} from './types';
+import {
   Chat,
+  Media,
   ChatData,
   ChatType,
   Message,
@@ -13,17 +16,17 @@ import {
   GroupChat,
   QuestChat,
   ChatMember,
-  QuestsResponse,
-  QuestsResponseType,
   MemberType,
   InfoMessage,
   MessageType,
   MemberStatus,
   MessageAction,
+  QuestsResponse,
   ChatMemberData,
   QuestChatStatuses,
+  QuestsResponseType,
   ChatMemberDeletionData,
-} from "@workquest/database-models/lib/models";
+} from '@workquest/database-models/lib/models';
 
 /**
 
@@ -311,10 +314,12 @@ export class ChatController {
   ) {
   }
 
-  public lastMessage(): Promise<Message> {
+  public lastMessage(options: { tx?: Transaction } = {}): Promise<Message> {
     return Message.findOne({
       where: { chatId: this.chat.id },
       order: [['number', 'DESC']],
+      lock: 'UPDATE' as any,
+      transaction: options.tx,
     });
   }
 
@@ -325,10 +330,27 @@ export class ChatController {
     });
   }
 
-  protected async sendInfoMessage(payload: { senderMember: ChatMember, infoMessageMember: ChatMember, action: MessageAction }, options: { tx?: Transaction }): Promise<[message: Message, infoMessage: InfoMessage]> {
-    const lastMessage = await this.lastMessage();
+  public async sendMessage(payload: SendMessageToChatPayload, options: { tx?: Transaction } = {}): Promise<Message> {
+    const lastMessage = await this.lastMessage(options);
 
-    // TODO: добавить LOCK
+    const message = await Message.create({
+      number: lastMessage.number + 1,
+      chatId: this.chat.id,
+      senderMemberId: payload.senderMember.id,
+      type: MessageType.message,
+      text: payload.text,
+    }, { transaction: options.tx });
+
+    await message.$set('medias', payload.medias as Media[],  {
+      transaction: options.tx,
+    });
+
+    return message;
+  }
+
+  protected async sendInfoMessage(payload: SendInfoMessageToChatPayload, options: { tx?: Transaction }): Promise<[message: Message, infoMessage: InfoMessage]> {
+    const lastMessage = await this.lastMessage(options);
+
     const message = Message.build({
       senderMemberId: payload.senderMember.id,
       chatId: this.chat.id,
@@ -347,8 +369,6 @@ export class ChatController {
       infoMessage.save({ transaction: options.tx }),
     ]);
   }
-
-  // public addUserTo
 }
 
 export class QuestChatController extends ChatController {
@@ -614,35 +634,61 @@ export class PrivateChatController extends ChatController {
     super(chat);
   }
 
-  // static async create(payload: FindOrCreatePrivateChatPayload, options: { tx?: Transaction } = {}) {
-  //
-  // }
-
   static async findOrCreate(payload: FindOrCreatePrivateChatPayload, options: { tx?: Transaction } = {}) {
-    const [chat, isCreated] = await Chat.findOrCreate({
+    const [chat, isCreated] = await Chat.scope('privateChat').findOrCreate({
       where: { type: ChatType.private },
+      defaults: { type: ChatType.private },
+      transaction: options.tx,
       include: [{
         model: ChatMember,
-        as: 'firstMemberInPrivateChat',
+        as: 'senderInPrivateChat',
         where: { userId: payload.senderUser.id },
         required: true,
-        attributes: [],
       }, {
         model: ChatMember,
-        as: 'secondMemberInPrivateChat',
+        as: 'recipientInPrivateChat',
         where: { userId: payload.recipientUser.id },
         required: true,
-        attributes: [],
-      }, {
-        model: ChatMember,
-        as: 'members'
-      }, {
-        model: ChatMember,
-        as: 'meMember',
-        where: { userId: payload.senderUser.id }
       }],
-      defaults: { type: ChatType.private },
-      transaction,
+    });
+
+    if (!isCreated) {
+      return new PrivateChatController(chat, {
+        senderMember: chat.senderInPrivateChat,
+        recipientMember: chat.recipientInPrivateChat,
+      });
+    }
+
+    const senderMemberBuild = ChatMember.build({
+      userId: payload.senderUser.id,
+      chatId: chat.id,
+      type: MemberType.User,
+    });
+    const recipientMemberBuild = ChatMember.build({
+      userId: payload.recipientUser.id,
+      chatId: chat.id,
+      type: MemberType.User,
+    });
+
+    const senderMemberDataBuild = ChatMemberData.build({
+      chatMemberId: senderMemberBuild.id,
+    });
+    const recipientMemberDataBuild = ChatMemberData.build({
+      chatMemberId: recipientMemberBuild.id,
+    });
+
+    const [senderMember, recipientMember] = await Promise.all([
+      senderMemberBuild.save({ transaction: options.tx }),
+      recipientMemberBuild.save({ transaction: options.tx }),
+    ]);
+    await Promise.all([
+      senderMemberDataBuild.save({ transaction: options.tx }),
+      recipientMemberDataBuild.save({ transaction: options.tx }),
+    ]);
+
+    return new PrivateChatController(chat, {
+      senderMember,
+      recipientMember,
     });
   }
 }
