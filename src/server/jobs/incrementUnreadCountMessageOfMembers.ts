@@ -25,8 +25,8 @@ export default async function incrementUnreadCountMessageOfMembers(payload: Unre
   const updatingChatMemberDataIds = updatingChatMemberData.map(member => { return member.id }); // Mode.increment (update) не позволяет делать include
 
   await ChatMemberData.increment( // у каждого участника разное число сообщений, инкремент - самое оптимальное
-    'unreadCountMessages'
-  , {
+    'unreadCountMessages',
+   {
       where: { chatMemberId: { [Op.in]: updatingChatMemberDataIds } }
   });
 }
