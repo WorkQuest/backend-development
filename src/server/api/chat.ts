@@ -241,7 +241,7 @@ export async function createGroupChat(r) {
     userIds.push(r.auth.credentials.id);
   }
 
-  await UserOldController.usersMustExist(memberUserIds);
+  await UserOldController.usersMustExist(userIds);
 
   const transaction = await r.server.app.db.transaction();
 
@@ -427,7 +427,7 @@ export async function sendMessageToChat(r) {
 }
 
 export async function removeUserFromGroupChat(r) {
-  await UserController.userMustExist(r.params.userId);
+  await UserOldController.userMustExist(r.params.userId);
 
   const chat = await Chat.findByPk(r.params.chatId, {
     include: [
@@ -582,7 +582,7 @@ export async function leaveFromGroupChat(r) {
 
 export async function addUsersInGroupChat(r) {
   const userIds: string[] = r.payload.userIds;
-  await UserController.usersMustExist(userIds, 'shortWithAdditionalInfo');
+  await UserOldController.usersMustExist(userIds, 'shortWithAdditionalInfo');
 
   const chat = await Chat.findByPk(r.params.chatId, {
     include: [
@@ -661,7 +661,7 @@ export async function addUsersInGroupChat(r) {
   await incrementUnreadCountMessageOfMembersJob({
     chatId: chat.id,
     notifierMemberId: chatController.chat.meMember.id,
-    withoutMemberIds: newMembersIds, //у тех, кого добавили уже будет одно непрочитанное, не нужно его увеличивать ещё на один,
+    skipMemberIds: newMembersIds, //у тех, кого добавили уже будет одно непрочитанное, не нужно его увеличивать ещё на один,
   });
 
   await updateCountUnreadChatsJob({

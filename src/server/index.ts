@@ -14,6 +14,7 @@ import routes from './routes';
 import config from './config/config';
 import SwaggerOptions from './config/swagger';
 import { initDatabase } from '@workquest/database-models/lib/models';
+import Database from './providers/provider.postgres';
 import { ControllerBroker } from './controllers/controller.broker';
 import { handleValidationError, responseHandler } from './utils';
 import { tokenValidate } from './utils/auth';
@@ -87,7 +88,7 @@ const init = async () => {
     { plugin: HapiSwagger, options: SwaggerOptions },
   ]);
 
-  server.app.db = await initDatabase(config.dbLink, true, true);
+  server.app.db = Database.instance();
   server.app.web3 = new Web3();
   server.app.broker = new ControllerBroker();
   server.app.scheduler = await run({

@@ -56,7 +56,7 @@ export class QuestChatController {
     const lastMessage = await this.lastMessage();
 
     const message = Message.build({
-      senderUserId: this.questChat.workerId,
+      senderUserId: this.questChat.workerMemberId,
       chatId: this.chat.id,
       type: MessageType.info,
       number: lastMessage.number + 1,
@@ -64,7 +64,7 @@ export class QuestChatController {
     });
     const infoMessage = InfoMessage.build({
       messageId: message.id,
-      userId: this.questChat.employerId,
+      userId: this.questChat.employerMemberId,
       messageAction: MessageAction.workerAcceptInviteOnQuest,
     });
 
@@ -78,7 +78,7 @@ export class QuestChatController {
     const lastMessage = await this.lastMessage();
 
     const message = Message.build({
-      senderUserId: this.questChat.workerId,
+      senderUserId: this.questChat.workerMemberId,
       chatId: this.chat.id,
       type: MessageType.info,
       number: lastMessage.number + 1,
@@ -86,7 +86,7 @@ export class QuestChatController {
     });
     const infoMessage = InfoMessage.build({
       messageId: message.id,
-      userId: this.questChat.employerId,
+      userId: this.questChat.employerMemberId,
       messageAction: MessageAction.workerRejectInviteOnQuest,
     });
 
@@ -100,7 +100,7 @@ export class QuestChatController {
     const lastMessage = await this.lastMessage();
 
     const message = Message.build({
-      senderUserId: this.questChat.employerId,
+      senderUserId: this.questChat.employerMemberId,
       chatId: this.chat.id,
       type: MessageType.info,
       number: lastMessage.number + 1,
@@ -108,7 +108,7 @@ export class QuestChatController {
     });
     const infoMessage = InfoMessage.build({
       messageId: message.id,
-      userId: this.questChat.workerId,
+      userId: this.questChat.workerMemberId,
       messageAction: MessageAction.employerRejectResponseOnQuest,
     });
 
@@ -178,8 +178,8 @@ export class QuestChatController {
       responseId,
     });
 
-    chatBuild.lastMessageId = responseWorkerMessageBuild.id;
-    chatBuild.lastMessageDate = responseWorkerMessageBuild.createdAt;
+    // chatBuild.lastMessageId = responseWorkerMessageBuild.id;
+    // chatBuild.lastMessageDate = responseWorkerMessageBuild.createdAt;
 
     const [chat, questChat, ] = await Promise.all([
       chatBuild.save({ transaction: options.tx }),
