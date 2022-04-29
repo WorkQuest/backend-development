@@ -4,7 +4,8 @@ import { literal, Op } from "sequelize";
 
 export type UnreadMessageIncrementPayload = {
   chatId: string;
-  notifierMemberId?: string[];
+  notifierMemberId: string;
+  withoutMemberIds?: string[]
 };
 
 export async function incrementUnreadCountMessageOfMembersJob(payload: UnreadMessageIncrementPayload) {
@@ -12,8 +13,8 @@ export async function incrementUnreadCountMessageOfMembersJob(payload: UnreadMes
 }
 
 export default async function incrementUnreadCountMessageOfMembers(payload: UnreadMessageIncrementPayload) {
-  const chatMemberData = await ChatMemberData.findAll({
-    where: { chatMemberId: { [Op.notIn]: payload.notifierMemberId } },
+  const updatingChatMemberData = await ChatMemberData.findAll({
+    where: { chatMemberId: { [Op.notIn]: [payload.notifierMemberId, ...payload.withoutMemberIds] } },
     include: [{
       model: ChatMember,
       where: { chatId: payload.chatId },
@@ -21,7 +22,11 @@ export default async function incrementUnreadCountMessageOfMembers(payload: Unre
     }]
   });
 
-  chatMemberData.map(async data => {
-    await data.update({ unreadCountMessages: data.unreadCountMessages + 1 })
+  const updatingChatMemberDataIds = updatingChatMemberData.map(member => { return member.id }); // Mode.increment (update) не позволяет делать include
+
+  await ChatMemberData.increment( // у каждого участника разное число сообщений, инкремент - самое оптимальное
+    'unreadCountMessages',
+   {
+      where: { chatMemberId: { [Op.in]: updatingChatMemberDataIds } }
   });
 }

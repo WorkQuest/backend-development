@@ -437,7 +437,7 @@ export async function sendMessageToChat(r) {
 
   await incrementUnreadCountMessageOfMembersJob({
     chatId: chat.id,
-    notifierMemberId: [chatController.chat.meMember.id],
+    notifierMemberId: chatController.chat.meMember.id,
   });
 
   await setMessageAsReadJob({
@@ -520,7 +520,7 @@ export async function removeUserFromGroupChat(r) {
 
   await incrementUnreadCountMessageOfMembersJob({
     chatId: chat.id,
-    notifierMemberId: [chat.meMember.id],
+    notifierMemberId: chat.meMember.id,
   });
 
   await setMessageAsReadJob({
@@ -591,7 +591,7 @@ export async function leaveFromGroupChat(r) {
 
   await incrementUnreadCountMessageOfMembersJob({
     chatId: chat.id,
-    notifierMemberId: [chat.meMember.id],
+    notifierMemberId: chat.meMember.id,
   });
 
   await setMessageAsReadJob({
@@ -693,7 +693,8 @@ export async function addUsersInGroupChat(r) {
 
   await incrementUnreadCountMessageOfMembersJob({
     chatId: chat.id,
-    notifierMemberId: [chatController.chat.meMember.id, ...newMembersIds] //у тех, кого добавили уже будет одно непрочитанное, не нужно его увеличивать ещё на один,
+    notifierMemberId: chatController.chat.meMember.id,
+    withoutMemberIds: newMembersIds, //у тех, кого добавили уже будет одно непрочитанное, не нужно его увеличивать ещё на один,
   });
 
   await updateCountUnreadChatsJob({
