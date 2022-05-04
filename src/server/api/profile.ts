@@ -47,11 +47,13 @@ export async function getMe(r) {
 
   if (r.auth.credentials.role === UserRole.Employer) {
     include.push({
-      model: EmployerProfileVisibilitySetting, as: 'employerProfileVisibilitySetting'
+      model: EmployerProfileVisibilitySetting,
+      as: 'employerProfileVisibilitySetting',
     });
   } else {
     include.push({
-      model: WorkerProfileVisibilitySetting, as: 'workerProfileVisibilitySetting'
+      model: WorkerProfileVisibilitySetting,
+      as: 'workerProfileVisibilitySetting',
     });
   }
 
@@ -98,21 +100,22 @@ export async function getUserByWallet(r) {
 }
 
 export async function getAllUsers(r) {
-  const workerProfileVisibilitySearchLiteral = literal(
-    `( CASE WHEN "User"."role" = 'employer' THEN ` +
-    '(CASE WHEN EXISTS (SELECT "usr"."id" FROM "Users" as "usr" ' +
-    `INNER JOIN "WorkerProfileVisibilitySettings" as "pvs" ON "pvs"."userId" = '${ r.auth.credentials.id }' ` +
-    'INNER JOIN "RatingStatistics" as rtn ON "rtn"."userId" = "User"."id" ' +
-    'WHERE ("rtn"."status" = ANY("pvs"."ratingStatusInMySearch") OR 4 = ANY("pvs"."ratingStatusInMySearch"))) THEN TRUE ELSE FALSE END) ' +
-    'ELSE TRUE END) '
-  );
+  const user: User = r.auth.credentials;
 
   const employerProfileVisibilitySearchLiteral = literal(
     `( CASE WHEN "User"."role" = 'worker' THEN ` +
     '(CASE WHEN EXISTS (SELECT "usr"."id" FROM "Users" as "usr" ' +
-    `INNER JOIN "EmployerProfileVisibilitySettings" as "pvs" ON "pvs"."userId" = '${ r.auth.credentials.id }' ` +
+    `INNER JOIN "EmployerProfileVisibilitySettings" as "pvs" ON "pvs"."userId" = '${ user.id }' ` +
     'INNER JOIN "RatingStatistics" as rtn ON "rtn"."userId" = "User"."id" ' +
-    'WHERE ("rtn"."status" = ANY("pvs"."ratingStatusInMySearch") OR 4 = ANY("pvs"."ratingStatusInMySearch"))) THEN TRUE ELSE FALSE END) ' +
+    'WHERE ("rtn"."status" & "pvs"."ratingStatusInMySearch" != 0)) THEN TRUE ELSE FALSE END) ' +
+    'ELSE TRUE END) '
+  );
+  const workerProfileVisibilitySearchLiteral = literal(
+    `( CASE WHEN "User"."role" = 'worker' THEN ` +
+    '(CASE WHEN EXISTS (SELECT "usr"."id" FROM "Users" as "usr" ' +
+    `INNER JOIN "WorkerProfileVisibilitySettings" as "pvs" ON "pvs"."userId" = '${ user.id }' ` +
+    'INNER JOIN "RatingStatistics" as rtn ON "rtn"."userId" = "User"."id" ' +
+    'WHERE ("rtn"."status" & "pvs"."ratingStatusInMySearch" != 0)) THEN TRUE ELSE FALSE END) ' +
     'ELSE TRUE END) '
   );
 
@@ -180,24 +183,6 @@ export function getUsers(role: UserRole, type: 'points' | 'list') {
     const userRatingStatisticLiteral = literal(
       '(SELECT "status" FROM "RatingStatistics" WHERE "userId" = "User"."id")'
     );
-    // const workerProfileVisibilitySearchLiteral = literal(
-    //   `( CASE WHEN "User"."role" = 'employer' THEN ` +
-    //   '(CASE WHEN EXISTS (SELECT "usr"."id" FROM "Users" as "usr" ' +
-    //   `INNER JOIN "WorkerProfileVisibilitySettings" as "pvs" ON "pvs"."userId" = '${ r.auth.credentials.id }' ` +
-    //   'INNER JOIN "RatingStatistics" as rtn ON "rtn"."userId" = "User"."id" ' +
-    //   'WHERE ("rtn"."status" = ANY("pvs"."ratingStatusInMySearch") OR 4 = ANY("pvs"."ratingStatusInMySearch"))) THEN TRUE ELSE FALSE END) ' +
-    //   'ELSE TRUE END) '
-    // );
-    //
-    // const employerProfileVisibilitySearchLiteral = literal(
-    //   `( CASE WHEN "User"."role" = 'worker' THEN ` +
-    //   '(CASE WHEN EXISTS (SELECT "usr"."id" FROM "Users" as "usr" ' +
-    //   `INNER JOIN "EmployerProfileVisibilitySettings" as "pvs" ON "pvs"."userId" = '${ r.auth.credentials.id }' ` +
-    //   'INNER JOIN "RatingStatistics" as rtn ON "rtn"."userId" = "User"."id" ' +
-    //   'WHERE ("rtn"."status" = ANY("pvs"."ratingStatusInMySearch") OR 4 = ANY("pvs"."ratingStatusInMySearch"))) THEN TRUE ELSE FALSE END) ' +
-    //   'ELSE TRUE END) '
-    // );
-
     const employerProfileVisibilitySearchLiteral = literal(
       `( CASE WHEN "User"."role" = 'worker' THEN ` +
       '(CASE WHEN EXISTS (SELECT "usr"."id" FROM "Users" as "usr" ' +
@@ -359,9 +344,6 @@ export function editProfile(userRole: UserRole) {
     await userController.updateEmployerProfileVisibility({
       profileVisibility: r.payload.profileVisibility,
     }, { tx: transaction });
-
-    const a = await EmployerProfileVisibilitySetting.findByPk('4a035b5e-0f77-44db-93e6-8e7e417bd1b4');
-    console.log(a.ratingStatusInMySearch & RatingStatus.verified);
 
     await Promise.all([
       EmployerProfileVisibilitySetting.update({
