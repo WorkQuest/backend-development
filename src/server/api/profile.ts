@@ -187,8 +187,8 @@ export function getUsers(role: UserRole, type: 'points' | 'list') {
       '(SELECT "type" FROM "UserRaiseViews" WHERE "userId" = "User"."id" AND "UserRaiseViews"."status" = 0)'
     );
     const userRatingStatisticLiteral = literal(
-      `(SELECT CASE WHEN "User"."status" = ${RatingStatus.TopRanked} THEN 0 WHEN "User"."status" = ${RatingStatus.Reliable} THEN 1 ` +
-      `WHEN "User"."status" = ${RatingStatus.Verified} THEN 2 WHEN "User"."status" = ${RatingStatus.NoStatus} THEN 3 END ` +
+      `(SELECT CASE WHEN "User"."status" = ${ RatingStatus.TopRanked } THEN 0 WHEN "User"."status" = ${ RatingStatus.Reliable } THEN 1 ` +
+      `WHEN "User"."status" = ${ RatingStatus.Verified } THEN 2 WHEN "User"."status" = ${ RatingStatus.NoStatus } THEN 3 END ` +
       `FROM "RatingStatistics" WHERE "userId" = "User"."id") `
     );
     const employerProfileVisibilitySearchLiteral = literal(
