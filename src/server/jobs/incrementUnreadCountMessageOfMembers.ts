@@ -3,8 +3,8 @@ import Database from "../providers/provider.postgres";
 import { incrementUnreadCountMessage } from "../queries";
 
 export type UnreadMessageIncrementPayload = {
-  chatId: string;
-  skipMemberIds: string[]
+  readonly chatId: string;
+  readonly skipMemberIds: string[];
 }
 
 export async function incrementUnreadCountMessageOfMembersJob(payload: UnreadMessageIncrementPayload) {
