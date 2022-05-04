@@ -1,6 +1,6 @@
 import { error } from '../utils';
 import { Errors } from '../utils/errors';
-import { ChatController, QuestChatController } from '../controllers/chat/controller.chat';
+import { ChatController, QuestChatController, GroupChatController } from '../controllers/chat/controller.chat';
 import {
   Chat,
   User,
@@ -11,6 +11,37 @@ import {
 } from '@workquest/database-models/lib/models';
 
 export class QuestChatControllerFactory {
+  public static async createById(id: string): Promise<QuestChatController> {
+    const chat = await Chat.findByPk(id, {
+      include: [{
+        model: QuestChat,
+        as: 'questChat',
+        where: { responseId: id },
+        required: true,
+      }, {
+        model: ChatMember,
+        as: 'members',
+        where: { type: MemberType.User },
+        include: [{
+          model: User.scope('shortWithAdditionalInfo'),
+          as: 'user',
+        }]
+      }],
+    });
+
+    if (!chat) {
+      throw error(Errors.NotFound, 'Quest chat not found by response id', { responseId: id });
+    }
+
+    const workerMember = chat.members.find(member => member.user.role === UserRole.Worker);
+    const employerMember = chat.members.find(member => member.user.role === UserRole.Employer);
+
+    return new QuestChatController(chat, chat.questChat, {
+      worker: workerMember,
+      employer: employerMember,
+    });
+  }
+
   public static async createByQuestResponseId(id: string): Promise<QuestChatController> {
     const chat = await Chat.findOne({
       include: [{
@@ -44,7 +75,9 @@ export class QuestChatControllerFactory {
 }
 
 export class GroupChatControllerFactory {
-
+  public static async createById(id: string): Promise<GroupChatController> {
+    return null;
+  }
 }
 
 export class ChatControllerFactory {

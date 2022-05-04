@@ -340,9 +340,9 @@ export class ChatController {
     });
   }
 
-  public getMembers(options: { exclude } = {}): Promise<Readonly<ChatMember>[]> {
+  public getMembers(): Promise<Readonly<ChatMember>[]> {
     return ChatMember.findAll({
-      where: { chatId: this.chat.id }
+      where: { chatId: this.chat.id },
     });
   }
 
@@ -570,6 +570,10 @@ export class GroupChatController extends ChatController {
     }
 
     return this.chat.toJSON();
+  }
+
+  public async removeUserMember(user: User, options: { tx?: Transaction } = {}) {
+
   }
 
   static async create(payload: CreateGroupChatPayload, options: { tx?: Transaction } = {}): Promise<GroupChatController> {
