@@ -38,6 +38,8 @@ export const searchFields = [
 ];
 
 export async function getMe(r) {
+  const user: User = r.auth.credentials;
+
   const totpIsActiveLiteral = literal(`"User"."settings"->'security'->'TOTP'->'active'`);
 
   const include = [
@@ -45,24 +47,25 @@ export async function getMe(r) {
     { model: ReferralProgramAffiliate.unscoped(), as: 'affiliateUser', attributes: ['referralCodeId'] },
   ] as any;
 
-  if (r.auth.credentials.role === UserRole.Employer) {
+  if (user.role === UserRole.Employer) {
     include.push({
       model: EmployerProfileVisibilitySetting,
       as: 'employerProfileVisibilitySetting',
     });
-  } else {
+  }
+  if (user.role === UserRole.Worker) {
     include.push({
       model: WorkerProfileVisibilitySetting,
       as: 'workerProfileVisibilitySetting',
     });
   }
 
-  const user = await User.findByPk(r.auth.credentials.id, {
+  const meUser = await User.findByPk(r.auth.credentials.id, {
     attributes: { include: [[totpIsActiveLiteral, 'totpIsActive']] },
     include,
   });
 
-  return output(user);
+  return output(meUser);
 }
 
 export async function getUser(r) {
@@ -338,20 +341,13 @@ export function editProfile(userRole: UserRole) {
     }
     if (userRole === UserRole.Worker) {
       await userOldController.setUserSpecializations(r.payload.specializationKeys, transaction);
-      await userController.updateWorkerProfileVisibility({
-        profileVisibility: r.payload.profileVisibility
-      }, { tx: transaction });
 
-      await userController.updateWorkerProfileVisibility({
-        profileVisibility: r.payload.profileVisibility,
-      }, { tx: transaction });
+      await userController.updateWorkerProfileVisibility(r.payload.profileVisibility, { tx: transaction });
     }
     if (userRole === UserRole.Employer) {
-      await userController.updateEmployerProfileVisibility({
-        profileVisibility: r.payload.profileVisibility,
-      }, { tx: transaction });
+      await userController.updateEmployerProfileVisibility(r.payload.profileVisibility, { tx: transaction });
     }
-    
+
     await Promise.all([
       user.update({
         ...phonesFields,

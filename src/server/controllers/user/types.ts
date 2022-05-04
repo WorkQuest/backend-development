@@ -1,7 +1,7 @@
 import {
-  EmployerProfileVisibilitySetting,
   UserRole,
-  UserStatus, WorkerProfileVisibilitySetting
+  UserStatus,
+  RatingStatus,
 } from "@workquest/database-models/lib/models";
 
 export interface SetUserRolePayload {
@@ -10,15 +10,11 @@ export interface SetUserRolePayload {
 }
 
 export interface UpdateEmployerProfileVisibilityPayload {
-  profileVisibility: {
-    ratingStatusCanRespondToQuest: number[],
-    ratingStatusInMySearch: number[],
-  },
+  ratingStatusCanRespondToQuest: RatingStatus[];
+  ratingStatusInMySearch: RatingStatus[];
 }
 
 export interface UpdateWorkerProfileVisibilityPayload {
-  profileVisibility: {
-    ratingStatusCanInviteMeOnQuest: number[],
-    ratingStatusInMySearch: number[],
-  },
+  ratingStatusCanInviteMeOnQuest: RatingStatus[];
+  ratingStatusInMySearch: RatingStatus[];
 }

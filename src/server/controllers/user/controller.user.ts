@@ -6,7 +6,8 @@ import { totpValidate } from "@workquest/database-models/lib/utils";
 import { SkillsFiltersController } from "../controller.skillsFilters";
 import { createReferralProgramJob } from "../../jobs/createReferralProgram";
 import {
-  UpdateEmployerProfileVisibilityPayload, UpdateWorkerProfileVisibilityPayload
+  UpdateWorkerProfileVisibilityPayload,
+  UpdateEmployerProfileVisibilityPayload,
 } from "./types";
 import {
   ChatsStatistic,
@@ -16,6 +17,7 @@ import {
   QuestsStatistic,
   RatingStatistic,
   Session,
+  RatingStatus,
   User,
   UserRaiseStatus,
   UserRaiseView,
@@ -521,39 +523,37 @@ export class UserController {
       });
   }
 
-  public async updateEmployerProfileVisibility(payload: UpdateEmployerProfileVisibilityPayload, options: { tx?: Transaction }) {
+  public updateEmployerProfileVisibility(payload: UpdateEmployerProfileVisibilityPayload, options: { tx?: Transaction }): Promise<any> {
     let ratingStatusCanRespondToQuest = 0;
     let ratingStatusInMySearch = 0;
 
-    payload.profileVisibility.ratingStatusCanRespondToQuest.forEach(status => {
-      ratingStatusCanRespondToQuest |= status;
-    });
-    payload.profileVisibility.ratingStatusInMySearch.forEach(status => {
-      ratingStatusInMySearch |= status;
-    });
+    payload.ratingStatusInMySearch.forEach(status =>
+      (ratingStatusInMySearch |= status)
+    );
+    payload.ratingStatusCanRespondToQuest.forEach(status =>
+      (ratingStatusCanRespondToQuest |= status)
+    );
 
-    await EmployerProfileVisibilitySetting.update({
-      ratingStatusInMySearch, ratingStatusCanRespondToQuest
-    }, {
-      where: { userId: this.user.id }, transaction: options.tx
+    return EmployerProfileVisibilitySetting.update({ ratingStatusInMySearch, ratingStatusCanRespondToQuest }, {
+      where: { userId: this.user.id },
+      transaction: options.tx,
     });
   }
 
-  public async updateWorkerProfileVisibility(payload: UpdateWorkerProfileVisibilityPayload, options: { tx?: Transaction }) {
-    let ratingStatusCanInviteMeOnQuest = 0;
-    let ratingStatusInMySearch = 0;
+  public updateWorkerProfileVisibility(payload: UpdateWorkerProfileVisibilityPayload, options: { tx?: Transaction }): Promise<any> {
+    let ratingStatusCanInviteMeOnQuest = RatingStatus.NoStatus;
+    let ratingStatusInMySearch = RatingStatus.NoStatus;
 
-    payload.profileVisibility.ratingStatusCanInviteMeOnQuest.forEach(status => {
-      ratingStatusCanInviteMeOnQuest |= status;
-    });
-    payload.profileVisibility.ratingStatusInMySearch.forEach(status => {
-      ratingStatusInMySearch |= status;
-    });
+    payload.ratingStatusInMySearch.forEach(status =>
+      (ratingStatusInMySearch |= status)
+    );
+    payload.ratingStatusCanInviteMeOnQuest.forEach(status =>
+      (ratingStatusCanInviteMeOnQuest |= status)
+    );
 
-    await WorkerProfileVisibilitySetting.update({
-      ratingStatusInMySearch, ratingStatusCanInviteMeOnQuest
-    }, {
-      where: { userId: this.user.id }, transaction: options.tx
+    return  WorkerProfileVisibilitySetting.update({ ratingStatusInMySearch, ratingStatusCanInviteMeOnQuest }, {
+      where: { userId: this.user.id },
+      transaction: options.tx,
     });
   }
 }
