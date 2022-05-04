@@ -12,6 +12,7 @@ import {
   ChatData,
   ChatType,
   Message,
+  User,
   UserRole,
   GroupChat,
   QuestChat,
@@ -330,6 +331,21 @@ export class ChatController {
     });
   }
 
+  public getUserMember(userMember: User): Promise<ChatMember> {
+    return ChatMember.findOne({
+      where: {
+        chatId: this.chat.id,
+        userId: userMember.id,
+      },
+    });
+  }
+
+  public getMembers(options: { exclude } = {}): Promise<Readonly<ChatMember>[]> {
+    return ChatMember.findAll({
+      where: { chatId: this.chat.id }
+    });
+  }
+
   public async sendMessage(payload: SendMessageToChatPayload, options: { tx?: Transaction } = {}): Promise<Message> {
     const lastMessage = await this.lastMessage(options);
 
@@ -341,9 +357,15 @@ export class ChatController {
       text: payload.text,
     }, { transaction: options.tx });
 
-    await message.$set('medias', payload.medias as Media[],  {
-      transaction: options.tx,
-    });
+    await Promise.all([
+      ChatData.update({ lastMessageId: message.id }, {
+        where: { chatId: this.chat.id },
+        transaction: options.tx,
+      }),
+      message.$set('medias', payload.medias as Media[],  {
+        transaction: options.tx,
+      }),
+    ]);
 
     return message;
   }
@@ -535,12 +557,6 @@ export class GroupChatController extends ChatController {
     public readonly ownerMember: ChatMember,
   ) {
     super(chat);
-  }
-
-  public getMembers(): Promise<Readonly<ChatMember>[]> {
-    return ChatMember.findAll({
-      where: { chatId: this.chat.id }
-    });
   }
 
   public async toDtoResult() {

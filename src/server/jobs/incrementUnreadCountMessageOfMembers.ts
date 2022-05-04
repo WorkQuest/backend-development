@@ -5,7 +5,7 @@ import { incrementUnreadCountMessage } from "../queries";
 export type UnreadMessageIncrementPayload = {
   chatId: string;
   skipMemberIds: string[]
-};
+}
 
 export async function incrementUnreadCountMessageOfMembersJob(payload: UnreadMessageIncrementPayload) {
   return addJob('incrementUnreadCountMessageOfMembers', payload);
