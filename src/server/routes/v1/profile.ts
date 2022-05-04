@@ -32,7 +32,7 @@ import {
   userStatisticsSchema,
   userWorkersSchema, workerPayloadSchema, workerQueryForMapPointsSchema,
   workerQuerySchema,
-  workerWagePerHourSchema,
+  workerCostPerHourSchema,
   workPlaceSchema
 } from "@workquest/database-models/lib/schemes";
 
@@ -181,7 +181,7 @@ export default [{
         locationFull: locationFullSchema.allow(null).required(),
         workplace: workPlaceSchema.allow(null).required(),
         additionalInfo: userAdditionalInfoWorkerSchema.required(),
-        wagePerHour: workerWagePerHourSchema.allow(null).required(),
+        costPerHour: workerCostPerHourSchema.allow(null).required(),
         specializationKeys: specializationKeysSchema.required().unique(),
         profileVisibility: profileVisibilitySettingsSchema.required(),
       }).label("EditWorkerProfilePayload")
