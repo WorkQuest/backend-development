@@ -30,7 +30,7 @@
     "@types/dotenv": "^6.1.1",
     "@types/joi": "^14.3.4",
     "@types/validator": "^13.1.0",
-    "@workquest/database-models": "git+https://github.com/WorkQuest/database-models.git#98c40f6a74a62ec3c8ac28c678568a0099539860",
+    "@workquest/database-models": "git+https://github.com/WorkQuest/database-models.git#c009b4f56a79abe5dcf05a8326d8720f5988cf82",
     "amqplib": "^0.8.0",
     "aws-sdk": "^2.918.0",
     "axios": "^0.21.1",
