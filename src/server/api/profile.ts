@@ -18,7 +18,7 @@ import {
   QuestsResponseStatus,
   QuestsStatistic,
   QuestStatus,
-  RatingStatistic,
+  RatingStatistic, RatingStatus,
   ReferralProgramAffiliate,
   User,
   UserChangeRoleData,
@@ -141,16 +141,17 @@ export async function getAllUsers(r) {
     );
   }
 
-  if (r.auth.credentials.role) {
-    r.auth.credentials.role === 'worker' ?
-      include.push({
-        model: WorkerProfileVisibilitySetting,
-        as: 'workerProfileVisibilitySetting',
-      }) && where[Op.and].push(workerProfileVisibilitySearchLiteral) :
-      include.push({
-        model: EmployerProfileVisibilitySetting,
-        as: 'employerProfileVisibilitySetting',
-      }) && where[Op.and].push(employerProfileVisibilitySearchLiteral);
+  if (r.auth.credentials.role === UserRole.Worker) {
+    include.push({
+      model: WorkerProfileVisibilitySetting,
+      as: 'workerProfileVisibilitySetting',
+    }) && where[Op.and].push(workerProfileVisibilitySearchLiteral);
+  }
+  if (r.auth.credentials.role === UserRole.Employer) {
+    include.push({
+      model: EmployerProfileVisibilitySetting,
+      as: 'employerProfileVisibilitySetting',
+    }) && where[Op.and].push(employerProfileVisibilitySearchLiteral);
   }
 
   const { count, rows } = await User.findAndCountAll({
@@ -186,7 +187,9 @@ export function getUsers(role: UserRole, type: 'points' | 'list') {
       '(SELECT "type" FROM "UserRaiseViews" WHERE "userId" = "User"."id" AND "UserRaiseViews"."status" = 0)'
     );
     const userRatingStatisticLiteral = literal(
-      '(SELECT "status" FROM "RatingStatistics" WHERE "userId" = "User"."id")'
+      `(SELECT CASE WHEN "User"."status" = ${RatingStatus.TopRanked} THEN 0 WHEN "User"."status" = ${RatingStatus.Reliable} THEN 1 ` +
+      `WHEN "User"."status" = ${RatingStatus.Verified} THEN 2 WHEN "User"."status" = ${RatingStatus.NoStatus} THEN 3 END ` +
+      `FROM "RatingStatistics" WHERE "userId" = "User"."id") `
     );
     const employerProfileVisibilitySearchLiteral = literal(
       `( CASE WHEN "User"."role" = 'worker' THEN ` +
@@ -264,18 +267,18 @@ export function getUsers(role: UserRole, type: 'points' | 'list') {
       order.push([key, value]);
     }
 
-    if (r.auth.credentials.role) {
-      r.auth.credentials.role === 'worker' ?
-        include.push({
-          model: WorkerProfileVisibilitySetting,
-          as: 'workerProfileVisibilitySetting',
-        }) && where[Op.and].push(workerProfileVisibilitySearchLiteral) :
-        include.push({
-          model: EmployerProfileVisibilitySetting,
-          as: 'employerProfileVisibilitySetting',
-        }) && where[Op.and].push(employerProfileVisibilitySearchLiteral);
+    if (r.auth.credentials.role === UserRole.Worker) {
+      include.push({
+        model: WorkerProfileVisibilitySetting,
+        as: 'workerProfileVisibilitySetting',
+      }) && where[Op.and].push(workerProfileVisibilitySearchLiteral);
     }
-
+    if (r.auth.credentials.role === UserRole.Employer) {
+      include.push({
+        model: EmployerProfileVisibilitySetting,
+        as: 'employerProfileVisibilitySetting',
+      }) && where[Op.and].push(employerProfileVisibilitySearchLiteral);
+    }
     if (type === 'list') {
       const { count, rows } = await User.findAndCountAll({
         distinct: true,
@@ -348,19 +351,17 @@ export function editProfile(userRole: UserRole) {
       await userController.updateEmployerProfileVisibility(r.payload.profileVisibility, { tx: transaction });
     }
 
-    await Promise.all([
-      user.update({
-        ...phonesFields,
-        ...locationFields,
-        avatarId: avatarId,
-        lastName: r.payload.lastName,
-        firstName: r.payload.firstName,
-        priority: r.payload.priority || null,
-        workplace: r.payload.workplace || null,
-        wagePerHour: r.payload.wagePerHour || null,
-        additionalInfo: r.payload.additionalInfo,
-      }, transaction),
-    ]);
+    await user.update({
+      ...phonesFields,
+      ...locationFields,
+      avatarId: avatarId,
+      lastName: r.payload.lastName,
+      firstName: r.payload.firstName,
+      priority: r.payload.priority || null,
+      workplace: r.payload.workplace || null,
+      wagePerHour: r.payload.wagePerHour || null,
+      additionalInfo: r.payload.additionalInfo,
+    }, transaction);
 
     await transaction.commit();
 
