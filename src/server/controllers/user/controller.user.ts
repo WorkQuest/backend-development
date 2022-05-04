@@ -6,7 +6,7 @@ import { totpValidate } from "@workquest/database-models/lib/utils";
 import { SkillsFiltersController } from "../controller.skillsFilters";
 import { createReferralProgramJob } from "../../jobs/createReferralProgram";
 import {
-  UpdateEmployerProfileVisibilityPayload,
+  UpdateEmployerProfileVisibilityPayload, UpdateWorkerProfileVisibilityPayload
 } from "./types";
 import {
   ChatsStatistic,
@@ -528,7 +528,7 @@ export class UserController {
     payload.profileVisibility.ratingStatusCanRespondToQuest.forEach(status => {
       ratingStatusCanRespondToQuest |= status;
     });
-    payload.profileVisibility.ratingStatusCanRespondToQuest.forEach(status => {
+    payload.profileVisibility.ratingStatusInMySearch.forEach(status => {
       ratingStatusInMySearch |= status;
     });
 
@@ -539,14 +539,14 @@ export class UserController {
     });
   }
 
-  public async updateWorkerProfileVisibility(payload: UpdateEmployerProfileVisibilityPayload, options: { tx?: Transaction }) {
+  public async updateWorkerProfileVisibility(payload: UpdateWorkerProfileVisibilityPayload, options: { tx?: Transaction }) {
     let ratingStatusCanInviteMeOnQuest = 0;
     let ratingStatusInMySearch = 0;
 
-    payload.profileVisibility.ratingStatusCanRespondToQuest.forEach(status => {
+    payload.profileVisibility.ratingStatusCanInviteMeOnQuest.forEach(status => {
       ratingStatusCanInviteMeOnQuest |= status;
     });
-    payload.profileVisibility.ratingStatusCanRespondToQuest.forEach(status => {
+    payload.profileVisibility.ratingStatusInMySearch.forEach(status => {
       ratingStatusInMySearch |= status;
     });
 

@@ -16,6 +16,9 @@ export interface UpdateEmployerProfileVisibilityPayload {
   },
 }
 
-// export interface UpdateWorkerProfileVisibilityPayload {
-//   profileVisibility: WorkerProfileVisibilitySetting,
-// }
+export interface UpdateWorkerProfileVisibilityPayload {
+  profileVisibility: {
+    ratingStatusCanInviteMeOnQuest: number[],
+    ratingStatusInMySearch: number[],
+  },
+}

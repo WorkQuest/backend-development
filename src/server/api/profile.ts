@@ -18,7 +18,7 @@ import {
   QuestsResponseStatus,
   QuestsStatistic,
   QuestStatus,
-  RatingStatistic, RatingStatus,
+  RatingStatistic,
   ReferralProgramAffiliate,
   User,
   UserChangeRoleData,
@@ -164,6 +164,8 @@ export async function getAllUsers(r) {
 
 export function getUsers(role: UserRole, type: 'points' | 'list') {
   return async function(r) {
+    const user: User = r.auth.credentials;
+
     const entersAreaLiteral = literal(
       'st_within("User"."locationPostGIS", st_makeenvelope(:northLng, :northLat, :southLng, :southLat, 4326))'
     );
@@ -186,17 +188,17 @@ export function getUsers(role: UserRole, type: 'points' | 'list') {
     const employerProfileVisibilitySearchLiteral = literal(
       `( CASE WHEN "User"."role" = 'worker' THEN ` +
       '(CASE WHEN EXISTS (SELECT "usr"."id" FROM "Users" as "usr" ' +
-      `INNER JOIN "EmployerProfileVisibilitySettings" as "pvs" ON "pvs"."userId" = '${ r.auth.credentials.id }' ` +
+      `INNER JOIN "EmployerProfileVisibilitySettings" as "pvs" ON "pvs"."userId" = '${ user.id }' ` +
       'INNER JOIN "RatingStatistics" as rtn ON "rtn"."userId" = "User"."id" ' +
-      'WHERE ("rtn"."status" & "pvs"."ratingStatusInMySearch" > 0)) THEN TRUE ELSE FALSE END) ' +
+      'WHERE ("rtn"."status" & "pvs"."ratingStatusInMySearch" != 0)) THEN TRUE ELSE FALSE END) ' +
       'ELSE TRUE END) '
     );
     const workerProfileVisibilitySearchLiteral = literal(
       `( CASE WHEN "User"."role" = 'worker' THEN ` +
       '(CASE WHEN EXISTS (SELECT "usr"."id" FROM "Users" as "usr" ' +
-      `INNER JOIN "WorkerProfileVisibilitySettings" as "pvs" ON "pvs"."userId" = '${ r.auth.credentials.id }' ` +
+      `INNER JOIN "WorkerProfileVisibilitySettings" as "pvs" ON "pvs"."userId" = '${ user.id }' ` +
       'INNER JOIN "RatingStatistics" as rtn ON "rtn"."userId" = "User"."id" ' +
-      'WHERE ("rtn"."status" & "pvs"."ratingStatusInMySearch" > 0)) THEN TRUE ELSE FALSE END) ' +
+      'WHERE ("rtn"."status" & "pvs"."ratingStatusInMySearch" != 0)) THEN TRUE ELSE FALSE END) ' +
       'ELSE TRUE END) '
     );
 
@@ -339,18 +341,18 @@ export function editProfile(userRole: UserRole) {
       await userController.updateWorkerProfileVisibility({
         profileVisibility: r.payload.profileVisibility
       }, { tx: transaction });
+
+      await userController.updateWorkerProfileVisibility({
+        profileVisibility: r.payload.profileVisibility,
+      }, { tx: transaction });
     }
-
-    await userController.updateEmployerProfileVisibility({
-      profileVisibility: r.payload.profileVisibility,
-    }, { tx: transaction });
-
+    if (userRole === UserRole.Employer) {
+      await userController.updateEmployerProfileVisibility({
+        profileVisibility: r.payload.profileVisibility,
+      }, { tx: transaction });
+    }
+    
     await Promise.all([
-      EmployerProfileVisibilitySetting.update({
-        ratingStatusCanRespondToQuest: r.payload.profileVisibility.ratingStatusCanRespondToQuest[0] | r.payload.profileVisibility.ratingStatusCanRespondToQuest[1]
-      }, {
-        where: { userId: r.auth.credentials.id }, transaction,
-      }),
       user.update({
         ...phonesFields,
         ...locationFields,
