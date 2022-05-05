@@ -18,6 +18,7 @@ import {
   QuestsResponse,
   QuestsResponseStatus,
   QuestsResponseType,
+  QuestChatStatuses,
   QuestsReview,
   QuestsStarred,
   QuestStatus,
@@ -98,7 +99,7 @@ export async function getQuest(r) {
       },
       as: 'questChat',
       required: false,
-      where: literal(`"questChat"."employerId" = $employerId AND "Quest"."status" NOT IN (${excludeStatuses.join(',')})`),
+      where: literal(`"questChat"."employerId" = $employerId AND "Quest"."status" NOT IN (${excludeStatuses.join(',')}) AND "questChat"."status" = ${QuestChatStatuses.Open}`),
     });
 
     bind['employerId'] = r.auth.credentials.id;
