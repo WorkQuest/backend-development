@@ -1,30 +1,36 @@
-import { Op, Transaction } from 'sequelize';
-import { error } from '../../utils';
-import config from '../../config/config';
-import { Errors } from '../../utils/errors';
-import { SetUserRolePayload } from "./types";
-import { totpValidate } from '@workquest/database-models/lib/utils';
-import { SkillsFiltersController } from '../controller.skillsFilters';
+import { Op, Transaction } from "sequelize";
+import { error } from "../../utils";
+import config from "../../config/config";
+import { Errors } from "../../utils/errors";
+import { totpValidate } from "@workquest/database-models/lib/utils";
+import { SkillsFiltersController } from "../controller.skillsFilters";
 import { createReferralProgramJob } from "../../jobs/createReferralProgram";
 import {
-  User,
-  Quest,
-  Session,
-  UserRole,
-  UserStatus,
-  QuestDispute,
-  QuestsResponse,
-  UserRaiseView,
+  UpdateWorkerProfileVisibilityPayload,
+  UpdateEmployerProfileVisibilityPayload,
+} from "./types";
+import {
   ChatsStatistic,
-  UserRaiseStatus,
+  defaultUserSettings,
+  EmployerProfileVisibilitySetting,
+  QuestDispute,
   QuestsStatistic,
   RatingStatistic,
-  defaultUserSettings,
-  QuestsResponseStatus,
-  ProfileVisibilitySetting,
-  NetworkProfileVisibility,
+  Session,
+  RatingStatus,
+  User,
+  UserRaiseStatus,
+  UserRaiseView,
+  UserRole,
   UserSpecializationFilter,
-} from '@workquest/database-models/lib/models';
+  UserStatus,
+  WorkerProfileVisibilitySetting
+} from "@workquest/database-models/lib/models";
+
+export interface CreateProfileVisibility {
+  userId: string,
+  role: UserRole,
+}
 
 abstract class UserHelper {
   public abstract user: User;
@@ -258,71 +264,6 @@ abstract class UserHelper {
     await UserRaiseView.create({
       userId: this.user.id,
     });
-  }
-
-  private async checkWorkerSubmittingJobOffer(visitorUserController: UserOldController) {
-    if (visitorUserController.user.role === UserRole.Worker) {
-      throw error(Errors.Forbidden, 'User hide its profile', { userId: this.user.id });
-    }
-
-    const quests = await Quest.unscoped().findAll({
-      where: { userId: visitorUserController.user.id },
-      include: [{
-        model: QuestsResponse.unscoped(),
-        as: 'response',
-        where: {
-          workerId: this.user.id,
-          status: { [Op.notIn]: [
-              QuestsResponseStatus.Closed,
-              QuestsResponseStatus.Rejected,
-            ] },
-        },
-        required: true,
-      }]
-    });
-
-    if (quests.length === 0) {
-      throw error(Errors.Forbidden, 'User hide its profile', { userId: this.user.id });
-    }
-  }
-
-  private async checkEmployerSubmittingJobOffer(visitorUserController: UserOldController) {
-    if (visitorUserController.user.role === UserRole.Employer) {
-      throw error(Errors.Forbidden, 'User hide its profile', { userId: this.user.id });
-    }
-
-    const quests = await Quest.unscoped().findAll({
-      where: { userId: this.user.id, },
-      include: [{
-        model: QuestsResponse.unscoped(),
-        as: 'response',
-        where: {
-          workerId: visitorUserController.user.id,
-          status: { [Op.notIn]: [
-              QuestsResponseStatus.Closed,
-              QuestsResponseStatus.Rejected,
-            ] },
-        },
-        required: true,
-      }]
-    });
-
-    if (quests.length === 0) {
-      throw error(Errors.Forbidden, 'User hide its profile', { userId: this.user.id });
-    }
-  }
-
-  public async canVisitMyProfile(visitorUserController: UserOldController): Promise<this> {
-    const profileVisibility = await ProfileVisibilitySetting.findOne({where: { userId: this.user.id } });
-
-    if (profileVisibility.network === NetworkProfileVisibility.SubmittingOffer && this.user.role === UserRole.Employer) {
-      await this.checkEmployerSubmittingJobOffer(visitorUserController);
-    }
-    if (profileVisibility.network === NetworkProfileVisibility.SubmittingOffer && this.user.role === UserRole.Worker) {
-      await this.checkWorkerSubmittingJobOffer(visitorUserController);
-    }
-
-    return this;
   }
 }
 
@@ -568,5 +509,51 @@ export class UserController {
     }
 
     return additionalInfo;
+  }
+
+  public static async createProfileVisibility(payload: CreateProfileVisibility) {
+    payload.role === 'employer' ?
+      await EmployerProfileVisibilitySetting.findOrCreate({
+        where: { userId: payload.userId },
+        defaults: { userId: payload.userId },
+      }) :
+      await WorkerProfileVisibilitySetting.findOrCreate({
+        where: { userId: payload.userId },
+        defaults: { userId: payload.userId },
+      });
+  }
+
+  public updateEmployerProfileVisibility(payload: UpdateEmployerProfileVisibilityPayload, options: { tx?: Transaction }): Promise<any> {
+    let ratingStatusCanRespondToQuest = 0;
+    let ratingStatusInMySearch = 0;
+
+    payload.ratingStatusInMySearch.forEach(status =>
+      (ratingStatusInMySearch |= status)
+    );
+    payload.ratingStatusCanRespondToQuest.forEach(status =>
+      (ratingStatusCanRespondToQuest |= status)
+    );
+
+    return EmployerProfileVisibilitySetting.update({ ratingStatusInMySearch, ratingStatusCanRespondToQuest }, {
+      where: { userId: this.user.id },
+      transaction: options.tx,
+    });
+  }
+
+  public updateWorkerProfileVisibility(payload: UpdateWorkerProfileVisibilityPayload, options: { tx?: Transaction }): Promise<any> {
+    let ratingStatusCanInviteMeOnQuest = RatingStatus.NoStatus;
+    let ratingStatusInMySearch = RatingStatus.NoStatus;
+
+    payload.ratingStatusInMySearch.forEach(status =>
+      (ratingStatusInMySearch |= status)
+    );
+    payload.ratingStatusCanInviteMeOnQuest.forEach(status =>
+      (ratingStatusCanInviteMeOnQuest |= status)
+    );
+
+    return  WorkerProfileVisibilitySetting.update({ ratingStatusInMySearch, ratingStatusCanInviteMeOnQuest }, {
+      where: { userId: this.user.id },
+      transaction: options.tx,
+    });
   }
 }

@@ -1,6 +1,15 @@
 import { col, fn } from 'sequelize';
 import { addJob } from '../utils/scheduler';
-import { User, Quest, QuestsReview, UserRole, StatusKYC, QuestStatus, RatingStatus, RatingStatistic } from '@workquest/database-models/lib/models';
+import {
+  User,
+  Quest,
+  UserRole,
+  StatusKYC,
+  QuestStatus,
+  RatingStatus,
+  QuestsReview,
+  RatingStatistic,
+} from '@workquest/database-models/lib/models';
 
 /**
  * 1 уровень Verified.
@@ -63,23 +72,23 @@ function ratingStatus(user: User, completedQuestsCount: number, averageMark: num
   const verifiedConditions: RatingConditions = { completedQuests: 10, averageMark: 3.5, socialNetworks: 1 };
 
   if (user.statusKYC !== StatusKYC.Confirmed) {
-    return RatingStatus.noStatus;
+    return RatingStatus.NoStatus;
   }
   if (thisUser.check(verifiedConditions) && !user.phone) {
-    return RatingStatus.verified;
+    return RatingStatus.Verified;
   }
 
   if (thisUser.check(topRankedConditions)) {
-    return RatingStatus.topRanked;
+    return RatingStatus.TopRanked;
   }
   if (thisUser.check(reliableConditions)) {
-    return RatingStatus.reliable;
+    return RatingStatus.Reliable;
   }
   if (thisUser.check(verifiedConditions)) {
-    return RatingStatus.verified;
+    return RatingStatus.Verified;
   }
 
-  return RatingStatus.noStatus;
+  return RatingStatus.NoStatus;
 }
 
 export default async function (payload: StatisticPayload) {

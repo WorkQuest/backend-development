@@ -23,7 +23,6 @@ import {
   QuestsResponseType,
   QuestsResponseStatus,
 } from '@workquest/database-models/lib/models';
-import { UserController } from "../controllers/user/controller.user";
 
 export async function responseOnQuest(r) {
   const { message, medias } = r.payload;
@@ -38,7 +37,7 @@ export async function responseOnQuest(r) {
 
   await checksListWorker
     .checkUserRole(UserRole.Worker)
-    .checkRatingMustMatchVisibilitySettings(questController.quest.user)
+    .checkWorkerRatingMustMatchEmployerVisibilitySettings(questController.quest.user)
   checksListQuest
     .checkQuestStatuses(QuestStatus.Recruitment)
 
@@ -91,7 +90,7 @@ export async function inviteOnQuest(r) {
 
   await checksListEmployer
     .checkUserRole(UserRole.Employer)
-    .checkRatingMustMatchVisibilitySettings(workerController.user)
+    .checkEmployerRatingMustMatchWorkerVisibilitySettings(workerController.user)
   checksListWorker
     .checkUserRole(UserRole.Worker)
   checksListQuest
