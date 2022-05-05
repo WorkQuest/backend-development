@@ -35,7 +35,7 @@ import {
   workerQueryForMapPointsSchema,
   workerQuerySchema,
   workerCostPerHourSchema,
-  workPlaceSchema
+  workPlaceSchema, payPeriodSchema
 } from "@workquest/database-models/lib/schemes";
 
 export default [{
@@ -182,6 +182,7 @@ export default [{
         priority: prioritySchema.allow(null).required(),
         locationFull: locationFullSchema.allow(null).required(),
         workplace: workPlaceSchema.allow(null).required(),
+        payPeriod: payPeriodSchema.allow(null).required(),
         additionalInfo: userAdditionalInfoWorkerSchema.required(),
         costPerHour: workerCostPerHourSchema.allow(null).required(),
         specializationKeys: specializationKeysSchema.required().unique(),

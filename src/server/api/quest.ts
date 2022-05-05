@@ -216,8 +216,9 @@ export function getQuests(type: 'list' | 'points', requester?: 'worker' | 'emplo
       ...(r.query.statuses && { status: { [Op.in]: r.query.statuses } }),
       ...(r.query.priorities && { priority: { [Op.in]: r.query.priorities } }),
       ...(r.query.workplaces && { workplace: { [Op.in]: r.query.workplaces } }),
-      ...(r.query.employments && { employment: { [Op.in]: r.query.employments } }),
+      ...(r.query.typeOfEmployments && { typeOfEmployment: { [Op.in]: r.query.typeOfEmployments } }),
       ...(r.query.priceBetween && { price: { [Op.between]: [r.query.priceBetween.from, r.query.priceBetween.to] } }),
+      ...(r.query.payPeriods && { payPeriod: { [Op.in]: r.query.payPeriods } }),
     };
 
     if (r.query.q) {

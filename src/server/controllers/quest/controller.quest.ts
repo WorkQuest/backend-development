@@ -12,15 +12,15 @@ import {
   QuestsStarred,
   QuestRaiseView,
   QuestEmployment,
-  QuestSpecializationFilter,
-} from '@workquest/database-models/lib/models';
+  QuestSpecializationFilter, PayPeriod
+} from "@workquest/database-models/lib/models";
 
 export interface EditedQuestPayload {
   title: string,
   avatarId: string,
   priority: Priority,
   workplace: WorkPlace,
-  employment: QuestEmployment,
+  typeOfEmployment: QuestEmployment,
   locationFull: {
     location: LocationType;
     locationPlaceName: string;
@@ -37,7 +37,8 @@ export interface CreatedQuestPayload {
   description: string;
   priority: Priority;
   workplace: WorkPlace;
-  employment: QuestEmployment;
+  payPeriod: PayPeriod;
+  typeOfEmployment: QuestEmployment;
 
   locationFull: {
     location: LocationType;
@@ -111,7 +112,8 @@ export class QuestController {
       userId: payload.employer.id,
       status: QuestStatus.Pending,
       workplace: payload.workplace,
-      employment: payload.employment,
+      payPeriod: payload.payPeriod,
+      typeOfEmployment: payload.typeOfEmployment,
       priority: payload.priority,
       title: payload.title,
       description: payload.description,
@@ -130,7 +132,7 @@ export class QuestController {
       avatarId: payload.avatarId,
       priority: payload.priority,
       workplace: payload.workplace,
-      employment: payload.employment,
+      typeOfEmployment: payload.typeOfEmployment,
       location: payload.locationFull.location,
       locationPlaceName: payload.locationFull.locationPlaceName,
       locationPostGIS: transformToGeoPostGIS(payload.locationFull.location),

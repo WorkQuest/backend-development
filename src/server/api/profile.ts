@@ -219,6 +219,7 @@ export function getUsers(role: UserRole, type: 'points' | 'list') {
       ...(r.query.priorities && { priority: r.query.priorities }),
       ...(r.query.workplaces && { workplace: r.query.workplaces }),
       ...(r.query.betweenCostPerHour && { costPerHour: { [Op.between]: [r.query.betweenCostPerHour.from, r.query.betweenCostPerHour.to] } }),
+      ...(r.query.payPeriods && { payPeriod: { [Op.in]: r.query.payPeriods } }),
     };
 
     if (r.query.q) {
@@ -359,6 +360,7 @@ export function editProfile(userRole: UserRole) {
       firstName: r.payload.firstName,
       priority: r.payload.priority || null,
       workplace: r.payload.workplace || null,
+      payPeriod: r.payload.payPeriod || null,
       costPerHour: r.payload.costPerHour || null,
       additionalInfo: r.payload.additionalInfo,
     }, transaction);

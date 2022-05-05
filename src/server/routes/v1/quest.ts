@@ -55,7 +55,7 @@ export default [{
     validate: {
       payload: Joi.object({
         workplace: workPlaceSchema.required(),
-        employment: questEmploymentSchema.required(),
+        typeOfEmployment: questEmploymentSchema.required(),
         priority: prioritySchema.required(),
         locationFull: locationFullSchema.required(),
         title: questTitleSchema.required(),
@@ -250,7 +250,7 @@ export default [{
       }).label("EditQuestParams"),
       payload: Joi.object({
         workplace: workPlaceSchema.required(),
-        employment: questEmploymentSchema.required(),
+        typeOfEmployment: questEmploymentSchema.required(),
         priority: prioritySchema.required(),
         locationFull: locationFullSchema.required(),
         title: questTitleSchema.required(),
