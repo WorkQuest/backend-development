@@ -16,10 +16,10 @@ import {
 } from "@workquest/database-models/lib/models";
 
 export interface EditedQuestPayload {
-  title: string,
   avatarId: string,
   priority: Priority,
   workplace: WorkPlace,
+  payPeriod: PayPeriod,
   typeOfEmployment: QuestEmployment,
   locationFull: {
     location: LocationType;
@@ -128,10 +128,10 @@ export class QuestController {
 
   public async update(payload: EditedQuestPayload, options: { tx?: Transaction } = {}) {
     await this.quest.update({
-      title: payload.title,
       avatarId: payload.avatarId,
       priority: payload.priority,
       workplace: payload.workplace,
+      payPeriod: payload.payPeriod,
       typeOfEmployment: payload.typeOfEmployment,
       location: payload.locationFull.location,
       locationPlaceName: payload.locationFull.locationPlaceName,
