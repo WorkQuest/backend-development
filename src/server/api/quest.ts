@@ -35,6 +35,8 @@ export const searchQuestFields = [
 export async function getQuest(r) {
   const user: User = r.auth.credentials;
 
+  const bind = {};
+
   const include = [{
     model: QuestsStarred,
     as: "star",
@@ -78,8 +80,33 @@ export async function getQuest(r) {
     });
   }
 
+  if (user.role === UserRole.Employer) {
+    const excludeStatuses = [
+      QuestStatus.Closed,
+      QuestStatus.Dispute,
+      QuestStatus.Blocked,
+      QuestStatus.Pending,
+      QuestStatus.Recruitment,
+      QuestStatus.WaitingForConfirmFromWorkerOnAssign
+    ];
+
+    include.push({
+      model: QuestChat.scope('idsOnly'),
+      attributes: {
+        include: [[literal('CASE WHEN "questChat"."chatId" IS NULL THEN NULL ELSE "chatId" END'), 'chatId']],
+        exclude: ['createdAt', 'updatedAt', 'status', 'id'],
+      },
+      as: 'questChat',
+      required: false,
+      where: literal(`"questChat"."employerId" = $employerId AND "Quest"."status" NOT IN (${excludeStatuses.join(',')})`),
+    });
+
+    bind['employerId'] = r.auth.credentials.id;
+  }
+
   const quest = await Quest.findOne({
     where: { id: r.params.questId },
+    bind,
     include,
   });
 
