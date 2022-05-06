@@ -44,7 +44,6 @@ export class QuestsInviteController {
       avatar: this.worker.avatar,
       ratingStatistic: this.worker.ratingStatistic,
       raiseView: this.worker.raiseView,
-      additionalInfo: this.worker.additionalInfo,
     };
 
     questResponseJson['quest'] = questJson;
@@ -109,7 +108,6 @@ export class QuestResponseController {
       avatar: this.worker.avatar,
       ratingStatistic: this.worker.ratingStatistic,
       raiseView: this.worker.raiseView,
-      additionalInfo: this.worker.additionalInfo,
     };
 
     questResponseJson['quest'] = questJson;
