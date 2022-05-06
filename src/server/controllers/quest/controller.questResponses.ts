@@ -47,15 +47,6 @@ export class QuestsInviteController {
       additionalInfo: this.worker.additionalInfo,
     };
 
-    questResponseJson['employer'] = {
-      id: this.quest.user.id,
-      firstName: this.quest.user.firstName,
-      lastName: this.quest.user.lastName,
-      avatar: this.quest.user.avatar,
-      ratingStatistic: this.quest.user.ratingStatistic,
-      additionalInfo: this.quest.user.additionalInfo,
-    };
-
     questResponseJson['quest'] = questJson;
 
     return questResponseJson;
@@ -119,15 +110,6 @@ export class QuestResponseController {
       ratingStatistic: this.worker.ratingStatistic,
       raiseView: this.worker.raiseView,
       additionalInfo: this.worker.additionalInfo,
-    };
-
-    questResponseJson['employer'] = {
-      id: this.quest.user.id,
-      firstName: this.quest.user.firstName,
-      lastName: this.quest.user.lastName,
-      avatar: this.quest.user.avatar,
-      ratingStatistic: this.quest.user.ratingStatistic,
-      additionalInfo: this.quest.user.additionalInfo,
     };
 
     questResponseJson['quest'] = questJson;
