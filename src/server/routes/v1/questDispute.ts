@@ -7,10 +7,12 @@ import {
   outputOkSchema,
   questDisputeSchema,
   questDisputeReviewSchema,
+  questDisputeReasonSchema,
   questDisputesWithCountSchema,
   questDisputeReviewMarkSchema,
   questDisputeReviewMessageTextSchema,
-} from '@workquest/database-models/lib/schemes';
+  questDisputeProblemDescriptionSchema
+} from "@workquest/database-models/lib/schemes";
 
 export default [
   {
@@ -48,7 +50,7 @@ export default [
         }).label('GetDisputesQuery'),
       },
       response: {
-        schema: questDisputesWithCountSchema.label('getDisputesResponse'),
+        schema: outputOkSchema(questDisputesWithCountSchema).label('getDisputesResponse'),
       },
     },
   },
@@ -71,8 +73,31 @@ export default [
         }).label('QuestDisputeSendReviewPayload'),
       },
       response: {
-        schema: questDisputeReviewSchema.label('QuestDisputeSendReviewResponse'),
+        schema: outputOkSchema(questDisputeReviewSchema).label('QuestDisputeSendReviewResponse'),
       },
     },
   },
+  {
+    method: 'POST',
+    path: '/v1/quest/{questId}/dispute',
+    handler: handlers.createDispute,
+    options: {
+      id: 'v1.quest.dispute.createDispute',
+      auth: 'jwt-access',
+      tags: ['api', 'quest-disputes'],
+      description: 'Create dispute',
+      validate: {
+        params: Joi.object({
+          questId: idSchema.required(),
+        }).label('QuestDisputeCreateParams'),
+        payload: Joi.object({
+          reason: questDisputeReasonSchema.required(),
+          problemDescription: questDisputeProblemDescriptionSchema.required()
+        }).label('QuestDisputeCreatePayload')
+      },
+      response: {
+        schema: outputOkSchema(questDisputeSchema).label('QuestDisputeCreateResponse'),
+      }
+    }
+  }
 ];

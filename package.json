@@ -28,9 +28,9 @@
     "@hapi/vision": "^6.0.0",
     "@types/bluebird": "^3.5.32",
     "@types/dotenv": "^6.1.1",
-    "@types/joi": "^14.3.4",
+    "@types/joi": "^14.3.4",7aff56b4f409d16ee4d48d600bb386139ae06edb
     "@types/validator": "^13.1.0",
-    "@workquest/database-models": "git+https://github.com/WorkQuest/database-models.git#1c0e8ca375ba5db166d1edd326eac0f404ce7eeb",
+    "@workquest/database-models": "git+https://github.com/WorkQuest/database-models.git#7aff56b4f409d16ee4d48d600bb386139ae06edb7aff56b4f409d16ee4d48d600bb386139ae06edb7aff56b4f409d16ee4d48d600bb386139ae06edb7aff56b4f409d16ee4d48d600bb386139ae06edb7aff56b4f409d16ee4d48d600bb386139ae06edb",
     "amqplib": "^0.8.0",
     "aws-sdk": "^2.918.0",
     "axios": "^0.21.1",
