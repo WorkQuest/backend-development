@@ -14,6 +14,7 @@ import {
   QuestChatStatuses,
   QuestsResponseType,
 } from '@workquest/database-models/lib/models';
+import quest from "../../routes/v1/quest";
 
 export interface CreateQuestChatPayload {
   readonly worker: User;
@@ -30,10 +31,14 @@ export class QuestChatController {
   ) {
   }
 
-  public toDto(): object {
+  public async toDto(): Promise <object> {
+    const worker = await User.scope('short').findByPk(this.questChat.workerId);
+
     const chat = this.chat.toJSON();
 
     chat['questChat'] = this.questChat.toJSON();
+
+    chat['questChat']['worker'] = worker.toJSON();
 
     return chat;
   }
