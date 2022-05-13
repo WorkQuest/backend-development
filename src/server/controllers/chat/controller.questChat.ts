@@ -14,7 +14,6 @@ import {
   QuestChatStatuses,
   QuestsResponseType,
 } from '@workquest/database-models/lib/models';
-import quest from "../../routes/v1/quest";
 
 export interface CreateQuestChatPayload {
   readonly worker: User;
