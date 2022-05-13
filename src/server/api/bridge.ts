@@ -63,5 +63,5 @@ export async function getRecipientSwaps(r) {
     });
   }
 
-  return output({ count, swaps });
+  return output({ count, events: swaps });
 }
