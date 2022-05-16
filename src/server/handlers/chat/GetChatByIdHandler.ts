@@ -1,6 +1,6 @@
 import { HandlerDecoratorBase, IHandler } from "../types";
-import { Chat, Media } from "@workquest/database-models/lib/models";
-import { MediaValidator } from "../media/MediaValidator"
+import { Chat } from "@workquest/database-models/lib/models";
+import { GetChatByIdValidator } from "./GetChatByIdValidator";
 
 export interface GetChatByIdCommand {
   readonly chatId: string;
@@ -12,24 +12,22 @@ export class GetChatByIdHandler implements IHandler<GetChatByIdCommand, Promise<
   }
 }
 
-export class GetChatByIdPostValidationHandler<Tin extends { medias: Media[] }> extends HandlerDecoratorBase<Tin, Promise<Media[]>> {
-  private readonly validator: MediaValidator;
+export class GetChatByIdPostValidationHandler<Tin extends { chatId: string }> extends HandlerDecoratorBase<Tin, Promise<Chat>> {
+  private readonly validator: GetChatByIdValidator;
 
   constructor(
-    protected readonly decorated: IHandler<Tin, Promise<Media[]>>,
+    protected readonly decorated: IHandler<Tin, Promise<Chat>>,
   ) {
     super(decorated);
 
-    this.validator = new MediaValidator();
+    this.validator = new GetChatByIdValidator();
   }
 
-  public async Handle(command: Tin): Promise<Media[]> {
-    const medias = await this.decorated.Handle(command);
+  public async Handle(command: Tin): Promise<Chat> {
+    const chat = await this.decorated.Handle(command);
 
-    for (const media of medias) {
-      await this.validator.MediaMustExists(media);
-    }
+    this.validator.NotNull(chat);
 
-    return medias;
+    return chat;
   }
 }

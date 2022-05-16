@@ -5,7 +5,7 @@ import { Errors } from "../../../utils/errors";
 export class ChatMemberValidator {
   public NotNull(chat: Chat, member: ChatMember) {
     if (!member) {
-      throw error(Errors.Forbidden, 'Member is not found', {
+      throw error(Errors.NotFound, 'Member is not found', {
         chatId: chat.id,
         member: member.id,
       });
