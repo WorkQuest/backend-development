@@ -58,7 +58,7 @@ export class GetMediasPostValidationHandler<Tin extends { mediaIds: ReadonlyArra
     const medias = await this.decorated.Handle(command);
 
     for (const media of medias) {
-      await this.validator.MediasMustExist(media);
+      await this.validator.MediaMustExists(media);
     }
 
     return medias;

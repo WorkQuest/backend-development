@@ -2,7 +2,7 @@ import * as aws from "aws-sdk";
 import { error } from "../../utils";
 import config from "../../config/config";
 import { Errors } from "../../utils/errors";
-import { Media } from "@workquest/database-models/lib/models";
+import { Media, User } from "@workquest/database-models/lib/models";
 
 export class MediaValidator {
   private spaces = new aws.S3({
@@ -18,7 +18,18 @@ export class MediaValidator {
       if (err.code === 'NoSuchKey')       {
         throw error(Errors.InvalidPayload, 'Media is not exists', { mediaId: media.id });
       }
-      throw err;
+      throw error(Errors.UnknownBucketError, 'Unknown bucket error', {});
+    }
+  }
+
+  public HasCompleteSetValidate(medias: Media[], mediaIds: string[]) {
+    if (medias.length !== mediaIds.length) {
+      const notFountUserIds = medias.map(user => {
+        if (!mediaIds.includes(user.id)) {
+          return user.id
+        }
+      });
+      throw error(Errors.NotFound, 'Users not found', { userIds: notFountUserIds });
     }
   }
 }
