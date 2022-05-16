@@ -1,9 +1,6 @@
 import { HandlerDecoratorBase, IHandler } from "../types";
 import { Chat, ChatMember, Media } from "@workquest/database-models/lib/models";
-import { error } from "../../utils";
-import { Errors } from "../../utils/errors";
-import * as aws from 'aws-sdk';
-import config from '../../config/config';
+import { MediaValidator } from "./MediaValidator";
 
 export interface GetMediaByIdCommand {
   readonly mediaId: string;
@@ -62,7 +59,7 @@ export class GetMediasPostValidationHandler<Tin extends { medias: Media[] }> ext
     const medias = await this.decorated.Handle(command);
 
     for (const media of medias) {
-      await this.validator.MediasMustExists(media);
+      await this.validator.MediasMustExist(media);
     }
 
     return medias;

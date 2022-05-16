@@ -11,8 +11,18 @@ export class MediaValidator {
     endpoint: config.cdn.endpoint,
   });
 
-  //TODO: private
   public async MediaMustExists(media: Media) {
+    try {
+      await this.spaces.getObjectAcl({ Bucket: config.cdn.bucket, Key: media.hash }).promise();
+    } catch (err) {
+      if (err.code === 'NoSuchKey')       {
+        throw error(Errors.InvalidPayload, 'Media is not exists', { mediaId: media.id });
+      }
+      throw err;
+    }
+  }
+
+  public async MediasMustExist(media: Media) {
     try {
       //TODO: test with amazon bucket and without cycle
       await this.spaces.getObjectAcl({ Bucket: config.cdn.bucket, Key: media.hash }).promise();
@@ -24,3 +34,4 @@ export class MediaValidator {
     }
   }
 }
+
