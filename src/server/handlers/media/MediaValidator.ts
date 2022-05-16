@@ -1,8 +1,8 @@
 import * as aws from "aws-sdk";
-import config from "../../config/config";
-import { Media } from "@workquest/database-models/lib/models";
 import { error } from "../../utils";
+import config from "../../config/config";
 import { Errors } from "../../utils/errors";
+import { Media } from "@workquest/database-models/lib/models";
 
 export class MediaValidator {
   private spaces = new aws.S3({
@@ -13,18 +13,6 @@ export class MediaValidator {
 
   public async MediaMustExists(media: Media) {
     try {
-      await this.spaces.getObjectAcl({ Bucket: config.cdn.bucket, Key: media.hash }).promise();
-    } catch (err) {
-      if (err.code === 'NoSuchKey')       {
-        throw error(Errors.InvalidPayload, 'Media is not exists', { mediaId: media.id });
-      }
-      throw err;
-    }
-  }
-
-  public async MediasMustExist(media: Media) {
-    try {
-      //TODO: test with amazon bucket and without cycle
       await this.spaces.getObjectAcl({ Bucket: config.cdn.bucket, Key: media.hash }).promise();
     } catch (err) {
       if (err.code === 'NoSuchKey')       {

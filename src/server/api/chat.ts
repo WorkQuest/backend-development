@@ -40,7 +40,11 @@ import {
 import { LeaveFromGroupChatHandler } from '../handlers/chat/group-chat/LeaveFromGroupChatHandler';
 import { SendMessageToChatHandler } from '../handlers/chat/SendMessageToChatHandler';
 import { GetChatByIdHandler } from '../handlers/chat/GetChatByIdHandler';
-import { GetMediaByIdsHandler, GetMediaPostValidationHandler } from '../handlers/media/GetMediaByIdHandlers';
+import {
+  GetMediaByIdsHandler,
+  GetMediaPostValidationHandler,
+  GetMediasPostValidationHandler
+} from '../handlers/media/GetMediaByIdHandlers';
 
 export const searchChatFields = ['name'];
 
@@ -298,7 +302,7 @@ export async function sendMessageToChat(r) {
 
   const chat = await new GetChatByIdHandler().Handle({ chatId });
 
-  const medias = await new GetMediaPostValidationHandler(
+  const medias = await new GetMediasPostValidationHandler(
     new GetMediaByIdsHandler()
   ).Handle({ mediaIds })
 
