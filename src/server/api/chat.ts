@@ -40,6 +40,7 @@ import {
   GetChatMemberByIdHandler, GetChatMemberByUserHandler,
   GetChatMemberPostAccessPermission, GetChatMemberPostValidationHandler
 } from '../handlers/chat/chat-member/GetChatMemberHandlers';
+import { LeaveFromGroupChatHandler } from '../handlers/chat/group-chat/LeaveFromGroupChatHandler';
 
 export const searchChatFields = ['name'];
 
@@ -443,24 +444,24 @@ export async function removeMemberFromGroupChat(r) {
     )
   ).Handle({ member, groupChat, deletionInitiator: meMember });
 
-  await resetUnreadCountMessagesOfMemberJob({
-    memberId: meMember.id,
-    chatId: groupChat.id,
-    lastReadMessage: { id: messageWithInfo.id, number: messageWithInfo.number },
-  });
-  await incrementUnreadCountMessageOfMembersJob({
-    skipMemberIds: [meMember.id],
-    chatId: groupChat.id,
-  });
-  await setMessageAsReadJob({
-    senderMemberId: meMember.id,
-    chatId: groupChat.id,
-    lastUnreadMessage: { id: messageWithInfo.id, number: messageWithInfo.number },
-  });
-  await updateCountUnreadChatsJob({
-    chatId: groupChat.id,
-    skipMembersIds: [meMember.id],
-  });
+  // await resetUnreadCountMessagesOfMemberJob({
+  //   memberId: meMember.id,
+  //   chatId: groupChat.id,
+  //   lastReadMessage: { id: messageWithInfo.id, number: messageWithInfo.number },
+  // });
+  // await incrementUnreadCountMessageOfMembersJob({
+  //   skipMemberIds: [meMember.id],
+  //   chatId: groupChat.id,
+  // });
+  // await setMessageAsReadJob({
+  //   senderMemberId: meMember.id,
+  //   chatId: groupChat.id,
+  //   lastUnreadMessage: { id: messageWithInfo.id, number: messageWithInfo.number },
+  // });
+  // await updateCountUnreadChatsJob({
+  //   chatId: groupChat.id,
+  //   skipMembersIds: [meMember.id],
+  // });
 
   // r.server.app.broker.sendChatNotification({
   //   action: ChatNotificationActions.groupChatDeleteUser,
@@ -486,29 +487,18 @@ export async function leaveFromGroupChat(r) {
     )
   ).Handle({ chat: groupChat, user: meUser });
 
+  const messageWithInfo = await new LeaveFromGroupChatHandler(r.server.app.db)
+    .Handle({ member: meMember, groupChat });
 
-
-  const [infoMessage] = await r.server.app.db.transaction(async (tx) => {
-    return await groupChatService.leaveChat({
-      member: meMember
-    }, {
-      tx,
-      notifyWithInfoMessage: true
-    });
-  }) as [Message];
-
-  /** Стоит обновлять counts для мемберов всех чатов */
-  const members = await groupChatService.getMembers();
-
-  await incrementUnreadCountMessageOfMembersJob({
-    chatId: groupChatService.getChat().id,
-    skipMemberIds: [meMember.id],
-  });
-  await setMessageAsReadJob({
-    chatId: groupChatService.getChat().id,
-    senderMemberId: meMember.id,
-    lastUnreadMessage: { id: infoMessage.id, number: infoMessage.number },
-  });
+  // await incrementUnreadCountMessageOfMembersJob({
+  //   chatId: groupChatService.getChat().id,
+  //   skipMemberIds: [meMember.id],
+  // });
+  // await setMessageAsReadJob({
+  //   chatId: groupChatService.getChat().id,
+  //   senderMemberId: meMember.id,
+  //   lastUnreadMessage: { id: infoMessage.id, number: infoMessage.number },
+  // });
   // await updateCountUnreadChatsJob({
   //   userIds: members
   //     .filter(m => m.type == MemberType.User)
@@ -524,7 +514,7 @@ export async function leaveFromGroupChat(r) {
   //   data: result,
   // });
 
-  return output(infoMessage);
+  return output(messageWithInfo);
 }
 
 export async function addUsersInGroupChat(r) {
@@ -575,17 +565,16 @@ export async function addUsersInGroupChat(r) {
 
   const lastMessage = await groupChatService.getLastMessage();
 
-  await resetUnreadCountMessagesOfMemberJob({
-    memberId: meMember.id,
-    chatId: groupChatService.getChat().id,
-    lastReadMessage: { id: lastMessage.id, number: lastMessage.number },
-  });
+  // await resetUnreadCountMessagesOfMemberJob({
+  //   memberId: meMember.id,
+  //   chatId: groupChatService.getChat().id,
+  //   lastReadMessage: { id: lastMessage.id, number: lastMessage.number },
+  // });
   // await incrementUnreadCountMessageOfMembersJob({
   //   chatId: group-chat.id,
   //   notifierMemberId: chatController.group-chat.meMember.id,
   //   withoutMemberIds: newMembersIds,
   // });
-
   // await updateCountUnreadChatsJob({
   //   userIds: [r.auth.credentials.id, ...userIdsInChatWithoutSender],
   // });
@@ -596,11 +585,11 @@ export async function addUsersInGroupChat(r) {
   //   senderMemberId: group-chat.meMember.id,
   // });
   //
-  // // r.server.app.broker.sendChatNotification({
-  // //   action: ChatNotificationActions.groupChatAddUser,
-  // //   recipients: userIdsInChatWithoutSender,
-  // //   data: messagesResult,
-  // // });
+  // r.server.app.broker.sendChatNotification({
+  //   action: ChatNotificationActions.groupChatAddUser,
+  //   recipients: userIdsInChatWithoutSender,
+  //   data: messagesResult,
+  // });
   //
   return output(infoMessages);
 }
