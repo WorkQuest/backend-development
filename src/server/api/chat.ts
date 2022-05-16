@@ -25,13 +25,10 @@ import {
   StarredMessage,
   User
 } from '@workquest/database-models/lib/models';
-import { GroupChatService } from '../services/chat/service.chat';
-import { UserService } from '../services/user/service.user';
 import {
   DeletedMemberFromGroupChatHandler,
   DeletedMemberFromGroupChatPreAccessPermissionHandler, DeletedMemberFromGroupChatPreValidateHandler
 } from '../handlers/chat/group-chat/DeletedMemberFromGroupChatHandler';
-import { DeleteMemberFromGroupChatCommand } from '../handlers/chat/group-chat/types';
 import {
   GetGroupChatHandler,
   GetGroupChatPostValidationHandler
@@ -41,6 +38,7 @@ import {
   GetChatMemberPostAccessPermission, GetChatMemberPostValidationHandler
 } from '../handlers/chat/chat-member/GetChatMemberHandlers';
 import { LeaveFromGroupChatHandler } from '../handlers/chat/group-chat/LeaveFromGroupChatHandler';
+import { SendMessageToChatHandler } from '../handlers/chat/SendMessageToChatHandler';
 
 export const searchChatFields = ['name'];
 
@@ -293,68 +291,30 @@ export async function sendMessageToUser(r) {
 export async function sendMessageToChat(r) {
   const meUser: User = r.auth.credentials;
 
-  const { chatId }: string = r.params as { chatId: string };
-  const { text, mediaIds } = r.payload as { text: string, mediaIds: string[] }
+  const { chatId } = r.params as { chatId: string };
+  const { text, mediaIds } = r.payload as { text: string, mediaIds: string[] };
 
-  const medias =
+  new
 
-  const senderUser: User = r.auth.credentials;
+  new SendMessageToChatHandler(r.server.app.db)
 
-  const chatId: string = r.params.chatId;
-  const { text, medias } = r.payload as { text: string, medias: string[] }
-
-  const mediaModels = await MediaController.getMedias(medias);
-
-  const chatController = await ChatControllerFactory.createById(chatId);
-  const checksListChat = new ChecksListChat(chatController.chat);
-
-  const senderMember = await chatController.getUserMember(senderUser);
-
-  await checksListChat
-    .checkChatMemberMustBeInChat(senderMember)
-
-  if (chatController.chat.type === ChatType.Quest) {
-    const questChatController = await QuestChatControllerFactory.createById(chatId);
-
-    const checksListQuestChat = new ChecksListQuestChat(
-      questChatController.chat,
-      questChatController.questChat,
-    );
-
-    await checksListQuestChat
-      .checkQuestChatMastHaveStatus(QuestChatStatuses.Open)
-  }
-
-  const [message] = await r.server.app.db.transaction(async (tx) => {
-    const message = await chatController.sendMessage({
-      text,
-      senderMember,
-      medias: mediaModels,
-    }, { tx });
-
-    return [message];
-  }) as [Message];
-
-  const members = await chatController.getMembers();
-  const membersWithoutSenderMember = members.filter(m => m.id !== senderMember.id);
-
-  await resetUnreadCountMessagesOfMemberJob({
-    memberId: senderMember.id,
-    chatId: chatController.chat.id,
-    lastReadMessage: { id: message.id, number: message.number },
-  });
-  await incrementUnreadCountMessageOfMembersJob({
-    chatId: chatController.chat.id,
-    skipMemberIds: [senderMember.id],
-  });
-  await setMessageAsReadJob({
-    chatId: r.params.chatId,
-    senderMemberId: chatController.chat.meMember.id,
-    lastUnreadMessage: { id: message.id, number: message.number },
-  });
-  await updateCountUnreadChatsJob({
-    members: members,
-  });
+  // await resetUnreadCountMessagesOfMemberJob({
+  //   memberId: senderMember.id,
+  //   chatId: chatController.chat.id,
+  //   lastReadMessage: { id: message.id, number: message.number },
+  // });
+  // await incrementUnreadCountMessageOfMembersJob({
+  //   chatId: chatController.chat.id,
+  //   skipMemberIds: [senderMember.id],
+  // });
+  // await setMessageAsReadJob({
+  //   chatId: r.params.chatId,
+  //   senderMemberId: chatController.chat.meMember.id,
+  //   lastUnreadMessage: { id: message.id, number: message.number },
+  // });
+  // await updateCountUnreadChatsJob({
+  //   members: members,
+  // });
 
   // r.server.app.broker.sendChatNotification({
   //   action: ChatNotificationActions.newMessage,
@@ -362,7 +322,7 @@ export async function sendMessageToChat(r) {
   //   data: message,
   // });
 
-  return output(message);
+  // return output(message);
 }
 
 export async function removeMemberFromGroupChat(r) {
