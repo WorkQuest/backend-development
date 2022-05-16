@@ -39,6 +39,8 @@ import {
 } from '../handlers/chat/chat-member/GetChatMemberHandlers';
 import { LeaveFromGroupChatHandler } from '../handlers/chat/group-chat/LeaveFromGroupChatHandler';
 import { SendMessageToChatHandler } from '../handlers/chat/SendMessageToChatHandler';
+import { GetChatByIdHandler } from '../handlers/chat/GetChatByIdHandler';
+import { GetMediaByIdsHandler, GetMediaPostValidationHandler } from '../handlers/media/GetMediaByIdHandlers';
 
 export const searchChatFields = ['name'];
 
@@ -294,7 +296,13 @@ export async function sendMessageToChat(r) {
   const { chatId } = r.params as { chatId: string };
   const { text, mediaIds } = r.payload as { text: string, mediaIds: string[] };
 
-  new
+  const chat = await new GetChatByIdHandler().Handle({ chatId });
+
+  const medias = await new GetMediaPostValidationHandler(
+    new GetMediaByIdsHandler()
+  ).Handle({ mediaIds })
+
+
 
   new SendMessageToChatHandler(r.server.app.db)
 
