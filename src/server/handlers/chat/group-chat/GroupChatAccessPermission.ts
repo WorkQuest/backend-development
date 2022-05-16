@@ -1,7 +1,6 @@
 import { Chat, ChatMember } from '@workquest/database-models/lib/models';
 import { error } from "../../../utils";
 import { Errors } from "../../../utils/errors";
-import chat from "../../../routes/v1/chat";
 
 export class GroupChatAccessPermission {
   public MemberHasAccess(groupChat: Chat, member: ChatMember) {

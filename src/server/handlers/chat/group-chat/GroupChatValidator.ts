@@ -1,7 +1,6 @@
 import { Chat, ChatMember, ChatType } from "@workquest/database-models/lib/models";
 import { error } from "../../../utils";
 import { Errors } from "../../../utils/errors"
-import { adminWithSecretSchema } from "@workquest/database-models/lib/schemes";
 
 export class GroupChatValidator {
   public NotNull(groupChat: Chat) {

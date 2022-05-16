@@ -1,4 +1,4 @@
-import { Options, HandlerDecoratorBase, IHandler } from '../../types';
+import { Options, IHandler } from '../../types';
 import {
   Chat,
   Message,
