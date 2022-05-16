@@ -25,7 +25,28 @@ export class GetMediaByIdsHandler implements IHandler<GetMediaByIdsCommand, Prom
   }
 }
 
-export class GetMediaPostValidationHandler<Tin extends { medias: Media[] }> extends HandlerDecoratorBase<Tin, Promise<Media[]>> {
+export class GetMediaPostValidationHandler<Tin extends { media: Media }> extends HandlerDecoratorBase<Tin, Promise<Media>> {
+  private readonly validator: MediaValidator;
+
+  constructor(
+    protected readonly decorated: IHandler<Tin, Promise<Media>>,
+  ) {
+    super(decorated);
+
+    this.validator = new MediaValidator();
+  }
+
+  public async Handle(command: Tin): Promise<Media> {
+    const media = await this.decorated.Handle(command);
+
+    await this.validator.MediaMustExists(media);
+
+
+    return media;
+  }
+}
+
+export class GetMediasPostValidationHandler<Tin extends { medias: Media[] }> extends HandlerDecoratorBase<Tin, Promise<Media[]>> {
 
   private readonly validator: MediaValidator;
 
@@ -41,7 +62,7 @@ export class GetMediaPostValidationHandler<Tin extends { medias: Media[] }> exte
     const medias = await this.decorated.Handle(command);
 
     for (const media of medias) {
-      await this.validator.MediaMustExists(media);
+      await this.validator.MediasMustExists(media);
     }
 
     return medias;
@@ -55,7 +76,6 @@ export class MediaValidator {
     endpoint: config.cdn.endpoint,
   });
 
-  //TODO: private
   public async MediaMustExists(media: Media) {
     try {
       //TODO: test with amazon bucket and without cycle
@@ -68,5 +88,16 @@ export class MediaValidator {
     }
   }
 
+  public async MediasMustExists(media: Media) {
+    try {
+      //TODO: test with amazon bucket and without cycle
+      await this.spaces.getObjectAcl({ Bucket: config.cdn.bucket, Key: media.hash }).promise();
+    } catch (err) {
+      if (err.code === 'NoSuchKey')       {
+        throw error(Errors.InvalidPayload, 'Media is not exists', { mediaId: media.id });
+      }
+      throw err;
+    }
+  }
 }
 
