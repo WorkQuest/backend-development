@@ -1,10 +1,23 @@
 import { Chat, ChatMember } from '@workquest/database-models/lib/models';
+import { error } from "../../../utils";
+import { Errors } from "../../../utils/errors";
 
 export class GroupChatAccessPermission {
   public MemberHasAccess(groupChat: Chat, member: ChatMember) {
-
+    if (!groupChat.members.includes(member)) {
+      throw error(Errors.Forbidden, 'User is not a member of this chat', {
+        chatId: groupChat.id,
+        userId: member.userId,
+      });
+    }
   }
-  public MemberHasOwnerAccess(groupChat: Chat, member: ChatMember) {
 
+  public MemberHasOwnerAccess(groupChat: Chat, member: ChatMember) {
+    if (groupChat.groupChat.ownerMemberId !== member.id) {
+      throw error(Errors.Forbidden, 'User must be owner of this chat', {
+        chatId: groupChat.id,
+        userId: member.userId,
+      });
+    }
   }
 }
