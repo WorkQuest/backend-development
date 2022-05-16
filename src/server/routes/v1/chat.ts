@@ -143,7 +143,7 @@ export default [
         }).label('SendMessageToUserParams'),
         payload: Joi.object({
           text: messageTextSchema.allow('').default(''),
-          medias: idsSchema.required().unique(),
+          mediaIds: idsSchema.required().unique(),
         }).label('SendMessageToUserPayload'),
       },
       response: {

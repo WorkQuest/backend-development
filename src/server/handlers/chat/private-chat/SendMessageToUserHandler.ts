@@ -1,12 +1,15 @@
 import { IHandler, Options } from '../../types';
 import {
-  Media,
   Chat,
   User,
+  Media,
   Message,
   ChatType,
   ChatMember,
-  MessageType, MemberStatus, ChatMemberData, MemberType
+  MemberType,
+  MessageType,
+  MemberStatus,
+  ChatMemberData,
 } from '@workquest/database-models/lib/models';
 
 export interface SendMessageToUserCommand {

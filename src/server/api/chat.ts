@@ -268,9 +268,16 @@ export async function createGroupChat(r) {
 }
 
 export async function sendMessageToUser(r) {
-  const userController = await UserControllerFactory.createById(r.params.userId);
+  const meUser: User = r.auth.credentials;
 
-  const { text, medias } = r.payload as { text: string, medias: string[] }
+  const { userId } = r.params as { userId: string };
+  const { text, mediaIds } = r.payload as { text: string, mediaIds: string[] }
+
+  const recipient user =
+
+  const medias = await new GetMediasPostValidationHandler(
+    new GetMediaByIdsHandler()
+  ).Handle({ mediaIds });
 
   // await incrementUnreadCountMessageOfMembersJob({
   //   chatId: privateChatController.chat.id,
@@ -302,13 +309,22 @@ export async function sendMessageToChat(r) {
 
   const chat = await new GetChatByIdHandler().Handle({ chatId });
 
+  const meMember = await new GetChatMemberPostAccessPermission(
+    new GetChatMemberPostValidationHandler(
+      new GetChatMemberByUserHandler()
+    )
+  ).Handle({ user: meUser, chat });
+
   const medias = await new GetMediasPostValidationHandler(
     new GetMediaByIdsHandler()
-  ).Handle({ mediaIds })
+  ).Handle({ mediaIds });
 
-
-
-  new SendMessageToChatHandler(r.server.app.db)
+  await new SendMessageToChatHandler(r.server.app.db).Handle({
+    chat,
+    text,
+    medias,
+    sender: meMember,
+  })
 
   // await resetUnreadCountMessagesOfMemberJob({
   //   memberId: senderMember.id,
