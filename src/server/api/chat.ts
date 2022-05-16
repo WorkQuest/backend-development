@@ -254,36 +254,13 @@ export async function createGroupChat(r) {
     userIds.push(r.auth.credentials.id);
   }
 
-  const userControllers = await UserControllerFactory.createByIds(userIds);
-
-  const ownerRawMemberInGroupChat: RawMember = {
-    userId: r.auth.credentials.id,
-    type: MemberType.User,
-  }
-  const rawMembersInGroupChat: RawMember[] = userControllers.map(c => ({
-    userId: c.user.id,
-    type: MemberType.User,
-  }));
-
-  const [groupChatController] = await r.server.app.db.transaction(async (tx) => {
-    const groupChatController = await GroupChatController.create({
-      name: chatName,
-      rawMembers: rawMembersInGroupChat,
-      ownerRawMember: ownerRawMemberInGroupChat,
-    }, { tx });
-
-    return [groupChatController];
-  }) as Readonly<[GroupChatController]>;
-
-  const chatDto = await groupChatController.toDtoResult();
-
   // r.server.app.broker.sendChatNotification({
   //   recipients: userMemberIds.filter((id) => id !== userChatOwner.id),
   //   action: ChatNotificationActions.groupChatCreate,
   //   data: chatDto,
   // });
 
-  return output(chatDto);
+  // return output(chatDto);
 }
 
 export async function sendMessageToUser(r) {
@@ -291,47 +268,18 @@ export async function sendMessageToUser(r) {
 
   const { text, medias } = r.payload as { text: string, medias: string[] }
 
-  const senderRawMember: RawMember = {
-    userId: r.auth.credentials.id,
-    type: MemberType.User,
-  }
-  const recipientRawMember: RawMember = {
-    userId: userController.user.id,
-    type: MemberType.User,
-  }
-
-  ChecksListPrivateChat
-    .checkDontSendMe(senderRawMember.userId, recipientRawMember.userId)
-
-  const mediaModels = await MediaController.getMedias(medias);
-
-  const [privateChatController, message] = await r.server.app.db.transaction(async (tx) => {
-    const privateChatController = await PrivateChatController.findOrCreate({
-      senderRawMember,
-      recipientRawMember,
-    }, { tx });
-
-    const message = await privateChatController.sendMessage({
-      text,
-      medias: mediaModels,
-      senderMember: privateChatController.members.senderMember,
-    }, { tx });
-
-    return [privateChatController, message];
-  }) as Readonly<[PrivateChatController, Message]>;
-
-  await incrementUnreadCountMessageOfMembersJob({
-    chatId: privateChatController.chat.id,
-    skipMemberIds: [privateChatController.members.senderMember.id],
-  });
-  await setMessageAsReadJob({
-    chatId: privateChatController.chat.id,
-    lastUnreadMessage: { id: message.id, number: message.number },
-    senderMemberId: privateChatController.members.senderMember.id,
-  });
-  await updateCountUnreadChatsJob({
-    members: [privateChatController.members.senderMember, privateChatController.members.recipientMember],
-  });
+  // await incrementUnreadCountMessageOfMembersJob({
+  //   chatId: privateChatController.chat.id,
+  //   skipMemberIds: [privateChatController.members.senderMember.id],
+  // });
+  // await setMessageAsReadJob({
+  //   chatId: privateChatController.chat.id,
+  //   lastUnreadMessage: { id: message.id, number: message.number },
+  //   senderMemberId: privateChatController.members.senderMember.id,
+  // });
+  // await updateCountUnreadChatsJob({
+  //   members: [privateChatController.members.senderMember, privateChatController.members.recipientMember],
+  // });
 
   // r.server.app.broker.sendChatNotification({
   //   data: message,
@@ -339,7 +287,7 @@ export async function sendMessageToUser(r) {
   //   recipients: [privateChatController.members.recipientMember.userId],
   // });
 
-  return output(message);
+  // return output(message);
 }
 
 export async function sendMessageToChat(r) {
