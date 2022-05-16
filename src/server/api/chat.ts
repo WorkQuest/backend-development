@@ -523,48 +523,6 @@ export async function addUsersInGroupChat(r) {
   const { chatId } = r.params as { chatId: string };
   const { userIds } = r.payload as { userIds: string[] };
 
-  const groupChatService = await GroupChatService.findById(chatId, { validate: true });
-
-  const meMember = await groupChatService
-    .chatMemberService
-    .findUserMember(meUser, { validate: true })
-
-  groupChatService
-    .validatorService
-    .validateAccessUserAsChatOwner(meMember)
-
-  const users = await UserService.findActiveUsersByIds(userIds);
-  const currentUserMembers = await groupChatService.chatMemberService.findUserMembers(users);
-  const usersNotInChat = users.filter(u => currentUserMembers.findIndex(m => m.userId === u.id) !== -1);
-
-  groupChatService
-    .validatorService
-    .validateForDeletedUsersRecovery(currentUserMembers)
-
-  const [infoMessages] = await r.server.app.db.transaction(async (tx) => {
-    const infoMessages: Message[] = [];
-
-    const newMembers = usersNotInChat
-      .map(u => groupChatService.chatMemberService.createUserMember({ user: u } ))
-
-    for (const member of [...newMembers, ...currentUserMembers]) {
-      const [isAdded, infoMessage] = await groupChatService.addMember({
-        notChatMember: member,
-      }, {
-        tx,
-        notifyWithInfoMessage: true,
-      });
-
-      if (isAdded && infoMessage) {
-        infoMessages.push(infoMessage);
-      }
-    }
-
-    return [infoMessages];
-  });
-
-  const lastMessage = await groupChatService.getLastMessage();
-
   // await resetUnreadCountMessagesOfMemberJob({
   //   memberId: meMember.id,
   //   chatId: groupChatService.getChat().id,
@@ -591,7 +549,7 @@ export async function addUsersInGroupChat(r) {
   //   data: messagesResult,
   // });
   //
-  return output(infoMessages);
+  // return output(infoMessages);
 }
 
 export async function setMessagesAsRead(r) {
