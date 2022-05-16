@@ -1,16 +1,17 @@
-import { addJob } from '../utils/scheduler';
-import { ChatMember, ChatMemberData, UserChatsStatistic, MemberType } from "@workquest/database-models/lib/models";
 import { Op } from 'sequelize';
+import { addJob } from '../utils/scheduler';
+import { ChatMember, ChatMemberData, UserChatsStatistic, MemberType, MemberStatus } from "@workquest/database-models/lib/models";
 
-export type UserUnreadChatsPayload = {
-  userIds: string[];
+export type UpdateCountUnreadChatsPayload = {
+  readonly chatId: string;
+  readonly skipMembersIds: ReadonlyArray<string>;
 };
 
-export async function updateCountUnreadChatsJob(payload: UserUnreadChatsPayload) {
+export async function updateCountUnreadChatsJob(payload: UpdateCountUnreadChatsPayload) {
   return addJob('updateCountUnreadChats', payload);
 }
 
-export default async function updateCountUnreadChats(payload: UserUnreadChatsPayload) {
+export default async function updateCountUnreadChats(payload: UpdateCountUnreadChatsPayload) {
   for (const userId of payload.userIds) {
     const unreadChatsCounter = await ChatMember.unscoped().findAndCountAll({
       where: {

@@ -18,7 +18,7 @@ abstract class MessageHelper {
 
   async messageMustBeChat(chatId: string) {
     if (this.message.chatId !== chatId) {
-      throw error(Errors.Forbidden, 'This message not from this chat', {});
+      throw error(Errors.Forbidden, 'This message not from this group-chat', {});
     }
 
     return this;

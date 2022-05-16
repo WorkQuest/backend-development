@@ -30,7 +30,7 @@ export class QuestChatControllerFactory {
     });
 
     if (!chat) {
-      throw error(Errors.NotFound, 'Quest chat not found by response id', { responseId: id });
+      throw error(Errors.NotFound, 'Quest group-chat not found by response id', { responseId: id });
     }
 
     const workerMember = chat.members.find(member => member.user.role === UserRole.Worker);
@@ -61,7 +61,7 @@ export class QuestChatControllerFactory {
     });
 
     if (!chat) {
-      throw error(Errors.NotFound, 'Quest chat not found by response id', { responseId: id });
+      throw error(Errors.NotFound, 'Quest group-chat not found by response id', { responseId: id });
     }
 
     const workerMember = chat.members.find(member => member.user.role === UserRole.Worker);

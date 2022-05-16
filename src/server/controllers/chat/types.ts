@@ -2,8 +2,18 @@ import {
   User,
   Media,
   Quest,
-  QuestsResponse, ChatMember, MessageAction
+  ChatMember,
+  MemberType,
+  MessageAction,
+  QuestsResponse,
 } from '@workquest/database-models/lib/models';
+
+export type RawMember = {
+  userId?: string,
+  adminId?: string,
+
+  type: MemberType,
+}
 
 export interface CreateQuestChatPayload {
   readonly worker: User;
@@ -14,21 +24,25 @@ export interface CreateQuestChatPayload {
 }
 
 export interface CreateGroupChatPayload {
-  readonly users: Readonly<User[]>;
-  readonly userOwner: User;
-
   readonly name: string;
+
+  readonly ownerRawMember: RawMember;
+  readonly rawMembers: Readonly<RawMember[]>;
 }
 
 export interface FindOrCreatePrivateChatPayload {
-  readonly senderUser: User;
-  readonly recipientUser: User;
+  readonly senderRawMember: RawMember;
+  readonly recipientRawMember: RawMember;
 }
 
 export interface SendInfoMessageToChatPayload {
   action: MessageAction,
   senderMember: ChatMember,
   infoMessageMember: ChatMember,
+}
+
+export interface BulkSendInfoMessageToChatPayload {
+
 }
 
 export interface SendMessageToChatPayload {

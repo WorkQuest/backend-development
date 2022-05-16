@@ -1,15 +1,15 @@
 import { error } from '../utils';
 import { Errors } from '../utils/errors';
 import {
-  User,
   Chat,
-  ChatType,
-  QuestChat,
   ChatMember,
-  QuestChatStatuses,
-  ChatMemberDeletionData,
+  ChatType,
+  GroupChat,
+  MemberStatus,
+  QuestChat,
+  QuestChatStatus,
+  ReasonForRemovingFromChat,
 } from '@workquest/database-models/lib/models';
-import { GroupChat } from '@workquest/database-models/src/models/chats/GroupChat';
 
 export class ChecksListChat {
   constructor(
@@ -17,51 +17,20 @@ export class ChecksListChat {
   ) {
   }
 
-  public async checkUserMemberMustBeInChat(userMember: User): Promise<this> {
-    const [member, memberDeletionData] = await Promise.all([
-      ChatMember.findOne({
-        where: {
-          chatId: this.chat.id,
-          userId: userMember.id,
-        }
-      }),
-      ChatMemberDeletionData.findOne({
-        include: {
-          model: ChatMember,
-          as: 'chatMember',
-          required: true,
-          where: {
-            chatId: this.chat.id,
-            userId: userMember.id,
-          },
-        },
-      }),
-    ]);
-
-    if (!member) {
-      throw error(Errors.Forbidden, 'User is not a member of this chat', {
+  public checkChatMemberMustBeInChat(chatMember: ChatMember): this {
+    if (!chatMember) {
+      throw error(Errors.Forbidden, 'User/Admin is not a member of this group-chat', {
         chatId: this.chat.id,
-        userId: userMember.id,
       });
     }
-    if (memberDeletionData) {
-      throw error(Errors.Forbidden, 'User has been removed from this chat', {
+    if (chatMember.status === MemberStatus.Deleted) {
+      throw error(Errors.Forbidden, 'Member has been removed from this group-chat', {
         chatId: this.chat.id,
-        userId: userMember.id,
+        memberId: chatMember.id,
       });
     }
 
     return this;
-  }
-
-  public async checkChatMustHaveMember(userId: string) {
-    const member = await ChatMember.unscoped().findOne({
-      where: { chatId: this.chat.id, userId },
-    });
-
-    if (!member) {
-      throw error(Errors.Forbidden, 'User is not a member of this chat', {});
-    }
   }
 
   public checkChatMustHaveType(type: ChatType): this {
@@ -84,9 +53,9 @@ export class ChecksListQuestChat extends ChecksListChat {
     super(chat);
   }
 
-  public checkQuestChatMastHaveStatus(status: QuestChatStatuses): this {
+  public checkQuestChatMastHaveStatus(status: QuestChatStatus): this {
     if (this.questChat.status !== status) {
-      throw error(Errors.Forbidden, 'Quest chat type does not match', {
+      throw error(Errors.Forbidden, 'Quest group-chat type does not match', {
         mastHave: status,
         current: this.questChat.status,
       });
@@ -104,12 +73,57 @@ export class ChecksListGroupChat extends ChecksListChat {
     super(chat);
   }
 
-  public checkGroupChatMustHaveOwnerMember(memberId: string): this {
-    if (this.groupChat.ownerMemberId !== memberId) {
-      throw error(Errors.Forbidden, 'User is not a owner in this chat', {
-        mastHave: memberId,
+  public checkMembersMustNotBeInGroupChat(entityIds: string[], members: ChatMember[]): this {
+    const membersAlreadyInChat = members
+      .filter(m => m.status === MemberStatus.Active && entityIds
+        .some(id => m.userId === id || m.adminId === id)
+      )
+
+    if (membersAlreadyInChat.length !== 0) {
+      throw error(Errors.AlreadyExists, 'Members is already in this group-chat', {
+        membersAlreadyInChat: membersAlreadyInChat.map(m => ({
+          id: m.id,
+          type: m.type,
+          userId: m.userId,
+          adminId: m.adminId,
+        })),
+      });
+    }
+
+    return this;
+  }
+
+  public checkMembersMustHaveReasonForDeletionInGroupChat(reason: ReasonForRemovingFromChat, remoteMembers: ChatMember[]): this {
+    const membersReasonDoesNotMatch = remoteMembers.filter(m => m.chatMemberDeletionData.reason !==reason);
+
+    if (membersReasonDoesNotMatch.length !== 0) {
+      throw error(Errors.Forbidden, 'Reason for deleting members does not match', {
+        membersReasonDoesNotMatch: membersReasonDoesNotMatch.map(m => ({
+          id: m.id,
+          type: m.type,
+          userId: m.userId,
+          adminId: m.adminId,
+        })),
+      });
+    }
+
+    return this;
+  }
+
+  public checkGroupChatMustHaveOwnerChatMember(chatMember: ChatMember): this {
+    if (this.groupChat.ownerMemberId !== chatMember.id) {
+      throw error(Errors.Forbidden, 'Member is not a owner in this group-chat', {
+        mastHave: chatMember.id,
         current: this.groupChat.ownerMemberId,
       });
+    }
+
+    return this;
+  }
+
+  public checkGroupChatNotHaveOwnerUserMember(chatMember: ChatMember): this {
+    if (this.groupChat.ownerMemberId === chatMember.id) {
+      throw error(Errors.Forbidden, 'User is group-chat owner', {});
     }
 
     return this;
@@ -123,9 +137,27 @@ export class ChecksListPrivateChat extends ChecksListChat {
     super(chat);
   }
 
-  public static checkDontSendMe(senderUserId: string, recipientUserId: string) {
-    if (senderUserId === recipientUserId) {
+  public static checkDontSendMe(senderId, recipientId) {
+    if (senderId === recipientId) {
       throw error(Errors.InvalidPayload, "You can't send a message to yourself", {});
     }
+  }
+}
+
+export class ChecksListChatMember {
+  constructor(
+    protected readonly chatMember: ChatMember,
+  ) {
+  }
+
+  public checkMemberStatus(...statuses: MemberStatus[]): this | never {
+    if (!statuses.includes(this.chatMember.status)) {
+      throw error(Errors.InvalidStatus, "Chat member status doesn't match", {
+        current: this.chatMember.status,
+        mustHave: statuses,
+      });
+    }
+
+    return this;
   }
 }

@@ -1,26 +1,25 @@
 import { addJob } from "../utils/scheduler";
 import { ChatMember, ChatMemberData, MemberStatus } from "@workquest/database-models/lib/models";
 
-export type resetUnreadCountMessagesPayload = {
-  chatId: string;
-  memberId: string;
-  lastReadMessageId: string;
-  lastReadMessageNumber: number;
+export type ResetUnreadCountMessagesPayload = {
+  chatId: string,
+  memberId: string,
+  lastReadMessage: { id: string, number: number },
 };
 
-export async function resetUnreadCountMessagesOfMemberJob(payload: resetUnreadCountMessagesPayload) {
+export async function resetUnreadCountMessagesOfMemberJob(payload: ResetUnreadCountMessagesPayload) {
   return addJob('resetUnreadCountMessagesOfMember', payload);
 }
 
-export default async function resetUnreadCountMessagesOfMember(payload: resetUnreadCountMessagesPayload) {
+export default async function resetUnreadCountMessagesOfMember(payload: ResetUnreadCountMessagesPayload) {
   const chatMember = await ChatMember.findByPk(payload.memberId);
 
-  if(chatMember.status === MemberStatus.Active) {
+  if (chatMember.status === MemberStatus.Active) {
     await ChatMemberData.update(
       {
         unreadCountMessages: 0,
-        lastReadMessageId: payload.lastReadMessageId,
-        lastReadMessageNumber: payload.lastReadMessageNumber,
+        lastReadMessageId: payload.lastReadMessage.id,
+        lastReadMessageNumber: payload.lastReadMessage.number,
       },
       {
         where: { chatMemberId: payload.memberId },

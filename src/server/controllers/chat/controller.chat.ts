@@ -1,19 +1,20 @@
-import { Transaction } from "sequelize";
+import { Op, Transaction } from "sequelize";
 import {
+  RawMember,
   CreateGroupChatPayload,
   CreateQuestChatPayload,
   SendMessageToChatPayload,
   SendInfoMessageToChatPayload,
   FindOrCreatePrivateChatPayload,
+  BulkSendInfoMessageToChatPayload,
 } from './types';
 import {
   Chat,
+  User,
   Media,
   ChatData,
   ChatType,
   Message,
-  User,
-  UserRole,
   GroupChat,
   QuestChat,
   ChatMember,
@@ -22,17 +23,17 @@ import {
   MessageType,
   MemberStatus,
   MessageAction,
-  QuestsResponse,
   ChatMemberData,
-  QuestChatStatuses,
+  QuestChatStatus,
   QuestsResponseType,
   ChatMemberDeletionData,
+  ReasonForRemovingFromChat,
 } from '@workquest/database-models/lib/models';
 
 /**
 
 abstract class ChatHelper {
-  public abstract chat: Chat;
+  public abstract group-chat: Chat;
 
   static async chatMustExists(chatId: string) {
     if (!(await Chat.findByPk(chatId))) {
@@ -42,16 +43,16 @@ abstract class ChatHelper {
 
   public async chatMustHaveMember(userId: string) {
     const member = await ChatMember.findOne({
-      where: { chatId: this.chat.id, userId },
+      where: { chatId: this.group-chat.id, userId },
     });
 
     if (!member) {
-      throw error(Errors.Forbidden, 'User is not a member of this chat', {});
+      throw error(Errors.Forbidden, 'User is not a member of this group-chat', {});
     }
   }
 
   public chatMustHaveType(type: ChatType): this {
-    if (this.chat.type !== type) {
+    if (this.group-chat.type !== type) {
       throw error(Errors.InvalidType, 'Type does not match', {});
     }
 
@@ -59,10 +60,10 @@ abstract class ChatHelper {
   }
 
   public questChatMastHaveStatus(status: QuestChatStatuses): this {
-    if (this.chat.questChat.status !== status) {
-      throw error(Errors.Forbidden, 'Quest chat type does not match', {
+    if (this.group-chat.questChat.status !== status) {
+      throw error(Errors.Forbidden, 'Quest group-chat type does not match', {
         mastHave: status,
-        current: this.chat.questChat.status,
+        current: this.group-chat.questChat.status,
       });
     }
 
@@ -70,8 +71,8 @@ abstract class ChatHelper {
   }
 
   public chatMustHaveOwner(memberId: string): this {
-    if (this.chat.groupChat.ownerMemberId !== memberId) {
-      throw error(Errors.Forbidden, 'User is not a owner in this chat', {});
+    if (this.group-chat.groupChat.ownerMemberId !== memberId) {
+      throw error(Errors.Forbidden, 'User is not a owner in this group-chat', {});
     }
 
     return this;
@@ -79,7 +80,7 @@ abstract class ChatHelper {
 
   public async usersNotExistInGroupChat(userIds: string[]): Promise<this> {
     const members = await ChatMember.unscoped().findAll({
-      where: { userId: userIds, chatId: this.chat.id },
+      where: { userId: userIds, chatId: this.group-chat.id },
     });
 
     const membersIds = members.map(member => { return member.id });
@@ -91,7 +92,7 @@ abstract class ChatHelper {
     if (membersData.length !== 0) {
       const existingMembers = members.filter((member) => (membersIds.findIndex((memberId) => member.id === memberId) !== -1));
       const existingUsersIds = existingMembers.map(member => member.userId);
-      throw error(Errors.AlreadyExists, 'Users already exists in group chat', { existingUsersIds });
+      throw error(Errors.AlreadyExists, 'Users already exists in group group-chat', { existingUsersIds });
     }
 
     return this;
@@ -99,38 +100,38 @@ abstract class ChatHelper {
 }
 
 export class ChatController extends ChatHelper {
-  constructor(public chat: Chat) {
+  constructor(public group-chat: Chat) {
     super();
 
-    if (!chat) {
+    if (!group-chat) {
       throw error(Errors.NotFound, 'Chat not found', {});
     }
   }
 
   static async createGroupChat(userIds: string[], name, ownerUserId, transaction?: Transaction): Promise<ChatController> {
-    const chat = await Chat.create({ type: ChatType.group }, { transaction });
-    const chatController = new ChatController(chat);
-    const chatMembers = await chatController.createChatMembers(userIds, chat.id, transaction);
+    const group-chat = await Chat.create({ type: ChatType.group }, { transaction });
+    const chatController = new ChatController(group-chat);
+    const chatMembers = await chatController.createChatMembers(userIds, group-chat.id, transaction);
     const ownerChatMember = chatMembers.find(member => member.userId === ownerUserId);
-    await GroupChat.create({ name, ownerMemberId: ownerChatMember.id, chatId: chat.id }, { transaction });
-    chat.setDataValue('members', chatMembers);
+    await GroupChat.create({ name, ownerMemberId: ownerChatMember.id, chatId: group-chat.id }, { transaction });
+    group-chat.setDataValue('members', chatMembers);
     return chatController;
   }
 
   static async createQuestChat(employerId, workerId, questId, responseId, transaction?: Transaction) {
-    const chat = await Chat.create({ type: ChatType.quest }, { transaction });
-    const chatController = new ChatController(chat);
-    const chatMembers = await chatController.createChatMembers([employerId, workerId], chat.id, transaction);
+    const group-chat = await Chat.create({ type: ChatType.quest }, { transaction });
+    const chatController = new ChatController(group-chat);
+    const chatMembers = await chatController.createChatMembers([employerId, workerId], group-chat.id, transaction);
     const employerMemberId = chatMembers.find(member => member.userId === employerId).id;
     const workerMemberId = chatMembers.find(member => member.userId === workerId).id;
-    await QuestChat.create({ employerMemberId, workerMemberId, questId, responseId, chatId: chat.id }, { transaction });
-    chat.setDataValue('members', chatMembers);
+    await QuestChat.create({ employerMemberId, workerMemberId, questId, responseId, chatId: group-chat.id }, { transaction });
+    group-chat.setDataValue('members', chatMembers);
     return chatController;
   }
 
   static async findOrCreatePrivateChat(senderUserId: string, recipientUserId: string, transaction?: Transaction): Promise<{ controller: ChatController, isCreated: boolean }> {
     try {
-      const [chat, isCreated] = await Chat.findOrCreate({
+      const [group-chat, isCreated] = await Chat.findOrCreate({
         where: { type: ChatType.private },
         include: [
           {
@@ -162,10 +163,10 @@ export class ChatController extends ChatHelper {
         },
         transaction,
       });
-      const controller = new ChatController(chat);
+      const controller = new ChatController(group-chat);
       if (isCreated) {
-        const chatMembers = await controller.createChatMembers([senderUserId, recipientUserId],chat.id, transaction)
-        chat.setDataValue('members', chatMembers);
+        const chatMembers = await controller.createChatMembers([senderUserId, recipientUserId],group-chat.id, transaction)
+        group-chat.setDataValue('members', chatMembers);
       }
       return {controller, isCreated};
     } catch (error) {
@@ -249,7 +250,7 @@ export class ChatController extends ChatHelper {
       });
 
       if (!isCreated) {
-        throw error(Errors.Forbidden, 'User already not a member of this chat', {});
+        throw error(Errors.Forbidden, 'User already not a member of this group-chat', {});
       }
 
       await ChatMember.update({ status: MemberStatus.Deleted }, { where: {id: chatMemberId}, transaction });
@@ -315,13 +316,27 @@ export class ChatController {
   ) {
   }
 
-  public lastMessage(options: { tx?: Transaction } = {}): Promise<Message> {
-    return Message.findOne({
+  private _lastMessage: Message;
+
+  protected setLastMessage(message: Message) {
+    this._lastMessage = message;
+  }
+
+  public async getLastMessage(options: { tx?: Transaction } = {}): Promise<Message> {
+    if (this._lastMessage) {
+      return this._lastMessage;
+    }
+
+    const message = await Message.findOne({
       where: { chatId: this.chat.id },
       order: [['number', 'DESC']],
       lock: 'UPDATE' as any,
       transaction: options.tx,
     });
+
+    this.setLastMessage(message);
+
+    return message;
   }
 
   public firstMessage(): Promise<Message> {
@@ -340,22 +355,31 @@ export class ChatController {
     });
   }
 
-  public getMembers(): Promise<Readonly<ChatMember>[]> {
+  public getMembers(options: { statuses: MemberStatus[] } = { statuses: [MemberStatus.Active] }): Promise<Readonly<ChatMember>[]> {
     return ChatMember.findAll({
-      where: { chatId: this.chat.id },
+      where: {
+        chatId: this.chat.id,
+        status: options.statuses
+      },
+      include: {
+        model: ChatMemberDeletionData,
+        as: 'chatMemberDeletionData',
+      }
     });
   }
 
   public async sendMessage(payload: SendMessageToChatPayload, options: { tx?: Transaction } = {}): Promise<Message> {
-    const lastMessage = await this.lastMessage(options);
+    const lastMessage = await this.getLastMessage(options);
 
     const message = await Message.create({
       number: lastMessage.number + 1,
       chatId: this.chat.id,
       senderMemberId: payload.senderMember.id,
-      type: MessageType.message,
+      type: MessageType.Message,
       text: payload.text,
     }, { transaction: options.tx });
+
+    this.setLastMessage(message);
 
     await Promise.all([
       ChatData.update({ lastMessageId: message.id }, {
@@ -371,25 +395,62 @@ export class ChatController {
   }
 
   protected async sendInfoMessage(payload: SendInfoMessageToChatPayload, options: { tx?: Transaction }): Promise<[message: Message, infoMessage: InfoMessage]> {
-    const lastMessage = await this.lastMessage(options);
+    const lastMessage = await this.getLastMessage(options);
 
-    const message = Message.build({
+    const messageBuild = Message.build({
       senderMemberId: payload.senderMember.id,
       chatId: this.chat.id,
-      type: MessageType.info,
+      type: MessageType.Info,
       number: lastMessage.number + 1,
       createdAt: Date.now(),
     });
-    const infoMessage = InfoMessage.build({
-      messageId: message.id,
+    const infoMessageBuild = InfoMessage.build({
+      messageId: messageBuild.id,
       memberId: payload.infoMessageMember.id,
       messageAction: payload.action,
     });
 
-    return Promise.all([
-      message.save({ transaction: options.tx }),
-      infoMessage.save({ transaction: options.tx }),
+    const [message, infoMessage] = await Promise.all([
+      messageBuild.save({ transaction: options.tx }),
+      infoMessageBuild.save({ transaction: options.tx }),
     ]);
+
+    this.setLastMessage(message);
+
+    return [message, infoMessage];
+  }
+
+  protected async bulkSendInfoMessages(payload: BulkSendInfoMessageToChatPayload, options: { tx?: Transaction }): Promise<[message: Message, infoMessage: InfoMessage]> {
+    const lastMessage = await this.getLastMessage(options);
+
+    const messages: Message[] = [];
+    const infoMessages: InfoMessage[] = [];
+
+    for (const payload of payloads) {
+
+    }
+
+    const messageBuild = Message.build({
+      senderMemberId: payload.senderMember.id,
+      chatId: this.chat.id,
+      type: MessageType.Info,
+      number: lastMessage.number + 1,
+      createdAt: Date.now(),
+    });
+    const infoMessageBuild = InfoMessage.build({
+      messageId: messageBuild.id,
+      memberId: payload.infoMessageMember.id,
+      messageAction: payload.action,
+    });
+
+    const [message, infoMessage] = await Promise.all([
+      messageBuild.save({ transaction: options.tx }),
+      infoMessageBuild.save({ transaction: options.tx }),
+    ]);
+
+    this.setLastMessage(message);
+
+    return [message, infoMessage];
   }
 }
 
@@ -411,14 +472,14 @@ export class QuestChatController extends ChatController {
   }
 
   public closeQuestChat(options: { tx?: Transaction } = {}): Promise<any> {
-    return this.questChat.update({ status: QuestChatStatuses.Close }, { transaction: options.tx });
+    return this.questChat.update({ status: QuestChatStatus.Close }, { transaction: options.tx });
   }
 
   public async sendInfoMessageAboutAcceptInvite(options: { tx?: Transaction } = {}): Promise<[message: Message, infoMessage: InfoMessage]> {
     return this.sendInfoMessage({
       senderMember: this.members.worker,
       infoMessageMember: this.members.employer,
-      action: MessageAction.workerAcceptInviteOnQuest,
+      action: MessageAction.WorkerAcceptInviteOnQuest,
     }, options);
   }
 
@@ -426,7 +487,7 @@ export class QuestChatController extends ChatController {
     return this.sendInfoMessage({
       senderMember: this.members.worker,
       infoMessageMember: this.members.employer,
-      action: MessageAction.workerRejectInviteOnQuest,
+      action: MessageAction.WorkerRejectInviteOnQuest,
     }, options);
   }
 
@@ -434,12 +495,12 @@ export class QuestChatController extends ChatController {
     return this.sendInfoMessage({
       senderMember: this.members.employer,
       infoMessageMember: this.members.worker,
-      action: MessageAction.employerRejectResponseOnQuest,
+      action: MessageAction.EmployerRejectResponseOnQuest,
     }, options);
   }
 
   static async create(payload: CreateQuestChatPayload, options: { tx?: Transaction } = {}): Promise<QuestChatController> {
-    const chat = await Chat.create({ type: ChatType.quest }, { transaction: options.tx });
+    const chat = await Chat.create({ type: ChatType.Quest }, { transaction: options.tx });
 
     const workerId = payload.worker.id;
     const employerId = payload.quest.userId;
@@ -462,8 +523,8 @@ export class QuestChatController extends ChatController {
       : { senderMemberId: workerChatMemberBuild.id }
 
     const firstInfoMessagePayload = payload.questResponse.type === QuestsResponseType.Invite
-      ? { messageAction: MessageAction.employerInviteOnQuest, memberId: workerChatMemberBuild.id }
-      : { messageAction: MessageAction.workerResponseOnQuest, memberId: employerChatMemberBuild.id }
+      ? { messageAction: MessageAction.EmployerInviteOnQuest, memberId: workerChatMemberBuild.id }
+      : { messageAction: MessageAction.WorkerResponseOnQuest, memberId: employerChatMemberBuild.id }
 
     const responseMessagePayload = payload.questResponse.type === QuestsResponseType.Invite
       ? { memberId: employerChatMemberBuild.id }
@@ -472,7 +533,7 @@ export class QuestChatController extends ChatController {
     const firstMessageBuild = Message.build({
       senderMemberId: firstMessagePayload.senderMemberId,
       chatId: chat.id,
-      type: MessageType.info,
+      type: MessageType.Info,
       number: 1 /** Because create */,
       createdAt: Date.now(),
     });
@@ -487,7 +548,7 @@ export class QuestChatController extends ChatController {
       senderMemberId: responseMessagePayload.memberId,
       chatId: chat.id,
       text: payload.message,
-      type: MessageType.message,
+      type: MessageType.Message,
       number: 2 /** Because create */,
       createdAt: Date.now() + 100,
     });
@@ -572,17 +633,90 @@ export class GroupChatController extends ChatController {
     return this.chat.toJSON();
   }
 
-  public async removeUserMember(user: User, options: { tx?: Transaction } = {}) {
-
+  public async sendInfoMessageAboutMemberRestored(memberRestored, options: { tx?: Transaction } = {}): Promise<[message: Message, infoMessage: InfoMessage]> {
+    return this.sendInfoMessage({
+      senderMember: this.ownerMember,
+      infoMessageMember: memberRestored,
+      action: MessageAction.GroupChatMemberRestored,
+    }, options);
   }
 
-  static async create(payload: CreateGroupChatPayload, options: { tx?: Transaction } = {}): Promise<GroupChatController> {
-    const chat = await Chat.create({ type: ChatType.group });
+  public async sendInfoMessageAboutMemberAdded(newMember: ChatMember, options: { tx?: Transaction } = {}): Promise<[message: Message, infoMessage: InfoMessage]> {
+    return this.sendInfoMessage({
+      senderMember: this.ownerMember,
+      infoMessageMember: newMember,
+      action: MessageAction.GroupChatAddMember,
+    }, options);
+  }
 
-    const membersBuild = ChatMember.bulkBuild(payload.users.map(user => ({
-      chatId: chat.id,
-      userId: user.id,
-      type: MemberType.User,
+  public async sendInfoMessageAboutRemovedMember(remoteChatMember: ChatMember, options: { tx?: Transaction } = {}): Promise<[message: Message, infoMessage: InfoMessage]> {
+    return this.sendInfoMessage({
+      senderMember: this.ownerMember,
+      infoMessageMember: remoteChatMember,
+      action: MessageAction.GroupChatDeleteMember,
+    }, options);
+  }
+
+  public async sendInfoMessageAboutLeaveMember(chatMemberWhoLeft: ChatMember, options: { tx?: Transaction } = {}): Promise<[message: Message, infoMessage: InfoMessage]> {
+    return this.sendInfoMessage({
+      senderMember: chatMemberWhoLeft,
+      infoMessageMember: null,
+      action: MessageAction.GroupChatLeaveMember,
+    }, options);
+  }
+
+  public async leaveChat(chatMember: ChatMember, options: { tx?: Transaction } = {}) {
+    const lastMessage = await this.getLastMessage(options);
+
+    return Promise.all([
+      ChatMemberDeletionData.create({
+        chatMemberId: chatMember.id,
+        beforeDeletionMessageId: lastMessage.id,
+        reason: ReasonForRemovingFromChat.Left,
+        beforeDeletionMessageNumber: lastMessage.number,
+      }, { transaction: options.tx, }),
+
+      chatMember.update({ status: MemberStatus.Deleted }, {
+        where: { id: chatMember.id },
+        transaction: options.tx,
+      }),
+
+      ChatMemberData.destroy({
+        where: { chatMemberId: chatMember.id },
+        transaction: options.tx,
+      }),
+    ]);
+  }
+
+  public async removeMember(chatMember: ChatMember, options: { tx?: Transaction } = {}) {
+    const lastMessage = await this.getLastMessage(options);
+
+    return Promise.all([
+      ChatMemberDeletionData.create({
+        chatMemberId: chatMember.id,
+        beforeDeletionMessageId: lastMessage.id,
+        reason: ReasonForRemovingFromChat.Removed,
+        beforeDeletionMessageNumber: lastMessage.number,
+      }, { transaction: options.tx, }),
+
+      chatMember.update({ status: MemberStatus.Deleted }, {
+        where: { id: chatMember.id },
+        transaction: options.tx,
+      }),
+
+      ChatMemberData.destroy({
+        where: { chatMemberId: chatMember.id },
+        transaction: options.tx,
+      }),
+    ]);
+  }
+
+  public async addMembers(newRawMembers: Readonly<RawMember[]>, options: { tx?: Transaction } = {}): Promise<ChatMember[]> {
+    const lastMessage = await this.getLastMessage(options);
+
+    const membersBuild = ChatMember.bulkBuild(newRawMembers.map(m => ({
+      chatId: this.chat.id,
+      ...m,
     })));
 
     const members = await Promise.all(
@@ -592,19 +726,76 @@ export class GroupChatController extends ChatController {
         )
     );
 
-    const memberCreator = members
-      .find(m => m.userId === payload.userOwner.id)
+    const chatMembersDataBuild = ChatMemberData.bulkBuild(members.map(m => ({
+      chatMemberId: m.id,
+      unreadCountMessages: 0,
+      lastReadMessageId: lastMessage.id,
+      lastReadMessageNumber: lastMessage.number,
+    })));
+
+    await Promise.all(chatMembersDataBuild
+      .map(async md => md
+        .save({ transaction: options.tx })
+      )
+    );
+
+    return members;
+  }
+
+  public async recoverDeletedMembers(deletedMembers: Readonly<ChatMember[]>, options: { tx?: Transaction } = {}): Promise<ChatMember[]> {
+    const lastMessage = await this.getLastMessage(options);
+
+    const [, members] = await ChatMember.update({
+      status: MemberStatus.Active,
+    }, {
+      where: { id: deletedMembers.map(m => m.id) },
+      transaction: options.tx,
+    });
+
+    const chatMembersDataBuild = ChatMemberData.bulkBuild(members.map(m => ({
+      chatMemberId: m.id,
+      unreadCountMessages: 0,
+      lastReadMessageId: lastMessage.id,
+      lastReadMessageNumber: lastMessage.number,
+    })));
+
+    await Promise.all(chatMembersDataBuild
+      .map(async md => md
+        .save({ transaction: options.tx })
+      )
+    );
+
+    return members;
+  }
+
+  static async create(payload: CreateGroupChatPayload, options: { tx?: Transaction } = {}): Promise<GroupChatController> {
+    const chat = await Chat.create({ type: ChatType.Group });
+
+    const membersBuild = ChatMember.bulkBuild(payload.rawMembers.map(m => ({
+      chatId: chat.id,
+      ...m,
+    })));
+
+    const members = await Promise.all(
+      membersBuild
+        .map(async member => member
+          .save({ transaction: options.tx })
+        )
+    );
+
+    const ownerMember = members
+      .find(m => m.userId === payload.ownerRawMember.userId || m.adminId === payload.ownerRawMember.adminId)
 
     const groupChat = await GroupChat.create({
       name: payload.name,
-      ownerMemberId: memberCreator.id,
+      ownerMemberId: ownerMember.id,
       chatId: chat.id,
     });
 
     const firstMessageBuild = await Message.create({
-      senderMemberId: memberCreator.id,
+      senderMemberId: ownerMember.id,
       chatId: chat.id,
-      type: MessageType.info,
+      type: MessageType.Info,
       number: 1 /** Because create */,
       createdAt: Date.now(),
     });
@@ -612,7 +803,7 @@ export class GroupChatController extends ChatController {
     await InfoMessage.create({
       messageId: firstMessageBuild.id,
       memberId: null,
-      messageAction: MessageAction.groupChatCreate,
+      messageAction: MessageAction.GroupChatCreate,
     });
 
     const chatData = await ChatData.create({
@@ -621,7 +812,7 @@ export class GroupChatController extends ChatController {
     });
 
     const chatMembersDataBuild = ChatMemberData.bulkBuild(members.map(m => {
-      if (m.id === memberCreator.id) {
+      if (m.id === ownerMember.id) {
         return {
           chatMemberId: m.id,
           unreadCountMessages: 0,
@@ -642,7 +833,7 @@ export class GroupChatController extends ChatController {
     chat.setDataValue('groupChat', groupChat);
     chat.setDataValue('chatData', chatData);
 
-    return new GroupChatController(chat, groupChat, memberCreator);
+    return new GroupChatController(chat, groupChat, ownerMember);
   }
 }
 
@@ -656,18 +847,28 @@ export class PrivateChatController extends ChatController {
 
   static async findOrCreate(payload: FindOrCreatePrivateChatPayload, options: { tx?: Transaction } = {}) {
     const [chat, isCreated] = await Chat.scope('privateChat').findOrCreate({
-      where: { type: ChatType.private },
-      defaults: { type: ChatType.private },
+      where: { type: ChatType.Private },
+      defaults: { type: ChatType.Private },
       transaction: options.tx,
       include: [{
         model: ChatMember,
         as: 'senderInPrivateChat',
-        where: { userId: payload.senderUser.id },
+        where: {
+          [Op.or]: [
+            { userId: payload.senderRawMember.userId },
+            { adminId: payload.senderRawMember.adminId },
+          ],
+        },
         required: true,
       }, {
         model: ChatMember,
         as: 'recipientInPrivateChat',
-        where: { userId: payload.recipientUser.id },
+        where: {
+          [Op.or]: [
+            { userId: payload.recipientRawMember.userId },
+            { adminId: payload.recipientRawMember.adminId },
+          ],
+        },
         required: true,
       }],
     });
@@ -680,14 +881,12 @@ export class PrivateChatController extends ChatController {
     }
 
     const senderMemberBuild = ChatMember.build({
-      userId: payload.senderUser.id,
       chatId: chat.id,
-      type: MemberType.User,
+      ...payload.senderRawMember,
     });
     const recipientMemberBuild = ChatMember.build({
-      userId: payload.recipientUser.id,
       chatId: chat.id,
-      type: MemberType.User,
+      ...payload.recipientRawMember,
     });
 
     const senderMemberDataBuild = ChatMemberData.build({
