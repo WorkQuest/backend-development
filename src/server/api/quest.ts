@@ -63,7 +63,7 @@ export async function getQuest(r) {
         { opponentUserId: r.auth.credentials.id },
         { openDisputeUserId: r.auth.credentials.id },
       ],
-      status: { [Op.in]: [DisputeStatus.Pending, DisputeStatus.InProgress] },
+      status: { [Op.in]: [DisputeStatus.Pending, DisputeStatus.Created, DisputeStatus.InProgress] },
     },
   }, {
     model: QuestsReview.unscoped(),
