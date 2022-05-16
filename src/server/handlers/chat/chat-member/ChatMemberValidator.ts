@@ -4,10 +4,10 @@ import { Errors } from "../../../utils/errors";
 
 export class ChatMemberValidator {
   public NotNull(chat: Chat, member: ChatMember) {
-    if (!chat.members.includes(member)) {
-      throw error(Errors.Forbidden, 'User is not a member of this chat', {
+    if (!member) {
+      throw error(Errors.Forbidden, 'Member is not found', {
         chatId: chat.id,
-        userId: member.userId,
+        member: member.id,
       });
     }
   }

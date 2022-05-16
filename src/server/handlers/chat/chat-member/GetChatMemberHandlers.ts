@@ -81,7 +81,7 @@ export class GetChatMemberPostAccessPermission<Tin extends { chat: Chat }> exten
   public async Handle(command: Tin): Promise<ChatMember> {
     const chatMember = await this.decorated.Handle(command);
 
-    this.accessPermission.HasAccessOnChat();
+    this.accessPermission.HasAccessOnChat(command.chat, chatMember);
 
     return chatMember;
   }
