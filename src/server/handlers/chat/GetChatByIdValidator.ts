@@ -1,7 +1,6 @@
-import { Chat, ChatMember } from "@workquest/database-models/lib/models";
 import { error } from "../../utils";
 import { Errors } from "../../utils/errors";
-
+import { Chat } from "@workquest/database-models/lib/models";
 
 export class GetChatByIdValidator {
   public NotNull(chat: Chat) {

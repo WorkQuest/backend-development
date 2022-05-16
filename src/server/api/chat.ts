@@ -39,7 +39,7 @@ import {
 } from '../handlers/chat/chat-member/GetChatMemberHandlers';
 import { LeaveFromGroupChatHandler } from '../handlers/chat/group-chat/LeaveFromGroupChatHandler';
 import { SendMessageToChatHandler } from '../handlers/chat/SendMessageToChatHandler';
-import { GetChatByIdHandler } from '../handlers/chat/GetChatByIdHandler';
+import { GetChatByIdHandler, GetChatByIdPostValidationHandler } from '../handlers/chat/GetChatByIdHandler';
 import {
   GetMediaByIdsHandler,
   GetMediaPostValidationHandler,
@@ -307,7 +307,9 @@ export async function sendMessageToChat(r) {
   const { chatId } = r.params as { chatId: string };
   const { text, mediaIds } = r.payload as { text: string, mediaIds: string[] };
 
-  const chat = await new GetChatByIdHandler().Handle({ chatId });
+  const chat = await new GetChatByIdPostValidationHandler(
+    new GetChatByIdHandler()
+  ).Handle({ chatId });
 
   const meMember = await new GetChatMemberPostAccessPermission(
     new GetChatMemberPostValidationHandler(
