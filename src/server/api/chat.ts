@@ -49,17 +49,6 @@ import {
   DeletedMemberFromGroupChatPreAccessPermissionHandler,
 } from '../handlers';
 
-import {
-
-} from '../handlers/media/GetMediaByIdHandlers';
-import {
-
-} from '../handlers/user/GetUsersByIdHandler';
-import {  } from '../handlers/chat/private-chat/SendMessageToUserHandler';
-import {
-
-} from '../handlers/chat/group-chat/AddUsersInGroupChatHandler';
-
 export const searchChatFields = ['name'];
 
 //TODO: improve getDataValue('meMember') to meMember, do tests
