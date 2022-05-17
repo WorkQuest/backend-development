@@ -45,6 +45,13 @@ import {
   GetMediaPostValidationHandler,
   GetMediasPostValidationHandler
 } from '../handlers/media/GetMediaByIdHandlers';
+import {
+  GetUsersByIdHandler,
+  GetUsersByIdPostAccessPermission,
+  GetUsersByIdPostValidationHandler,
+  GetUsersByIdsHandler
+} from '../handlers/user/GetUsersByIdsHandler';
+import { SendMessageToUserHandler } from '../handlers/chat/private-chat/SendMessageToUserHandler';
 
 export const searchChatFields = ['name'];
 
@@ -273,11 +280,22 @@ export async function sendMessageToUser(r) {
   const { userId } = r.params as { userId: string };
   const { text, mediaIds } = r.payload as { text: string, mediaIds: string[] }
 
-  const recipient user =
+  const recipientUser = await new GetUsersByIdPostAccessPermission(
+    new GetUsersByIdPostValidationHandler(
+      new GetUsersByIdHandler()
+    )
+  ).Handle({ userId });
 
   const medias = await new GetMediasPostValidationHandler(
     new GetMediaByIdsHandler()
   ).Handle({ mediaIds });
+
+  const message = await new SendMessageToUserHandler(r.server.app.db).Handle({
+    text,
+    medias,
+    sender: meUser,
+    recipient: recipientUser,
+  });
 
   // await incrementUnreadCountMessageOfMembersJob({
   //   chatId: privateChatController.chat.id,
@@ -298,7 +316,7 @@ export async function sendMessageToUser(r) {
   //   recipients: [privateChatController.members.recipientMember.userId],
   // });
 
-  // return output(message);
+  return output(message);
 }
 
 export async function sendMessageToChat(r) {

@@ -16,7 +16,6 @@ export class UserAccessPermission {
       });
     }
   }
-
   public UserHasConfirmedAccess(user: User) {
     if (user.status !== UserStatus.Confirmed) {
       throw error(Errors.InvalidStatus, 'Users must have confirmed status', {
