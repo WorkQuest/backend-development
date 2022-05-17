@@ -2,62 +2,62 @@ import { literal, Op } from 'sequelize';
 import { error, output } from '../utils';
 import { Errors } from '../utils/errors';
 import { setMessageAsReadJob } from '../jobs/setMessageAsRead';
+import { ChatNotificationActions } from '../controllers/controller.broker';
 import { updateCountUnreadChatsJob } from '../jobs/updateCountUnreadChats';
 import { updateCountUnreadMessagesJob } from '../jobs/updateCountUnreadMessages';
+import { listOfUsersByChatsCountQuery, listOfUsersByChatsQuery } from '../queries';
 import { resetUnreadCountMessagesOfMemberJob } from '../jobs/resetUnreadCountMessagesOfMember';
 import { incrementUnreadCountMessageOfMembersJob } from '../jobs/incrementUnreadCountMessageOfMembers';
-import { ChatNotificationActions } from '../controllers/controller.broker';
-import { listOfUsersByChatsCountQuery, listOfUsersByChatsQuery } from '../queries';
-import { ChecksListChat, ChecksListPrivateChat, ChecksListQuestChat } from '../checks-list/checksList.chat';
-import { ChatControllerFactory, QuestChatControllerFactory } from '../factories/factory.chatController';
 import {
   Chat,
+  User,
   ChatData,
-  ChatMember,
-  ChatMemberDeletionData,
-  ChatType,
-  MemberType,
   Message,
   QuestChat,
-  QuestChatStatuses,
-  SenderMessageStatus,
+  ChatMember,
   StarredChat,
   StarredMessage,
-  User
+  SenderMessageStatus,
+  ChatMemberDeletionData,
 } from '@workquest/database-models/lib/models';
 import {
-  DeletedMemberFromGroupChatHandler,
-  DeletedMemberFromGroupChatPreAccessPermissionHandler, DeletedMemberFromGroupChatPreValidateHandler
-} from '../handlers/chat/group-chat/DeletedMemberFromGroupChatHandler';
-import {
+  GetChatByIdHandler,
   GetGroupChatHandler,
-  GetGroupChatPostValidationHandler
-} from '../handlers/chat/group-chat/GetGroupChatHandler';
-import {
-  GetChatMemberByIdHandler, GetChatMemberByUserHandler,
-  GetChatMemberPostAccessPermissionHandler, GetChatMemberPostValidationHandler
-} from '../handlers/chat/chat-member/GetChatMemberHandlers';
-import {
-  LeaveFromGroupChatHandler,
-  LeaveFromGroupChatPreAccessPermissionHandler, LeaveFromGroupChatPreValidateHandler
-} from '../handlers/chat/group-chat/LeaveFromGroupChatHandler';
-import { SendMessageToChatHandler } from '../handlers/chat/SendMessageToChatHandler';
-import { GetChatByIdHandler, GetChatByIdPostValidationHandler } from '../handlers/chat/GetChatByIdHandler';
-import {
+  GetUsersByIdHandler,
+  GetUsersByIdsHandler,
   GetMediaByIdsHandler,
-  GetMediaPostValidationHandler,
-  GetMediasPostValidationHandler
+  SendMessageToChatHandler,
+  SendMessageToUserHandler,
+  GetChatMemberByIdHandler,
+  LeaveFromGroupChatHandler,
+  GetChatMemberByUserHandler,
+  AddUsersInGroupChatHandler,
+  GetMediasPostValidationHandler,
+  GetChatByIdPostValidationHandler,
+  GetUsersByIdPostValidationHandler,
+  DeletedMemberFromGroupChatHandler,
+  GetChatMemberPostValidationHandler,
+  GetUsersByIdsPostValidationHandler,
+  LeaveFromGroupChatPreValidateHandler,
+  AddUsersInGroupChatPreValidateHandler,
+  GetUsersByIdPostAccessPermissionHandler,
+  GetChatMemberPostAccessPermissionHandler,
+  GetUsersByIdsPostAccessPermissionHandler,
+  LeaveFromGroupChatPreAccessPermissionHandler,
+  DeletedMemberFromGroupChatPreValidateHandler,
+  AddUsersInGroupChatPreAccessPermissionHandler,
+  DeletedMemberFromGroupChatPreAccessPermissionHandler,
+} from '../handlers';
+
+import {
+
 } from '../handlers/media/GetMediaByIdHandlers';
 import {
-  GetUsersByIdHandler,
-  GetUsersByIdPostAccessPermission,
-  GetUsersByIdPostValidationHandler,
-  GetUsersByIdHandler, GetUsersByIdsHandler, GetUsersByIdsPostValidationHandler, GetUsersByIdsPostAccessPermission
+
 } from '../handlers/user/GetUsersByIdHandler';
-import { SendMessageToUserHandler } from '../handlers/chat/private-chat/SendMessageToUserHandler';
+import {  } from '../handlers/chat/private-chat/SendMessageToUserHandler';
 import {
-  AddUsersInGroupChatHandler,
-  AddUsersInGroupChatPreAccessPermissionHandler, AddUsersInGroupChatPreValidateHandler
+
 } from '../handlers/chat/group-chat/AddUsersInGroupChatHandler';
 
 export const searchChatFields = ['name'];
@@ -287,7 +287,7 @@ export async function sendMessageToUser(r) {
   const { userId } = r.params as { userId: string };
   const { text, mediaIds } = r.payload as { text: string, mediaIds: string[] }
 
-  const recipientUser = await new GetUsersByIdPostAccessPermission(
+  const recipientUser = await new GetUsersByIdPostAccessPermissionHandler(
     new GetUsersByIdPostValidationHandler(
       new GetUsersByIdHandler()
     )
@@ -500,7 +500,7 @@ export async function addUsersInGroupChat(r) {
   ).Handle({ chat: groupChat, user: meUser });
 
   const users = await new GetUsersByIdsPostValidationHandler(
-    new GetUsersByIdsPostAccessPermission(
+    new GetUsersByIdsPostAccessPermissionHandler(
       new GetUsersByIdsHandler()
     )
   ).Handle({ userIds });

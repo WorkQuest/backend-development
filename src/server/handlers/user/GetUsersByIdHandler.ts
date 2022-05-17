@@ -44,7 +44,7 @@ export class GetUsersByIdPostValidationHandler extends HandlerDecoratorBase<GetU
   }
 }
 
-export class GetUsersByIdPostAccessPermission extends HandlerDecoratorBase<GetUsersByIdCommand, Promise<User>> {
+export class GetUsersByIdPostAccessPermissionHandler extends HandlerDecoratorBase<GetUsersByIdCommand, Promise<User>> {
 
   private readonly accessPermission: UserAccessPermission;
 
@@ -86,7 +86,7 @@ export class GetUsersByIdsPostValidationHandler extends HandlerDecoratorBase<Get
   }
 }
 
-export class GetUsersByIdsPostAccessPermission extends HandlerDecoratorBase<GetUsersByIdsCommand, Promise<User[]>> {
+export class GetUsersByIdsPostAccessPermissionHandler extends HandlerDecoratorBase<GetUsersByIdsCommand, Promise<User[]>> {
 
   private readonly accessPermission: UserAccessPermission;
 
