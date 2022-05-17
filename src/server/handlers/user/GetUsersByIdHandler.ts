@@ -8,7 +8,7 @@ export interface GetUsersByIdCommand {
 }
 
 export interface GetUsersByIdsCommand {
-  readonly usersIds: ReadonlyArray<string>;
+  readonly userIds: ReadonlyArray<string>;
 }
 
 export class GetUsersByIdHandler implements IHandler<GetUsersByIdCommand, Promise<User>> {
@@ -19,7 +19,7 @@ export class GetUsersByIdHandler implements IHandler<GetUsersByIdCommand, Promis
 
 export class GetUsersByIdsHandler implements IHandler<GetUsersByIdsCommand, Promise<User[]>> {
   public async Handle(command: GetUsersByIdsCommand): Promise<User[]> {
-    return await User.findAll({ where: { id: command.usersIds } });
+    return await User.findAll({ where: { id: command.userIds } });
   }
 }
 
@@ -80,7 +80,7 @@ export class GetUsersByIdsPostValidationHandler extends HandlerDecoratorBase<Get
   public async Handle(command: GetUsersByIdsCommand): Promise<User[]> {
     const users = await this.decorated.Handle(command);
 
-    this.validator.HasCompleteSetValidate(users, command.usersIds as string[]);
+    this.validator.HasCompleteSetValidate(users, command.userIds as string[]);
 
     return users;
   }
