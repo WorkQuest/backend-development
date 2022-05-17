@@ -1,4 +1,6 @@
-import { IHandler, Options } from '../../types';
+import { GroupChatValidator } from './GroupChatValidator';
+import { HandlerDecoratorBase, IHandler, Options } from '../../types';
+import { GroupChatAccessPermission } from './GroupChatAccessPermission';
 import {
   Chat,
   User,
@@ -15,6 +17,7 @@ import {
 
 export interface AddUsersInGroupChatCommand {
   readonly groupChat: Chat;
+  readonly addInitiator: ChatMember,
   readonly users: ReadonlyArray<User>;
 }
 
@@ -204,5 +207,45 @@ export class AddUsersInGroupChatHandler implements IHandler<AddUsersInGroupChatC
 
       return [...messagesWithInfoRestoreMembers, ...messagesWithInfoAddMembers];
     });
+  }
+}
+
+export class AddUsersInGroupChatPreAccessPermissionHandler extends HandlerDecoratorBase<AddUsersInGroupChatCommand, Promise<Message[]>> {
+
+  private readonly accessPermission: GroupChatAccessPermission;
+
+  constructor(
+    protected readonly decorated: IHandler<AddUsersInGroupChatCommand, Promise<Message[]>>,
+  ) {
+    super(decorated);
+
+    this.accessPermission = new GroupChatAccessPermission();
+  }
+
+  public async Handle(command: AddUsersInGroupChatCommand): Promise<Message[]> {
+    this.accessPermission.MemberHasAccess(command.groupChat, command.addInitiator);
+    this.accessPermission.MemberHasOwnerAccess(command.groupChat, command.addInitiator);
+
+    return this.decorated.Handle(command);
+  }
+}
+
+export class AddUsersInGroupChatPreValidateHandler extends HandlerDecoratorBase<AddUsersInGroupChatCommand, Promise<Message[]>> {
+
+  private readonly validator: GroupChatValidator;
+
+  constructor(
+    protected readonly decorated: IHandler<AddUsersInGroupChatCommand, Promise<Message[]>>,
+  ) {
+    super(decorated);
+
+    this.validator = new GroupChatValidator();
+  }
+
+  public async Handle(command: AddUsersInGroupChatCommand): Promise<Message[]> {
+    this.validator.NotNull(command.groupChat);
+    this.validator.GroupChatValidate(command.groupChat);
+
+    return this.decorated.Handle(command);
   }
 }

@@ -1,4 +1,6 @@
-import { Options, IHandler } from '../../types';
+import { GroupChatValidator } from './GroupChatValidator';
+import { Options, IHandler, HandlerDecoratorBase } from '../../types';
+import { GroupChatAccessPermission } from './GroupChatAccessPermission';
 import {
   Chat,
   Message,
@@ -94,5 +96,45 @@ export class LeaveFromGroupChatHandler implements IHandler<LeaveFromGroupChatCom
     });
 
     return messageWithInfo;
+  }
+}
+
+export class LeaveFromGroupChatPreAccessPermissionHandler extends HandlerDecoratorBase<LeaveFromGroupChatCommand, Promise<Message>> {
+
+  private readonly accessPermission: GroupChatAccessPermission;
+
+  constructor(
+    protected readonly decorated: IHandler<LeaveFromGroupChatCommand, Promise<Message>>,
+  ) {
+    super(decorated);
+
+    this.accessPermission = new GroupChatAccessPermission();
+  }
+
+  public async Handle(command: LeaveFromGroupChatCommand): Promise<Message> {
+    this.accessPermission.MemberHasAccess(command.groupChat, command.member);
+
+    return this.decorated.Handle(command);
+  }
+}
+
+export class LeaveFromGroupChatPreValidateHandler extends HandlerDecoratorBase<LeaveFromGroupChatCommand, Promise<Message>> {
+
+  private readonly validator: GroupChatValidator;
+
+  constructor(
+    protected readonly decorated: IHandler<LeaveFromGroupChatCommand, Promise<Message>>,
+  ) {
+    super(decorated);
+
+    this.validator = new GroupChatValidator();
+  }
+
+  public async Handle(command: LeaveFromGroupChatCommand): Promise<Message> {
+    this.validator.NotNull(command.groupChat);
+    this.validator.GroupChatValidate(command.groupChat);
+    this.validator.NotChatOwnerValidate(command.groupChat, command.member);
+
+    return this.decorated.Handle(command);
   }
 }

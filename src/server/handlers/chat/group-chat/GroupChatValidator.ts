@@ -1,6 +1,10 @@
-import { Chat, ChatMember, ChatType } from "@workquest/database-models/lib/models";
 import { error } from "../../../utils";
 import { Errors } from "../../../utils/errors"
+import {
+  Chat,
+  ChatType,
+  ChatMember,
+} from "@workquest/database-models/lib/models";
 
 export class GroupChatValidator {
   public NotNull(groupChat: Chat) {
@@ -16,7 +20,6 @@ export class GroupChatValidator {
       });
     }
   }
-
   public NotChatOwnerValidate(groupChat: Chat, member: ChatMember) {
     if (member.id === groupChat.groupChat.ownerMemberId) {
       throw error(Errors.Forbidden, 'User is an owner of this chat', {

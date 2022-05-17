@@ -112,7 +112,7 @@ export class DeletedMemberFromGroupChatPreAccessPermissionHandler extends Handle
   }
 }
 
-export class DeletedMemberFromGroupChatPreValidateHandler extends HandlerDecoratorBase <DeleteMemberFromGroupChatCommand, Promise<Message>> {
+export class DeletedMemberFromGroupChatPreValidateHandler extends HandlerDecoratorBase<DeleteMemberFromGroupChatCommand, Promise<Message>> {
 
   private readonly validator: GroupChatValidator;
 

@@ -68,7 +68,7 @@ export class GetChatMemberPostValidationHandler<Tin extends { chat: Chat }> exte
   }
 }
 
-export class GetChatMemberPostAccessPermission<Tin extends { chat: Chat }> extends HandlerDecoratorBase<Tin, Promise<ChatMember>> {
+export class GetChatMemberPostAccessPermissionHandler<Tin extends { chat: Chat }> extends HandlerDecoratorBase<Tin, Promise<ChatMember>> {
 
   private readonly accessPermission: ChatMemberAccessPermission;
 
@@ -108,7 +108,7 @@ export class GetChatMembersPostValidationHandler<Tin extends { chat: Chat }> ext
   }
 }
 
-export class GetChatMembersPostAccessPermission<Tin extends { chat: Chat }> extends HandlerDecoratorBase<Tin, Promise<ChatMember[]>> {
+export class GetChatMembersPostAccessPermissionHandler<Tin extends { chat: Chat }> extends HandlerDecoratorBase<Tin, Promise<ChatMember[]>> {
 
   private readonly accessPermission: ChatMemberAccessPermission;
 

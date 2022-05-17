@@ -35,9 +35,12 @@ import {
 } from '../handlers/chat/group-chat/GetGroupChatHandler';
 import {
   GetChatMemberByIdHandler, GetChatMemberByUserHandler,
-  GetChatMemberPostAccessPermission, GetChatMemberPostValidationHandler
+  GetChatMemberPostAccessPermissionHandler, GetChatMemberPostValidationHandler
 } from '../handlers/chat/chat-member/GetChatMemberHandlers';
-import { LeaveFromGroupChatHandler } from '../handlers/chat/group-chat/LeaveFromGroupChatHandler';
+import {
+  LeaveFromGroupChatHandler,
+  LeaveFromGroupChatPreAccessPermissionHandler, LeaveFromGroupChatPreValidateHandler
+} from '../handlers/chat/group-chat/LeaveFromGroupChatHandler';
 import { SendMessageToChatHandler } from '../handlers/chat/SendMessageToChatHandler';
 import { GetChatByIdHandler, GetChatByIdPostValidationHandler } from '../handlers/chat/GetChatByIdHandler';
 import {
@@ -49,9 +52,13 @@ import {
   GetUsersByIdHandler,
   GetUsersByIdPostAccessPermission,
   GetUsersByIdPostValidationHandler,
-  GetUsersByIdsHandler
-} from '../handlers/user/GetUsersByIdsHandler';
+  GetUsersByIdHandler, GetUsersByIdsHandler, GetUsersByIdsPostValidationHandler, GetUsersByIdsPostAccessPermission
+} from '../handlers/user/GetUsersByIdHandler';
 import { SendMessageToUserHandler } from '../handlers/chat/private-chat/SendMessageToUserHandler';
+import {
+  AddUsersInGroupChatHandler,
+  AddUsersInGroupChatPreAccessPermissionHandler, AddUsersInGroupChatPreValidateHandler
+} from '../handlers/chat/group-chat/AddUsersInGroupChatHandler';
 
 export const searchChatFields = ['name'];
 
@@ -329,7 +336,7 @@ export async function sendMessageToChat(r) {
     new GetChatByIdHandler()
   ).Handle({ chatId });
 
-  const meMember = await new GetChatMemberPostAccessPermission(
+  const meMember = await new GetChatMemberPostAccessPermissionHandler(
     new GetChatMemberPostValidationHandler(
       new GetChatMemberByUserHandler()
     )
@@ -382,13 +389,13 @@ export async function removeMemberFromGroupChat(r) {
     new GetGroupChatHandler()
   ).Handle({ chatId });
 
-  const member = await new GetChatMemberPostAccessPermission(
+  const member = await new GetChatMemberPostAccessPermissionHandler(
     new GetChatMemberPostValidationHandler(
       new GetChatMemberByIdHandler()
     )
   ).Handle({ chat: groupChat, id: memberId });
 
-  const meMember = await new GetChatMemberPostAccessPermission(
+  const meMember = await new GetChatMemberPostAccessPermissionHandler(
     new GetChatMemberPostValidationHandler(
       new GetChatMemberByUserHandler()
     )
@@ -437,14 +444,17 @@ export async function leaveFromGroupChat(r) {
     new GetGroupChatHandler()
   ).Handle({ chatId });
 
-  const meMember = await new GetChatMemberPostAccessPermission(
+  const meMember = await new GetChatMemberPostAccessPermissionHandler(
     new GetChatMemberPostValidationHandler(
       new GetChatMemberByUserHandler()
     )
   ).Handle({ chat: groupChat, user: meUser });
 
-  const messageWithInfo = await new LeaveFromGroupChatHandler(r.server.app.db)
-    .Handle({ member: meMember, groupChat });
+  const messageWithInfo = await new LeaveFromGroupChatPreValidateHandler(
+    new LeaveFromGroupChatPreAccessPermissionHandler(
+      new LeaveFromGroupChatHandler(r.server.app.db)
+    )
+  ).Handle({ member: meMember, groupChat });
 
   // await incrementUnreadCountMessageOfMembersJob({
   //   chatId: groupChatService.getChat().id,
@@ -479,6 +489,28 @@ export async function addUsersInGroupChat(r) {
   const { chatId } = r.params as { chatId: string };
   const { userIds } = r.payload as { userIds: string[] };
 
+  const groupChat = await new GetGroupChatPostValidationHandler(
+    new GetGroupChatHandler()
+  ).Handle({ chatId });
+
+  const meMember = await new GetChatMemberPostValidationHandler(
+    new GetChatMemberPostAccessPermissionHandler(
+      new GetChatMemberByUserHandler()
+    )
+  ).Handle({ chat: groupChat, user: meUser });
+
+  const users = await new GetUsersByIdsPostValidationHandler(
+    new GetUsersByIdsPostAccessPermission(
+      new GetUsersByIdsHandler()
+    )
+  ).Handle({ userIds });
+
+  const messagesWithInfo = await new AddUsersInGroupChatPreValidateHandler(
+    new AddUsersInGroupChatPreAccessPermissionHandler(
+      new AddUsersInGroupChatHandler(r.server.app.db)
+    )
+  ).Handle({ groupChat, users, addInitiator: meMember })
+
   // await resetUnreadCountMessagesOfMemberJob({
   //   memberId: meMember.id,
   //   chatId: groupChatService.getChat().id,
@@ -505,7 +537,7 @@ export async function addUsersInGroupChat(r) {
   //   data: messagesResult,
   // });
   //
-  // return output(infoMessages);
+  return output(messagesWithInfo);
 }
 
 export async function setMessagesAsRead(r) {
