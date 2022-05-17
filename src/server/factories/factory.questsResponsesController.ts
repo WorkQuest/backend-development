@@ -8,7 +8,11 @@ export class QuestResponseControllerFactory {
     const questResponse = await QuestsResponse.findByPk(id, {
       include: [{
         model: Quest,
-        as: 'quest'
+        as: 'quest',
+        include: [{
+          model: User.scope('shortWithAdditionalInfo'),
+          as: 'user'
+        }],
       }, {
         model: User,
         as: 'worker'
@@ -32,7 +36,11 @@ export class QuestInviteControllerFactory {
     const questInvite = await QuestsResponse.findByPk(id, {
       include: [{
         model: Quest,
-        as: 'quest'
+        as: 'quest',
+        include: [{
+          model: User.scope('shortWithAdditionalInfo'),
+          as: 'user'
+        }],
       }, {
         model: User,
         as: 'worker'

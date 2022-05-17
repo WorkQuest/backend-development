@@ -252,12 +252,11 @@ abstract class UserHelper {
   }
 
   public userMustBeDisputeMember(dispute: QuestDispute): this {
-    const isUserDisputeMember = dispute.openDisputeUserId === this.user.id ? true : (dispute.opponentUserId === this.user.id);
-
-    if (!isUserDisputeMember) {
-      throw error(Errors.InvalidRole, 'User is not dispute member', [{userId: this.user.id}]);
+    if (dispute.openDisputeUserId === this.user.id || dispute.opponentUserId === this.user.id) {
+      return this;
     }
-    return this;
+
+    throw error(Errors.InvalidRole, 'User is not dispute member', {});
   }
 
   public async createRaiseView() {

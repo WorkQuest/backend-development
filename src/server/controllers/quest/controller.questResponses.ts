@@ -51,12 +51,12 @@ export class QuestsInviteController {
     return questResponseJson;
   }
 
-  public acceptInvitation(options: { tx?: Transaction } = {}): Promise<void> {
-    return void this.questInvite.update({ status: QuestsResponseStatus.Accepted }, { transaction: options.tx });
+  public acceptInvitation(options: { tx?: Transaction } = {}): Promise<any> {
+    return this.questInvite.update({ status: QuestsResponseStatus.Accepted }, { transaction: options.tx });
   }
 
-  public rejectInvitation(options: { tx?: Transaction } = {}): Promise<void> {
-    return void this.questInvite.update({ status: QuestsResponseStatus.Rejected }, { transaction: options.tx });
+  public rejectInvitation(options: { tx?: Transaction } = {}): Promise<any> {
+    return this.questInvite.update({ status: QuestsResponseStatus.Rejected }, { transaction: options.tx });
   }
 
   public static async sendInvite(payload: SendInvitePayload, options: { tx?: Transaction } = {}): Promise<QuestsInviteController | never> {

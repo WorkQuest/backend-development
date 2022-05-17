@@ -18,6 +18,7 @@ import {
   QuestsResponse,
   QuestsResponseStatus,
   QuestsResponseType,
+  QuestChatStatuses,
   QuestsReview,
   QuestsStarred,
   QuestStatus,
@@ -34,6 +35,8 @@ export const searchQuestFields = [
 
 export async function getQuest(r) {
   const user: User = r.auth.credentials;
+
+  const bind = {};
 
   const include = [{
     model: QuestsStarred,
@@ -60,7 +63,7 @@ export async function getQuest(r) {
         { opponentUserId: r.auth.credentials.id },
         { openDisputeUserId: r.auth.credentials.id },
       ],
-      status: { [Op.in]: [DisputeStatus.Pending, DisputeStatus.InProgress] },
+      status: { [Op.in]: [DisputeStatus.Pending, DisputeStatus.Created, DisputeStatus.InProgress] },
     },
   }, {
     model: QuestsReview.unscoped(),
@@ -78,8 +81,33 @@ export async function getQuest(r) {
     });
   }
 
+  if (user.role === UserRole.Employer) {
+    const excludeStatuses = [
+      QuestStatus.Closed,
+      QuestStatus.Dispute,
+      QuestStatus.Blocked,
+      QuestStatus.Pending,
+      QuestStatus.Recruitment,
+      QuestStatus.WaitingForConfirmFromWorkerOnAssign
+    ];
+
+    include.push({
+      model: QuestChat.scope('idsOnly'),
+      attributes: {
+        include: [[literal('CASE WHEN "questChat"."chatId" IS NULL THEN NULL ELSE "chatId" END'), 'chatId']],
+        exclude: ['createdAt', 'updatedAt', 'status', 'id'],
+      },
+      as: 'questChat',
+      required: false,
+      where: literal(`"questChat"."employerId" = $employerId AND "Quest"."status" NOT IN (${excludeStatuses.join(',')}) AND "questChat"."status" = ${QuestChatStatuses.Open}`),
+    });
+
+    bind['employerId'] = r.auth.credentials.id;
+  }
+
   const quest = await Quest.findOne({
     where: { id: r.params.questId },
+    bind,
     include,
   });
 

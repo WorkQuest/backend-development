@@ -30,10 +30,14 @@ export class QuestChatController {
   ) {
   }
 
-  public toDto(): object {
+  public async toDto(): Promise <object> {
+    const worker = await User.scope('short').findByPk(this.questChat.workerId);
+
     const chat = this.chat.toJSON();
 
     chat['questChat'] = this.questChat.toJSON();
+
+    chat['questChat']['worker'] = worker.toJSON();
 
     return chat;
   }

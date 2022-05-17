@@ -73,7 +73,7 @@ export async function responseOnQuest(r) {
   });
 
   return(
-    questChatController.toDto()
+    await questChatController.toDto()
   );
 }
 
@@ -127,7 +127,7 @@ export async function inviteOnQuest(r) {
   });
 
   return output(
-    questChatController.toDto()
+    await questChatController.toDto()
   );
 }
 
