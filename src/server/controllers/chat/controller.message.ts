@@ -1,7 +1,6 @@
 import { Message } from '@workquest/database-models/lib/models';
 import { error } from '../../utils';
 import { Errors } from '../../utils/errors';
-import { Transaction } from 'sequelize';
 
 abstract class MessageHelper {
   public abstract message: Message;

@@ -1,6 +1,6 @@
 import { error } from '../utils';
 import { Errors } from '../utils/errors';
-import { ChatController, QuestChatController, GroupChatController } from '../controllers/chat/controller.chat';
+import { QuestChatController } from '../controllers/chat/controller.chat';
 import {
   Chat,
   User,
@@ -71,17 +71,5 @@ export class QuestChatControllerFactory {
       worker: workerMember,
       employer: employerMember,
     });
-  }
-}
-
-export class GroupChatControllerFactory {
-  public static async createById(id: string): Promise<GroupChatController> {
-    return null;
-  }
-}
-
-export class ChatControllerFactory {
-  public static async createById(id: string): Promise<ChatController> {
-    return null;
   }
 }
