@@ -218,7 +218,8 @@ export function getUsers(role: UserRole, type: 'points' | 'list') {
       status: UserStatus.Confirmed,
       ...(r.query.priorities && { priority: r.query.priorities }),
       ...(r.query.workplaces && { workplace: r.query.workplaces }),
-      ...(r.query.betweenWagePerHour && { wagePerHour: { [Op.between]: [r.query.betweenWagePerHour.from, r.query.betweenWagePerHour.to] } }),
+      ...(r.query.betweenCostPerHour && { costPerHour: { [Op.between]: [r.query.betweenCostPerHour.from, r.query.betweenCostPerHour.to] } }),
+      ...(r.query.payPeriods && { payPeriod: { [Op.in]: r.query.payPeriods } }),
     };
 
     if (r.query.q) {
@@ -359,7 +360,8 @@ export function editProfile(userRole: UserRole) {
       firstName: r.payload.firstName,
       priority: r.payload.priority || null,
       workplace: r.payload.workplace || null,
-      wagePerHour: r.payload.wagePerHour || null,
+      payPeriod: r.payload.payPeriod || null,
+      costPerHour: r.payload.costPerHour || null,
       additionalInfo: r.payload.additionalInfo,
     }, transaction);
 
@@ -513,14 +515,14 @@ export async function changeUserRole(r) {
     userId: user.id,
     movedFromRole: user.role,
     additionalInfo: user.additionalInfo,
-    wagePerHour: user.wagePerHour,
+    costPerHour: user.costPerHour,
     workplace: user.workplace,
     priority: user.priority,
   }, { transaction });
 
   await user.update({
     workplace: null,
-    wagePerHour: null,
+    costPerHour: null,
     role: changeToRole,
     additionalInfo: UserOldController.getDefaultAdditionalInfo(changeToRole),
   }, { transaction });

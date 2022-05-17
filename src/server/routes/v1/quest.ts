@@ -22,7 +22,7 @@ import {
   specializationKeysSchema,
   questsForGetWithCountSchema,
   questQueryForMapPointsSchema,
-  questQueryForGetWorkersSchema,
+  questQueryForGetWorkersSchema, payPeriodSchema
 } from "@workquest/database-models/lib/schemes";
 
 export default [{
@@ -55,7 +55,8 @@ export default [{
     validate: {
       payload: Joi.object({
         workplace: workPlaceSchema.required(),
-        employment: questEmploymentSchema.required(),
+        payPeriod: payPeriodSchema.required(),
+        typeOfEmployment: questEmploymentSchema.required(),
         priority: prioritySchema.required(),
         locationFull: locationFullSchema.required(),
         title: questTitleSchema.required(),
@@ -250,7 +251,7 @@ export default [{
       }).label("EditQuestParams"),
       payload: Joi.object({
         workplace: workPlaceSchema.required(),
-        employment: questEmploymentSchema.required(),
+        typeOfEmployment: questEmploymentSchema.required(),
         priority: prioritySchema.required(),
         locationFull: locationFullSchema.required(),
         title: questTitleSchema.required(),
