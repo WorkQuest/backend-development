@@ -103,6 +103,70 @@ export async function getUserByWallet(r) {
 }
 
 export async function getAllUsers(r) {
+  const user: User = r.auth.credentials;
+
+  const employerProfileVisibilitySearchLiteral = literal(
+    `( CASE WHEN "User"."role" = 'worker' THEN ` +
+    '(CASE WHEN EXISTS (SELECT "usr"."id" FROM "Users" as "usr" ' +
+    `INNER JOIN "EmployerProfileVisibilitySettings" as "pvs" ON "pvs"."userId" = '${ user.id }' ` +
+    'INNER JOIN "RatingStatistics" as rtn ON "rtn"."userId" = "User"."id" ' +
+    'WHERE ("rtn"."status" & "pvs"."ratingStatusInMySearch" != 0)) THEN TRUE ELSE FALSE END) ' +
+    'ELSE TRUE END) '
+  );
+  const workerProfileVisibilitySearchLiteral = literal(
+    `( CASE WHEN "User"."role" = 'worker' THEN ` +
+    '(CASE WHEN EXISTS (SELECT "usr"."id" FROM "Users" as "usr" ' +
+    `INNER JOIN "WorkerProfileVisibilitySettings" as "pvs" ON "pvs"."userId" = '${ user.id }' ` +
+    'INNER JOIN "RatingStatistics" as rtn ON "rtn"."userId" = "User"."id" ' +
+    'WHERE ("rtn"."status" & "pvs"."ratingStatusInMySearch" != 0)) THEN TRUE ELSE FALSE END) ' +
+    'ELSE TRUE END) '
+  );
+
+  const where = {
+    status: UserStatus.Confirmed,
+    id: { [Op.ne]: r.auth.credentials.id }
+  };
+  where[Op.and] = [];
+
+  const include = [{
+    model: Wallet,
+    as: 'wallet',
+    attributes: ['address'],
+    required: r.query.walletRequired,
+  }] as any;
+
+  if (r.query.q) {
+    where[Op.or] = searchFields.map(
+      field => ({ [field]: { [Op.iLike]: `%${r.query.q}%` }})
+    );
+  }
+
+  if (r.auth.credentials.role === UserRole.Worker) {
+    include.push({
+      model: WorkerProfileVisibilitySetting,
+      as: 'workerProfileVisibilitySetting',
+    }) && where[Op.and].push(workerProfileVisibilitySearchLiteral);
+  }
+  if (r.auth.credentials.role === UserRole.Employer) {
+    include.push({
+      model: EmployerProfileVisibilitySetting,
+      as: 'employerProfileVisibilitySetting',
+    }) && where[Op.and].push(employerProfileVisibilitySearchLiteral);
+  }
+
+  const { count, rows } = await User.findAndCountAll({
+    where,
+    col: 'id',
+    distinct: true,
+    include,
+    limit: r.query.limit,
+    offset: r.query.offset,
+  });
+
+  return output({ count, users: rows });
+}
+
+export async function getAllUsersDao(r) {
   const where = {
     status: UserStatus.Confirmed,
     id: { [Op.ne]: r.auth.credentials.id }
