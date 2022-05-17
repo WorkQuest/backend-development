@@ -244,6 +244,7 @@ export default [
     'google',
     'linkedin',
     'twitter',
+    'facebook',
   ].map(strategy => (
     [
       'dao',
