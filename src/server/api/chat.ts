@@ -578,16 +578,15 @@ export async function setMessagesAsRead(r) {
     chatId: r.params.chatId,
     senderMemberId: chat.meMember.id,
   });
-
   await updateCountUnreadChatsJob({
     userIds: [r.auth.credentials.id],
   });
 
-  r.server.app.broker.sendChatNotification({
-    action: ChatNotificationActions.messageReadByRecipient,
-    recipients: otherSenders.map((sender) => sender.senderMemberId),
-    data: message,
-  });
+  // r.server.app.broker.sendChatNotification({
+  //   action: ChatNotificationActions.messageReadByRecipient,
+  //   recipients: otherSenders.map((sender) => sender.senderMemberId),
+  //   data: message,
+  // });
 
   return output();
 }
