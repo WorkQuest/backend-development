@@ -141,6 +141,27 @@ export default [{
     },
   }
 }, {
+  method: "GET",
+  path: "/v1/dao/profile/users",
+  handler: handlers.getAllUsersDao,
+  options: {
+    auth: 'jwt-access',
+    id: "v1.profile.getAllUsersDao",
+    tags: ["api", "profile"],
+    description: "Get all users (workers and employers)",
+    validate: {
+      query: Joi.object({
+        q: searchSchema,
+        walletRequired: Joi.boolean().default(false),
+        limit: limitSchema,
+        offset: offsetSchema,
+      }).label('GetAllUsersDaoQuery'),
+    },
+    response: {
+      schema: outputPaginationSchema('users', userSchema).label("GetAllUsersDaoResponse")
+    },
+  }
+}, {
   method: "PUT",
   path: "/v1/employer/profile/edit",
   handler: handlers.editProfile(UserRole.Employer),
