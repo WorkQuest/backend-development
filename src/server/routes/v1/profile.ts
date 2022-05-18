@@ -2,7 +2,7 @@ import * as Joi from "joi";
 import * as handlers from "../../api/profile";
 import { UserRole } from "@workquest/database-models/lib/models";
 import {
-  accountAddressSchema,
+  accountAddressSchema, employerProfileVisibilitySettingsSchema,
   employerQuerySchema,
   emptyOkSchema,
   idSchema,
@@ -13,7 +13,6 @@ import {
   outputPaginationSchema,
   phoneSchema,
   prioritySchema,
-  profileVisibilitySettingsSchema,
   searchSchema,
   specializationKeysSchema,
   totpSchema,
@@ -30,10 +29,13 @@ import {
   userRoleSchema,
   userSchema,
   userStatisticsSchema,
-  userWorkersSchema, workerPayloadSchema, workerQueryForMapPointsSchema,
+  userWorkersSchema,
+  workerPayloadSchema,
+  workerProfileVisibilitySettingsSchema,
+  workerQueryForMapPointsSchema,
   workerQuerySchema,
-  workerWagePerHourSchema,
-  workPlaceSchema
+  workerCostPerHourSchema,
+  workPlaceSchema, payPeriodSchema
 } from "@workquest/database-models/lib/schemes";
 
 export default [{
@@ -155,7 +157,7 @@ export default [{
         phoneNumber: phoneSchema.allow(null).required(),
         locationFull: locationFullSchema.allow(null).required(),
         additionalInfo: userAdditionalInfoEmployerSchema.required(),
-        profileVisibility: profileVisibilitySettingsSchema.required(),
+        profileVisibility: employerProfileVisibilitySettingsSchema.required(),
       }).label("EditEmployerProfilePayload")
     },
     response: {
@@ -180,10 +182,11 @@ export default [{
         priority: prioritySchema.allow(null).required(),
         locationFull: locationFullSchema.allow(null).required(),
         workplace: workPlaceSchema.allow(null).required(),
+        payPeriod: payPeriodSchema.allow(null).required(),
         additionalInfo: userAdditionalInfoWorkerSchema.required(),
-        wagePerHour: workerWagePerHourSchema.allow(null).required(),
+        costPerHour: workerCostPerHourSchema.allow(null).required(),
         specializationKeys: specializationKeysSchema.required().unique(),
-        profileVisibility: profileVisibilitySettingsSchema.required(),
+        profileVisibility: workerProfileVisibilitySettingsSchema.required(),
       }).label("EditWorkerProfilePayload")
     },
     response: {

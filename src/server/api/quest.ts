@@ -18,6 +18,7 @@ import {
   QuestsResponse,
   QuestsResponseStatus,
   QuestsResponseType,
+  QuestChatStatuses,
   QuestsReview,
   QuestsStarred,
   QuestStatus,
@@ -34,6 +35,8 @@ export const searchQuestFields = [
 
 export async function getQuest(r) {
   const user: User = r.auth.credentials;
+
+  const bind = {};
 
   const include = [{
     model: QuestsStarred,
@@ -60,7 +63,7 @@ export async function getQuest(r) {
         { opponentUserId: r.auth.credentials.id },
         { openDisputeUserId: r.auth.credentials.id },
       ],
-      status: { [Op.in]: [DisputeStatus.pending, DisputeStatus.inProgress] },
+      status: { [Op.in]: [DisputeStatus.Pending, DisputeStatus.Created, DisputeStatus.InProgress] },
     },
   }, {
     model: QuestsReview.unscoped(),
@@ -78,8 +81,33 @@ export async function getQuest(r) {
     });
   }
 
+  if (user.role === UserRole.Employer) {
+    const excludeStatuses = [
+      QuestStatus.Closed,
+      QuestStatus.Dispute,
+      QuestStatus.Blocked,
+      QuestStatus.Pending,
+      QuestStatus.Recruitment,
+      QuestStatus.WaitingForConfirmFromWorkerOnAssign
+    ];
+
+    include.push({
+      model: QuestChat.scope('idsOnly'),
+      attributes: {
+        include: [[literal('CASE WHEN "questChat"."chatId" IS NULL THEN NULL ELSE "chatId" END'), 'chatId']],
+        exclude: ['createdAt', 'updatedAt', 'status', 'id'],
+      },
+      as: 'questChat',
+      required: false,
+      where: literal(`"questChat"."employerId" = $employerId AND "Quest"."status" NOT IN (${excludeStatuses.join(',')}) AND "questChat"."status" = ${QuestChatStatuses.Open}`),
+    });
+
+    bind['employerId'] = r.auth.credentials.id;
+  }
+
   const quest = await Quest.findOne({
     where: { id: r.params.questId },
+    bind,
     include,
   });
 
@@ -198,69 +226,46 @@ export function getQuests(type: 'list' | 'points', requester?: 'worker' | 'emplo
     const questRaiseViewLiteral = literal(
       '(SELECT "type" FROM "QuestRaiseViews" WHERE "questId" = "Quest"."id" AND "QuestRaiseViews"."status" = 0)'
     );
+    const requesterWorkerLiteral = literal(
+      `(1 = (CASE WHEN EXISTS (SELECT * FROM "QuestsResponses" as qResp ` +
+      `WHERE qResp."questId" = "Quest"."id" AND (qResp."workerId"  = '${ user.id }' AND ` +
+        `qResp."status" IN (${ QuestsResponseStatus.Open }, ${ QuestsResponseStatus.Accepted }))) THEN 1 END)) `
+    )
 
     const include = [];
     const replacements = {};
     const order = [[questRaiseViewLiteral, 'asc']] as any[];
     const where = {
       [Op.and]: [],
+      [Op.or]: [],
       ...(r.query.filter && { filter: r.params.filter }),
       ...(r.params.userId && { userId: r.params.userId }),
       ...(r.params.workerId && { assignedWorkerId: r.params.workerId }),
       ...(r.query.statuses && { status: { [Op.in]: r.query.statuses } }),
       ...(r.query.priorities && { priority: { [Op.in]: r.query.priorities } }),
       ...(r.query.workplaces && { workplace: { [Op.in]: r.query.workplaces } }),
-      ...(r.query.employments && { employment: { [Op.in]: r.query.employments } }),
+      ...(r.query.typeOfEmployments && { typeOfEmployment: { [Op.in]: r.query.typeOfEmployments } }),
       ...(r.query.priceBetween && { price: { [Op.between]: [r.query.priceBetween.from, r.query.priceBetween.to] } }),
+      ...(r.query.payPeriods && { payPeriod: { [Op.in]: r.query.payPeriods } }),
     };
 
     if (r.query.q) {
-      where[Op.or] = searchQuestFields.map(field => ({
+      where[Op.or].push(searchQuestFields.map(field => ({
         [field]: { [Op.iLike]: `%${r.query.q}%` }
-      }));
+      })));
 
       where[Op.or].push(userSearchLiteral)
-    }
-    if (!requester) {
-      // TODO проверка r.query.responded, r.query.invited на роль
-
-      include.push({
-        model: QuestsResponse.unscoped(),
-        as: 'invited',
-        required: !!(r.query.invited),
-        where: {
-          [Op.and]: [{ workerId: user.id }, { type: QuestsResponseType.Invite }],
-        },
-      }, {
-        model: QuestsResponse.unscoped(),
-        as: 'responded',
-        required: !!(r.query.responded),
-        where: {
-          [Op.and]: [{ workerId: user.id }, { type: QuestsResponseType.Response }],
-        },
-      });
     }
     if (requester && requester === 'worker') {
       checksListUser
         .checkUserRole(UserRole.Worker)
 
-      where[Op.and].push({ assignedWorkerId: user.id });
-
-      include.push({
-        model: QuestsResponse.unscoped(),
-        as: 'invited',
-        required: !!(r.query.invited), /** Because there is request without this flag */
-        where: {
-          [Op.and]: [{ workerId: user.id }, { type: QuestsResponseType.Invite }],
-        },
-      }, {
-        model: QuestsResponse.unscoped(),
-        as: 'responded',
-        required: !!(r.query.responded), /** Because there is request without this flag */
-        where: {
-          [Op.and]: [{ workerId: user.id }, { type: QuestsResponseType.Response }],
-        },
-      });
+      if (!(r.query.responded || r.query.invited)) {
+        where[Op.or].push(
+          requesterWorkerLiteral,
+          { assignedWorkerId: r.auth.credentials.id },
+        );
+      }
     }
     if (requester && requester === 'employer') {
       checksListUser
@@ -339,10 +344,33 @@ export function getQuests(type: 'list' | 'points', requester?: 'worker' | 'emplo
       as: 'star',
       where: { userId: user.id },
       required: !!(r.query.starred), /** Because there is request without this flag */
+    }, {
+      model: QuestsResponse.unscoped(),
+      as: 'invited',
+      required: !!(r.query.invited),
+      where: {
+        [Op.and]: [{ workerId: user.id }, { type: QuestsResponseType.Invite }],
+        status: {[Op.in]: [QuestsResponseStatus.Open, QuestsResponseStatus.Accepted]}
+      },
+    }, {
+      model: QuestsResponse.unscoped(),
+      as: 'responded',
+      required: !!(r.query.responded),
+      where: {
+        [Op.and]: [{ workerId: user.id }, { type: QuestsResponseType.Response }],
+        status: {[Op.in]: [QuestsResponseStatus.Open, QuestsResponseStatus.Accepted]}
+      },
     });
 
     for (const [key, value] of Object.entries(r.query.sort || {})) {
       order.push([key, value]);
+    }
+
+    if (where[Op.or].length === 0) {
+      delete where[Op.or];
+    }
+    if (where[Op.and].length === 0) {
+      delete where[Op.and];
     }
 
     // TODO !!!!

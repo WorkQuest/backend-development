@@ -6,7 +6,8 @@ import {
   UserStatus,
   RatingStatus,
   RatingStatistic,
-  ProfileVisibilitySetting,
+  WorkerProfileVisibilitySetting,
+  EmployerProfileVisibilitySetting,
 } from "@workquest/database-models/lib/models";
 
 export class ChecksListUser {
@@ -26,24 +27,43 @@ export class ChecksListUser {
     return this;
   }
 
-  public async checkRatingMustMatchVisibilitySettings(comparableUser: User): Promise<this> {
-    const [thisUserRatingStatistic, comparableUserVisibilitySetting] = await Promise.all([
+  public async checkWorkerRatingMustMatchEmployerVisibilitySettings(employer: User): Promise<this> {
+    const [workerRatingStatistic, employerVisibilitySetting] = await Promise.all([
       RatingStatistic.findOne({ where: { userId: this.user.id } }),
-      ProfileVisibilitySetting.findOne({ where: { userId: comparableUser.id } }),
+      EmployerProfileVisibilitySetting.findOne({ where: { userId: employer.id } }),
     ]);
 
-    if (comparableUserVisibilitySetting.ratingStatus === RatingStatus.AllStatuses) {
-      return this;
-    }
-    if (thisUserRatingStatistic.status !== comparableUserVisibilitySetting.ratingStatus) {
-      throw error(Errors.InvalidStatus, "User rating does not match comparable user's profile visibility setting", {
-        comparableUserSettings: {
-          userId: comparableUser.id,
-          ratingStatus: comparableUserVisibilitySetting.ratingStatus,
+    if ((employerVisibilitySetting.ratingStatusCanRespondToQuest & workerRatingStatistic.status) <= 0) {
+      throw error(Errors.InvalidStatus, "Worker rating does not match employer's profile visibility setting", {
+        employerSettings: {
+          userId: employer.id,
+          ratingStatus: employerVisibilitySetting.ratingStatusCanRespondToQuest,
         },
-        userRating: {
+        workerRating: {
           userId: this.user.id,
-          status: thisUserRatingStatistic.status,
+          status: workerRatingStatistic.status,
+        },
+      });
+    }
+
+    return this;
+  }
+
+  public async checkEmployerRatingMustMatchWorkerVisibilitySettings(worker: User): Promise<this> {
+    const [workerRatingStatistic, employerVisibilitySetting] = await Promise.all([
+      RatingStatistic.findOne({ where: { userId: this.user.id } }),
+      WorkerProfileVisibilitySetting.findOne({ where: { userId: worker.id } }),
+    ]);
+
+    if ((employerVisibilitySetting.ratingStatusCanInviteMeOnQuest & workerRatingStatistic.status) <= 0) {
+      throw error(Errors.InvalidStatus, "Worker rating does not match employer's profile visibility setting", {
+        employerSettings: {
+          userId: worker.id,
+          ratingStatus: employerVisibilitySetting.ratingStatusCanInviteMeOnQuest,
+        },
+        workerRating: {
+          userId: this.user.id,
+          status: workerRatingStatistic.status,
         },
       });
     }

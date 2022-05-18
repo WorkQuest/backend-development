@@ -24,7 +24,7 @@ export default async function (payload: StatisticPayload) {
   const admin: Admin = ratingStatistic.admin;
 
   const reviewCountPromise = QuestDisputeReview.count({ where: { toAdminId: admin.id } });
-  const averageMarkResultPromise = QuestDisputeReview.findOne({
+  const averageMarkResultPromise = QuestDisputeReview.unscoped().findOne({
     attributes: [[fn('AVG', col('mark')), 'avgMark']],
     where: { toAdminId: ratingStatistic.adminId },
   });
