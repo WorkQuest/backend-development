@@ -169,7 +169,6 @@ export async function getAllUsers(r) {
 export async function getAllUsersDao(r) {
   const where = {
     status: UserStatus.Confirmed,
-    id: { [Op.ne]: r.auth.credentials.id }
   };
   where[Op.and] = [];
 
