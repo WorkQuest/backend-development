@@ -1,6 +1,6 @@
 import config from '../../config/config';
 import { Sequelize } from 'sequelize-typescript';
-import models from '@workquest/database-models/lib/models/common-models';
+import { models } from "@workquest/database-models/lib/models";
 
 export default class Database extends Sequelize {
   private static _instance: Database;
@@ -20,7 +20,7 @@ export default class Database extends Sequelize {
         connectTimeout: 60000
       },
       logging: false,
-      models: models,
+      models: [...models],
     });
   }
 }
