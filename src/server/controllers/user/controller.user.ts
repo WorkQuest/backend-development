@@ -10,7 +10,7 @@ import {
   UpdateEmployerProfileVisibilityPayload,
 } from "./types";
 import {
-  ChatsStatistic,
+  //ChatsStatistic,
   defaultUserSettings,
   EmployerProfileVisibilitySetting,
   QuestDispute,
@@ -385,10 +385,10 @@ export class UserOldController extends UserHelper {
       where: { userId: userId },
       defaults: { userId: userId },
     });
-    await ChatsStatistic.findOrCreate({
-      where: { userId: userId },
-      defaults: { userId: userId },
-    });
+    // await ChatsStatistic.findOrCreate({
+    //   where: { userId: userId },
+    //   defaults: { userId: userId },
+    // });
     await QuestsStatistic.findOrCreate({
       where: { userId: userId },
       defaults: { userId: userId },
@@ -457,11 +457,11 @@ export class UserController {
         defaults: { userId: this.user.id },
         transaction: options.tx,
       }),
-      ChatsStatistic.findOrCreate({
-        where: { userId: this.user.id },
-        defaults: { userId: this.user.id },
-        transaction: options.tx,
-      }),
+      // ChatsStatistic.findOrCreate({
+      //   where: { userId: this.user.id },
+      //   defaults: { userId: this.user.id },
+      //   transaction: options.tx,
+      // }),
       QuestsStatistic.findOrCreate({
         where: { userId: this.user.id },
         defaults: { userId: this.user.id },

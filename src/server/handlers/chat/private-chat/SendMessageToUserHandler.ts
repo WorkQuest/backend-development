@@ -82,9 +82,13 @@ export class SendMessageToUserHandler implements IHandler<SendMessageToUserComma
   }
 
   private static async sendMessage(payload: SendMessageToMemberPayload, options: Options = {}) {
+    let lastMessageNumber = 1;
+    if (payload.lastMessage) {
+      lastMessageNumber += payload.lastMessage.number
+    }
     const message = await Message.create({
       chatId: payload.privateChat.id,
-      number: payload.lastMessage.number++,
+      number: lastMessageNumber,
       senderMemberId: payload.sender.id,
       type: MessageType.Message,
       text: payload.text,
@@ -138,6 +142,7 @@ export class SendMessageToUserHandler implements IHandler<SendMessageToUserComma
 
         const payload: SendMessageToMemberPayload = {
           ...command,
+          lastMessage,
           privateChat,
           sender: privateChat.senderInPrivateChat,
           recipient: privateChat.recipientInPrivateChat,
