@@ -1,7 +1,6 @@
+import config from '../../config/config';
 import { Sequelize } from 'sequelize-typescript';
 import models from '@workquest/database-models/lib/models/common-models';
-
-import config from '../config/config';
 
 export default class Database extends Sequelize {
   private static _instance: Database;

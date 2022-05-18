@@ -1,5 +1,5 @@
 import { addJob } from '../utils/scheduler';
-import Database from "../providers/provider.postgres";
+import Database from "../providers/database/provider.postgres";
 import { incrementUnreadCountMessage } from "../queries";
 
 export type UnreadMessageIncrementPayload = {

@@ -14,7 +14,7 @@ import routes from './routes';
 import config from './config/config';
 import SwaggerOptions from './config/swagger';
 import { initDatabase } from '@workquest/database-models/lib/models';
-import Database from './providers/provider.postgres';
+import Database from './providers/database/provider.postgres';
 import { ControllerBroker } from './controllers/controller.broker';
 import { handleValidationError, responseHandler } from './utils';
 import { tokenValidate } from './utils/auth';

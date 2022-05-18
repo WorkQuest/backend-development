@@ -35,6 +35,7 @@ import {
   GetMediasPostValidationHandler,
   GetChatByIdPostValidationHandler,
   GetUsersByIdPostValidationHandler,
+  GetGroupChatPostValidationHandler,
   DeletedMemberFromGroupChatHandler,
   GetChatMemberPostValidationHandler,
   GetUsersByIdsPostValidationHandler,
