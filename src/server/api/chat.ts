@@ -56,6 +56,8 @@ import {
   GetChatMemberPostLimitedAccessPermissionHandler,
   DeletedMemberFromGroupChatPreAccessPermissionHandler,
 } from '../handlers';
+import { MemberStatus } from '@workquest/database-models/src/models/chats/ChatMember';
+import { Admin } from '@workquest/database-models/src/models/admin/Admin';
 
 export const searchChatFields = ['name'];
 
@@ -229,33 +231,32 @@ export async function listOfUsersByChats(r) {
 }
 
 export async function getChatMembers(r) {
-  const exceptDeletedUsersLiteral = literal(
-    '(1 = (CASE WHEN EXISTS (SELECT "chatMemberId" FROM "ChatMemberDeletionData" INNER JOIN "ChatMembers" ON "User"."id" = "ChatMembers"."userId" WHERE "ChatMemberDeletionData"."chatMemberId" = "ChatMembers"."id") THEN 0 ELSE 1 END))'
-  );
+  const meUser: User = r.auth.credentials;
 
-  const where = {};
-  where[Op.or] = exceptDeletedUsersLiteral;
+  const { chatId } = r.params as { chatId: string };
 
-  const chat = await Chat.findByPk(r.params.chatId);
-  const chatController = new ChatController(chat);
-  await chatController.chatMustHaveMember(r.auth.credentials.id);
+  const chat = await new GetChatByIdPostValidationHandler(
+    new GetChatByIdHandler()
+  ).Handle({ chatId });
 
-  const { count, rows } = await User.scope('shortWithAdditionalInfo').findAndCountAll({
-    include: [
-      {
-        model: ChatMember,
-        attributes: [],
-        as: 'chatMember',
-        where: { chatId: chat.id },
-        include: [{
-          model: ChatMemberDeletionData,
-          as: 'chatMemberDeletionData'
-        }]
-      },
-    ],
-    where,
-    limit: r.query.limit,
-    offset: r.query.offset,
+  const meMember = await new GetChatMemberPostFullAccessPermissionHandler(
+    new GetChatMemberPostValidationHandler(
+      new GetChatMemberByUserHandler()
+    )
+  ).Handle({ user: meUser, chat });
+
+  const { count, rows } = await ChatMember.unscoped().findAndCountAll({
+    include: [{
+      model: User.scope('shortWithAdditionalInfo'),
+      as: 'user',
+    }, {
+      model: Admin.scope('short'),
+      as: 'admin',
+    }],
+    where: {
+      chatId: chat.id,
+      status: MemberStatus.Active,
+    },
   });
 
   return output({ count, members: rows });
@@ -557,7 +558,7 @@ export async function setMessagesAsRead(r) {
     where: {
       chatId: chatController.chat.id,
       senderMemberId: { [Op.ne]: chat.meMember.id },
-      senderStatus: SenderMessageStatus.unread,
+      senderStatus: SenderMessageStatus.Unread,
       number: { [Op.gte]: message.number },
     },
     group: ['senderMemberId'],
