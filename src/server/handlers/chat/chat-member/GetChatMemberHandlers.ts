@@ -68,7 +68,7 @@ export class GetChatMemberPostValidationHandler<Tin extends { chat: Chat }> exte
   }
 }
 
-export class GetChatMemberPostAccessPermissionHandler<Tin extends { chat: Chat }> extends HandlerDecoratorBase<Tin, Promise<ChatMember>> {
+export class GetChatMemberPostFullAccessPermissionHandler<Tin extends { chat: Chat }> extends HandlerDecoratorBase<Tin, Promise<ChatMember>> {
 
   private readonly accessPermission: ChatMemberAccessPermission;
 
@@ -81,7 +81,26 @@ export class GetChatMemberPostAccessPermissionHandler<Tin extends { chat: Chat }
   public async Handle(command: Tin): Promise<ChatMember> {
     const chatMember = await this.decorated.Handle(command);
 
-    this.accessPermission.HasAccessOnChat(command.chat, chatMember);
+    this.accessPermission.HasFullAccessOnChat(command.chat, chatMember);
+
+    return chatMember;
+  }
+}
+
+export class GetChatMemberPostLimitedAccessPermissionHandler<Tin extends { chat: Chat }> extends HandlerDecoratorBase<Tin, Promise<ChatMember>> {
+
+  private readonly accessPermission: ChatMemberAccessPermission;
+
+  constructor(
+    protected readonly decorated: IHandler<Tin, Promise<ChatMember>>,
+  ) {
+    super(decorated);
+  }
+
+  public async Handle(command: Tin): Promise<ChatMember> {
+    const chatMember = await this.decorated.Handle(command);
+
+    this.accessPermission.HasLimitedAccessOnChat(command.chat, chatMember);
 
     return chatMember;
   }
@@ -108,7 +127,7 @@ export class GetChatMembersPostValidationHandler<Tin extends { chat: Chat }> ext
   }
 }
 
-export class GetChatMembersPostAccessPermissionHandler<Tin extends { chat: Chat }> extends HandlerDecoratorBase<Tin, Promise<ChatMember[]>> {
+export class GetActiveChatMembersPostAccessPermissionHandler<Tin extends { chat: Chat }> extends HandlerDecoratorBase<Tin, Promise<ChatMember[]>> {
 
   private readonly accessPermission: ChatMemberAccessPermission;
 

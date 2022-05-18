@@ -26,12 +26,17 @@ import {
   GetUsersByIdHandler,
   GetUsersByIdsHandler,
   GetMediaByIdsHandler,
+  MarkChatStarHandler,
   SendMessageToChatHandler,
   SendMessageToUserHandler,
   GetChatMemberByIdHandler,
+  RemoveStarFromChatHandler,
   LeaveFromGroupChatHandler,
   GetChatMemberByUserHandler,
+  UserMarkMessageStarHandler,
   AddUsersInGroupChatHandler,
+  GetChatMessageByIdHandler,
+  RemoveStarFromMessageHandler,
   GetMediasPostValidationHandler,
   GetChatByIdPostValidationHandler,
   GetUsersByIdPostValidationHandler,
@@ -41,19 +46,16 @@ import {
   GetUsersByIdsPostValidationHandler,
   LeaveFromGroupChatPreValidateHandler,
   AddUsersInGroupChatPreValidateHandler,
+  GetChatMessageByIdPostValidatorHandler,
   GetUsersByIdPostAccessPermissionHandler,
-  GetChatMemberPostAccessPermissionHandler,
   GetUsersByIdsPostAccessPermissionHandler,
   LeaveFromGroupChatPreAccessPermissionHandler,
   DeletedMemberFromGroupChatPreValidateHandler,
+  GetChatMemberPostFullAccessPermissionHandler,
   AddUsersInGroupChatPreAccessPermissionHandler,
+  GetChatMemberPostLimitedAccessPermissionHandler,
   DeletedMemberFromGroupChatPreAccessPermissionHandler,
 } from '../handlers';
-import { UserMarkMessageStarHandler } from '../handlers/chat/star/MarkMessageStarHandler';
-import {
-  GetMessageByIdHandler,
-  GetMessageByIdPostValidatorHandler
-} from '../handlers/chat/message/GetMessageByIdHandler';
 
 export const searchChatFields = ['name'];
 
@@ -331,7 +333,7 @@ export async function sendMessageToChat(r) {
     new GetChatByIdHandler()
   ).Handle({ chatId });
 
-  const meMember = await new GetChatMemberPostAccessPermissionHandler(
+  const meMember = await new GetChatMemberPostFullAccessPermissionHandler(
     new GetChatMemberPostValidationHandler(
       new GetChatMemberByUserHandler()
     )
@@ -384,13 +386,13 @@ export async function removeMemberFromGroupChat(r) {
     new GetGroupChatHandler()
   ).Handle({ chatId });
 
-  const member = await new GetChatMemberPostAccessPermissionHandler(
+  const member = await new GetChatMemberPostFullAccessPermissionHandler(
     new GetChatMemberPostValidationHandler(
       new GetChatMemberByIdHandler()
     )
   ).Handle({ chat: groupChat, id: memberId });
 
-  const meMember = await new GetChatMemberPostAccessPermissionHandler(
+  const meMember = await new GetChatMemberPostFullAccessPermissionHandler(
     new GetChatMemberPostValidationHandler(
       new GetChatMemberByUserHandler()
     )
@@ -439,7 +441,7 @@ export async function leaveFromGroupChat(r) {
     new GetGroupChatHandler()
   ).Handle({ chatId });
 
-  const meMember = await new GetChatMemberPostAccessPermissionHandler(
+  const meMember = await new GetChatMemberPostFullAccessPermissionHandler(
     new GetChatMemberPostValidationHandler(
       new GetChatMemberByUserHandler()
     )
@@ -485,7 +487,7 @@ export async function addUsersInGroupChat(r) {
   ).Handle({ chatId });
 
   const meMember = await new GetChatMemberPostValidationHandler(
-    new GetChatMemberPostAccessPermissionHandler(
+    new GetChatMemberPostFullAccessPermissionHandler(
       new GetChatMemberByUserHandler()
     )
   ).Handle({ chat: groupChat, user: meUser });
@@ -621,72 +623,57 @@ export async function markMessageStar(r) {
     new GetChatByIdHandler()
   ).Handle({ chatId });
 
-  const meMember = await new GetChatMemberPostAccessPermissionHandler(
-    new GetChatMemberPostValidationHandler(
+  const meMember = await new GetChatMemberPostValidationHandler(
+    new GetChatMemberPostLimitedAccessPermissionHandler(
       new GetChatMemberByUserHandler()
     )
   ).Handle({ chat, user: meUser });
 
-  const message = await new GetMessageByIdPostValidatorHandler(
-    new GetMessageByIdHandler()
-  ).Handle({ messageId });
+  const message = await new GetChatMessageByIdPostValidatorHandler(
+    new GetChatMessageByIdHandler()
+  ).Handle({ messageId, chat });
 
-  await new UserMarkMessageStarHandler().Handle({
-
-  });
+  await new UserMarkMessageStarHandler().Handle({ user: meUser, message });
 
   return output();
 }
 
 export async function removeStarFromMessage(r) {
-  const starredMessage = await StarredMessage.findOne({
-    where: {
-      messageId: r.params.messageId,
-      userId: r.auth.credentials.id,
-    },
-  });
+  const meUser: User = r.auth.credentials;
 
-  if (!starredMessage) {
-    return error(Errors.Forbidden, 'Message or message with star not fount', {});
-  }
+  const { messageId } = r.params as { messageId: string };
 
-  await starredMessage.destroy();
+  await new RemoveStarFromMessageHandler().Handle({ user: meUser, messageId });
 
   return output();
 }
 
 export async function markChatStar(r) {
-  const chat = await Chat.findByPk(r.params.chatId);
-  const chatController = new ChatController(chat);
+  const meUser: User = r.auth.credentials;
 
-  await chatController.chatMustHaveMember(r.auth.credentials.id);
+  const { chatId } = r.params as { chatId: string };
 
-  await StarredChat.findOrCreate({
-    where: {
-      userId: r.auth.credentials.id,
-      chatId: r.params.chatId,
-    },
-    defaults: {
-      userId: r.auth.credentials.id,
-      chatId: r.params.chatId,
-    }
-  });
+  const chat = await new GetChatByIdPostValidationHandler(
+    new GetChatByIdHandler()
+  ).Handle({ chatId });
+
+  const meMember = await new GetChatMemberPostValidationHandler(
+    new GetChatMemberPostLimitedAccessPermissionHandler(
+      new GetChatMemberByUserHandler()
+    )
+  ).Handle({ chat, user: meUser });
+
+  await new MarkChatStarHandler().Handle({ chat, user: meUser });
 
   return output();
 }
 
 export async function removeStarFromChat(r) {
-  await ChatController.chatMustExists(r.params.chatId);
+  const meUser: User = r.auth.credentials;
 
-  //TODO: что делать до звёздочкой, если исключили из чата?
-  //await group-chat.mustHaveMember(r.auth.credentials.id);
+  const { chatId } = r.params as { chatId: string };
 
-  await StarredChat.destroy({
-    where: {
-      chatId: r.params.chatId,
-      userId: r.auth.credentials.id,
-    },
-  });
+  await new RemoveStarFromChatHandler().Handle({ user: meUser, chatId });
 
   return output();
 }

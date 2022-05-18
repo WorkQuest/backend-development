@@ -1,13 +1,13 @@
-import { HandlerDecoratorBase, IHandler } from '../../types';
-import { Message } from '@workquest/database-models/lib/models';
 import { MessageValidator } from './MessageValidator';
+import { HandlerDecoratorBase, IHandler } from '../../types';
+import { Chat, Message } from '@workquest/database-models/lib/models';
 
 export interface GetMessageByIdCommand {
   readonly messageId: string;
 }
 
 export interface GetChatMessageByIdCommand {
-  readonly chatId: string;
+  readonly chat: Chat;
   readonly messageId: string;
 }
 
@@ -19,7 +19,7 @@ export class GetMessageByIdHandler implements IHandler<GetMessageByIdCommand, Pr
 
 export class GetChatMessageByIdHandler implements IHandler<GetChatMessageByIdCommand, Promise<Message>> {
   public Handle(command: GetChatMessageByIdCommand): Promise<Message> {
-    return Message.findOne({ where: { messageId: command.messageId, chatId: command.chatId } });
+    return Message.findOne({ where: { messageId: command.messageId, chatId: command.chat.id } });
   }
 }
 
@@ -53,7 +53,7 @@ export class GetChatMessageByIdPostValidatorHandler extends HandlerDecoratorBase
   public async Handle(command: GetChatMessageByIdCommand): Promise<Message> {
     const message = await this.decorated.Handle(command);
 
-    this.messageValidator.NotNull(message, command.messageId);
+    this.messageValidator.NotNullThisChat(message, command.chat, command.messageId);
 
     return message;
   }

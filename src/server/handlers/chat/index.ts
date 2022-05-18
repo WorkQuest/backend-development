@@ -15,3 +15,11 @@ export * from "./group-chat/AddUsersInGroupChatHandler";
 export * from "./group-chat/DeletedMemberFromGroupChatHandler";
 
 export * from "./private-chat/SendMessageToUserHandler";
+
+export * from "./star/MarkChatStarHandler";
+export * from "./star/MarkMessageStarHandler";
+export * from "./star/RemoveStarFromChatHandler";
+export * from "./star/RemoveStarFromMessageHandler";
+
+export * from "./message/MessageValidator";
+export * from "./message/GetMessageByIdHandler";
