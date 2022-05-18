@@ -7,7 +7,7 @@ import { Errors } from '../utils/errors';
 import converter from 'bech32-converting';
 import { addSendEmailJob } from '../jobs/sendEmail';
 import { generateJwt } from '../utils/auth';
-import { UserOldController } from '../controllers/user/controller.user';
+import { UserController, UserOldController } from '../controllers/user/controller.user';
 import { ChecksListUser } from '../checks-list/checksList.user';
 import { totpValidate } from '@workquest/database-models/lib/utils';
 import { createReferralProgramJob } from '../jobs/createReferralProgram';
@@ -177,6 +177,7 @@ export async function confirmEmail(r) {
 
     if (role) {
       await userController.confirmUser(role, { tx });
+      await UserController.createProfileVisibility({ userId: userController.user.id, role }, { tx });
     } else {
       await userController.confirmUserWithStatusNeedSetRole({ tx });
     }
