@@ -26,7 +26,7 @@ export class GetChatByIdPostValidationHandler<Tin extends { chatId: string }> ex
   public async Handle(command: Tin): Promise<Chat> {
     const chat = await this.decorated.Handle(command);
 
-    this.validator.NotNull(chat);
+    this.validator.NotNull(chat, command.chatId);
 
     return chat;
   }

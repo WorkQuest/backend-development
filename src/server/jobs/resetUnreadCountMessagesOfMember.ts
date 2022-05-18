@@ -1,5 +1,6 @@
+import { literal, Op } from 'sequelize';
 import { addJob } from "../utils/scheduler";
-import { ChatMember, ChatMemberData, MemberStatus } from "@workquest/database-models/lib/models";
+import { ChatMemberData } from "@workquest/database-models/lib/models";
 
 export type ResetUnreadCountMessagesPayload = {
   chatId: string,
@@ -12,18 +13,39 @@ export async function resetUnreadCountMessagesOfMemberJob(payload: ResetUnreadCo
 }
 
 export default async function resetUnreadCountMessagesOfMember(payload: ResetUnreadCountMessagesPayload) {
-  const chatMember = await ChatMember.findByPk(payload.memberId);
-
-  if (chatMember.status === MemberStatus.Active) {
-    await ChatMemberData.update(
-      {
-        unreadCountMessages: 0,
-        lastReadMessageId: payload.lastReadMessage.id,
-        lastReadMessageNumber: payload.lastReadMessage.number,
-      },
-      {
-        where: { chatMemberId: payload.memberId },
-      },
+  const whereLiteralBuilder = (chatId: string) =>
+    literal(`"ChatMemberData"."chatMemberId" = "ChatMembers"."id" ` +
+      `AND ("ChatMembers"."chatId" = ${chatId} AND "ChatMembers"."status" = 'active') `
     );
-  }
+
+  await ChatMemberData.update(
+    {
+      unreadCountMessages: 0,
+      lastReadMessageId: payload.lastReadMessage.id,
+      lastReadMessageNumber: payload.lastReadMessage.number,
+    },
+    {
+      where: {
+        [Op.and]: [
+          whereLiteralBuilder(payload.chatId),
+          { chatMemberId: payload.memberId },
+        ],
+      },
+    },
+  );
+
+  // const chatMember = await ChatMember.findByPk(payload.memberId);
+  //
+  // if (chatMember.status === MemberStatus.Active) {
+  //   await ChatMemberData.update(
+  //     {
+  //       unreadCountMessages: 0,
+  //       lastReadMessageId: payload.lastReadMessage.id,
+  //       lastReadMessageNumber: payload.lastReadMessage.number,
+  //     },
+  //     {
+  //       where: { chatMemberId: payload.memberId },
+  //     },
+  //   );
+  // }
 }

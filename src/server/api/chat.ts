@@ -49,6 +49,11 @@ import {
   AddUsersInGroupChatPreAccessPermissionHandler,
   DeletedMemberFromGroupChatPreAccessPermissionHandler,
 } from '../handlers';
+import { UserMarkMessageStarHandler } from '../handlers/chat/star/MarkMessageStarHandler';
+import {
+  GetMessageByIdHandler,
+  GetMessageByIdPostValidatorHandler
+} from '../handlers/chat/message/GetMessageByIdHandler';
 
 export const searchChatFields = ['name'];
 
@@ -397,24 +402,24 @@ export async function removeMemberFromGroupChat(r) {
     )
   ).Handle({ member, groupChat, deletionInitiator: meMember });
 
-  // await resetUnreadCountMessagesOfMemberJob({
-  //   memberId: meMember.id,
-  //   chatId: groupChat.id,
-  //   lastReadMessage: { id: messageWithInfo.id, number: messageWithInfo.number },
-  // });
-  // await incrementUnreadCountMessageOfMembersJob({
-  //   skipMemberIds: [meMember.id],
-  //   chatId: groupChat.id,
-  // });
-  // await setMessageAsReadJob({
-  //   senderMemberId: meMember.id,
-  //   chatId: groupChat.id,
-  //   lastUnreadMessage: { id: messageWithInfo.id, number: messageWithInfo.number },
-  // });
-  // await updateCountUnreadChatsJob({
-  //   chatId: groupChat.id,
-  //   skipMembersIds: [meMember.id],
-  // });
+  await resetUnreadCountMessagesOfMemberJob({
+    chatId: groupChat.id,
+    memberId: meMember.id,
+    lastReadMessage: { id: messageWithInfo.id, number: messageWithInfo.number },
+  });
+  await incrementUnreadCountMessageOfMembersJob({
+    skipMemberIds: [meMember.id],
+    chatId: groupChat.id,
+  });
+  await setMessageAsReadJob({
+    senderMemberId: meMember.id,
+    chatId: groupChat.id,
+    lastUnreadMessage: { id: messageWithInfo.id, number: messageWithInfo.number },
+  });
+  await updateCountUnreadChatsJob({
+    chatId: groupChat.id,
+    skipMembersIds: [meMember.id],
+  });
 
   // r.server.app.broker.sendChatNotification({
   //   action: ChatNotificationActions.groupChatDeleteUser,
@@ -446,23 +451,19 @@ export async function leaveFromGroupChat(r) {
     )
   ).Handle({ member: meMember, groupChat });
 
-  // await incrementUnreadCountMessageOfMembersJob({
-  //   chatId: groupChatService.getChat().id,
-  //   skipMemberIds: [meMember.id],
-  // });
-  // await setMessageAsReadJob({
-  //   chatId: groupChatService.getChat().id,
-  //   senderMemberId: meMember.id,
-  //   lastUnreadMessage: { id: infoMessage.id, number: infoMessage.number },
-  // });
-  // await updateCountUnreadChatsJob({
-  //   userIds: members
-  //     .filter(m => m.type == MemberType.User)
-  //     .map(m => m.userId),
-  //   adminIds: members
-  //     .filter(m => m.type == MemberType.Admin)
-  //     .map(m => m.adminId),
-  // });
+  await incrementUnreadCountMessageOfMembersJob({
+    chatId: groupChat.id,
+    skipMemberIds: [meMember.id],
+  });
+  await setMessageAsReadJob({
+    chatId: groupChat.id,
+    senderMemberId: meMember.id,
+    lastUnreadMessage: { id: messageWithInfo.id, number: messageWithInfo.number },
+  });
+  await updateCountUnreadChatsJob({
+    chatId: groupChat.id,
+    skipMembersIds: [meMember.id],
+  });
 
   // r.server.app.broker.sendChatNotification({
   //   action: ChatNotificationActions.groupChatLeaveUser,
@@ -501,32 +502,33 @@ export async function addUsersInGroupChat(r) {
     )
   ).Handle({ groupChat, users, addInitiator: meMember })
 
-  // await resetUnreadCountMessagesOfMemberJob({
-  //   memberId: meMember.id,
-  //   chatId: groupChatService.getChat().id,
-  //   lastReadMessage: { id: lastMessage.id, number: lastMessage.number },
-  // });
-  // await incrementUnreadCountMessageOfMembersJob({
-  //   chatId: group-chat.id,
-  //   notifierMemberId: chatController.group-chat.meMember.id,
-  //   withoutMemberIds: newMembersIds,
-  // });
-  // await updateCountUnreadChatsJob({
-  //   userIds: [r.auth.credentials.id, ...userIdsInChatWithoutSender],
-  // });
-  //
-  // await setMessageAsReadJob({
-  //   lastUnreadMessage: { id: lastMessage.id, number: lastMessage.number },
-  //   chatId: r.params.chatId,
-  //   senderMemberId: group-chat.meMember.id,
-  // });
-  //
+  const lastMessage = messagesWithInfo[messagesWithInfo.length - 1];
+
+  await resetUnreadCountMessagesOfMemberJob({
+    chatId: groupChat.id,
+    memberId: meMember.id,
+    lastReadMessage: { id: lastMessage.id, number: lastMessage.number },
+  });
+  await incrementUnreadCountMessageOfMembersJob({
+    chatId: groupChat.id,
+    skipMemberIds: [meMember.id],
+  });
+  await updateCountUnreadChatsJob({
+    chatId: groupChat.id,
+    skipMembersIds: [meMember.id],
+  });
+  await setMessageAsReadJob({
+    chatId: groupChat.id,
+    senderMemberId: meMember.id,
+    lastUnreadMessage: { id: lastMessage.id, number: lastMessage.number }
+  });
+
   // r.server.app.broker.sendChatNotification({
   //   action: ChatNotificationActions.groupChatAddUser,
   //   recipients: userIdsInChatWithoutSender,
   //   data: messagesResult,
   // });
-  //
+
   return output(messagesWithInfo);
 }
 
@@ -611,23 +613,26 @@ export async function getUserStarredMessages(r) {
 }
 
 export async function markMessageStar(r) {
-  const chat = await Chat.findByPk(r.params.chatId);
-  const message = await Message.findByPk(r.params.messageId);
+  const meUser: User = r.auth.credentials;
 
-  const chatController = new ChatController(chat);
-  const messageController = new MessageController(message);
+  const { chatId, messageId } = r.params as { chatId: string, messageId: string };
 
-  await chatController.chatMustHaveMember(r.auth.credentials.id);
+  const chat = await new GetChatByIdPostValidationHandler(
+    new GetChatByIdHandler()
+  ).Handle({ chatId });
 
-  await StarredMessage.findOrCreate({
-    where: {
-      userId: r.auth.credentials.id,
-      messageId: r.params.messageId,
-    },
-    defaults: {
-      userId: r.auth.credentials.id,
-      messageId: r.params.messageId,
-    }
+  const meMember = await new GetChatMemberPostAccessPermissionHandler(
+    new GetChatMemberPostValidationHandler(
+      new GetChatMemberByUserHandler()
+    )
+  ).Handle({ chat, user: meUser });
+
+  const message = await new GetMessageByIdPostValidatorHandler(
+    new GetMessageByIdHandler()
+  ).Handle({ messageId });
+
+  await new UserMarkMessageStarHandler().Handle({
+
   });
 
   return output();

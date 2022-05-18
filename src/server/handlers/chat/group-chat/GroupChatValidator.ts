@@ -7,9 +7,9 @@ import {
 } from "@workquest/database-models/lib/models";
 
 export class GroupChatValidator {
-  public NotNull(groupChat: Chat) {
+  public NotNull(groupChat: Chat, chatId: string) {
     if (!groupChat) {
-      throw error(Errors.NotFound, 'Chat does not exist', { chatId: groupChat.id });
+      throw error(Errors.NotFound, 'Chat does not exist', { chatId });
     }
   }
   public GroupChatValidate(groupChat: Chat) {

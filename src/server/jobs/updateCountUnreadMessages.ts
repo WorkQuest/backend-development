@@ -1,18 +1,26 @@
-import { addJob } from '../utils/scheduler';
-import {Message, ChatMember, ChatMemberData} from '@workquest/database-models/lib/models';
 import { Op } from 'sequelize';
+import { addJob } from '../utils/scheduler';
+import {
+  Message,
+  ChatMember,
+  ChatMemberData,
+} from '@workquest/database-models/lib/models';
 
 export type MemberUnreadMessagesPayload = {
-  lastUnreadMessage: { id: string; number: number };
-  readerMemberId: string;
   chatId: string;
+  readerMemberId: string;
+  lastUnreadMessage: { id: string; number: number };
 };
 
 export async function updateCountUnreadMessagesJob(payload: MemberUnreadMessagesPayload) {
   return addJob('updateCountUnreadMessages', payload);
 }
-/**TODO refactor!!!!!!*/
+
 export default async function updateCountUnreadMessages(payload: MemberUnreadMessagesPayload) {
+
+
+
+
   const chatMemberData = await ChatMemberData.findOne({
     where: { chatMemberId: payload.readerMemberId },
     include: [{
@@ -33,7 +41,10 @@ export default async function updateCountUnreadMessages(payload: MemberUnreadMes
 
     unreadMessageCounter = { unreadCountMessages: 0 };
   } else {
-    const firstUnreadMessageNumber = chatMemberData.lastReadMessageNumber ? chatMemberData.lastReadMessageNumber : 1;
+    const firstUnreadMessageNumber = chatMemberData.lastReadMessageNumber
+      ? chatMemberData.lastReadMessageNumber
+      : 1
+
     const unreadMessageCount = await Message.count({
       where: {
         id: { [Op.ne]: chatMemberData.lastReadMessageId },
@@ -47,7 +58,9 @@ export default async function updateCountUnreadMessages(payload: MemberUnreadMes
     const unreadCountMessages = chatMemberData.unreadCountMessages - unreadMessageCount;
 
     unreadMessageCounter = {
-      unreadCountMessages: unreadCountMessages < 0 ? 0 : unreadCountMessages,
+      unreadCountMessages: unreadCountMessages < 0
+        ? 0
+        : unreadCountMessages,
       lastReadMessageId: payload.lastUnreadMessage.id,
       lastReadMessageNumber: payload.lastUnreadMessage.number,
     };

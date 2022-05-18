@@ -1,6 +1,11 @@
-import { Op } from 'sequelize';
+import { literal, Op } from 'sequelize';
 import { addJob } from '../utils/scheduler';
-import { ChatMember, ChatMemberData, UserChatsStatistic, MemberType, MemberStatus } from "@workquest/database-models/lib/models";
+import {
+  MemberType,
+  ChatMember,
+  ChatMemberData,
+  UserChatsStatistic,
+} from "@workquest/database-models/lib/models";
 
 export type UpdateCountUnreadChatsPayload = {
   readonly chatId: string;
@@ -12,25 +17,57 @@ export async function updateCountUnreadChatsJob(payload: UpdateCountUnreadChatsP
 }
 
 export default async function updateCountUnreadChats(payload: UpdateCountUnreadChatsPayload) {
-  for (const userId of payload.userIds) {
-    const unreadChatsCounter = await ChatMember.unscoped().findAndCountAll({
-      where: {
-        userId: userId,
-      },
-      include: [{
-        model: ChatMemberData,
-        as: 'chatMemberData',
-        where: { unreadCountMessages: { [Op.ne]: 0 } }
-      }]
-    });
+  // TODO для юзеров и для админов + вынести в отдельные функции
 
-    const [chatsStatistic, isCreated] = await UserChatsStatistic.findOrCreate({
-      where: { userId },
-      defaults: { userId, type: MemberType.User, unreadCountChats: unreadChatsCounter.count },
-    });
+  const updateValueLiteral = literal(`
+    SELECT COUNT("ChatMember"."id") 
+    FROM "ChatMembers" 
+    WHERE 
+        "ChatMembers"."userId" = "Users"."id"
+        AND 1 = (
+            CASE WHEN EXISTS(
+                SELECT "ChatMemberData"."id" 
+                FROM "ChatMemberData" 
+                WHERE 
+                    "ChatMemberData"."memberId" =  "ChatMembers"."id" 
+                    AND "ChatMembers"."unreadCountMessages" != 0
+            )
+        )
+  `);
 
-    if (!isCreated) {
-      await chatsStatistic.update({ unreadCountChats: unreadChatsCounter.count });
-    }
-  }
+  const whereLiteralBuilder = (chatId: string) => literal(`
+    "ChatMembers"."chatId" = ${ chatId } 
+    AND "ChatMembers"."status" = 'active'
+    AND "ChatMembers"."type" = 'User'
+  `);
+
+  await UserChatsStatistic.update({ unreadCountChats: updateValueLiteral }, {
+    where: {
+      [Op.and]: [
+        whereLiteralBuilder(payload.chatId),
+      ]
+    },
+  })
+
+  // for (const userId of payload.userIds) {
+  //   const unreadChatsCounter = await ChatMember.unscoped().findAndCountAll({
+  //     where: {
+  //       userId: userId,
+  //     },
+  //     include: [{
+  //       model: ChatMemberData,
+  //       as: 'chatMemberData',
+  //       where: { unreadCountMessages: { [Op.ne]: 0 } }
+  //     }]
+  //   });
+  //
+  //   const [chatsStatistic, isCreated] = await UserChatsStatistic.findOrCreate({
+  //     where: { userId },
+  //     defaults: { userId, type: MemberType.User, unreadCountChats: unreadChatsCounter.count },
+  //   });
+  //
+  //   if (!isCreated) {
+  //     await chatsStatistic.update({ unreadCountChats: unreadChatsCounter.count });
+  //   }
+  // }
 }
