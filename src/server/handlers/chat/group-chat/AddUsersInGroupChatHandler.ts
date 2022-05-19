@@ -41,27 +41,27 @@ export class AddUsersInGroupChatHandler implements IHandler<AddUsersInGroupChatC
 
   private static async sendInfoMessagesAboutRestoreMembers(payload: RestoreMembersPayload, options: Options = {}): Promise<Message[]> {
     const messages = Message.bulkBuild(
-      payload.deletedMembers.map((member, number) => ({
+      payload.deletedMembers.map((member, number ) => ({
         type: MemberType.User,
         chatId: payload.groupChat.id,
-        number: payload.lastMessage.number + number,
+        number: payload.lastMessage.number + number + 1, //cause starts from 0
         senderMemberId: payload.groupChat.groupChat.ownerMemberId,
       }))
     );
     const infoMessages = InfoMessage.bulkBuild(
       messages.map((message, number) => ({
         messageId: message.id,
-        memberId: payload.deletedMembers[number],
+        memberId: payload.deletedMembers[number].id,
         messageAction: MessageAction.GroupChatMemberRestored,
       }))
     )
 
-    await Promise.all([
+    await Promise.all(
       messages.map(async message => message.save({ transaction: options.tx })),
-    ]);
-    await Promise.all([
+    );
+    await Promise.all(
       infoMessages.map(async infoMessage => infoMessage.save({ transaction: options.tx })),
-    ]);
+    );
 
     messages.forEach((message, number) => {
       message.setDataValue('infoMessage', infoMessages[number]);
@@ -75,7 +75,7 @@ export class AddUsersInGroupChatHandler implements IHandler<AddUsersInGroupChatC
       payload.newMembers.map((member, number) => ({
         type: MemberType.User,
         chatId: payload.groupChat.id,
-        number: payload.lastMessage.number + number,
+        number: payload.lastMessage.number + number + 1, //'cause starts from 0
         senderMemberId: payload.groupChat.groupChat.ownerMemberId,
       }))
     );
@@ -176,11 +176,15 @@ export class AddUsersInGroupChatHandler implements IHandler<AddUsersInGroupChatC
         model: ChatMemberDeletionData,
         as: 'chatMemberDeletionData',
         where: { reason: ReasonForRemovingFromChat.Removed },
+        required: true,
       },
     });
 
+    const deletedMemberUserIds = deletedMembers.map(member => { return member.userId });
+    const newMemberUserIds = userIds.filter(userId => !deletedMemberUserIds.includes(userId));
+
     const newMembers = ChatMember.bulkBuild(
-      userIds.map(userId => ({
+      newMemberUserIds.map(userId => ({
         userId,
         type: MemberType.User,
       }))
@@ -190,22 +194,33 @@ export class AddUsersInGroupChatHandler implements IHandler<AddUsersInGroupChatC
       const lastMessage = await AddUsersInGroupChatHandler.getLastMessage(command.groupChat, { tx });
 
       await Promise.all([
-        await AddUsersInGroupChatHandler.addMembers({ lastMessage, newMembers, groupChat: command.groupChat }, { tx }),
-        await AddUsersInGroupChatHandler.restoreMembers({ lastMessage, deletedMembers, groupChat: command.groupChat }, { tx }),
+        AddUsersInGroupChatHandler.addMembers({ lastMessage, newMembers, groupChat: command.groupChat }, { tx }),
+        AddUsersInGroupChatHandler.restoreMembers({ lastMessage, deletedMembers, groupChat: command.groupChat }, { tx }),
       ]);
 
-      const messagesWithInfoRestoreMembers = await AddUsersInGroupChatHandler.sendInfoMessagesAboutRestoreMembers({
-        lastMessage,
-        deletedMembers,
-        groupChat: command.groupChat,
-      }, { tx });
-      const messagesWithInfoAddMembers = await AddUsersInGroupChatHandler.sendInfoMessageAboutAddMember({
-        newMembers,
-        groupChat: command.groupChat,
-        lastMessage: messagesWithInfoRestoreMembers[messagesWithInfoRestoreMembers.length - 1],
-      }, { tx });
+      let messages = [];
 
-      return [...messagesWithInfoRestoreMembers, ...messagesWithInfoAddMembers];
+      if (deletedMembers.length !== 0) {
+        const messagesWithInfoRestoreMembers = await AddUsersInGroupChatHandler.sendInfoMessagesAboutRestoreMembers({
+          lastMessage,
+          deletedMembers,
+          groupChat: command.groupChat,
+        }, { tx });
+
+        messages.push(...messagesWithInfoRestoreMembers);
+      }
+
+      if (newMembers.length !== 0) {
+        const messagesWithInfoAddMembers = await AddUsersInGroupChatHandler.sendInfoMessageAboutAddMember({
+          newMembers,
+          groupChat: command.groupChat,
+          lastMessage,
+        }, { tx });
+
+        messages.push(...messagesWithInfoAddMembers);
+      }
+
+      return messages;
     });
   }
 }
@@ -223,6 +238,11 @@ export class AddUsersInGroupChatPreAccessPermissionHandler extends HandlerDecora
   }
 
   public async Handle(command: AddUsersInGroupChatCommand): Promise<Message[]> {
+    const users: User[] =  command.users as User[];
+
+    await this.accessPermission.UserIsNotMemberAccess(command.groupChat, users);
+    await this.accessPermission.UserIsNotLeftAccess(command.groupChat, users);
+
     this.accessPermission.MemberHasAccess(command.groupChat, command.addInitiator);
     this.accessPermission.MemberHasOwnerAccess(command.groupChat, command.addInitiator);
 
@@ -243,7 +263,6 @@ export class AddUsersInGroupChatPreValidateHandler extends HandlerDecoratorBase<
   }
 
   public async Handle(command: AddUsersInGroupChatCommand): Promise<Message[]> {
-    this.validator.NotNull(command.groupChat);
     this.validator.GroupChatValidate(command.groupChat);
 
     return this.decorated.Handle(command);

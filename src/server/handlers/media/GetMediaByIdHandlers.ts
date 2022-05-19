@@ -18,7 +18,7 @@ export class GetMediaByIdHandler implements IHandler<GetMediaByIdCommand, Promis
 
 export class GetMediaByIdsHandler implements IHandler<GetMediaByIdsCommand, Promise<Media[]>>{
   public Handle(command: GetMediaByIdsCommand): Promise<Media[]> {
-    return Media.findAll({ where: { userId: command.mediaIds } });
+    return Media.findAll({ where: { id: command.mediaIds } });
   }
 }
 

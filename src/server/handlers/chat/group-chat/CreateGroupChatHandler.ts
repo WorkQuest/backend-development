@@ -1,18 +1,18 @@
-import { IHandler, Options } from '../../types';
+import { IHandler, Options } from "../../types";
 import {
   Chat,
-  User,
-  Message,
+  ChatMember,
+  ChatMemberData,
   ChatType,
   GroupChat,
-  MemberType,
-  ChatMember,
-  MessageType,
   InfoMessage,
   MemberStatus,
+  MemberType,
+  Message,
   MessageAction,
-  ChatMemberData,
-} from '@workquest/database-models/lib/models';
+  MessageType,
+  User
+} from "@workquest/database-models/lib/models";
 
 export interface CreateGroupChatCommand {
   readonly chatName: string;
@@ -20,12 +20,18 @@ export interface CreateGroupChatCommand {
   readonly invitedUsers: ReadonlyArray<User>;
 }
 
- interface CreateGroupChatPayload extends CreateGroupChatCommand {
+interface CreateChatData {
+  chat: Chat,
+  groupChat: GroupChat,
+  owner: ChatMember
+}
+
+interface CreateGroupChatPayload extends CreateGroupChatCommand {
 
 }
 
-interface SendInfoMessagePayload extends CreateGroupChatCommand {
-  readonly groupChat: Chat;
+interface SendInfoMessagePayload extends CreateChatData {
+
 }
 
 export class CreateGroupChatHandler implements IHandler<CreateGroupChatCommand, Promise<[Chat, Message]>> {
@@ -38,8 +44,8 @@ export class CreateGroupChatHandler implements IHandler<CreateGroupChatCommand, 
     const message = Message.build({
       number: 1,
       type: MessageType.Info,
-      chatId: payload.groupChat.id,
-      senderMemberId: payload.groupChat.groupChat.ownerMemberId,
+      chatId: payload.chat.id,
+      senderMemberId: payload.groupChat.ownerMemberId,
     });
     const info = InfoMessage.build({
       memberId: null,
@@ -57,7 +63,7 @@ export class CreateGroupChatHandler implements IHandler<CreateGroupChatCommand, 
     return message;
   }
 
-  private static async createGroupChatAndAddMembers(payload: CreateGroupChatPayload, options: Options = {}): Promise<Chat> {
+  private static async createGroupChatAndAddMembers(payload: CreateGroupChatPayload, options: Options = {}): Promise<CreateChatData> {
     const chat = await Chat.create({ type: ChatType.Group }, { transaction: options.tx });
 
     const members = ChatMember.bulkBuild(
@@ -98,24 +104,23 @@ export class CreateGroupChatHandler implements IHandler<CreateGroupChatCommand, 
 
     const owner = members.find(members => members.userId === payload.chatCreator.id);
 
-    const groupChatData = await GroupChat.create({
+    const groupChat = await GroupChat.create({
       chatId: chat.id,
       name: payload.chatName,
       ownerMemberId: owner.id,
-    });
+    }, { transaction: options.tx });
 
-    groupChatData.setDataValue('ownerMember', owner);
-    chat.setDataValue('groupChat', groupChatData);
-
-    return chat;
+    groupChat.setDataValue('ownerMember', owner);
+    chat.setDataValue('groupChat', groupChat);
+    return { chat, groupChat, owner };
   }
 
   public async Handle(command: CreateGroupChatCommand): Promise<[Chat, Message]> {
     return await this.dbContext.transaction(async (tx) => {
-      const chat = await CreateGroupChatHandler.createGroupChatAndAddMembers({ ...command }, { tx });
-      const messageWithInfo = await CreateGroupChatHandler.sendInfoMessageAboutGroupChatCreate({ ...command, groupChat: chat }, { tx });
+      const chatData = await CreateGroupChatHandler.createGroupChatAndAddMembers({ ...command }, { tx });
+      const messageWithInfo = await CreateGroupChatHandler.sendInfoMessageAboutGroupChatCreate({ ...command, ...chatData }, { tx });
 
-      return [chat, messageWithInfo];
+      return [chatData.chat, messageWithInfo];
     });
   }
 }

@@ -166,7 +166,7 @@ export default [
         }).label('SendMessageToChatParams'),
         payload: Joi.object({
           text: messageTextSchema.allow('').default(''),
-          medias: idsSchema.required().unique(),
+          mediaIds: idsSchema.required().unique(),
         }).label('SendMessageToChatPayload'),
       },
       response: {

@@ -90,8 +90,8 @@ export class LeaveFromGroupChatHandler implements IHandler<LeaveFromGroupChatCom
       const payload = { ...command, lastMessage };
 
       return Promise.all([
-        LeaveFromGroupChatHandler.leaveMember(payload),
-        LeaveFromGroupChatHandler.sendInfoMessageAboutLeaveMember(payload),
+        LeaveFromGroupChatHandler.leaveMember(payload, { tx }),
+        LeaveFromGroupChatHandler.sendInfoMessageAboutLeaveMember(payload, { tx }),
       ]);
     });
 
@@ -131,7 +131,6 @@ export class LeaveFromGroupChatPreValidateHandler extends HandlerDecoratorBase<L
   }
 
   public async Handle(command: LeaveFromGroupChatCommand): Promise<Message> {
-    this.validator.NotNull(command.groupChat);
     this.validator.GroupChatValidate(command.groupChat);
     this.validator.NotChatOwnerValidate(command.groupChat, command.member);
 

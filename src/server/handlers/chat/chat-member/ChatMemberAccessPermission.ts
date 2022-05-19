@@ -30,7 +30,7 @@ export class ChatMemberAccessPermission {
         });
       }
       if (member.status === MemberStatus.Deleted) {
-        throw error(Errors.Forbidden, 'User is deleted of this chat', {
+        throw error(Errors.Forbidden, 'User has been deleted from this chat', {
           chatId: chat.id,
           userId: member.userId,
         });

@@ -4,7 +4,7 @@ import { Errors } from "../../utils/errors";
 
 export class UserAccessPermission {
   public UsersHasConfirmedAccess(users: User[]) {
-    const unconfirmedUsers = users.map(user => {
+    const unconfirmedUsers = users.filter(user => {
       if (user.status !== UserStatus.Confirmed) {
         return user.id
       }

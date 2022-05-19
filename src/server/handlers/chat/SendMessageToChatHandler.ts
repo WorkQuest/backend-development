@@ -28,9 +28,13 @@ export class SendMessageToChatHandler implements IHandler<SendMessageToChatComma
   }
 
   private static async sendMessage(payload: SendMessageToChatPayload, options: Options = {}): Promise<Message> {
+    let lastMessageNumber = 1;
+    if (payload.lastMessage) {
+      lastMessageNumber += payload.lastMessage.number
+    }
     const message = await Message.create({
       chatId: payload.chat.id,
-      number: payload.lastMessage.number++,
+      number: lastMessageNumber,
       senderMemberId: payload.sender.id,
       type: MessageType.Message,
       text: payload.text,
