@@ -234,7 +234,7 @@ export async function listOfUsersByChats(r) {
   //
   // return output({ count: parseInt(countResults[0].count), users });
 }
-
+//check
 export async function getChatMembers(r) {
   const meUser: User = r.auth.credentials;
 
@@ -251,6 +251,7 @@ export async function getChatMembers(r) {
   ).Handle({ user: meUser, chat });
 
   const { count, rows } = await ChatMember.unscoped().findAndCountAll({
+    distinct: true,
     include: [{
       model: User.scope('shortWithAdditionalInfo'),
       as: 'user',
@@ -552,7 +553,7 @@ export async function addUsersInGroupChat(r) {
 
   return output(messagesWithInfo);
 }
-
+//TODO!!!!
 export async function setMessagesAsRead(r) {
   // const chat = await Chat.findByPk(r.params.chatId, {
   //   include: [{
@@ -609,7 +610,7 @@ export async function setMessagesAsRead(r) {
   //
   // return output();
 }
-
+//check
 export async function getUserStarredMessages(r) {
   const { count, rows } = await Message.findAndCountAll({
     distinct: true,
@@ -631,7 +632,7 @@ export async function getUserStarredMessages(r) {
 
   return output({ count, messages: rows });
 }
-
+//check
 export async function markMessageStar(r) {
   const meUser: User = r.auth.credentials;
 
@@ -655,7 +656,7 @@ export async function markMessageStar(r) {
 
   return output();
 }
-
+//check
 export async function removeStarFromMessage(r) {
   const meUser: User = r.auth.credentials;
 
@@ -665,7 +666,7 @@ export async function removeStarFromMessage(r) {
 
   return output();
 }
-
+//check
 export async function markChatStar(r) {
   const meUser: User = r.auth.credentials;
 
@@ -685,7 +686,7 @@ export async function markChatStar(r) {
 
   return output();
 }
-
+//check
 export async function removeStarFromChat(r) {
   const meUser: User = r.auth.credentials;
 

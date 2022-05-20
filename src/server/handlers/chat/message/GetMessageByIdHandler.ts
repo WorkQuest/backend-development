@@ -19,7 +19,7 @@ export class GetMessageByIdHandler implements IHandler<GetMessageByIdCommand, Pr
 
 export class GetChatMessageByIdHandler implements IHandler<GetChatMessageByIdCommand, Promise<Message>> {
   public Handle(command: GetChatMessageByIdCommand): Promise<Message> {
-    return Message.findOne({ where: { messageId: command.messageId, chatId: command.chat.id } });
+    return Message.findOne({ where: { id: command.messageId, chatId: command.chat.id } });
   }
 }
 
@@ -48,6 +48,8 @@ export class GetChatMessageByIdPostValidatorHandler extends HandlerDecoratorBase
     protected readonly decorated: IHandler<GetChatMessageByIdCommand, Promise<Message>>,
   ) {
     super(decorated);
+
+    this.messageValidator = new MessageValidator();
   }
 
   public async Handle(command: GetChatMessageByIdCommand): Promise<Message> {
