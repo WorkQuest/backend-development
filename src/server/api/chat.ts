@@ -181,7 +181,7 @@ export async function getChatMessages(r) {
   //
   // return output({ count, messages: rows, chat });
 }
-
+//check
 export async function getUserChat(r) {
   const { chatId } = r.params as { chatId: string };
 
@@ -675,7 +675,7 @@ export async function markChatStar(r) {
     new GetChatByIdHandler()
   ).Handle({ chatId });
 
-  const meMember = await new GetChatMemberPostValidationHandler(
+  await new GetChatMemberPostValidationHandler(
     new GetChatMemberPostLimitedAccessPermissionHandler(
       new GetChatMemberByUserHandler()
     )

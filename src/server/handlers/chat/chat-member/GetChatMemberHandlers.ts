@@ -97,6 +97,8 @@ export class GetChatMemberPostLimitedAccessPermissionHandler<Tin extends { chat:
     protected readonly decorated: IHandler<Tin, Promise<ChatMember>>,
   ) {
     super(decorated);
+
+    this.accessPermission = new ChatMemberAccessPermission();
   }
 
   public async Handle(command: Tin): Promise<ChatMember> {
