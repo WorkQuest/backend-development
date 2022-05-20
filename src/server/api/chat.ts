@@ -83,58 +83,58 @@ export async function getUserChats(r) {
     'ELSE (SELECT "Messages"."createdAt" FROM "ChatData" INNER JOIN "Messages" ON "lastMessageId" = "Messages"."id" WHERE "ChatData"."chatId" = "Chat"."id") END)'
   );
 
-  const where = {};
-  const replacements = {};
-
-  const include: any[] = [{
-    model: ChatMember,
-    where: { userId: r.auth.credentials.id },
-    include: {
-      model: ChatMemberDeletionData,
-      as: 'chatMemberDeletionData',
-      include: [{
-        model: Message.unscoped(),
-        as: 'beforeDeletionMessage'
-      }]
-    },
-    required: true,
-    as: 'meMember',
-  }, {
-    model: StarredChat,
-    where: { userId: r.auth.credentials.id },
-    as: 'star',
-    required: r.query.starred,
-  }, {
-    model: ChatData,
-    as: 'chatData',
-    include: [{
-      model: Message,
-      as: 'lastMessage'
-    }]
-  }];
-
-  if (r.query.q) {
-    where[Op.or] = searchChatFields.map(field => ({
-      [field]: { [Op.iLike]: `%${r.query.q}%` }
-    }));
-
-    where[Op.or].push(searchByQuestNameLiteral, searchByFirstAndLastNameLiteral);
-
-    replacements['query'] = `%${r.query.q}%`;
-    replacements['searcherId'] = r.auth.credentials.id;
-  }
-
-  const { count, rows } = await Chat.findAndCountAll({
-    where,
-    include,
-    replacements,
-    distinct: true,
-    limit: r.query.limit,
-    offset: r.query.offset,
-    order: [[orderByMessageDateLiteral, r.query.sort.lastMessageDate]],
-  });
-
-  return output({ count, chats: rows });
+  // const where = {};
+  // const replacements = {};
+  //
+  // const include: any[] = [{
+  //   model: ChatMember,
+  //   where: { userId: r.auth.credentials.id },
+  //   include: {
+  //     model: ChatMemberDeletionData,
+  //     as: 'chatMemberDeletionData',
+  //     include: [{
+  //       model: Message.unscoped(),
+  //       as: 'beforeDeletionMessage'
+  //     }]
+  //   },
+  //   required: true,
+  //   as: 'meMember',
+  // }, {
+  //   model: StarredChat,
+  //   where: { userId: r.auth.credentials.id },
+  //   as: 'star',
+  //   required: r.query.starred,
+  // }, {
+  //   model: ChatData,
+  //   as: 'chatData',
+  //   include: [{
+  //     model: Message,
+  //     as: 'lastMessage'
+  //   }]
+  // }];
+  //
+  // if (r.query.q) {
+  //   where[Op.or] = searchChatFields.map(field => ({
+  //     [field]: { [Op.iLike]: `%${r.query.q}%` }
+  //   }));
+  //
+  //   where[Op.or].push(searchByQuestNameLiteral, searchByFirstAndLastNameLiteral);
+  //
+  //   replacements['query'] = `%${r.query.q}%`;
+  //   replacements['searcherId'] = r.auth.credentials.id;
+  // }
+  //
+  // const { count, rows } = await Chat.findAndCountAll({
+  //   where,
+  //   include,
+  //   replacements,
+  //   distinct: true,
+  //   limit: r.query.limit,
+  //   offset: r.query.offset,
+  //   order: [[orderByMessageDateLiteral, r.query.sort.lastMessageDate]],
+  // });
+  //
+  // return output({ count, chats: rows });
 }
 
 export async function getChatMessages(r) {
@@ -183,6 +183,11 @@ export async function getChatMessages(r) {
 }
 
 export async function getUserChat(r) {
+  const { chatId } = r.params as { chatId: string };
+
+  const chat = await new GetGroupChatPostValidationHandler(
+    new GetGroupChatHandler()
+  ).Handle({ chatId });
   // const chat = await Chat.findByPk(r.params.chatId, {
   //   include: [{
   //     model: StarredChat,
@@ -198,7 +203,7 @@ export async function getUserChat(r) {
   //
   // await chatController.chatMustHaveMember(r.auth.credentials.id);
   //
-  // return output(chat);
+  return output(chat);
 }
 
 export async function listOfUsersByChats(r) {

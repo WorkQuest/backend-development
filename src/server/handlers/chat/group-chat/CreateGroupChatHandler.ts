@@ -1,6 +1,7 @@
 import { IHandler, Options } from "../../types";
 import {
   Chat,
+  ChatData,
   ChatMember,
   ChatMemberData,
   ChatType,
@@ -20,17 +21,21 @@ export interface CreateGroupChatCommand {
   readonly invitedUsers: ReadonlyArray<User>;
 }
 
-interface CreateChatData {
+interface GroupChatInfoCommand {
   chat: Chat,
   groupChat: GroupChat,
   owner: ChatMember
+}
+
+interface CreateChatDataPayload extends GroupChatInfoCommand {
+  message: Message,
 }
 
 interface CreateGroupChatPayload extends CreateGroupChatCommand {
 
 }
 
-interface SendInfoMessagePayload extends CreateChatData {
+interface SendInfoMessagePayload extends GroupChatInfoCommand {
 
 }
 
@@ -63,7 +68,7 @@ export class CreateGroupChatHandler implements IHandler<CreateGroupChatCommand, 
     return message;
   }
 
-  private static async createGroupChatAndAddMembers(payload: CreateGroupChatPayload, options: Options = {}): Promise<CreateChatData> {
+  private static async createGroupChatAndAddMembers(payload: CreateGroupChatPayload, options: Options = {}): Promise<GroupChatInfoCommand> {
     const chat = await Chat.create({ type: ChatType.Group }, { transaction: options.tx });
 
     const members = ChatMember.bulkBuild(
@@ -115,12 +120,22 @@ export class CreateGroupChatHandler implements IHandler<CreateGroupChatCommand, 
     return { chat, groupChat, owner };
   }
 
+  private static async createChatData(payload: CreateChatDataPayload, options: Options = {}) {
+    const chatData = await ChatData.create({
+      chatId: payload.chat.id,
+      lastMessageId: payload.message.id,
+    }, { transaction: options.tx });
+
+    payload.chat.setDataValue('chatData', chatData);
+  }
+
   public async Handle(command: CreateGroupChatCommand): Promise<[Chat, Message]> {
     return await this.dbContext.transaction(async (tx) => {
-      const chatData = await CreateGroupChatHandler.createGroupChatAndAddMembers({ ...command }, { tx });
-      const messageWithInfo = await CreateGroupChatHandler.sendInfoMessageAboutGroupChatCreate({ ...command, ...chatData }, { tx });
+      const chatInfo = await CreateGroupChatHandler.createGroupChatAndAddMembers({ ...command }, { tx });
+      const messageWithInfo = await CreateGroupChatHandler.sendInfoMessageAboutGroupChatCreate({ ...command, ...chatInfo }, { tx });
+      await CreateGroupChatHandler.createChatData({ ...chatInfo, message: messageWithInfo}, { tx });
 
-      return [chatData.chat, messageWithInfo];
+      return [chatInfo.chat, messageWithInfo];
     });
   }
 }
