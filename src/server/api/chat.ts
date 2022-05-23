@@ -268,10 +268,6 @@ export async function createGroupChat(r) {
   const chatCreator: User = r.auth.credentials;
   const userIds: string[] = r.payload.userIds;
 
-  // if (!userIds.includes(r.auth.credentials.id)) {
-  //   userIds.push(r.auth.credentials.id);
-  // }
-
   const invitedUsers: User[] = await new GetUsersByIdsPostValidationHandler(
     new GetUsersByIdsPostAccessPermissionHandler(
       new GetUsersByIdsHandler()
@@ -548,62 +544,63 @@ export async function addUsersInGroupChat(r) {
 
   return output(messagesWithInfo);
 }
-//TODO!!!!
+//сheck
 export async function setMessagesAsRead(r) {
-  // const chat = await Chat.findByPk(r.params.chatId, {
-  //   include: [{
-  //     model: ChatMember,
-  //     as: 'meMember',
-  //     where: { userId: r.auth.credentials.id }
-  //   }]
-  // });
-  // const chatController = new ChatController(chat);
-  //
-  // await chatController.chatMustHaveMember(r.auth.credentials.id);
-  //
-  // const message = await Message.findByPk(r.payload.messageId);
-  //
-  // if (!message) {
-  //   return error(Errors.NotFound, 'Message is not found', {});
-  // }
-  //
-  // const otherSenders = await Message.unscoped().findAll({
-  //   attributes: ['senderMemberId'],
-  //   where: {
-  //     chatId: chatController.chat.id,
-  //     senderMemberId: { [Op.ne]: chat.meMember.id },
-  //     senderStatus: SenderMessageStatus.Unread,
-  //     number: { [Op.gte]: message.number },
-  //   },
-  //   group: ['senderMemberId'],
-  // });
-  //
+  const meUser: User = r.auth.credentials
+  const { chatId } = r.params as { chatId: string };
+  const { messageId } = r.payload as { messageId: string };
+
+  const chat = await new GetChatByIdPostValidationHandler(
+    new GetChatByIdHandler()
+  ).Handle({ chatId });
+
+  const meMember = await new GetChatMemberPostValidationHandler(
+    new GetChatMemberPostLimitedAccessPermissionHandler(
+      new GetChatMemberByUserHandler()
+    )
+  ).Handle({ chat, user: meUser });
+
+  const message = await new GetChatMessageByIdPostValidatorHandler(
+    new GetChatMessageByIdHandler()
+  ).Handle({ messageId, chat });
+
+  const otherSenders = await Message.unscoped().findAll({
+    attributes: ['senderMemberId'],
+    where: {
+      chatId: chat.id,
+      senderMemberId: { [Op.ne]: meMember.id },
+      senderStatus: SenderMessageStatus.Unread,
+      number: { [Op.gte]: message.number },
+    },
+    group: ['senderMemberId'],
+  });
+
   // await updateCountUnreadMessagesJob({
   //   lastUnreadMessage: { id: message.id, number: message.number },
   //   chatId: chat.id,
   //   readerMemberId: chat.meMember.id,
   // });
-  //
-  // if (otherSenders.length === 0) {
-  //   return output();
-  // }
-  //
-  // await setMessageAsReadJob({
-  //   lastUnreadMessage: { id: message.id, number: message.number },
-  //   chatId: r.params.chatId,
-  //   senderMemberId: chat.meMember.id,
-  // });
+
+  if (otherSenders.length === 0) {
+    return output();
+  }
+
+  await setMessageAsReadJob({
+    lastUnreadMessage: { id: message.id, number: message.number },
+    chatId: r.params.chatId,
+    senderMemberId: meMember.id,
+  });
   // await updateCountUnreadChatsJob({
   //   userIds: [r.auth.credentials.id],
   // });
-  //
-  // // r.server.app.broker.sendChatNotification({
-  // //   action: ChatNotificationActions.messageReadByRecipient,
-  // //   recipients: otherSenders.map((sender) => sender.senderMemberId),
-  // //   data: message,
-  // // });
-  //
-  // return output();
+
+  // r.server.app.broker.sendChatNotification({
+  //   action: ChatNotificationActions.messageReadByRecipient,
+  //   recipients: otherSenders.map((sender) => sender.senderMemberId),
+  //   data: message,
+  // });
+
+  return output();
 }
 //check
 export async function getUserStarredMessages(r) {

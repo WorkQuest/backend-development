@@ -27,7 +27,7 @@ interface GroupChatInfoCommand {
   owner: ChatMember
 }
 
-interface CreateChatDataPayload extends GroupChatInfoCommand {
+interface CreateChatDataAndChatMemberDataPayload extends GroupChatInfoCommand {
   message: Message,
 }
 
@@ -91,20 +91,8 @@ export class CreateGroupChatHandler implements IHandler<CreateGroupChatCommand, 
       )
     }
 
-    const chatMembersData = ChatMemberData.bulkBuild(
-      members.map(member => ({
-        chatMemberId: member.id,
-        lastReadMessageId: null,
-        unreadCountMessages: 0,
-        lastReadMessageNumber: null,
-      }))
-    );
-
     await Promise.all(
       members.map(async member => member.save({ transaction: options.tx })),
-    );
-    await Promise.all(
-      chatMembersData.map(async data => data.save({ transaction: options.tx })),
     );
 
     const owner = members.find(members => members.userId === payload.chatCreator.id);
@@ -117,14 +105,29 @@ export class CreateGroupChatHandler implements IHandler<CreateGroupChatCommand, 
 
     groupChat.setDataValue('ownerMember', owner);
     chat.setDataValue('groupChat', groupChat);
+    chat.setDataValue('members', members);
+
     return { chat, groupChat, owner };
   }
 
-  private static async createChatData(payload: CreateChatDataPayload, options: Options = {}) {
+  private static async createChatDataAndChatMemberData(payload: CreateChatDataAndChatMemberDataPayload, options: Options = {}) {
     const chatData = await ChatData.create({
       chatId: payload.chat.id,
       lastMessageId: payload.message.id,
     }, { transaction: options.tx });
+
+    const chatMemberData = ChatMemberData.bulkBuild(
+      payload.chat.getDataValue('members').map(member => ({
+        chatMemberId: member.id,
+        lastReadMessageId: member.id === payload.owner.id ? payload.message.id : null,
+        unreadCountMessages: member.id === payload.owner.id ? 0 : 1,
+        lastReadMessageNumber: member.id === payload.owner.id ? payload.message.number : null,
+      }))
+    );
+
+    await Promise.all(
+      chatMemberData.map(async chatMemberData => chatMemberData.save({ transaction: options.tx })),
+    );
 
     payload.chat.setDataValue('chatData', chatData);
   }
@@ -133,7 +136,7 @@ export class CreateGroupChatHandler implements IHandler<CreateGroupChatCommand, 
     return await this.dbContext.transaction(async (tx) => {
       const chatInfo = await CreateGroupChatHandler.createGroupChatAndAddMembers({ ...command }, { tx });
       const messageWithInfo = await CreateGroupChatHandler.sendInfoMessageAboutGroupChatCreate({ ...command, ...chatInfo }, { tx });
-      await CreateGroupChatHandler.createChatData({ ...chatInfo, message: messageWithInfo}, { tx });
+      await CreateGroupChatHandler.createChatDataAndChatMemberData({ ...chatInfo, message: messageWithInfo }, { tx });
 
       return [chatInfo.chat, messageWithInfo];
     });

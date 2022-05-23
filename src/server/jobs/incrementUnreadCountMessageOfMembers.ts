@@ -12,8 +12,6 @@ export async function incrementUnreadCountMessageOfMembersJob(payload: UnreadMes
 }
 
 export default async function incrementUnreadCountMessageOfMembers(payload: UnreadMessageIncrementPayload) {
-  // const db = Database.instance();
-
   const whereLiteralBuilder = (chatId: string, skipMembersIds: string[]) =>
     literal(`"ChatMemberData"."chatMemberId" = "ChatMembers"."id" ` +
     `AND ("ChatMembers"."chatId" = ${chatId} AND "ChatMembers"."status" = 'active') ` +
@@ -25,15 +23,6 @@ export default async function incrementUnreadCountMessageOfMembers(payload: Unre
       [Op.and]: whereLiteralBuilder(payload.chatId, payload.skipMemberIds)
     },
   });
-
-  // const options = {
-  //   replacements: {
-  //     chatId: payload.chatId,
-  //     skipMembersIds: payload.skipMemberIds,
-  //   },
-  // };
-  //
-  // await db.query(incrementUnreadCountMessage, options);
 }
 
 
