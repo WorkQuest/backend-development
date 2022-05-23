@@ -63,6 +63,7 @@ export const searchChatFields = ['name'];
 
 //TODO: improve getDataValue('meMember') to meMember, do tests
 
+//check
 export async function getUserChats(r) {
   const searchByQuestNameLiteral = literal(
     `(SELECT "title" FROM "Quests" WHERE "id" = ` +
@@ -83,58 +84,58 @@ export async function getUserChats(r) {
     'ELSE (SELECT "Messages"."createdAt" FROM "ChatData" INNER JOIN "Messages" ON "lastMessageId" = "Messages"."id" WHERE "ChatData"."chatId" = "Chat"."id") END)'
   );
 
-  // const where = {};
-  // const replacements = {};
-  //
-  // const include: any[] = [{
-  //   model: ChatMember,
-  //   where: { userId: r.auth.credentials.id },
-  //   include: {
-  //     model: ChatMemberDeletionData,
-  //     as: 'chatMemberDeletionData',
-  //     include: [{
-  //       model: Message.unscoped(),
-  //       as: 'beforeDeletionMessage'
-  //     }]
-  //   },
-  //   required: true,
-  //   as: 'meMember',
-  // }, {
-  //   model: StarredChat,
-  //   where: { userId: r.auth.credentials.id },
-  //   as: 'star',
-  //   required: r.query.starred,
-  // }, {
-  //   model: ChatData,
-  //   as: 'chatData',
-  //   include: [{
-  //     model: Message,
-  //     as: 'lastMessage'
-  //   }]
-  // }];
-  //
-  // if (r.query.q) {
-  //   where[Op.or] = searchChatFields.map(field => ({
-  //     [field]: { [Op.iLike]: `%${r.query.q}%` }
-  //   }));
-  //
-  //   where[Op.or].push(searchByQuestNameLiteral, searchByFirstAndLastNameLiteral);
-  //
-  //   replacements['query'] = `%${r.query.q}%`;
-  //   replacements['searcherId'] = r.auth.credentials.id;
-  // }
-  //
-  // const { count, rows } = await Chat.findAndCountAll({
-  //   where,
-  //   include,
-  //   replacements,
-  //   distinct: true,
-  //   limit: r.query.limit,
-  //   offset: r.query.offset,
-  //   order: [[orderByMessageDateLiteral, r.query.sort.lastMessageDate]],
-  // });
-  //
-  // return output({ count, chats: rows });
+  const where = {};
+  const replacements = {};
+
+  const include: any[] = [{
+    model: ChatMember,
+    where: { userId: r.auth.credentials.id },
+    include: {
+      model: ChatMemberDeletionData,
+      as: 'chatMemberDeletionData',
+      include: [{
+        model: Message.unscoped(),
+        as: 'beforeDeletionMessage'
+      }]
+    },
+    required: true,
+    as: 'meMember',
+  }, {
+    model: StarredChat,
+    where: { userId: r.auth.credentials.id },
+    as: 'star',
+    required: r.query.starred,
+  }, {
+    model: ChatData,
+    as: 'chatData',
+    include: [{
+      model: Message,
+      as: 'lastMessage'
+    }]
+  }];
+
+  if (r.query.q) {
+    where[Op.or] = searchChatFields.map(field => ({
+      [field]: { [Op.iLike]: `%${r.query.q}%` }
+    }));
+
+    where[Op.or].push(searchByQuestNameLiteral, searchByFirstAndLastNameLiteral);
+
+    replacements['query'] = `%${r.query.q}%`;
+    replacements['searcherId'] = r.auth.credentials.id;
+  }
+
+  const { count, rows } = await Chat.findAndCountAll({
+    where,
+    include,
+    replacements,
+    distinct: true,
+    limit: r.query.limit,
+    offset: r.query.offset,
+    order: [[orderByMessageDateLiteral, r.query.sort.lastMessageDate]],
+  });
+
+  return output({ count, chats: rows });
 }
 //check
 export async function getChatMessages(r) {
@@ -199,34 +200,34 @@ export async function getUserChat(r) {
   //
   return output(chat);
 }
-
+//check
 export async function listOfUsersByChats(r) {
-  // const options = {
-  //   replacements: {
-  //     currentUserId: r.auth.credentials.id,
-  //     limitValue: r.query.limit,
-  //     offsetValue: r.query.offset,
-  //     excludeUsersFromChatId: r.query.excludeMembersChatId || '',
-  //   },
-  // };
-  //
-  // const [countResults] = await r.server.app.db.query(listOfUsersByChatsCountQuery, options);
-  // const [userResults] = await r.server.app.db.query(listOfUsersByChatsQuery, options);
-  //
-  // const users = userResults.map((result) => ({
-  //   id: result.id,
-  //   firstName: result.firstName,
-  //   lastName: result.lastName,
-  //   additionalInfo: result.additionalInfo,
-  //   avatarId: result.avatarId,
-  //   avatar: {
-  //     id: result['avatar.id'],
-  //     url: result['avatar.url'],
-  //     contentType: result['avatar.contentType'],
-  //   },
-  // }));
-  //
-  // return output({ count: parseInt(countResults[0].count), users });
+  const options = {
+    replacements: {
+      currentUserId: r.auth.credentials.id,
+      limitValue: r.query.limit,
+      offsetValue: r.query.offset,
+      excludeUsersFromChatId: r.query.excludeMembersChatId || '',
+    },
+  };
+
+  const [countResults] = await r.server.app.db.query(listOfUsersByChatsCountQuery, options);
+  const [userResults] = await r.server.app.db.query(listOfUsersByChatsQuery, options);
+
+  const users = userResults.map((result) => ({
+    id: result.id,
+    firstName: result.firstName,
+    lastName: result.lastName,
+    additionalInfo: result.additionalInfo,
+    avatarId: result.avatarId,
+    avatar: {
+      id: result['avatar.id'],
+      url: result['avatar.url'],
+      contentType: result['avatar.contentType'],
+    },
+  }));
+
+  return output({ count: parseInt(countResults[0].count), users });
 }
 //check
 export async function getChatMembers(r) {
