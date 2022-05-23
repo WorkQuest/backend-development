@@ -136,58 +136,52 @@ export async function getUserChats(r) {
   //
   // return output({ count, chats: rows });
 }
-
+//check
 export async function getChatMessages(r) {
-  // const chat = await Chat.findByPk(r.params.chatId, {
-  //   include: {
-  //     model: ChatMember,
-  //     where: { userId: r.auth.credentials.id },
-  //     include: [{
-  //       model: ChatMemberDeletionData,
-  //       include: [{
-  //         model: Message.unscoped(),
-  //         as: 'beforeDeletionMessage'
-  //       }],
-  //       as: 'chatMemberDeletionData'
-  //     }],
-  //     required: false,
-  //     as: 'meMember',
-  //   },
-  // });
-  // const chatController = new ChatController(chat);
-  //
-  // await chatController.chatMustHaveMember(r.auth.credentials.id);
-  //
-  // const where = {
-  //   chatId: chat.id,
-  //   ...(chat.meMember.chatMemberDeletionData && {createdAt: {[Op.lte]: chat.meMember.chatMemberDeletionData.beforeDeletionMessage.createdAt}})
-  // }
-  //
-  // const { count, rows } = await Message.findAndCountAll({
-  //   where,
-  //   include: [
-  //     {
-  //       model: StarredMessage,
-  //       as: 'star',
-  //       where: { userId: r.auth.credentials.id },
-  //       required: r.query.starred,
-  //     },
-  //   ],
-  //   distinct: true,
-  //   limit: r.query.limit,
-  //   offset: r.query.offset,
-  //   order: [['createdAt', r.query.sort.createdAt]],
-  // });
-  //
-  // return output({ count, messages: rows, chat });
+  const { chatId } = r.params as { chatId: string };
+  const meUser = r.auth.credentials;
+
+  const chat = await new GetChatByIdPostValidationHandler(
+    new GetChatByIdHandler()
+  ).Handle({ chatId });
+
+  const meMember = await new GetChatMemberPostValidationHandler(
+    new GetChatMemberPostLimitedAccessPermissionHandler(
+      new GetChatMemberByUserHandler()
+    )
+  ).Handle({ chat, user: meUser });
+
+  const where = {
+    chatId: chat.id,
+    ...(meMember.chatMemberDeletionData && { createdAt: {[Op.lte]: meMember.chatMemberDeletionData.beforeDeletionMessage.createdAt }})
+  }
+
+  const { count, rows } = await Message.findAndCountAll({
+    where,
+    include: [
+      {
+        model: StarredMessage,
+        as: 'star',
+        where: { userId: meMember.userId },
+        required: r.query.starred,
+      },
+    ],
+    distinct: true,
+    limit: r.query.limit,
+    offset: r.query.offset,
+    order: [['createdAt', r.query.sort.createdAt]],
+  });
+
+  return output({ count, messages: rows, chat });
 }
 //check
 export async function getUserChat(r) {
   const { chatId } = r.params as { chatId: string };
 
-  const chat = await new GetGroupChatPostValidationHandler(
-    new GetGroupChatHandler()
+  const chat = await new GetChatByIdPostValidationHandler(
+    new GetChatByIdHandler()
   ).Handle({ chatId });
+
   // const chat = await Chat.findByPk(r.params.chatId, {
   //   include: [{
   //     model: StarredChat,

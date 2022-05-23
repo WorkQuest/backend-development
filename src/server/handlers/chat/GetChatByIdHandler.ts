@@ -8,7 +8,7 @@ export interface GetChatByIdCommand {
 
 export class GetChatByIdHandler implements IHandler<GetChatByIdCommand, Promise<Chat>> {
   public Handle(command: GetChatByIdCommand): Promise<Chat> {
-    return Chat.findByPk(command.chatId);
+    return Chat.scope('forGetChat').findByPk(command.chatId);
   }
 }
 

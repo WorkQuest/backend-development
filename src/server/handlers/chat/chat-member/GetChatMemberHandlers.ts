@@ -14,7 +14,7 @@ export interface GetChatMemberByIdCommand {
 }
 
 export interface GetChatMembersByUsersCommand {
-  readonly chat: Chat;
+  readonly chat: Chat;f8f49b6c892ffd8f322347f3854416c5067d6384
   readonly users: ReadonlyArray<User>;
 }
 
@@ -25,7 +25,7 @@ export interface GetChatMembersByIdsCommand {
 
 export class GetChatMemberByUserHandler implements IHandler<GetChatMemberByUserCommand, Promise<ChatMember>> {
   public async Handle(command: GetChatMemberByUserCommand): Promise<ChatMember> {
-    return await ChatMember.findOne({ where: { userId: command.user.id, chatId: command.chat.id } });
+    return await ChatMember.scope('forGetChat').findOne({ where: { userId: command.user.id, chatId: command.chat.id } });
   }
 }
 
