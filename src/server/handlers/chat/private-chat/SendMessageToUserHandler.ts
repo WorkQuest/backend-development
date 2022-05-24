@@ -95,7 +95,7 @@ export class SendMessageToUserHandler implements IHandler<SendMessageToUserComma
     }, { transaction: options.tx });
 
     await message.$set('medias', payload.medias as Media[], { transaction: options.tx });
-
+    message.setDataValue('chat', payload.privateChat);
     return message;
   }
 

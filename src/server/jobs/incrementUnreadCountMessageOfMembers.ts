@@ -1,6 +1,6 @@
 import { literal, Op } from 'sequelize';
 import { addJob } from '../utils/scheduler';
-import { ChatMemberData } from '@workquest/database-models/lib/models';
+import { ChatMember, ChatMemberData, MemberStatus } from "@workquest/database-models/lib/models";
 
 export type UnreadMessageIncrementPayload = {
   readonly chatId: string;
@@ -13,12 +13,13 @@ export async function incrementUnreadCountMessageOfMembersJob(payload: UnreadMes
 
 export default async function incrementUnreadCountMessageOfMembers(payload: UnreadMessageIncrementPayload) {
   const whereLiteralBuilder = (chatId: string, skipMembersIds: string[]) =>
-    literal(`"ChatMemberData"."chatMemberId" = "ChatMembers"."id" ` +
-    `AND ("ChatMembers"."chatId" = ${chatId} AND "ChatMembers"."status" = 'active') ` +
-    `AND "ChatMembers"."id" not in (${skipMembersIds.join(',')}) `
+    literal(
+    `((SELECT "ChatMembers"."chatId" FROM "ChatMembers" WHERE "id" = "ChatMemberData"."chatMemberId") = '${ chatId }' ` +
+    `AND (SELECT "ChatMembers"."status" FROM "ChatMembers" WHERE "id" = "ChatMemberData"."chatMemberId") = ${ MemberStatus.Active }) ` +
+    `AND "ChatMemberData"."chatMemberId" != ANY(string_to_array('${(skipMembersIds.join(','))}', ',')) `
   );
 
-  await ChatMemberData.update({  }, {
+  await ChatMemberData.increment('unreadCountMessages' ,{
     where: {
       [Op.and]: whereLiteralBuilder(payload.chatId, payload.skipMemberIds)
     },
