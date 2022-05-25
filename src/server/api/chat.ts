@@ -1,6 +1,5 @@
 import { literal, Op } from 'sequelize';
-import { error, output } from '../utils';
-import { Errors } from '../utils/errors';
+import { output } from '../utils';
 import { setMessageAsReadJob } from '../jobs/setMessageAsRead';
 import { ChatNotificationActions } from '../controllers/controller.broker';
 import { updateCountUnreadChatsJob } from '../jobs/updateCountUnreadChats';
