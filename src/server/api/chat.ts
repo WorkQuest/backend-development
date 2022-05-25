@@ -258,7 +258,7 @@ export async function getChatMembers(r) {
 
   return output({ count, members: rows });
 }
-
+//TODO updateCountUnreadChatsJob
 export async function createGroupChat(r) {
   const chatName: string = r.payload.name;
   const chatCreator: User = r.auth.credentials;
@@ -269,6 +269,11 @@ export async function createGroupChat(r) {
       new GetUsersByIdsHandler()
     )
   ).Handle({ userIds });
+
+  await updateCountUnreadChatsJob({
+    //chatId: message.chatId,
+    userIds: [...userIds, chatCreator.id],
+  });
 
   const [chat, messageWithInfo] = await new CreateGroupChatHandler(r.server.app.db).Handle({
     chatName,
