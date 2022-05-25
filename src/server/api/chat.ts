@@ -270,15 +270,15 @@ export async function createGroupChat(r) {
     )
   ).Handle({ userIds });
 
-  await updateCountUnreadChatsJob({
-    //chatId: message.chatId,
-    userIds: [...userIds, chatCreator.id],
-  });
-
   const [chat, messageWithInfo] = await new CreateGroupChatHandler(r.server.app.db).Handle({
     chatName,
     chatCreator,
     invitedUsers,
+  });
+
+  await updateCountUnreadChatsJob({
+    //chatId: message.chatId,
+    userIds: [...userIds, chatCreator.id],
   });
 
   // r.server.app.broker.sendChatNotification({
