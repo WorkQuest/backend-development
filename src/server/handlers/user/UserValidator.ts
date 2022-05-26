@@ -12,12 +12,9 @@ export class UserValidator {
   }
   public HasCompleteSetValidate(users: User[], userIds: string[]) {
     if (users.length !== userIds.length) {
-      const notFountUserIds = users.map(user => {
-        if (!userIds.includes(user.id)) {
-          return user.id
-        }
-      });
-      throw error(Errors.NotFound, 'Users not found', { userIds: notFountUserIds });
+      const userFindingIds = users.map(user => { return user.id });
+      const notFoundUserIds = userIds.filter(userId => !userFindingIds.includes(userId));
+      throw error(Errors.NotFound, 'Users not found', { userIds: notFoundUserIds });
     }
   }
 }
