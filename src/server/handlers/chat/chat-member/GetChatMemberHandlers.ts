@@ -14,7 +14,7 @@ export interface GetChatMemberByIdCommand {
 }
 
 export interface GetChatMembersByUsersCommand {
-  readonly chat: Chat;f8f49b6c892ffd8f322347f3854416c5067d6384
+  readonly chat: Chat;
   readonly users: ReadonlyArray<User>;
 }
 
