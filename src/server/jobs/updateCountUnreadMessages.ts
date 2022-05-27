@@ -17,10 +17,6 @@ export async function updateCountUnreadMessagesJob(payload: MemberUnreadMessages
 }
 
 export default async function updateCountUnreadMessages(payload: MemberUnreadMessagesPayload) {
-
-
-
-
   const chatMemberData = await ChatMemberData.findOne({
     where: { chatMemberId: payload.readerMemberId },
     include: [{
