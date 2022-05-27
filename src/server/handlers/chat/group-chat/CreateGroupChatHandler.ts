@@ -109,13 +109,8 @@ export class CreateGroupChatHandler implements IHandler<CreateGroupChatCommand, 
 
     return { chat, groupChat, owner };
   }
-
+//TODO: подумай, как вынести в джобу
   private static async createChatDataAndChatMemberData(payload: CreateChatDataAndChatMemberDataPayload, options: Options = {}) {
-    const chatData = await ChatData.create({
-      chatId: payload.chat.id,
-      lastMessageId: payload.message.id,
-    }, { transaction: options.tx });
-
     const chatMemberData = ChatMemberData.bulkBuild(
       payload.chat.getDataValue('members').map(member => ({
         chatMemberId: member.id,
@@ -128,8 +123,6 @@ export class CreateGroupChatHandler implements IHandler<CreateGroupChatCommand, 
     await Promise.all(
       chatMemberData.map(async chatMemberData => chatMemberData.save({ transaction: options.tx })),
     );
-
-    payload.chat.setDataValue('chatData', chatData);
   }
 
   public async Handle(command: CreateGroupChatCommand): Promise<[Chat, Message]> {

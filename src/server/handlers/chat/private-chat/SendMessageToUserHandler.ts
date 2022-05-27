@@ -1,16 +1,17 @@
-import { IHandler, Options } from '../../types';
+import { IHandler, Options } from "../../types";
 import {
   Chat,
-  User,
-  Media,
-  Message,
-  ChatType,
+  ChatData,
   ChatMember,
-  MemberType,
-  MessageType,
-  MemberStatus,
   ChatMemberData,
-} from '@workquest/database-models/lib/models';
+  ChatType,
+  Media,
+  MemberStatus,
+  MemberType,
+  Message,
+  MessageType,
+  User
+} from "@workquest/database-models/lib/models";
 
 export interface SendMessageToUserCommand {
   readonly text: string;
@@ -65,7 +66,7 @@ export class SendMessageToUserHandler implements IHandler<SendMessageToUserComma
     }, {
       chatMemberId: recipient.id,
       chatId: payload.privateChat.id,
-      unreadCountMessages: 1,
+      unreadCountMessages: 0, //т.к дальше отработает джоба, которая инкрементирует сообщения
       lastReadMessageId: null,
       lastReadMessageNumber: null,
     }]);
@@ -134,9 +135,9 @@ export class SendMessageToUserHandler implements IHandler<SendMessageToUserComma
       if (isCreated) {
         const [sender, recipient] = await SendMessageToUserHandler.addP2PMembers({ ...command, privateChat }, { tx });
 
-        const payload: SendMessageToMemberPayload = { ...command, sender, recipient, privateChat }
+        const payload: SendMessageToMemberPayload = { ...command, sender, recipient, privateChat };
 
-        return SendMessageToUserHandler.sendMessage(payload, { tx });
+        return await SendMessageToUserHandler.sendMessage(payload, { tx });
       } else {
         const lastMessage = await SendMessageToUserHandler.getLastMessage(privateChat, { tx });
 
