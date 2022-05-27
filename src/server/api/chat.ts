@@ -259,7 +259,7 @@ export async function getChatMembers(r) {
 
   return output({ count, members: rows });
 }
-//TODO updateCountUnreadChatsJob
+
 export async function createGroupChat(r) {
   const chatName: string = r.payload.name;
   const chatCreator: User = r.auth.credentials;
@@ -277,10 +277,26 @@ export async function createGroupChat(r) {
     invitedUsers,
   });
 
-  const members = chat.getDataValue('members')
+  await updateChatDataJob({
+    chatId: chat.id,
+    lastMessageId: messageWithInfo.id,
+  });
+
+  await updateCountUnreadMessagesJob({
+    lastUnreadMessage: { id: messageWithInfo.id, number: messageWithInfo.number },
+    chatId: chat.id,
+    readerMemberId: chat.getDataValue('groupChat').ownerMemberId,
+  });
+
+  await setMessageAsReadJob({
+    chatId: messageWithInfo.chatId,
+    lastUnreadMessage: { id: messageWithInfo.id, number: messageWithInfo.number },
+    senderMemberId: chat.getDataValue('groupChat').ownerMemberId,
+  });
+
+  const members = chat.getDataValue('members');
 
   await updateCountUnreadChatsJob({
-    //chatId: message.chatId,
     members,
   });
 
@@ -292,7 +308,7 @@ export async function createGroupChat(r) {
 
   return output(chat);
 }
-//TODO updateCountUnreadChatsJob
+
 export async function sendMessageToUser(r) {
   const meUser: User = r.auth.credentials;
 
@@ -360,7 +376,7 @@ export async function sendMessageToUser(r) {
 
   return output(message);
 }
-//TODO updateCountUnreadChatsJob
+
 export async function sendMessageToChat(r) {
   const meUser: User = r.auth.credentials;
 
@@ -390,35 +406,32 @@ export async function sendMessageToChat(r) {
 
   await resetUnreadCountMessagesOfMemberJob({
     memberId: meMember.id,
-    chatId: chat.id,
+    chatId,
     lastReadMessage: { id: message.id, number: message.number },
   });
   await incrementUnreadCountMessageOfMembersJob({
-    chatId: chat.id,
+    chatId,
     skipMemberIds: [meMember.id],
+  });
+
+  await updateChatDataJob({
+    chatId,
+    lastMessageId: message.id,
   });
 
   await updateCountUnreadMessagesJob({
     lastUnreadMessage: { id: message.id, number: message.number },
-    chatId: message.chatId,
+    chatId,
     readerMemberId: meMember.id,
   });
 
   await setMessageAsReadJob({
-    chatId: r.params.chatId,
+    chatId,
     senderMemberId: meMember.id,
     lastUnreadMessage: { id: message.id, number: message.number },
   });
 
-  //TODO: переделать
-  const members = await ChatMember.findAll({ where: {
-    chatId,
-    status: MemberStatus.Active,
-    }
-  });
-  const userIds = members.map(member => { return member.userId });
-
-  // await updateCountUnreadChatsJob({ userIds });
+  await updateCountUnreadChatsJob({ members: chat.getDataValue('members') });
 
   // r.server.app.broker.sendChatNotification({
   //   action: ChatNotificationActions.newMessage,
@@ -428,7 +441,7 @@ export async function sendMessageToChat(r) {
 
   return output(message);
 }
-//TODO updateCountUnreadChatsJob
+
 export async function removeMemberFromGroupChat(r) {
   const meUser: User = r.auth.credentials;
 
@@ -461,9 +474,15 @@ export async function removeMemberFromGroupChat(r) {
     memberId: meMember.id,
     lastReadMessage: { id: messageWithInfo.id, number: messageWithInfo.number },
   });
+
   await incrementUnreadCountMessageOfMembersJob({
     skipMemberIds: [meMember.id],
     chatId: groupChat.id,
+  });
+
+  await updateChatDataJob({
+    chatId: groupChat.id,
+    lastMessageId: messageWithInfo.id,
   });
 
   await updateCountUnreadMessagesJob({
@@ -484,9 +503,8 @@ export async function removeMemberFromGroupChat(r) {
       status: MemberStatus.Active,
     }
   });
-  const userIds = members.map(member => { return member.userId });
 
-  // await updateCountUnreadChatsJob({ userIds });
+  await updateCountUnreadChatsJob({ members });
 
   // r.server.app.broker.sendChatNotification({
   //   action: ChatNotificationActions.groupChatDeleteUser,
@@ -496,7 +514,7 @@ export async function removeMemberFromGroupChat(r) {
 
   return output(messageWithInfo);
 }
-//TODO updateCountUnreadChatsJob
+
 export async function leaveFromGroupChat(r) {
   const meUser: User = r.auth.credentials;
 
@@ -523,6 +541,11 @@ export async function leaveFromGroupChat(r) {
     skipMemberIds: [meMember.id],
   });
 
+  await updateChatDataJob({
+    chatId: groupChat.id,
+    lastMessageId: messageWithInfo.id,
+  });
+
   await updateCountUnreadMessagesJob({
     lastUnreadMessage: { id: messageWithInfo.id, number: messageWithInfo.number },
     chatId: messageWithInfo.chatId,
@@ -541,9 +564,8 @@ export async function leaveFromGroupChat(r) {
       status: MemberStatus.Active,
     }
   });
-  const userIds = members.map(member => { return member.userId });
 
-  // await updateCountUnreadChatsJob({ userIds });
+  await updateCountUnreadChatsJob({ members });
 
   // r.server.app.broker.sendChatNotification({
   //   action: ChatNotificationActions.groupChatLeaveUser,
@@ -553,7 +575,7 @@ export async function leaveFromGroupChat(r) {
 
   return output(messageWithInfo);
 }
-//TODO updateCountUnreadChatsJob
+
 export async function addUsersInGroupChat(r) {
   const meUser: User = r.auth.credentials;
 
@@ -589,9 +611,15 @@ export async function addUsersInGroupChat(r) {
     memberId: meMember.id,
     lastReadMessage: { id: lastMessage.id, number: lastMessage.number },
   });
+
   await incrementUnreadCountMessageOfMembersJob({
     chatId: groupChat.id,
     skipMemberIds: [meMember.id],
+  });
+
+  await updateChatDataJob({
+    chatId: groupChat.id,
+    lastMessageId: lastMessage.id,
   });
 
   await updateCountUnreadMessagesJob({
@@ -612,11 +640,8 @@ export async function addUsersInGroupChat(r) {
       status: MemberStatus.Active,
     }
   });
-  const memberUserIds = members.map(member => { return member.userId });
 
-  // await updateCountUnreadChatsJob({
-  //   userIds: memberUserIds,
-  // });
+  await updateCountUnreadChatsJob({ members });
 
   // r.server.app.broker.sendChatNotification({
   //   action: ChatNotificationActions.groupChatAddUser,
@@ -626,7 +651,7 @@ export async function addUsersInGroupChat(r) {
 
   return output(messagesWithInfo);
 }
-//сheck updateCountUnreadMessagesJob, updateCountUnreadMessagesJob
+
 export async function setMessagesAsRead(r) {
   const meUser: User = r.auth.credentials
   const { chatId } = r.params as { chatId: string };

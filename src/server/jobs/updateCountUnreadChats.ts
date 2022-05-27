@@ -3,7 +3,7 @@ import { addJob } from "../utils/scheduler";
 import {
   AdminChatStatistic,
   ChatMember,
-  ChatMemberData,
+  ChatMemberData, MemberStatus,
   MemberType,
   UserChatsStatistic
 } from "@workquest/database-models/lib/models";
@@ -50,7 +50,8 @@ export default async function updateCountUnreadChats(payload: UpdateCountUnreadC
         },
       }],
       where: {
-        id: member.id,
+        userId: member.userId,
+        status: MemberStatus.Active,
       }
     });
 
