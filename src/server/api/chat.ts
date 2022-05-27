@@ -709,7 +709,7 @@ export async function setMessagesAsRead(r) {
 
   return output();
 }
-//check
+
 export async function getUserStarredMessages(r) {
   const { count, rows } = await Message.findAndCountAll({
     distinct: true,
@@ -731,7 +731,7 @@ export async function getUserStarredMessages(r) {
 
   return output({ count, messages: rows });
 }
-//check
+
 export async function markMessageStar(r) {
   const meUser: User = r.auth.credentials;
 
@@ -755,7 +755,7 @@ export async function markMessageStar(r) {
 
   return output();
 }
-//check
+
 export async function removeStarFromMessage(r) {
   const meUser: User = r.auth.credentials;
 
@@ -765,7 +765,7 @@ export async function removeStarFromMessage(r) {
 
   return output();
 }
-//check
+
 export async function markChatStar(r) {
   const meUser: User = r.auth.credentials;
 
@@ -785,7 +785,7 @@ export async function markChatStar(r) {
 
   return output();
 }
-//check
+
 export async function removeStarFromChat(r) {
   const meUser: User = r.auth.credentials;
 
