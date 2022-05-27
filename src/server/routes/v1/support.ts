@@ -1,0 +1,30 @@
+import * as Joi from 'joi';
+import * as handlers from '../../api/support';
+import {
+  outputOkSchema,
+  userEmailSchema,
+  titleSupportSchema,
+  descriptionSupportSchema
+} from '@workquest/database-models/lib/schemes';
+
+export default [{
+  method: 'POST',
+  path: '/v1/support/create',
+  handler: handlers.createSupport,
+  options: {
+    auth: 'jwt-access',
+    id: 'v1.support.create',
+    tags: ['api', 'support'],
+    description: 'Create ',
+    validate: {
+      payload: Joi.object({
+        email: userEmailSchema.required(),
+        title: titleSupportSchema.required(),
+        description: descriptionSupportSchema.required()
+      }).label('SupportCreatedPayload')
+    },
+    response: {
+      // schema: outputOkSchema().label('SupportCreatedResponse'),
+    },
+  },
+}];
