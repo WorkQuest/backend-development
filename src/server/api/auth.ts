@@ -324,6 +324,7 @@ export async function loginWallet(r) {
     totpIsActive: userTotpActiveStatus,
     userStatus: wallet.user.status,
     address: wallet.address,
+    userId: user.id,
   };
 
   return output(result);
