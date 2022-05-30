@@ -19,6 +19,7 @@ import proposal from './proposal';
 import pensionFund from './pensionFund';
 import referral from './referral';
 import savingProduct from "./savingProduct";
+import report from './report';
 import support from './support';
 
 export default [
@@ -43,5 +44,7 @@ export default [
   ...pensionFund,
   ...referral,
   ...savingProduct,
-  ...support
+  ...support,
+  ...savingProduct,
+  ...report
 ];
