@@ -44,8 +44,8 @@ export async function createProposal(r) {
 
 export async function getProposals(r) {
   const searchByProposalIdLiteral = literal(
-    `(SELECT "contractProposalId"::TEXT FROM "ProposalCreatedEvents" `
-    + `WHERE "proposalId" = "Proposal"."id") ILIKE :query`,
+    `(SELECT "contractProposalId"::TEXT FROM "ProposalCreatedEvents" ` +
+    `WHERE "proposalId" = "Proposal"."id") ILIKE :query `,
   );
 
   const where = {
