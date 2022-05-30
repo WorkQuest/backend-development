@@ -166,6 +166,37 @@ export async function getAllUsers(r) {
   return output({ count, users: rows });
 }
 
+export async function getAllUsersDao(r) {
+  const where = {
+    status: UserStatus.Confirmed,
+  };
+  where[Op.and] = [];
+
+  const include = [{
+    model: Wallet,
+    as: 'wallet',
+    attributes: ['address'],
+    required: r.query.walletRequired,
+  }] as any;
+
+  if (r.query.q) {
+    where[Op.or] = searchFields.map(
+      field => ({ [field]: { [Op.iLike]: `%${r.query.q}%` }})
+    );
+  }
+
+  const { count, rows } = await User.findAndCountAll({
+    where,
+    col: 'id',
+    distinct: true,
+    include,
+    limit: r.query.limit,
+    offset: r.query.offset,
+  });
+
+  return output({ count, users: rows });
+}
+
 export function getUsers(role: UserRole, type: 'points' | 'list') {
   return async function(r) {
     const user: User = r.auth.credentials;

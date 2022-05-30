@@ -44,8 +44,8 @@ export async function createProposal(r) {
 
 export async function getProposals(r) {
   const searchByProposalIdLiteral = literal(
-    `(SELECT "contractProposalId"::TEXT FROM "ProposalCreatedEvents" `
-    + `WHERE "proposalId" = "Proposal"."id") ILIKE :query`,
+    `(SELECT "contractProposalId"::TEXT FROM "ProposalCreatedEvents" ` +
+    `WHERE "proposalId" = "Proposal"."id") ILIKE :query `,
   );
 
   const where = {
@@ -69,7 +69,7 @@ export async function getProposals(r) {
   const { count, rows } = await Proposal.findAndCountAll({
     where,
     order,
-    // distinct: true,
+    distinct: true,
     limit: r.query.limit,
     offset: r.query.offset,
     include: {
