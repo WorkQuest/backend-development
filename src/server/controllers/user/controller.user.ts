@@ -1,29 +1,36 @@
-import { Op, Transaction } from 'sequelize';
-import { error } from '../../utils';
-import { Errors } from '../../utils/errors';
-import config from '../../config/config';
-import { totpValidate } from '@workquest/database-models/lib/utils';
-import { SkillsFiltersController } from '../controller.skillsFilters';
+import { Op, Transaction } from "sequelize";
+import { error } from "../../utils";
+import config from "../../config/config";
+import { Errors } from "../../utils/errors";
+import { totpValidate } from "@workquest/database-models/lib/utils";
+import { SkillsFiltersController } from "../controller.skillsFilters";
 import { createReferralProgramJob } from "../../jobs/createReferralProgram";
 import {
-  User,
-  Quest,
-  Session,
-  UserRole,
-  UserStatus,
+  UpdateWorkerProfileVisibilityPayload,
+  UpdateEmployerProfileVisibilityPayload,
+} from "./types";
+import {
+  //ChatsStatistic,
+  defaultUserSettings,
+  EmployerProfileVisibilitySetting,
   QuestDispute,
-  QuestsResponse,
-  UserRaiseView,
-  ChatsStatistic,
-  UserRaiseStatus,
   QuestsStatistic,
   RatingStatistic,
-  defaultUserSettings,
-  QuestsResponseStatus,
-  ProfileVisibilitySetting,
-  NetworkProfileVisibility,
+  Session,
+  RatingStatus,
+  User,
+  UserRaiseStatus,
+  UserRaiseView,
+  UserRole,
   UserSpecializationFilter,
-} from '@workquest/database-models/lib/models';
+  UserStatus,
+  WorkerProfileVisibilitySetting
+} from "@workquest/database-models/lib/models";
+
+export interface CreateProfileVisibility {
+  userId: string,
+  role: UserRole,
+}
 
 abstract class UserHelper {
   public abstract user: User;
@@ -245,83 +252,17 @@ abstract class UserHelper {
   }
 
   public userMustBeDisputeMember(dispute: QuestDispute): this {
-    const isUserDisputeMember = dispute.openDisputeUserId === this.user.id ? true : (dispute.opponentUserId === this.user.id);
-
-    if (!isUserDisputeMember) {
-      throw error(Errors.InvalidRole, 'User is not dispute member', [{userId: this.user.id}]);
+    if (dispute.openDisputeUserId === this.user.id || dispute.opponentUserId === this.user.id) {
+      return this;
     }
-    return this;
+
+    throw error(Errors.InvalidRole, 'User is not dispute member', {});
   }
 
   public async createRaiseView() {
     await UserRaiseView.create({
       userId: this.user.id,
     });
-  }
-
-  private async checkWorkerSubmittingJobOffer(visitorUserController: UserController) {
-    if (visitorUserController.user.role === UserRole.Worker) {
-      throw error(Errors.Forbidden, 'User hide its profile', { userId: this.user.id });
-    }
-
-    const quests = await Quest.unscoped().findAll({
-      where: { userId: visitorUserController.user.id },
-      include: [{
-        model: QuestsResponse.unscoped(),
-        as: 'response',
-        where: {
-          workerId: this.user.id,
-          status: { [Op.notIn]: [
-              QuestsResponseStatus.Closed,
-              QuestsResponseStatus.Rejected,
-            ] },
-        },
-        required: true,
-      }]
-    });
-
-    if (quests.length === 0) {
-      throw error(Errors.Forbidden, 'User hide its profile', { userId: this.user.id });
-    }
-  }
-
-  private async checkEmployerSubmittingJobOffer(visitorUserController: UserController) {
-    if (visitorUserController.user.role === UserRole.Employer) {
-      throw error(Errors.Forbidden, 'User hide its profile', { userId: this.user.id });
-    }
-
-    const quests = await Quest.unscoped().findAll({
-      where: { userId: this.user.id, },
-      include: [{
-        model: QuestsResponse.unscoped(),
-        as: 'response',
-        where: {
-          workerId: visitorUserController.user.id,
-          status: { [Op.notIn]: [
-              QuestsResponseStatus.Closed,
-              QuestsResponseStatus.Rejected,
-            ] },
-        },
-        required: true,
-      }]
-    });
-
-    if (quests.length === 0) {
-      throw error(Errors.Forbidden, 'User hide its profile', { userId: this.user.id });
-    }
-  }
-
-  public async canVisitMyProfile(visitorUserController: UserController): Promise<this> {
-    const profileVisibility = await ProfileVisibilitySetting.findOne({where: { userId: this.user.id } });
-
-    if (profileVisibility.network === NetworkProfileVisibility.SubmittingOffer && this.user.role === UserRole.Employer) {
-      await this.checkEmployerSubmittingJobOffer(visitorUserController);
-    }
-    if (profileVisibility.network === NetworkProfileVisibility.SubmittingOffer && this.user.role === UserRole.Worker) {
-      await this.checkWorkerSubmittingJobOffer(visitorUserController);
-    }
-
-    return this;
   }
 }
 
@@ -444,10 +385,10 @@ export class UserOldController extends UserHelper {
       where: { userId: userId },
       defaults: { userId: userId },
     });
-    await ChatsStatistic.findOrCreate({
-      where: { userId: userId },
-      defaults: { userId: userId },
-    });
+    // await ChatsStatistic.findOrCreate({
+    //   where: { userId: userId },
+    //   defaults: { userId: userId },
+    // });
     await QuestsStatistic.findOrCreate({
       where: { userId: userId },
       defaults: { userId: userId },
@@ -485,5 +426,133 @@ export class UserController {
   constructor(
     public readonly user: User,
   ) {
+  }
+
+  public updateUserEmailConfirmCode(emailConfirmCode: string, options: { tx?: Transaction } = {}) {
+    return this.user.update({
+      'settings.emailConfirm': emailConfirmCode,
+    }, { transaction: options.tx });
+  }
+
+  public confirmUser(setRole: UserRole, options: { tx?: Transaction } = {}) {
+    return this.user.update({
+      role: setRole,
+      status: UserStatus.Confirmed,
+      'settings.emailConfirm': null,
+      additionalInfo: UserOldController.getDefaultAdditionalInfo(setRole),
+    }, { transaction: options.tx });
+  }
+
+  public confirmUserWithStatusNeedSetRole(options: { tx?: Transaction } = {}) {
+    return this.user.update({
+      'settings.emailConfirm': null,
+      status: UserStatus.NeedSetRole,
+    }, { transaction: options.tx });
+  }
+
+  public createStatistics(options: { tx?: Transaction } = {}) {
+    return Promise.all([
+      RatingStatistic.findOrCreate({
+        where: { userId: this.user.id },
+        defaults: { userId: this.user.id },
+        transaction: options.tx,
+      }),
+      // ChatsStatistic.findOrCreate({
+      //   where: { userId: this.user.id },
+      //   defaults: { userId: this.user.id },
+      //   transaction: options.tx,
+      // }),
+      QuestsStatistic.findOrCreate({
+        where: { userId: this.user.id },
+        defaults: { userId: this.user.id },
+        transaction: options.tx,
+      }),
+    ]);
+  }
+
+  public async createRaiseView(options: { tx?: Transaction } = {}) {
+    return UserRaiseView.findOrCreate({
+      where: { userId: this.user.id },
+      defaults: { userId: this.user.id },
+      transaction: options.tx,
+    });
+  }
+
+  public static getDefaultAdditionalInfo(role: UserRole) {
+    let additionalInfo: object = {
+      description: null,
+      secondMobileNumber: null,
+      address: null,
+      socialNetwork: {
+        instagram: null,
+        twitter: null,
+        linkedin: null,
+        facebook: null,
+      },
+    };
+
+    if (role === UserRole.Worker) {
+      additionalInfo = {
+        ...additionalInfo,
+        skills: [],
+        educations: [],
+        workExperiences: [],
+      };
+    } else if (role === UserRole.Employer) {
+      additionalInfo = {
+        ...additionalInfo,
+        company: null,
+        CEO: null,
+        website: null,
+      };
+    }
+
+    return additionalInfo;
+  }
+
+  public static async createProfileVisibility(payload: CreateProfileVisibility) {
+    payload.role === 'employer' ?
+      await EmployerProfileVisibilitySetting.findOrCreate({
+        where: { userId: payload.userId },
+        defaults: { userId: payload.userId },
+      }) :
+      await WorkerProfileVisibilitySetting.findOrCreate({
+        where: { userId: payload.userId },
+        defaults: { userId: payload.userId },
+      });
+  }
+
+  public updateEmployerProfileVisibility(payload: UpdateEmployerProfileVisibilityPayload, options: { tx?: Transaction }): Promise<any> {
+    let ratingStatusCanRespondToQuest = 0;
+    let ratingStatusInMySearch = 0;
+
+    payload.ratingStatusInMySearch.forEach(status =>
+      (ratingStatusInMySearch |= status)
+    );
+    payload.ratingStatusCanRespondToQuest.forEach(status =>
+      (ratingStatusCanRespondToQuest |= status)
+    );
+
+    return EmployerProfileVisibilitySetting.update({ ratingStatusInMySearch, ratingStatusCanRespondToQuest }, {
+      where: { userId: this.user.id },
+      transaction: options.tx,
+    });
+  }
+
+  public updateWorkerProfileVisibility(payload: UpdateWorkerProfileVisibilityPayload, options: { tx?: Transaction }): Promise<any> {
+    let ratingStatusCanInviteMeOnQuest = RatingStatus.NoStatus;
+    let ratingStatusInMySearch = RatingStatus.NoStatus;
+
+    payload.ratingStatusInMySearch.forEach(status =>
+      (ratingStatusInMySearch |= status)
+    );
+    payload.ratingStatusCanInviteMeOnQuest.forEach(status =>
+      (ratingStatusCanInviteMeOnQuest |= status)
+    );
+
+    return  WorkerProfileVisibilitySetting.update({ ratingStatusInMySearch, ratingStatusCanInviteMeOnQuest }, {
+      where: { userId: this.user.id },
+      transaction: options.tx,
+    });
   }
 }

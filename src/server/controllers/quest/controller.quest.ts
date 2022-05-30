@@ -12,15 +12,15 @@ import {
   QuestsStarred,
   QuestRaiseView,
   QuestEmployment,
-  QuestSpecializationFilter,
-} from '@workquest/database-models/lib/models';
+  QuestSpecializationFilter, PayPeriod
+} from "@workquest/database-models/lib/models";
 
 export interface EditedQuestPayload {
-  title: string,
   avatarId: string,
   priority: Priority,
   workplace: WorkPlace,
-  employment: QuestEmployment,
+  payPeriod: PayPeriod,
+  typeOfEmployment: QuestEmployment,
   locationFull: {
     location: LocationType;
     locationPlaceName: string;
@@ -37,7 +37,8 @@ export interface CreatedQuestPayload {
   description: string;
   priority: Priority;
   workplace: WorkPlace;
-  employment: QuestEmployment;
+  payPeriod: PayPeriod;
+  typeOfEmployment: QuestEmployment;
 
   locationFull: {
     location: LocationType;
@@ -98,9 +99,11 @@ export class QuestController {
   }
 
   public createRaiseView(options: { tx?: Transaction } = {}) {
-    return QuestRaiseView.create({
-      questId: this.quest.id,
-    }, { transaction: options.tx });
+    return QuestRaiseView.findOrCreate({
+      where: { questId: this.quest.id },
+      defaults: { questId: this.quest.id },
+      transaction: options.tx,
+    });
   }
 
   public static async create(payload: CreatedQuestPayload, options: { tx?: Transaction } = {}): Promise<QuestController> {
@@ -109,7 +112,8 @@ export class QuestController {
       userId: payload.employer.id,
       status: QuestStatus.Pending,
       workplace: payload.workplace,
-      employment: payload.employment,
+      payPeriod: payload.payPeriod,
+      typeOfEmployment: payload.typeOfEmployment,
       priority: payload.priority,
       title: payload.title,
       description: payload.description,
@@ -124,11 +128,11 @@ export class QuestController {
 
   public async update(payload: EditedQuestPayload, options: { tx?: Transaction } = {}) {
     await this.quest.update({
-      title: payload.title,
       avatarId: payload.avatarId,
       priority: payload.priority,
       workplace: payload.workplace,
-      employment: payload.employment,
+      payPeriod: payload.payPeriod,
+      typeOfEmployment: payload.typeOfEmployment,
       location: payload.locationFull.location,
       locationPlaceName: payload.locationFull.locationPlaceName,
       locationPostGIS: transformToGeoPostGIS(payload.locationFull.location),

@@ -86,8 +86,8 @@ const init = async () => {
     { plugin: Pino, options: pinoConfig(false) },
     { plugin: HapiSwagger, options: SwaggerOptions },
   ]);
-
   server.app.db = await initDatabase(config.dbLink, true, true);
+  //server.app.db = Database.instance();
   server.app.web3 = new Web3();
   server.app.broker = new ControllerBroker();
   server.app.scheduler = await run({
@@ -104,6 +104,8 @@ const init = async () => {
       '/api/v1/profile/set-role',
       '/api/v1/auth/logout',
       '/api/v1/auth/register/wallet',
+      '/api/v1/auth/main/resend-email',
+      '/api/v1/auth/dao/resend-email',
     ]),
   });
   server.auth.strategy('jwt-refresh', 'bearer-access-token', {

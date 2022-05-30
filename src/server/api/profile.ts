@@ -1,7 +1,7 @@
 import { literal, Op } from "sequelize";
 import { addSendSmsJob } from "../jobs/sendSms";
 import { error, getRandomCodeNumber, output } from "../utils";
-import { UserOldController } from '../controllers/user/controller.user';
+import { UserController, UserOldController } from "../controllers/user/controller.user";
 import { transformToGeoPostGIS } from "../utils/postGIS";
 import { MediaController } from "../controllers/controller.media";
 import { SkillsFiltersController } from "../controllers/controller.skillsFilters";
@@ -11,22 +11,23 @@ import { updateQuestsStatisticJob } from "../jobs/updateQuestsStatistic";
 import { deleteUserFiltersJob } from "../jobs/deleteUserFilters";
 import { Errors } from "../utils/errors";
 import {
-  ChatsStatistic,
+  UserChatsStatistic,
   Quest,
+  EmployerProfileVisibilitySetting,
   QuestsResponse,
   QuestsResponseStatus,
   QuestsStatistic,
   QuestStatus,
-  RatingStatistic,
+  RatingStatistic, RatingStatus,
   ReferralProgramAffiliate,
   User,
   UserChangeRoleData,
+  UserRaiseStatus,
   UserRaiseView,
   UserRole,
   UserStatus,
-  UserRaiseStatus,
-  ProfileVisibilitySetting,
-  Wallet
+  Wallet,
+  WorkerProfileVisibilitySetting
 } from "@workquest/database-models/lib/models";
 import { convertAddressToHex } from "../utils/profile";
 
@@ -37,18 +38,34 @@ export const searchFields = [
 ];
 
 export async function getMe(r) {
+  const user: User = r.auth.credentials;
+
   const totpIsActiveLiteral = literal(`"User"."settings"->'security'->'TOTP'->'active'`);
 
-  const user = await User.findByPk(r.auth.credentials.id, {
+  const include = [
+    { model: Wallet, as: 'wallet', attributes: ['address'] },
+    { model: ReferralProgramAffiliate.unscoped(), as: 'affiliateUser', attributes: ['referralCodeId'] },
+  ] as any;
+
+  if (user.role === UserRole.Employer) {
+    include.push({
+      model: EmployerProfileVisibilitySetting,
+      as: 'employerProfileVisibilitySetting',
+    });
+  }
+  if (user.role === UserRole.Worker) {
+    include.push({
+      model: WorkerProfileVisibilitySetting,
+      as: 'workerProfileVisibilitySetting',
+    });
+  }
+
+  const meUser = await User.findByPk(r.auth.credentials.id, {
     attributes: { include: [[totpIsActiveLiteral, 'totpIsActive']] },
-    include: [
-      { model: Wallet, as: 'wallet', attributes: ['address'] },
-      { model: ReferralProgramAffiliate.unscoped(), as: 'affiliateUser', attributes: ['referralCodeId'] },
-      { model: ProfileVisibilitySetting, as: 'profileVisibilitySetting' }
-    ],
+    include,
   });
 
-  return output(user);
+  return output(meUser);
 }
 
 export async function getUser(r) {
@@ -56,12 +73,10 @@ export async function getUser(r) {
     include: [{ model: Wallet, as: 'wallet', attributes: ['address'] }],
   });
   const userController = new UserOldController(user);
-  const visitorController = new UserOldController(r.auth.credentials)
 
   await userController
     .checkNotSeeYourself(r.auth.credentials.id)
     .userMustHaveStatus(UserStatus.Confirmed)
-    .canVisitMyProfile(visitorController)
 
   return output(userController.user);
 }
@@ -88,13 +103,22 @@ export async function getUserByWallet(r) {
 }
 
 export async function getAllUsers(r) {
-  const user = r.auth.credentials;
-  const priorityVisibilityLiteral = literal(
-    `( CASE WHEN "User"."role" != '${ user.role }' THEN ` +
+  const user: User = r.auth.credentials;
+
+  const employerProfileVisibilitySearchLiteral = literal(
+    `( CASE WHEN "User"."role" = 'worker' THEN ` +
     '(CASE WHEN EXISTS (SELECT "usr"."id" FROM "Users" as "usr" ' +
-    `INNER JOIN "ProfileVisibilitySettings" as "pvs" ON "pvs"."userId" = '${ r.auth.credentials.id }' ` +
+    `INNER JOIN "EmployerProfileVisibilitySettings" as "pvs" ON "pvs"."userId" = '${ user.id }' ` +
     'INNER JOIN "RatingStatistics" as rtn ON "rtn"."userId" = "User"."id" ' +
-    'WHERE ("rtn"."status" = "pvs"."ratingStatus" OR "pvs"."ratingStatus" = 4)) THEN TRUE ELSE FALSE END) ' +
+    'WHERE ("rtn"."status" & "pvs"."ratingStatusInMySearch" != 0)) THEN TRUE ELSE FALSE END) ' +
+    'ELSE TRUE END) '
+  );
+  const workerProfileVisibilitySearchLiteral = literal(
+    `( CASE WHEN "User"."role" = 'worker' THEN ` +
+    '(CASE WHEN EXISTS (SELECT "usr"."id" FROM "Users" as "usr" ' +
+    `INNER JOIN "WorkerProfileVisibilitySettings" as "pvs" ON "pvs"."userId" = '${ user.id }' ` +
+    'INNER JOIN "RatingStatistics" as rtn ON "rtn"."userId" = "User"."id" ' +
+    'WHERE ("rtn"."status" & "pvs"."ratingStatusInMySearch" != 0)) THEN TRUE ELSE FALSE END) ' +
     'ELSE TRUE END) '
   );
 
@@ -102,15 +126,14 @@ export async function getAllUsers(r) {
     status: UserStatus.Confirmed,
     id: { [Op.ne]: r.auth.credentials.id }
   };
+  where[Op.and] = [];
+
   const include = [{
     model: Wallet,
     as: 'wallet',
     attributes: ['address'],
     required: r.query.walletRequired,
-  }, {
-    model: ProfileVisibilitySetting,
-    as: 'profileVisibilitySetting',
-  }];
+  }] as any;
 
   if (r.query.q) {
     where[Op.or] = searchFields.map(
@@ -118,7 +141,18 @@ export async function getAllUsers(r) {
     );
   }
 
-  where[Op.and] = [priorityVisibilityLiteral];
+  if (r.auth.credentials.role === UserRole.Worker) {
+    include.push({
+      model: WorkerProfileVisibilitySetting,
+      as: 'workerProfileVisibilitySetting',
+    }) && where[Op.and].push(workerProfileVisibilitySearchLiteral);
+  }
+  if (r.auth.credentials.role === UserRole.Employer) {
+    include.push({
+      model: EmployerProfileVisibilitySetting,
+      as: 'employerProfileVisibilitySetting',
+    }) && where[Op.and].push(employerProfileVisibilitySearchLiteral);
+  }
 
   const { count, rows } = await User.findAndCountAll({
     where,
@@ -134,7 +168,7 @@ export async function getAllUsers(r) {
 
 export function getUsers(role: UserRole, type: 'points' | 'list') {
   return async function(r) {
-    const user = r.auth.credentials;
+    const user: User = r.auth.credentials;
 
     const entersAreaLiteral = literal(
       'st_within("User"."locationPostGIS", st_makeenvelope(:northLng, :northLat, :southLng, :southLat, 4326))'
@@ -153,14 +187,24 @@ export function getUsers(role: UserRole, type: 'points' | 'list') {
       '(SELECT "type" FROM "UserRaiseViews" WHERE "userId" = "User"."id" AND "UserRaiseViews"."status" = 0)'
     );
     const userRatingStatisticLiteral = literal(
-      '(SELECT "status" FROM "RatingStatistics" WHERE "userId" = "User"."id")'
+      `(SELECT CASE WHEN "User"."status" = ${ RatingStatus.TopRanked } THEN 0 WHEN "User"."status" = ${ RatingStatus.Reliable } THEN 1 ` +
+      `WHEN "User"."status" = ${ RatingStatus.Verified } THEN 2 WHEN "User"."status" = ${ RatingStatus.NoStatus } THEN 3 END ` +
+      `FROM "RatingStatistics" WHERE "userId" = "User"."id") `
     );
-    const priorityVisibilityLiteral = literal(
-      `( CASE WHEN "User"."role" != '${ user.role }' THEN ` +
+    const employerProfileVisibilitySearchLiteral = literal(
+      `( CASE WHEN "User"."role" = 'worker' THEN ` +
       '(CASE WHEN EXISTS (SELECT "usr"."id" FROM "Users" as "usr" ' +
-      `INNER JOIN "ProfileVisibilitySettings" as "pvs" ON "pvs"."userId" = '${ r.auth.credentials.id }' ` +
+      `INNER JOIN "EmployerProfileVisibilitySettings" as "pvs" ON "pvs"."userId" = '${ user.id }' ` +
       'INNER JOIN "RatingStatistics" as rtn ON "rtn"."userId" = "User"."id" ' +
-      'WHERE ("rtn"."status" = "pvs"."ratingStatus" OR "pvs"."ratingStatus" = 4)) THEN TRUE ELSE FALSE END) ' +
+      'WHERE ("rtn"."status" & "pvs"."ratingStatusInMySearch" != 0)) THEN TRUE ELSE FALSE END) ' +
+      'ELSE TRUE END) '
+    );
+    const workerProfileVisibilitySearchLiteral = literal(
+      `( CASE WHEN "User"."role" = 'worker' THEN ` +
+      '(CASE WHEN EXISTS (SELECT "usr"."id" FROM "Users" as "usr" ' +
+      `INNER JOIN "WorkerProfileVisibilitySettings" as "pvs" ON "pvs"."userId" = '${ user.id }' ` +
+      'INNER JOIN "RatingStatistics" as rtn ON "rtn"."userId" = "User"."id" ' +
+      'WHERE ("rtn"."status" & "pvs"."ratingStatusInMySearch" != 0)) THEN TRUE ELSE FALSE END) ' +
       'ELSE TRUE END) '
     );
 
@@ -174,7 +218,8 @@ export function getUsers(role: UserRole, type: 'points' | 'list') {
       status: UserStatus.Confirmed,
       ...(r.query.priorities && { priority: r.query.priorities }),
       ...(r.query.workplaces && { workplace: r.query.workplaces }),
-      ...(r.query.betweenWagePerHour && { wagePerHour: { [Op.between]: [r.query.betweenWagePerHour.from, r.query.betweenWagePerHour.to] } }),
+      ...(r.query.betweenCostPerHour && { costPerHour: { [Op.between]: [r.query.betweenCostPerHour.from, r.query.betweenCostPerHour.to] } }),
+      ...(r.query.payPeriods && { payPeriod: { [Op.in]: r.query.payPeriods } }),
     };
 
     if (r.query.q) {
@@ -199,7 +244,7 @@ export function getUsers(role: UserRole, type: 'points' | 'list') {
 
       where[Op.and].push(entersAreaLiteral);
     }
-    if (r.payload.specializations && role === UserRole.Worker) {
+    if (role === UserRole.Worker && r.payload.specializations) {
       const { paths, industryKeys } = SkillsFiltersController.splitPathsAndSingleKeysOfIndustry(r.payload.specializations);
 
       if (paths.length !== 0 && industryKeys.length === 0) {
@@ -223,13 +268,18 @@ export function getUsers(role: UserRole, type: 'points' | 'list') {
       order.push([key, value]);
     }
 
-    include.push({
-      model: ProfileVisibilitySetting,
-      as: 'profileVisibilitySetting',
-    });
-
-    where[Op.and].push(priorityVisibilityLiteral);
-
+    if (r.auth.credentials.role === UserRole.Worker) {
+      include.push({
+        model: WorkerProfileVisibilitySetting,
+        as: 'workerProfileVisibilitySetting',
+      }) && where[Op.and].push(workerProfileVisibilitySearchLiteral);
+    }
+    if (r.auth.credentials.role === UserRole.Employer) {
+      include.push({
+        model: EmployerProfileVisibilitySetting,
+        as: 'employerProfileVisibilitySetting',
+      }) && where[Op.and].push(employerProfileVisibilitySearchLiteral);
+    }
     if (type === 'list') {
       const { count, rows } = await User.findAndCountAll({
         distinct: true,
@@ -259,15 +309,18 @@ export async function setRole(r) {
 
   await userController.setRole(r.payload.role);
 
+  await UserController.createProfileVisibility({ userId: user.id, role: r.payload.role });
+
   return output();
 }
 
 export function editProfile(userRole: UserRole) {
   return async function (r) {
     const user: User = r.auth.credentials;
-    const userController = new UserOldController(user);
+    const userOldController = new UserOldController(user);
+    const userController = new UserController(user);
 
-    await userController.userMustHaveRole(userRole);
+    await userOldController.userMustHaveRole(userRole);
 
     const locationFields = { location: null, locationPostGIS: null, locationPlaceName: null };
     const avatarId = r.payload.avatarId ? (await MediaController.getMedia(r.payload.avatarId)).id : null;
@@ -291,25 +344,26 @@ export function editProfile(userRole: UserRole) {
       locationFields.locationPostGIS = transformToGeoPostGIS(r.payload.locationFull.location);
     }
     if (userRole === UserRole.Worker) {
-      await userController.setUserSpecializations(r.payload.specializationKeys, transaction);
+      await userOldController.setUserSpecializations(r.payload.specializationKeys, transaction);
+
+      await userController.updateWorkerProfileVisibility(r.payload.profileVisibility, { tx: transaction });
+    }
+    if (userRole === UserRole.Employer) {
+      await userController.updateEmployerProfileVisibility(r.payload.profileVisibility, { tx: transaction });
     }
 
-    await Promise.all([
-      ProfileVisibilitySetting.update(r.payload.profileVisibility, {
-        where: { userId: r.auth.credentials.id }, transaction,
-      }),
-      user.update({
-        ...phonesFields,
-        ...locationFields,
-        avatarId: avatarId,
-        lastName: r.payload.lastName,
-        firstName: r.payload.firstName,
-        priority: r.payload.priority || null,
-        workplace: r.payload.workplace || null,
-        wagePerHour: r.payload.wagePerHour || null,
-        additionalInfo: r.payload.additionalInfo,
-      }, transaction),
-    ]);
+    await user.update({
+      ...phonesFields,
+      ...locationFields,
+      avatarId: avatarId,
+      lastName: r.payload.lastName,
+      firstName: r.payload.firstName,
+      priority: r.payload.priority || null,
+      workplace: r.payload.workplace || null,
+      payPeriod: r.payload.payPeriod || null,
+      costPerHour: r.payload.costPerHour || null,
+      additionalInfo: r.payload.additionalInfo,
+    }, transaction);
 
     await transaction.commit();
 
@@ -377,7 +431,7 @@ export async function sendCodeOnPhoneNumber(r) {
 }
 
 export async function getUserStatistics(r) {
-  const chatsStatistic = await ChatsStatistic.findOne({
+  const chatsStatistic = await UserChatsStatistic.findOne({
     where: { userId: r.auth.credentials.id },
   });
 
@@ -461,14 +515,14 @@ export async function changeUserRole(r) {
     userId: user.id,
     movedFromRole: user.role,
     additionalInfo: user.additionalInfo,
-    wagePerHour: user.wagePerHour,
+    costPerHour: user.costPerHour,
     workplace: user.workplace,
     priority: user.priority,
   }, { transaction });
 
   await user.update({
     workplace: null,
-    wagePerHour: null,
+    costPerHour: null,
     role: changeToRole,
     additionalInfo: UserOldController.getDefaultAdditionalInfo(changeToRole),
   }, { transaction });

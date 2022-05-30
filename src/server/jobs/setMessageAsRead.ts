@@ -1,11 +1,14 @@
-import { addJob } from '../utils/scheduler';
-import { ChatMember, Message, SenderMessageStatus } from '@workquest/database-models/lib/models';
 import { Op } from 'sequelize';
+import { addJob } from '../utils/scheduler';
+import {
+  Message,
+  SenderMessageStatus,
+} from '@workquest/database-models/lib/models';
 
 export interface MessageAsReadPayload {
-  lastUnreadMessage: { id: string; number: number };
   chatId: string;
-  senderId: string;
+  senderMemberId: string;
+  lastUnreadMessage: { id: string; number: number };
 }
 
 export async function setMessageAsReadJob(payload: MessageAsReadPayload) {
@@ -15,13 +18,13 @@ export async function setMessageAsReadJob(payload: MessageAsReadPayload) {
 export default async function setMessageAsRead(payload: MessageAsReadPayload) {
   await Message.update(
     {
-      senderStatus: SenderMessageStatus.read,
+      senderStatus: SenderMessageStatus.Read,
     },
     {
       where: {
         chatId: payload.chatId,
-        senderStatus: SenderMessageStatus.unread,
-        senderUserId: { [Op.ne]: payload.senderId },
+        senderStatus: SenderMessageStatus.Unread,
+        senderMemberId: { [Op.ne]: payload.senderMemberId },
         number: { [Op.lte]: payload.lastUnreadMessage.number },
       },
     },

@@ -1,14 +1,16 @@
-import Web3 from 'web3';
 import { error, output } from '../utils';
+import { Errors } from '../utils/errors';
 import configReferral from '../config/config.referral';
-import { referralProgramClaimAndPaidEventsQuery, referralProgramClaimAndPaidEventsCountQuery} from '../queries';
+import {
+  referralProgramClaimAndPaidEventsQuery,
+  referralProgramClaimAndPaidEventsCountQuery,
+} from '../queries';
 import {
   User,
   ReferralStatus,
   ReferralProgramReferral,
   ReferralProgramAffiliate,
 } from '@workquest/database-models/lib/models';
-import { Errors } from '../utils/errors';
 
 export async function getMyReferrals(r) {
   const affiliateUser: User = r.auth.credentials;
@@ -62,9 +64,8 @@ export async function getMySignedCreatedReferrals(r) {
     return output(null);
   }
 
-  const web3 = new Web3();
-  const data = web3.utils.soliditySha3({ t:'address', v: affiliateAddress.affiliateUser.wallet.address }, { t: 'address', v: referralAddresses });
-  const signed = await web3.eth.accounts.sign(data, configReferral.privateKey);
+  const data = r.server.app.web3.utils.soliditySha3({ t:'address', v: affiliateAddress.affiliateUser.wallet.address }, { t: 'address', v: referralAddresses });
+  const signed = await r.server.app.web3.eth.accounts.sign(data, configReferral.privateKey);
 
   return output({
     v: signed.v,
