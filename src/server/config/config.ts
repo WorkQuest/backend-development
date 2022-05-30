@@ -87,20 +87,4 @@ export default {
     pubUrl: process.env.CDN_PUB_END_POINT,
     expiresIn: parseInt(process.env.CDN_EXPIRES_IN),
   },
-  token: {
-    WQT: {
-      bscNetwork: {
-        address: process.env.TOKEN_WQT_BSC_NETWORK_ADDRESS,
-      },
-      ethereumNetwork: {
-        address: process.env.TOKEN_WQT_ETHEREUM_NETWORK_ADDRESS,
-      },
-    },
-    WETH: {
-      address: process.env.TOKEN_WETH_ADDRESS,
-    },
-    WBNB: {
-      address: process.env.TOKEN_WBNB_ADDRESS,
-    },
-  },
 };
