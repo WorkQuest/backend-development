@@ -4,7 +4,8 @@ import {
   outputOkSchema,
   userEmailSchema,
   titleSupportSchema,
-  descriptionSupportSchema
+  descriptionSupportSchema,
+  supportPostResponseSchema
 } from '@workquest/database-models/lib/schemes';
 
 export default [{
@@ -24,7 +25,7 @@ export default [{
       }).label('SupportCreatedPayload')
     },
     response: {
-      // schema: outputOkSchema().label('SupportCreatedResponse'),
+      schema: outputOkSchema(supportPostResponseSchema).label('SupportPostResponse'),
     },
   },
 }];

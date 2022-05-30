@@ -1,15 +1,18 @@
 import { error, output } from '../utils';
 import { Support, User, AdminSupportResolved, SupportStatus } from '@workquest/database-models/lib/models';
 import { Errors } from '../utils/errors';
+import { Op } from 'sequelize';
 
 export async function createSupport(r) {
   const author: User = r.auth.credentials;
 
-  const [post, isCreateSupport] = await Support.findOrCreate({
+  const [supportPost, isCreateSupport] = await Support.findOrCreate({
     where: {
       authorId: author.id,
       title: r.payload.title,
-      status: SupportStatus.Created || SupportStatus.Waiting
+      status: {
+        [Op.or]: [SupportStatus.Created, SupportStatus.Waiting]
+      }
     },
     defaults: {
       authorId: author.id,
@@ -22,8 +25,18 @@ export async function createSupport(r) {
   });
 
   if (!isCreateSupport) {
-    return error(Errors.Forbidden, 'User can`t send message on support platform', {});
+    return error(Errors.Forbidden, 'The user cannot send a message to the support platform, the post has already been created', {});
   }
 
-  return output();
+  const result = {
+    supportTicket: supportPost.supportTicket,
+    authorId: supportPost.authorId,
+    email: supportPost.email,
+    title: supportPost.title,
+    description: supportPost.description,
+    status: supportPost.status,
+    decision: supportPost.decision
+  };
+
+  return output(result);
 }
