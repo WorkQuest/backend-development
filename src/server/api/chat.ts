@@ -1,43 +1,71 @@
-import { literal, Op } from "sequelize";
-import { error, output } from "../utils";
-import { Errors } from "../utils/errors";
-import { ChatController } from "../controllers/chat/controller.chat";
-import { ChatNotificationActions } from "../controllers/controller.broker";
-import { MediaController } from "../controllers/controller.media";
-import { MessageController } from "../controllers/chat/controller.message";
-import { UserOldController } from '../controllers/user/controller.user';
-import { listOfUsersByChatsCountQuery, listOfUsersByChatsQuery } from "../queries";
+import { literal, Op } from 'sequelize';
+import { output } from '../utils';
+import { updateChatDataJob } from "../jobs/updateChatData";
+import { setMessageAsReadJob } from '../jobs/setMessageAsRead';
+import { ChatNotificationActions } from '../controllers/controller.broker';
+import { updateCountUnreadChatsJob } from '../jobs/updateCountUnreadChats';
+import { updateCountUnreadMessagesJob } from '../jobs/updateCountUnreadMessages';
+import { listOfUsersByChatsCountQuery, listOfUsersByChatsQuery } from '../queries';
+import { resetUnreadCountMessagesOfMemberJob } from '../jobs/resetUnreadCountMessagesOfMember';
+import { incrementUnreadCountMessageOfMembersJob } from '../jobs/incrementUnreadCountMessageOfMembers';
 import {
   Chat,
+  User,
+  Admin,
   ChatData,
-  ChatMemberDeletionData,
-  GroupChat, MemberStatus,
   Message,
-  ChatType,
   QuestChat,
   ChatMember,
-  InfoMessage,
-  MessageType,
-  MessageAction,
   StarredChat,
+  MemberStatus,
   StarredMessage,
-  QuestChatStatuses,
   SenderMessageStatus,
-  User
-} from "@workquest/database-models/lib/models";
-import { setMessageAsReadJob }  from "../jobs/setMessageAsRead";
-import { updateCountUnreadChatsJob }  from "../jobs/updateCountUnreadChats";
-import { updateCountUnreadMessagesJob }  from "../jobs/updateCountUnreadMessages";
-import { resetUnreadCountMessagesOfMemberJob }  from "../jobs/resetUnreadCountMessagesOfMember";
-import { incrementUnreadCountMessageOfMembersJob }  from "../jobs/incrementUnreadCountMessageOfMembers";
+  ChatMemberDeletionData,
+} from '@workquest/database-models/lib/models';
+import {
+  GetChatByIdHandler,
+  GetGroupChatHandler,
+  GetUsersByIdHandler,
+  GetUsersByIdsHandler,
+  GetMediaByIdsHandler,
+  MarkChatStarHandler,
+  SendMessageToChatHandler,
+  SendMessageToUserHandler,
+  GetChatMemberByIdHandler,
+  RemoveStarFromChatHandler,
+  LeaveFromGroupChatHandler,
+  GetChatMemberByUserHandler,
+  UserMarkMessageStarHandler,
+  AddUsersInGroupChatHandler,
+  GetChatMessageByIdHandler,
+  RemoveStarFromMessageHandler,
+  GetMediasPostValidationHandler,
+  GetChatByIdPostValidationHandler,
+  GetUsersByIdPostValidationHandler,
+  GetGroupChatPostValidationHandler,
+  DeletedMemberFromGroupChatHandler,
+  GetChatMemberPostValidationHandler,
+  GetUsersByIdsPostValidationHandler,
+  LeaveFromGroupChatPreValidateHandler,
+  AddUsersInGroupChatPreValidateHandler,
+  GetChatMessageByIdPostValidatorHandler,
+  GetUsersByIdPostAccessPermissionHandler,
+  GetUsersByIdsPostAccessPermissionHandler,
+  LeaveFromGroupChatPreAccessPermissionHandler,
+  DeletedMemberFromGroupChatPreValidateHandler,
+  GetChatMemberPostFullAccessPermissionHandler,
+  AddUsersInGroupChatPreAccessPermissionHandler,
+  GetChatMemberPostLimitedAccessPermissionHandler,
+  DeletedMemberFromGroupChatPreAccessPermissionHandler, CreateGroupChatHandler
+} from "../handlers";
 
 export const searchChatFields = ['name'];
 
-//TODO: improve getDataValue('meMember') to meMember, do tests
-
 export async function getUserChats(r) {
   const searchByQuestNameLiteral = literal(
-    `(SELECT "title" FROM "Quests" WHERE "id" = ` + `(SELECT "questId" FROM "QuestChats" WHERE "chatId" = "Chat"."id")) ` + `ILIKE :query`,
+    `(SELECT "title" FROM "Quests" WHERE "id" = ` +
+    `(SELECT "questId" FROM "QuestChats" WHERE "chatId" = "Chat"."id")) ` +
+    ` ILIKE :query`,
   );
   const searchByFirstAndLastNameLiteral = literal(
     `1 = (CASE WHEN EXISTS (SELECT "firstName", "lastName" FROM "Users" as "userMember" ` +
@@ -81,8 +109,7 @@ export async function getUserChats(r) {
       model: Message,
       as: 'lastMessage'
     }]
-  }
-  ];
+  }];
 
   if (r.query.q) {
     where[Op.or] = searchChatFields.map(field => ({
@@ -109,29 +136,22 @@ export async function getUserChats(r) {
 }
 
 export async function getChatMessages(r) {
-  const chat = await Chat.findByPk(r.params.chatId, {
-    include: {
-      model: ChatMember,
-      where: { userId: r.auth.credentials.id },
-      include: [{
-        model: ChatMemberDeletionData,
-        include: [{
-          model: Message.unscoped(),
-          as: 'beforeDeletionMessage'
-        }],
-        as: 'chatMemberDeletionData'
-      }],
-      required: false,
-      as: 'meMember',
-    },
-  });
-  const chatController = new ChatController(chat);
+  const { chatId } = r.params as { chatId: string };
+  const meUser = r.auth.credentials;
 
-  await chatController.chatMustHaveMember(r.auth.credentials.id);
+  const chat = await new GetChatByIdPostValidationHandler(
+    new GetChatByIdHandler()
+  ).Handle({ chatId });
+
+  const meMember = await new GetChatMemberPostValidationHandler(
+    new GetChatMemberPostLimitedAccessPermissionHandler(
+      new GetChatMemberByUserHandler()
+    )
+  ).Handle({ chat, user: meUser });
 
   const where = {
     chatId: chat.id,
-    ...(chat.meMember.chatMemberDeletionData && {createdAt: {[Op.lte]: chat.meMember.chatMemberDeletionData.beforeDeletionMessage.createdAt}})
+    ...(meMember.chatMemberDeletionData && { createdAt: {[Op.lte]: meMember.chatMemberDeletionData.beforeDeletionMessage.createdAt }})
   }
 
   const { count, rows } = await Message.findAndCountAll({
@@ -140,7 +160,7 @@ export async function getChatMessages(r) {
       {
         model: StarredMessage,
         as: 'star',
-        where: { userId: r.auth.credentials.id },
+        where: { userId: meMember.userId },
         required: r.query.starred,
       },
     ],
@@ -154,21 +174,27 @@ export async function getChatMessages(r) {
 }
 
 export async function getUserChat(r) {
-  const chat = await Chat.findByPk(r.params.chatId, {
-    include: [{
-      model: StarredChat,
-      as: 'star',
-      required: false,
-    }, {
-      model: QuestChat,
-      as: 'questChat',
-      required: false,
-    }],
-  });
-  const chatController = new ChatController(chat);
+  const { chatId } = r.params as { chatId: string };
 
-  await chatController.chatMustHaveMember(r.auth.credentials.id);
+  const chat = await new GetChatByIdPostValidationHandler(
+    new GetChatByIdHandler()
+  ).Handle({ chatId });
 
+  // const chat = await Chat.findByPk(r.params.chatId, {
+  //   include: [{
+  //     model: StarredChat,
+  //     as: 'star',
+  //     required: false,
+  //   }, {
+  //     model: QuestChat,
+  //     as: 'questChat',
+  //     required: false,
+  //   }],
+  // });
+  // const chatController = new ChatController(chat);
+  //
+  // await chatController.chatMustHaveMember(r.auth.credentials.id);
+  //
   return output(chat);
 }
 
@@ -202,477 +228,420 @@ export async function listOfUsersByChats(r) {
 }
 
 export async function getChatMembers(r) {
-  const exceptDeletedUsersLiteral = literal(
-    '(1 = (CASE WHEN EXISTS (SELECT "chatMemberId" FROM "ChatMemberDeletionData" INNER JOIN "ChatMembers" ON "User"."id" = "ChatMembers"."userId" WHERE "ChatMemberDeletionData"."chatMemberId" = "ChatMembers"."id") THEN 0 ELSE 1 END))'
-  );
+  const meUser: User = r.auth.credentials;
 
-  const where = {};
-  where[Op.or] = exceptDeletedUsersLiteral;
+  const { chatId } = r.params as { chatId: string };
 
-  const chat = await Chat.findByPk(r.params.chatId);
-  const chatController = new ChatController(chat);
-  await chatController.chatMustHaveMember(r.auth.credentials.id);
+  const chat = await new GetChatByIdPostValidationHandler(
+    new GetChatByIdHandler()
+  ).Handle({ chatId });
 
-  const { count, rows } = await User.scope('shortWithAdditionalInfo').findAndCountAll({
-    include: [
-      {
-        model: ChatMember,
-        attributes: [],
-        as: 'chatMember',
-        where: { chatId: chat.id },
-        include: [{
-          model: ChatMemberDeletionData,
-          as: 'chatMemberDeletionData'
-        }]
-      },
-    ],
-    where,
-    limit: r.query.limit,
-    offset: r.query.offset,
+  const meMember = await new GetChatMemberPostFullAccessPermissionHandler(
+    new GetChatMemberPostValidationHandler(
+      new GetChatMemberByUserHandler()
+    )
+  ).Handle({ user: meUser, chat });
+
+  const { count, rows } = await ChatMember.unscoped().findAndCountAll({
+    distinct: true,
+    include: [{
+      model: User.scope('shortWithAdditionalInfo'),
+      as: 'user',
+    }, {
+      model: Admin.scope('short'),
+      as: 'admin',
+    }],
+    where: {
+      chatId: chat.id,
+      status: MemberStatus.Active,
+    },
   });
 
   return output({ count, members: rows });
 }
 
 export async function createGroupChat(r) {
+  const chatName: string = r.payload.name;
+  const chatCreator: User = r.auth.credentials;
   const userIds: string[] = r.payload.userIds;
 
-  if (!userIds.includes(r.auth.credentials.id)) {
-    userIds.push(r.auth.credentials.id);
-  }
+  const invitedUsers: User[] = await new GetUsersByIdsPostValidationHandler(
+    new GetUsersByIdsPostAccessPermissionHandler(
+      new GetUsersByIdsHandler()
+    )
+  ).Handle({ userIds });
 
-  await UserOldController.usersMustExist(userIds);
+  const [chat, messageWithInfo] = await new CreateGroupChatHandler(r.server.app.db).Handle({
+    chatName,
+    chatCreator,
+    invitedUsers,
+  });
 
-  const transaction = await r.server.app.db.transaction();
+  await updateChatDataJob({
+    chatId: chat.id,
+    lastMessageId: messageWithInfo.id,
+  });
 
-  const chatController = await ChatController.createGroupChat(userIds, r.payload.name, r.auth.credentials.id, transaction);
-
-  const meMember = chatController.chat.getDataValue('members').find(member => member.userId === r.auth.credentials.id);
-
-  const message = await chatController.createInfoMessage(meMember.id, chatController.chat.id, 1, meMember.id, MessageAction.groupChatCreate, transaction);
-  await chatController.createChatMembersData(chatController.chat.getDataValue('members'), r.auth.credentials.id, message, transaction);
-  await chatController.createChatData(chatController.chat.id, message.id, transaction);
-
-  await transaction.commit();
-
-  const result = await Chat.findByPk(chatController.chat.id);
+  await updateCountUnreadMessagesJob({
+    lastUnreadMessage: { id: messageWithInfo.id, number: messageWithInfo.number },
+    chatId: chat.id,
+    readerMemberId: chat.getDataValue('groupChat').ownerMemberId,
+  });
 
   await setMessageAsReadJob({
-    lastUnreadMessage: { id: message.id, number: message.number },
-    chatId: chatController.chat.id,
-    senderMemberId: meMember.id,
+    chatId: messageWithInfo.chatId,
+    lastUnreadMessage: { id: messageWithInfo.id, number: messageWithInfo.number },
+    senderMemberId: chat.getDataValue('groupChat').ownerMemberId,
   });
 
-  await updateCountUnreadChatsJob({ userIds: userIds });
+  const members = chat.getDataValue('members');
 
-  r.server.app.broker.sendChatNotification({
-    recipients: userIds.filter((userId) => userId !== r.auth.credentials.id),
-    action: ChatNotificationActions.groupChatCreate,
-    data: result, // TODO lastReadMessageId: message.id
+  await updateCountUnreadChatsJob({
+    members,
   });
 
-  return output(result);
+  // r.server.app.broker.sendChatNotification({
+  //   recipients: userMemberIds.filter((id) => id !== userChatOwner.id),
+  //   action: ChatNotificationActions.groupChatCreate,
+  //   data: chatDto,
+  // });
+
+  return output(chat);
 }
 
 export async function sendMessageToUser(r) {
-  if (r.params.userId === r.auth.credentials.id) {
-    return error(Errors.InvalidPayload, "You can't send a message to yourself", {});
-  }
+  const meUser: User = r.auth.credentials;
 
-  await UserOldController.userMustExist(r.params.userId);
+  const { userId } = r.params as { userId: string };
+  const { text, mediaIds } = r.payload as { text: string, mediaIds: string[] }
 
-  const medias = await MediaController.getMedias(r.payload.medias);
-  const transaction = await r.server.app.db.transaction();
+  const recipientUser = await new GetUsersByIdPostAccessPermissionHandler(
+    new GetUsersByIdPostValidationHandler(
+      new GetUsersByIdHandler()
+    )
+  ).Handle({ userId });
 
-  const chatController = await ChatController.findOrCreatePrivateChat(r.auth.credentials.id, r.params.userId, transaction);
+  const medias = await new GetMediasPostValidationHandler(
+    new GetMediaByIdsHandler()
+  ).Handle({ mediaIds });
 
-  const lastMessage = await Message.unscoped().findOne({
-    order: [['createdAt', 'DESC']],
-    where: { chatId: chatController.controller.chat.id },
-    lock: 'UPDATE' as any,
-    transaction,
+  const message = await new SendMessageToUserHandler(r.server.app.db).Handle({
+    text,
+    medias,
+    sender: meUser,
+    recipient: recipientUser,
   });
 
-  const messageNumber = lastMessage ? (lastMessage.number + 1) : 1;
+  const meMember = await new GetChatMemberByUserHandler().Handle({ user: meUser, chat: message.getDataValue('chat') });
 
-  const meMember = chatController.controller.chat.getDataValue('members').find(member => member.userId === r.auth.credentials.id);
+  await incrementUnreadCountMessageOfMembersJob({
+    chatId: message.chatId,
+    skipMemberIds: [meMember.id],
+  });
 
-  const message = await chatController.controller.createMessage(chatController.controller.chat.id, meMember.id, messageNumber, r.payload.text, transaction);
+  const recipientMember = await ChatMember.findOne({
+    where: {
+      userId: recipientUser.id,
+      chatId: message.getDataValue('chat').id
+    }
+  });
 
-  await message.$set('medias', medias, { transaction });
+  await updateChatDataJob({
+    chatId: message.getDataValue('chat').id,
+    lastMessageId: message.id,
+  });
 
-  if (chatController.isCreated) {
-    await chatController.controller.createChatMembersData(chatController.controller.chat.getDataValue('members'), r.auth.credentials.id, message, transaction);
-    await chatController.controller.createChatData(chatController.controller.chat.id, message.id, transaction);
-  } else {
-    await ChatData.update({ lastMessageId: message.id }, { where: { chatId: chatController.controller.chat.id }, transaction });
-  }
-
-  await transaction.commit();
-
-  if (!chatController.isCreated) {
-    await resetUnreadCountMessagesOfMemberJob({
-      chatId: chatController.controller.chat.id,
-      lastReadMessageId: message.id,
-      memberId: meMember.id,
-      lastReadMessageNumber: message.number,
-    });
-
-    await incrementUnreadCountMessageOfMembersJob({
-      chatId: chatController.controller.chat.id,
-      notifierMemberId: meMember.id,
-    });
-  }
+  await updateCountUnreadMessagesJob({
+    lastUnreadMessage: { id: message.id, number: message.number },
+    chatId: message.chatId,
+    readerMemberId: meMember.id,
+  });
 
   await setMessageAsReadJob({
+    chatId: message.chatId,
     lastUnreadMessage: { id: message.id, number: message.number },
-    chatId: chatController.controller.chat.id,
     senderMemberId: meMember.id,
   });
 
+  //TODO
   await updateCountUnreadChatsJob({
-    userIds: [r.auth.credentials.id, r.params.userId],
+    members: [meMember, recipientMember],
   });
 
-  const result = await Message.findByPk(message.id);
-
-  r.server.app.broker.sendChatNotification({
-    action: ChatNotificationActions.newMessage,
-    recipients: [r.params.userId],
-    data: result,
-  });
-
-  return output(result);
-}
-
-export async function sendMessageToChat(r) {
-  const medias = await MediaController.getMedias(r.payload.medias);
-  const chat = await Chat.findByPk(r.params.chatId, {
-    include: [
-      {
-      model: ChatData,
-      as: 'chatData'
-    }, {
-      model: ChatMember,
-      as: 'members'
-    }, {
-      model: ChatMember,
-      as: 'meMember',
-      where: { userId: r.auth.credentials.id }
-    }]
-  });
-  const chatController = new ChatController(chat);
-
-  await chatController.chatMustHaveMember(r.auth.credentials.id);
-
-  if (chat.type === ChatType.quest) {
-    chatController.questChatMastHaveStatus(QuestChatStatuses.Open);
-  }
-
-  const transaction = await r.server.app.db.transaction();
-
-  const lastMessage = await Message.unscoped().findOne({
-    order: [['createdAt', 'DESC']],
-    where: { chatId: chat.id },
-    lock: 'UPDATE' as any,
-    transaction,
-  });
-
-  const messageNumber = chat.chatData.lastMessage.number + 1;
-
-  const message = await chatController.createMessage(chatController.chat.id, chatController.chat.getDataValue('meMember').id, messageNumber, r.payload.text, transaction);
-  await message.$set('medias', medias, { transaction });
-
-  await chat.chatData.update({ lastMessageId: message.id }, { transaction });
-
-  await transaction.commit();
-
-  const membersWithoutSender = await ChatMember.scope('userIdsOnly').findAll({
-    where: { chatId: chat.id, userId: { [Op.ne]: r.auth.credentials.id } },
-  });
-
-  const userIdsWithoutSender = membersWithoutSender.map((member) => member.userId);
-  const result = await Message.findByPk(message.id);
-
-  /** TODO: update jobs */
-  await resetUnreadCountMessagesOfMemberJob({
-    chatId: chat.id,
-    lastReadMessageId: message.id,
-    memberId: chatController.chat.meMember.id,
-    lastReadMessageNumber: message.number,
-  });
-
-  await incrementUnreadCountMessageOfMembersJob({
-    chatId: chat.id,
-    notifierMemberId: chatController.chat.meMember.id,
-  });
-
-  await setMessageAsReadJob({
-    lastUnreadMessage: { id: message.id, number: message.number },
-    chatId: r.params.chatId,
-    senderMemberId: chatController.chat.meMember.id,
-  });
-
-  await updateCountUnreadChatsJob({
-    userIds: [r.auth.credentials.id, ...userIdsWithoutSender],
-  });
-
-  r.server.app.broker.sendChatNotification({
-    action: ChatNotificationActions.newMessage,
-    recipients: userIdsWithoutSender,
-    data: result,
-  });
-
-  return output(result);
-}
-
-export async function removeUserFromGroupChat(r) {
-  await UserOldController.userMustExist(r.params.userId);
-
-  const chat = await Chat.findByPk(r.params.chatId, {
-    include: [
-      {
-        model: ChatMember,
-        as: 'members',
-      },
-      {
-        model: ChatData,
-        as: 'chatData',
-      },
-      {
-        model: GroupChat,
-        as: 'groupChat',
-      },
-      {
-        model: ChatMember,
-        as: 'meMember',
-        where: { userId: r.auth.credentials.id }
-      }
-    ]
-  });
-  const chatController = new ChatController(chat);
-
-  await chatController
-    .chatMustHaveOwner(chat.meMember.id)
-    .chatMustHaveType(ChatType.group)
-    .chatMustHaveMember(r.params.userId);
-
-  const transaction = await r.server.app.db.transaction();
-
-  const removedChatMember = chatController.chat.members.find(member => member.userId === r.params.userId);
-
-  const messageNumber = chat.chatData.lastMessage.number + 1;
-
-  const message = await chatController.createInfoMessage(chat.meMember.id, chatController.chat.id, messageNumber, removedChatMember.id, MessageAction.groupChatDeleteUser, transaction);
-
-  await chat.chatData.update({ lastMessageId: message.id }, { transaction });
-
-  await chatController.createChatMemberDeletionData(removedChatMember.id, message.id, message.number, transaction);
-
-  await transaction.commit();
-
-  const membersWithoutSender = await ChatMember.scope('userIdsOnly').findAll({
-    where: { chatId: chat.id, userId: { [Op.ne]: r.auth.credentials.id } },
-  });
-
-  const userIdsWithoutSender = membersWithoutSender.map((member) => member.userId);
-
-  /** TODO: refactor jobs*/
-  await resetUnreadCountMessagesOfMemberJob({
-    chatId: chat.id,
-    lastReadMessageId: message.id,
-    memberId: chat.meMember.id,
-    lastReadMessageNumber: message.number,
-  });
-
-  await incrementUnreadCountMessageOfMembersJob({
-    chatId: chat.id,
-    notifierMemberId: chat.meMember.id,
-  });
-
-  await setMessageAsReadJob({
-    lastUnreadMessage: { id: message.id, number: message.number },
-    chatId: chatController.chat.id,
-    senderMemberId: chat.meMember.id,
-  });
-
-  await updateCountUnreadChatsJob({
-    userIds: [r.auth.credentials.id, ...userIdsWithoutSender],
-  });
-
-  r.server.app.broker.sendChatNotification({
-    action: ChatNotificationActions.groupChatDeleteUser,
-    recipients: userIdsWithoutSender,
-    data: message,
-  });
+  // r.server.app.broker.sendChatNotification({
+  //   data: message,
+  //   action: ChatNotificationActions.newMessage,
+  //   recipients: [privateChatController.members.recipientMember.userId],
+  // });
 
   return output(message);
 }
 
-export async function leaveFromGroupChat(r) {
-  const chat = await Chat.findByPk(r.params.chatId, {
-    include: [{
-      model: GroupChat,
-      as: 'groupChat',
-    }, {
-      model: ChatData,
-      as: 'chatData',
-    }, {
-      model: ChatMember,
-      as: 'members',
-      where: {
-        userId: { [Op.ne]: r.auth.credentials.id }
-      }
-    }, {
-      model: ChatMember,
-      as: 'meMember',
-      where: { userId: r.auth.credentials.id },
-    }]
+export async function sendMessageToChat(r) {
+  const meUser: User = r.auth.credentials;
+
+  const { chatId } = r.params as { chatId: string };
+  const { text, mediaIds } = r.payload as { text: string, mediaIds: string[] };
+
+  const chat = await new GetChatByIdPostValidationHandler(
+    new GetChatByIdHandler()
+  ).Handle({ chatId });
+
+  const meMember = await new GetChatMemberPostFullAccessPermissionHandler(
+    new GetChatMemberPostValidationHandler(
+      new GetChatMemberByUserHandler()
+    )
+  ).Handle({ user: meUser, chat });
+
+  const medias = await new GetMediasPostValidationHandler(
+    new GetMediaByIdsHandler()
+  ).Handle({ mediaIds });
+
+  const message = await new SendMessageToChatHandler(r.server.app.db).Handle({
+    chat,
+    text,
+    medias,
+    sender: meMember,
   });
-  const chatController = new ChatController(chat);
 
-  if (chat.groupChat.ownerMemberId === chat.meMember.id) {
-    return error(Errors.Forbidden, 'User is chat owner', {});
-  }
-
-  await chatController
-    .chatMustHaveType(ChatType.group)
-    .chatMustHaveMember(r.auth.credentials.id);
-
-  const transaction = await r.server.app.db.transaction();
-
-  const messageNumber = chat.chatData.lastMessage.number + 1;
-  const message = await chatController.createInfoMessage(chatController.chat.meMember.id, chatController.chat.id, messageNumber, chatController.chat.meMember.id, MessageAction.groupChatLeaveUser, transaction);
-
-  await chatController.chat.chatData.update({ lastMessageId: message.id }, { transaction });
-
-  await chatController.createChatMemberDeletionData(chat.meMember.id, message.id, message.number, transaction);
-
-  await transaction.commit();
-
-  const result = await Message.findByPk(message.id);
-  const membersWithoutSender = await ChatMember.scope('userIdsOnly').findAll({
-    where: { chatId: chat.groupChat.id, userId: { [Op.ne]: r.auth.credentials.id } },
+  await resetUnreadCountMessagesOfMemberJob({
+    memberId: meMember.id,
+    chatId,
+    lastReadMessage: { id: message.id, number: message.number },
   });
-  const userIdsWithoutSender = membersWithoutSender.map((member) => member.userId);
-
   await incrementUnreadCountMessageOfMembersJob({
-    chatId: chat.id,
-    notifierMemberId: chat.meMember.id,
+    chatId,
+    skipMemberIds: [meMember.id],
+  });
+
+  await updateChatDataJob({
+    chatId,
+    lastMessageId: message.id,
+  });
+
+  await updateCountUnreadMessagesJob({
+    lastUnreadMessage: { id: message.id, number: message.number },
+    chatId,
+    readerMemberId: meMember.id,
   });
 
   await setMessageAsReadJob({
+    chatId,
+    senderMemberId: meMember.id,
     lastUnreadMessage: { id: message.id, number: message.number },
-    chatId: chatController.chat.id,
-    senderMemberId: chat.meMember.id,
   });
 
-  await updateCountUnreadChatsJob({
-    userIds: [r.auth.credentials.id, ...userIdsWithoutSender],
+  await updateCountUnreadChatsJob({ members: chat.getDataValue('members') });
+
+  // r.server.app.broker.sendChatNotification({
+  //   action: ChatNotificationActions.newMessage,
+  //   recipients: ,
+  //   data: message,
+  // });
+
+  return output(message);
+}
+
+export async function removeMemberFromGroupChat(r) {
+  const meUser: User = r.auth.credentials;
+
+  const { chatId, userId } = r.params as { chatId: string, userId: string };
+
+  const groupChat = await new GetGroupChatPostValidationHandler(
+    new GetGroupChatHandler()
+  ).Handle({ chatId });
+
+  const member = await new GetChatMemberPostFullAccessPermissionHandler(
+    new GetChatMemberPostValidationHandler(
+      new GetChatMemberByIdHandler()
+    )
+  ).Handle({ chat: groupChat, id: userId });
+
+  const meMember = await new GetChatMemberPostFullAccessPermissionHandler(
+    new GetChatMemberPostValidationHandler(
+      new GetChatMemberByUserHandler()
+    )
+  ).Handle({ chat: groupChat, user: meUser });
+
+  const messageWithInfo = await new DeletedMemberFromGroupChatPreAccessPermissionHandler(
+    new DeletedMemberFromGroupChatPreValidateHandler(
+      new DeletedMemberFromGroupChatHandler(r.server.app.db)
+    )
+  ).Handle({ member, groupChat, deletionInitiator: meMember });
+
+  await resetUnreadCountMessagesOfMemberJob({
+    chatId: groupChat.id,
+    memberId: meMember.id,
+    lastReadMessage: { id: messageWithInfo.id, number: messageWithInfo.number },
   });
 
-  r.server.app.broker.sendChatNotification({
-    action: ChatNotificationActions.groupChatLeaveUser,
-    recipients: chat.members,//userIdsWithoutSender,
-    data: result,
+  await incrementUnreadCountMessageOfMembersJob({
+    skipMemberIds: [meMember.id],
+    chatId: groupChat.id,
   });
 
-  return output(result);
+  await updateChatDataJob({
+    chatId: groupChat.id,
+    lastMessageId: messageWithInfo.id,
+  });
+
+  await updateCountUnreadMessagesJob({
+    lastUnreadMessage: { id: messageWithInfo.id, number: messageWithInfo.number },
+    chatId: messageWithInfo.chatId,
+    readerMemberId: meMember.id,
+  });
+
+  await setMessageAsReadJob({
+    senderMemberId: meMember.id,
+    chatId: groupChat.id,
+    lastUnreadMessage: { id: messageWithInfo.id, number: messageWithInfo.number },
+  });
+
+  //TODO: переделать
+  const members = await ChatMember.findAll({ where: {
+      chatId,
+      status: MemberStatus.Active,
+    }
+  });
+
+  await updateCountUnreadChatsJob({ members });
+
+  // r.server.app.broker.sendChatNotification({
+  //   action: ChatNotificationActions.groupChatDeleteUser,
+  //   recipients: userIdsWithoutSender,
+  //   data: message,
+  // });
+
+  return output(messageWithInfo);
+}
+
+export async function leaveFromGroupChat(r) {
+  const meUser: User = r.auth.credentials;
+
+  const { chatId } = r.params as { chatId: string };
+
+  const groupChat = await new GetGroupChatPostValidationHandler(
+    new GetGroupChatHandler()
+  ).Handle({ chatId });
+
+  const meMember = await new GetChatMemberPostFullAccessPermissionHandler(
+    new GetChatMemberPostValidationHandler(
+      new GetChatMemberByUserHandler()
+    )
+  ).Handle({ chat: groupChat, user: meUser });
+
+  const messageWithInfo = await new LeaveFromGroupChatPreValidateHandler(
+    new LeaveFromGroupChatPreAccessPermissionHandler(
+      new LeaveFromGroupChatHandler(r.server.app.db)
+    )
+  ).Handle({ member: meMember, groupChat });
+
+  await incrementUnreadCountMessageOfMembersJob({
+    chatId: groupChat.id,
+    skipMemberIds: [meMember.id],
+  });
+
+  await updateChatDataJob({
+    chatId: groupChat.id,
+    lastMessageId: messageWithInfo.id,
+  });
+
+  await updateCountUnreadMessagesJob({
+    lastUnreadMessage: { id: messageWithInfo.id, number: messageWithInfo.number },
+    chatId: messageWithInfo.chatId,
+    readerMemberId: meMember.id,
+  });
+
+  await setMessageAsReadJob({
+    chatId: groupChat.id,
+    senderMemberId: meMember.id,
+    lastUnreadMessage: { id: messageWithInfo.id, number: messageWithInfo.number },
+  });
+
+  //TODO: переделать
+  const members = await ChatMember.findAll({ where: {
+      chatId,
+      status: MemberStatus.Active,
+    }
+  });
+
+  await updateCountUnreadChatsJob({ members });
+
+  // r.server.app.broker.sendChatNotification({
+  //   action: ChatNotificationActions.groupChatLeaveUser,
+  //   recipients: group-chat.members,//userIdsWithoutSender,
+  //   data: result,
+  // });
+
+  return output(messageWithInfo);
 }
 
 export async function addUsersInGroupChat(r) {
-  const userIds: string[] = r.payload.userIds;
-  await UserOldController.usersMustExist(userIds, 'shortWithAdditionalInfo');
+  const meUser: User = r.auth.credentials;
 
-  const chat = await Chat.findByPk(r.params.chatId, {
-    include: [
-      {
-        model: ChatMember,
-        as: 'meMember',
-        where: { userId: r.auth.credentials.id }
-      },
-      {
-        model: ChatData,
-        as: 'chatData',
-      },
-      {
-        model: GroupChat,
-        as: 'groupChat',
-      }
+  const { chatId } = r.params as { chatId: string };
+  const { userIds } = r.payload as { userIds: string[] };
 
-    ]
-  });
-  const chatController = new ChatController(chat);
+  const groupChat = await new GetGroupChatPostValidationHandler(
+    new GetGroupChatHandler()
+  ).Handle({ chatId });
 
-  await chatController
-    .chatMustHaveType(ChatType.group)
-    .chatMustHaveOwner(chat.meMember.id)
-    .usersNotExistInGroupChat(userIds);
+  const meMember = await new GetChatMemberPostValidationHandler(
+    new GetChatMemberPostFullAccessPermissionHandler(
+      new GetChatMemberByUserHandler()
+    )
+  ).Handle({ chat: groupChat, user: meUser });
 
-  const transaction = await r.server.app.db.transaction();
+  const users = await new GetUsersByIdsPostValidationHandler(
+    new GetUsersByIdsPostAccessPermissionHandler(
+      new GetUsersByIdsHandler()
+    )
+  ).Handle({ userIds });
 
-  const newMembers = await chatController.createChatMembers(userIds, chat.id, transaction);
+  const messagesWithInfo = await new AddUsersInGroupChatPreValidateHandler(
+    new AddUsersInGroupChatPreAccessPermissionHandler(
+      new AddUsersInGroupChatHandler(r.server.app.db)
+    )
+  ).Handle({ groupChat, users, addInitiator: meMember })
 
-  const messages: Message[] = [];
-  for (let i = 0; i < newMembers.length; i++) {
-    const memberId = newMembers[i].id;
-    const messageNumber = chat.chatData.lastMessage.number + 1;
-
-    const message = await chatController.createInfoMessage(chatController.chat.meMember.id, chatController.chat.id, messageNumber, memberId, MessageAction.groupChatAddUser, transaction);
-
-    messages.push(message);
-  }
-
-  const lastMessage = messages[messages.length - 1];
-  await chatController.createChatMembersData(newMembers, r.auth.credentials.id, lastMessage, transaction);
-
-  await chat.chatData.update({ lastMessageId: lastMessage.id }, { transaction } );
-
-  await transaction.commit();
-
-  const membersWithoutSender = await ChatMember.scope('userIdsOnly').findAll({
-    where: { chatId: chat.id, userId: { [Op.ne]: r.auth.credentials.id } },
-  });
-
-  const chatMembers = await ChatMember.findAll({ where: { chatId: chat.id, status: MemberStatus.Active }});
-
-  const userIdsInChatWithoutSender = membersWithoutSender.map((member) => member.userId);
-
-  const messagesResult = messages.map((message) => {
-    const keysMessage: { [key: string]: any } = message.toJSON();
-    const keysInfoMessage = message.getDataValue('infoMessage').toJSON() as InfoMessage;
-
-    keysInfoMessage.member = chatMembers.find((_) => _.id === keysInfoMessage.memberId).toJSON() as ChatMember;
-
-    keysMessage.infoMessage = keysInfoMessage;
-
-    return keysMessage;
-  }) as Message[];
-
-  const newMembersIds = newMembers.map(member => { return member.id });
+  const lastMessage = messagesWithInfo[messagesWithInfo.length - 1];
 
   await resetUnreadCountMessagesOfMemberJob({
-    chatId: chat.id,
-    lastReadMessageId: lastMessage.id,
-    memberId: chatController.chat.meMember.id,
-    lastReadMessageNumber: lastMessage.number,
+    chatId: groupChat.id,
+    memberId: meMember.id,
+    lastReadMessage: { id: lastMessage.id, number: lastMessage.number },
   });
 
   await incrementUnreadCountMessageOfMembersJob({
-    chatId: chat.id,
-    notifierMemberId: chatController.chat.meMember.id,
-    skipMemberIds: newMembersIds, //у тех, кого добавили уже будет одно непрочитанное, не нужно его увеличивать ещё на один,
+    chatId: groupChat.id,
+    skipMemberIds: [meMember.id],
   });
 
-  await updateCountUnreadChatsJob({
-    userIds: [r.auth.credentials.id, ...userIdsInChatWithoutSender],
+  await updateChatDataJob({
+    chatId: groupChat.id,
+    lastMessageId: lastMessage.id,
+  });
+
+  await updateCountUnreadMessagesJob({
+    lastUnreadMessage: { id: lastMessage.id, number: lastMessage.number },
+    chatId: groupChat.id,
+    readerMemberId: meMember.id,
   });
 
   await setMessageAsReadJob({
-    lastUnreadMessage: { id: lastMessage.id, number: lastMessage.number },
-    chatId: r.params.chatId,
-    senderMemberId: chat.meMember.id,
+    chatId: groupChat.id,
+    senderMemberId: meMember.id,
+    lastUnreadMessage: { id: lastMessage.id, number: lastMessage.number }
   });
+
+  //TODO: переделать
+  const members = await ChatMember.findAll({ where: {
+      chatId,
+      status: MemberStatus.Active,
+    }
+  });
+
+  await updateCountUnreadChatsJob({ members });
 
   // r.server.app.broker.sendChatNotification({
   //   action: ChatNotificationActions.groupChatAddUser,
@@ -680,33 +649,34 @@ export async function addUsersInGroupChat(r) {
   //   data: messagesResult,
   // });
 
-  return output(messagesResult);
+  return output(messagesWithInfo);
 }
 
 export async function setMessagesAsRead(r) {
-  const chat = await Chat.findByPk(r.params.chatId, {
-    include: [{
-      model: ChatMember,
-      as: 'meMember',
-      where: { userId: r.auth.credentials.id }
-    }]
-  });
-  const chatController = new ChatController(chat);
+  const meUser: User = r.auth.credentials
+  const { chatId } = r.params as { chatId: string };
+  const { messageId } = r.payload as { messageId: string };
 
-  await chatController.chatMustHaveMember(r.auth.credentials.id);
+  const chat = await new GetChatByIdPostValidationHandler(
+    new GetChatByIdHandler()
+  ).Handle({ chatId });
 
-  const message = await Message.findByPk(r.payload.messageId);
+  const meMember = await new GetChatMemberPostValidationHandler(
+    new GetChatMemberPostLimitedAccessPermissionHandler(
+      new GetChatMemberByUserHandler()
+    )
+  ).Handle({ chat, user: meUser });
 
-  if (!message) {
-    return error(Errors.NotFound, 'Message is not found', {});
-  }
+  const message = await new GetChatMessageByIdPostValidatorHandler(
+    new GetChatMessageByIdHandler()
+  ).Handle({ messageId, chat });
 
   const otherSenders = await Message.unscoped().findAll({
     attributes: ['senderMemberId'],
     where: {
-      chatId: chatController.chat.id,
-      senderMemberId: { [Op.ne]: chat.meMember.id },
-      senderStatus: SenderMessageStatus.unread,
+      chatId: chat.id,
+      senderMemberId: { [Op.ne]: meMember.id },
+      senderStatus: SenderMessageStatus.Unread,
       number: { [Op.gte]: message.number },
     },
     group: ['senderMemberId'],
@@ -725,18 +695,17 @@ export async function setMessagesAsRead(r) {
   await setMessageAsReadJob({
     lastUnreadMessage: { id: message.id, number: message.number },
     chatId: r.params.chatId,
-    senderMemberId: chat.meMember.id,
+    senderMemberId: meMember.id,
   });
+  // await updateCountUnreadChatsJob({
+  //   userIds: [r.auth.credentials.id],
+  // });
 
-  await updateCountUnreadChatsJob({
-    userIds: [r.auth.credentials.id],
-  });
-
-  r.server.app.broker.sendChatNotification({
-    action: ChatNotificationActions.messageReadByRecipient,
-    recipients: otherSenders.map((sender) => sender.senderMemberId),
-    data: message,
-  });
+  // r.server.app.broker.sendChatNotification({
+  //   action: ChatNotificationActions.messageReadByRecipient,
+  //   recipients: otherSenders.map((sender) => sender.senderMemberId),
+  //   data: message,
+  // });
 
   return output();
 }
@@ -764,77 +733,65 @@ export async function getUserStarredMessages(r) {
 }
 
 export async function markMessageStar(r) {
-  const chat = await Chat.findByPk(r.params.chatId);
-  const message = await Message.findByPk(r.params.messageId);
+  const meUser: User = r.auth.credentials;
 
-  const chatController = new ChatController(chat);
-  const messageController = new MessageController(message);
+  const { chatId, messageId } = r.params as { chatId: string, messageId: string };
 
-  await chatController.chatMustHaveMember(r.auth.credentials.id);
+  const chat = await new GetChatByIdPostValidationHandler(
+    new GetChatByIdHandler()
+  ).Handle({ chatId });
 
-  await StarredMessage.findOrCreate({
-    where: {
-      userId: r.auth.credentials.id,
-      messageId: r.params.messageId,
-    },
-    defaults: {
-      userId: r.auth.credentials.id,
-      messageId: r.params.messageId,
-    }
-  });
+  const meMember = await new GetChatMemberPostValidationHandler(
+    new GetChatMemberPostLimitedAccessPermissionHandler(
+      new GetChatMemberByUserHandler()
+    )
+  ).Handle({ chat, user: meUser });
+
+  const message = await new GetChatMessageByIdPostValidatorHandler(
+    new GetChatMessageByIdHandler()
+  ).Handle({ messageId, chat });
+
+  await new UserMarkMessageStarHandler().Handle({ user: meUser, message });
 
   return output();
 }
 
 export async function removeStarFromMessage(r) {
-  const starredMessage = await StarredMessage.findOne({
-    where: {
-      messageId: r.params.messageId,
-      userId: r.auth.credentials.id,
-    },
-  });
+  const meUser: User = r.auth.credentials;
 
-  if (!starredMessage) {
-    return error(Errors.Forbidden, 'Message or message with star not fount', {});
-  }
+  const { messageId } = r.params as { messageId: string };
 
-  await starredMessage.destroy();
+  await new RemoveStarFromMessageHandler().Handle({ user: meUser, messageId });
 
   return output();
 }
 
 export async function markChatStar(r) {
-  const chat = await Chat.findByPk(r.params.chatId);
-  const chatController = new ChatController(chat);
+  const meUser: User = r.auth.credentials;
 
-  await chatController.chatMustHaveMember(r.auth.credentials.id);
+  const { chatId } = r.params as { chatId: string };
 
-  await StarredChat.findOrCreate({
-    where: {
-      userId: r.auth.credentials.id,
-      chatId: r.params.chatId,
-    },
-    defaults: {
-      userId: r.auth.credentials.id,
-      chatId: r.params.chatId,
-    }
-  });
+  const chat = await new GetChatByIdPostValidationHandler(
+    new GetChatByIdHandler()
+  ).Handle({ chatId });
+
+  await new GetChatMemberPostValidationHandler(
+    new GetChatMemberPostLimitedAccessPermissionHandler(
+      new GetChatMemberByUserHandler()
+    )
+  ).Handle({ chat, user: meUser });
+
+  await new MarkChatStarHandler().Handle({ chat, user: meUser });
 
   return output();
 }
 
 export async function removeStarFromChat(r) {
-  await ChatController.chatMustExists(r.params.chatId);
+  const meUser: User = r.auth.credentials;
 
-  //TODO: что делать до звёздочкой, если исключили из чата?
-  //await chat.mustHaveMember(r.auth.credentials.id);
+  const { chatId } = r.params as { chatId: string };
 
-  await StarredChat.destroy({
-    where: {
-      chatId: r.params.chatId,
-      userId: r.auth.credentials.id,
-    },
-  });
+  await new RemoveStarFromChatHandler().Handle({ user: meUser, chatId });
 
   return output();
 }

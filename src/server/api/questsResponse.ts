@@ -1,6 +1,6 @@
 import { output } from '../utils';
 import { MediaController } from '../controllers/controller.media';
-import { QuestChatController } from '../controllers/chat/controller.questChat';
+import { QuestChatController } from '../controllers/chat/controller.chat';
 import { ChatNotificationActions, QuestNotificationActions } from '../controllers/controller.broker';
 import { QuestResponseController, QuestsInviteController } from '../controllers/quest/controller.questResponses';
 import { ChecksListQuest } from '../checks-list/checksList.quest';
@@ -37,7 +37,7 @@ export async function responseOnQuest(r) {
 
   await checksListWorker
     .checkUserRole(UserRole.Worker)
-    .checkRatingMustMatchVisibilitySettings(questController.quest.user)
+    .checkWorkerRatingMustMatchEmployerVisibilitySettings(questController.quest.user)
   checksListQuest
     .checkQuestStatuses(QuestStatus.Recruitment)
 
@@ -73,7 +73,7 @@ export async function responseOnQuest(r) {
   });
 
   return(
-    questChatController.toDto()
+    await questChatController.toDto()
   );
 }
 
@@ -90,7 +90,7 @@ export async function inviteOnQuest(r) {
 
   await checksListEmployer
     .checkUserRole(UserRole.Employer)
-    .checkRatingMustMatchVisibilitySettings(workerController.user)
+    .checkEmployerRatingMustMatchWorkerVisibilitySettings(workerController.user)
   checksListWorker
     .checkUserRole(UserRole.Worker)
   checksListQuest
@@ -127,7 +127,7 @@ export async function inviteOnQuest(r) {
   });
 
   return output(
-    questChatController.toDto()
+    await questChatController.toDto()
   );
 }
 

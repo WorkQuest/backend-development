@@ -1,17 +1,14 @@
-import Web3 from 'web3';
-import configBridge from '../config/config.bridge';
 import { output } from '../utils';
+import configBridge from '../config/config.bridge';
 import { SwapEvents, BridgeSwapTokenEvent } from '@workquest/database-models/lib/models';
 
-const linkRpcProvider = configBridge.debug ? configBridge.bscTestNetwork.rpcProviderLink : configBridge.bscMainNetwork.rpcProviderLink;
-const web3 = new Web3(new Web3.providers.HttpProvider(linkRpcProvider)); // TODO А зачем вообще провайдер?
-
 export async function getRecipientSwaps(r) {
-  const recipient = r.params.recipient.toLowerCase();
   const swaps = [];
+  const recipient = r.params.recipient.toLowerCase();
 
   const redeemedEvents = await BridgeSwapTokenEvent.findAll({
     where: {
+      ...(r.query.symbol && { symbol: r.query.symbol }),
       event: SwapEvents.swapRedeemed,
       recipient,
     },
@@ -22,13 +19,14 @@ export async function getRecipientSwaps(r) {
     offset: r.query.offset,
     order: [['timestamp', 'DESC']],
     where: {
+      ...(r.query.symbol && { symbol: r.query.symbol }),
       event: SwapEvents.swapInitialized,
       recipient,
     },
   });
 
   for (const swapEvent of rows) {
-    const data = web3.utils.soliditySha3(
+    const data = r.server.app.web3.utils.soliditySha3(
       swapEvent.nonce,
       swapEvent.amount,
       swapEvent.recipient,
@@ -36,7 +34,7 @@ export async function getRecipientSwaps(r) {
       swapEvent.chainTo,
       swapEvent.symbol,
     );
-    const sing = await web3.eth.accounts.sign(data, configBridge.privateKey);
+    const sing = await r.server.app.web3.eth.accounts.sign(data, configBridge.privateKey);
     const redeemedRowIndex = redeemedEvents.findIndex((row) => row.messageHash === swapEvent.messageHash);
 
     swaps.push({

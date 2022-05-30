@@ -22,7 +22,7 @@ import {
   specializationKeysSchema,
   questsForGetWithCountSchema,
   questQueryForMapPointsSchema,
-  questQueryForGetWorkersSchema,
+  questQueryForGetWorkersSchema, payPeriodSchema
 } from "@workquest/database-models/lib/schemes";
 
 export default [{
@@ -55,7 +55,8 @@ export default [{
     validate: {
       payload: Joi.object({
         workplace: workPlaceSchema.required(),
-        employment: questEmploymentSchema.required(),
+        payPeriod: payPeriodSchema.required(),
+        typeOfEmployment: questEmploymentSchema.required(),
         priority: prioritySchema.required(),
         locationFull: locationFullSchema.required(),
         title: questTitleSchema.required(),
@@ -120,6 +121,40 @@ export default [{
         workerId: idSchema.required(),
       }).label("WorkerGetQuestsParams"),
       query: questQueryForGetWorkersSchema,
+      payload: questsPayloadSchema,
+    },
+    response: {
+      schema: outputOkSchema(questsForGetWithCountSchema).label("WorkerGetQuestsResponse")
+    },
+  }
+}, {
+  method: "POST",
+  path: "/v1/me/employer/get-quests",
+  handler: handlers.getQuests('list', 'employer'),
+  options: {
+    auth: 'jwt-access',
+    id: "v1.me.employer.quests",
+    tags: ["api", "quest"],
+    description: "Get quests for me as employer (created by me)",
+    validate: {
+      query: questQuerySchema,
+      payload: questsPayloadSchema,
+    },
+    response: {
+      schema: outputOkSchema(questsForGetWithCountSchema).label("EmployerGetQuestsResponse")
+    },
+  }
+}, {
+  method: "POST",
+  path: "/v1/me/worker/get-quests",
+  handler: handlers.getQuests('list', 'worker'),
+  options: {
+    auth: 'jwt-access',
+    id: "v1.me.worker.quests",
+    tags: ["api", "quest"],
+    description: "Get quests for me as worker (executed by me)",
+    validate: {
+      query: questQuerySchema,
       payload: questsPayloadSchema,
     },
     response: {
@@ -216,7 +251,7 @@ export default [{
       }).label("EditQuestParams"),
       payload: Joi.object({
         workplace: workPlaceSchema.required(),
-        employment: questEmploymentSchema.required(),
+        typeOfEmployment: questEmploymentSchema.required(),
         priority: prioritySchema.required(),
         locationFull: locationFullSchema.required(),
         title: questTitleSchema.required(),
