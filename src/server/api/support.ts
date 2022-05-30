@@ -1,7 +1,7 @@
+import { Op } from 'sequelize';
+import { Errors } from '../utils/errors';
 import { error, output } from '../utils';
 import { Support, User, AdminSupportResolved, SupportStatus } from '@workquest/database-models/lib/models';
-import { Errors } from '../utils/errors';
-import { Op } from 'sequelize';
 
 export async function createSupport(r) {
   const author: User = r.auth.credentials;
