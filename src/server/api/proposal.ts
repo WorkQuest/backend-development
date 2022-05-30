@@ -69,7 +69,7 @@ export async function getProposals(r) {
   const { count, rows } = await Proposal.findAndCountAll({
     where,
     order,
-    // distinct: true,
+    distinct: true,
     limit: r.query.limit,
     offset: r.query.offset,
     include: {
