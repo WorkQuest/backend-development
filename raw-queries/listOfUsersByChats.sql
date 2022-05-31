@@ -13,7 +13,7 @@ FROM "Users" AS "User"
     INNER JOIN "ChatMembers" AS "chatMember" ON "User"."id" = "chatMember"."userId"
 
     INNER JOIN "Chats" AS "chatMember->chat" ON "chatMember"."chatId" = "chatMember->chat"."id"
-    AND "chatMember->chat"."type" IN ('private', 'quest')
+    AND "chatMember->chat"."type" IN ('Private', 'Quest')
 WHERE
     ("User"."deletedAt" IS NULL)
   AND "User".id != :currentUserId

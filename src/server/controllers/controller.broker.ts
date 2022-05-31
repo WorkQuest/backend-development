@@ -31,7 +31,7 @@ export const enum QuestNotificationActions {
 }
 
 export const enum ChatNotificationActions {
-  /** Group chat */
+  /** Group group-chat */
   groupChatCreate = 'groupChatCreate',
   groupChatAddUser = 'groupChatAddUser',
   groupChatDeleteUser = 'groupChatDeleteUser',
