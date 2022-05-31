@@ -29,6 +29,7 @@ import {
   GetUsersByIdsHandler,
   GetMediaByIdsHandler,
   MarkChatStarHandler,
+  CreateGroupChatHandler,
   SendMessageToChatHandler,
   SendMessageToUserHandler,
   GetChatMemberByIdHandler,
@@ -56,7 +57,7 @@ import {
   GetChatMemberPostFullAccessPermissionHandler,
   AddUsersInGroupChatPreAccessPermissionHandler,
   GetChatMemberPostLimitedAccessPermissionHandler,
-  DeletedMemberFromGroupChatPreAccessPermissionHandler, CreateGroupChatHandler
+  DeletedMemberFromGroupChatPreAccessPermissionHandler,
 } from "../handlers";
 
 export const searchChatFields = ['name'];
@@ -72,12 +73,11 @@ export async function getUserChats(r) {
     `INNER JOIN "ChatMembers" AS "member" ON "userMember"."id" = "member"."userId" AND "member"."chatId" = "Chat"."id" ` +
     `WHERE "userMember"."firstName" || ' ' || "userMember"."lastName" ILIKE :query AND "userMember"."id" <> :searcherId) THEN 1 ELSE 0 END ) `,
   );
-
-  /**TODO: попытаться сократить запрос*/
   const orderByMessageDateLiteral = literal(
     '(CASE WHEN EXISTS (SELECT "Messages"."createdAt" FROM "ChatMemberDeletionData" INNER JOIN "Messages" ON "beforeDeletionMessageId" = "Messages"."id" ' +
     'INNER JOIN "ChatMembers" ON "ChatMemberDeletionData"."beforeDeletionMessageId" = "ChatMembers"."id" WHERE "ChatMembers"."chatId" = "Chat"."id") ' +
-    'THEN (SELECT "Messages"."createdAt" FROM "ChatMemberDeletionData" INNER JOIN "Messages" ON "beforeDeletionMessageId" = "Messages"."id" INNER JOIN "ChatMembers" ON "ChatMemberDeletionData"."beforeDeletionMessageId" = "ChatMembers"."id" WHERE "ChatMembers"."chatId" = "Chat"."id") ' +
+    'THEN (SELECT "Messages"."createdAt" FROM "ChatMemberDeletionData" INNER JOIN "Messages" ON "beforeDeletionMessageId" = "Messages"."id" INNER JOIN "ChatMembers" ON ' +
+    ' "ChatMemberDeletionData"."beforeDeletionMessageId" = "ChatMembers"."id" WHERE "ChatMembers"."chatId" = "Chat"."id") ' +
     'ELSE (SELECT "Messages"."createdAt" FROM "ChatData" INNER JOIN "Messages" ON "lastMessageId" = "Messages"."id" WHERE "ChatData"."chatId" = "Chat"."id") END)'
   );
 
@@ -151,7 +151,7 @@ export async function getChatMessages(r) {
 
   const where = {
     chatId: chat.id,
-    ...(meMember.chatMemberDeletionData && { createdAt: {[Op.lte]: meMember.chatMemberDeletionData.beforeDeletionMessage.createdAt }})
+    ...(meMember.chatMemberDeletionData && { createdAt: { [Op.lte]: meMember.chatMemberDeletionData.beforeDeletionMessage.createdAt } }),
   }
 
   const { count, rows } = await Message.findAndCountAll({
