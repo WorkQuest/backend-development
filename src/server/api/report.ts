@@ -1,4 +1,9 @@
-import { DiscussionComment, Quest, Report, ReportStatus, User } from '@workquest/database-models/lib/models';
+import {
+  Report,
+  reportEntities,
+  ReportStatus,
+  User
+} from '@workquest/database-models/lib/models';
 import { MediaController } from '../controllers/controller.media';
 import { Errors } from "../utils/errors";
 import { error, output } from "../utils";
@@ -7,15 +12,13 @@ export async function sendReport(r) {
   const user: User = r.auth.credentials;
   const mediaModels = await MediaController.getMedias(r.payload.medias);
 
-  const entities = { User, Quest, Comment: DiscussionComment };
+  const entityObject = reportEntities[r.payload.entityType];
 
-  const entityModel = entities[r.payload.entityType];
-
-  if (!entityModel) {
+  if (!entityObject) {
     return error(Errors.NotFound, 'Entity not found', {});
   }
 
-  const entity = await entityModel.findByPk(r.payload.entityId);
+  const entity = await entityObject.entity.findByPk(r.payload.entityId);
 
   if (!entity) {
     return error(Errors.NotFound, 'Entity not found', {});
