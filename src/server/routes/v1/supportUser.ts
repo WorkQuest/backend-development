@@ -1,5 +1,5 @@
 import * as Joi from 'joi';
-import * as handlers from '../../api/support';
+import * as handlers from '../../api/supportUser';
 import {
   outputOkSchema,
   userEmailSchema,
