@@ -4,7 +4,6 @@ import {
   User,
   UserRole,
   UserStatus,
-  RatingStatus,
   RatingStatistic,
   WorkerProfileVisibilitySetting,
   EmployerProfileVisibilitySetting,
