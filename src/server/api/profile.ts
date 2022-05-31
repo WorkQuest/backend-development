@@ -340,6 +340,8 @@ export async function setRole(r) {
 
   await userController.setRole(r.payload.role);
 
+  await userController.createRaiseView();
+
   await UserController.createProfileVisibility({ userId: user.id, role: r.payload.role });
 
   return output();
