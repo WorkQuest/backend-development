@@ -510,15 +510,17 @@ export class UserController {
     return additionalInfo;
   }
 
-  public static async createProfileVisibility(payload: CreateProfileVisibility) {
+  public static async createProfileVisibility(payload: CreateProfileVisibility, options: { tx?: Transaction } = {}) {
     payload.role === 'employer' ?
       await EmployerProfileVisibilitySetting.findOrCreate({
         where: { userId: payload.userId },
         defaults: { userId: payload.userId },
+        transaction: options.tx,
       }) :
       await WorkerProfileVisibilitySetting.findOrCreate({
         where: { userId: payload.userId },
         defaults: { userId: payload.userId },
+        transaction: options.tx,
       });
   }
 
