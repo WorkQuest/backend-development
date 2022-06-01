@@ -109,6 +109,9 @@ export async function getUserChats(r) {
       model: Message,
       as: 'lastMessage'
     }]
+  }, {
+    model: ChatMember,
+    as: 'members',
   }];
 
   if (r.query.q) {
