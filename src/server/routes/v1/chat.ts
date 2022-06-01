@@ -41,7 +41,7 @@ export default [
   },
   {
     method: 'GET',
-    path: '/v1/user/me/group-chat/{chatId}/messages',
+    path: '/v1/user/me/chat/{chatId}/messages',
     handler: handlers.getChatMessages,
     options: {
       auth: 'jwt-access',
@@ -70,7 +70,7 @@ export default [
   },
   {
     method: 'GET',
-    path: '/v1/user/me/group-chat/{chatId}',
+    path: '/v1/user/me/chat/{chatId}',
     handler: handlers.getUserChat,
     options: {
       auth: 'jwt-access',
@@ -89,7 +89,7 @@ export default [
   },
   {
     method: 'GET',
-    path: '/v1/user/me/group-chat/members/users-by-chats',
+    path: '/v1/user/me/chat/members/users-by-chats',
     handler: handlers.listOfUsersByChats,
     options: {
       auth: 'jwt-access',
@@ -110,7 +110,7 @@ export default [
   },
   {
     method: 'POST',
-    path: '/v1/user/me/group-chat/group/create',
+    path: '/v1/user/me/chat/group/create',
     handler: handlers.createGroupChat,
     options: {
       auth: 'jwt-access',
@@ -153,7 +153,7 @@ export default [
   },
   {
     method: 'POST',
-    path: '/v1/group-chat/{chatId}/send-message',
+    path: '/v1/chat/{chatId}/send-message',
     handler: handlers.sendMessageToChat,
     options: {
       auth: 'jwt-access',
@@ -176,7 +176,7 @@ export default [
   },
   {
     method: 'POST',
-    path: '/v1/user/me/group-chat/group/{chatId}/add',
+    path: '/v1/user/me/chat/group/{chatId}/add',
     handler: handlers.addUsersInGroupChat,
     options: {
       auth: 'jwt-access',
@@ -198,7 +198,7 @@ export default [
   },
   {
     method: 'DELETE',
-    path: '/v1/user/me/group-chat/group/{chatId}/remove/{userId}',
+    path: '/v1/user/me/chat/group/{chatId}/remove/{userId}',
     handler: handlers.removeMemberFromGroupChat,
     options: {
       auth: 'jwt-access',
@@ -218,7 +218,7 @@ export default [
   },
   {
     method: 'POST',
-    path: '/v1/user/me/group-chat/group/{chatId}/leave',
+    path: '/v1/user/me/chat/group/{chatId}/leave',
     handler: handlers.leaveFromGroupChat,
     options: {
       auth: 'jwt-access',
@@ -237,7 +237,7 @@ export default [
   },
   {
     method: 'GET',
-    path: '/v1/user/me/group-chat/group/{chatId}/members',
+    path: '/v1/user/me/chat/group/{chatId}/members',
     handler: handlers.getChatMembers,
     options: {
       auth: 'jwt-access',
@@ -260,7 +260,7 @@ export default [
   },
   {
     method: 'GET',
-    path: '/v1/user/me/group-chat/messages/star',
+    path: '/v1/user/me/chat/messages/star',
     handler: handlers.getUserStarredMessages,
     options: {
       auth: 'jwt-access',
@@ -280,7 +280,7 @@ export default [
   },
   {
     method: 'POST',
-    path: '/v1/user/me/group-chat/{chatId}/message/{messageId}/star',
+    path: '/v1/user/me/chat/{chatId}/message/{messageId}/star',
     handler: handlers.markMessageStar,
     options: {
       auth: 'jwt-access',
@@ -300,7 +300,7 @@ export default [
   },
   {
     method: 'DELETE',
-    path: '/v1/user/me/group-chat/message/{messageId}/star',
+    path: '/v1/user/me/chat/message/{messageId}/star',
     handler: handlers.removeStarFromMessage,
     options: {
       auth: 'jwt-access',
@@ -319,7 +319,7 @@ export default [
   },
   {
     method: 'POST',
-    path: '/v1/user/me/group-chat/{chatId}/star',
+    path: '/v1/user/me/chat/{chatId}/star',
     handler: handlers.markChatStar,
     options: {
       auth: 'jwt-access',
@@ -338,7 +338,7 @@ export default [
   },
   {
     method: 'DELETE',
-    path: '/v1/user/me/group-chat/{chatId}/star',
+    path: '/v1/user/me/chat/{chatId}/star',
     handler: handlers.removeStarFromChat,
     options: {
       auth: 'jwt-access',
