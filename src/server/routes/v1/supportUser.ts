@@ -15,7 +15,7 @@ export default [{
   path: '/v1/user-support/create',
   handler: handlers.createSupport,
   options: {
-    auth: false,//'jwt-access',
+    auth: 'jwt-access',
     id: 'v1.user-support.create',
     tags: ['api', 'user-support'],
     description: 'Create support ticket',
@@ -35,7 +35,7 @@ export default [{
   path: '/v1/user/me/user-support/tickets',
   handler: handlers.getSupportTickets,
   options: {
-    auth: false,//'jwt-access',
+    auth: 'jwt-access',
     id: 'v1.user-support.getTickets',
     tags: ['api', 'user-support'],
     description: 'Get all support tickets',

@@ -8,8 +8,7 @@ import {
 } from '@workquest/database-models/lib/models';
 
 export async function createSupport(r) {
-  // const author: User = r.auth.credentials;
-  const author = { id: 'df76449e-7bf5-4128-b34c-4e2b367cd0e0'}
+  const author: User = r.auth.credentials;
 
   const [supportTicket, isCreateSupport] = await SupportUser.findOrCreate({
     where: {
@@ -45,8 +44,7 @@ export async function createSupport(r) {
 }
 
 export async function getSupportTickets(r) {
-  // const user : User = r.auth.credentials
-  const user = { id: 'df76449e-7bf5-4128-b34c-4e2b367cd0e0'}
+  const user : User = r.auth.credentials
 
   const tickets = await SupportUser.findAndCountAll({
     where: {
