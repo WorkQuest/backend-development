@@ -4,8 +4,10 @@ import {
   outputOkSchema,
   userEmailSchema,
   titleSupportSchema,
+  supportQuerySchema,
   descriptionSupportSchema,
-  supportPostResponseSchema
+  supportPostResponseSchema,
+  GetUserSupportTicketsResponseSchema
 } from '@workquest/database-models/lib/schemes';
 
 export default [{
@@ -25,7 +27,23 @@ export default [{
       }).label('UserSupportCreatePayload')
     },
     response: {
-      schema: outputOkSchema(supportPostResponseSchema).label('UserSupportCreateResponse'),
+      schema: outputOkSchema(supportPostResponseSchema).label('UserSupportCreateResponse')
+    }
+  }
+}, {
+  method: 'GET',
+  path: '/v1/user/me/user-support/tickets',
+  handler: handlers.getSupportTickets,
+  options: {
+    auth: 'jwt-access',
+    id: 'v1.user-support.getTickets',
+    tags: ['api', 'user-support'],
+    description: 'Get all support tickets',
+    validate: {
+      query: supportQuerySchema
     },
-  },
+    response: {
+      schema: outputOkSchema(GetUserSupportTicketsResponseSchema).label('UserSupportTicketsResponse')
+    }
+  }
 }];

@@ -10,11 +10,11 @@ import {
 export async function createSupport(r) {
   const author: User = r.auth.credentials;
 
-  const [supportPost, isCreateSupport] = await SupportUser.findOrCreate({
+  const [supportTicket, isCreateSupport] = await SupportUser.findOrCreate({
     where: {
       authorUserId: author.id,
       title: r.payload.title,
-      status: SupportStatus.Pending,
+      status: SupportStatus.Pending
     },
     defaults: {
       authorUserId: author.id,
@@ -31,14 +31,33 @@ export async function createSupport(r) {
   }
 
   const result = {
-    number: supportPost.number,
-    authorUserId: supportPost.authorUserId,
-    email: supportPost.email,
-    title: supportPost.title,
-    description: supportPost.description,
-    status: supportPost.status,
-    decision: supportPost.decision
+    number: supportTicket.number,
+    authorUserId: supportTicket.authorUserId,
+    email: supportTicket.email,
+    title: supportTicket.title,
+    description: supportTicket.description,
+    status: supportTicket.status,
+    decision: supportTicket.decision
   };
 
   return output(result);
+}
+
+export async function getSupportTickets(r) {
+  const user : User = r.auth.credentials
+
+  const tickets = await SupportUser.findAndCountAll({
+    where: {
+      authorUserId: user.id,
+      status: r.query.status
+    },
+    limit: r.query.limit,
+    offset: r.query.offset
+  });
+
+  if (!tickets) {
+    return error(Errors.NotFound, 'No support tickets found for user', {});
+  }
+
+  return output(tickets);
 }
