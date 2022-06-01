@@ -47,7 +47,7 @@
     "hapi-cors": "^1.0.3",
     "hapi-pino": "^6.1.0",
     "hapi-pulse": "^3.0.0",
-    "hapi-swagger": "^14.1.0",
+    "hapi-swagger": "14.1.0",
     "joi": "^17.4.0",
     "jsonwebtoken": "^8.5.1",
     "lab-transform-typescript": "^3.0.1",
