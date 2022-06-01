@@ -14,7 +14,7 @@ export async function createSupport(r) {
     where: {
       authorUserId: author.id,
       title: r.payload.title,
-      status: SupportStatus.Pending
+      status: SupportStatus.Pending,
     },
     defaults: {
       authorUserId: author.id,

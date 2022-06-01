@@ -10,22 +10,22 @@ import {
 
 export default [{
   method: 'POST',
-  path: '/v1/support/create',
+  path: '/v1/user-support/create',
   handler: handlers.createSupport,
   options: {
     auth: 'jwt-access',
-    id: 'v1.support.create',
-    tags: ['api', 'support'],
-    description: 'Create ',
+    id: 'v1.user-support.create',
+    tags: ['api', 'user-support'],
+    description: 'Create support ticket',
     validate: {
       payload: Joi.object({
         email: userEmailSchema.required(),
         title: titleSupportSchema.required(),
         description: descriptionSupportSchema.required()
-      }).label('SupportCreatedPayload')
+      }).label('UserSupportCreatePayload')
     },
     response: {
-      schema: outputOkSchema(supportPostResponseSchema).label('SupportPostResponse'),
+      schema: outputOkSchema(supportPostResponseSchema).label('UserSupportCreateResponse'),
     },
   },
 }];
