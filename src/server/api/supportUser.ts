@@ -31,7 +31,7 @@ export async function createSupport(r) {
   }
 
   const result = {
-    supportTicket: supportPost.supportTicket,
+    number: supportPost.number,
     authorUserId: supportPost.authorUserId,
     email: supportPost.email,
     title: supportPost.title,

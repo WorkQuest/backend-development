@@ -30,7 +30,7 @@
     "@types/dotenv": "^6.1.1",
     "@types/joi": "^14.3.4",
     "@types/validator": "^13.1.0",
-    "@workquest/database-models": "git+https://github.com/WorkQuest/database-models.git#cfbeecac5c3146e0b60d0beb93ea23653872648c",
+    "@workquest/database-models": "git+https://github.com/WorkQuest/database-models.git#a1801feeaacb698a69f6d4e42684bed973c99e24",
     "amqplib": "^0.8.0",
     "aws-sdk": "^2.918.0",
     "axios": "^0.21.1",
@@ -61,7 +61,7 @@
     "sequelize-typescript": "2.0.0",
     "speakeasy": "^2.0.0",
     "twilio": "^3.66.0",
-    "typescript": "^4.1.5",
+    "typescript": "^4.7.2",
     "uuid": "^8.2.0",
     "web3": "^1.5.3"
   },
