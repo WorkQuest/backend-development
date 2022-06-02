@@ -1,49 +1,55 @@
 import * as Joi from 'joi';
 import * as handlers from '../../api/supportUser';
 import {
+  limitSchema,
+  offsetSchema,
   outputOkSchema,
   userEmailSchema,
-  titleSupportSchema,
-  supportQuerySchema,
-  descriptionSupportSchema,
-  supportPostResponseSchema,
-  GetUserSupportTicketsResponseSchema
+  supportTicketSchema,
+  outputPaginationSchema,
+  titleSupportTicketSchema,
+  statusSupportTicketSchema,
+  descriptionSupportTicketSchema,
 } from '@workquest/database-models/lib/schemes';
 
 export default [{
   method: 'POST',
-  path: '/v1/user-support/create',
+  path: '/v1/user-support-ticket/create',
   handler: handlers.createSupport,
   options: {
     auth: 'jwt-access',
     id: 'v1.user-support.create',
-    tags: ['api', 'user-support'],
+    tags: ['api', 'user-support-ticket'],
     description: 'Create support ticket',
     validate: {
       payload: Joi.object({
         email: userEmailSchema.required(),
-        title: titleSupportSchema.required(),
-        description: descriptionSupportSchema.required()
-      }).label('UserSupportCreatePayload')
+        title: titleSupportTicketSchema.required(),
+        description: descriptionSupportTicketSchema.required()
+      }).label('UserSupportTicketCreatePayload')
     },
     response: {
-      schema: outputOkSchema(supportPostResponseSchema).label('UserSupportCreateResponse')
+      schema: outputOkSchema(supportTicketSchema).label('UserSupportTicketCreateResponse')
     }
   }
 }, {
   method: 'GET',
-  path: '/v1/user/me/user-support/tickets',
+  path: '/v1/user/me/user-support-ticket/tickets',
   handler: handlers.getSupportTickets,
   options: {
     auth: 'jwt-access',
-    id: 'v1.user-support.getTickets',
-    tags: ['api', 'user-support'],
+    id: 'v1.user-support-ticket.getTickets',
+    tags: ['api', 'user-support-ticket'],
     description: 'Get all support tickets',
     validate: {
-      query: supportQuerySchema
+      query: Joi.object({
+        limit: limitSchema,
+        offset: offsetSchema,
+        status: statusSupportTicketSchema,
+      }).label('GetUserSupportTicketQuery')
     },
     response: {
-      schema: outputOkSchema(GetUserSupportTicketsResponseSchema).label('UserSupportTicketsResponse')
+      schema: outputPaginationSchema('tickets', supportTicketSchema).label('GetUserSupportTicketResponse')
     }
   }
 }];
