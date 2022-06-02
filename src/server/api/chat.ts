@@ -20,7 +20,7 @@ import {
   MemberStatus,
   StarredMessage,
   SenderMessageStatus,
-  ChatMemberDeletionData, ChatType
+  ChatMemberDeletionData, ChatType, models
 } from "@workquest/database-models/lib/models";
 import {
   GetChatByIdHandler,
@@ -80,6 +80,9 @@ export async function getUserChats(r) {
     ' "ChatMemberDeletionData"."beforeDeletionMessageId" = "ChatMembers"."id" WHERE "ChatMembers"."chatId" = "Chat"."id") ' +
     'ELSE (SELECT "Messages"."createdAt" FROM "ChatData" INNER JOIN "Messages" ON "lastMessageId" = "Messages"."id" WHERE "ChatData"."chatId" = "Chat"."id") END)'
   );
+  const userModel = literal(
+    `"Chat"."type" = 'Private'`
+  )
 
   const where = {
     ...(r.query.type && { type: r.query.type }),
@@ -121,7 +124,15 @@ export async function getUserChats(r) {
         }
       }]
     }]
-  },];
+  }, {
+    model: ChatMember,
+    as: 'members',
+    where: { [Op.and]: [{ userId: { [Op.ne]: r.auth.credentials.id } }, userModel] },
+    required: false,
+  }, {
+    model: QuestChat,
+    as: 'questChat',
+  }];
 
   if (r.query.type && r.query.type === ChatType.Quest) {
     include.push({
