@@ -43,5 +43,5 @@ export default [
   ...pensionFund,
   ...referral,
   ...savingProduct,
-  ...supportUser
+  ...supportUser,
 ];
