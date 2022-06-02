@@ -202,21 +202,6 @@ export async function getUserChat(r) {
     new GetChatByIdHandler()
   ).Handle({ chatId });
 
-  // const chat = await Chat.findByPk(r.params.chatId, {
-  //   include: [{
-  //     model: StarredChat,
-  //     as: 'star',
-  //     required: false,
-  //   }, {
-  //     model: QuestChat,
-  //     as: 'questChat',
-  //     required: false,
-  //   }],
-  // });
-  // const chatController = new ChatController(chat);
-  //
-  // await chatController.chatMustHaveMember(r.auth.credentials.id);
-  //
   return output(chat);
 }
 
