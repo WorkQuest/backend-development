@@ -107,7 +107,16 @@ export async function getUserChats(r) {
     as: 'chatData',
     include: [{
       model: Message,
-      as: 'lastMessage'
+      as: 'lastMessage',
+      include: [{
+        model: ChatMember,
+        as: 'sender',
+        include: {
+          model: User.unscoped(),
+          as: 'user',
+          attributes: ["id", "firstName", "lastName"]
+        }
+      }]
     }]
   }];
 

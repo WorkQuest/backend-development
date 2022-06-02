@@ -1,5 +1,5 @@
 import { HandlerDecoratorBase, IHandler } from "../types";
-import { Chat, ChatMember } from "@workquest/database-models/lib/models";
+import { Chat, ChatData, ChatMember, Message } from "@workquest/database-models/lib/models";
 import { GetChatByIdValidator } from "./GetChatByIdValidator";
 
 export interface GetChatByIdCommand {
@@ -8,12 +8,7 @@ export interface GetChatByIdCommand {
 
 export class GetChatByIdHandler implements IHandler<GetChatByIdCommand, Promise<Chat>> {
   public Handle(command: GetChatByIdCommand): Promise<Chat> {
-    return Chat.scope('forGetChat').findByPk(command.chatId, {
-      include: {
-        model: ChatMember,
-        as: 'members',
-      }
-    });
+    return Chat.scope('forGetChat').findByPk(command.chatId);
   }
 }
 
