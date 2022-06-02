@@ -20,8 +20,8 @@ import {
   MemberStatus,
   StarredMessage,
   SenderMessageStatus,
-  ChatMemberDeletionData,
-} from '@workquest/database-models/lib/models';
+  ChatMemberDeletionData, ChatType
+} from "@workquest/database-models/lib/models";
 import {
   GetChatByIdHandler,
   GetGroupChatHandler,
@@ -81,7 +81,10 @@ export async function getUserChats(r) {
     'ELSE (SELECT "Messages"."createdAt" FROM "ChatData" INNER JOIN "Messages" ON "lastMessageId" = "Messages"."id" WHERE "ChatData"."chatId" = "Chat"."id") END)'
   );
 
-  const where = {};
+  const where = {
+    ...(r.query.type && { type: r.query.type }),
+  };
+
   const replacements = {};
 
   const include: any[] = [{
@@ -109,7 +112,17 @@ export async function getUserChats(r) {
       model: Message,
       as: 'lastMessage'
     }]
-  }];
+  },];
+
+  if (r.query.type && r.query.type === ChatType.Quest) {
+    include.push({
+      model: QuestChat,
+      as: 'questChat',
+      where: {
+        status: r.query.questChatStatus,
+      },
+    });
+  }
 
   if (r.query.q) {
     where[Op.or] = searchChatFields.map(field => ({
