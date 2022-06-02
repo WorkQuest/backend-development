@@ -58,9 +58,7 @@ export default [
           limit: limitSchema,
           sort: Joi.object({
             createdAt: sortDirectionSchema.default('DESC'),
-          })
-            .default({ createdAt: 'DESC' })
-            .label('SortMessages'),
+          }).default({ createdAt: 'DESC' }).label('SortMessages'),
         }).label('GetMessagesQuery'),
       },
       response: {
