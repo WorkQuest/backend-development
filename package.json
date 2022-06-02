@@ -58,6 +58,7 @@
     "qs": "^6.9.6",
     "reflect-metadata": "^0.1.13",
     "sequelize": "6.6.2",
+    "sequelize-cli": "6.4.1",
     "sequelize-typescript": "2.0.0",
     "speakeasy": "^2.0.0",
     "twilio": "^3.66.0",

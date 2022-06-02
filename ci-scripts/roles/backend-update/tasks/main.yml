@@ -64,11 +64,11 @@
     src: ./{{ backend_db_config_json }}.j2
     dest: '{{ backend_bin }}/{{ backend_db_config_json }}'
 
-#- name: Migrate database
-#  shell: npx sequelize-cli db:migrate
-#  args:
-#    chdir: '{{ backend_bin }}'
-#  ignore_errors: yes
+- name: Migrate database
+  shell: npx sequelize-cli db:migrate
+  args:
+    chdir: '{{ backend_bin }}'
+  ignore_errors: yes
 
 - name: Start/reload backend process
   shell: pm2 reload app.json
