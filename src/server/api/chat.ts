@@ -20,7 +20,7 @@ import {
   MemberStatus,
   StarredMessage,
   SenderMessageStatus,
-  ChatMemberDeletionData, ChatType, models, Quest, GroupChat
+  ChatMemberDeletionData, ChatType, Quest, GroupChat, Media
 } from "@workquest/database-models/lib/models";
 import {
   GetChatByIdHandler,
@@ -200,16 +200,31 @@ export async function getChatMessages(r) {
     ...(meMember.chatMemberDeletionData && { createdAt: { [Op.lte]: meMember.chatMemberDeletionData.beforeDeletionMessage.createdAt } }),
   }
 
+  const include = [{
+    model: StarredMessage,
+    as: 'star',
+    where: { userId: meMember.userId },
+    required: r.query.starred,
+  }, {
+    model: ChatMember,
+    as: 'sender',
+    include: [{
+      model: User.unscoped(),
+      as: 'user',
+      attributes: ["id", "avatarId", "firstName", "lastName"],
+      include: [{
+        model: Media,
+        as: 'avatar'
+      }],
+    }],
+  }, {
+    model: Media,
+    as: 'medias',
+  }];
+
   const { count, rows } = await Message.findAndCountAll({
     where,
-    include: [
-      {
-        model: StarredMessage,
-        as: 'star',
-        where: { userId: meMember.userId },
-        required: r.query.starred,
-      },
-    ],
+    include,
     distinct: true,
     limit: r.query.limit,
     offset: r.query.offset,
