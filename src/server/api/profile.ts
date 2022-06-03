@@ -11,9 +11,9 @@ import { updateQuestsStatisticJob } from "../jobs/updateQuestsStatistic";
 import { deleteUserFiltersJob } from "../jobs/deleteUserFilters";
 import { Errors } from "../utils/errors";
 import {
-  ChatsStatistic,
-  EmployerProfileVisibilitySetting,
+  UserChatsStatistic,
   Quest,
+  EmployerProfileVisibilitySetting,
   QuestsResponse,
   QuestsResponseStatus,
   QuestsStatistic,
@@ -340,6 +340,8 @@ export async function setRole(r) {
 
   await userController.setRole(r.payload.role);
 
+  await userController.createRaiseView();
+
   await UserController.createProfileVisibility({ userId: user.id, role: r.payload.role });
 
   return output();
@@ -462,7 +464,7 @@ export async function sendCodeOnPhoneNumber(r) {
 }
 
 export async function getUserStatistics(r) {
-  const chatsStatistic = await ChatsStatistic.findOne({
+  const chatsStatistic = await UserChatsStatistic.findOne({
     where: { userId: r.auth.credentials.id },
   });
 

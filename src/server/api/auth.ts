@@ -129,7 +129,6 @@ export function getLoginViaSocialNetworkHandler(returnType: 'token' | 'redirect'
 
     const user = await UserOldController.getUserByNetworkProfile(r.auth.strategy, profile, referralId);
     const userController = new UserOldController(user);
-    await userController.createRaiseView();
 
     const session = await Session.create({
       userId: user.id,
@@ -170,10 +169,7 @@ export async function confirmEmail(r) {
     .checkEmailConfirmCode(confirmCode)
 
   await r.server.app.db.transaction(async (tx) => {
-    await Promise.all([
-      userController.createRaiseView({ tx }),
-      userController.createStatistics({ tx }),
-    ]);
+    await userController.createStatistics({ tx });
 
     if (role) {
       await userController.confirmUser(role, { tx });
@@ -324,6 +320,7 @@ export async function loginWallet(r) {
     totpIsActive: userTotpActiveStatus,
     userStatus: wallet.user.status,
     address: wallet.address,
+    userId: user.id,
   };
 
   return output(result);

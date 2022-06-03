@@ -45,9 +45,9 @@ export default [
     handler: handlers.getChatMessages,
     options: {
       auth: 'jwt-access',
-      id: 'v1.chat.getMessages',
+      id: 'v1.group-chat.getMessages',
       tags: ['api', 'chat'],
-      description: 'Get all messages for chat',
+      description: 'Get all messages for group-chat',
       validate: {
         params: Joi.object({
           chatId: idSchema.required(),
@@ -58,9 +58,7 @@ export default [
           limit: limitSchema,
           sort: Joi.object({
             createdAt: sortDirectionSchema.default('DESC'),
-          })
-            .default({ createdAt: 'DESC' })
-            .label('SortMessages'),
+          }).default({ createdAt: 'DESC' }).label('SortMessages'),
         }).label('GetMessagesQuery'),
       },
       response: {
@@ -75,7 +73,7 @@ export default [
     options: {
       auth: 'jwt-access',
       id: 'v1.user.me.getChat',
-      description: 'Get chat',
+      description: 'Get group-chat',
       tags: ['api', 'chat'],
       validate: {
         params: Joi.object({
@@ -93,7 +91,7 @@ export default [
     handler: handlers.listOfUsersByChats,
     options: {
       auth: 'jwt-access',
-      id: 'v1.user.me.chat.members.getUsersByChats',
+      id: 'v1.user.me.group-chat.members.getUsersByChats',
       description: 'Get list of users by chats',
       tags: ['api', 'chat'],
       validate: {
@@ -114,13 +112,13 @@ export default [
     handler: handlers.createGroupChat,
     options: {
       auth: 'jwt-access',
-      id: 'v1.chat.group.create',
-      description: 'Create new group chat',
+      id: 'v1.group-chat.group.create',
+      description: 'Create new group group-chat',
       tags: ['api', 'chat'],
       validate: {
         payload: Joi.object({
           name: chatNameSchema.required(),
-          memberUserIds: idsSchema.required().min(1).unique(),
+          userIds: idsSchema.required().min(1).unique(),
         }).label('CreateGroupChatPayload'),
       },
       response: {
@@ -143,7 +141,7 @@ export default [
         }).label('SendMessageToUserParams'),
         payload: Joi.object({
           text: messageTextSchema.allow('').default(''),
-          medias: idsSchema.required().unique(),
+          mediaIds: idsSchema.required().unique(),
         }).label('SendMessageToUserPayload'),
       },
       response: {
@@ -157,8 +155,8 @@ export default [
     handler: handlers.sendMessageToChat,
     options: {
       auth: 'jwt-access',
-      id: 'v1.chat.sendMessageToChat',
-      description: 'Send message to chat',
+      id: 'v1.group-chat.sendMessageToChat',
+      description: 'Send message to group-chat',
       tags: ['api', 'chat'],
       validate: {
         params: Joi.object({
@@ -166,7 +164,7 @@ export default [
         }).label('SendMessageToChatParams'),
         payload: Joi.object({
           text: messageTextSchema.allow('').default(''),
-          medias: idsSchema.required().unique(),
+          mediaIds: idsSchema.required().unique(),
         }).label('SendMessageToChatPayload'),
       },
       response: {
@@ -180,8 +178,8 @@ export default [
     handler: handlers.addUsersInGroupChat,
     options: {
       auth: 'jwt-access',
-      id: 'v1.chat.group.addUsers',
-      description: 'Add users in group chat. For one or more users',
+      id: 'v1.group-chat.group.addUsers',
+      description: 'Add users in group group-chat. For one or more users',
       tags: ['api', 'chat'],
       validate: {
         params: Joi.object({
@@ -199,11 +197,11 @@ export default [
   {
     method: 'DELETE',
     path: '/v1/user/me/chat/group/{chatId}/remove/{userId}',
-    handler: handlers.removeUserInGroupChat,
+    handler: handlers.removeMemberFromGroupChat,
     options: {
       auth: 'jwt-access',
-      id: 'v1.chat.group.removeUser',
-      description: 'Remove user from group chat (only for owner)',
+      id: 'v1.group-chat.group.removeUser',
+      description: 'Remove user from group group-chat (only for owner)',
       tags: ['api', 'chat'],
       validate: {
         params: Joi.object({
@@ -222,8 +220,8 @@ export default [
     handler: handlers.leaveFromGroupChat,
     options: {
       auth: 'jwt-access',
-      id: 'v1.chat.group.leave',
-      description: 'Leave from group chat',
+      id: 'v1.group-chat.group.leave',
+      description: 'Leave from group group-chat',
       tags: ['api', 'chat'],
       validate: {
         params: Joi.object({
@@ -241,8 +239,8 @@ export default [
     handler: handlers.getChatMembers,
     options: {
       auth: 'jwt-access',
-      id: 'v1.chat.group.getMembers',
-      description: 'Get members in group chat (only for chat members)',
+      id: 'v1.group-chat.group.getMembers',
+      description: 'Get members in group group-chat (only for group-chat members)',
       tags: ['api', 'chat'],
       validate: {
         params: Joi.object({
@@ -264,7 +262,7 @@ export default [
     handler: handlers.getUserStarredMessages,
     options: {
       auth: 'jwt-access',
-      id: 'v1.chat.messages.getStarredMessages',
+      id: 'v1.group-chat.messages.getStarredMessages',
       description: 'Get starred messages of the user',
       tags: ['api', 'chat'],
       validate: {
@@ -284,7 +282,7 @@ export default [
     handler: handlers.markMessageStar,
     options: {
       auth: 'jwt-access',
-      id: 'v1.chat.message.markMessageStar',
+      id: 'v1.group-chat.message.markMessageStar',
       description: 'Mark message star',
       tags: ['api', 'chat'],
       validate: {
@@ -304,7 +302,7 @@ export default [
     handler: handlers.removeStarFromMessage,
     options: {
       auth: 'jwt-access',
-      id: 'v1.chat.message.removeStar',
+      id: 'v1.group-chat.message.removeStar',
       description: 'Remove star from message',
       tags: ['api', 'chat'],
       validate: {
@@ -323,8 +321,8 @@ export default [
     handler: handlers.markChatStar,
     options: {
       auth: 'jwt-access',
-      id: 'v1.mark.chat',
-      description: 'Mark chat by star',
+      id: 'v1.mark.group-chat',
+      description: 'Mark group-chat by star',
       tags: ['api', 'chat'],
       validate: {
         params: Joi.object({
@@ -342,8 +340,8 @@ export default [
     handler: handlers.removeStarFromChat,
     options: {
       auth: 'jwt-access',
-      id: 'v1.remove.star.chat',
-      description: 'Remove star from chat',
+      id: 'v1.remove.star.group-chat',
+      description: 'Remove star from group-chat',
       tags: ['api', 'chat'],
       validate: {
         params: Joi.object({
