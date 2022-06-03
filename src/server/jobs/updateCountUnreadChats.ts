@@ -50,7 +50,7 @@ export default async function updateCountUnreadChats(payload: UpdateCountUnreadC
         },
       }],
       where: {
-        userId: member.userId,
+        [Op.or]: [{ userId: member.userId }, { adminId: member.adminId }],
         status: MemberStatus.Active,
       }
     });

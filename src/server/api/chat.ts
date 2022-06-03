@@ -592,12 +592,6 @@ export async function leaveFromGroupChat(r) {
     lastMessageId: messageWithInfo.id,
   });
 
-  await updateCountUnreadMessagesJob({
-    lastUnreadMessage: { id: messageWithInfo.id, number: messageWithInfo.number },
-    chatId: messageWithInfo.chatId,
-    readerMemberId: meMember.id,
-  });
-
   await setMessageAsReadJob({
     chatId: groupChat.id,
     senderMemberId: meMember.id,
