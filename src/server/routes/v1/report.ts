@@ -1,11 +1,13 @@
 import * as Joi from 'joi';
 import * as handlers from '../../api/report';
 import {
-  reportDescriptionSchema,
+  idSchema,
+  idsSchema,
+  emptyOkSchema,
+  reportTitleSchema,
   reportEntityTypeSchema,
-  reportTitleSchema
-} from '@workquest/database-models/lib/schemes/report';
-import { emptyOkSchema, idSchema, idsSchema } from '@workquest/database-models/lib/schemes';
+  reportDescriptionSchema,
+} from '@workquest/database-models/lib/schemes';
 
 export default [{
   method: 'POST',

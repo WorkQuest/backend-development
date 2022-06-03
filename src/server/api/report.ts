@@ -1,50 +1,42 @@
+import {output} from "../utils";
+import { User, ReportEntityType } from '@workquest/database-models/lib/models';
 import {
-  Report,
-  reportEntities,
-  ReportStatus,
-  User
-} from '@workquest/database-models/lib/models';
-import { MediaController } from '../controllers/controller.media';
-import { Errors } from "../utils/errors";
-import { error, output } from "../utils";
+  SendReportHandler,
+  GetMediaByIdsHandler,
+  GetEntityForReportHandler,
+  SendReportPreAccessPermission,
+  GetMediasPostValidationHandler,
+  GetEntityForReportPreValidateHandler,
+} from '../handlers';
 
 export async function sendReport(r) {
-  const user: User = r.auth.credentials;
-  const mediaModels = await MediaController.getMedias(r.payload.mediaIds);
+  const meUser: User = r.auth.credentials;
 
-  const entityObject = reportEntities[r.payload.entityType];
+  const {
+    title,
+    mediaIds,
+    entityId,
+    entityType,
+    description,
+  } = r.payload as {
+    title: string,
+    description: string,
+    mediaIds: string[],
+    entityId: string,
+    entityType: ReportEntityType,
+  };
 
-  if (!entityObject) {
-    return error(Errors.NotFound, 'Entity not found', {});
-  }
+  const medias = await new GetMediasPostValidationHandler(
+    new GetMediaByIdsHandler()
+  ).Handle({ mediaIds });
 
-  const entity = await entityObject.entity.findByPk(r.payload.entityId);
+  const entity = await new GetEntityForReportPreValidateHandler(
+    new GetEntityForReportHandler()
+  ).Handle({ entityId, entityType });
 
-  if (!entity) {
-    return error(Errors.NotFound, 'Entity not found', {});
-  }
+  const report = await new SendReportPreAccessPermission(
+    new SendReportHandler(r.server.app.db),
+  ).Handle({ author: meUser, title, description, medias, entityType, entity })
 
-  if (
-    (entity.userId && entity.userId === user.id) ||
-    (entity.id && entity.id === user.id) ||
-    (entity.assignedWorkerId && entity.assignedWorkerId === user.id) ||
-    (entity.authorId && entity.authorId === user.id)
-  ) {
-    return error(Errors.InvalidPayload, 'You can`t report yourself or the quest you`re on', {});
-  }
-
-  await r.server.app.db.transaction(async (transaction) => {
-    const report = await Report.create({
-      authorId: user.id,
-      title: r.payload.title,
-      description: r.payload.description,
-      status: ReportStatus.Created,
-      entityType: r.payload.entityType,
-      entityId: r.payload.entityId,
-    }, { transaction });
-
-    await report.$set('medias', mediaModels, { transaction });
-  });
-
-  return output();
+  return output(report);
 }
