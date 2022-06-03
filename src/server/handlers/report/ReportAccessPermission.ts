@@ -7,7 +7,7 @@ export class ReportAccessPermission {
   public NotSendReportYourself(author: User, entity: EntityReport, type: ReportEntityType) {
     const checkUser = function(user: User) {
       if (user.id === author.id) {
-        return error(Errors.InvalidPayload, 'You can`t report yourself', {});
+        throw error(Errors.InvalidPayload, 'You can`t report yourself', {});
       }
     }
     const checkQuest = function(quest: Quest) {
@@ -15,12 +15,12 @@ export class ReportAccessPermission {
         quest.userId === author.id ||
         quest.assignedWorkerId === author.id
       ) {
-        return error(Errors.InvalidPayload, 'You cannot report a quest you are doing/created', {});
+        throw  error(Errors.InvalidPayload, 'You cannot report a quest you are doing/created', {});
       }
     }
     const checkDiscussionComment = function(comment: DiscussionComment) {
       if (comment.authorId === author.id) {
-        return error(Errors.InvalidPayload, 'You cannot report a comment that was created', {});
+        throw  error(Errors.InvalidPayload, 'You cannot report a comment that was created', {});
       }
     }
 
