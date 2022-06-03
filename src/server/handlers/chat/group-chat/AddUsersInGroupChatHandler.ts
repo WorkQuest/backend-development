@@ -12,8 +12,8 @@ import {
   MessageAction,
   ChatMemberData,
   ChatMemberDeletionData,
-  ReasonForRemovingFromChat,
-} from '@workquest/database-models/lib/models';
+  ReasonForRemovingFromChat, MessageType
+} from "@workquest/database-models/lib/models";
 
 export interface AddUsersInGroupChatCommand {
   readonly groupChat: Chat;
@@ -42,7 +42,7 @@ export class AddUsersInGroupChatHandler implements IHandler<AddUsersInGroupChatC
   private static async sendInfoMessagesAboutRestoreMembers(payload: RestoreMembersPayload, options: Options = {}): Promise<Message[]> {
     const messages = Message.bulkBuild(
       payload.deletedMembers.map((member, number ) => ({
-        type: MemberType.User,
+        type: MessageType.Info,
         chatId: payload.groupChat.id,
         number: payload.lastMessage.number + number + 1, //cause starts from 0
         senderMemberId: payload.groupChat.groupChat.ownerMemberId,
@@ -73,7 +73,7 @@ export class AddUsersInGroupChatHandler implements IHandler<AddUsersInGroupChatC
   private static async sendInfoMessageAboutAddMember(payload: AddUsersPayload, options: Options = {}): Promise<Message[]> {
     const messages = Message.bulkBuild(
       payload.newMembers.map((member, number) => ({
-        type: MemberType.User,
+        type: MessageType.Info,
         chatId: payload.groupChat.id,
         number: payload.lastMessage.number + number + 1, //'cause starts from 0
         senderMemberId: payload.groupChat.groupChat.ownerMemberId,
