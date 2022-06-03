@@ -1,7 +1,6 @@
 import { IHandler, Options } from "../../types";
 import {
   Chat,
-  ChatData,
   ChatMember,
   ChatMemberData,
   ChatType,
