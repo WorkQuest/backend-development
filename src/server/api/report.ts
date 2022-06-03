@@ -38,5 +38,5 @@ export async function sendReport(r) {
     new SendReportHandler(r.server.app.db),
   ).Handle({ author: meUser, title, description, medias, entityType, entity })
 
-  return output(report);
+  return output();
 }
