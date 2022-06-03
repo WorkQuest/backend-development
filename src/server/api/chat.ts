@@ -128,6 +128,11 @@ export async function getUserChats(r) {
     model: ChatMember,
     as: 'members',
     where: { [Op.and]: [ { userId: { [Op.ne]: r.auth.credentials.id } }, chatTypeLiteral ] },
+    include: [{
+      model: User.unscoped(),
+      as: 'user',
+      attributes: ["id", "firstName", "lastName"],
+    }],
     required: false,
   }, {
     model: QuestChat,
