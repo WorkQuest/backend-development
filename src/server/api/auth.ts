@@ -45,7 +45,11 @@ export function register(host: 'dao' | 'main') {
     await addSendEmailJob({
       email: r.payload.email,
       subject: 'Work Quest | Confirmation code',
-      text: `Your confirmation code is ${emailConfirmCode}. Follow this link ${config.baseUrl}/sign-in?token=${emailConfirmCode}`,
+      text:
+        `Welcome to WorkQuest` +
+        `${emailConfirmCode}\n` +
+        `If it was not you, then change password to protect your account.\n` +
+        'This email sent automatically, please do not reply to it.',
       html: emailHtml,
     });
 
@@ -110,7 +114,11 @@ export function resendConfirmCodeEmail(host: 'dao' | 'main') {
     await addSendEmailJob({
       email: r.payload.email,
       subject: 'Work Quest | Confirmation code',
-      text: `Your confirmation code is ${ emailConfirmCode }. Follow this link ${ config.baseUrl }/sign-in?token=${ emailConfirmCode }`,
+      text:
+        `Welcome to WorkQuest` +
+        `${emailConfirmCode}\n` +
+        `If it was not you, then change password to protect your account.\n` +
+        'This email sent automatically, please do not reply to it.',
       html: emailHtml,
     });
 
