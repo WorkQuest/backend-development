@@ -20,7 +20,7 @@ import {
   MemberStatus,
   StarredMessage,
   SenderMessageStatus,
-  ChatMemberDeletionData, ChatType
+  ChatMemberDeletionData, ChatType, models, Quest, GroupChat
 } from "@workquest/database-models/lib/models";
 import {
   GetChatByIdHandler,
@@ -80,6 +80,9 @@ export async function getUserChats(r) {
     ' "ChatMemberDeletionData"."beforeDeletionMessageId" = "ChatMembers"."id" WHERE "ChatMembers"."chatId" = "Chat"."id") ' +
     'ELSE (SELECT "Messages"."createdAt" FROM "ChatData" INNER JOIN "Messages" ON "lastMessageId" = "Messages"."id" WHERE "ChatData"."chatId" = "Chat"."id") END)'
   );
+  const chatTypeLiteral = literal(
+    `("Chat"."type" = '${ ChatType.Private }' OR "Chat"."type" = '${ ChatType.Quest }')`
+  )
 
   const where = {
     ...(r.query.type && { type: r.query.type }),
@@ -121,7 +124,28 @@ export async function getUserChats(r) {
         }
       }]
     }]
-  },];
+  }, {
+    model: ChatMember,
+    as: 'members',
+    where: { [Op.and]: [ { userId: { [Op.ne]: r.auth.credentials.id } }, chatTypeLiteral ] },
+    include: [{
+      model: User.unscoped(),
+      as: 'user',
+      attributes: ["id", "firstName", "lastName"],
+    }],
+    required: false,
+  }, {
+    model: QuestChat,
+    as: 'questChat',
+    include: {
+      model: Quest.unscoped(),
+      as: 'quest',
+      attributes: ["id", "title"],
+    }
+  }, {
+    model: GroupChat,
+    as: 'groupChat',
+  }];
 
   if (r.query.type && r.query.type === ChatType.Quest) {
     include.push({
@@ -313,7 +337,7 @@ export async function createGroupChat(r) {
   //   data: chatDto,
   // });
 
-  return output(chat);
+  return output({ chat, infoMessage: messageWithInfo });
 }
 
 export async function sendMessageToUser(r) {
