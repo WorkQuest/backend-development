@@ -20,7 +20,7 @@ import {
   MemberStatus,
   StarredMessage,
   SenderMessageStatus,
-  ChatMemberDeletionData, ChatType, Quest, GroupChat, Media
+  ChatMemberDeletionData, ChatType, Quest, GroupChat, Media, InfoMessage
 } from "@workquest/database-models/lib/models";
 import {
   GetChatByIdHandler,
@@ -117,13 +117,16 @@ export async function getUserChats(r) {
       include: [{
         model: ChatMember,
         as: 'sender',
-        include: {
+        include: [{
           model: User.unscoped(),
           as: 'user',
           attributes: ["id", "firstName", "lastName"]
-        }
-      }]
-    }]
+        }],
+      }, {
+        model: InfoMessage,
+        as: 'infoMessage',
+      }],
+    }],
   }, {
     model: ChatMember,
     as: 'members',
