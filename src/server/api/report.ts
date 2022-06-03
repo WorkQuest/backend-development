@@ -10,7 +10,7 @@ import { error, output } from "../utils";
 
 export async function sendReport(r) {
   const user: User = r.auth.credentials;
-  const mediaModels = await MediaController.getMedias(r.payload.medias);
+  const mediaModels = await MediaController.getMedias(r.payload.mediaIds);
 
   const entityObject = reportEntities[r.payload.entityType];
 

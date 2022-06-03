@@ -22,7 +22,7 @@ export default [{
         entityId: idSchema.required(),
         title: reportTitleSchema.required(),
         description: reportDescriptionSchema.required(),
-        medias: idsSchema.required().unique(),
+        mediaIds: idsSchema.required().unique(),
       }).label('SendReportPayload'),
     },
     response: {
