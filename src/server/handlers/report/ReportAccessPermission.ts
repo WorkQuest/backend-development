@@ -28,7 +28,7 @@ export class ReportAccessPermission {
       checkUser(entity as unknown as User);
     } else if (type === ReportEntityType.Quest) {
       checkQuest(entity as unknown as Quest);
-    } else if (type === ReportEntityType.Comment) {
+    } else if (type === ReportEntityType.DiscussionComment) {
       checkDiscussionComment(entity as unknown as DiscussionComment)
     }
   }
