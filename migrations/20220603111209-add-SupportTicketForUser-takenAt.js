@@ -2,12 +2,12 @@
 
 module.exports = {
   async up (queryInterface, Sequelize) {
-    return queryInterface.addColumn('SupportTicketForUsers', 'acceptedAt', {
+    return queryInterface.addColumn('SupportTicketForUsers', 'takenAt', {
       type: Sequelize.DataTypes.DATE,
     });
   },
 
   async down (queryInterface, Sequelize) {
-    return queryInterface.removeColumn('SupportTicketForUsers', 'acceptedAt');
+    return queryInterface.removeColumn('SupportTicketForUsers', 'takenAt');
   }
 };
