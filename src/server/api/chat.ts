@@ -1,4 +1,4 @@
-import { literal, Op } from 'sequelize';
+import { literal, Op, where } from 'sequelize';
 import { output } from '../utils';
 import { updateChatDataJob } from "../jobs/updateChatData";
 import { setMessageAsReadJob } from '../jobs/setMessageAsRead';
@@ -59,6 +59,7 @@ import {
   GetChatMemberPostLimitedAccessPermissionHandler,
   DeletedMemberFromGroupChatPreAccessPermissionHandler,
 } from "../handlers";
+import { MemberType } from '@workquest/database-models/src/models/types';
 
 export const searchChatFields = ['name'];
 
@@ -343,17 +344,17 @@ export async function createGroupChat(r) {
     senderMemberId: chat.getDataValue('groupChat').ownerMemberId,
   });
 
-  const members = chat.getDataValue('members');
+  const members: ChatMember[] = chat.getDataValue('members');
 
   await updateCountUnreadChatsJob({
     members,
   });
 
-  // r.server.app.broker.sendChatNotification({
-  //   recipients: userMemberIds.filter((id) => id !== userChatOwner.id),
-  //   action: ChatNotificationActions.groupChatCreate,
-  //   data: chatDto,
-  // });
+  r.server.app.broker.sendChatNotification({
+    recipients: members.map(member => member.userId || member.adminId).filter(id => chatCreator.id !== id),
+    action: ChatNotificationActions.groupChatCreate,
+    data: messageWithInfo.toJSON(),
+  });
 
   return output({ chat, infoMessage: messageWithInfo });
 }
@@ -417,11 +418,11 @@ export async function sendMessageToUser(r) {
     members: [meMember, recipientMember],
   });
 
-  // r.server.app.broker.sendChatNotification({
-  //   data: message,
-  //   action: ChatNotificationActions.newMessage,
-  //   recipients: [privateChatController.members.recipientMember.userId],
-  // });
+  r.server.app.broker.sendChatNotification({
+    data: message,
+    recipients: [userId],
+    action: ChatNotificationActions.newMessage,
+  });
 
   return output(message);
 }
@@ -480,13 +481,23 @@ export async function sendMessageToChat(r) {
     lastUnreadMessage: { id: message.id, number: message.number },
   });
 
-  await updateCountUnreadChatsJob({ members: chat.getDataValue('members') });
+  await updateCountUnreadChatsJob({
+    members: chat.getDataValue('members'),
+  });
 
-  // r.server.app.broker.sendChatNotification({
-  //   action: ChatNotificationActions.newMessage,
-  //   recipients: ,
-  //   data: message,
-  // });
+  const members = await ChatMember.findAll({
+    attributes: ['userId', 'adminId'],
+    where: {
+      userId: { [Op.not]: meUser.id },
+      status: MemberStatus.Active,
+    },
+  })
+
+  r.server.app.broker.sendChatNotification({
+    data: message.toJSON(),
+    action: ChatNotificationActions.newMessage,
+    recipients: members.map(({ userId, adminId}) => userId || adminId),
+  });
 
   return output(message);
 }
@@ -547,7 +558,8 @@ export async function removeMemberFromGroupChat(r) {
   });
 
   //TODO: переделать
-  const members = await ChatMember.findAll({ where: {
+  const members = await ChatMember.findAll({
+    where: {
       chatId,
       status: MemberStatus.Active,
     }
@@ -555,11 +567,11 @@ export async function removeMemberFromGroupChat(r) {
 
   await updateCountUnreadChatsJob({ members });
 
-  // r.server.app.broker.sendChatNotification({
-  //   action: ChatNotificationActions.groupChatDeleteUser,
-  //   recipients: userIdsWithoutSender,
-  //   data: message,
-  // });
+  r.server.app.broker.sendChatNotification({
+    data: messageWithInfo.toJSON(),
+    action: ChatNotificationActions.groupChatDeleteUser,
+    recipients: members.map(({ userId, adminId }) => userId ||adminId).filter(id => meUser.id !== id),
+  });
 
   return output(messageWithInfo);
 }
@@ -602,7 +614,8 @@ export async function leaveFromGroupChat(r) {
   });
 
   //TODO: переделать
-  const members = await ChatMember.findAll({ where: {
+  const members = await ChatMember.findAll({
+    where: {
       chatId,
       status: MemberStatus.Active,
     }
@@ -610,11 +623,11 @@ export async function leaveFromGroupChat(r) {
 
   await updateCountUnreadChatsJob({ members });
 
-  // r.server.app.broker.sendChatNotification({
-  //   action: ChatNotificationActions.groupChatLeaveUser,
-  //   recipients: group-chat.members,//userIdsWithoutSender,
-  //   data: result,
-  // });
+  r.server.app.broker.sendChatNotification({
+    data: messageWithInfo.toJSON(),
+    action: ChatNotificationActions.groupChatLeaveUser,
+    recipients: members.map(({ userId, adminId }) => userId ||adminId),
+  });
 
   return output(messageWithInfo);
 }
@@ -686,11 +699,11 @@ export async function addUsersInGroupChat(r) {
 
   await updateCountUnreadChatsJob({ members });
 
-  // r.server.app.broker.sendChatNotification({
-  //   action: ChatNotificationActions.groupChatAddUser,
-  //   recipients: userIdsInChatWithoutSender,
-  //   data: messagesResult,
-  // });
+  r.server.app.broker.sendChatNotification({
+    data: lastMessage.toJSON(),
+    action: ChatNotificationActions.groupChatAddUser,
+    recipients: members.map(({ userId, adminId }) => userId ||adminId).filter(id => meUser.id !== id),
+  });
 
   return output(messagesWithInfo);
 }
