@@ -697,7 +697,9 @@ export async function addUsersInGroupChat(r) {
     }
   });
 
-  await updateCountUnreadChatsJob({ members });
+  await updateCountUnreadChatsJob({
+    members,
+  });
 
   r.server.app.broker.sendChatNotification({
     data: lastMessage.toJSON(),
