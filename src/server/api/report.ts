@@ -1,5 +1,6 @@
 import { output } from '../utils';
 import { ReportEntityType, User } from '@workquest/database-models/lib/models';
+import { ReportNotificationActions } from '../controllers/controller.broker';
 import {
   SendReportHandler,
   GetMediaByIdsHandler,
@@ -7,8 +8,8 @@ import {
   SendReportPreAccessPermission,
   GetMediasPostValidationHandler,
   GetEntityForReportPreValidateHandler,
+  GetEntityForReportPostValidateHandler
 } from '../handlers';
-import { ReportNotificationActions } from '../controllers/controller.broker';
 
 export async function sendReport(r) {
   const meUser: User = r.auth.credentials;
@@ -32,7 +33,9 @@ export async function sendReport(r) {
   ).Handle({ mediaIds });
 
   const entity = await new GetEntityForReportPreValidateHandler(
-    new GetEntityForReportHandler()
+    new GetEntityForReportPostValidateHandler(
+      new GetEntityForReportHandler()
+    )
   ).Handle({ entityId, entityType });
 
   const report = await new SendReportPreAccessPermission(

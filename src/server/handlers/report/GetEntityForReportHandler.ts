@@ -19,6 +19,14 @@ export type EntityReport =
   | Quest
   | DiscussionComment
 
+export class GetEntityForReportHandler implements IHandler<GetEntityForReportCommand, Promise<EntityReport>> {
+  public async Handle(command: GetEntityForReportCommand): Promise<EntityReport> {
+    const entityObject = reportEntities[command.entityType] as unknown as { entity: EntityReport, statuses: any };
+
+    return await entityObject.entity['findByPk'].call(entityObject.entity, command.entityId) as EntityReport;
+  }
+}
+
 export class GetEntityForReportPreValidateHandler extends HandlerDecoratorBase<GetEntityForReportCommand, Promise<EntityReport>> {
 
   private readonly validator: ReportValidator;
@@ -38,10 +46,23 @@ export class GetEntityForReportPreValidateHandler extends HandlerDecoratorBase<G
   }
 }
 
-export class GetEntityForReportHandler implements IHandler<GetEntityForReportCommand, Promise<EntityReport>> {
-  public async Handle(command: GetEntityForReportCommand): Promise<EntityReport> {
-    const entityObject = reportEntities[command.entityType] as unknown as { entity: EntityReport, statuses: any };
+export class GetEntityForReportPostValidateHandler extends HandlerDecoratorBase<GetEntityForReportCommand, Promise<EntityReport>> {
 
-    return await entityObject.entity['findByPk'].call(command.entityId) as EntityReport;
+  private readonly validator: ReportValidator;
+
+  constructor(
+    protected readonly decorated: IHandler<GetEntityForReportCommand, Promise<EntityReport>>,
+  ) {
+    super(decorated);
+
+    this.validator = new ReportValidator();
+  }
+
+  public async Handle(command: GetEntityForReportCommand): Promise<EntityReport> {
+    const entity = await this.decorated.Handle(command);
+
+    this.validator.isEntityExist(entity);
+
+    return entity;
   }
 }
