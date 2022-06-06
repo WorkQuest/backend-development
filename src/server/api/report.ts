@@ -45,7 +45,7 @@ export async function sendReport(r) {
   r.server.app.broker.sendReportNotification({
     recipients: [r.auth.credentials.id],
     action: ReportNotificationActions.ReportSubmitted,
-    data: { id: report.id },
+    data: { id: report.id }
   });
 
   return output();
