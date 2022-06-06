@@ -59,6 +59,7 @@ import {
   GetChatMemberPostLimitedAccessPermissionHandler,
   DeletedMemberFromGroupChatPreAccessPermissionHandler,
 } from "../handlers";
+import { ChatDeletionData } from "@workquest/database-models/lib/models/chats/ChatDeletionData";
 
 export const searchChatFields = ['name'];
 
@@ -693,6 +694,51 @@ export async function addUsersInGroupChat(r) {
   // });
 
   return output(messagesWithInfo);
+}
+
+export async function removeChatFromList(r) {
+  const meUser: User = r.auth.credentials;
+
+  const { chatId } = r.params as { chatId: string };
+
+  const chat = await new GetChatByIdPostValidationHandler(
+    new  GetGroupChatHandler()
+  ).Handle({ chatId });
+
+  const chatDeletionData = await ChatDeletionData.create({
+    userId: meUser.id,
+    chatId: chat.id,
+    beforeDeletionMessageId: chat.chatData.lastMessageId,
+    beforeDeletionMessageNumber: chat.chatData.lastMessage.number,
+  });
+
+
+  await incrementUnreadCountMessageOfMembersJob({
+    chatId: groupChat.id,
+    skipMemberIds: [meMember.id],
+  });
+
+  await updateChatDataJob({
+    chatId: groupChat.id,
+    lastMessageId: messageWithInfo.id,
+  });
+
+  await setMessageAsReadJob({
+    chatId: groupChat.id,
+    senderMemberId: meMember.id,
+    lastUnreadMessage: { id: messageWithInfo.id, number: messageWithInfo.number },
+  });
+
+  //TODO: переделать
+  const members = await ChatMember.findAll({ where: {
+      chatId,
+      status: MemberStatus.Active,
+    }
+  });
+
+  await updateCountUnreadChatsJob({ members });
+
+  return output(messageWithInfo);
 }
 
 export async function setMessagesAsRead(r) {

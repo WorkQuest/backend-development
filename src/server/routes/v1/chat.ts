@@ -20,6 +20,7 @@ import {
   messagesForGetWithCountSchema,
   usersShortWithAdditionalInfoSchema,
 } from '@workquest/database-models/lib/schemes';
+import { removeChatFromList } from "../../api/chat";
 
 export default [
   {
@@ -230,6 +231,25 @@ export default [
       },
       response: {
         schema: outputOkSchema(messageSchema).label('LeaveFromGroupChatResponse'),
+      },
+    },
+  },
+  {
+    method: 'POST',
+    path: '/v1/user/me/chat/{chatId}/remove',
+    handler: handlers.removeChatFromList,
+    options: {
+      auth: 'jwt-access',
+      id: 'v1.group-chat.group.leave',
+      description: 'Remove chat from list',
+      tags: ['api', 'chat'],
+      validate: {
+        params: Joi.object({
+          chatId: idSchema.required(),
+        }).label('RemoveChatFromListParams'),
+      },
+      response: {
+        schema: emptyOkSchema.label('RemoveChatFromListResponse'),
       },
     },
   },
