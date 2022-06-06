@@ -17,7 +17,7 @@ export async function createSupport(r) {
     },
     defaults: {
       authorUserId: meUser.id,
-      email: r.payload.email,
+      replyToMail: r.payload.email,
       title: r.payload.title,
       description: r.payload.description,
       status: TicketStatus.Pending,
