@@ -40,8 +40,8 @@ export class SendMessageToChatHandler implements IHandler<SendMessageToChatComma
       text: payload.text,
     }, { transaction: options.tx });
 
-    await message.$set('medias', payload.medias as Media[], { transaction: options.tx });
-
+    await message.setDataValue('medias', payload.medias as Media[]);
+    await message.setDataValue('sender', payload.sender);
     return message;
   }
 
