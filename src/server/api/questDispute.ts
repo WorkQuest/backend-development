@@ -67,7 +67,7 @@ export async function getDispute(r) {
     include: {
       model: Quest,
       include: [{
-        model: QuestChat.scope('idsOnly'),
+        model: QuestChat.unscoped(),
         where: { questChatWorkerLiteral },
       }],
     },
