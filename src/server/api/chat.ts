@@ -20,7 +20,7 @@ import {
   MemberStatus,
   StarredMessage,
   SenderMessageStatus,
-  ChatMemberDeletionData, ChatType, Quest, GroupChat, Media, InfoMessage
+  ChatMemberDeletionData, ChatType, Quest, GroupChat, Media, InfoMessage, ChatMemberData
 } from "@workquest/database-models/lib/models";
 import {
   GetChatByIdHandler,
@@ -59,7 +59,6 @@ import {
   GetChatMemberPostLimitedAccessPermissionHandler,
   DeletedMemberFromGroupChatPreAccessPermissionHandler,
 } from "../handlers";
-import { MemberType } from '@workquest/database-models/src/models/types';
 
 export const searchChatFields = ['name'];
 
@@ -218,12 +217,20 @@ export async function getChatMessages(r) {
       attributes: ["id", "avatarId", "firstName", "lastName"],
       include: [{
         model: Media,
-        as: 'avatar'
+        as: 'avatar',
       }],
+    }, {
+      model: ChatMemberData,
+      attributes: ["lastReadMessageId", "unreadCountMessages", "lastReadMessageNumber"],
+      as: 'chatMemberData',
     }],
   }, {
     model: Media,
     as: 'medias',
+  }, {
+    model: InfoMessage.unscoped(),
+    attributes: ["messageId", "messageAction"],
+    as: 'infoMessage'
   }];
 
   const { count, rows } = await Message.findAndCountAll({
