@@ -2,7 +2,6 @@ import { LoginApp } from '@workquest/database-models/lib/models/user/types';
 import { fn, literal, Op, QueryTypes } from 'sequelize';
 import { addJob } from '../utils/scheduler';
 import {
-  Session,
   StatusKYC,
   User,
   UserRole,
@@ -53,10 +52,10 @@ async function userGroupCountBuilder(...group): Promise<{ [key: string]: number 
 export async function addWriteStatisticsJob() {
   const runAt = new Date(new Date().setHours(23, 55, 0));
 
-  return addJob('writeStatistics', {}, { 'run_at': runAt });
+  return addJob('writeDailyUserStatistics', {}, { 'run_at': runAt });
 }
 
-async function writeUserStatistics() {
+export default async function() {
   const [todayUserStatistics] = await UsersPlatformStatistic.findOrBuild({
     where: { date: new Date() }
   });
@@ -118,26 +117,11 @@ async function writeUserStatistics() {
     }
   }
 
-  todayUserStatistics.registered = await User.unscoped().count({
-    where: {
-      createdAt: {
-        [Op.between]: [
-          new Date().setHours(0, 0, 0, 0),
-          new Date().setHours(23, 59, 59, 999)
-        ]
-      }
-    }
-  });
+  todayUserStatistics.registered = await User.unscoped().count();
 
   todayUserStatistics.use2FA = await User.unscoped().count({
     where: { 'settings.security.TOTP.active': true }
   });
-}
 
-export default async function() {
-  await addWriteStatisticsJob();
-
-  await Promise.all([
-    writeUserStatistics()
-  ]);
+  await todayUserStatistics.save();
 }
