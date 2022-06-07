@@ -1,8 +1,41 @@
+import { LoginApp } from '@workquest/database-models/lib/models/user/types';
+import { fn, literal, Op, QueryTypes } from 'sequelize';
 import { addJob } from '../utils/scheduler';
-import { StatusKYC, User, UserRole, UsersPlatformStatistic, UserStatus } from '@workquest/database-models/lib/models';
-import { fn, literal, Op } from 'sequelize';
+import {
+  Session,
+  StatusKYC,
+  User,
+  UserRole,
+  UsersPlatformStatistic,
+  UserStatus
+} from '@workquest/database-models/lib/models';
 
-const yesterdayDate = new Date(Date.now() - 86400000).toDateString();
+const platformQuery = `
+    SELECT type, COUNT(*)
+    FROM (SELECT (
+                     CASE
+                         WHEN (device ILIKE 'Android%' OR device ILIKE 'iOS%' OR device ILIKE 'Dart%') AND app = '${LoginApp.App}'
+                             THEN 'app'
+                         WHEN (device ILIKE 'Android%' OR device ILIKE 'iOS%' OR device ILIKE 'Dart%') AND app = '${LoginApp.Wallet}'
+                             THEN 'wallet'
+                         ELSE 'web' END
+                     ) as type
+          FROM "Sessions") as q
+    GROUP BY type;
+`;
+
+async function userRawCountBuilder(query: string) {
+  const rawCount = await User.sequelize.query(query, { type: QueryTypes.SELECT });
+  const countObject = {};
+
+  rawCount.forEach((count) => {
+    const [mainKey, countKey] = Object.keys(count);
+
+    countObject[count[mainKey]] = parseInt(count[countKey]);
+  });
+
+  return countObject;
+}
 
 async function userGroupCountBuilder(...group): Promise<{ [key: string]: number }> {
   const count: any = await User.unscoped().count({ group });
@@ -37,6 +70,7 @@ async function writeUserStatistics() {
   const smsPassed = await userGroupCountBuilder(
     fn('CAST', literal('"phone" IS NOT NULL as bool'))
   );
+  const platformType = await userRawCountBuilder(platformQuery);
 
   for (const statusesKey in statuses) {
     if (parseInt(statusesKey) === UserStatus.Confirmed) {
@@ -74,6 +108,16 @@ async function writeUserStatistics() {
     }
   }
 
+  for (const platform in platformType) {
+    if (platform === 'app') {
+      todayUserStatistics.useApp = platformType[platform];
+    } else if (platform === 'wallet') {
+      todayUserStatistics.useWallet = platformType[platform];
+    } else if (platform === 'web') {
+      todayUserStatistics.useWeb = platformType[platform];
+    }
+  }
+
   todayUserStatistics.registered = await User.unscoped().count({
     where: {
       createdAt: {
@@ -82,7 +126,7 @@ async function writeUserStatistics() {
           new Date().setHours(23, 59, 59, 999)
         ]
       }
-    },
+    }
   });
 
   todayUserStatistics.use2FA = await User.unscoped().count({
