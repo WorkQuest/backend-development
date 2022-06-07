@@ -18,7 +18,7 @@ import {
   QuestsResponse,
   QuestsResponseStatus,
   QuestsResponseType,
-  QuestChatStatuses,
+  QuestChatStatus,
   QuestsReview,
   QuestsStarred,
   QuestStatus,
@@ -74,7 +74,7 @@ export async function getQuest(r) {
 
   if (user.role === UserRole.Worker) {
     include.push({
-      model: QuestChat.scope('idsOnly'),
+      model: QuestChat.scope('forQuestChat'),
       as: 'questChat',
       required: false,
       where: { workerId: user.id },
@@ -92,14 +92,14 @@ export async function getQuest(r) {
     ];
 
     include.push({
-      model: QuestChat.scope('idsOnly'),
+      model: QuestChat.scope('forQuestChat'),
       attributes: {
         include: [[literal('CASE WHEN "questChat"."chatId" IS NULL THEN NULL ELSE "chatId" END'), 'chatId']],
         exclude: ['createdAt', 'updatedAt', 'status', 'id'],
       },
       as: 'questChat',
       required: false,
-      where: literal(`"questChat"."employerId" = $employerId AND "Quest"."status" NOT IN (${excludeStatuses.join(',')}) AND "questChat"."status" = ${QuestChatStatuses.Open}`),
+      where: literal(`"questChat"."employerId" = $employerId AND "Quest"."status" NOT IN (${excludeStatuses.join(',')}) AND "questChat"."status" = ${QuestChatStatus.Open}`),
     });
 
     bind['employerId'] = r.auth.credentials.id;
@@ -303,7 +303,7 @@ export function getQuests(type: 'list' | 'points', requester?: 'worker' | 'emplo
     }
     if (user.role === UserRole.Worker) {
       include.push({
-        model: QuestChat.scope('idsOnly'),
+        model: QuestChat.scope('forQuestChat'),
         where: { workerId: user.id },
         as: 'questChat',
         required: false,
@@ -311,7 +311,7 @@ export function getQuests(type: 'list' | 'points', requester?: 'worker' | 'emplo
     }
     if (user.role === UserRole.Employer) {
       include.push({
-        model: QuestChat.scope('idsOnly'),
+        model: QuestChat.scope('forQuestChat'),
         as: 'questChat',
         attributes: {
           include: [[questChatLiteral, 'id']],

@@ -5,7 +5,8 @@ import amqp from 'amqplib/callback_api';
 export const enum MainBrokerQueues {
   Chat = 'chat',
   Quest = 'quest',
-  DAO = 'dao'
+  DAO = 'dao',
+  Report = 'report'
 }
 
 export const enum QuestNotificationActions {
@@ -31,7 +32,7 @@ export const enum QuestNotificationActions {
 }
 
 export const enum ChatNotificationActions {
-  /** Group chat */
+  /** Group group-chat */
   groupChatCreate = 'groupChatCreate',
   groupChatAddUser = 'groupChatAddUser',
   groupChatDeleteUser = 'groupChatDeleteUser',
@@ -48,6 +49,10 @@ export const enum DaoNotificationActions {
   commentLiked = 'commentLiked',
   replyToComment = 'replyToComment',
   /** Proposal */
+}
+
+export const enum ReportNotificationActions {
+  ReportSubmitted = 'ReportSubmitted'
 }
 
 type Notification<Action> = {
@@ -121,5 +126,13 @@ export class ControllerBroker {
     const convertedData = ControllerBroker.convertData(notification);
 
     this.channel.sendToQueue(MainBrokerQueues.DAO, convertedData);
+  }
+
+  public sendReportNotification(notification: Notification<ReportNotificationActions>) {
+    if (!this.channel) return;
+
+    const convertedData = ControllerBroker.convertData(notification);
+
+    this.channel.sendToQueue(MainBrokerQueues.Report, convertedData);
   }
 }

@@ -86,8 +86,8 @@ const init = async () => {
     { plugin: Pino, options: pinoConfig(false) },
     { plugin: HapiSwagger, options: SwaggerOptions },
   ]);
-
   server.app.db = await initDatabase(config.dbLink, true, true);
+  //server.app.db = Database.instance();
   server.app.web3 = new Web3();
   server.app.broker = new ControllerBroker();
   server.app.scheduler = await run({

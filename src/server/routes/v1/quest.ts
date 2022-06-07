@@ -252,9 +252,9 @@ export default [{
       payload: Joi.object({
         workplace: workPlaceSchema.required(),
         typeOfEmployment: questEmploymentSchema.required(),
+        payPeriod: payPeriodSchema.required(),
         priority: prioritySchema.required(),
         locationFull: locationFullSchema.required(),
-        title: questTitleSchema.required(),
         medias: idsSchema.unique().required(),
         specializationKeys: specializationKeysSchema.unique().required(),
       }).label("EditQuestPayload"),
