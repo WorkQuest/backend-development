@@ -63,7 +63,7 @@ export default [{
         description: questDescriptionSchema.required(),
         price: questPriceSchema.required(),
         medias: idsSchema.required().unique(),
-        specializationKeys: specializationKeysSchema.required().unique(),
+        specializationKeys: specializationKeysSchema.required().unique().min(1),
       }).label("CreateQuestPayload")
     },
     response: {

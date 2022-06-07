@@ -21,8 +21,8 @@ import {
   QuestStatus,
   QuestsResponse,
   QuestsResponseType,
-  QuestsResponseStatus,
-} from '@workquest/database-models/lib/models';
+  QuestsResponseStatus, Wallet
+} from "@workquest/database-models/lib/models";
 
 export async function responseOnQuest(r) {
   const { message, medias } = r.payload;
@@ -65,6 +65,15 @@ export async function responseOnQuest(r) {
     recipients: [questController.quest.userId],
     data: await questChatController.firstMessage(),
   });
+
+  const wallet = await Wallet.unscoped().findOne({
+    where: {
+      userId: workerController.user.id
+    },
+    attributes: ["address"]
+  });
+
+  questResponseController.worker.wallet = wallet;
 
   r.server.app.broker.sendQuestNotification({
     action: QuestNotificationActions.workerRespondedToQuest,

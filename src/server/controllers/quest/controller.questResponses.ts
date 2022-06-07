@@ -106,6 +106,7 @@ export class QuestResponseController {
       firstName: this.worker.firstName,
       lastName: this.worker.lastName,
       avatar: this.worker.avatar,
+      wallet: this.worker.wallet,
       ratingStatistic: this.worker.ratingStatistic,
       raiseView: this.worker.raiseView,
     };
