@@ -48,6 +48,8 @@ export default async function updateCountUnreadChats(payload: UpdateCountUnreadC
         where: {
           unreadCountMessages: { [Op.ne]: 0 },
         },
+      }, {
+        model:
       }],
       where: {
         [Op.or]: [{ userId: member.userId }, { adminId: member.adminId }],

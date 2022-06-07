@@ -747,6 +747,8 @@ export async function removeChatFromList(r) {
     new  GetGroupChatHandler()
   ).Handle({ chatId });
 
+  const meMember = await new GetChatMemberByUserHandler().Handle({ user: meUser, chat });
+
   const chatDeletionData = await ChatDeletionData.create({
     userId: meUser.id,
     chatId: chat.id,
@@ -754,33 +756,9 @@ export async function removeChatFromList(r) {
     beforeDeletionMessageNumber: chat.chatData.lastMessage.number,
   });
 
+  await updateCountUnreadChatsJob({ members: [meMember] });
 
-  await incrementUnreadCountMessageOfMembersJob({
-    chatId: groupChat.id,
-    skipMemberIds: [meMember.id],
-  });
-
-  await updateChatDataJob({
-    chatId: groupChat.id,
-    lastMessageId: messageWithInfo.id,
-  });
-
-  await setMessageAsReadJob({
-    chatId: groupChat.id,
-    senderMemberId: meMember.id,
-    lastUnreadMessage: { id: messageWithInfo.id, number: messageWithInfo.number },
-  });
-
-  //TODO: переделать
-  const members = await ChatMember.findAll({ where: {
-      chatId,
-      status: MemberStatus.Active,
-    }
-  });
-
-  await updateCountUnreadChatsJob({ members });
-
-  return output(messageWithInfo);
+  return output();
 }
 
 export async function setMessagesAsRead(r) {
