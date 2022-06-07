@@ -93,14 +93,26 @@ export async function getUserChats(r) {
   const include: any[] = [{
     model: ChatMember,
     where: { userId: r.auth.credentials.id },
-    include: {
+    include: [{
       model: ChatMemberDeletionData,
       as: 'chatMemberDeletionData',
       include: [{
         model: Message.unscoped(),
         as: 'beforeDeletionMessage'
       }]
-    },
+    }, {
+    model: User.unscoped(),
+    as: 'user',
+    attributes: ["id", "avatarId", "firstName", "lastName"],
+    include: [{
+      model: Media,
+      as: 'avatar',
+    }],
+  }, {
+    model: ChatMemberData,
+    attributes: ["lastReadMessageId", "unreadCountMessages", "lastReadMessageNumber"],
+    as: 'chatMemberData',
+  }],
     required: true,
     as: 'meMember',
   }, {
