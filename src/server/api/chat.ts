@@ -770,7 +770,7 @@ export async function setMessagesAsRead(r) {
   await updateCountUnreadMessagesJob({
     lastUnreadMessage: { id: message.id, number: message.number },
     chatId: chat.id,
-    readerMemberId: chat.meMember.id,
+    readerMemberId: meMember.id,
   });
 
   if (otherSenders.length === 0) {
