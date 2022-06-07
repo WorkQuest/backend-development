@@ -63,7 +63,7 @@ export default [{
         description: questDescriptionSchema.required(),
         price: questPriceSchema.required(),
         medias: idsSchema.required().unique(),
-        specializationKeys: specializationKeysSchema.required().unique(),
+        specializationKeys: specializationKeysSchema.required().unique().min(1),
       }).label("CreateQuestPayload")
     },
     response: {
@@ -252,9 +252,9 @@ export default [{
       payload: Joi.object({
         workplace: workPlaceSchema.required(),
         typeOfEmployment: questEmploymentSchema.required(),
+        payPeriod: payPeriodSchema.required(),
         priority: prioritySchema.required(),
         locationFull: locationFullSchema.required(),
-        title: questTitleSchema.required(),
         medias: idsSchema.unique().required(),
         specializationKeys: specializationKeysSchema.unique().required(),
       }).label("EditQuestPayload"),

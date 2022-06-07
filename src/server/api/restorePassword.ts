@@ -24,7 +24,11 @@ export async function sendCodeForRestorePassword(r) {
     await addSendEmailJob({
       email: r.payload.email,
       subject: 'Work Quest | Reset password confirmation',
-      text: `Change password. Follow this link ${emailRestorePasswordLink}`,
+      text:
+        `Reset password confirmation\n` +
+        `${emailRestorePasswordLink}\n` +
+        `If it was not you, then change password to protect your account.\n` +
+        `This email sent automatically, please do not reply to it.`,
       html: emailHtml,
     });
 

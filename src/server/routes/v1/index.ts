@@ -19,6 +19,8 @@ import proposal from './proposal';
 import pensionFund from './pensionFund';
 import referral from './referral';
 import savingProduct from "./savingProduct";
+import supportUser from './supportUser';
+import report from './report';
 
 export default [
   ...liquidityPoolWETH,
@@ -41,5 +43,7 @@ export default [
   ...proposal,
   ...pensionFund,
   ...referral,
-  ...savingProduct
+  ...savingProduct,
+  ...supportUser,
+  ...report
 ];

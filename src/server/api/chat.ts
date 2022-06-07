@@ -1,4 +1,4 @@
-import { literal, Op } from 'sequelize';
+import { literal, Op, where } from 'sequelize';
 import { output } from '../utils';
 import { updateChatDataJob } from "../jobs/updateChatData";
 import { setMessageAsReadJob } from '../jobs/setMessageAsRead';
@@ -20,8 +20,8 @@ import {
   MemberStatus,
   StarredMessage,
   SenderMessageStatus,
-  ChatMemberDeletionData,
-} from '@workquest/database-models/lib/models';
+  ChatMemberDeletionData, ChatType, Quest, GroupChat, Media, InfoMessage, ChatMemberData
+} from "@workquest/database-models/lib/models";
 import {
   GetChatByIdHandler,
   GetGroupChatHandler,
@@ -80,21 +80,39 @@ export async function getUserChats(r) {
     ' "ChatMemberDeletionData"."beforeDeletionMessageId" = "ChatMembers"."id" WHERE "ChatMembers"."chatId" = "Chat"."id") ' +
     'ELSE (SELECT "Messages"."createdAt" FROM "ChatData" INNER JOIN "Messages" ON "lastMessageId" = "Messages"."id" WHERE "ChatData"."chatId" = "Chat"."id") END)'
   );
+  const chatTypeLiteral = literal(
+    `("Chat"."type" = '${ ChatType.Private }' OR "Chat"."type" = '${ ChatType.Quest }')`
+  )
 
-  const where = {};
+  const where = {
+    ...(r.query.type && { type: r.query.type }),
+  };
+
   const replacements = {};
 
   const include: any[] = [{
     model: ChatMember,
     where: { userId: r.auth.credentials.id },
-    include: {
+    include: [{
       model: ChatMemberDeletionData,
       as: 'chatMemberDeletionData',
       include: [{
         model: Message.unscoped(),
         as: 'beforeDeletionMessage'
       }]
-    },
+    }, {
+    model: User.unscoped(),
+    as: 'user',
+    attributes: ["id", "avatarId", "firstName", "lastName"],
+    include: [{
+      model: Media,
+      as: 'avatar',
+    }],
+  }, {
+    model: ChatMemberData,
+    attributes: ["lastReadMessageId", "unreadCountMessages", "lastReadMessageNumber"],
+    as: 'chatMemberData',
+  }],
     required: true,
     as: 'meMember',
   }, {
@@ -107,9 +125,60 @@ export async function getUserChats(r) {
     as: 'chatData',
     include: [{
       model: Message,
-      as: 'lastMessage'
-    }]
+      as: 'lastMessage',
+      include: [{
+        model: ChatMember,
+        as: 'sender',
+        include: [{
+          model: User.unscoped(),
+          as: 'user',
+          attributes: ["id", "firstName", "lastName"]
+        }],
+      }, {
+        model: InfoMessage,
+        as: 'infoMessage',
+      }],
+    }],
+  }, {
+    model: ChatMember,
+    as: 'members',
+    where: { [Op.and]: [ { userId: { [Op.ne]: r.auth.credentials.id } }, chatTypeLiteral ] },
+    include: [{
+      model: User.unscoped(),
+      as: 'user',
+      attributes: ["id", "firstName", "lastName"],
+      include: [{
+        model: Media,
+        as: 'avatar'
+      }]
+    }, {
+      model: ChatMemberData,
+      attributes: ["lastReadMessageId", "unreadCountMessages", "lastReadMessageNumber"],
+      as: 'chatMemberData'
+    }],
+    required: false,
+  }, {
+    model: QuestChat,
+    as: 'questChat',
+    include: {
+      model: Quest.unscoped(),
+      as: 'quest',
+      attributes: ["id", "title"],
+    }
+  }, {
+    model: GroupChat,
+    as: 'groupChat',
   }];
+
+  if (r.query.type && r.query.type === ChatType.Quest) {
+    include.push({
+      model: QuestChat,
+      as: 'questChat',
+      where: {
+        status: r.query.questChatStatus,
+      },
+    });
+  }
 
   if (r.query.q) {
     where[Op.or] = searchChatFields.map(field => ({
@@ -154,16 +223,39 @@ export async function getChatMessages(r) {
     ...(meMember.chatMemberDeletionData && { createdAt: { [Op.lte]: meMember.chatMemberDeletionData.beforeDeletionMessage.createdAt } }),
   }
 
+  const include = [{
+    model: StarredMessage,
+    as: 'star',
+    where: { userId: meMember.userId },
+    required: r.query.starred,
+  }, {
+    model: ChatMember,
+    as: 'sender',
+    include: [{
+      model: User.unscoped(),
+      as: 'user',
+      attributes: ["id", "avatarId", "firstName", "lastName"],
+      include: [{
+        model: Media,
+        as: 'avatar',
+      }],
+    }, {
+      model: ChatMemberData,
+      attributes: ["lastReadMessageId", "unreadCountMessages", "lastReadMessageNumber"],
+      as: 'chatMemberData',
+    }],
+  }, {
+    model: Media,
+    as: 'medias',
+  }, {
+    model: InfoMessage.unscoped(),
+    attributes: ["messageId", "messageAction"],
+    as: 'infoMessage'
+  }];
+
   const { count, rows } = await Message.findAndCountAll({
     where,
-    include: [
-      {
-        model: StarredMessage,
-        as: 'star',
-        where: { userId: meMember.userId },
-        required: r.query.starred,
-      },
-    ],
+    include,
     distinct: true,
     limit: r.query.limit,
     offset: r.query.offset,
@@ -180,21 +272,6 @@ export async function getUserChat(r) {
     new GetChatByIdHandler()
   ).Handle({ chatId });
 
-  // const chat = await Chat.findByPk(r.params.chatId, {
-  //   include: [{
-  //     model: StarredChat,
-  //     as: 'star',
-  //     required: false,
-  //   }, {
-  //     model: QuestChat,
-  //     as: 'questChat',
-  //     required: false,
-  //   }],
-  // });
-  // const chatController = new ChatController(chat);
-  //
-  // await chatController.chatMustHaveMember(r.auth.credentials.id);
-  //
   return output(chat);
 }
 
@@ -294,19 +371,19 @@ export async function createGroupChat(r) {
     senderMemberId: chat.getDataValue('groupChat').ownerMemberId,
   });
 
-  const members = chat.getDataValue('members');
+  const members: ChatMember[] = chat.getDataValue('members');
 
   await updateCountUnreadChatsJob({
     members,
   });
 
-  // r.server.app.broker.sendChatNotification({
-  //   recipients: userMemberIds.filter((id) => id !== userChatOwner.id),
-  //   action: ChatNotificationActions.groupChatCreate,
-  //   data: chatDto,
-  // });
+  r.server.app.broker.sendChatNotification({
+    recipients: members.map(member => member.userId || member.adminId).filter(id => chatCreator.id !== id),
+    action: ChatNotificationActions.groupChatCreate,
+    data: messageWithInfo.toJSON(),
+  });
 
-  return output(chat);
+  return output({ chat, infoMessage: messageWithInfo });
 }
 
 export async function sendMessageToUser(r) {
@@ -368,11 +445,11 @@ export async function sendMessageToUser(r) {
     members: [meMember, recipientMember],
   });
 
-  // r.server.app.broker.sendChatNotification({
-  //   data: message,
-  //   action: ChatNotificationActions.newMessage,
-  //   recipients: [privateChatController.members.recipientMember.userId],
-  // });
+  r.server.app.broker.sendChatNotification({
+    data: message,
+    recipients: [userId],
+    action: ChatNotificationActions.newMessage,
+  });
 
   return output(message);
 }
@@ -431,13 +508,23 @@ export async function sendMessageToChat(r) {
     lastUnreadMessage: { id: message.id, number: message.number },
   });
 
-  await updateCountUnreadChatsJob({ members: chat.getDataValue('members') });
+  await updateCountUnreadChatsJob({
+    members: chat.getDataValue('members'),
+  });
 
-  // r.server.app.broker.sendChatNotification({
-  //   action: ChatNotificationActions.newMessage,
-  //   recipients: ,
-  //   data: message,
-  // });
+  const members = await ChatMember.findAll({
+    attributes: ['userId', 'adminId'],
+    where: {
+      userId: { [Op.not]: meUser.id },
+      status: MemberStatus.Active,
+    },
+  })
+
+  r.server.app.broker.sendChatNotification({
+    data: message.toJSON(),
+    action: ChatNotificationActions.newMessage,
+    recipients: members.map(({ userId, adminId}) => userId || adminId),
+  });
 
   return output(message);
 }
@@ -498,7 +585,8 @@ export async function removeMemberFromGroupChat(r) {
   });
 
   //TODO: переделать
-  const members = await ChatMember.findAll({ where: {
+  const members = await ChatMember.findAll({
+    where: {
       chatId,
       status: MemberStatus.Active,
     }
@@ -506,11 +594,11 @@ export async function removeMemberFromGroupChat(r) {
 
   await updateCountUnreadChatsJob({ members });
 
-  // r.server.app.broker.sendChatNotification({
-  //   action: ChatNotificationActions.groupChatDeleteUser,
-  //   recipients: userIdsWithoutSender,
-  //   data: message,
-  // });
+  r.server.app.broker.sendChatNotification({
+    data: messageWithInfo.toJSON(),
+    action: ChatNotificationActions.groupChatDeleteUser,
+    recipients: members.map(({ userId, adminId }) => userId ||adminId).filter(id => meUser.id !== id),
+  });
 
   return output(messageWithInfo);
 }
@@ -546,12 +634,6 @@ export async function leaveFromGroupChat(r) {
     lastMessageId: messageWithInfo.id,
   });
 
-  await updateCountUnreadMessagesJob({
-    lastUnreadMessage: { id: messageWithInfo.id, number: messageWithInfo.number },
-    chatId: messageWithInfo.chatId,
-    readerMemberId: meMember.id,
-  });
-
   await setMessageAsReadJob({
     chatId: groupChat.id,
     senderMemberId: meMember.id,
@@ -559,7 +641,8 @@ export async function leaveFromGroupChat(r) {
   });
 
   //TODO: переделать
-  const members = await ChatMember.findAll({ where: {
+  const members = await ChatMember.findAll({
+    where: {
       chatId,
       status: MemberStatus.Active,
     }
@@ -567,11 +650,11 @@ export async function leaveFromGroupChat(r) {
 
   await updateCountUnreadChatsJob({ members });
 
-  // r.server.app.broker.sendChatNotification({
-  //   action: ChatNotificationActions.groupChatLeaveUser,
-  //   recipients: group-chat.members,//userIdsWithoutSender,
-  //   data: result,
-  // });
+  r.server.app.broker.sendChatNotification({
+    data: messageWithInfo.toJSON(),
+    action: ChatNotificationActions.groupChatLeaveUser,
+    recipients: members.map(({ userId, adminId }) => userId ||adminId),
+  });
 
   return output(messageWithInfo);
 }
@@ -641,13 +724,15 @@ export async function addUsersInGroupChat(r) {
     }
   });
 
-  await updateCountUnreadChatsJob({ members });
+  await updateCountUnreadChatsJob({
+    members,
+  });
 
-  // r.server.app.broker.sendChatNotification({
-  //   action: ChatNotificationActions.groupChatAddUser,
-  //   recipients: userIdsInChatWithoutSender,
-  //   data: messagesResult,
-  // });
+  r.server.app.broker.sendChatNotification({
+    data: lastMessage.toJSON(),
+    action: ChatNotificationActions.groupChatAddUser,
+    recipients: members.map(({ userId, adminId }) => userId ||adminId).filter(id => meUser.id !== id),
+  });
 
   return output(messagesWithInfo);
 }
@@ -685,7 +770,7 @@ export async function setMessagesAsRead(r) {
   await updateCountUnreadMessagesJob({
     lastUnreadMessage: { id: message.id, number: message.number },
     chatId: chat.id,
-    readerMemberId: chat.meMember.id,
+    readerMemberId: meMember.id,
   });
 
   if (otherSenders.length === 0) {

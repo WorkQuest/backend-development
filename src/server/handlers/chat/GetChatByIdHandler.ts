@@ -1,5 +1,5 @@
 import { HandlerDecoratorBase, IHandler } from "../types";
-import { Chat } from "@workquest/database-models/lib/models";
+import { Chat, ChatData, ChatMember, Message } from "@workquest/database-models/lib/models";
 import { GetChatByIdValidator } from "./GetChatByIdValidator";
 
 export interface GetChatByIdCommand {

@@ -31,7 +31,11 @@ export async function enableTOTP(r) {
 
   await addSendEmailJob({
     email: userController.user.email,
-    text: `Confirmation code Google Authenticator: ${confirmCode}`,
+    text:
+      `Verification code to enable 2FA on your account\n`+
+      `${confirmCode}\n` +
+      `If it was not you, then change password to protect your account.\n` +
+      `This email sent automatically, please do not reply to it.`,
     subject: 'WorkQuest | Google Authenticator confirmation',
     html: emailHtml,
   });
