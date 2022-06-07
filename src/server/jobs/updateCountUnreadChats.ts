@@ -63,34 +63,4 @@ export default async function updateCountUnreadChats(payload: UpdateCountUnreadC
       await updateAdminChatStatistic(member.adminId, unreadChatsCounter);
     }
   }
-
-  // const updateValueLiteral = literal(`
-  //   (SELECT COUNT("ChatMembers"."id")
-  //   FROM "ChatMembers"
-  //   WHERE
-  //       "ChatMembers"."userId" != '${ payload.senderMemberId }'
-  //       AND 1 = (
-  //           CASE WHEN EXISTS(
-  //               SELECT "ChatMemberData"."id"
-  //               FROM "ChatMemberData"
-  //               WHERE
-  //                   "ChatMemberData"."chatMemberId" = "ChatMembers"."id"
-  //                   AND "ChatMemberData"."unreadCountMessages" != 0
-  //           ) THEN 1 END
-  //       )) FROM "ChatMembers"
-  // `);
-  //
-  // const whereLiteralBuilder = (chatId: string) => literal(`
-  //   "ChatMembers"."chatId" = '${ chatId }'
-  //   AND "ChatMembers"."status" = ${ MemberStatus.Active }
-  //   AND "ChatMembers"."type" = '${ MemberType.User }'
-  // `);
-  //
-  // await UserChatsStatistic.update({ updatedAt: new Date(), unreadCountChats: updateValueLiteral }, {
-  //   where: {
-  //     [Op.and]: [
-  //       whereLiteralBuilder(payload.chatId),
-  //     ]
-  //   },
-  // })
 }
