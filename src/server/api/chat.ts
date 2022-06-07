@@ -147,6 +147,14 @@ export async function getUserChats(r) {
       model: User.unscoped(),
       as: 'user',
       attributes: ["id", "firstName", "lastName"],
+      include: [{
+        model: Media,
+        as: 'avatar'
+      }]
+    }, {
+      model: ChatMemberData,
+      attributes: ["lastReadMessageId", "unreadCountMessages", "lastReadMessageNumber"],
+      as: 'chatMemberData'
     }],
     required: false,
   }, {
