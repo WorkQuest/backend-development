@@ -1,5 +1,6 @@
-import { col, fn } from 'sequelize';
+import { writeActionStatistics } from './writeActionStatistics';
 import { addJob } from '../utils/scheduler';
+import { col, fn } from 'sequelize';
 import {
   User,
   Quest,
@@ -8,7 +9,7 @@ import {
   QuestStatus,
   RatingStatus,
   QuestsReview,
-  RatingStatistic,
+  RatingStatistic, UsersPlatformStatisticFields
 } from '@workquest/database-models/lib/models';
 
 /**
@@ -126,4 +127,6 @@ export default async function (payload: StatisticPayload) {
     reviewCount,
     averageMark: averageMarkResult.getDataValue('avgMark'),
   });
+
+  await writeActionStatistics(UsersPlatformStatisticFields[RatingStatus[status]], 'user');
 }

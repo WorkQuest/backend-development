@@ -13,7 +13,16 @@ import { totpValidate } from '@workquest/database-models/lib/utils';
 import { createReferralProgramJob } from '../jobs/createReferralProgram';
 import { UserControllerFactory } from '../factories/factory.userController';
 import { error, getDevice, getGeo, getRandomHexToken, getRealIp, output } from '../utils';
-import { defaultUserSettings, Session, User, UserStatus, Wallet } from '@workquest/database-models/lib/models';
+import { LoginApp } from '@workquest/database-models/lib/models/user/types';
+import { writeActionStatistics } from '../jobs/writeActionStatistics';
+import {
+  defaultUserSettings,
+  Session,
+  User,
+  UsersPlatformStatisticFields,
+  UserStatus,
+  Wallet
+} from '@workquest/database-models/lib/models';
 import Handlebars = require('handlebars');
 
 
@@ -83,6 +92,23 @@ export function register(host: 'dao' | 'main') {
       userStatus: user.status,
     };
 
+    if (
+      session.device.startsWith('Android') ||
+      session.device.startsWith('iOS') ||
+      session.device.startsWith('Dart')
+    ) {
+      await writeActionStatistics(UsersPlatformStatisticFields.UseApp, 'user');
+    } else {
+      await writeActionStatistics(UsersPlatformStatisticFields.UseWeb, 'user');
+    }
+
+    await Promise.all([
+      writeActionStatistics(UsersPlatformStatisticFields.Registered, 'user'),
+      writeActionStatistics(UsersPlatformStatisticFields.Unfinished, 'user'),
+      writeActionStatistics(UsersPlatformStatisticFields.KycNotPassed, 'user'),
+      writeActionStatistics(UsersPlatformStatisticFields.SmsNotPassed, 'user'),
+    ]);
+
     return output(result);
   };
 }
@@ -138,6 +164,8 @@ export function getLoginViaSocialNetworkHandler(returnType: 'token' | 'redirect'
     const user = await UserOldController.getUserByNetworkProfile(r.auth.strategy, profile, referralId);
     const userController = new UserOldController(user);
 
+    await writeActionStatistics(r.auth.strategy, 'user');
+
     const session = await Session.create({
       userId: user.id,
       invalidating: false,
@@ -155,12 +183,16 @@ export function getLoginViaSocialNetworkHandler(returnType: 'token' | 'redirect'
     if (returnType === 'redirect') {
       const qs = querystring.stringify(result);
 
+      await writeActionStatistics(UsersPlatformStatisticFields.UseWeb, 'user');
+
       return h.redirect(
         platform === 'main'
           ? config.baseUrl + '/sign-in?' + qs
           : config.baseUrlDao + '/sign-in?' + qs,
       );
     }
+
+    await writeActionStatistics(UsersPlatformStatisticFields.UseApp, 'user');
 
     return output(result);
   };
@@ -187,6 +219,8 @@ export async function confirmEmail(r) {
     }
   });
 
+  await writeActionStatistics(UsersPlatformStatisticFields.Finished, 'user');
+
   return output({ status: userController.user.status });
 }
 
@@ -212,6 +246,7 @@ export async function login(r) {
     isTotpPassed: !userTotpActiveStatus,
     place: getGeo(r),
     ip: getRealIp(r),
+    app: LoginApp.App,
     device: getDevice(r),
   });
 
@@ -221,6 +256,16 @@ export async function login(r) {
     totpIsActive: userTotpActiveStatus,
     address: user.wallet ? user.wallet.address : null,
   };
+
+  if (
+    session.device.startsWith('Android') ||
+    session.device.startsWith('iOS') ||
+    session.device.startsWith('Dart')
+  ) {
+    await writeActionStatistics(UsersPlatformStatisticFields.UseApp, 'user');
+  } else {
+    await writeActionStatistics(UsersPlatformStatisticFields.UseWeb, 'user');
+  }
 
   return output(result);
 }
@@ -232,6 +277,7 @@ export async function refreshTokens(r) {
     isTotpPassed: true,
     place: getGeo(r),
     ip: getRealIp(r),
+    app: LoginApp.App,
     device: getDevice(r),
   });
 
@@ -239,6 +285,16 @@ export async function refreshTokens(r) {
     ...generateJwt({ id: newSession.id, userId: newSession.userId }),
     userStatus: r.auth.credentials.status,
   };
+
+  if (
+    newSession.device.startsWith('Android') ||
+    newSession.device.startsWith('iOS') ||
+    newSession.device.startsWith('Dart')
+  ) {
+    await writeActionStatistics(UsersPlatformStatisticFields.UseApp, 'user');
+  } else {
+    await writeActionStatistics(UsersPlatformStatisticFields.UseWeb, 'user');
+  }
 
   return output(result);
 }
@@ -320,6 +376,7 @@ export async function loginWallet(r) {
     place: getGeo(r),
     ip: getRealIp(r),
     device: getDevice(r),
+    app: LoginApp.Wallet,
     isTotpPassed: !userTotpActiveStatus,
   });
 
@@ -330,6 +387,8 @@ export async function loginWallet(r) {
     address: wallet.address,
     userId: user.id,
   };
+
+  await writeActionStatistics(UsersPlatformStatisticFields.UseWallet, 'user');
 
   return output(result);
 }

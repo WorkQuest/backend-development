@@ -11,18 +11,28 @@ import {
   ReportsPlatformStatistic,
   QuestsPlatformStatistic,
   UsersPlatformStatistic,
-  DaoPlatformStatistic,
+  DaoPlatformStatistic
 } from '@workquest/database-models/lib/models';
+
+type Statistics =
+  | 'raiseView'
+  | 'dispute'
+  | 'report'
+  | 'quest'
+  | 'user'
+  | 'dao'
+
+type StatisticAction = 'increment' | 'decrement'
 
 const searchOptionsYesterday = { where: { date: new Date(Date.now() - 86400000) } };
 const searchOptions = { where: { date: new Date() } };
 
-export async function writeActionStatistics(incrementField, by = 1) {
-  return addJob('writeActionStatistics', { incrementField, by });
+export async function writeActionStatistics(incrementField, statistic: Statistics, by: string | number = 1, type: StatisticAction = 'increment') {
+  return addJob('writeActionStatistics', { incrementField, statistic, by, type });
 }
 
-async function writeIncrementStatistic(statisticModel, incrementField: string, by: string | number = 1) {
-  return statisticModel.increment(incrementField, { ...searchOptions, by });
+async function writeStatistic(statisticModel, incrementField: string, by: string | number = 1, type: StatisticAction) {
+  return statisticModel[type].call(statisticModel, incrementField, { ...searchOptions, by });
 }
 
 const methods = {
@@ -50,83 +60,49 @@ const methods = {
     model: DaoPlatformStatistic,
     array: daoPlatformStatisticFieldsArray
   }
+};
+
+async function createStatisticRows() {
+  for (const method in methods) {
+    const statistic = await methods[method].model.findOne({
+      ...searchOptionsYesterday,
+      attributes: { exclude: ['date', 'createdAt', 'updatedAt'] }
+    });
+
+    await methods[method].model.findOrCreate({
+      ...searchOptions,
+      defaults: statistic ? statistic.toJSON() : statistic
+    });
+  }
 }
 
-export default async function(payload: { incrementField: string, by?: number }) {
+export default async function(payload: { incrementField: string, statistic: string, by?: number, type?: StatisticAction }) {
   try {
-    for (const method in methods) {
-      const ifExist = methods[method].array.includes(payload.incrementField);
+    if (!payload.type) {
+      payload.type = 'increment';
+    }
 
-      if (!ifExist) {
-        continue;
-      }
+    const ifExist = methods[payload.statistic].array.includes(payload.incrementField);
 
-      const [[, updated]] = await writeIncrementStatistic(methods[method].model, payload.incrementField, payload.by);
+    if (!ifExist) {
+      return;
+    }
 
-      if (!updated) {
-        const [
-          raiseViewStatistic,
-          disputeStatistic,
-          reportStatistic,
-          questStatistic,
-          userStatistic,
-          daoStatistic,
-        ] = await Promise.all([
-          RaiseViewsPlatformStatistic.findOne({
-            ...searchOptionsYesterday,
-            attributes: { exclude: ['date'] }
-          }),
-          DisputesPlatformStatistic.findOne({
-            ...searchOptionsYesterday,
-            attributes: { exclude: ['date'] }
-          }),
-          ReportsPlatformStatistic.findOne({
-            ...searchOptionsYesterday,
-            attributes: { exclude: ['date'] }
-          }),
-          QuestsPlatformStatistic.findOne({
-            ...searchOptionsYesterday,
-            attributes: { exclude: ['date'] }
-          }),
-          UsersPlatformStatistic.findOne({
-            ...searchOptionsYesterday,
-            attributes: { exclude: ['date'] }
-          }),
-          DaoPlatformStatistic.findOne({
-            ...searchOptionsYesterday,
-            attributes: { exclude: ['date'] }
-          }),
-        ]);
+    const [[, updated]] = await writeStatistic(
+      methods[payload.statistic].model,
+      payload.incrementField,
+      payload.by,
+      payload.type
+    );
 
-        await Promise.all([
-          RaiseViewsPlatformStatistic.findOrCreate({
-            ...searchOptions,
-            defaults: raiseViewStatistic
-          }),
-          DisputesPlatformStatistic.findOrCreate({
-            ...searchOptions,
-            defaults: disputeStatistic
-          }),
-          ReportsPlatformStatistic.findOrCreate({
-            ...searchOptions,
-            defaults: reportStatistic
-          }),
-          QuestsPlatformStatistic.findOrCreate({
-            ...searchOptions,
-            defaults: questStatistic
-          }),
-          UsersPlatformStatistic.findOrCreate({
-            ...searchOptions,
-            defaults: userStatistic
-          }),
-          DaoPlatformStatistic.findOrCreate({
-            ...searchOptions,
-            defaults: daoStatistic
-          }),
-        ]);
-
-        await writeIncrementStatistic(methods[method].model, payload.incrementField, payload.by);
-      }
+    if (!updated) {
+      await createStatisticRows();
+      await writeStatistic(
+        methods[payload.statistic].model,
+        payload.incrementField,
+        payload.by,
+        payload.type
+      );
     }
   } catch (err) {
     console.log(err);

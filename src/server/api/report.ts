@@ -1,15 +1,16 @@
 import { output } from '../utils';
-import { ReportEntityType, User } from '@workquest/database-models/lib/models';
+import { ReportEntityType, ReportsPlatformStatisticFields, User } from '@workquest/database-models/lib/models';
 import { ReportNotificationActions } from '../controllers/controller.broker';
 import {
-  SendReportHandler,
-  GetMediaByIdsHandler,
   GetEntityForReportHandler,
-  SendReportPreAccessPermission,
-  GetMediasPostValidationHandler,
+  GetEntityForReportPostValidateHandler,
   GetEntityForReportPreValidateHandler,
-  GetEntityForReportPostValidateHandler
+  GetMediaByIdsHandler,
+  GetMediasPostValidationHandler,
+  SendReportHandler,
+  SendReportPreAccessPermission
 } from '../handlers';
+import { writeActionStatistics } from '../jobs/writeActionStatistics';
 
 export async function sendReport(r) {
   const meUser: User = r.auth.credentials;
@@ -41,6 +42,10 @@ export async function sendReport(r) {
   const report = await new SendReportPreAccessPermission(
     new SendReportHandler(r.server.app.db),
   ).Handle({ author: meUser, title, description, medias, entityType, entity });
+
+  if (report.entityType !== ReportEntityType.DiscussionComment) {
+    await writeActionStatistics(ReportsPlatformStatisticFields[report.entityType], 'report');
+  }
 
   r.server.app.broker.sendReportNotification({
     recipients: [r.auth.credentials.id],

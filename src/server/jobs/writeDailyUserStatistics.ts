@@ -2,6 +2,7 @@ import { LoginApp } from '@workquest/database-models/lib/models/user/types';
 import { fn, literal, Op, QueryTypes } from 'sequelize';
 import { addJob } from '../utils/scheduler';
 import {
+  RatingStatus,
   StatusKYC,
   User,
   UserRole,
@@ -22,6 +23,10 @@ const platformQuery = `
           FROM "Sessions") as q
     GROUP BY type;
 `;
+
+const ratingStatusesQuery = `
+  SELECT status, COUNT(*) FROM "RatingStatistics" GROUP BY status;
+`
 
 async function userRawCountBuilder(query: string) {
   const rawCount = await User.sequelize.query(query, { type: QueryTypes.SELECT });
@@ -70,6 +75,7 @@ export default async function() {
     fn('CAST', literal('"phone" IS NOT NULL as bool'))
   );
   const platformType = await userRawCountBuilder(platformQuery);
+  const ratingStatuses = await userRawCountBuilder(ratingStatusesQuery);
 
   for (const statusesKey in statuses) {
     if (parseInt(statusesKey) === UserStatus.Confirmed) {
@@ -114,6 +120,18 @@ export default async function() {
       todayUserStatistics.useWallet = platformType[platform];
     } else if (platform === 'web') {
       todayUserStatistics.useWeb = platformType[platform];
+    }
+  }
+
+  for (const ratingStatus in ratingStatuses) {
+    if (parseInt(ratingStatus) === RatingStatus.NoStatus) {
+      todayUserStatistics.noStatus = ratingStatuses[ratingStatus];
+    } else if (parseInt(ratingStatus) === RatingStatus.Verified) {
+      todayUserStatistics.verified = ratingStatuses[ratingStatus];
+    } else if (parseInt(ratingStatus) === RatingStatus.Reliable) {
+      todayUserStatistics.reliable = ratingStatuses[ratingStatus];
+    } else if (parseInt(ratingStatus) === RatingStatus.TopRanked) {
+      todayUserStatistics.topRanked = ratingStatuses[ratingStatus];
     }
   }
 

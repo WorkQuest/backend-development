@@ -1,35 +1,38 @@
-import { literal, Op } from "sequelize";
-import { addSendSmsJob } from "../jobs/sendSms";
-import { error, getRandomCodeNumber, output } from "../utils";
-import { UserController, UserOldController } from "../controllers/user/controller.user";
-import { transformToGeoPostGIS } from "../utils/postGIS";
-import { MediaController } from "../controllers/controller.media";
-import { SkillsFiltersController } from "../controllers/controller.skillsFilters";
-import { addUpdateReviewStatisticsJob } from "../jobs/updateReviewStatistics";
-import { updateUserRaiseViewStatusJob } from "../jobs/updateUserRaiseViewStatus";
-import { updateQuestsStatisticJob } from "../jobs/updateQuestsStatistic";
-import { deleteUserFiltersJob } from "../jobs/deleteUserFilters";
-import { Errors } from "../utils/errors";
+import { literal, Op } from 'sequelize';
+import { addSendSmsJob } from '../jobs/sendSms';
+import { error, getRandomCodeNumber, output } from '../utils';
+import { UserController, UserOldController } from '../controllers/user/controller.user';
+import { transformToGeoPostGIS } from '../utils/postGIS';
+import { MediaController } from '../controllers/controller.media';
+import { SkillsFiltersController } from '../controllers/controller.skillsFilters';
+import { addUpdateReviewStatisticsJob } from '../jobs/updateReviewStatistics';
+import { updateUserRaiseViewStatusJob } from '../jobs/updateUserRaiseViewStatus';
+import { updateQuestsStatisticJob } from '../jobs/updateQuestsStatistic';
+import { deleteUserFiltersJob } from '../jobs/deleteUserFilters';
+import { Errors } from '../utils/errors';
 import {
-  UserChatsStatistic,
-  Quest,
   EmployerProfileVisibilitySetting,
+  Quest,
   QuestsResponse,
   QuestsResponseStatus,
   QuestsStatistic,
   QuestStatus,
-  RatingStatistic, RatingStatus,
+  RatingStatistic,
+  RatingStatus,
   ReferralProgramAffiliate,
   User,
   UserChangeRoleData,
+  UserChatsStatistic,
   UserRaiseStatus,
   UserRaiseView,
   UserRole,
+  UsersPlatformStatisticFields,
   UserStatus,
   Wallet,
   WorkerProfileVisibilitySetting
-} from "@workquest/database-models/lib/models";
-import { convertAddressToHex } from "../utils/profile";
+} from '@workquest/database-models/lib/models';
+import { convertAddressToHex } from '../utils/profile';
+import { writeActionStatistics } from '../jobs/writeActionStatistics';
 
 export const searchFields = [
   "firstName",
@@ -344,6 +347,8 @@ export async function setRole(r) {
 
   await UserController.createProfileVisibility({ userId: user.id, role: r.payload.role });
 
+  await writeActionStatistics(r.payload.role + 's', 'user');
+
   return output();
 }
 
@@ -436,6 +441,8 @@ export async function confirmPhoneNumber(r) {
     .userMustHaveVerificationPhone()
     .checkPhoneConfirmationCode(r.payload.confirmCode)
     .confirmPhoneNumber()
+
+  await writeActionStatistics(UsersPlatformStatisticFields.SmsPassed, 'user');
 
   return output();
 }
@@ -572,6 +579,18 @@ export async function changeUserRole(r) {
     userId: user.id,
     role: user.role,
   });
+  await writeActionStatistics(
+    UsersPlatformStatisticFields.Workers,
+    'user',
+    1,
+    user.role === UserRole.Worker ? 'increment' : 'decrement'
+  );
+  await writeActionStatistics(
+    UsersPlatformStatisticFields.Employers,
+    'user',
+    1,
+    user.role === UserRole.Employer ? 'increment' : 'decrement'
+  );
 
   return output();
 }

@@ -13,8 +13,9 @@ import {
   QuestStatus,
   QuestDispute,
   DisputeStatus,
-  QuestDisputeReview,
-} from "@workquest/database-models/lib/models";
+  QuestDisputeReview, DisputesPlatformStatisticFields
+} from '@workquest/database-models/lib/models';
+import { writeActionStatistics } from '../jobs/writeActionStatistics';
 
 export async function createDispute(r) {
   const user: User = r.auth.credentials;
@@ -55,6 +56,11 @@ export async function createDispute(r) {
     reason: r.payload.reason,
     problemDescription: r.payload.problemDescription,
   });
+
+  await Promise.all([
+    writeActionStatistics(DisputesPlatformStatisticFields.Pending, 'dispute'),
+    writeActionStatistics(DisputesPlatformStatisticFields.Total, 'dispute'),
+  ]);
 
   return output(await QuestDispute.findByPk(dispute.id));
 }
