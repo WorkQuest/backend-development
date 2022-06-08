@@ -1,3 +1,4 @@
+import { addJob } from '../utils/scheduler';
 import {
   raiseViewsPlatformStatisticFieldsArray,
   disputesPlatformStatisticFieldsArray,
@@ -13,10 +14,15 @@ import {
   DaoPlatformStatistic,
 } from '@workquest/database-models/lib/models';
 
+const searchOptionsYesterday = { where: { date: new Date(Date.now() - 86400000) } };
 const searchOptions = { where: { date: new Date() } };
 
-async function writeStatistic(statisticModel, incrementField: string) {
-  return statisticModel.increment(incrementField, searchOptions);
+export async function writeActionStatistics(incrementField, by = 1) {
+  return addJob('writeActionStatistics', { incrementField, by });
+}
+
+async function writeIncrementStatistic(statisticModel, incrementField: string, by: string | number = 1) {
+  return statisticModel.increment(incrementField, { ...searchOptions, by });
 }
 
 const methods = {
@@ -46,10 +52,8 @@ const methods = {
   }
 }
 
-export default async function(payload: { incrementField: string }) {
+export default async function(payload: { incrementField: string, by?: number }) {
   try {
-    let statisticUpdated = false;
-
     for (const method in methods) {
       const ifExist = methods[method].array.includes(payload.incrementField);
 
@@ -57,20 +61,72 @@ export default async function(payload: { incrementField: string }) {
         continue;
       }
 
-      const [[, updated]] = await writeStatistic(methods[method].model, payload.incrementField);
+      const [[, updated]] = await writeIncrementStatistic(methods[method].model, payload.incrementField, payload.by);
 
-      statisticUpdated = updated;
-    }
+      if (!updated) {
+        const [
+          raiseViewStatistic,
+          disputeStatistic,
+          reportStatistic,
+          questStatistic,
+          userStatistic,
+          daoStatistic,
+        ] = await Promise.all([
+          RaiseViewsPlatformStatistic.findOne({
+            ...searchOptionsYesterday,
+            attributes: { exclude: ['date'] }
+          }),
+          DisputesPlatformStatistic.findOne({
+            ...searchOptionsYesterday,
+            attributes: { exclude: ['date'] }
+          }),
+          ReportsPlatformStatistic.findOne({
+            ...searchOptionsYesterday,
+            attributes: { exclude: ['date'] }
+          }),
+          QuestsPlatformStatistic.findOne({
+            ...searchOptionsYesterday,
+            attributes: { exclude: ['date'] }
+          }),
+          UsersPlatformStatistic.findOne({
+            ...searchOptionsYesterday,
+            attributes: { exclude: ['date'] }
+          }),
+          DaoPlatformStatistic.findOne({
+            ...searchOptionsYesterday,
+            attributes: { exclude: ['date'] }
+          }),
+        ]);
 
-    if (!statisticUpdated) {
-      await Promise.all([
-        RaiseViewsPlatformStatistic.findOrCreate(searchOptions),
-        DisputesPlatformStatistic.findOrCreate(searchOptions),
-        ReportsPlatformStatistic.findOrCreate(searchOptions),
-        QuestsPlatformStatistic.findOrCreate(searchOptions),
-        UsersPlatformStatistic.findOrCreate(searchOptions),
-        DaoPlatformStatistic.findOrCreate(searchOptions),
-      ]);
+        await Promise.all([
+          RaiseViewsPlatformStatistic.findOrCreate({
+            ...searchOptions,
+            defaults: raiseViewStatistic
+          }),
+          DisputesPlatformStatistic.findOrCreate({
+            ...searchOptions,
+            defaults: disputeStatistic
+          }),
+          ReportsPlatformStatistic.findOrCreate({
+            ...searchOptions,
+            defaults: reportStatistic
+          }),
+          QuestsPlatformStatistic.findOrCreate({
+            ...searchOptions,
+            defaults: questStatistic
+          }),
+          UsersPlatformStatistic.findOrCreate({
+            ...searchOptions,
+            defaults: userStatistic
+          }),
+          DaoPlatformStatistic.findOrCreate({
+            ...searchOptions,
+            defaults: daoStatistic
+          }),
+        ]);
+
+        await writeIncrementStatistic(methods[method].model, payload.incrementField, payload.by);
+      }
     }
   } catch (err) {
     console.log(err);
