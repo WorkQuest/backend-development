@@ -240,10 +240,6 @@ export async function getChatMessages(r) {
         model: Media,
         as: 'avatar',
       }],
-    }, {
-      model: ChatMemberData,
-      attributes: ["lastReadMessageId", "unreadCountMessages", "lastReadMessageNumber"],
-      as: 'chatMemberData',
     }],
   }, {
     model: Media,

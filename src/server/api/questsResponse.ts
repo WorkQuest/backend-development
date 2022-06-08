@@ -60,12 +60,6 @@ export async function responseOnQuest(r) {
     return [questResponseController, questChatController];
   }) as [QuestResponseController, QuestChatController];
 
-  r.server.app.broker.sendChatNotification({
-    action: ChatNotificationActions.newMessage,
-    recipients: [questController.quest.userId],
-    data: await questChatController.firstMessage(),
-  });
-
   const wallet = await Wallet.unscoped().findOne({
     where: {
       userId: workerController.user.id
@@ -74,6 +68,12 @@ export async function responseOnQuest(r) {
   });
 
   questResponseController.worker.wallet = wallet;
+
+  r.server.app.broker.sendChatNotification({
+    action: ChatNotificationActions.newMessage,
+    recipients: [questController.quest.userId],
+    data: await questChatController.firstMessage(),
+  });
 
   r.server.app.broker.sendQuestNotification({
     action: QuestNotificationActions.workerRespondedToQuest,
@@ -220,6 +220,15 @@ export async function acceptInviteOnQuest(r) {
     await questInviteController.acceptInvitation({ tx });
     await questChatController.sendInfoMessageAboutAcceptInvite({ tx });
   });
+
+  const wallet = await Wallet.unscoped().findOne({
+    where: {
+      userId: workerController.user.id
+    },
+    attributes: ["address"]
+  });
+
+  questInviteController.worker.wallet = wallet;
 
   r.server.app.broker.sendQuestNotification({
     action: QuestNotificationActions.workerAcceptedInvitationToQuest,
