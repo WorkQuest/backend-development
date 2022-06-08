@@ -9,7 +9,7 @@ import {
   outputPaginationSchema,
   titleSupportTicketSchema,
   statusSupportTicketSchema,
-  descriptionSupportTicketSchema,
+  descriptionSupportTicketSchema, sortDirectionSchema
 } from '@workquest/database-models/lib/schemes';
 
 export default [{
@@ -46,6 +46,9 @@ export default [{
         limit: limitSchema,
         offset: offsetSchema,
         status: statusSupportTicketSchema,
+        sort: Joi.object({
+          createdAt: sortDirectionSchema.default('DESC'),
+        }).default({ createdAt: 'DESC' }).label('SortTickets'),
       }).label('GetUserSupportTicketQuery')
     },
     response: {
