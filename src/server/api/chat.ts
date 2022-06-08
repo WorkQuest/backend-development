@@ -1,4 +1,4 @@
-import { literal, Op, where } from 'sequelize';
+import { literal, Op } from 'sequelize';
 import { output } from '../utils';
 import { updateChatDataJob } from "../jobs/updateChatData";
 import { setMessageAsReadJob } from '../jobs/setMessageAsRead';
