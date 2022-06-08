@@ -240,6 +240,10 @@ export async function getChatMessages(r) {
         model: Media,
         as: 'avatar',
       }],
+    }, {
+      model: ChatMemberData,
+      attributes: ["lastReadMessageId", "unreadCountMessages", "lastReadMessageNumber"],
+      as: 'chatMemberData',
     }],
   }, {
     model: Media,
@@ -808,6 +812,23 @@ export async function getUserStarredMessages(r) {
         model: Chat.unscoped(),
         as: 'chat',
       },
+      {
+        model: ChatMember,
+        as: 'sender',
+        include: [{
+          model: User.unscoped(),
+          as: 'user',
+          attributes: ["id", "avatarId", "firstName", "lastName"],
+          include: [{
+            model: Media,
+            as: 'avatar',
+          }],
+        }],
+      },
+      {
+        model: Media,
+        as: 'medias'
+      }
     ],
   });
 
