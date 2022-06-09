@@ -1,4 +1,4 @@
-import { Op } from "sequelize";
+import { literal, Op } from "sequelize";
 import { addJob } from "../utils/scheduler";
 import {
   AdminChatStatistic,
@@ -41,6 +41,10 @@ async function updateAdminChatStatistic(adminId: string, unreadChatsCounter: num
 export default async function updateCountUnreadChats(payload: UpdateCountUnreadChatsPayload) {
   // TODO для юзеров и для админов + вынести в отдельные функции
   for (const member of payload.members) {
+    const userOrAdminLiteral = literal(
+      `(CASE WHEN EXISTS (SELECT "id" FROM "Users" WHERE "Users"."id" = '${ member.userId }') ` +
+      `THEN "userId" = '${ member.userId }' ELSE "adminId" = '${ member.adminId }' END)`
+    )
     const unreadChatsCounter = await ChatMember.unscoped().count({
       include: [{
         model: ChatMemberData,
@@ -50,18 +54,19 @@ export default async function updateCountUnreadChats(payload: UpdateCountUnreadC
         },
       }],
       where: {
-        [Op.or]: [{ userId: member.userId }, { adminId: member.adminId }],
+        userOrAdminLiteral,
         status: MemberStatus.Active,
       }
     });
+    console.log(unreadChatsCounter);
 
-    if (member.type === MemberType.User) {
-      await updateUserChatStatistic(member.userId, unreadChatsCounter);
-    }
-
-    if (member.type === MemberType.Admin) {
-      await updateAdminChatStatistic(member.adminId, unreadChatsCounter);
-    }
+    // if (member.type === MemberType.User) {
+    //   await updateUserChatStatistic(member.userId, unreadChatsCounter);
+    // }
+    //
+    // if (member.type === MemberType.Admin) {
+    //   await updateAdminChatStatistic(member.adminId, unreadChatsCounter);
+    // }
   }
 
   // const updateValueLiteral = literal(`
