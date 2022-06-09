@@ -20,7 +20,7 @@ import {
   MemberStatus,
   StarredMessage,
   SenderMessageStatus,
-  ChatMemberDeletionData, ChatType, Quest, GroupChat, Media, InfoMessage, ChatMemberData
+  ChatMemberDeletionData, ChatType, Quest, GroupChat, Media, InfoMessage, ChatMemberData, ChatDeletionData
 } from "@workquest/database-models/lib/models";
 import {
   GetChatByIdHandler,
@@ -59,7 +59,6 @@ import {
   GetChatMemberPostLimitedAccessPermissionHandler,
   DeletedMemberFromGroupChatPreAccessPermissionHandler,
 } from "../handlers";
-import { ChatDeletionData } from "@workquest/database-models/lib/models/chats/ChatDeletionData";
 
 export async function getUserChats(r) {
   const searchByQuestNameLiteral = literal(
@@ -750,16 +749,38 @@ export async function removeChatFromList(r) {
 
   const meMember = await new GetChatMemberByUserHandler().Handle({ user: meUser, chat });
 
-  const chatDeletionData = await ChatDeletionData.create({
-    userId: meUser.id,
-    chatId: chat.id,
-    beforeDeletionMessageId: chat.chatData.lastMessageId,
-    beforeDeletionMessageNumber: chat.chatData.lastMessage.number,
+  // const chatDeletionData = await ChatDeletionData.create({
+  //   chatMemberId: meMember.id,
+  //   chatId: chat.id,
+  //   beforeDeletionMessageId: chat.chatData.lastMessageId,
+  //   beforeDeletionMessageNumber: chat.chatData.lastMessage.number,
+  // });
+
+  const chatDeletionDataLiteral = literal((
+    'NOT EXISTS "chatDeletionData"'
+  ));
+
+  const unreadChatsCounter = await ChatMember.unscoped().count({
+    include: [{
+      model: ChatMemberData,
+      as: 'chatMemberData',
+      where: {
+        unreadCountMessages: { [Op.ne]: 0 },
+      },
+    }, {
+      model: ChatDeletionData,
+      as: 'chatDeletionData'
+    }],
+    where: {
+      [Op.or]: [{ userId: meMember.userId }, { adminId: meMember.adminId }],
+      status: MemberStatus.Active,
+      chatDeletionDataLiteral,
+    }
   });
 
-  await updateCountUnreadChatsJob({ members: [meMember] });
+  //await updateCountUnreadChatsJob({ members: [meMember] });
 
-  return output();
+  return output(unreadChatsCounter);
 }
 
 export async function setMessagesAsRead(r) {
