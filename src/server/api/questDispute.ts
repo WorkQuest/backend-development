@@ -5,6 +5,7 @@ import { ChecksListQuest } from '../checks-list/checksList.quest';
 import { UserOldController } from "../controllers/user/controller.user";
 import { QuestControllerFactory } from '../factories/factory.questController';
 import { addUpdateDisputeReviewStatisticsJob } from "../jobs/updateDisputeReviewStatistics";
+import { QuestStatisticController } from '../controllers/statistic/controller.questStatistic';
 import {
   User,
   Admin,
@@ -15,7 +16,6 @@ import {
   DisputeStatus,
   QuestDisputeReview, DisputesPlatformStatisticFields
 } from '@workquest/database-models/lib/models';
-import { writeActionStatistics } from '../jobs/writeActionStatistics';
 
 export async function createDispute(r) {
   const user: User = r.auth.credentials;
@@ -57,10 +57,7 @@ export async function createDispute(r) {
     problemDescription: r.payload.problemDescription,
   });
 
-  await Promise.all([
-    writeActionStatistics(DisputesPlatformStatisticFields.Pending, 'dispute'),
-    writeActionStatistics(DisputesPlatformStatisticFields.Total, 'dispute'),
-  ]);
+  await QuestStatisticController.createDisputeAction();
 
   return output(await QuestDispute.findByPk(dispute.id));
 }

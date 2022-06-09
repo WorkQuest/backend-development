@@ -1,4 +1,4 @@
-import { addJob } from '../utils/scheduler';
+import { StatisticAction } from '../controllers/statistic/controller.baseStatistic';
 import {
   raiseViewsPlatformStatisticFieldsArray,
   disputesPlatformStatisticFieldsArray,
@@ -14,22 +14,8 @@ import {
   DaoPlatformStatistic
 } from '@workquest/database-models/lib/models';
 
-type Statistics =
-  | 'raiseView'
-  | 'dispute'
-  | 'report'
-  | 'quest'
-  | 'user'
-  | 'dao'
-
-type StatisticAction = 'increment' | 'decrement'
-
 const searchOptionsYesterday = { where: { date: new Date(Date.now() - 86400000) } };
 const searchOptions = { where: { date: new Date() } };
-
-export async function writeActionStatistics(incrementField, statistic: Statistics, by: string | number = 1, type: StatisticAction = 'increment') {
-  return addJob('writeActionStatistics', { incrementField, statistic, by, type });
-}
 
 async function writeStatistic(statisticModel, incrementField: string, by: string | number = 1, type: StatisticAction) {
   return statisticModel[type].call(statisticModel, incrementField, { ...searchOptions, by });

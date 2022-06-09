@@ -1,4 +1,4 @@
-import { writeActionStatistics } from './writeActionStatistics';
+import { UserStatisticController } from '../controllers/statistic/controller.userStatistic';
 import { addJob } from '../utils/scheduler';
 import { col, fn } from 'sequelize';
 import {
@@ -9,7 +9,7 @@ import {
   QuestStatus,
   RatingStatus,
   QuestsReview,
-  RatingStatistic, UsersPlatformStatisticFields
+  RatingStatistic,
 } from '@workquest/database-models/lib/models';
 
 /**
@@ -122,11 +122,11 @@ export default async function (payload: StatisticPayload) {
 
   const status = ratingStatus(user, completedQuestsCount, averageMarkResult.getDataValue('avgMark'));
 
+  await UserStatisticController.setRatingStatusAction(status, ratingStatistic.status);
+
   await ratingStatistic.update({
     status,
     reviewCount,
     averageMark: averageMarkResult.getDataValue('avgMark'),
   });
-
-  await writeActionStatistics(UsersPlatformStatisticFields[RatingStatus[status]], 'user');
 }

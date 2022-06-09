@@ -8,18 +8,17 @@ import converter from 'bech32-converting';
 import { addSendEmailJob } from '../jobs/sendEmail';
 import { generateJwt } from '../utils/auth';
 import { UserController, UserOldController } from '../controllers/user/controller.user';
+import { UserStatisticController } from '../controllers/statistic/controller.userStatistic';
 import { ChecksListUser } from '../checks-list/checksList.user';
 import { totpValidate } from '@workquest/database-models/lib/utils';
 import { createReferralProgramJob } from '../jobs/createReferralProgram';
 import { UserControllerFactory } from '../factories/factory.userController';
 import { error, getDevice, getGeo, getRandomHexToken, getRealIp, output } from '../utils';
 import { LoginApp } from '@workquest/database-models/lib/models/user/types';
-import { writeActionStatistics } from '../jobs/writeActionStatistics';
 import {
   defaultUserSettings,
   Session,
   User,
-  UsersPlatformStatisticFields,
   UserStatus,
   Wallet
 } from '@workquest/database-models/lib/models';
@@ -92,22 +91,8 @@ export function register(host: 'dao' | 'main') {
       userStatus: user.status,
     };
 
-    if (
-      session.device.startsWith('Android') ||
-      session.device.startsWith('iOS') ||
-      session.device.startsWith('Dart')
-    ) {
-      await writeActionStatistics(UsersPlatformStatisticFields.UseApp, 'user');
-    } else {
-      await writeActionStatistics(UsersPlatformStatisticFields.UseWeb, 'user');
-    }
-
-    await Promise.all([
-      writeActionStatistics(UsersPlatformStatisticFields.Registered, 'user'),
-      writeActionStatistics(UsersPlatformStatisticFields.Unfinished, 'user'),
-      writeActionStatistics(UsersPlatformStatisticFields.KycNotPassed, 'user'),
-      writeActionStatistics(UsersPlatformStatisticFields.SmsNotPassed, 'user'),
-    ]);
+    await UserStatisticController.loginAction(session);
+    await UserStatisticController.registeredAction();
 
     return output(result);
   };
@@ -164,8 +149,6 @@ export function getLoginViaSocialNetworkHandler(returnType: 'token' | 'redirect'
     const user = await UserOldController.getUserByNetworkProfile(r.auth.strategy, profile, referralId);
     const userController = new UserOldController(user);
 
-    await writeActionStatistics(r.auth.strategy, 'user');
-
     const session = await Session.create({
       userId: user.id,
       invalidating: false,
@@ -180,10 +163,10 @@ export function getLoginViaSocialNetworkHandler(returnType: 'token' | 'redirect'
       userStatus: user.status,
     };
 
+    await UserStatisticController.loginAction(session);
+
     if (returnType === 'redirect') {
       const qs = querystring.stringify(result);
-
-      await writeActionStatistics(UsersPlatformStatisticFields.UseWeb, 'user');
 
       return h.redirect(
         platform === 'main'
@@ -191,8 +174,6 @@ export function getLoginViaSocialNetworkHandler(returnType: 'token' | 'redirect'
           : config.baseUrlDao + '/sign-in?' + qs,
       );
     }
-
-    await writeActionStatistics(UsersPlatformStatisticFields.UseApp, 'user');
 
     return output(result);
   };
@@ -214,12 +195,13 @@ export async function confirmEmail(r) {
     if (role) {
       await userController.confirmUser(role, { tx });
       await UserController.createProfileVisibility({ userId: userController.user.id, role }, { tx });
+      await UserStatisticController.addRoleAction(role);
     } else {
       await userController.confirmUserWithStatusNeedSetRole({ tx });
     }
   });
 
-  await writeActionStatistics(UsersPlatformStatisticFields.Finished, 'user');
+  await UserStatisticController.finishedAction();
 
   return output({ status: userController.user.status });
 }
@@ -257,15 +239,7 @@ export async function login(r) {
     address: user.wallet ? user.wallet.address : null,
   };
 
-  if (
-    session.device.startsWith('Android') ||
-    session.device.startsWith('iOS') ||
-    session.device.startsWith('Dart')
-  ) {
-    await writeActionStatistics(UsersPlatformStatisticFields.UseApp, 'user');
-  } else {
-    await writeActionStatistics(UsersPlatformStatisticFields.UseWeb, 'user');
-  }
+  await UserStatisticController.loginAction(session);
 
   return output(result);
 }
@@ -286,15 +260,7 @@ export async function refreshTokens(r) {
     userStatus: r.auth.credentials.status,
   };
 
-  if (
-    newSession.device.startsWith('Android') ||
-    newSession.device.startsWith('iOS') ||
-    newSession.device.startsWith('Dart')
-  ) {
-    await writeActionStatistics(UsersPlatformStatisticFields.UseApp, 'user');
-  } else {
-    await writeActionStatistics(UsersPlatformStatisticFields.UseWeb, 'user');
-  }
+  await UserStatisticController.loginAction(newSession);
 
   return output(result);
 }
@@ -388,7 +354,7 @@ export async function loginWallet(r) {
     userId: user.id,
   };
 
-  await writeActionStatistics(UsersPlatformStatisticFields.UseWallet, 'user');
+  await UserStatisticController.loginAction(session);
 
   return output(result);
 }

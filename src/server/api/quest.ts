@@ -10,7 +10,7 @@ import { updateQuestsStatisticJob } from "../jobs/updateQuestsStatistic";
 import { SkillsFiltersController } from "../controllers/controller.skillsFilters";
 import { EmployerControllerFactory, WorkerControllerFactory } from "../factories/factory.userController";
 import { QuestControllerFactory } from "../factories/factory.questController";
-import { writeActionStatistics } from '../jobs/writeActionStatistics';
+import { QuestStatisticController } from '../controllers/statistic/controller.questStatistic';
 import {
   DisputeStatus,
   Quest,
@@ -25,7 +25,6 @@ import {
   QuestStatus,
   User,
   UserRole,
-  QuestsPlatformStatisticFields
 } from '@workquest/database-models/lib/models';
 
 
@@ -149,11 +148,7 @@ export async function createQuest(r) {
     role: UserRole.Employer,
   });
 
-  await Promise.all([
-    writeActionStatistics(QuestsPlatformStatisticFields.Sum, 'quest', questController.quest.price),
-    writeActionStatistics(QuestsPlatformStatisticFields.Total, 'quest'),
-    writeActionStatistics(QuestsPlatformStatisticFields.Pending, 'quest'),
-  ]);
+  await QuestStatisticController.createQuestAction(questController.quest.price);
 
   return output(questController.quest);
 }
