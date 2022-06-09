@@ -1,11 +1,12 @@
-import { Op } from "sequelize";
+import { literal, Op } from "sequelize";
 import { addJob } from "../utils/scheduler";
 import {
   AdminChatStatistic,
   ChatMember,
   ChatMemberData, MemberStatus,
   MemberType,
-  UserChatsStatistic
+  UserChatsStatistic,
+  ChatDeletionData
 } from "@workquest/database-models/lib/models";
 
 export type UpdateCountUnreadChatsPayload = {
@@ -39,7 +40,10 @@ async function updateAdminChatStatistic(adminId: string, unreadChatsCounter: num
 }
 
 export default async function updateCountUnreadChats(payload: UpdateCountUnreadChatsPayload) {
-  // TODO для юзеров и для админов + вынести в отдельные функции
+  const chatDeletionDataLiteral = literal((
+    'NOT EXISTS "chatDeletionData"'
+  ));
+
   for (const member of payload.members) {
     const unreadChatsCounter = await ChatMember.unscoped().count({
       include: [{
@@ -49,11 +53,13 @@ export default async function updateCountUnreadChats(payload: UpdateCountUnreadC
           unreadCountMessages: { [Op.ne]: 0 },
         },
       }, {
-        model:
+        model: ChatDeletionData,
+        as: 'chatDeletionData'
       }],
       where: {
         [Op.or]: [{ userId: member.userId }, { adminId: member.adminId }],
         status: MemberStatus.Active,
+        chatDeletionDataLiteral,
       }
     });
 
