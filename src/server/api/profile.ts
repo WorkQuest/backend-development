@@ -1,35 +1,37 @@
-import { literal, Op } from "sequelize";
-import { addSendSmsJob } from "../jobs/sendSms";
-import { error, getRandomCodeNumber, output } from "../utils";
-import { UserController, UserOldController } from "../controllers/user/controller.user";
-import { transformToGeoPostGIS } from "../utils/postGIS";
-import { MediaController } from "../controllers/controller.media";
-import { SkillsFiltersController } from "../controllers/controller.skillsFilters";
-import { addUpdateReviewStatisticsJob } from "../jobs/updateReviewStatistics";
-import { updateUserRaiseViewStatusJob } from "../jobs/updateUserRaiseViewStatus";
-import { updateQuestsStatisticJob } from "../jobs/updateQuestsStatistic";
-import { deleteUserFiltersJob } from "../jobs/deleteUserFilters";
-import { Errors } from "../utils/errors";
+import { literal, Op } from 'sequelize';
+import { addSendSmsJob } from '../jobs/sendSms';
+import { error, getRandomCodeNumber, output } from '../utils';
+import { UserController, UserOldController } from '../controllers/user/controller.user';
+import { UserStatisticController } from '../controllers/statistic/controller.userStatistic';
+import { transformToGeoPostGIS } from '../utils/postGIS';
+import { MediaController } from '../controllers/controller.media';
+import { SkillsFiltersController } from '../controllers/controller.skillsFilters';
+import { addUpdateReviewStatisticsJob } from '../jobs/updateReviewStatistics';
+import { updateUserRaiseViewStatusJob } from '../jobs/updateUserRaiseViewStatus';
+import { updateQuestsStatisticJob } from '../jobs/updateQuestsStatistic';
+import { deleteUserFiltersJob } from '../jobs/deleteUserFilters';
+import { convertAddressToHex } from '../utils/profile';
+import { Errors } from '../utils/errors';
 import {
-  UserChatsStatistic,
-  Quest,
   EmployerProfileVisibilitySetting,
+  Quest,
   QuestsResponse,
   QuestsResponseStatus,
   QuestsStatistic,
   QuestStatus,
-  RatingStatistic, RatingStatus,
+  RatingStatistic,
+  RatingStatus,
   ReferralProgramAffiliate,
   User,
   UserChangeRoleData,
+  UserChatsStatistic,
   UserRaiseStatus,
   UserRaiseView,
   UserRole,
   UserStatus,
   Wallet,
   WorkerProfileVisibilitySetting
-} from "@workquest/database-models/lib/models";
-import { convertAddressToHex } from "../utils/profile";
+} from '@workquest/database-models/lib/models';
 
 export const searchFields = [
   "firstName",
@@ -344,6 +346,8 @@ export async function setRole(r) {
 
   await UserController.createProfileVisibility({ userId: user.id, role: r.payload.role });
 
+  await UserStatisticController.addRoleAction(r.payload.role);
+
   return output();
 }
 
@@ -436,6 +440,8 @@ export async function confirmPhoneNumber(r) {
     .userMustHaveVerificationPhone()
     .checkPhoneConfirmationCode(r.payload.confirmCode)
     .confirmPhoneNumber()
+
+  await UserStatisticController.smsPassedAction();
 
   return output();
 }
@@ -572,6 +578,7 @@ export async function changeUserRole(r) {
     userId: user.id,
     role: user.role,
   });
+  await UserStatisticController.changeRoleAction(user.role);
 
   return output();
 }

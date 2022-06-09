@@ -1,14 +1,15 @@
 import { output } from '../utils';
 import { ReportEntityType, User } from '@workquest/database-models/lib/models';
 import { ReportNotificationActions } from '../controllers/controller.broker';
+import { ReportStatisticController } from '../controllers/statistic/controller.reportStatistic';
 import {
-  SendReportHandler,
-  GetMediaByIdsHandler,
   GetEntityForReportHandler,
-  SendReportPreAccessPermission,
-  GetMediasPostValidationHandler,
+  GetEntityForReportPostValidateHandler,
   GetEntityForReportPreValidateHandler,
-  GetEntityForReportPostValidateHandler
+  GetMediaByIdsHandler,
+  GetMediasPostValidationHandler,
+  SendReportHandler,
+  SendReportPreAccessPermission
 } from '../handlers';
 
 export async function sendReport(r) {
@@ -41,6 +42,8 @@ export async function sendReport(r) {
   const report = await new SendReportPreAccessPermission(
     new SendReportHandler(r.server.app.db),
   ).Handle({ author: meUser, title, description, medias, entityType, entity });
+
+  await ReportStatisticController.createReportAction(report.entityType);
 
   r.server.app.broker.sendReportNotification({
     recipients: [r.auth.credentials.id],
