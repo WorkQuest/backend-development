@@ -62,17 +62,15 @@ async function createStatisticRows() {
   }
 }
 
-export default async function(payload: { incrementField: string, statistic: string, by?: number, type?: StatisticAction }) {
+export default async function(payload: { incrementField: string, statistic: string, by?: number | string, type?: StatisticAction }) {
   try {
-    if (!payload.type) {
-      payload.type = 'increment';
-    }
-
     const ifExist = methods[payload.statistic].array.includes(payload.incrementField);
 
     if (!ifExist) {
       return;
     }
+
+    payload.type ??= 'increment';
 
     const [[, updated]] = await writeStatistic(
       methods[payload.statistic].model,
