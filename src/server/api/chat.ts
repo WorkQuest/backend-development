@@ -1,4 +1,4 @@
-import { literal, Op, where } from 'sequelize';
+import { literal, Op } from 'sequelize';
 import { output } from '../utils';
 import { updateChatDataJob } from "../jobs/updateChatData";
 import { setMessageAsReadJob } from '../jobs/setMessageAsRead';
@@ -61,8 +61,6 @@ import {
 } from "../handlers";
 import { ChatDeletionData } from "@workquest/database-models/lib/models/chats/ChatDeletionData";
 
-export const searchChatFields = ['name'];
-
 export async function getUserChats(r) {
   const searchByQuestNameLiteral = literal(
     `(SELECT "title" FROM "Quests" WHERE "id" = ` +
@@ -73,6 +71,11 @@ export async function getUserChats(r) {
     `1 = (CASE WHEN EXISTS (SELECT "firstName", "lastName" FROM "Users" as "userMember" ` +
     `INNER JOIN "ChatMembers" AS "member" ON "userMember"."id" = "member"."userId" AND "member"."chatId" = "Chat"."id" ` +
     `WHERE "userMember"."firstName" || ' ' || "userMember"."lastName" ILIKE :query AND "userMember"."id" <> :searcherId) THEN 1 ELSE 0 END ) `,
+  );
+  const searchByGroupNameLiteral = literal(
+    `(SELECT "name" FROM "GroupChats" WHERE "id" = ` +
+    `(SELECT "id" FROM "GroupChats" WHERE "chatId" = "Chat"."id")) ` +
+    ` ILIKE :query`,
   );
   const orderByMessageDateLiteral = literal(
     '(CASE WHEN EXISTS (SELECT "Messages"."createdAt" FROM "ChatMemberDeletionData" INNER JOIN "Messages" ON "beforeDeletionMessageId" = "Messages"."id" ' +
@@ -182,11 +185,9 @@ export async function getUserChats(r) {
   }
 
   if (r.query.q) {
-    where[Op.or] = searchChatFields.map(field => ({
-      [field]: { [Op.iLike]: `%${r.query.q}%` }
-    }));
+    where[Op.or] = [];
 
-    where[Op.or].push(searchByQuestNameLiteral, searchByFirstAndLastNameLiteral);
+    where[Op.or].push(searchByQuestNameLiteral, searchByFirstAndLastNameLiteral, searchByGroupNameLiteral);
 
     replacements['query'] = `%${r.query.q}%`;
     replacements['searcherId'] = r.auth.credentials.id;
@@ -794,7 +795,7 @@ export async function setMessagesAsRead(r) {
   await updateCountUnreadMessagesJob({
     lastUnreadMessage: { id: message.id, number: message.number },
     chatId: chat.id,
-    readerMemberId: chat.meMember.id,
+    readerMemberId: meMember.id,
   });
 
   if (otherSenders.length === 0) {
@@ -835,6 +836,23 @@ export async function getUserStarredMessages(r) {
         model: Chat.unscoped(),
         as: 'chat',
       },
+      {
+        model: ChatMember,
+        as: 'sender',
+        include: [{
+          model: User.unscoped(),
+          as: 'user',
+          attributes: ["id", "avatarId", "firstName", "lastName"],
+          include: [{
+            model: Media,
+            as: 'avatar',
+          }],
+        }],
+      },
+      {
+        model: Media,
+        as: 'medias'
+      }
     ],
   });
 
