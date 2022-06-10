@@ -28,13 +28,13 @@ export class BaseStatisticController {
   }
 
   static async writeActions(payload: WriteActionPayload<string[]>) {
-    for (const incrementField of payload.incrementFields) {
+    return Promise.all(payload.incrementFields.map((field) => {
       return addJob('writeActionStatistics', {
-        incrementField,
+        incrementField: field,
         statistic: payload.statistic,
         by: payload.by || 1,
         type: payload.type || 'increment'
       });
-    }
+    }));
   }
 }
