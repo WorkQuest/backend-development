@@ -31,7 +31,7 @@
     "@types/joi": "^14.3.4",
     "@types/validator": "^13.1.0",
     "@workquest/contract-data-pools": "github:WorkQuest/contract-data-pools#devnet",
-    "@workquest/database-models": "git+https://github.com/WorkQuest/database-models.git#9849351648f34f47193aa2b3606cd7e11877b6ad",
+    "@workquest/database-models": "git+https://github.com/WorkQuest/database-models.git#ebd91652a0b7755b2b6d231fed190841c10dd123",
     "amqplib": "^0.8.0",
     "aws-sdk": "^2.918.0",
     "axios": "^0.21.1",
