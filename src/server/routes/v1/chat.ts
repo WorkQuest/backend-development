@@ -235,7 +235,7 @@ export default [
     },
   },
   {
-    method: 'POST',
+    method: 'DELETE',
     path: '/v1/user/me/chat/{chatId}/remove',
     handler: handlers.removeChatFromList,
     options: {
