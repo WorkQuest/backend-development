@@ -185,7 +185,7 @@ export async function getUserChats(r) {
       model: QuestChat,
       as: 'questChat',
       where: {
-        status: r.query.questChatStatus ? r.query.questChatStatu : { [Op.and]: [QuestChatStatus.Open, QuestChatStatus.Close] },
+        status: r.query.questChatStatus,
       },
     });
   }
