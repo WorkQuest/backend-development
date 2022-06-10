@@ -146,7 +146,7 @@ export async function getUserChats(r) {
         }],
       }, {
         model: InfoMessage,
-        as: 'infoMessage',
+        as: 'infoMessage'
       }],
     }],
   }, {
