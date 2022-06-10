@@ -6,6 +6,7 @@ import * as fs from 'fs';
 import Handlebars = require('handlebars');
 import { User } from '@workquest/database-models/lib/models';
 import { UserOldController } from '../controllers/user/controller.user';
+import { UserStatisticController } from '../controllers/statistic/controller.userStatistic';
 
 const confirmTemplatePath = path.join(__dirname, '..', '..', '..', 'templates', 'confirm2FA.html');
 const confirmTemplate = Handlebars.compile(
@@ -40,6 +41,8 @@ export async function enableTOTP(r) {
     html: emailHtml,
   });
 
+  await UserStatisticController.enableTOTPAction();
+
   return output(base32);
 }
 
@@ -71,6 +74,8 @@ export async function disableTOTP(r) {
     'settings.security.TOTP.active': false,
     'settings.security.TOTP.secret': null,
   });
+
+  await UserStatisticController.disableTOTPAction();
 
   return output();
 }

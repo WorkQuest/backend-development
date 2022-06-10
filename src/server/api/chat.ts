@@ -1,63 +1,70 @@
-import { literal, Op } from 'sequelize';
-import { output } from '../utils';
+import { literal, Op } from "sequelize";
+import { output } from "../utils";
 import { updateChatDataJob } from "../jobs/updateChatData";
-import { setMessageAsReadJob } from '../jobs/setMessageAsRead';
-import { ChatNotificationActions } from '../controllers/controller.broker';
-import { updateCountUnreadChatsJob } from '../jobs/updateCountUnreadChats';
-import { updateCountUnreadMessagesJob } from '../jobs/updateCountUnreadMessages';
-import { listOfUsersByChatsCountQuery, listOfUsersByChatsQuery } from '../queries';
-import { resetUnreadCountMessagesOfMemberJob } from '../jobs/resetUnreadCountMessagesOfMember';
-import { incrementUnreadCountMessageOfMembersJob } from '../jobs/incrementUnreadCountMessageOfMembers';
+import { setMessageAsReadJob } from "../jobs/setMessageAsRead";
+import { ChatNotificationActions } from "../controllers/controller.broker";
+import { updateCountUnreadChatsJob } from "../jobs/updateCountUnreadChats";
+import { updateCountUnreadMessagesJob } from "../jobs/updateCountUnreadMessages";
+import { listOfUsersByChatsCountQuery, listOfUsersByChatsQuery } from "../queries";
+import { resetUnreadCountMessagesOfMemberJob } from "../jobs/resetUnreadCountMessagesOfMember";
+import { incrementUnreadCountMessageOfMembersJob } from "../jobs/incrementUnreadCountMessageOfMembers";
 import {
-  Chat,
-  User,
   Admin,
+  Chat,
   ChatData,
-  Message,
-  QuestChat,
   ChatMember,
-  StarredChat,
+  ChatMemberData,
+  ChatMemberDeletionData,
+  ChatType,
+  GroupChat,
+  InfoMessage,
+  Media,
   MemberStatus,
-  StarredMessage,
+  Message,
+  Quest,
+  QuestChat,
+  QuestChatStatus,
   SenderMessageStatus,
-  ChatMemberDeletionData, ChatType, Quest, GroupChat, Media, InfoMessage, ChatMemberData
+  StarredChat,
+  StarredMessage,
+  User
 } from "@workquest/database-models/lib/models";
 import {
-  GetChatByIdHandler,
-  GetGroupChatHandler,
-  GetUsersByIdHandler,
-  GetUsersByIdsHandler,
-  GetMediaByIdsHandler,
-  MarkChatStarHandler,
+  AddUsersInGroupChatHandler,
+  AddUsersInGroupChatPreAccessPermissionHandler,
+  AddUsersInGroupChatPreValidateHandler,
   CreateGroupChatHandler,
+  DeletedMemberFromGroupChatHandler,
+  DeletedMemberFromGroupChatPreAccessPermissionHandler,
+  DeletedMemberFromGroupChatPreValidateHandler,
+  GetChatByIdHandler,
+  GetChatByIdPostValidationHandler,
+  GetChatMemberByIdHandler,
+  GetChatMemberByUserHandler,
+  GetChatMemberPostFullAccessPermissionHandler,
+  GetChatMemberPostLimitedAccessPermissionHandler,
+  GetChatMemberPostValidationHandler,
+  GetChatMessageByIdHandler,
+  GetChatMessageByIdPostValidatorHandler,
+  GetGroupChatHandler,
+  GetGroupChatPostValidationHandler,
+  GetMediaByIdsHandler,
+  GetMediasPostValidationHandler,
+  GetUsersByIdHandler,
+  GetUsersByIdPostAccessPermissionHandler,
+  GetUsersByIdPostValidationHandler,
+  GetUsersByIdsHandler,
+  GetUsersByIdsPostAccessPermissionHandler,
+  GetUsersByIdsPostValidationHandler,
+  LeaveFromGroupChatHandler,
+  LeaveFromGroupChatPreAccessPermissionHandler,
+  LeaveFromGroupChatPreValidateHandler,
+  MarkChatStarHandler,
+  RemoveStarFromChatHandler,
+  RemoveStarFromMessageHandler,
   SendMessageToChatHandler,
   SendMessageToUserHandler,
-  GetChatMemberByIdHandler,
-  RemoveStarFromChatHandler,
-  LeaveFromGroupChatHandler,
-  GetChatMemberByUserHandler,
-  UserMarkMessageStarHandler,
-  AddUsersInGroupChatHandler,
-  GetChatMessageByIdHandler,
-  RemoveStarFromMessageHandler,
-  GetMediasPostValidationHandler,
-  GetChatByIdPostValidationHandler,
-  GetUsersByIdPostValidationHandler,
-  GetGroupChatPostValidationHandler,
-  DeletedMemberFromGroupChatHandler,
-  GetChatMemberPostValidationHandler,
-  GetUsersByIdsPostValidationHandler,
-  LeaveFromGroupChatPreValidateHandler,
-  AddUsersInGroupChatPreValidateHandler,
-  GetChatMessageByIdPostValidatorHandler,
-  GetUsersByIdPostAccessPermissionHandler,
-  GetUsersByIdsPostAccessPermissionHandler,
-  LeaveFromGroupChatPreAccessPermissionHandler,
-  DeletedMemberFromGroupChatPreValidateHandler,
-  GetChatMemberPostFullAccessPermissionHandler,
-  AddUsersInGroupChatPreAccessPermissionHandler,
-  GetChatMemberPostLimitedAccessPermissionHandler,
-  DeletedMemberFromGroupChatPreAccessPermissionHandler,
+  UserMarkMessageStarHandler
 } from "../handlers";
 
 export async function getUserChats(r) {
@@ -139,7 +146,7 @@ export async function getUserChats(r) {
         }],
       }, {
         model: InfoMessage,
-        as: 'infoMessage',
+        as: 'infoMessage'
       }],
     }],
   }, {
@@ -173,7 +180,7 @@ export async function getUserChats(r) {
     as: 'groupChat',
   }];
 
-  if (r.query.type && r.query.type === ChatType.Quest) {
+  if (r.query.questChatStatus && (r.query.type && r.query.type === ChatType.Quest)) {
     include.push({
       model: QuestChat,
       as: 'questChat',
