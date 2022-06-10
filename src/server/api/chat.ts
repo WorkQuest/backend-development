@@ -180,7 +180,7 @@ export async function getUserChats(r) {
     as: 'groupChat',
   }];
 
-  if (r.query.type && r.query.type === ChatType.Quest) {
+  if (r.query.questChatStatus && (r.query.type && r.query.type === ChatType.Quest)) {
     include.push({
       model: QuestChat,
       as: 'questChat',
