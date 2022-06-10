@@ -8,7 +8,7 @@ export class ReportStatisticController extends BaseStatisticController {
     }
 
     await this.writeAction({
-      incrementFields: ReportsPlatformStatisticFields[entity],
+      incrementFields: ReportsPlatformStatisticFields[entity + 's'],
       statistic: 'report'
     });
   }
