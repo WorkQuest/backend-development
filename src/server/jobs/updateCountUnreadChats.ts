@@ -66,14 +66,13 @@ export default async function updateCountUnreadChats(payload: UpdateCountUnreadC
         chatDeletionDataLiteral,
       }
     });
-    console.log(unreadChatsCounter);
 
-    // if (member.type === MemberType.User) {
-    //   await updateUserChatStatistic(member.userId, unreadChatsCounter);
-    // }
-    //
-    // if (member.type === MemberType.Admin) {
-    //   await updateAdminChatStatistic(member.adminId, unreadChatsCounter);
-    // }
+    if (member.type === MemberType.User) {
+      await updateUserChatStatistic(member.userId, unreadChatsCounter);
+    }
+
+    if (member.type === MemberType.Admin) {
+      await updateAdminChatStatistic(member.adminId, unreadChatsCounter);
+    }
   }
 }

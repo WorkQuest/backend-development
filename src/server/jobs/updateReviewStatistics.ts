@@ -1,5 +1,6 @@
-import { col, fn } from 'sequelize';
+import { UserStatisticController } from '../controllers/statistic/controller.userStatistic';
 import { addJob } from '../utils/scheduler';
+import { col, fn } from 'sequelize';
 import {
   User,
   Quest,
@@ -120,6 +121,8 @@ export default async function (payload: StatisticPayload) {
   ]);
 
   const status = ratingStatus(user, completedQuestsCount, averageMarkResult.getDataValue('avgMark'));
+
+  await UserStatisticController.setRatingStatusAction(status, ratingStatistic.status);
 
   await ratingStatistic.update({
     status,
