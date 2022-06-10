@@ -1,9 +1,9 @@
-import { error, output } from '../utils';
-import { FaucetAmount, FaucetWqtWusd, TransactionStatus, User } from '@workquest/database-models/lib/models';
-import { Errors } from '../utils/errors';
-import { sentFaucetWusdTestnetJob } from '../jobs/sentFaucetWusdTestnet';
-import { sentFaucetWqtTestnetJob } from '../jobs/sentFaucetWqtTestnet';
 import BigNumber from 'bignumber.js';
+import { Errors } from '../utils/errors';
+import { error, output } from '../utils';
+import { sentFaucetWqtTestnetJob } from '../jobs/sentFaucetWqtTestnet';
+import { sentFaucetWusdTestnetJob } from '../jobs/sentFaucetWusdTestnet';
+import { FaucetAmount, FaucetWqtWusd, TransactionStatus, User } from '@workquest/database-models/lib/models';
 
 export async function sentFaucetWusd(r) {
   const user: User = r.auth.credentials;

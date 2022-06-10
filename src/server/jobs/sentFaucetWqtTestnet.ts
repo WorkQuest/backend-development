@@ -1,10 +1,10 @@
-import { addJob } from '../utils/scheduler';
-import { Transaction, TransactionStatus, FaucetWqtWusd } from '@workquest/database-models/lib/models';
-import { error } from '../utils';
-import { Errors } from '../utils/errors';
-import { Networks } from '@workquest/contract-data-pools';
 import Web3 from 'web3';
+import { error } from '../utils';
 import config from '../config/config';
+import { Errors } from '../utils/errors';
+import { addJob } from '../utils/scheduler';
+import { Networks } from '@workquest/contract-data-pools';
+import { Transaction, TransactionStatus, FaucetWqtWusd } from '@workquest/database-models/lib/models';
 
 export interface sentFaucetWqtPayload {
   address: string;
