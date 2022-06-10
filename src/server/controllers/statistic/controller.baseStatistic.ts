@@ -19,7 +19,7 @@ type WriteActionPayload<Increment> = {
 
 export class BaseStatisticController {
   static async writeAction(payload: WriteActionPayload<string>) {
-    return addJob('writeActionStatistics', {
+    await addJob('writeActionStatistics', {
       incrementField: payload.incrementFields,
       statistic: payload.statistic,
       by: payload.by || 1,
@@ -28,13 +28,13 @@ export class BaseStatisticController {
   }
 
   static async writeActions(payload: WriteActionPayload<string[]>) {
-    return Promise.all(payload.incrementFields.map((field) => {
-      return addJob('writeActionStatistics', {
+    for (const field of payload.incrementFields) {
+      await addJob('writeActionStatistics', {
         incrementField: field,
         statistic: payload.statistic,
         by: payload.by || 1,
         type: payload.type || 'increment'
       });
-    }));
+    }
   }
 }
