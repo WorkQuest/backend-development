@@ -1,39 +1,46 @@
 import BigNumber from 'bignumber.js';
 import { Errors } from '../utils/errors';
 import { error, output } from '../utils';
-import { sentFaucetWqtTestnetJob } from '../jobs/sentFaucetWqtTestnet';
-import { sentFaucetWusdTestnetJob } from '../jobs/sentFaucetWusdTestnet';
-import { FaucetAmount, FaucetWqtWusd, TransactionStatus, User } from '@workquest/database-models/lib/models';
+import { sendFaucetWqtTestnetJob } from '../jobs/sendFaucetWqtTestnet';
+import { sendFaucetWusdTestnetJob } from '../jobs/sendFaucetWusdTestnet';
+import {
+  User,
+  Wallet,
+  FaucetSymbol,
+  FaucetAmount,
+  FaucetWqtWusd,
+  TransactionStatus,
+} from '@workquest/database-models/lib/models';
 
 export async function sentFaucetWusd(r) {
   const user: User = r.auth.credentials;
 
-  const userWallet = await User.scope('shortWithWallet').findByPk(user.id);
+  const wallet = await Wallet.findOne({ where: { userId: user.id } });
 
-  if (!userWallet.wallet) {
-    return error(Errors.WalletExists, 'Wallet already exists', {});
+  if (!wallet) {
+    return error(Errors.NotFound, 'User don`t has wallet', {});
   }
 
-  const [,isCreate] = await FaucetWqtWusd.findOrCreate({
+  const [, isCreated] = await FaucetWqtWusd.findOrCreate({
     where: {
-      address: userWallet.wallet.address,
-      symbol: 'WUSD'
+      address: wallet.address,
+      symbol: FaucetSymbol.WUSD
     },
     defaults: {
       userId: user.id,
-      address: userWallet.wallet.address,
+      address: wallet.address,
       amount: new BigNumber(FaucetAmount.WUSD).shiftedBy(18).toString(),
-      symbol: 'WUSD',
+      symbol: FaucetSymbol.WUSD,
       status: TransactionStatus.Pending
     }
   });
 
-  if (!isCreate) {
+  if (!isCreated) {
     return error(Errors.Forbidden, 'Test Wusd coins previously sent', {});
   }
 
-  await sentFaucetWusdTestnetJob({
-    address: userWallet.wallet.address,
+  await sendFaucetWusdTestnetJob({
+    address: wallet.address,
     amount: FaucetAmount.WUSD
   });
 
@@ -43,32 +50,32 @@ export async function sentFaucetWusd(r) {
 export async function sentFaucetWqt(r) {
   const user: User = r.auth.credentials;
 
-  const userWallet = await User.scope('shortWithWallet').findByPk(user.id);
+  const wallet = await Wallet.findOne({ where: { userId: user.id } });
 
-  if (!userWallet.wallet) {
-    return error(Errors.WalletExists, 'Wallet already exists', {});
+  if (!wallet) {
+    return error(Errors.NotFound, 'User don`t has wallet', {});
   }
 
-  const [,isCreate] = await FaucetWqtWusd.findOrCreate({
+  const [, isCreated] = await FaucetWqtWusd.findOrCreate({
     where: {
-      address: userWallet.wallet.address,
-      symbol: 'WQT'
+      address: wallet.address,
+      symbol: FaucetSymbol.WQT
     },
     defaults: {
       userId: user.id,
-      address: userWallet.wallet.address,
+      address: wallet.address,
       amount: new BigNumber(FaucetAmount.WQT).shiftedBy(18).toString(),
-      symbol: 'WQT',
+      symbol: FaucetSymbol.WQT,
       status: TransactionStatus.Pending
     }
   });
 
-  if (!isCreate) {
+  if (!isCreated) {
     return error(Errors.Forbidden, 'Test WQT coins previously sent', {});
   }
 
-  await sentFaucetWqtTestnetJob({
-    address: userWallet.wallet.address,
+  await sendFaucetWqtTestnetJob({
+    address: wallet.address,
     amount: FaucetAmount.WQT
   });
 

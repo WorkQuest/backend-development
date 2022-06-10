@@ -1,15 +1,10 @@
 import Web3 from 'web3';
-import { error } from '../utils';
 import config from '../config/config';
-import { Errors } from '../utils/errors';
 import { addJob } from '../utils/scheduler';
-import {
-  Networks,
-  Store, WorkQuestNetworkContracts
-} from '@workquest/contract-data-pools';
-import { Transaction, TransactionStatus, FaucetWqtWusd } from '@workquest/database-models/lib/models';
+import { Networks } from '@workquest/contract-data-pools';
+import { FaucetSymbol, FaucetWqtWusd, Transaction, TransactionStatus } from '@workquest/database-models/lib/models';
 
-export interface sentFaucetWusdPayload {
+export interface SendFaucetWqtPayload {
   address: string;
   amount: string;
 }
@@ -18,42 +13,40 @@ function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-export async function sentFaucetWusdTestnetJob(payload: sentFaucetWusdPayload) {
-  return addJob('sentFaucetWusdTestnet', payload);
+export async function sendFaucetWqtTestnetJob(payload: SendFaucetWqtPayload) {
+  return addJob('sendFaucetWqtTestnet', payload);
 }
 
-export default async function(payload: sentFaucetWusdPayload) {
+export default async function(payload: SendFaucetWqtPayload) {
   try {
     const transmissionData = await FaucetWqtWusd.findOne({
-      where: { address: payload.address, symbol: 'WUSD' }
+      where: { address: payload.address, symbol: FaucetSymbol.WQT }
     });
 
     if (transmissionData.status !== TransactionStatus.Pending) {
-      return error(Errors.Forbidden, 'Job to send WUSD can`t send transaction, because status not pending ', {});
+      return;
     }
 
     await transmissionData.update({ status: TransactionStatus.InProcess });
-
-    const contractWusdData = Store[Networks.WorkQuest][WorkQuestNetworkContracts.WUSD];
 
     const web3 = new Web3(new Web3.providers.HttpProvider(config.faucet.workQuestDevNetwork.linkRpcProvider));
     const account = web3.eth.accounts.privateKeyToAccount(config.faucet.privateKey);
     web3.eth.accounts.wallet.add(account);
     web3.eth.defaultAccount = account.address;
-    const contractWusd = new web3.eth.Contract(contractWusdData.getAbi(), contractWusdData.address, { from: config.faucet.address });
 
+    const gasLimit = await web3.eth.estimateGas({
+      from: config.faucet.address,
+      to: payload.address,
+      value: web3.utils.toWei(payload.amount.toString())
+    });
     const gasPrice = await web3.eth.getGasPrice();
-    const gasLimit = await contractWusd.methods['transfer'].apply(null, [
-      payload.address,
-      web3.utils.toWei(payload.amount.toString())
-    ]).estimateGas({ from: config.faucet.address });
 
     const transactionConfig = {
       gasPrice,
       gas: gasLimit,
       from: config.faucet.address,
-      to: contractWusdData.address,
-      data: contractWusd.methods.transfer(payload.address, web3.utils.toWei(payload.amount.toString())).encodeABI()
+      to: payload.address,
+      value: web3.utils.toWei(payload.amount.toString())
     };
 
     web3.eth.sendTransaction(transactionConfig)
@@ -69,16 +62,12 @@ export default async function(payload: sentFaucetWusdPayload) {
           network: Networks.WorkQuest
         });
 
-        if (!receipt.status) {
-          transmissionData.status = TransactionStatus.TransactionError;
-        }
-
         await transmissionData.update({
-          status: TransactionStatus.Success,
+          status: receipt.status
+            ? TransactionStatus.Success
+            : TransactionStatus.TransactionError,
           transactionHashFaucetSentToken: transaction.hash
         });
-
-        await transaction.save();
       })
       .catch(async error => {
         await transmissionData.update({
@@ -86,15 +75,16 @@ export default async function(payload: sentFaucetWusdPayload) {
           status: TransactionStatus.BroadcastError
         });
       });
-    await sleep(5000);
   } catch (err) {
     console.log(err);
+
     await FaucetWqtWusd.update({
       error: err.toString(),
       status: TransactionStatus.UnknownError
     }, {
-      where: { address: payload.address, symbol: 'WUSD' }
+      where: { address: payload.address, symbol: FaucetSymbol.WQT }
     });
-    await sleep(5000);
   }
+
+  await sleep(5000);
 }
