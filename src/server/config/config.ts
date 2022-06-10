@@ -91,7 +91,7 @@ export default {
     privateKey: process.env.FAUCET_PRIVATE_KEY,
     address: process.env.FAUCET_WALLET_ADDRESS,
     workQuestDevNetwork: {
-      linkRpcProvider: process.env.WORK_QUEST_DEV_NETWORK_RPC_PROVIDER,
+      linkRpcProvider: process.env.WORK_QUEST_TEST_NETWORK_RPC_PROVIDER,
     },
   }
 };

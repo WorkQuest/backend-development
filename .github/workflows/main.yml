@@ -368,7 +368,7 @@ jobs:
           
             FAUCET_PRIVATE_KEY=${{ secrets.FAUCET_PRIVATE_KEY }} \
             FAUCET_WALLET_ADDRESS=${{ secrets.FAUCET_WALLET_ADDRESS }} \
-            WORK_QUEST_DEV_NETWORK_RPC_PROVIDER=${{ secrets.WORK_QUEST_DEV_NETWORK_RPC_PROVIDER }} \
+            WORK_QUEST_TEST_NETWORK_RPC_PROVIDER=${{ secrets.WORK_QUEST_TEST_NETWORK_RPC_PROVIDER }} \
 
             DEBUG=${{ secrets.DEBUG }} \
             BASE_URL=${{ secrets.BASE_URL }} \
