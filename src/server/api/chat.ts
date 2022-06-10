@@ -23,12 +23,10 @@ import {
   Message,
   Quest,
   QuestChat,
-  QuestChatStatus,
   SenderMessageStatus,
   StarredChat,
   StarredMessage,
-  SenderMessageStatus,
-  ChatMemberDeletionData, ChatType, Quest, GroupChat, Media, InfoMessage, ChatMemberData, ChatDeletionData
+  ChatDeletionData,
   User
 } from "@workquest/database-models/lib/models";
 import {
@@ -68,6 +66,7 @@ import {
   SendMessageToUserHandler,
   UserMarkMessageStarHandler
 } from "../handlers";
+import { RemoveChatFromChatsListHandler } from "../handlers/chat/RemoveChatFromChatsListHandler";
 
 export async function getUserChats(r) {
   const searchByQuestNameLiteral = literal(
@@ -94,10 +93,14 @@ export async function getUserChats(r) {
   );
   const chatTypeLiteral = literal(
     `("Chat"."type" = '${ ChatType.Private }' OR "Chat"."type" = '${ ChatType.Quest }')`
-  )
+  );
+  const chatDeletionDataLiteral = literal((
+    `NOT EXISTS(SELECT "id" FROM "ChatDeletionData" WHERE "chatMemberId" = "meMember"."id") `
+  ));
 
   const where = {
     ...(r.query.type && { type: r.query.type }),
+    chatDeletionDataLiteral
   };
 
   const replacements = {};
@@ -124,7 +127,10 @@ export async function getUserChats(r) {
     model: ChatMemberData,
     attributes: ["lastReadMessageId", "unreadCountMessages", "lastReadMessageNumber"],
     as: 'chatMemberData',
-  }],
+  }, {
+     model: ChatDeletionData,
+     as: 'chatDeletionData',
+    }],
     required: true,
     as: 'meMember',
   }, {
@@ -753,43 +759,17 @@ export async function removeChatFromList(r) {
   const { chatId } = r.params as { chatId: string };
 
   const chat = await new GetChatByIdPostValidationHandler(
-    new  GetGroupChatHandler()
+    new  GetChatByIdHandler()
   ).Handle({ chatId });
 
   const meMember = await new GetChatMemberByUserHandler().Handle({ user: meUser, chat });
 
-  // const chatDeletionData = await ChatDeletionData.create({
-  //   chatMemberId: meMember.id,
-  //   chatId: chat.id,
-  //   beforeDeletionMessageId: chat.chatData.lastMessageId,
-  //   beforeDeletionMessageNumber: chat.chatData.lastMessage.number,
-  // });
-
-  const chatDeletionDataLiteral = literal((
-    'NOT EXISTS "chatDeletionData"'
-  ));
-
-  const unreadChatsCounter = await ChatMember.unscoped().count({
-    include: [{
-      model: ChatMemberData,
-      as: 'chatMemberData',
-      where: {
-        unreadCountMessages: { [Op.ne]: 0 },
-      },
-    }, {
-      model: ChatDeletionData,
-      as: 'chatDeletionData'
-    }],
-    where: {
-      [Op.or]: [{ userId: meMember.userId }, { adminId: meMember.adminId }],
-      status: MemberStatus.Active,
-      chatDeletionDataLiteral,
-    }
+  await new RemoveChatFromChatsListHandler(r.server.app.db).Handle({
+    chat,
+    meMember,
   });
 
-  //await updateCountUnreadChatsJob({ members: [meMember] });
-
-  return output(unreadChatsCounter);
+  return output();
 }
 
 export async function setMessagesAsRead(r) {
