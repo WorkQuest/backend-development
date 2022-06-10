@@ -40,10 +40,6 @@ async function updateAdminChatStatistic(adminId: string, unreadChatsCounter: num
 }
 
 export default async function updateCountUnreadChats(payload: UpdateCountUnreadChatsPayload) {
-  const chatDeletionDataLiteral = literal((
-    'NOT EXISTS "chatDeletionData"'
-  ));
-
   for (const member of payload.members) {
     const userOrAdminLiteral = literal(
       `(CASE WHEN EXISTS (SELECT "id" FROM "Users" WHERE "Users"."id" = '${ member.userId }') ` +
@@ -63,7 +59,6 @@ export default async function updateCountUnreadChats(payload: UpdateCountUnreadC
       where: {
         userOrAdminLiteral,
         status: MemberStatus.Active,
-        chatDeletionDataLiteral,
       }
     });
 
