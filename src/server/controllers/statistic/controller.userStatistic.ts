@@ -107,7 +107,7 @@ export class UserStatisticController extends BaseStatisticController {
 
   static async addRoleAction(role: UserRole) {
     await this.writeAction({
-      incrementFields: UsersPlatformStatisticFields[role + 's'],
+      incrementFields: role + 's',
       statistic: 'user'
     });
   }
@@ -116,12 +116,13 @@ export class UserStatisticController extends BaseStatisticController {
     const oldRole = newRole === UserRole.Worker ? UserRole.Employer : UserRole.Worker;
 
     await this.writeAction({
-      incrementFields: UsersPlatformStatisticFields[newRole + 's'],
+      incrementFields: newRole + 's',
       statistic: 'user'
     });
     await this.writeAction({
-      incrementFields: UsersPlatformStatisticFields[oldRole + 's'],
-      statistic: 'user'
+      incrementFields: oldRole + 's',
+      statistic: 'user',
+      type: 'decrement'
     });
   }
 }
