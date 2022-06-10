@@ -18,9 +18,10 @@ import skillFilters from './skillFilters';
 import proposal from './proposal';
 import pensionFund from './pensionFund';
 import referral from './referral';
-import savingProduct from "./savingProduct";
+import savingProduct from './savingProduct';
 import supportUser from './supportUser';
 import report from './report';
+import faucetWqtWusd from './faucetWqtWusd';
 
 export default [
   ...liquidityPoolWETH,
@@ -45,5 +46,6 @@ export default [
   ...referral,
   ...savingProduct,
   ...supportUser,
-  ...report
+  ...report,
+  ...faucetWqtWusd
 ];
