@@ -1,4 +1,4 @@
-import { literal, Op } from "sequelize";
+import { col, fn, literal, Op } from 'sequelize';
 import { Errors } from "../utils/errors";
 import { QuestController } from "../controllers/quest/controller.quest";
 import { error, output } from "../utils";
@@ -177,20 +177,27 @@ export async function editQuest(r) {
     ]);
   });
 
-  const questsResponseWorkerIds = await QuestsResponse.findAll({
-    attributes: ['workerId'],
+  const questsResponseWorkerIds = await QuestsResponse.unscoped().findAll({
+    attributes: [
+      [fn('array_agg', col('"workerId"')), 'workerIds'],
+      'type'
+    ],
     where: {
       questId: questController.quest.id,
       status: QuestsResponseStatus.Open,
     },
+    group: ['type'],
+    order: [['type', 'ASC']]
   });
 
   if (questsResponseWorkerIds.length !== 0) {
-    r.server.app.broker.sendQuestNotification({
-      action: QuestNotificationActions.questEdited,
-      recipients: questsResponseWorkerIds.map(_ => _.workerId),
-      data: questController.quest,
-    });
+    for (const response of questsResponseWorkerIds) {
+      r.server.app.broker.sendQuestNotification({
+        action: QuestNotificationActions.questEdited,
+        recipients: response.getDataValue('workerIds'),
+        data: { ...questController.quest.toJSON(), responseType: response.type },
+      });
+    }
   }
 
   return output(questController.quest);
