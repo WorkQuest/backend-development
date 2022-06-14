@@ -26,12 +26,26 @@ export class RemoveChatFromChatsListHandler implements IHandler<RemoveChatFromCh
   }
 
   private static async removeChat(payload: RemoveChatFromChatsListPayload, options: Options = {}) {
-    await ChatDeletionData.create({
-      chatMemberId: payload.meMember.id,
-      chatId: payload.chat.id,
-      beforeDeletionMessageId: payload.chat.chatData.lastMessageId,
-      beforeDeletionMessageNumber: payload.chat.chatData.lastMessage.number,
-    }, { transaction: options.tx });
+    const [ chatDeletionData, isCreated ] = await ChatDeletionData.findOrCreate({
+      where: {
+        chatMemberId: payload.meMember.id,
+        chatId: payload.chat.id,
+      },
+      defaults: {
+        chatMemberId: payload.meMember.id,
+        chatId: payload.chat.id,
+        beforeDeletionMessageId: payload.chat.chatData.lastMessageId,
+        beforeDeletionMessageNumber: payload.chat.chatData.lastMessage.number,
+      },
+      transaction: options.tx
+    });
+
+    if (!isCreated) {
+      await chatDeletionData.update({
+        beforeDeletionMessageId: payload.chat.chatData.lastMessageId,
+        beforeDeletionMessageNumber: payload.chat.chatData.lastMessage.number,
+      }, { transaction: options.tx });
+    }
   }
 
   public async Handle(command: RemoveChatFromChatsListCommand): Promise<Message> {
