@@ -95,7 +95,9 @@ export async function getUserChats(r) {
     `("Chat"."type" = '${ ChatType.Private }' OR "Chat"."type" = '${ ChatType.Quest }')`
   );
   const chatDeletionDataLiteral = literal((
-    `(NOT EXISTS(SELECT "id" FROM "ChatDeletionData" WHERE "chatMemberId" = "meMember"."id") AND )`
+    `(NOT EXISTS(SELECT "id" FROM "ChatDeletionData" WHERE "chatMemberId" = "meMember"."id") ` +
+    'OR (SELECT "createdAt" FROM "Messages" WHERE "Chat"."id" = "Messages"."chatId" ORDER BY "Messages"."createdAt" DESC LIMIT 1 OFFSET 0 ) > ' +
+    '(SELECT "updatedAt" FROM "ChatDeletionData" WHERE "chatMemberId" = "meMember"."id"))'
   ));
 
   const where = {
@@ -218,10 +220,6 @@ export async function getUserChats(r) {
 }
 
 export async function getChatMessages(r) {
-  const chatMessagesFromDeletedChat = literal(
-    'CASE'
-  );
-
   const { chatId } = r.params as { chatId: string };
   const meUser = r.auth.credentials;
 
