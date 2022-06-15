@@ -12,7 +12,7 @@ import {
   MessageAction,
   ChatMemberData,
   ChatMemberDeletionData,
-  ReasonForRemovingFromChat, MessageType
+  ReasonForRemovingFromChat, MessageType, Media
 } from "@workquest/database-models/lib/models";
 
 export interface AddUsersInGroupChatCommand {
@@ -63,6 +63,10 @@ export class AddUsersInGroupChatHandler implements IHandler<AddUsersInGroupChatC
       infoMessages.map(async infoMessage => infoMessage.save({ transaction: options.tx })),
     );
 
+    infoMessages.forEach((infoMessage, number) =>{
+      infoMessage.setDataValue('member', payload.deletedMembers[number]);
+    });
+
     messages.forEach((message, number) => {
       message.setDataValue('infoMessage', infoMessages[number]);
     });
@@ -93,6 +97,10 @@ export class AddUsersInGroupChatHandler implements IHandler<AddUsersInGroupChatC
     await Promise.all(
       infoMessages.map(async infoMessage => infoMessage.save({ transaction: options.tx })),
     );
+
+    infoMessages.forEach((infoMessage, number) =>{
+      infoMessage.setDataValue('member', payload.newMembers[number]);
+    });
 
     messages.forEach((message, number) => {
       message.setDataValue('infoMessage', infoMessages[number]);
@@ -172,12 +180,20 @@ export class AddUsersInGroupChatHandler implements IHandler<AddUsersInGroupChatC
         userId: userIds,
         chatId: command.groupChat.id,
       },
-      include: {
+      include: [{
         model: ChatMemberDeletionData,
         as: 'chatMemberDeletionData',
         where: { reason: ReasonForRemovingFromChat.Removed },
         required: true,
-      },
+      }, {
+        model: User.unscoped(),
+        as: 'user',
+        attributes: ["firstName", "lastName", "role"],
+        include: [{
+          model: Media,
+          as: 'avatar',
+        }]
+      }],
     });
 
     const deletedMemberUserIds = deletedMembers.map(member => { return member.userId });
@@ -198,6 +214,10 @@ export class AddUsersInGroupChatHandler implements IHandler<AddUsersInGroupChatC
         AddUsersInGroupChatHandler.restoreMembers({ lastMessage, deletedMembers, groupChat: command.groupChat }, { tx }),
       ]);
 
+      await Promise.all(
+        newMembers.map(async newMember => newMember.save({ transaction: tx })),
+      )
+
       let messages = [];
 
       if (deletedMembers.length !== 0) {
@@ -211,8 +231,22 @@ export class AddUsersInGroupChatHandler implements IHandler<AddUsersInGroupChatC
       }
 
       if (newMembers.length !== 0) {
+        const newMembersIds = newMembers.map(member => { return member.id});
+        const members = await ChatMember.findAll({
+          where: { id: newMembersIds },
+          include: [{
+            model: User.unscoped(),
+            as: 'user',
+            attributes: ["firstName", "lastName", "role"],
+            include: [{
+              model: Media,
+              as: 'avatar',
+            }]
+          }],
+          transaction: tx,
+        });
         const messagesWithInfoAddMembers = await AddUsersInGroupChatHandler.sendInfoMessageAboutAddMember({
-          newMembers,
+          newMembers: members,
           groupChat: command.groupChat,
           lastMessage,
         }, { tx });
