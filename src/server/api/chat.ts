@@ -19,7 +19,7 @@ import {
   GroupChat,
   InfoMessage,
   Media,
-  MemberStatus,
+  MemberStatus, MemberType,
   Message,
   Quest,
   QuestChat,
@@ -28,7 +28,7 @@ import {
   StarredChat,
   StarredMessage,
   User
-} from "@workquest/database-models/lib/models";
+} from '@workquest/database-models/lib/models';
 import {
   AddUsersInGroupChatHandler,
   AddUsersInGroupChatPreAccessPermissionHandler,
@@ -523,11 +523,17 @@ export async function sendMessageToChat(r) {
   const members = await ChatMember.findAll({
     attributes: ['userId', 'adminId'],
     where: {
-      userId: { [Op.not]: meUser.id },
+      [Op.or]: {
+        [Op.and]: {
+          type: MemberType.User,
+          userId: { [Op.ne]: meUser.id }
+        },
+        type: MemberType.Admin
+      },
       status: MemberStatus.Active,
       chatId
     },
-  })
+  });
 
   r.server.app.broker.sendChatNotification({
     data: message.toJSON(),
