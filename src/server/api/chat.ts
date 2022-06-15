@@ -152,7 +152,7 @@ export async function getUserChats(r) {
   }, {
     model: ChatMember,
     as: 'members',
-    where: { [Op.and]: [ { userId: { [Op.ne]: r.auth.credentials.id } }, chatTypeLiteral ] },
+    where: { [Op.and]: [ { [Op.or]: [{ adminId: { [Op.ne]: r.auth.credentials.id } }, { userId: { [Op.ne]: r.auth.credentials.id } }] }, chatTypeLiteral ] },
     include: [{
       model: User.unscoped(),
       as: 'user',
@@ -161,6 +161,10 @@ export async function getUserChats(r) {
         model: Media,
         as: 'avatar'
       }]
+    }, {
+      model: Admin.unscoped(),
+      as: 'admin',
+      attributes: ["id", "firstName", "lastName"],
     }, {
       model: ChatMemberData,
       attributes: ["lastReadMessageId", "unreadCountMessages", "lastReadMessageNumber"],
