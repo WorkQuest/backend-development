@@ -61,6 +61,8 @@ export async function addWriteStatisticsJob() {
 }
 
 export default async function() {
+  await addWriteStatisticsJob();
+
   const [todayUserStatistics] = await UsersPlatformStatistic.findOrBuild({
     where: { date: new Date() }
   });
