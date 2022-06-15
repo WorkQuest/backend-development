@@ -52,6 +52,7 @@ export async function responseOnQuest(r) {
 
     const questChatController = await QuestChatController.create({
       message,
+      medias,
       quest: questController.quest,
       worker: workerController.user,
       questResponse: questResponseController.questResponse,

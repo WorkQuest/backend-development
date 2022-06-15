@@ -21,6 +21,8 @@ export interface CreateQuestChatPayload {
   readonly questResponse: QuestsResponse;
 
   readonly message: string;
+
+  readonly medias?: Media[];
 }
 
 export interface CreateGroupChatPayload {
