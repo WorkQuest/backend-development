@@ -525,6 +525,7 @@ export async function sendMessageToChat(r) {
     where: {
       userId: { [Op.not]: meUser.id },
       status: MemberStatus.Active,
+      chatId
     },
   })
 
