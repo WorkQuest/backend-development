@@ -19,7 +19,7 @@ import {
   GroupChat,
   InfoMessage,
   Media,
-  MemberStatus,
+  MemberStatus, MemberType,
   Message,
   Quest,
   QuestChat,
@@ -28,7 +28,7 @@ import {
   StarredChat,
   StarredMessage,
   User
-} from "@workquest/database-models/lib/models";
+} from '@workquest/database-models/lib/models';
 import {
   AddUsersInGroupChatHandler,
   AddUsersInGroupChatPreAccessPermissionHandler,
@@ -152,7 +152,7 @@ export async function getUserChats(r) {
   }, {
     model: ChatMember,
     as: 'members',
-    where: { [Op.and]: [ { userId: { [Op.ne]: r.auth.credentials.id } }, chatTypeLiteral ] },
+    where: { [Op.and]: [ { [Op.or]: [{ adminId: { [Op.ne]: r.auth.credentials.id } }, { userId: { [Op.ne]: r.auth.credentials.id } }] }, chatTypeLiteral ] },
     include: [{
       model: User.unscoped(),
       as: 'user',
@@ -161,6 +161,10 @@ export async function getUserChats(r) {
         model: Media,
         as: 'avatar'
       }]
+    }, {
+      model: Admin.unscoped(),
+      as: 'admin',
+      attributes: ["id", "firstName", "lastName"],
     }, {
       model: ChatMemberData,
       attributes: ["lastReadMessageId", "unreadCountMessages", "lastReadMessageNumber"],
@@ -523,10 +527,17 @@ export async function sendMessageToChat(r) {
   const members = await ChatMember.findAll({
     attributes: ['userId', 'adminId'],
     where: {
-      userId: { [Op.not]: meUser.id },
+      [Op.or]: {
+        [Op.and]: {
+          type: MemberType.User,
+          userId: { [Op.ne]: meUser.id }
+        },
+        type: MemberType.Admin
+      },
       status: MemberStatus.Active,
-    },
-  })
+      chatId
+    }
+  });
 
   r.server.app.broker.sendChatNotification({
     data: message.toJSON(),
