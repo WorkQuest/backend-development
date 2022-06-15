@@ -21,6 +21,6 @@ WHERE
     SELECT "chatId" FROM "ChatMembers" WHERE "ChatMembers"."userId"=:currentUserId
     )
   AND "User"."id" NOT IN (
-    SELECT "ChatMembers"."userId" FROM "ChatMembers" WHERE "ChatMembers"."chatId"=:excludeUsersFromChatId
+    SELECT "ChatMembers"."userId" FROM "ChatMembers" WHERE ("ChatMembers"."chatId"=:excludeUsersFromChatId AND "chatMember"."status"=0)
     )
     LIMIT :limitValue OFFSET :offsetValue;
