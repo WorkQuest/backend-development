@@ -35,12 +35,12 @@ export default async function(payload: SendFaucetWqtPayload) {
     await transmissionData.update({ status: TransactionStatus.InProcess });
 
     const web3 = new Web3(new Web3.providers.HttpProvider(config.faucet.workQuestDevNetwork.linkRpcProvider));
-    const account = web3.eth.accounts.privateKeyToAccount(config.faucet.privateKey);
+    const account = web3.eth.accounts.privateKeyToAccount(config.faucet.wqt.privateKey);
     web3.eth.accounts.wallet.add(account);
     web3.eth.defaultAccount = account.address;
 
     const gasLimit = await web3.eth.estimateGas({
-      from: config.faucet.address,
+      from: config.faucet.wqt.address,
       to: payload.address,
       value: web3.utils.toWei(payload.amount.toString())
     });
@@ -49,7 +49,7 @@ export default async function(payload: SendFaucetWqtPayload) {
     const transactionConfig = {
       gasPrice,
       gas: gasLimit,
-      from: config.faucet.address,
+      from: config.faucet.wqt.address,
       to: payload.address,
       value: web3.utils.toWei(payload.amount.toString())
     };
@@ -79,6 +79,8 @@ export default async function(payload: SendFaucetWqtPayload) {
           error: error.toString(),
           status: TransactionStatus.BroadcastError
         });
+
+        return false;
       });
   } catch (err) {
     console.log(err);
@@ -89,6 +91,8 @@ export default async function(payload: SendFaucetWqtPayload) {
     }, {
       where: { address: payload.address, symbol: FaucetSymbol.WQT }
     });
+
+    return false;
   }
 
   await sleep(5000);

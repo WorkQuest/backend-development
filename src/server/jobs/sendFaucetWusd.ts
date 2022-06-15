@@ -41,26 +41,26 @@ export default async function(payload: SendFaucetWusdPayload) {
     const contractWusdData = Store[Networks.WorkQuest][WorkQuestNetworkContracts.WUSD];
 
     const web3 = new Web3(new Web3.providers.HttpProvider(config.faucet.workQuestDevNetwork.linkRpcProvider));
-    const account = web3.eth.accounts.privateKeyToAccount(config.faucet.privateKey);
+    const account = web3.eth.accounts.privateKeyToAccount(config.faucet.wusd.privateKey);
     web3.eth.accounts.wallet.add(account);
     web3.eth.defaultAccount = account.address;
 
     const contractWusd = new web3.eth.Contract(
       contractWusdData.getAbi(),
       contractWusdData.address,
-      { from: config.faucet.address }
+      { from: config.faucet.wusd.address }
     );
 
     const gasPrice = await web3.eth.getGasPrice();
     const gasLimit = await contractWusd.methods['transfer'].apply(null, [
       payload.address,
       web3.utils.toWei(payload.amount.toString())
-    ]).estimateGas({ from: config.faucet.address });
+    ]).estimateGas({ from: config.faucet.wusd.address });
 
     const transactionConfig = {
       gasPrice,
       gas: gasLimit,
-      from: config.faucet.address,
+      from: config.faucet.wusd.address,
       to: contractWusdData.address,
       data: contractWusd.methods.transfer(payload.address, web3.utils.toWei(payload.amount.toString())).encodeABI()
     };
@@ -90,6 +90,8 @@ export default async function(payload: SendFaucetWusdPayload) {
           error: error.toString(),
           status: TransactionStatus.BroadcastError
         });
+
+        return false;
       });
   } catch (err) {
     console.log(err);
@@ -100,6 +102,8 @@ export default async function(payload: SendFaucetWusdPayload) {
     }, {
       where: { address: payload.address, symbol: FaucetSymbol.WUSD }
     });
+
+    return false;
   }
 
   await sleep(5000);

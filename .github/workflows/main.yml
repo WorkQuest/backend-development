@@ -366,8 +366,12 @@ jobs:
 
             REFERRAL_CONTRACT_PRIVAT_KEY=${{ secrets.REFERRAL_CONTRACT_PRIVAT_KEY }} \
           
-            FAUCET_PRIVATE_KEY=${{ secrets.FAUCET_PRIVATE_KEY }} \
-            FAUCET_WALLET_ADDRESS=${{ secrets.FAUCET_WALLET_ADDRESS }} \
+            FAUCET_WQT_PRIVATE_KEY=${{ secrets.FAUCET_WQT_PRIVATE_KEY }} \
+            FAUCET_WQT_WALLET_ADDRESS=${{ secrets.FAUCET_WQT_WALLET_ADDRESS }} \
+          
+            FAUCET_WUSD_PRIVATE_KEY=${{ secrets.FAUCET_WUSD_PRIVATE_KEY }} \
+            FAUCET_WUSD_WALLET_ADDRESS=${{ secrets.FAUCET_WUSD_WALLET_ADDRESS }} \
+          
             WORK_QUEST_TEST_NETWORK_RPC_PROVIDER=${{ secrets.WORK_QUEST_TEST_NETWORK_RPC_PROVIDER }} \
 
             DEBUG=${{ secrets.DEBUG }} \
