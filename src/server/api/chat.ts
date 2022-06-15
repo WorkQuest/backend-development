@@ -536,7 +536,7 @@ export async function sendMessageToChat(r) {
       },
       status: MemberStatus.Active,
       chatId
-    },
+    }
   });
 
   r.server.app.broker.sendChatNotification({
