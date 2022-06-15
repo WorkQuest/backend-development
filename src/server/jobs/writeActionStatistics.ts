@@ -14,7 +14,6 @@ import {
   DaoPlatformStatistic
 } from '@workquest/database-models/lib/models';
 
-const searchOptionsYesterday = { where: { date: new Date(Date.now() - 86400000) } };
 const searchOptions = { where: { date: new Date() } };
 
 async function writeStatistic(statisticModel, incrementField: string, by: string | number = 1, type: StatisticAction) {
@@ -51,8 +50,8 @@ const methods = {
 async function createStatisticRows() {
   for (const method in methods) {
     const statistic = await methods[method].model.findOne({
-      ...searchOptionsYesterday,
-      attributes: { exclude: ['date', 'createdAt', 'updatedAt'] }
+      attributes: { exclude: ['date', 'createdAt', 'updatedAt'] },
+      order: [['date', 'DESC']]
     });
 
     await methods[method].model.findOrCreate({
