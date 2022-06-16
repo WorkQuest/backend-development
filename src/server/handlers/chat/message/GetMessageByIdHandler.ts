@@ -1,5 +1,5 @@
 import { MessageValidator } from './MessageValidator';
-import { HandlerDecoratorBase, IHandler } from '../../types';
+import { BaseDecoratorHandler, IHandler } from '../../types';
 import { Chat, Message } from '@workquest/database-models/lib/models';
 
 export interface GetMessageByIdCommand {
@@ -23,7 +23,7 @@ export class GetChatMessageByIdHandler implements IHandler<GetChatMessageByIdCom
   }
 }
 
-export class GetMessageByIdPostValidatorHandler extends HandlerDecoratorBase<GetMessageByIdCommand, Promise<Message>> {
+export class GetMessageByIdPostValidatorHandler extends BaseDecoratorHandler<GetMessageByIdCommand, Promise<Message>> {
   private readonly messageValidator: MessageValidator;
 
   constructor(
@@ -41,7 +41,7 @@ export class GetMessageByIdPostValidatorHandler extends HandlerDecoratorBase<Get
   }
 }
 
-export class GetChatMessageByIdPostValidatorHandler extends HandlerDecoratorBase<GetChatMessageByIdCommand, Promise<Message>> {
+export class GetChatMessageByIdPostValidatorHandler extends BaseDecoratorHandler<GetChatMessageByIdCommand, Promise<Message>> {
   private readonly messageValidator: MessageValidator;
 
   constructor(

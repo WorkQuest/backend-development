@@ -3,8 +3,6 @@ import { addSendSmsJob } from '../jobs/sendSms';
 import { error, getRandomCodeNumber, output } from '../utils';
 import { UserController, UserOldController } from '../controllers/user/controller.user';
 import { UserStatisticController } from '../controllers/statistic/controller.userStatistic';
-import { transformToGeoPostGIS } from '../utils/postGIS';
-import { MediaController } from '../controllers/controller.media';
 import { SkillsFiltersController } from '../controllers/controller.skillsFilters';
 import { addUpdateReviewStatisticsJob } from '../jobs/updateReviewStatistics';
 import { updateUserRaiseViewStatusJob } from '../jobs/updateUserRaiseViewStatus';
@@ -12,25 +10,26 @@ import { updateQuestsStatisticJob } from '../jobs/updateQuestsStatistic';
 import { deleteUserFiltersJob } from '../jobs/deleteUserFilters';
 import { convertAddressToHex } from '../utils/profile';
 import { Errors } from '../utils/errors';
+import { EditProfileComposHandler } from '../handlers/compositions';
 import {
-  EmployerProfileVisibilitySetting,
   Quest,
-  QuestsResponse,
-  QuestsResponseStatus,
-  QuestsStatistic,
-  QuestStatus,
-  RatingStatistic,
-  RatingStatus,
-  ReferralProgramAffiliate,
   User,
-  UserChangeRoleData,
-  UserChatsStatistic,
-  UserRaiseStatus,
-  UserRaiseView,
+  Wallet,
   UserRole,
   UserStatus,
-  Wallet,
-  WorkerProfileVisibilitySetting
+  QuestStatus,
+  RatingStatus,
+  UserRaiseView,
+  QuestsResponse,
+  UserRaiseStatus,
+  QuestsStatistic,
+  RatingStatistic,
+  UserChangeRoleData,
+  UserChatsStatistic,
+  QuestsResponseStatus,
+  ReferralProgramAffiliate,
+  WorkerProfileVisibilitySetting,
+  EmployerProfileVisibilitySetting,
 } from '@workquest/database-models/lib/models';
 
 export const searchFields = [
@@ -353,62 +352,39 @@ export async function setRole(r) {
 
 export function editProfile(userRole: UserRole) {
   return async function (r) {
-    const user: User = r.auth.credentials;
-    const userOldController = new UserOldController(user);
-    const userController = new UserController(user);
+    const meUser: User = r.auth.credentials;
 
-    await userOldController.userMustHaveRole(userRole);
-
-    const locationFields = { location: null, locationPostGIS: null, locationPlaceName: null };
-    const avatarId = r.payload.avatarId ? (await MediaController.getMedia(r.payload.avatarId)).id : null;
-    const phonesFields = r.payload.phoneNumber ? { tempPhone: user.tempPhone, phone: user.phone } : { tempPhone: null, phone: null };
-
-    const transaction = await r.server.app.db.transaction();
-
-    if (r.payload.phoneNumber) {
-      if (
-        (user.phone && user.phone.fullPhone !== r.payload.phoneNumber.fullPhone) ||
-        (user.tempPhone && user.tempPhone.fullPhone !== r.payload.phoneNumber.fullPhone) ||
-        (!user.phone && !user.tempPhone)
-      ) {
-        phonesFields.phone = null;
-        phonesFields.tempPhone = r.payload.phoneNumber;
-      }
-    }
-    if (r.payload.locationFull) {
-      locationFields.location = r.payload.locationFull.location;
-      locationFields.locationPlaceName = r.payload.locationFull.locationPlaceName;
-      locationFields.locationPostGIS = transformToGeoPostGIS(r.payload.locationFull.location);
-    }
     if (userRole === UserRole.Worker) {
-      await userOldController.setUserSpecializations(r.payload.specializationKeys, transaction);
+      const [editableUser, workerProfileVisibilitySetting, userSpecializations] = await new EditProfileComposHandler(r.server.app.db).Handle({
+        user: meUser,
+        editableRole: userRole,
+        ... r.payload,
+      });
 
-      await userController.updateWorkerProfileVisibility(r.payload.profileVisibility, { tx: transaction });
+      await addUpdateReviewStatisticsJob({
+        userId: meUser.id,
+      });
+
+      editableUser.setDataValue('userSpecializations', userSpecializations);
+      editableUser.setDataValue('workerProfileVisibilitySetting', workerProfileVisibilitySetting);
+
+      return editableUser;
     }
     if (userRole === UserRole.Employer) {
-      await userController.updateEmployerProfileVisibility(r.payload.profileVisibility, { tx: transaction });
+      const [editableUser, employerProfileVisibilitySetting] = await new EditProfileComposHandler(r.server.app.db).Handle({
+        user: meUser,
+        editableRole: userRole,
+        ... r.payload,
+      });
+
+      await addUpdateReviewStatisticsJob({
+        userId: meUser.id,
+      });
+
+      editableUser.setDataValue('employerProfileVisibilitySetting', employerProfileVisibilitySetting);
+
+      return editableUser;
     }
-
-    await user.update({
-      ...phonesFields,
-      ...locationFields,
-      avatarId: avatarId,
-      lastName: r.payload.lastName,
-      firstName: r.payload.firstName,
-      priority: r.payload.priority || null,
-      workplace: r.payload.workplace || null,
-      payPeriod: r.payload.payPeriod || null,
-      costPerHour: r.payload.costPerHour || null,
-      additionalInfo: r.payload.additionalInfo,
-    }, transaction);
-
-    await transaction.commit();
-
-    await addUpdateReviewStatisticsJob({
-      userId: user.id,
-    });
-
-    return output(await User.findByPk(r.auth.credentials.id));
   };
 }
 

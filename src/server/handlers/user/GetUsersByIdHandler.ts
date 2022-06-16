@@ -1,5 +1,5 @@
 import { UserValidator } from './UserValidator';
-import { HandlerDecoratorBase, IHandler } from '../types';
+import { BaseDecoratorHandler, IHandler } from '../types';
 import { User } from '@workquest/database-models/lib/models';
 import { UserAccessPermission } from './UserAccessPermission';
 
@@ -23,7 +23,7 @@ export class GetUsersByIdsHandler implements IHandler<GetUsersByIdsCommand, Prom
   }
 }
 
-export class GetUsersByIdPostValidationHandler extends HandlerDecoratorBase<GetUsersByIdCommand, Promise<User>> {
+export class GetUsersByIdPostValidationHandler extends BaseDecoratorHandler<GetUsersByIdCommand, Promise<User>> {
 
   private readonly validator: UserValidator;
 
@@ -44,7 +44,7 @@ export class GetUsersByIdPostValidationHandler extends HandlerDecoratorBase<GetU
   }
 }
 
-export class GetUsersByIdPostAccessPermissionHandler extends HandlerDecoratorBase<GetUsersByIdCommand, Promise<User>> {
+export class GetUsersByIdPostAccessPermissionHandler extends BaseDecoratorHandler<GetUsersByIdCommand, Promise<User>> {
 
   private readonly accessPermission: UserAccessPermission;
 
@@ -65,7 +65,7 @@ export class GetUsersByIdPostAccessPermissionHandler extends HandlerDecoratorBas
   }
 }
 
-export class GetUsersByIdsPostValidationHandler extends HandlerDecoratorBase<GetUsersByIdsCommand, Promise<User[]>> {
+export class GetUsersByIdsPostValidationHandler extends BaseDecoratorHandler<GetUsersByIdsCommand, Promise<User[]>> {
 
   private readonly validator: UserValidator;
 
@@ -86,7 +86,7 @@ export class GetUsersByIdsPostValidationHandler extends HandlerDecoratorBase<Get
   }
 }
 
-export class GetUsersByIdsPostAccessPermissionHandler extends HandlerDecoratorBase<GetUsersByIdsCommand, Promise<User[]>> {
+export class GetUsersByIdsPostAccessPermissionHandler extends BaseDecoratorHandler<GetUsersByIdsCommand, Promise<User[]>> {
 
   private readonly accessPermission: UserAccessPermission;
 

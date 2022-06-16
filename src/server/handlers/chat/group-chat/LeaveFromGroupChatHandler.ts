@@ -1,5 +1,5 @@
 import { GroupChatValidator } from './GroupChatValidator';
-import { Options, IHandler, HandlerDecoratorBase } from '../../types';
+import { Options, IHandler, BaseDecoratorHandler } from '../../types';
 import { GroupChatAccessPermission } from './GroupChatAccessPermission';
 import {
   Chat,
@@ -99,7 +99,7 @@ export class LeaveFromGroupChatHandler implements IHandler<LeaveFromGroupChatCom
   }
 }
 
-export class LeaveFromGroupChatPreAccessPermissionHandler extends HandlerDecoratorBase<LeaveFromGroupChatCommand, Promise<Message>> {
+export class LeaveFromGroupChatPreAccessPermissionHandler extends BaseDecoratorHandler<LeaveFromGroupChatCommand, Promise<Message>> {
 
   private readonly accessPermission: GroupChatAccessPermission;
 
@@ -118,7 +118,7 @@ export class LeaveFromGroupChatPreAccessPermissionHandler extends HandlerDecorat
   }
 }
 
-export class LeaveFromGroupChatPreValidateHandler extends HandlerDecoratorBase<LeaveFromGroupChatCommand, Promise<Message>> {
+export class LeaveFromGroupChatPreValidateHandler extends BaseDecoratorHandler<LeaveFromGroupChatCommand, Promise<Message>> {
 
   private readonly validator: GroupChatValidator;
 

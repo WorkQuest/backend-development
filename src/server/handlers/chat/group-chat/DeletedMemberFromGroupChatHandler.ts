@@ -1,5 +1,5 @@
 import { GroupChatValidator } from './GroupChatValidator';
-import { Options, HandlerDecoratorBase, IHandler } from '../../types';
+import { Options, BaseDecoratorHandler, IHandler } from '../../types';
 import { GroupChatAccessPermission } from './GroupChatAccessPermission';
 import {
   Chat,
@@ -99,7 +99,7 @@ export class DeletedMemberFromGroupChatHandler implements IHandler<DeleteMemberF
   }
 }
 
-export class DeletedMemberFromGroupChatPreAccessPermissionHandler extends HandlerDecoratorBase<DeleteMemberFromGroupChatCommand, Promise<Message>> {
+export class DeletedMemberFromGroupChatPreAccessPermissionHandler extends BaseDecoratorHandler<DeleteMemberFromGroupChatCommand, Promise<Message>> {
 
   private readonly accessPermission: GroupChatAccessPermission;
 
@@ -119,7 +119,7 @@ export class DeletedMemberFromGroupChatPreAccessPermissionHandler extends Handle
   }
 }
 
-export class DeletedMemberFromGroupChatPreValidateHandler extends HandlerDecoratorBase<DeleteMemberFromGroupChatCommand, Promise<Message>> {
+export class DeletedMemberFromGroupChatPreValidateHandler extends BaseDecoratorHandler<DeleteMemberFromGroupChatCommand, Promise<Message>> {
 
   private readonly validator: GroupChatValidator;
 
