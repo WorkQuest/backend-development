@@ -66,14 +66,19 @@ export async function getDispute(r) {
   const user: User = r.auth.credentials;
   const questChatWorkerLiteral = literal('"quest->questChat"."workerId" = "quest"."assignedWorkerId"');
 
+  const include = [ {
+    model: QuestDisputeReview,
+    as: 'questDisputeReviews'
+  }, {
+    model: Quest,
+    include: [{
+      model: QuestChat.unscoped(),
+      where: { questChatWorkerLiteral },
+    },],
+  }];
+
   const dispute = await QuestDispute.findByPk(r.params.disputeId, {
-    include: {
-      model: Quest,
-      include: [{
-        model: QuestChat.unscoped(),
-        where: { questChatWorkerLiteral },
-      }],
-    },
+    include,
   });
 
   if (!dispute) {
@@ -90,6 +95,11 @@ export async function getDispute(r) {
 }
 
 export async function getDisputes(r) {
+  const include = [{
+    model: QuestDisputeReview,
+    as: 'questDisputeReviews'
+  }];
+
   const { count, rows } = await QuestDispute.findAndCountAll({
     where: {
       [Op.or]: [
@@ -97,6 +107,7 @@ export async function getDisputes(r) {
         { openDisputeUserId: r.auth.credentials.id }
       ],
     },
+    include,
     limit: r.query.limit,
     offset: r.query.offset,
     order: [['createdAt', 'DESC']],
