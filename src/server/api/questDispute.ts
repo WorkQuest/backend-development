@@ -66,9 +66,12 @@ export async function getDispute(r) {
   const user: User = r.auth.credentials;
   const questChatWorkerLiteral = literal('"quest->questChat"."workerId" = "quest"."assignedWorkerId"');
 
-  const include = [ {
+  const include = [{
     model: QuestDisputeReview,
-    as: 'questDisputeReviews'
+    as: 'currentUserDisputeReview',
+    where: {
+      fromUserId: user.id,
+    }
   }, {
     model: Quest,
     include: [{
@@ -97,7 +100,10 @@ export async function getDispute(r) {
 export async function getDisputes(r) {
   const include = [{
     model: QuestDisputeReview,
-    as: 'questDisputeReviews'
+    as: 'currentUserDisputeReview',
+    where: {
+      fromUserId: r.auth.credentials.id,
+    }
   }];
 
   const { count, rows } = await QuestDispute.findAndCountAll({
