@@ -10,7 +10,8 @@ import {
   AdditionalInfoEmployer, UserSpecializationFilter, WorkerProfileVisibilitySetting, EmployerProfileVisibilitySetting
 } from '@workquest/database-models/lib/models';
 
-/** */
+/**
+ *  */
 export type LocationFull = {
   location: LocationType,
   locationPlaceName: string,
