@@ -1,4 +1,4 @@
-import { HandlerDecoratorBase, IHandler } from "../types";
+import { BaseDecoratorHandler, IHandler } from "../types";
 import { Chat, ChatData, ChatMember, Message } from "@workquest/database-models/lib/models";
 import { GetChatByIdValidator } from "./GetChatByIdValidator";
 
@@ -12,7 +12,7 @@ export class GetChatByIdHandler implements IHandler<GetChatByIdCommand, Promise<
   }
 }
 
-export class GetChatByIdPostValidationHandler<Tin extends { chatId: string }> extends HandlerDecoratorBase<Tin, Promise<Chat>> {
+export class GetChatByIdPostValidationHandler<Tin extends { chatId: string }> extends BaseDecoratorHandler<Tin, Promise<Chat>> {
   private readonly validator: GetChatByIdValidator;
 
   constructor(
