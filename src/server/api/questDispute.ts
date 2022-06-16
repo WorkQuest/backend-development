@@ -71,7 +71,8 @@ export async function getDispute(r) {
     as: 'currentUserDisputeReview',
     where: {
       fromUserId: user.id,
-    }
+    },
+    required: false,
   }, {
     model: Quest,
     include: [{
@@ -103,7 +104,8 @@ export async function getDisputes(r) {
     as: 'currentUserDisputeReview',
     where: {
       fromUserId: r.auth.credentials.id,
-    }
+    },
+    required: false,
   }];
 
   const { count, rows } = await QuestDispute.findAndCountAll({
