@@ -66,19 +66,19 @@ export async function getDispute(r) {
   const user: User = r.auth.credentials;
   const questChatWorkerLiteral = literal('"quest->questChat"."workerId" = "quest"."assignedWorkerId"');
 
-  const include = [{
-    model: QuestChat.unscoped(),
-    where: { questChatWorkerLiteral },
-  }, {
+  const include = [ {
     model: QuestDisputeReview,
     as: 'questDisputeReviews'
+  }, {
+    model: Quest,
+    include: [{
+      model: QuestChat.unscoped(),
+      where: { questChatWorkerLiteral },
+    },],
   }];
 
   const dispute = await QuestDispute.findByPk(r.params.disputeId, {
-    include: {
-      model: Quest,
-      include,
-    },
+    include,
   });
 
   if (!dispute) {
