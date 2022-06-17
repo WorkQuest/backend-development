@@ -271,7 +271,7 @@ export async function getChatMessages(r) {
     distinct: true,
     limit: r.query.limit,
     offset: r.query.offset,
-    order: [['createdAt', r.query.sort.createdAt]],
+    order: [['createdAt', r.query.sort.createdAt]]
   });
 
   return output({ count, messages: rows, chat });
