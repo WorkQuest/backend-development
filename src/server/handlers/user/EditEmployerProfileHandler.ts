@@ -128,7 +128,7 @@ export class EditEmployerProfilePreValidateHandler extends BaseDecoratorHandler<
   }
 
   public Handle(command: EditEmployerProfileCommand): EditEmployerProfileResult {
-    this.validator.HasMustBeEmployer(command.user);
+    this.validator.MustBeEmployer(command.user);
 
     return this.decorated.Handle(command);
   }

@@ -6,3 +6,5 @@ export * from "./LogoutAllSessionsHandler";
 export * from "./EditWorkerProfileHandler";
 export * from "./ChangeUserPasswordHandler";
 export * from "./EditEmployerProfileHandler";
+export * from "./ChangeRoleFromWorkerHandler";
+export * from "./ChangeRoleFromEmployerHandler";

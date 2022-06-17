@@ -160,7 +160,7 @@ export class EditWorkerProfilePreValidateHandler extends BaseDecoratorHandler<Ed
   }
 
   public Handle(command: EditWorkerProfileCommand): EditWorkerProfileResult {
-    this.validator.HasMustBeWorker(command.user);
+    this.validator.MustBeWorker(command.user);
 
     return this.decorated.Handle(command);
   }

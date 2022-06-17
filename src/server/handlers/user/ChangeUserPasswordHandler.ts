@@ -21,7 +21,7 @@ export class ChangeUserPasswordPreAccessPermissionHandler extends BaseDecoratorH
   }
 
   public async Handle(command: ChangeUserPasswordCommand): ChangeUserPasswordResult {
-    await this.accessPermission.UserHasPasswordAccess(command.user, command.oldPassword);
+    await this.accessPermission.HasPasswordAccess(command.user, command.oldPassword);
 
     return this.decorated.Handle(command);
   }

@@ -1,18 +1,16 @@
 import * as bcrypt from "bcrypt";
 import { error } from "../../utils";
 import { Errors } from "../../utils/errors";
+import { totpValidate } from '@workquest/database-models/lib/utils';
 import { User, UserStatus } from "@workquest/database-models/lib/models";
 
 export class UserAccessPermission {
-  public async UserHasPasswordAccess(user: User, password: string) {
-    if (!user.password) {
-      throw error(Errors.Forbidden, 'User not found or password does not match', {});
-    }
-
-    const isCompare = await bcrypt.compareSync(password, user.password);
-
-    if (!isCompare) {
-      throw error(Errors.Forbidden, 'User not found or password does not match', {});
+  public HasConfirmedAccess(user: User) {
+    if (user.status !== UserStatus.Confirmed) {
+      throw error(Errors.InvalidStatus, 'Users must have confirmed status', {
+        userId: user.id,
+        currentStatus: user.status,
+      });
     }
   }
   public UsersHasConfirmedAccess(users: User[]) {
@@ -28,12 +26,20 @@ export class UserAccessPermission {
       });
     }
   }
-  public UserHasConfirmedAccess(user: User) {
-    if (user.status !== UserStatus.Confirmed) {
-      throw error(Errors.InvalidStatus, 'Users must have confirmed status', {
-        userId: user.id,
-        currentStatus: user.status,
-      });
+  public Has2FAAccess(user: User, code: string) {
+    if (!totpValidate(code, user.settings.security.TOTP.secret)) {
+      throw error(Errors.InvalidPayload, 'TOTP is invalid', [{ field: 'totp', reason: 'invalid' }]);
+    }
+  }
+  public async HasPasswordAccess(user: User, password: string) {
+    if (!user.password) {
+      throw error(Errors.Forbidden, 'User not found or password does not match', {});
+    }
+
+    const isCompare = await bcrypt.compareSync(password, user.password);
+
+    if (!isCompare) {
+      throw error(Errors.Forbidden, 'User not found or password does not match', {});
     }
   }
 }

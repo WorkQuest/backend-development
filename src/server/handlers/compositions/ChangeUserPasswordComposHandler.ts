@@ -1,15 +1,13 @@
 import { BaseCompositeHandler } from '../types';
-import { LogoutAllSessionsHandler } from '../user/LogoutAllSessionsHandler';
 import { ChangeUserPasswordResult, ChangeUserPasswordCommand } from './types';
 import {
-  GetUserByIdPostValidationHandler,
-  GetUserByIdWithFullAccessHandler,
-  GetUserByIdPostAccessPermissionHandler,
-} from '../user';
-import {
+  LogoutAllSessionsHandler,
   ChangeUserPasswordHandler,
+  GetUserByIdWithFullAccessHandler,
+  GetUserByIdPostValidationHandler,
+  GetUserByIdPostAccessPermissionHandler,
   ChangeUserPasswordPreAccessPermissionHandler,
-} from '../user/ChangeUserPasswordHandler';
+} from '../user';
 
 export class ChangeUserPasswordComposHandler extends BaseCompositeHandler<ChangeUserPasswordCommand, ChangeUserPasswordResult> {
   constructor(

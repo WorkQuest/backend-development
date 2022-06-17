@@ -42,7 +42,7 @@ export class GetUserByIdPostValidationHandler extends BaseDecoratorHandler<GetUs
   public async Handle(command: GetUsersByIdCommand): GetUsersByIdResult {
     const user = await this.decorated.Handle(command);
 
-    this.validator.NotNull(user, command.userId);
+    this.validator.HasNotNull(user, command.userId);
 
     return user;
   }
@@ -63,7 +63,7 @@ export class GetUserByIdPostAccessPermissionHandler extends BaseDecoratorHandler
   public async Handle(command: GetUsersByIdCommand): GetUsersByIdResult {
     const user = await this.decorated.Handle(command);
 
-    this.accessPermission.UserHasConfirmedAccess(user);
+    this.accessPermission.HasConfirmedAccess(user);
 
     return user;
   }
