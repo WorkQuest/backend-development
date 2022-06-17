@@ -89,7 +89,7 @@ export class EditWorkerProfileHandler extends BaseDomainHandler<EditWorkerProfil
   }
 
   private updateWorkerProfileInfo(payload: UpdateWorkerProfileInfoPayload) {
-    payload.user.avatarId = payload.avatar.id;
+    payload.user.avatarId = payload.avatar?.id;
     payload.user.lastName = payload.lastName;
     payload.user.firstName = payload.firstName;
     payload.user.additionalInfo = payload.additionalInfo;

@@ -73,15 +73,8 @@ export class EditEmployerProfileHandler extends BaseDomainHandler<EditEmployerPr
     payload.user.locationPlaceName = locationFields.locationPlaceName;
   }
 
-  private updateProfileInfo(payload: UpdateEmployerProfileInfoPayload) {
-    payload.user.avatarId = payload.avatar.id;
-    payload.user.lastName = payload.lastName;
-    payload.user.firstName = payload.firstName;
-    payload.user.additionalInfo = payload.additionalInfo;
-  }
-
   private updateEmployerProfileInfo(payload: UpdateEmployerProfileInfoPayload) {
-    payload.user.avatarId = payload.avatar.id;
+    payload.user.avatarId = payload.avatar?.id;
     payload.user.lastName = payload.lastName;
     payload.user.firstName = payload.firstName;
     payload.user.additionalInfo = payload.additionalInfo;
@@ -112,7 +105,6 @@ export class EditEmployerProfileHandler extends BaseDomainHandler<EditEmployerPr
   public async Handle(command: EditEmployerProfileCommand): EditEmployerProfileResult {
     this.editLocation(command);
     this.editPhoneNumber(command);
-    this.updateProfileInfo(command);
     this.updateEmployerProfileInfo(command);
 
     return Promise.all([
