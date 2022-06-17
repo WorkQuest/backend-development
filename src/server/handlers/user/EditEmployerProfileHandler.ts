@@ -91,13 +91,14 @@ export class EditEmployerProfileHandler extends BaseDomainHandler<EditEmployerPr
       (ratingStatusCanRespondToQuest |= status)
     );
 
-    const [, [employerProfileVisibilitySetting]] = await EmployerProfileVisibilitySetting.update({
+    const employerProfileVisibilitySetting = await EmployerProfileVisibilitySetting.findOne({
+      where: { userId: payload.user.id },
+    });
+
+    await employerProfileVisibilitySetting.update({
       ratingStatusInMySearch,
       ratingStatusCanRespondToQuest,
-    }, {
-      where: { userId: payload.user.id },
-      transaction: this.options.tx,
-    });
+    }, { transaction: this.options.tx });
 
     return employerProfileVisibilitySetting;
   }
