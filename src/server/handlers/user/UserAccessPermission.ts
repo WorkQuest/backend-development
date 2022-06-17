@@ -5,6 +5,10 @@ import { User, UserStatus } from "@workquest/database-models/lib/models";
 
 export class UserAccessPermission {
   public async UserHasPasswordAccess(user: User, password: string) {
+    if (!user.password) {
+      throw error(Errors.Forbidden, 'User not found or password does not match', {});
+    }
+
     const isCompare = await bcrypt.compareSync(password, user.password);
 
     if (!isCompare) {

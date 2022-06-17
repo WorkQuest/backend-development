@@ -28,7 +28,7 @@ export class ChangeUserPasswordComposHandler extends BaseCompositeHandler<Change
     await this.dbContext.transaction(async (tx) => {
       await new ChangeUserPasswordPreAccessPermissionHandler(
         new ChangeUserPasswordHandler().setOptions({ tx })
-      ).Handle(command)
+      ).Handle({ ...command, user })
 
       await new LogoutAllSessionsHandler().setOptions({ tx })
         .Handle({ user })
