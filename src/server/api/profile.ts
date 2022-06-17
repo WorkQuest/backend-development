@@ -10,7 +10,7 @@ import { updateQuestsStatisticJob } from '../jobs/updateQuestsStatistic';
 import { deleteUserFiltersJob } from '../jobs/deleteUserFilters';
 import { convertAddressToHex } from '../utils/profile';
 import { Errors } from '../utils/errors';
-import { EditProfileComposHandler } from '../handlers/compositions';
+import { EditProfileComposHandler, ChangeUserPasswordComposHandler } from '../handlers/compositions';
 import {
   Quest,
   User,
@@ -389,20 +389,15 @@ export function editProfile(userRole: UserRole) {
 }
 
 export async function changePassword(r) {
-  const user = await User.scope('withPassword').findOne({
-    where: { id: r.auth.credentials.id },
+  const meUser: User = r.auth.credentials;
+
+  const { oldPassword, newPassword } = r.payload as { oldPassword: string, newPassword: string }
+
+  await new ChangeUserPasswordComposHandler(r.server.app.db).Handle({
+    oldPassword,
+    newPassword,
+    user: meUser,
   });
-
-  const userController = new UserOldController(user);
-
-  await userController.checkPassword(r.payload.oldPassword);
-
-  const transaction = await r.server.app.db.transaction();
-
-  await userController.changePassword(r.payload.newPassword, transaction);
-  await userController.logoutAllSessions(transaction);
-
-  await transaction.commit();
 
   return output();
 }

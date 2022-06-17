@@ -50,9 +50,9 @@ import {
   GetGroupChatPostValidationHandler,
   GetMediaByIdsHandler,
   GetMediasPostValidationHandler,
-  GetUsersByIdHandler,
-  GetUsersByIdPostAccessPermissionHandler,
-  GetUsersByIdPostValidationHandler,
+  GetUserByIdHandler,
+  GetUserByIdPostAccessPermissionHandler,
+  GetUserByIdPostValidationHandler,
   GetUsersByIdsHandler,
   GetUsersByIdsPostAccessPermissionHandler,
   GetUsersByIdsPostValidationHandler,
@@ -404,9 +404,9 @@ export async function sendMessageToUser(r) {
   const { userId } = r.params as { userId: string };
   const { text, mediaIds } = r.payload as { text: string, mediaIds: string[] }
 
-  const recipientUser = await new GetUsersByIdPostAccessPermissionHandler(
-    new GetUsersByIdPostValidationHandler(
-      new GetUsersByIdHandler()
+  const recipientUser = await new GetUserByIdPostAccessPermissionHandler(
+    new GetUserByIdPostValidationHandler(
+      new GetUserByIdHandler()
     )
   ).Handle({ userId });
 

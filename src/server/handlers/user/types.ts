@@ -9,9 +9,10 @@ import {
   AdditionalInfoWorker,
   AdditionalInfoEmployer, UserSpecializationFilter, WorkerProfileVisibilitySetting, EmployerProfileVisibilitySetting
 } from '@workquest/database-models/lib/models';
+import { ChangeUserPasswordHandler } from './ChangeUserPasswordHandler';
+import { GetUserByIdHandler } from './GetUserByIdHandler';
 
-/**
- *  */
+/** */
 export type LocationFull = {
   location: LocationType,
   locationPlaceName: string,
@@ -28,6 +29,14 @@ export type EmployerVisibility = {
 }
 
 /** Commands */
+export interface GetUsersByIdCommand {
+  readonly userId: string;
+}
+
+export interface GetUsersByIdsCommand {
+  readonly userIds: ReadonlyArray<string>;
+}
+
 export interface EditWorkerProfileCommand {
   readonly user: User;
   readonly avatar: Media | null;
@@ -55,7 +64,25 @@ export interface EditEmployerProfileCommand {
   readonly additionalInfo: AdditionalInfoEmployer;
 }
 
+export interface ChangeUserPasswordCommand {
+  readonly user: User;
+  readonly newPassword: string;
+  readonly oldPassword: string;
+}
+
+export interface LogoutAllSessionsCommand {
+  readonly user: User;
+}
+
 /** Results */
+export type GetUsersByIdResult = Promise<User>
+
+export type GetUsersByIdsResult = Promise<User[]>
+
 export type EditWorkerProfileResult = Promise<[User, WorkerProfileVisibilitySetting, UserSpecializationFilter[]]>
 
 export type EditEmployerProfileResult = Promise<[User, EmployerProfileVisibilitySetting]>
+
+export type ChangeUserPasswordResult = Promise<void>
+
+export type LogoutAllSessionsResult = Promise<void>

@@ -13,6 +13,7 @@ import {
   AdditionalInfoWorker,
   AdditionalInfoEmployer, WorkerProfileVisibilitySetting, UserSpecializationFilter
 } from '@workquest/database-models/lib/models';
+import { ChangeUserPasswordComposHandler } from './ChangeUserPasswordComposHandler';
 
 /** Commands */
 export interface EditWorkerProfileCommand {
@@ -48,11 +49,19 @@ export type EditProfileCommand =
   | EditWorkerProfileCommand
   | EditEmployerProfileCommand
 
+export interface ChangeUserPasswordCommand {
+  readonly user: User;
+  readonly newPassword: string;
+  readonly oldPassword: string;
+}
+
 /** Results */
 
 export type EditProfileResult = Promise<
   | EditWorkerProfileResult
   | EditEmployerProfileResult
 >
+
+export type ChangeUserPasswordResult = Promise<void>
 
 
