@@ -23,7 +23,7 @@ export class EditProfileComposHandler extends BaseCompositeHandler<EditProfileCo
     super(dbContext);
   }
 
-  private async editWorker(command: EditProfileCommand): EditWorkerProfileResult {
+  private async editEmployer(command: EditProfileCommand): EditWorkerProfileResult {
     let avatar: Media | null = null;
 
     if (command.avatarId) {
@@ -39,7 +39,7 @@ export class EditProfileComposHandler extends BaseCompositeHandler<EditProfileCo
     });
   }
 
-  private async editEmployer(command: EditProfileCommand): EditEmployerProfileResult {
+  private async editWorker(command: EditProfileCommand): EditEmployerProfileResult {
     let avatar: Media | null = null;
 
     if (command.avatarId) {
