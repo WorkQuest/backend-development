@@ -184,8 +184,9 @@ export async function getUserChats(r) {
     as: 'groupChat',
   }];
 
-  if ((r.query.questChatStatus && r.query.questChatStatus === QuestChatStatus.Open) &&
-    (r.query.type && r.query.type === ChatType.Quest)) {
+  if ((r.query.questChatStatus === QuestChatStatus.Open ||
+      r.query.questChatStatus === QuestChatStatus.Close) &&
+    (r.query.type === ChatType.Quest)) {
     include.push({
       model: QuestChat,
       as: 'questChat',
