@@ -293,7 +293,9 @@ export class QuestChatController extends ChatController {
       employerChatMemberDataBuild.save({ transaction: options.tx }),
     ]);
 
-    await message.$set('medias', payload.medias as Media[], { transaction: options.tx });
+    if (payload.medias) {
+      await message.$set('medias', payload.medias as Media[], { transaction: options.tx });
+    }
 
     return new QuestChatController(chat, questChat, {
       worker: workerChatMember,
