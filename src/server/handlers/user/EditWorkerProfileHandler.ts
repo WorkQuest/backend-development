@@ -77,13 +77,14 @@ export class EditWorkerProfileHandler extends BaseDomainHandler<EditWorkerProfil
       (ratingStatusCanInviteMeOnQuest |= status)
     );
 
-    const [, [workerProfileVisibilitySetting]] = await WorkerProfileVisibilitySetting.update({
+    const workerProfileVisibilitySetting = await WorkerProfileVisibilitySetting.findOne({
+      where: { userId: payload.user.id },
+    });
+
+    await workerProfileVisibilitySetting.update({
       ratingStatusInMySearch,
       ratingStatusCanInviteMeOnQuest,
-    }, {
-      where: { userId: payload.user.id },
-      transaction: this.options.tx,
-    });
+    }, { transaction: this.options.tx });
 
     return workerProfileVisibilitySetting;
   }
