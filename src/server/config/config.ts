@@ -87,4 +87,17 @@ export default {
     pubUrl: process.env.CDN_PUB_END_POINT,
     expiresIn: parseInt(process.env.CDN_EXPIRES_IN),
   },
+  faucet: {
+    wqt: {
+      privateKey: process.env.FAUCET_WQT_PRIVATE_KEY,
+      address: process.env.FAUCET_WQT_WALLET_ADDRESS,
+    },
+    wusd: {
+      privateKey: process.env.FAUCET_WUSD_PRIVATE_KEY,
+      address: process.env.FAUCET_WUSD_WALLET_ADDRESS,
+    },
+    workQuestDevNetwork: {
+      linkRpcProvider: process.env.WORK_QUEST_TEST_NETWORK_RPC_PROVIDER,
+    },
+  }
 };
