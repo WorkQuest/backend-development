@@ -1,12 +1,8 @@
-import { Op, Transaction } from "sequelize";
+import { Transaction } from "sequelize";
 import {
-  RawMember,
-  CreateGroupChatPayload,
   CreateQuestChatPayload,
   SendMessageToChatPayload,
   SendInfoMessageToChatPayload,
-  FindOrCreatePrivateChatPayload,
-  BulkSendInfoMessageToChatPayload,
 } from './types';
 import {
   Chat,
@@ -15,7 +11,6 @@ import {
   ChatData,
   ChatType,
   Message,
-  GroupChat,
   QuestChat,
   ChatMember,
   MemberType,
@@ -27,10 +22,7 @@ import {
   QuestChatStatus,
   QuestsResponseType,
   ChatMemberDeletionData,
-  ReasonForRemovingFromChat,
 } from '@workquest/database-models/lib/models';
-import { error } from '../../utils';
-import { Errors } from '../../utils/errors';
 
 export class ChatController {
   constructor(
