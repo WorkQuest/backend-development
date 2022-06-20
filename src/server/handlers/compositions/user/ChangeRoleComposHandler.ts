@@ -1,4 +1,4 @@
-import { BaseCompositeHandler } from '../types';
+import { BaseCompositeHandler } from '../../types';
 import { ChangeRoleCommand, ChangeRoleResult } from './types';
 import { UserRole } from '@workquest/database-models/lib/models';
 import {
@@ -11,8 +11,7 @@ import {
   ChangeRoleFromEmployerPreValidateHandler,
   ChangeRoleFromWorkerPreAccessPermissionHandler,
   ChangeRoleFromEmployerPreAccessPermissionHandler,
-} from '../user';
-
+} from '../../user';
 
 interface ChangeFromWorkerPayload extends ChangeRoleCommand {
 

@@ -1,6 +1,6 @@
-import { BaseCompositeHandler } from '../types';
+import { BaseCompositeHandler } from '../../types';
 import { UserRole, Media } from '@workquest/database-models/lib/models';
-import { GetMediaByIdHandler, GetMediaPostValidationHandler } from '../media';
+import { GetMediaByIdHandler, GetMediaPostValidationHandler } from '../../media';
 import {
   EditProfileResult,
   EditProfileCommand,
@@ -14,7 +14,7 @@ import {
   EditEmployerProfileHandler,
   EditWorkerProfilePreValidateHandler,
   EditEmployerProfilePreValidateHandler,
-} from '../user';
+} from '../../user';
 
 export class EditProfileComposHandler extends BaseCompositeHandler<EditProfileCommand, EditProfileResult> {
   constructor(
