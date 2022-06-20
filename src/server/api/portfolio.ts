@@ -1,8 +1,11 @@
 import { output } from '../utils';
 import { UserOldController } from '../controllers/user/controller.user';
-import { PortfolioController } from '../controllers/user/controller.portfolio';
 import { User, Portfolio } from '@workquest/database-models/lib/models';
-import { CreatePortfolioCaseComposHandler, EditPortfolioCaseComposHandler } from '../handlers/compositions';
+import {
+  EditPortfolioCaseComposHandler,
+  CreatePortfolioCaseComposHandler,
+  DeletePortfolioCaseComposeHandler,
+} from '../handlers/compositions';
 
 export async function addCase(r) {
   const meUser: User = r.auth.credentials;
@@ -33,11 +36,14 @@ export async function getCases(r) {
 }
 
 export async function deleteCase(r) {
-  const portfolioController = new PortfolioController(await Portfolio.findByPk(r.params.portfolioId));
+  const meUser: User = r.auth.credentials;
 
-  portfolioController.mustBeCaseCreator(r.auth.credentials.id);
+  const { portfolioId } = r.payload.params as { portfolioId: string };
 
-  await portfolioController.destroy();
+  await new DeletePortfolioCaseComposeHandler(r.server.app.db).Handle({
+    portfolioId,
+    user: meUser,
+  })
 
   return output();
 }

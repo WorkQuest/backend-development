@@ -1,6 +1,11 @@
 import { Portfolio, User } from '@workquest/database-models/lib/models';
 
 /** Commands */
+export interface DeletePortfolioCaseCommand {
+  readonly user: User;
+  readonly portfolioId: string;
+}
+
 export interface CreatePortfolioCaseCommand {
   readonly user: User;
   readonly title: string;
@@ -16,8 +21,9 @@ export interface EditPortfolioCaseCommand {
   readonly mediaIds: ReadonlyArray<string>;
 }
 
-
 /** Results */
 export type CreatePortfolioCaseResult = Promise<Portfolio>
 
 export type EditPortfolioCaseResult = Promise<Portfolio>
+
+export type DeletePortfolioCaseResult = Promise<void>

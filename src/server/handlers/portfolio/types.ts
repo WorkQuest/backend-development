@@ -5,6 +5,11 @@ export interface GetPortfolioCaseByIdCommand {
   readonly portfolioId: string;
 }
 
+export interface DeletePortfolioCaseCommand {
+  readonly user: User;
+  readonly portfolio: Portfolio;
+}
+
 export interface CreatePortfolioCaseCommand {
   readonly user: User;
   readonly title: string;
@@ -26,3 +31,5 @@ export type GetPortfolioCaseById = Promise<Portfolio>
 export type CreatePortfolioCaseResult = Promise<Portfolio>
 
 export type EditPortfolioCaseType = Promise<Portfolio>
+
+export type DeletePortfolioCaseType = Promise<void>
