@@ -50,6 +50,6 @@ export function tokenValidate(tokenType: 'access' | 'refresh', allowedUnconfirme
       throw error(Errors.UnconfirmedUser, 'Unconfirmed user', {});
     }
 
-    return { isValid: true, credentials: session.user, artifacts: { token, type: tokenType, sessionId: session.id } };
+    return { isValid: true, credentials: session.user, artifacts: { token, type: tokenType, session: session } };
   };
 }

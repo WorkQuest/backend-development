@@ -396,6 +396,7 @@ export async function changePassword(r) {
     oldPassword,
     newPassword,
     user: meUser,
+    currentSession: r.artifacts.session,
   });
 
   return output();
