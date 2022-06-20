@@ -1,31 +1,25 @@
 import { output } from '../utils';
-import { MediaController } from '../controllers/controller.media';
 import { UserOldController } from '../controllers/user/controller.user';
-import { PortfolioController } from '../controllers/user/controller.portfolio';
-import { User, UserRole, Portfolio } from '@workquest/database-models/lib/models';
+import { User, Portfolio } from '@workquest/database-models/lib/models';
+import {
+  EditPortfolioCaseComposHandler,
+  CreatePortfolioCaseComposHandler,
+  DeletePortfolioCaseComposeHandler,
+} from '../handlers/compositions';
 
 export async function addCase(r) {
-  const medias = await MediaController.getMedias(r.payload.medias);
-  const userController = new UserOldController(r.auth.credentials);
+  const meUser: User = r.auth.credentials;
 
-  await userController.userMustHaveRole(UserRole.Worker);
+  const { mediaIds, title, description } = r.payload as { mediaIds: string[], title: string, description: string };
 
-  const transaction = await r.server.app.db.transaction();
+  const portfolioCase = await new CreatePortfolioCaseComposHandler(r.server.app.db).Handle({
+    title,
+    mediaIds,
+    description,
+    user: meUser,
+  });
 
-  const portfolioController = await PortfolioController.new(
-    {
-      userId: userController.user.id,
-      title: r.payload.title,
-      description: r.payload.description,
-    },
-    transaction,
-  );
-
-  await portfolioController.setMedias(medias, transaction);
-
-  await transaction.commit();
-
-  return output(portfolioController.portfolio);
+  return output(portfolioCase);
 }
 
 export async function getCases(r) {
@@ -42,29 +36,31 @@ export async function getCases(r) {
 }
 
 export async function deleteCase(r) {
-  const portfolioController = new PortfolioController(await Portfolio.findByPk(r.params.portfolioId));
+  const meUser: User = r.auth.credentials;
 
-  portfolioController.mustBeCaseCreator(r.auth.credentials.id);
+  const { portfolioId } = r.payload.params as { portfolioId: string };
 
-  await portfolioController.destroy();
+  await new DeletePortfolioCaseComposeHandler(r.server.app.db).Handle({
+    portfolioId,
+    user: meUser,
+  })
 
   return output();
 }
 
 export async function editCase(r) {
-  const medias = await MediaController.getMedias(r.payload.medias);
+  const meUser: User = r.auth.credentials;
 
-  const portfolio = await Portfolio.findByPk(r.params.portfolioId);
-  const portfolioController = new PortfolioController(portfolio);
+  const { portfolioId } = r.payload.params as { portfolioId: string };
+  const { mediaIds, title, description } = r.payload as { mediaIds: string[], title: string, description: string };
 
-  portfolioController.mustBeCaseCreator(r.auth.credentials.id);
+  const portfolio = await new EditPortfolioCaseComposHandler(r.server.app.db).Handle({
+    title,
+    mediaIds,
+    description,
+    portfolioId,
+    user: meUser,
+  });
 
-  const transaction = await r.server.app.db.transaction();
-
-  await portfolioController.update(r.payload, transaction);
-  await portfolioController.setMedias(medias, transaction);
-
-  await transaction.commit();
-
-  return output(await Portfolio.findByPk(portfolio.id));
+  return output(portfolio);
 }

@@ -5,6 +5,7 @@ import { error, output } from '../utils';
 import { Errors } from '../utils/errors';
 import * as querystring from 'querystring';
 import { StatusKYC, User } from '@workquest/database-models/lib/models';
+import { UserStatisticController } from '../controllers/statistic/controller.userStatistic';
 
 export enum ReviewAnswer {
   Red = 'RED',
@@ -90,6 +91,10 @@ export async function applicantReviewed(r) {
   }
   const newStatusKYC = payload.reviewResult.reviewAnswer === ReviewAnswer.Green ? StatusKYC.Confirmed : StatusKYC.Unconfirmed;
   await user.update({ statusKYC: newStatusKYC });
+
+  if (newStatusKYC === StatusKYC.Confirmed) {
+    await UserStatisticController.kycPassedAction();
+  }
 
   return output();
 }

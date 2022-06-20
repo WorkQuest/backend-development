@@ -1,35 +1,35 @@
-import { literal, Op } from "sequelize";
-import { addSendSmsJob } from "../jobs/sendSms";
-import { error, getRandomCodeNumber, output } from "../utils";
-import { UserController, UserOldController } from "../controllers/user/controller.user";
-import { transformToGeoPostGIS } from "../utils/postGIS";
-import { MediaController } from "../controllers/controller.media";
-import { SkillsFiltersController } from "../controllers/controller.skillsFilters";
-import { addUpdateReviewStatisticsJob } from "../jobs/updateReviewStatistics";
-import { updateUserRaiseViewStatusJob } from "../jobs/updateUserRaiseViewStatus";
-import { updateQuestsStatisticJob } from "../jobs/updateQuestsStatistic";
-import { deleteUserFiltersJob } from "../jobs/deleteUserFilters";
-import { Errors } from "../utils/errors";
+import { literal, Op } from 'sequelize';
+import { addSendSmsJob } from '../jobs/sendSms';
+import { error, getRandomCodeNumber, output } from '../utils';
+import { UserController, UserOldController } from '../controllers/user/controller.user';
+import { UserStatisticController } from '../controllers/statistic/controller.userStatistic';
+import { SkillsFiltersController } from '../controllers/controller.skillsFilters';
+import { addUpdateReviewStatisticsJob } from '../jobs/updateReviewStatistics';
+import { updateUserRaiseViewStatusJob } from '../jobs/updateUserRaiseViewStatus';
+import { updateQuestsStatisticJob } from '../jobs/updateQuestsStatistic';
+import { deleteUserFiltersJob } from '../jobs/deleteUserFilters';
+import { convertAddressToHex } from '../utils/profile';
+import { Errors } from '../utils/errors';
 import {
-  UserChatsStatistic,
-  Quest,
-  EmployerProfileVisibilitySetting,
-  QuestsResponse,
-  QuestsResponseStatus,
-  QuestsStatistic,
-  QuestStatus,
-  RatingStatistic, RatingStatus,
-  ReferralProgramAffiliate,
+  ChangeRoleComposHandler,
+  EditProfileComposHandler,
+  ChangeUserPasswordComposHandler,
+} from '../handlers/compositions';
+import {
   User,
-  UserChangeRoleData,
-  UserRaiseStatus,
-  UserRaiseView,
+  Wallet,
   UserRole,
   UserStatus,
-  Wallet,
-  WorkerProfileVisibilitySetting
-} from "@workquest/database-models/lib/models";
-import { convertAddressToHex } from "../utils/profile";
+  RatingStatus,
+  UserRaiseView,
+  UserRaiseStatus,
+  QuestsStatistic,
+  RatingStatistic,
+  UserChatsStatistic,
+  ReferralProgramAffiliate,
+  WorkerProfileVisibilitySetting,
+  EmployerProfileVisibilitySetting,
+} from '@workquest/database-models/lib/models';
 
 export const searchFields = [
   "firstName",
@@ -344,85 +344,59 @@ export async function setRole(r) {
 
   await UserController.createProfileVisibility({ userId: user.id, role: r.payload.role });
 
+  await UserStatisticController.addRoleAction(r.payload.role);
+
   return output();
 }
 
 export function editProfile(userRole: UserRole) {
   return async function (r) {
-    const user: User = r.auth.credentials;
-    const userOldController = new UserOldController(user);
-    const userController = new UserController(user);
+    const meUser: User = r.auth.credentials;
 
-    await userOldController.userMustHaveRole(userRole);
-
-    const locationFields = { location: null, locationPostGIS: null, locationPlaceName: null };
-    const avatarId = r.payload.avatarId ? (await MediaController.getMedia(r.payload.avatarId)).id : null;
-    const phonesFields = r.payload.phoneNumber ? { tempPhone: user.tempPhone, phone: user.phone } : { tempPhone: null, phone: null };
-
-    const transaction = await r.server.app.db.transaction();
-
-    if (r.payload.phoneNumber) {
-      if (
-        (user.phone && user.phone.fullPhone !== r.payload.phoneNumber.fullPhone) ||
-        (user.tempPhone && user.tempPhone.fullPhone !== r.payload.phoneNumber.fullPhone) ||
-        (!user.phone && !user.tempPhone)
-      ) {
-        phonesFields.phone = null;
-        phonesFields.tempPhone = r.payload.phoneNumber;
-      }
-    }
-    if (r.payload.locationFull) {
-      locationFields.location = r.payload.locationFull.location;
-      locationFields.locationPlaceName = r.payload.locationFull.locationPlaceName;
-      locationFields.locationPostGIS = transformToGeoPostGIS(r.payload.locationFull.location);
-    }
     if (userRole === UserRole.Worker) {
-      await userOldController.setUserSpecializations(r.payload.specializationKeys, transaction);
+      const [editableUser, workerProfileVisibilitySetting, userSpecializations] = await new EditProfileComposHandler(r.server.app.db).Handle({
+        user: meUser,
+        editableRole: userRole,
+        ... r.payload,
+      });
 
-      await userController.updateWorkerProfileVisibility(r.payload.profileVisibility, { tx: transaction });
+      await addUpdateReviewStatisticsJob({
+        userId: meUser.id,
+      });
+
+      editableUser.setDataValue('userSpecializations', userSpecializations);
+      editableUser.setDataValue('workerProfileVisibilitySetting', workerProfileVisibilitySetting);
+
+      return editableUser;
     }
     if (userRole === UserRole.Employer) {
-      await userController.updateEmployerProfileVisibility(r.payload.profileVisibility, { tx: transaction });
+      const [editableUser, employerProfileVisibilitySetting] = await new EditProfileComposHandler(r.server.app.db).Handle({
+        user: meUser,
+        editableRole: userRole,
+        ... r.payload,
+      });
+
+      await addUpdateReviewStatisticsJob({
+        userId: meUser.id,
+      });
+
+      editableUser.setDataValue('employerProfileVisibilitySetting', employerProfileVisibilitySetting);
+
+      return editableUser;
     }
-
-    await user.update({
-      ...phonesFields,
-      ...locationFields,
-      avatarId: avatarId,
-      lastName: r.payload.lastName,
-      firstName: r.payload.firstName,
-      priority: r.payload.priority || null,
-      workplace: r.payload.workplace || null,
-      payPeriod: r.payload.payPeriod || null,
-      costPerHour: r.payload.costPerHour || null,
-      additionalInfo: r.payload.additionalInfo,
-    }, transaction);
-
-    await transaction.commit();
-
-    await addUpdateReviewStatisticsJob({
-      userId: user.id,
-    });
-
-    return output(await User.findByPk(r.auth.credentials.id));
   };
 }
 
 export async function changePassword(r) {
-  const user = await User.scope('withPassword').findOne({
-    where: { id: r.auth.credentials.id },
+  const meUser: User = r.auth.credentials;
+
+  const { oldPassword, newPassword } = r.payload as { oldPassword: string, newPassword: string }
+
+  await new ChangeUserPasswordComposHandler(r.server.app.db).Handle({
+    oldPassword,
+    newPassword,
+    user: meUser,
   });
-
-  const userController = new UserOldController(user);
-
-  await userController.checkPassword(r.payload.oldPassword);
-
-  const transaction = await r.server.app.db.transaction();
-
-  await userController.changePassword(r.payload.newPassword, transaction);
-  await userController.logoutAllSessions(transaction);
-
-  await transaction.commit();
 
   return output();
 }
@@ -436,6 +410,8 @@ export async function confirmPhoneNumber(r) {
     .userMustHaveVerificationPhone()
     .checkPhoneConfirmationCode(r.payload.confirmCode)
     .confirmPhoneNumber()
+
+  await UserStatisticController.smsPassedAction();
 
   return output();
 }
@@ -480,98 +456,26 @@ export async function getUserStatistics(r) {
 }
 
 export async function changeUserRole(r) {
-  const roleChangeTimeLimitInMilliseconds = 60000; /** 1 Mount - 2592000000, for DEBUG - 1 minute */
+  const meUser: User = r.auth.credentials;
 
-  const user = await User.scope('withPassword').findByPk(r.auth.credentials.id);
-  const userController = new UserOldController(user);
+  const { totp } = r.payload as{ totp: string }
 
-  const changeToRole = user.role === UserRole.Worker ? UserRole.Employer : UserRole.Worker;
-
-  const lastRoleChangeData = await UserChangeRoleData.findOne({
-    where: { userId: user.id },
-    order: [['createdAt', 'DESC']],
-  });
-
-  const userRegistrationDate: Date = user.createdAt;
-  const lastRoleChangeDate: Date | null = lastRoleChangeData ? lastRoleChangeData.createdAt : null;
-
-  const allowedChangeRoleFromDateInMilliseconds = lastRoleChangeData ?
-    lastRoleChangeDate.getTime() + roleChangeTimeLimitInMilliseconds :
-    userRegistrationDate.getTime() + roleChangeTimeLimitInMilliseconds
-
-  userController
-    .userMustHaveStatus(UserStatus.Confirmed)
-    .userMustHaveActiveStatusTOTP(true)
-    .checkTotpConfirmationCode(r.payload.totp)
-
-  if (Date.now() < allowedChangeRoleFromDateInMilliseconds) {
-    return error(Errors.Forbidden, 'Role change timeout has not passed yet', {
-      endDateOfTimeout: new Date(allowedChangeRoleFromDateInMilliseconds),
-    });
-  }
-
-  if (user.role === UserRole.Worker) {
-    const questCount = await Quest.count({
-      where: {
-        assignedWorkerId: user.id,
-        status: { [Op.notIn]: [QuestStatus.Closed, QuestStatus.Completed, QuestStatus.Blocked] }
-      }
-    });
-    const questsResponseCount = await QuestsResponse.count({
-      where: {
-        workerId: user.id,
-        status: { [Op.notIn]: [QuestsResponseStatus.Closed, QuestsResponseStatus.Rejected] }
-      }
-    });
-
-    if (questCount !== 0) {
-      return error(Errors.HasActiveQuests, 'There are active quests', { questCount });
-    }
-    if (questsResponseCount !== 0) {
-      return error(Errors.HasActiveResponses, 'There are active responses', { questsResponseCount });
-    }
-  }
-  if (user.role === UserRole.Employer) {
-    const questCount = await Quest.count({
-      where: { userId: user.id, status: { [Op.notIn]: [QuestStatus.Closed, QuestStatus.Completed] } }
-    });
-
-    if (questCount !== 0) {
-      return error(Errors.HasActiveQuests, 'There are active quests', { questCount });
-    }
-  }
-
-  const transaction = await r.server.app.db.transaction();
-
-  await UserChangeRoleData.create({
-    changedAdminId: null,
-    userId: user.id,
-    movedFromRole: user.role,
-    additionalInfo: user.additionalInfo,
-    costPerHour: user.costPerHour,
-    workplace: user.workplace,
-    priority: user.priority,
-  }, { transaction });
-
-  await user.update({
-    workplace: null,
-    costPerHour: null,
-    role: changeToRole,
-    additionalInfo: UserOldController.getDefaultAdditionalInfo(changeToRole),
-  }, { transaction });
-
-  await transaction.commit();
+  await new ChangeRoleComposHandler(r.server.app.db).Handle({
+    user: meUser,
+    code2FA: totp,
+  })
 
   await deleteUserFiltersJob({
-    userId: user.id
+    userId: meUser.id
   });
   await addUpdateReviewStatisticsJob({
-    userId: user.id,
+    userId: meUser.id,
   });
   await updateQuestsStatisticJob({
-    userId: user.id,
-    role: user.role,
+    userId: meUser.id,
+    role: meUser.role,
   });
+  await UserStatisticController.changeRoleAction(meUser.role);
 
   return output();
 }

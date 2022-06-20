@@ -1,12 +1,8 @@
-import { Op, Transaction } from "sequelize";
+import { Transaction } from "sequelize";
 import {
-  RawMember,
-  CreateGroupChatPayload,
   CreateQuestChatPayload,
   SendMessageToChatPayload,
   SendInfoMessageToChatPayload,
-  FindOrCreatePrivateChatPayload,
-  BulkSendInfoMessageToChatPayload,
 } from './types';
 import {
   Chat,
@@ -15,7 +11,6 @@ import {
   ChatData,
   ChatType,
   Message,
-  GroupChat,
   QuestChat,
   ChatMember,
   MemberType,
@@ -27,10 +22,7 @@ import {
   QuestChatStatus,
   QuestsResponseType,
   ChatMemberDeletionData,
-  ReasonForRemovingFromChat,
 } from '@workquest/database-models/lib/models';
-import { error } from '../../utils';
-import { Errors } from '../../utils/errors';
 
 export class ChatController {
   constructor(
@@ -281,7 +273,7 @@ export class QuestChatController extends ChatController {
       employerChatMemberBuild.save({ transaction: options.tx }),
     ]);
 
-    const [] = await Promise.all([
+    const [,,message] = await Promise.all([
       firstMessageBuild.save({ transaction: options.tx }),
       firstInfoMessageBuild.save({ transaction: options.tx }),
       responseMessageBuild.save({ transaction: options.tx }),
@@ -292,6 +284,10 @@ export class QuestChatController extends ChatController {
       workerChatMemberDataBuild.save({ transaction: options.tx }),
       employerChatMemberDataBuild.save({ transaction: options.tx }),
     ]);
+
+    if (payload.medias) {
+      await message.$set('medias', payload.medias as Media[], { transaction: options.tx });
+    }
 
     return new QuestChatController(chat, questChat, {
       worker: workerChatMember,

@@ -1,6 +1,6 @@
 {
   "name": "work-quest-backend",
-  "version": "1.0.11",
+  "version": "1.0.12",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -31,7 +31,7 @@
     "@types/joi": "^14.3.4",
     "@types/validator": "^13.1.0",
     "@workquest/contract-data-pools": "github:WorkQuest/contract-data-pools#testnet",
-    "@workquest/database-models": "git+https://github.com/WorkQuest/database-models.git#2f6c3538eb44d0bd2f93b07b24822f668b3c6e10",
+    "@workquest/database-models": "git+https://github.com/WorkQuest/database-models.git#a76d641d4a6cb856d1b1ed64a5732e678530730f",
     "amqplib": "^0.8.0",
     "aws-sdk": "^2.918.0",
     "axios": "^0.21.1",
