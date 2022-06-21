@@ -38,7 +38,6 @@ import {
   AddUsersInGroupChatHandler,
   AddUsersInGroupChatPreAccessPermissionHandler,
   AddUsersInGroupChatPreValidateHandler,
-  CreateGroupChatHandler,
   DeletedMemberFromGroupChatHandler,
   DeletedMemberFromGroupChatPreAccessPermissionHandler,
   DeletedMemberFromGroupChatPreValidateHandler,
@@ -71,6 +70,7 @@ import {
   UserMarkMessageStarHandler,
   RemoveChatFromChatsListHandler,
 } from "../handlers";
+import { CreateGroupChatComposHandler } from "../handlers/compositions";
 
 export async function getUserChats(r) {
   const searchByQuestNameLiteral = literal(
@@ -406,17 +406,12 @@ export async function createGroupChat(r) {
   const chatCreator: User = r.auth.credentials;
   const userIds: string[] = r.payload.userIds;
 
-  const invitedUsers: User[] = await new GetUsersByIdsPostValidationHandler(
-    new GetUsersByIdsPostAccessPermissionHandler(
-      new GetUsersByIdsHandler()
-    )
-  ).Handle({ userIds });
-
-  const [chat, messageWithInfo] = await new CreateGroupChatHandler(r.server.app.db).Handle({
-    chatName,
-    chatCreator,
-    invitedUsers,
-  });
+  const [chat, messageWithInfo] = await new CreateGroupChatComposHandler(r.server.app.db)
+    .Handle({
+      userIds,
+      chatName,
+      chatCreator,
+    });
 
   await updateChatDataJob({
     chatId: chat.id,
