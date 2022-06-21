@@ -1,13 +1,13 @@
-import { BaseCompositeHandler } from '../types';
+import { BaseCompositeHandler } from '../../types';
 import { ChangeUserPasswordResult, ChangeUserPasswordCommand } from './types';
 import {
-  LogoutAllSessionsHandler,
   ChangeUserPasswordHandler,
+  LogoutOtherSessionsHandler,
   GetUserByIdWithFullAccessHandler,
   GetUserByIdPostValidationHandler,
   GetUserByIdPostAccessPermissionHandler,
   ChangeUserPasswordPreAccessPermissionHandler,
-} from '../user';
+} from '../../user';
 
 export class ChangeUserPasswordComposHandler extends BaseCompositeHandler<ChangeUserPasswordCommand, ChangeUserPasswordResult> {
   constructor(
@@ -28,8 +28,8 @@ export class ChangeUserPasswordComposHandler extends BaseCompositeHandler<Change
         new ChangeUserPasswordHandler().setOptions({ tx })
       ).Handle({ ...command, user })
 
-      await new LogoutAllSessionsHandler().setOptions({ tx })
-        .Handle({ user })
+      await new LogoutOtherSessionsHandler().setOptions({ tx })
+        .Handle({ user, currentSession: command.currentSession, })
     });
   }
 }

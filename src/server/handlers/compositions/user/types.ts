@@ -1,20 +1,21 @@
 import {
   LocationFull,
   WorkerVisibility,
-  EmployerVisibility, EditWorkerProfileResult, EditEmployerProfileResult
-} from '../user';
+  EmployerVisibility,
+  EditWorkerProfileResult,
+  EditEmployerProfileResult,
+} from '../../user';
 import {
   User,
   Phone,
+  Session,
   Priority,
   UserRole,
   WorkPlace,
   PayPeriod,
   AdditionalInfoWorker,
-  AdditionalInfoEmployer, WorkerProfileVisibilitySetting, UserSpecializationFilter
+  AdditionalInfoEmployer,
 } from '@workquest/database-models/lib/models';
-import { ChangeUserPasswordComposHandler } from './ChangeUserPasswordComposHandler';
-import { ChangeRoleComposHandler } from './ChangeRoleComposHandler';
 
 /** Commands */
 export interface EditWorkerProfileCommand {
@@ -54,6 +55,7 @@ export interface ChangeUserPasswordCommand {
   readonly user: User;
   readonly newPassword: string;
   readonly oldPassword: string;
+  readonly currentSession: Session;
 }
 
 export interface ChangeRoleCommand {
@@ -62,7 +64,6 @@ export interface ChangeRoleCommand {
 }
 
 /** Results */
-
 export type EditProfileResult = Promise<
   | EditWorkerProfileResult
   | EditEmployerProfileResult

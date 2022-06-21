@@ -2,16 +2,17 @@ import {
   User,
   Media,
   Phone,
+  Session,
   Priority,
   WorkPlace,
   PayPeriod,
   LocationType,
   AdditionalInfoWorker,
-  AdditionalInfoEmployer, UserSpecializationFilter, WorkerProfileVisibilitySetting, EmployerProfileVisibilitySetting
+  AdditionalInfoEmployer,
+  UserSpecializationFilter,
+  WorkerProfileVisibilitySetting,
+  EmployerProfileVisibilitySetting,
 } from '@workquest/database-models/lib/models';
-import { ChangeUserPasswordHandler } from './ChangeUserPasswordHandler';
-import { GetUserByIdHandler } from './GetUserByIdHandler';
-import { ChangeRoleFromWorkerHandler } from './ChangeRoleFromWorkerHandler';
 
 /** */
 export type LocationFull = {
@@ -36,6 +37,31 @@ export interface GetUsersByIdCommand {
 
 export interface GetUsersByIdsCommand {
   readonly userIds: ReadonlyArray<string>;
+}
+
+export interface LogoutAllSessionsCommand {
+  readonly user: User;
+}
+
+export interface LogoutOtherSessionsCommand {
+  readonly user: User;
+  readonly currentSession: Session;
+}
+
+export interface ChangeRoleFromWorkerCommand {
+  readonly user: User;
+  readonly code2FA: string;
+}
+
+export interface ChangeRoleFromEmployerCommand {
+  readonly user: User;
+  readonly code2FA: string;
+}
+
+export interface ChangeUserPasswordCommand {
+  readonly user: User;
+  readonly newPassword: string;
+  readonly oldPassword: string;
 }
 
 export interface EditWorkerProfileCommand {
@@ -65,39 +91,21 @@ export interface EditEmployerProfileCommand {
   readonly additionalInfo: AdditionalInfoEmployer;
 }
 
-export interface ChangeUserPasswordCommand {
-  readonly user: User;
-  readonly newPassword: string;
-  readonly oldPassword: string;
-}
-
-export interface LogoutAllSessionsCommand {
-  readonly user: User;
-}
-
-export interface ChangeRoleFromWorkerCommand {
-  readonly user: User;
-  readonly code2FA: string;
-}
-
-export interface ChangeRoleFromEmployerCommand {
-  readonly user: User;
-  readonly code2FA: string;
-}
-
 /** Results */
 export type GetUsersByIdResult = Promise<User>
 
 export type GetUsersByIdsResult = Promise<User[]>
 
-export type EditWorkerProfileResult = Promise<[User, WorkerProfileVisibilitySetting, UserSpecializationFilter[]]>
-
-export type EditEmployerProfileResult = Promise<[User, EmployerProfileVisibilitySetting]>
-
 export type ChangeUserPasswordResult = Promise<void>
 
 export type LogoutAllSessionsResult = Promise<void>
 
+export type LogoutOtherSessionsResult = Promise<void>
+
 export type ChangeRoleFromWorkerResult = Promise<void>
 
 export type ChangeRoleFromEmployerResult = Promise<void>
+
+export type EditEmployerProfileResult = Promise<[User, EmployerProfileVisibilitySetting]>
+
+export type EditWorkerProfileResult = Promise<[User, WorkerProfileVisibilitySetting, UserSpecializationFilter[]]>

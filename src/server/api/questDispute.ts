@@ -116,6 +116,8 @@ export async function getDisputes(r) {
       ],
     },
     include,
+    distinct: true,
+    col: 'id',
     limit: r.query.limit,
     offset: r.query.offset,
     order: [['createdAt', 'DESC']],

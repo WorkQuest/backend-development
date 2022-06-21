@@ -2,7 +2,7 @@ import * as Joi from "joi";
 import * as handlers from "../../api/profile";
 import { UserRole } from "@workquest/database-models/lib/models";
 import {
-  accountAddressSchema, employerProfileVisibilitySettingsSchema,
+  accountAddressSchema,
   employerQuerySchema,
   emptyOkSchema,
   idSchema,
@@ -31,11 +31,13 @@ import {
   userStatisticsSchema,
   userWorkersSchema,
   workerPayloadSchema,
-  workerProfileVisibilitySettingsSchema,
-  workerQueryForMapPointsSchema,
   workerQuerySchema,
+  payPeriodSchema,
+  workPlaceSchema,
   workerCostPerHourSchema,
-  workPlaceSchema, payPeriodSchema
+  workerQueryForMapPointsSchema,
+  workerProfileVisibilitySettingsSchema,
+  employerProfileVisibilitySettingsSchema,
 } from "@workquest/database-models/lib/schemes";
 
 export default [{
