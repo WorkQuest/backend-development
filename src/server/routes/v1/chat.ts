@@ -228,7 +228,7 @@ export default [{
   handler: handlers.removeChatFromList,
   options: {
     auth: 'jwt-access',
-    id: 'v1.group-chat.group.remove',
+    id: 'v1.user.me.chat.removeChat',
     description: 'Remove chat from list',
     tags: ['api', 'chat'],
     validate: {
