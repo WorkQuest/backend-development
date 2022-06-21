@@ -59,6 +59,11 @@
     src: ./app.json.j2
     dest: '{{ backend_bin }}/app.json'
 
+  - name: Copy or generate Google Analytics API File
+    copy:
+      content: "{{ GOOGLE_ANALYTICS_API_FILE_DATA | b64decode }}"
+      dest: '{{ backend_bin }}/{{ GOOGLE_ANALYTICS_API_FILE_NAME }}'
+
 - name: Copy or generate db_config.json file
   template:
     src: ./{{ backend_db_config_json }}.j2

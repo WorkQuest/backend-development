@@ -1,6 +1,8 @@
 import { LoginApp } from '@workquest/database-models/lib/models/user/types';
-import { fn, literal, Op, QueryTypes } from 'sequelize';
+import { fn, literal, QueryTypes } from 'sequelize';
 import { addJob } from '../utils/scheduler';
+import config from '../config/config';
+import { google } from 'googleapis';
 import {
   RatingStatus,
   StatusKYC,
@@ -9,6 +11,27 @@ import {
   UsersPlatformStatistic,
   UserStatus
 } from '@workquest/database-models/lib/models';
+
+const analytics = google.analytics('v3');
+const analyticsApiFile = require(__dirname + '/../../../' + config.analytics.apiFileName);
+
+async function getAverageSessionTime() {
+  const jwt = new google.auth.JWT({
+    email: analyticsApiFile.client_email,
+    key: analyticsApiFile.private_key,
+    scopes: config.analytics.scopes,
+  });
+
+  const result = await analytics.data.ga.get({
+    auth: jwt,
+    ids: `ga:${config.analytics.viewId}`,
+    'start-date': 'yesterday',
+    'end-date': 'today',
+    metrics: 'ga:sessionDuration',
+  });
+
+  return parseInt(result.data.totalsForAllResults['ga:sessionDuration']);
+}
 
 const platformQuery = `
     SELECT type, COUNT(*)
@@ -83,7 +106,7 @@ export default async function() {
     if (parseInt(statusesKey) === UserStatus.Confirmed) {
       todayUserStatistics.finished = statuses[statusesKey];
     } else {
-      todayUserStatistics.unfinished += statuses[statusesKey];
+      todayUserStatistics.unfinished = statuses[statusesKey];
     }
   }
 
@@ -142,6 +165,8 @@ export default async function() {
   todayUserStatistics.use2FA = await User.unscoped().count({
     where: { 'settings.security.TOTP.active': true }
   });
+
+  todayUserStatistics.averageSessionTime = await getAverageSessionTime();
 
   await todayUserStatistics.save();
 }
