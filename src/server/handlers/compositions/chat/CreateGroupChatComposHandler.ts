@@ -1,14 +1,13 @@
 import { BaseCompositeHandler } from "../../types";
-import { CreateGroupChatComposCommand, CreateGroupChatComposResults } from "./types";
-import {
-  CreateGroupChatHandler
-} from "../../chat";
+import { CreateGroupChatHandler } from "../../chat";
 import { User } from "@workquest/database-models/lib/models";
+import { CreateGroupChatComposCommand, CreateGroupChatComposResults } from "./types";
 import {
   GetUsersByIdsHandler,
   GetUsersByIdsPostAccessPermissionHandler,
   GetUsersByIdsPostValidationHandler
 } from "../../user";
+
 
 export class CreateGroupChatComposHandler extends BaseCompositeHandler<CreateGroupChatComposCommand, CreateGroupChatComposResults> {
   constructor(
@@ -30,7 +29,7 @@ export class CreateGroupChatComposHandler extends BaseCompositeHandler<CreateGro
         chatName: command.chatName,
         chatCreator: command.chatCreator,
       });
-    })
+    });
 
     return [chat, messageWithInfo]
   }

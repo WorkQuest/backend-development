@@ -1,5 +1,5 @@
 import { GroupChatValidator } from './GroupChatValidator';
-import { Options, BaseDecoratorHandler, IHandler } from '../../types';
+import { Options, BaseDecoratorHandler, BaseDomainHandler, IHandler } from "../../types";
 import { GroupChatAccessPermission } from './GroupChatAccessPermission';
 import {
   Chat,
@@ -23,12 +23,7 @@ interface DeleteMemberPayload extends DeleteMemberFromGroupChatCommand {
   readonly lastMessage: Message;
 }
 
-export class DeletedMemberFromGroupChatHandler implements IHandler<DeleteMemberFromGroupChatCommand, Promise<Message>> {
-  constructor(
-    private readonly dbContext: any,
-  ) {
-  }
-
+export class DeletedMemberFromGroupChatHandler extends BaseDomainHandler<DeleteMemberFromGroupChatCommand, Promise<Message>> {
   private static getLastMessage(chat: Chat, options: Options = {}): Promise<Message> {
     return Message.findOne({
       where: { chatId: chat.id },
@@ -84,16 +79,14 @@ export class DeletedMemberFromGroupChatHandler implements IHandler<DeleteMemberF
   }
 
   public async Handle(command: DeleteMemberFromGroupChatCommand): Promise<Message> {
-    const [[deletedMember, deletionData], infoMessage] = await this.dbContext.transaction(async (tx) => {
-      const lastMessage = await DeletedMemberFromGroupChatHandler.getLastMessage(command.groupChat, { tx });
+    const lastMessage = await DeletedMemberFromGroupChatHandler.getLastMessage(command.groupChat, { tx: this.options.tx });
 
-      const payload = { ...command, lastMessage };
+    const payload = { ...command, lastMessage };
 
-      return await Promise.all([
-        DeletedMemberFromGroupChatHandler.deleteMember(payload, { tx }),
-        DeletedMemberFromGroupChatHandler.sendInfoMessageAboutDeleteMember(payload, { tx }),
-      ]);
-    });
+    const [[ deletedMember, deletionData ], infoMessage] = await Promise.all([
+      DeletedMemberFromGroupChatHandler.deleteMember(payload, { tx: this.options.tx }),
+      DeletedMemberFromGroupChatHandler.sendInfoMessageAboutDeleteMember(payload, { tx: this.options.tx }),
+    ]);
 
     return infoMessage;
   }

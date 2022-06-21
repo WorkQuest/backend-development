@@ -38,12 +38,8 @@ import {
   AddUsersInGroupChatHandler,
   AddUsersInGroupChatPreAccessPermissionHandler,
   AddUsersInGroupChatPreValidateHandler,
-  DeletedMemberFromGroupChatHandler,
-  DeletedMemberFromGroupChatPreAccessPermissionHandler,
-  DeletedMemberFromGroupChatPreValidateHandler,
   GetChatByIdHandler,
   GetChatByIdPostValidationHandler,
-  GetChatMemberByIdHandler,
   GetChatMemberByUserHandler,
   GetChatMemberPostFullAccessPermissionHandler,
   GetChatMemberPostLimitedAccessPermissionHandler,
@@ -70,7 +66,7 @@ import {
   UserMarkMessageStarHandler,
   RemoveChatFromChatsListHandler,
 } from "../handlers";
-import { CreateGroupChatComposHandler } from "../handlers/compositions";
+import { CreateGroupChatComposHandler, RemoveMemberFromGroupChatComposHandler } from "../handlers/compositions";
 
 export async function getUserChats(r) {
   const searchByQuestNameLiteral = literal(
@@ -600,27 +596,12 @@ export async function removeMemberFromGroupChat(r) {
 
   const { chatId, userId } = r.params as { chatId: string, userId: string };
 
-  const groupChat = await new GetGroupChatPostValidationHandler(
-    new GetGroupChatHandler()
-  ).Handle({ chatId });
-
-  const member = await new GetChatMemberPostFullAccessPermissionHandler(
-    new GetChatMemberPostValidationHandler(
-      new GetChatMemberByIdHandler()
-    )
-  ).Handle({ chat: groupChat, id: userId });
-
-  const meMember = await new GetChatMemberPostFullAccessPermissionHandler(
-    new GetChatMemberPostValidationHandler(
-      new GetChatMemberByUserHandler()
-    )
-  ).Handle({ chat: groupChat, user: meUser });
-
-  const messageWithInfo = await new DeletedMemberFromGroupChatPreAccessPermissionHandler(
-    new DeletedMemberFromGroupChatPreValidateHandler(
-      new DeletedMemberFromGroupChatHandler(r.server.app.db)
-    )
-  ).Handle({ member, groupChat, deletionInitiator: meMember });
+  const [groupChat, messageWithInfo, meMember] = await new RemoveMemberFromGroupChatComposHandler(r.server.app.db)
+    .Handle({
+      meUser,
+      chatId,
+      userId,
+    });
 
   await resetUnreadCountMessagesOfMemberJob({
     chatId: groupChat.id,
