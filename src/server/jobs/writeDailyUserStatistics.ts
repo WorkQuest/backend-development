@@ -27,10 +27,10 @@ async function getAverageSessionTime() {
     ids: `ga:${config.analytics.viewId}`,
     'start-date': 'yesterday',
     'end-date': 'today',
-    metrics: 'ga:sessionDuration',
+    metrics: 'ga:avgSessionDuration',
   });
 
-  return parseInt(result.data.totalsForAllResults['ga:sessionDuration']);
+  return parseInt(result.data.totalsForAllResults['ga:avgSessionDuration']);
 }
 
 const platformQuery = `
