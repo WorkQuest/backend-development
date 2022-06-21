@@ -19,7 +19,7 @@ import {
   GroupChat,
   InfoMessage,
   Media,
-  MemberStatus,
+  MemberStatus, MemberType,
   Message,
   Quest,
   QuestChat,
@@ -27,7 +27,9 @@ import {
   StarredChat,
   StarredMessage,
   ChatDeletionData,
-  User
+  User,
+  QuestsResponse,
+  QuestsResponseStatus,
 } from "@workquest/database-models/lib/models";
 import {
   AddUsersInGroupChatHandler,
@@ -50,12 +52,9 @@ import {
   GetGroupChatPostValidationHandler,
   GetMediaByIdsHandler,
   GetMediasPostValidationHandler,
-  GetUsersByIdHandler,
-  GetUsersByIdPostAccessPermissionHandler,
-  GetUsersByIdPostValidationHandler,
-  GetUsersByIdsHandler,
-  GetUsersByIdsPostAccessPermissionHandler,
-  GetUsersByIdsPostValidationHandler,
+  GetUserByIdHandler,
+  GetUserByIdPostAccessPermissionHandler,
+  GetUserByIdPostValidationHandler,
   LeaveFromGroupChatHandler,
   LeaveFromGroupChatPreAccessPermissionHandler,
   LeaveFromGroupChatPreValidateHandler,
@@ -102,7 +101,7 @@ export async function getUserChats(r) {
 
   const where = {
     ...(r.query.type && { type: r.query.type }),
-    chatDeletionDataLiteral
+    chatDeletionDataLiteral,
   };
 
   const replacements = {};
@@ -159,7 +158,7 @@ export async function getUserChats(r) {
   }, {
     model: ChatMember,
     as: 'members',
-    where: { [Op.and]: [ { userId: { [Op.ne]: r.auth.credentials.id } }, chatTypeLiteral ] },
+    where: { [Op.and]: [ { [Op.or]: [{ adminId: { [Op.ne]: r.auth.credentials.id } }, { userId: { [Op.ne]: r.auth.credentials.id } }] }, chatTypeLiteral ] },
     include: [{
       model: User.unscoped(),
       as: 'user',
@@ -168,6 +167,10 @@ export async function getUserChats(r) {
         model: Media,
         as: 'avatar'
       }]
+    }, {
+      model: Admin.unscoped(),
+      as: 'admin',
+      attributes: ["id", "firstName", "lastName"],
     }, {
       model: ChatMemberData,
       attributes: ["lastReadMessageId", "unreadCountMessages", "lastReadMessageNumber"],
@@ -187,10 +190,22 @@ export async function getUserChats(r) {
     as: 'groupChat',
   }];
 
-  if (r.query.questChatStatus && (r.query.type && r.query.type === ChatType.Quest)) {
+  if ((r.query.questChatStatus === QuestChatStatus.Open ||
+      r.query.questChatStatus === QuestChatStatus.Close) &&
+    (r.query.type === ChatType.Quest)) {
     include.push({
       model: QuestChat,
       as: 'questChat',
+      include: [{
+        model: QuestsResponse.unscoped(),
+        as: 'response',
+        attributes: ["id"],
+        where: {
+          status: {
+            [Op.notIn]: [QuestsResponseStatus.Closed, QuestsResponseStatus.Rejected]
+          }
+        }
+      }],
       where: {
         status: r.query.questChatStatus,
       },
@@ -410,9 +425,9 @@ export async function sendMessageToUser(r) {
   const { userId } = r.params as { userId: string };
   const { text, mediaIds } = r.payload as { text: string, mediaIds: string[] }
 
-  const recipientUser = await new GetUsersByIdPostAccessPermissionHandler(
-    new GetUsersByIdPostValidationHandler(
-      new GetUsersByIdHandler()
+  const recipientUser = await new GetUserByIdPostAccessPermissionHandler(
+    new GetUserByIdPostValidationHandler(
+      new GetUserByIdHandler()
     )
   ).Handle({ userId });
 
@@ -533,10 +548,17 @@ export async function sendMessageToChat(r) {
   const members = await ChatMember.findAll({
     attributes: ['userId', 'adminId'],
     where: {
-      userId: { [Op.not]: meUser.id },
+      [Op.or]: {
+        [Op.and]: {
+          type: MemberType.User,
+          userId: { [Op.ne]: meUser.id }
+        },
+        type: MemberType.Admin
+      },
+      chatId,
       status: MemberStatus.Active,
-    },
-  })
+    }
+  });
 
   r.server.app.broker.sendChatNotification({
     data: message.toJSON(),

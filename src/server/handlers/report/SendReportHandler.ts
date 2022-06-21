@@ -1,4 +1,4 @@
-import { HandlerDecoratorBase, IHandler } from '../types';
+import { BaseDecoratorHandler, IHandler } from '../types';
 import { ReportAccessPermission } from './ReportAccessPermission';
 import {
   User,
@@ -19,7 +19,7 @@ export interface SendReportCommand {
   readonly entity: User | DiscussionComment | Quest;
 }
 
-export class SendReportPreAccessPermission extends HandlerDecoratorBase<SendReportCommand, Promise<Report>> {
+export class SendReportPreAccessPermission extends BaseDecoratorHandler<SendReportCommand, Promise<Report>> {
   private readonly accessPermission: ReportAccessPermission;
 
   constructor(

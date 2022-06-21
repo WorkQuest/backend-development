@@ -26,7 +26,7 @@ const platformQuery = `
 
 const ratingStatusesQuery = `
   SELECT status, COUNT(*) FROM "RatingStatistics" GROUP BY status;
-`
+`;
 
 async function userRawCountBuilder(query: string) {
   const rawCount = await User.sequelize.query(query, { type: QueryTypes.SELECT });
@@ -61,6 +61,8 @@ export async function addWriteStatisticsJob() {
 }
 
 export default async function() {
+  await addWriteStatisticsJob();
+
   const [todayUserStatistics] = await UsersPlatformStatistic.findOrBuild({
     where: { date: new Date() }
   });

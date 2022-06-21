@@ -1,5 +1,5 @@
 import { MediaValidator } from "./MediaValidator";
-import { HandlerDecoratorBase, IHandler } from "../types";
+import { BaseDecoratorHandler, IHandler } from "../types";
 import { Media } from "@workquest/database-models/lib/models";
 
 export interface GetMediaByIdCommand {
@@ -22,7 +22,7 @@ export class GetMediaByIdsHandler implements IHandler<GetMediaByIdsCommand, Prom
   }
 }
 
-export class GetMediaPostValidationHandler<Tin extends { mediaId: string }> extends HandlerDecoratorBase<Tin, Promise<Media>> {
+export class GetMediaPostValidationHandler<Tin extends { mediaId: string }> extends BaseDecoratorHandler<Tin, Promise<Media>> {
   private readonly validator: MediaValidator;
 
   constructor(
@@ -42,7 +42,7 @@ export class GetMediaPostValidationHandler<Tin extends { mediaId: string }> exte
   }
 }
 
-export class GetMediasPostValidationHandler<Tin extends { mediaIds: ReadonlyArray<string> }> extends HandlerDecoratorBase<Tin, Promise<Media[]>> {
+export class GetMediasPostValidationHandler<Tin extends { mediaIds: ReadonlyArray<string> }> extends BaseDecoratorHandler<Tin, Promise<Media[]>> {
 
   private readonly validator: MediaValidator;
 

@@ -555,7 +555,7 @@ export class UserController {
       (ratingStatusCanInviteMeOnQuest |= status)
     );
 
-    return  WorkerProfileVisibilitySetting.update({ ratingStatusInMySearch, ratingStatusCanInviteMeOnQuest }, {
+    return WorkerProfileVisibilitySetting.update({ ratingStatusInMySearch, ratingStatusCanInviteMeOnQuest }, {
       where: { userId: this.user.id },
       transaction: options.tx,
     });

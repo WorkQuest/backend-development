@@ -1,5 +1,5 @@
 import { ReportValidator } from './ReportValidator';
-import { HandlerDecoratorBase, IHandler } from '../types';
+import { BaseDecoratorHandler, IHandler } from '../types';
 import {
   User,
   Quest,
@@ -27,7 +27,7 @@ export class GetEntityForReportHandler implements IHandler<GetEntityForReportCom
   }
 }
 
-export class GetEntityForReportPreValidateHandler extends HandlerDecoratorBase<GetEntityForReportCommand, Promise<EntityReport>> {
+export class GetEntityForReportPreValidateHandler extends BaseDecoratorHandler<GetEntityForReportCommand, Promise<EntityReport>> {
 
   private readonly validator: ReportValidator;
 
@@ -46,7 +46,7 @@ export class GetEntityForReportPreValidateHandler extends HandlerDecoratorBase<G
   }
 }
 
-export class GetEntityForReportPostValidateHandler extends HandlerDecoratorBase<GetEntityForReportCommand, Promise<EntityReport>> {
+export class GetEntityForReportPostValidateHandler extends BaseDecoratorHandler<GetEntityForReportCommand, Promise<EntityReport>> {
 
   private readonly validator: ReportValidator;
 

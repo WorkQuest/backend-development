@@ -281,7 +281,7 @@ export class QuestChatController extends ChatController {
       employerChatMemberBuild.save({ transaction: options.tx }),
     ]);
 
-    const [] = await Promise.all([
+    const [,,message] = await Promise.all([
       firstMessageBuild.save({ transaction: options.tx }),
       firstInfoMessageBuild.save({ transaction: options.tx }),
       responseMessageBuild.save({ transaction: options.tx }),
@@ -292,6 +292,10 @@ export class QuestChatController extends ChatController {
       workerChatMemberDataBuild.save({ transaction: options.tx }),
       employerChatMemberDataBuild.save({ transaction: options.tx }),
     ]);
+
+    if (payload.medias) {
+      await message.$set('medias', payload.medias as Media[], { transaction: options.tx });
+    }
 
     return new QuestChatController(chat, questChat, {
       worker: workerChatMember,

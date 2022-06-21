@@ -1,5 +1,5 @@
 import { GroupChatValidator } from './GroupChatValidator';
-import { HandlerDecoratorBase, IHandler } from '../../types';
+import { BaseDecoratorHandler, IHandler } from '../../types';
 import { Chat } from '@workquest/database-models/lib/models';
 
 export interface GetGroupChatCommand {
@@ -12,7 +12,7 @@ export class GetGroupChatHandler implements IHandler<GetGroupChatCommand, Promis
   }
 }
 
-export class GetGroupChatPostValidationHandler extends HandlerDecoratorBase<GetGroupChatCommand, Promise<Chat>> {
+export class GetGroupChatPostValidationHandler extends BaseDecoratorHandler<GetGroupChatCommand, Promise<Chat>> {
 
   private readonly validator: GroupChatValidator;
 
