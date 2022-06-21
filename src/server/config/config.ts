@@ -46,6 +46,11 @@ export default {
       pass: process.env.SMTP_PASSWORD,
     },
   },
+  analytics: {
+    apiFileName: process.env.GOOGLE_ANALYTICS_API_FILE_NAME,
+    viewId: process.env.GOOGLE_ANALYTICS_API_VIEW_ID,
+    scopes: ['https://www.googleapis.com/auth/analytics.readonly'],
+  },
   sumsub: {
     appToken: process.env.SUMSUB_APP_TOKEN,
     secretKey: process.env.SUMSUB_SECRET_KEY,
