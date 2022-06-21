@@ -3,8 +3,8 @@ import { addJob } from '../utils/scheduler';
 import {
   Message,
   ChatMember,
-  ChatMemberData,
-} from '@workquest/database-models/lib/models';
+  ChatMemberData, MemberStatus
+} from "@workquest/database-models/lib/models";
 
 export type MemberUnreadMessagesPayload = {
   chatId: string;
@@ -22,7 +22,10 @@ export default async function updateCountUnreadMessages(payload: MemberUnreadMes
     include: [{
       model: ChatMember,
       as: 'chatMember',
-      where: { chatId: payload.chatId }
+      where: {
+        chatId: payload.chatId,
+        status: MemberStatus.Active,
+      }
     }]
   });
 
