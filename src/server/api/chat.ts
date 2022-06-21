@@ -9,29 +9,32 @@ import { listOfUsersByChatsCountQuery, listOfUsersByChatsQuery } from "../querie
 import { resetUnreadCountMessagesOfMemberJob } from "../jobs/resetUnreadCountMessagesOfMember";
 import { incrementUnreadCountMessageOfMembersJob } from "../jobs/incrementUnreadCountMessageOfMembers";
 import {
-  Admin,
-  Chat,
-  ChatData,
-  ChatMember,
-  ChatMemberData,
-  ChatMemberDeletionData,
-  ChatType,
-  GroupChat,
-  InfoMessage,
-  Media,
-  MemberStatus, MemberType,
-  Message,
-  Quest,
-  QuestChat,
-  SenderMessageStatus,
-  StarredChat,
-  StarredMessage,
-  ChatDeletionData,
   User,
+  Chat,
+  Admin,
+  Media,
+  Quest,
+  Message,
+  ChatData,
+  ChatType,
+  QuestChat,
+  GroupChat,
+  ChatMember,
+  MemberType,
+  InfoMessage,
+  StarredChat,
+  MemberStatus,
+  ChatMemberData,
   QuestsResponse,
+  StarredMessage,
+  QuestChatStatus,
+  ChatDeletionData,
+  SenderMessageStatus,
   QuestsResponseStatus,
+  ChatMemberDeletionData,
 } from "@workquest/database-models/lib/models";
 import {
+  GetUsersByIdsPostValidationHandler,
   AddUsersInGroupChatHandler,
   AddUsersInGroupChatPreAccessPermissionHandler,
   AddUsersInGroupChatPreValidateHandler,
@@ -53,6 +56,8 @@ import {
   GetMediaByIdsHandler,
   GetMediasPostValidationHandler,
   GetUserByIdHandler,
+  GetUsersByIdsPostAccessPermissionHandler,
+  GetUsersByIdsHandler,
   GetUserByIdPostAccessPermissionHandler,
   GetUserByIdPostValidationHandler,
   LeaveFromGroupChatHandler,
@@ -63,9 +68,9 @@ import {
   RemoveStarFromMessageHandler,
   SendMessageToChatHandler,
   SendMessageToUserHandler,
-  UserMarkMessageStarHandler
+  UserMarkMessageStarHandler,
+  RemoveChatFromChatsListHandler,
 } from "../handlers";
-import { RemoveChatFromChatsListHandler } from "../handlers/chat/RemoveChatFromChatsListHandler";
 
 export async function getUserChats(r) {
   const searchByQuestNameLiteral = literal(
@@ -100,8 +105,8 @@ export async function getUserChats(r) {
   ));
 
   const where = {
-    ...(r.query.type && { type: r.query.type }),
     chatDeletionDataLiteral,
+    ...(r.query.type && { type: r.query.type }),
   };
 
   const replacements = {};
@@ -126,8 +131,12 @@ export async function getUserChats(r) {
     }],
   }, {
     model: ChatMemberData,
-    attributes: ["lastReadMessageId", "unreadCountMessages", "lastReadMessageNumber"],
     as: 'chatMemberData',
+    attributes: [
+      "lastReadMessageId",
+      "unreadCountMessages",
+      "lastReadMessageNumber",
+    ],
   }],
     required: true,
     as: 'meMember',
@@ -158,7 +167,17 @@ export async function getUserChats(r) {
   }, {
     model: ChatMember,
     as: 'members',
-    where: { [Op.and]: [ { [Op.or]: [{ adminId: { [Op.ne]: r.auth.credentials.id } }, { userId: { [Op.ne]: r.auth.credentials.id } }] }, chatTypeLiteral ] },
+    where: {
+      [Op.and]: [
+        chatTypeLiteral,
+        {
+          [Op.or]: [
+            { userId: { [Op.ne]: r.auth.credentials.id } },
+            { adminId: { [Op.ne]: r.auth.credentials.id } },
+          ],
+        },
+      ]
+    },
     include: [{
       model: User.unscoped(),
       as: 'user',
@@ -173,8 +192,12 @@ export async function getUserChats(r) {
       attributes: ["id", "firstName", "lastName"],
     }, {
       model: ChatMemberData,
-      attributes: ["lastReadMessageId", "unreadCountMessages", "lastReadMessageNumber"],
-      as: 'chatMemberData'
+      as: 'chatMemberData',
+      attributes: [
+        "lastReadMessageId",
+        "unreadCountMessages",
+        "lastReadMessageNumber",
+      ],
     }],
     required: false,
   }, {
@@ -190,9 +213,10 @@ export async function getUserChats(r) {
     as: 'groupChat',
   }];
 
-  if ((r.query.questChatStatus === QuestChatStatus.Open ||
-      r.query.questChatStatus === QuestChatStatus.Close) &&
-    (r.query.type === ChatType.Quest)) {
+  if (
+    (r.query.questChatStatus === QuestChatStatus.Open || r.query.questChatStatus === QuestChatStatus.Close) &&
+    (r.query.type === ChatType.Quest)
+  ) {
     include.push({
       model: QuestChat,
       as: 'questChat',
@@ -202,20 +226,23 @@ export async function getUserChats(r) {
         attributes: ["id"],
         where: {
           status: {
-            [Op.notIn]: [QuestsResponseStatus.Closed, QuestsResponseStatus.Rejected]
-          }
-        }
+            [Op.notIn]: [
+              QuestsResponseStatus.Closed,
+              QuestsResponseStatus.Rejected,
+            ],
+          },
+        },
       }],
-      where: {
-        status: r.query.questChatStatus,
-      },
+      where: { status: r.query.questChatStatus },
     });
   }
 
   if (r.query.q) {
-    where[Op.or] = [];
-
-    where[Op.or].push(searchByQuestNameLiteral, searchByFirstAndLastNameLiteral, searchByGroupNameLiteral);
+    where[Op.or] = [
+      searchByQuestNameLiteral,
+      searchByGroupNameLiteral,
+      searchByFirstAndLastNameLiteral,
+    ];
 
     replacements['query'] = `%${r.query.q}%`;
     replacements['searcherId'] = r.auth.credentials.id;
@@ -271,8 +298,12 @@ export async function getChatMessages(r) {
       }],
     }, {
       model: ChatMemberData,
-      attributes: ["lastReadMessageId", "unreadCountMessages", "lastReadMessageNumber"],
       as: 'chatMemberData',
+      attributes: [
+        "lastReadMessageId",
+        "unreadCountMessages",
+        "lastReadMessageNumber"
+      ],
     }, {
       model: ChatDeletionData,
       as: 'chatDeletionData',

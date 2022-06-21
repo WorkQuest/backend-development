@@ -1,5 +1,5 @@
 import { IHandler, Options } from '../types';
-import { Chat, ChatDeletionData, ChatMember, Media, Message, MessageType } from "@workquest/database-models/lib/models";
+import { Chat, ChatDeletionData, ChatMember, Message } from "@workquest/database-models/lib/models";
 
 export interface RemoveChatFromChatsListCommand {
   readonly chat: Chat;
