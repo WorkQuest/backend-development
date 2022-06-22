@@ -39,7 +39,6 @@ import {
   GetChatMemberPostFullAccessPermissionHandler,
   GetChatMemberPostLimitedAccessPermissionHandler,
   GetChatMemberPostValidationHandler,
-  MarkChatStarHandler,
   RemoveStarFromChatHandler,
   RemoveStarFromMessageHandler,
 } from "../handlers";
@@ -54,6 +53,7 @@ import {
   SetMessagesAsReadComposHandler
 } from "../handlers/compositions";
 import { MarkMessageStarComposHandler } from "../handlers/compositions/chat/MarkMessageStarComposHandler";
+import { MarkChatStarComposHandler } from "../handlers/compositions/chat/MarkChatStarComposHandler";
 //TODO - ?
 export async function getUserChats(r) {
   const searchByQuestNameLiteral = literal(
@@ -773,7 +773,7 @@ export async function setMessagesAsRead(r) {
 
   return output();
 }
-
+//TODO - ?
 export async function getUserStarredMessages(r) {
   const { count, rows } = await Message.findAndCountAll({
     distinct: true,
@@ -826,7 +826,7 @@ export async function markMessageStar(r) {
 
   return output();
 }
-
+//TODO - ?
 export async function removeStarFromMessage(r) {
   const meUser: User = r.auth.credentials;
 
@@ -836,27 +836,21 @@ export async function removeStarFromMessage(r) {
 
   return output();
 }
-
+//TODO Здесь не композиция, нужно подумать, какой base handler использовать
 export async function markChatStar(r) {
   const meUser: User = r.auth.credentials;
 
   const { chatId } = r.params as { chatId: string };
 
-  const chat = await new GetChatByIdPostValidationHandler(
-    new GetChatByIdHandler()
-  ).Handle({ chatId });
-
-  await new GetChatMemberPostValidationHandler(
-    new GetChatMemberPostLimitedAccessPermissionHandler(
-      new GetChatMemberByUserHandler()
-    )
-  ).Handle({ chat, user: meUser });
-
-  await new MarkChatStarHandler().Handle({ chat, user: meUser });
+  await new MarkChatStarComposHandler(r.server.app.db)
+    .Handle({
+      chatId,
+      meUser,
+    });
 
   return output();
 }
-
+//TODO - ?
 export async function removeStarFromChat(r) {
   const meUser: User = r.auth.credentials;
 
