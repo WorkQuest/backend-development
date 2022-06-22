@@ -1,4 +1,4 @@
-import { IHandler, Options } from '../types';
+import { BaseDomainHandler, IHandler, Options } from "../types";
 import { Chat, ChatMember, Media, Message, MessageType } from '@workquest/database-models/lib/models';
 
 export interface SendMessageToChatCommand {
@@ -12,12 +12,7 @@ export interface SendMessageToChatPayload extends SendMessageToChatCommand {
   readonly lastMessage: Message;
 }
 
-export class SendMessageToChatHandler implements IHandler<SendMessageToChatCommand, Promise<Message>> {
-  constructor(
-    private readonly dbContext: any,
-  ) {
-  }
-
+export class SendMessageToChatHandler extends BaseDomainHandler<SendMessageToChatCommand, Promise<Message>> {
   private static getLastMessage(chat: Chat, options: Options = {}): Promise<Message> {
     return Message.findOne({
       where: { chatId: chat.id },
@@ -47,12 +42,8 @@ export class SendMessageToChatHandler implements IHandler<SendMessageToChatComma
   }
 
   public async Handle(command: SendMessageToChatCommand): Promise<Message> {
-    return await this.dbContext.transaction(async (tx) => {
-      const lastMessage = await SendMessageToChatHandler.getLastMessage(command.chat, { tx });
-
-      const payload: SendMessageToChatPayload = { ...command, lastMessage };
-
-      return await SendMessageToChatHandler.sendMessage(payload, { tx });
-    });
+    const lastMessage = await SendMessageToChatHandler.getLastMessage(command.chat, { tx: this.options.tx });
+    const payload: SendMessageToChatPayload = { ...command, lastMessage };
+    return await SendMessageToChatHandler.sendMessage(payload, { tx: this.options.tx });
   }
 }

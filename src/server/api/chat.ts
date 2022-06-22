@@ -42,26 +42,19 @@ import {
   GetChatMemberPostValidationHandler,
   GetChatMessageByIdHandler,
   GetChatMessageByIdPostValidatorHandler,
-  GetMediaByIdsHandler,
-  GetMediasPostValidationHandler,
-  GetUserByIdHandler,
-  GetUserByIdPostAccessPermissionHandler,
-  GetUserByIdPostValidationHandler,
   MarkChatStarHandler,
   RemoveStarFromChatHandler,
   RemoveStarFromMessageHandler,
-  SendMessageToChatHandler,
-  SendMessageToUserHandler,
   UserMarkMessageStarHandler,
   RemoveChatFromChatsListHandler,
 } from "../handlers";
 import {
   CreateGroupChatComposHandler,
+  SendMessageToUserComposHandler,
   LeaveFromGroupChatComposHandler,
   AddUsersInGroupChatComposHandler,
-  RemoveMemberFromGroupChatComposHandler,
+  RemoveMemberFromGroupChatComposHandler, SendMessageToChatComposHandler
 } from "../handlers/compositions";
-import { SendMessageToUserComposHandler } from "../handlers/compositions/chat/SendMessageToUserComposHandler";
 
 export async function getUserChats(r) {
   const searchByQuestNameLiteral = literal(
@@ -435,7 +428,7 @@ export async function createGroupChat(r) {
 
   return output({ chat, infoMessage: messageWithInfo });
 }
-
+//TODO: test
 export async function sendMessageToUser(r) {
   const meUser: User = r.auth.credentials;
 
@@ -494,33 +487,20 @@ export async function sendMessageToUser(r) {
 
   return output(message);
 }
-
+//TODO: test
 export async function sendMessageToChat(r) {
   const meUser: User = r.auth.credentials;
 
   const { chatId } = r.params as { chatId: string };
   const { text, mediaIds } = r.payload as { text: string, mediaIds: string[] };
 
-  const chat = await new GetChatByIdPostValidationHandler(
-    new GetChatByIdHandler()
-  ).Handle({ chatId });
-
-  const meMember = await new GetChatMemberPostFullAccessPermissionHandler(
-    new GetChatMemberPostValidationHandler(
-      new GetChatMemberByUserHandler()
-    )
-  ).Handle({ user: meUser, chat });
-
-  const medias = await new GetMediasPostValidationHandler(
-    new GetMediaByIdsHandler()
-  ).Handle({ mediaIds });
-
-  const message = await new SendMessageToChatHandler(r.server.app.db).Handle({
-    chat,
-    text,
-    medias,
-    sender: meMember,
-  });
+  const [ chat, message, meMember ] = await new SendMessageToChatComposHandler(r.app.server.db)
+    .Handle({
+      text,
+      meUser,
+      chatId,
+      mediaIds,
+    });
 
   await resetUnreadCountMessagesOfMemberJob({
     memberId: meMember.id,
