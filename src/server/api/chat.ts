@@ -46,14 +46,13 @@ import {
   RemoveStarFromChatHandler,
   RemoveStarFromMessageHandler,
   UserMarkMessageStarHandler,
-  RemoveChatFromChatsListHandler,
 } from "../handlers";
 import {
   CreateGroupChatComposHandler,
   SendMessageToUserComposHandler,
   LeaveFromGroupChatComposHandler,
   AddUsersInGroupChatComposHandler,
-  RemoveMemberFromGroupChatComposHandler, SendMessageToChatComposHandler
+  RemoveMemberFromGroupChatComposHandler, SendMessageToChatComposHandler, RemoveChatFromListComposHandler
 } from "../handlers/compositions";
 
 export async function getUserChats(r) {
@@ -435,7 +434,7 @@ export async function sendMessageToUser(r) {
   const { userId } = r.params as { userId: string };
   const { text, mediaIds } = r.payload as { text: string, mediaIds: string[] }
 
-  const [recipientUser, message] = await new SendMessageToUserComposHandler(r.app.server.db)
+  const [recipientUser, message] = await new SendMessageToUserComposHandler(r.server.app.db)
     .Handle({
       text,
       userId,
@@ -494,7 +493,7 @@ export async function sendMessageToChat(r) {
   const { chatId } = r.params as { chatId: string };
   const { text, mediaIds } = r.payload as { text: string, mediaIds: string[] };
 
-  const [ chat, message, meMember ] = await new SendMessageToChatComposHandler(r.app.server.db)
+  const [ chat, message, meMember ] = await new SendMessageToChatComposHandler(r.server.app.db)
     .Handle({
       text,
       meUser,
@@ -668,7 +667,7 @@ export async function addUsersInGroupChat(r) {
   const { chatId } = r.params as { chatId: string };
   const { userIds } = r.payload as { userIds: string[] };
 
-  const [ groupChat, messagesWithInfo, meMember ] = await new AddUsersInGroupChatComposHandler(r.app.server.db)
+  const [ groupChat, messagesWithInfo, meMember ] = await new AddUsersInGroupChatComposHandler(r.server.app.db)
     .Handle({
       meUser,
       chatId,
@@ -724,22 +723,15 @@ export async function addUsersInGroupChat(r) {
 
   return output(messagesWithInfo);
 }
-
+//TODO: test
 export async function removeChatFromList(r) {
   const meUser: User = r.auth.credentials;
-
   const { chatId } = r.params as { chatId: string };
 
-  const chat = await new GetChatByIdPostValidationHandler(
-    new  GetChatByIdHandler()
-  ).Handle({ chatId });
-
-  const meMember = await new GetChatMemberByUserHandler().Handle({ user: meUser, chat });
-
-  await new RemoveChatFromChatsListHandler(r.server.app.db)
+  await new RemoveChatFromListComposHandler(r.server.app.db)
     .Handle({
-      chat,
-      meMember,
+      meUser,
+      chatId
     });
 
   return output();
