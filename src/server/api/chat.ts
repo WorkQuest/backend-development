@@ -61,6 +61,7 @@ import {
   AddUsersInGroupChatComposHandler,
   RemoveMemberFromGroupChatComposHandler,
 } from "../handlers/compositions";
+import { SendMessageToUserComposHandler } from "../handlers/compositions/chat/SendMessageToUserComposHandler";
 
 export async function getUserChats(r) {
   const searchByQuestNameLiteral = literal(
@@ -441,22 +442,13 @@ export async function sendMessageToUser(r) {
   const { userId } = r.params as { userId: string };
   const { text, mediaIds } = r.payload as { text: string, mediaIds: string[] }
 
-  const recipientUser = await new GetUserByIdPostAccessPermissionHandler(
-    new GetUserByIdPostValidationHandler(
-      new GetUserByIdHandler()
-    )
-  ).Handle({ userId });
-
-  const medias = await new GetMediasPostValidationHandler(
-    new GetMediaByIdsHandler()
-  ).Handle({ mediaIds });
-
-  const message = await new SendMessageToUserHandler(r.server.app.db).Handle({
-    text,
-    medias,
-    sender: meUser,
-    recipient: recipientUser,
-  });
+  const [recipientUser, message] = await new SendMessageToUserComposHandler(r.app.server.db)
+    .Handle({
+      text,
+      userId,
+      meUser,
+      mediaIds,
+    });
 
   const meMember = await new GetChatMemberByUserHandler().Handle({ user: meUser, chat: message.getDataValue('chat') });
 
@@ -764,10 +756,11 @@ export async function removeChatFromList(r) {
 
   const meMember = await new GetChatMemberByUserHandler().Handle({ user: meUser, chat });
 
-  await new RemoveChatFromChatsListHandler(r.server.app.db).Handle({
-    chat,
-    meMember,
-  });
+  await new RemoveChatFromChatsListHandler(r.server.app.db)
+    .Handle({
+      chat,
+      meMember,
+    });
 
   return output();
 }
