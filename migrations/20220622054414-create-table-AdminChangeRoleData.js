@@ -17,11 +17,7 @@ module.exports = {
       },
       adminId: {
         type: Sequelize.DataTypes.STRING,
-        allowNull: false,
-        references: {
-          model: 'Admins',
-          key: 'id'
-        }
+        allowNull: false
       },
       movedFromRole: {
         type: Sequelize.DataTypes.STRING,

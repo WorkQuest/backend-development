@@ -16,11 +16,7 @@ module.exports = {
         }
       },
       adminId: {
-        type: Sequelize.DataTypes.STRING,
-        references: {
-          model: 'Admins',
-          key: 'id'
-        }
+        type: Sequelize.DataTypes.STRING
       },
       contentType: {
         type: Sequelize.DataTypes.STRING,

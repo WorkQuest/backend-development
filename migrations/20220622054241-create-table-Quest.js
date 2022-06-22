@@ -18,11 +18,7 @@ module.exports = {
       avatarId: {
         type: Sequelize.DataTypes.STRING,
         defaultValue: null,
-        allowNull: true,
-        references: {
-          model: 'Media',
-          key: 'id'
-        }
+        allowNull: true
       },
       assignedWorkerId: {
         type: Sequelize.DataTypes.STRING,
@@ -81,7 +77,7 @@ module.exports = {
         allowNull: false
       },
       locationPostGIS: {
-        type: Sequelize.DataTypes.GEOMETRY(POINT, 4326)
+        type: Sequelize.DataTypes.GEOMETRY('POINT', 4326)
       },
       startedAt: {
         type: Sequelize.DataTypes.DATE

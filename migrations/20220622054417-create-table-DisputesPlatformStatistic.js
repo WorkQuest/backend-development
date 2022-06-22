@@ -29,7 +29,6 @@ module.exports = {
       },
       date: {
         type: Sequelize.DataTypes.DATE,
-        defaultValue: 1655895098040,
         primaryKey: true
       },
       createdAt: {
