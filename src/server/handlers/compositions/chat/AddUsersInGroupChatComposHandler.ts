@@ -2,8 +2,6 @@ import { BaseCompositeHandler } from "../../types";
 import {
   AddUserInGroupChatComposCommand,
   AddUserInGroupChatComposResults,
-  LeaveFromGroupChatComposCommand,
-  LeaveFromGroupChatComposResults
 } from "./types";
 import {
   AddUsersInGroupChatHandler,
@@ -14,9 +12,6 @@ import {
   GetChatMemberPostValidationHandler,
   GetGroupChatHandler,
   GetGroupChatPostValidationHandler,
-  LeaveFromGroupChatHandler,
-  LeaveFromGroupChatPreAccessPermissionHandler,
-  LeaveFromGroupChatPreValidateHandler
 } from "../../chat";
 import {
   GetUsersByIdsHandler,

@@ -34,10 +34,6 @@ import {
   ChatMemberDeletionData,
 } from "@workquest/database-models/lib/models";
 import {
-  GetUsersByIdsPostValidationHandler,
-  AddUsersInGroupChatHandler,
-  AddUsersInGroupChatPreAccessPermissionHandler,
-  AddUsersInGroupChatPreValidateHandler,
   GetChatByIdHandler,
   GetChatByIdPostValidationHandler,
   GetChatMemberByUserHandler,
@@ -46,13 +42,9 @@ import {
   GetChatMemberPostValidationHandler,
   GetChatMessageByIdHandler,
   GetChatMessageByIdPostValidatorHandler,
-  GetGroupChatHandler,
-  GetGroupChatPostValidationHandler,
   GetMediaByIdsHandler,
   GetMediasPostValidationHandler,
   GetUserByIdHandler,
-  GetUsersByIdsPostAccessPermissionHandler,
-  GetUsersByIdsHandler,
   GetUserByIdPostAccessPermissionHandler,
   GetUserByIdPostValidationHandler,
   MarkChatStarHandler,
@@ -63,12 +55,12 @@ import {
   UserMarkMessageStarHandler,
   RemoveChatFromChatsListHandler,
 } from "../handlers";
-import { CreateGroupChatComposHandler,
+import {
+  CreateGroupChatComposHandler,
   LeaveFromGroupChatComposHandler,
-  RemoveMemberFromGroupChatComposHandler
+  AddUsersInGroupChatComposHandler,
+  RemoveMemberFromGroupChatComposHandler,
 } from "../handlers/compositions";
-import {  } from "../handlers/compositions";
-import { AddUsersInGroupChatComposHandler } from "../handlers/compositions/chat/AddUsersInGroupChatComposHandler";
 
 export async function getUserChats(r) {
   const searchByQuestNameLiteral = literal(
@@ -697,7 +689,7 @@ export async function leaveFromGroupChat(r) {
 
   return output(messageWithInfo);
 }
-
+//TODO: test
 export async function addUsersInGroupChat(r) {
   const meUser: User = r.auth.credentials;
 
