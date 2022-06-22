@@ -1,5 +1,5 @@
 import { GroupChatValidator } from './GroupChatValidator';
-import { BaseDecoratorHandler, IHandler, Options } from '../../types';
+import { BaseDecoratorHandler, BaseDomainHandler, IHandler, Options } from "../../types";
 import { GroupChatAccessPermission } from './GroupChatAccessPermission';
 import {
   Chat,
@@ -33,12 +33,7 @@ interface AddUsersPayload {
   readonly newMembers: ReadonlyArray<ChatMember>;
 }
 
-export class AddUsersInGroupChatHandler implements IHandler<AddUsersInGroupChatCommand, Promise<Message[]>>{
-  constructor(
-    private readonly dbContext: any,
-  ) {
-  }
-
+export class AddUsersInGroupChatHandler extends BaseDomainHandler<AddUsersInGroupChatCommand, Promise<Message[]>>{
   private static async sendInfoMessagesAboutRestoreMembers(payload: RestoreMembersPayload, options: Options = {}): Promise<Message[]> {
     const messages = Message.bulkBuild(
       payload.deletedMembers.map((member, number ) => ({
@@ -206,56 +201,55 @@ export class AddUsersInGroupChatHandler implements IHandler<AddUsersInGroupChatC
       }))
     );
 
-    return await this.dbContext.transaction(async (tx) => {
-      const lastMessage = await AddUsersInGroupChatHandler.getLastMessage(command.groupChat, { tx });
 
-      await Promise.all([
-        AddUsersInGroupChatHandler.addMembers({ lastMessage, newMembers, groupChat: command.groupChat }, { tx }),
-        AddUsersInGroupChatHandler.restoreMembers({ lastMessage, deletedMembers, groupChat: command.groupChat }, { tx }),
-      ]);
+    const lastMessage = await AddUsersInGroupChatHandler.getLastMessage(command.groupChat, { tx: this.options.tx });
 
-      await Promise.all(
-        newMembers.map(async newMember => newMember.save({ transaction: tx })),
-      )
+    await Promise.all([
+      AddUsersInGroupChatHandler.addMembers({ lastMessage, newMembers, groupChat: command.groupChat }, { tx: this.options.tx }),
+      AddUsersInGroupChatHandler.restoreMembers({ lastMessage, deletedMembers, groupChat: command.groupChat }, { tx: this.options.tx }),
+    ]);
 
-      let messages = [];
+    await Promise.all(
+      newMembers.map(async newMember => newMember.save({ transaction: this.options.tx })),
+    )
 
-      if (deletedMembers.length !== 0) {
-        const messagesWithInfoRestoreMembers = await AddUsersInGroupChatHandler.sendInfoMessagesAboutRestoreMembers({
-          lastMessage,
-          deletedMembers,
-          groupChat: command.groupChat,
-        }, { tx });
+    let messages = [];
 
-        messages.push(...messagesWithInfoRestoreMembers);
-      }
+    if (deletedMembers.length !== 0) {
+      const messagesWithInfoRestoreMembers = await AddUsersInGroupChatHandler.sendInfoMessagesAboutRestoreMembers({
+        lastMessage,
+        deletedMembers,
+        groupChat: command.groupChat,
+      }, { tx: this.options.tx });
 
-      if (newMembers.length !== 0) {
-        const newMembersIds = newMembers.map(member => { return member.id});
-        const members = await ChatMember.findAll({
-          where: { id: newMembersIds },
+      messages.push(...messagesWithInfoRestoreMembers);
+    }
+
+    if (newMembers.length !== 0) {
+      const newMembersIds = newMembers.map(member => { return member.id});
+      const members = await ChatMember.findAll({
+        where: { id: newMembersIds },
+        include: [{
+          model: User.unscoped(),
+          as: 'user',
+          attributes: ["firstName", "lastName", "role"],
           include: [{
-            model: User.unscoped(),
-            as: 'user',
-            attributes: ["firstName", "lastName", "role"],
-            include: [{
-              model: Media,
-              as: 'avatar',
-            }]
-          }],
-          transaction: tx,
-        });
-        const messagesWithInfoAddMembers = await AddUsersInGroupChatHandler.sendInfoMessageAboutAddMember({
-          newMembers: members,
-          groupChat: command.groupChat,
-          lastMessage,
-        }, { tx });
+            model: Media,
+            as: 'avatar',
+          }]
+        }],
+        transaction: this.options.tx,
+      });
+      const messagesWithInfoAddMembers = await AddUsersInGroupChatHandler.sendInfoMessageAboutAddMember({
+        newMembers: members,
+        groupChat: command.groupChat,
+        lastMessage,
+      }, { tx: this.options.tx });
 
-        messages.push(...messagesWithInfoAddMembers);
-      }
+      messages.push(...messagesWithInfoAddMembers);
+    }
 
-      return messages;
-    });
+    return messages;
   }
 }
 

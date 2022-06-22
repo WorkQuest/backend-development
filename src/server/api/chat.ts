@@ -63,8 +63,12 @@ import {
   UserMarkMessageStarHandler,
   RemoveChatFromChatsListHandler,
 } from "../handlers";
-import { CreateGroupChatComposHandler, RemoveMemberFromGroupChatComposHandler } from "../handlers/compositions";
-import { LeaveFromGroupChatComposHandler } from "../handlers/compositions/chat/LeaveFromGroupChatComposHandler";
+import { CreateGroupChatComposHandler,
+  LeaveFromGroupChatComposHandler,
+  RemoveMemberFromGroupChatComposHandler
+} from "../handlers/compositions";
+import {  } from "../handlers/compositions";
+import { AddUsersInGroupChatComposHandler } from "../handlers/compositions/chat/AddUsersInGroupChatComposHandler";
 
 export async function getUserChats(r) {
   const searchByQuestNameLiteral = literal(
@@ -394,7 +398,7 @@ export async function getChatMembers(r) {
 
   return output({ count, members: rows });
 }
-
+//TODO: test
 export async function createGroupChat(r) {
   const chatName: string = r.payload.name;
   const chatCreator: User = r.auth.credentials;
@@ -588,7 +592,7 @@ export async function sendMessageToChat(r) {
 
   return output(message);
 }
-
+//TODO: test
 export async function removeMemberFromGroupChat(r) {
   const meUser: User = r.auth.credentials;
 
@@ -647,7 +651,7 @@ export async function removeMemberFromGroupChat(r) {
 
   return output(messageWithInfo);
 }
-
+//TODO: test
 export async function leaveFromGroupChat(r) {
   const meUser: User = r.auth.credentials;
 
@@ -700,27 +704,12 @@ export async function addUsersInGroupChat(r) {
   const { chatId } = r.params as { chatId: string };
   const { userIds } = r.payload as { userIds: string[] };
 
-  const groupChat = await new GetGroupChatPostValidationHandler(
-    new GetGroupChatHandler()
-  ).Handle({ chatId });
-
-  const meMember = await new GetChatMemberPostValidationHandler(
-    new GetChatMemberPostFullAccessPermissionHandler(
-      new GetChatMemberByUserHandler()
-    )
-  ).Handle({ chat: groupChat, user: meUser });
-
-  const users = await new GetUsersByIdsPostValidationHandler(
-    new GetUsersByIdsPostAccessPermissionHandler(
-      new GetUsersByIdsHandler()
-    )
-  ).Handle({ userIds });
-
-  const messagesWithInfo = await new AddUsersInGroupChatPreValidateHandler(
-    new AddUsersInGroupChatPreAccessPermissionHandler(
-      new AddUsersInGroupChatHandler(r.server.app.db)
-    )
-  ).Handle({ groupChat, users, addInitiator: meMember })
+  const [ groupChat, messagesWithInfo, meMember ] = await new AddUsersInGroupChatComposHandler(r.app.server.db)
+    .Handle({
+      meUser,
+      chatId,
+      userIds,
+    });
 
   const lastMessage = messagesWithInfo[messagesWithInfo.length - 1];
 
