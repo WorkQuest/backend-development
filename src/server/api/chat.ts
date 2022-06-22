@@ -29,7 +29,6 @@ import {
   StarredMessage,
   QuestChatStatus,
   ChatDeletionData,
-  SenderMessageStatus,
   QuestsResponseStatus,
   ChatMemberDeletionData,
 } from "@workquest/database-models/lib/models";
@@ -52,9 +51,12 @@ import {
   SendMessageToUserComposHandler,
   LeaveFromGroupChatComposHandler,
   AddUsersInGroupChatComposHandler,
-  RemoveMemberFromGroupChatComposHandler, SendMessageToChatComposHandler, RemoveChatFromListComposHandler
+  RemoveMemberFromGroupChatComposHandler,
+  SendMessageToChatComposHandler,
+  RemoveChatFromListComposHandler,
+  SetMessagesAsReadComposHandler
 } from "../handlers/compositions";
-
+//TODO - ?
 export async function getUserChats(r) {
   const searchByQuestNameLiteral = literal(
     `(SELECT "title" FROM "Quests" WHERE "id" = ` +
@@ -243,7 +245,7 @@ export async function getUserChats(r) {
 
   return output({ count, chats: rows });
 }
-
+//TODO - ?
 export async function getChatMessages(r) {
   const { chatId } = r.params as { chatId: string };
   const meUser = r.auth.credentials;
@@ -311,7 +313,7 @@ export async function getChatMessages(r) {
 
   return output({ count, messages: rows, chat });
 }
-
+//TODO - ?
 export async function getUserChat(r) {
   const { chatId } = r.params as { chatId: string };
 
@@ -321,7 +323,7 @@ export async function getUserChat(r) {
 
   return output(chat);
 }
-
+//TODO - ?
 export async function listOfUsersByChats(r) {
   const options = {
     replacements: {
@@ -350,7 +352,7 @@ export async function listOfUsersByChats(r) {
 
   return output({ count: parseInt(countResults[0].count), users });
 }
-
+//TODO - ?
 export async function getChatMembers(r) {
   const meUser: User = r.auth.credentials;
 
@@ -736,36 +738,18 @@ export async function removeChatFromList(r) {
 
   return output();
 }
-
+//Здесь не композиция, нужно подумать, какой base handler использовать
 export async function setMessagesAsRead(r) {
   const meUser: User = r.auth.credentials
   const { chatId } = r.params as { chatId: string };
   const { messageId } = r.payload as { messageId: string };
 
-  const chat = await new GetChatByIdPostValidationHandler(
-    new GetChatByIdHandler()
-  ).Handle({ chatId });
-
-  const meMember = await new GetChatMemberPostValidationHandler(
-    new GetChatMemberPostLimitedAccessPermissionHandler(
-      new GetChatMemberByUserHandler()
-    )
-  ).Handle({ chat, user: meUser });
-
-  const message = await new GetChatMessageByIdPostValidatorHandler(
-    new GetChatMessageByIdHandler()
-  ).Handle({ messageId, chat });
-
-  const otherSenders = await Message.unscoped().findAll({
-    attributes: ['senderMemberId'],
-    where: {
-      chatId: chat.id,
-      senderMemberId: { [Op.ne]: meMember.id },
-      senderStatus: SenderMessageStatus.Unread,
-      number: { [Op.gte]: message.number },
-    },
-    group: ['senderMemberId'],
-  });
+  const [chat, message, meMember] = await new SetMessagesAsReadComposHandler(r.server.app.db)
+    .Handle({
+      meUser,
+      chatId,
+      messageId,
+    });
 
   await updateCountUnreadMessagesJob({
     lastUnreadMessage: { id: message.id, number: message.number },
@@ -773,18 +757,15 @@ export async function setMessagesAsRead(r) {
     readerMemberId: meMember.id,
   });
 
-  if (otherSenders.length === 0) {
-    return output();
-  }
-
   await setMessageAsReadJob({
     lastUnreadMessage: { id: message.id, number: message.number },
     chatId: r.params.chatId,
     senderMemberId: meMember.id,
   });
-  // await updateCountUnreadChatsJob({
-  //   userIds: [r.auth.credentials.id],
-  // });
+
+  await updateCountUnreadChatsJob({
+    members: [meMember],
+  });
 
   // r.server.app.broker.sendChatNotification({
   //   action: ChatNotificationActions.messageReadByRecipient,
