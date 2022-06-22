@@ -212,9 +212,6 @@ export function getQuests(type: 'list' | 'points', requester?: 'worker' | 'emplo
     const entersAreaLiteral = literal(
       'st_within("Quest"."locationPostGIS", st_makeenvelope(:northLng, :northLat, :southLng, :southLat, 4326))'
     );
-    const questChatLiteral = literal(
-      'CASE WHEN "questChat->quest" = NULL THEN NULL ELSE "questChat->quest"."id" END'
-    );
     const questSpecializationOnlyPathsLiteral = literal(
       '(1 = (CASE WHEN EXISTS (SELECT "id" FROM "QuestSpecializationFilters" WHERE "questId" = "Quest"."id" AND "QuestSpecializationFilters"."path" IN (:path)) THEN 1 END))'
     );
@@ -313,7 +310,8 @@ export function getQuests(type: 'list' | 'points', requester?: 'worker' | 'emplo
     }
     if (user.role === UserRole.Worker) {
       include.push({
-        model: QuestChat.scope('forQuestChat'),
+        model: QuestChat.unscoped(),
+        attributes: ["chatId"],
         where: { workerId: user.id },
         as: 'questChat',
         required: false,
@@ -321,26 +319,11 @@ export function getQuests(type: 'list' | 'points', requester?: 'worker' | 'emplo
     }
     if (user.role === UserRole.Employer) {
       include.push({
-        model: QuestChat.scope('forQuestChat'),
+        model: QuestChat.unscoped(),
         as: 'questChat',
-        attributes: {
-          include: [[questChatLiteral, 'id']],
-        },
+        attributes: ["chatId"],
         where: { employerId: user.id, questChatWorkerLiteral },
         required: false,
-        include: {
-          model: Quest.unscoped(),
-          as: 'quest',
-          attributes: ['id', 'status'],
-          where: {
-            status: [
-              QuestStatus.Dispute,
-              QuestStatus.Recruitment,
-              QuestStatus.WaitingForConfirmFromWorkerOnAssign,
-            ],
-          },
-          required: false,
-        },
       });
     }
 
