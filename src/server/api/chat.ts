@@ -55,9 +55,6 @@ import {
   GetUsersByIdsHandler,
   GetUserByIdPostAccessPermissionHandler,
   GetUserByIdPostValidationHandler,
-  LeaveFromGroupChatHandler,
-  LeaveFromGroupChatPreAccessPermissionHandler,
-  LeaveFromGroupChatPreValidateHandler,
   MarkChatStarHandler,
   RemoveStarFromChatHandler,
   RemoveStarFromMessageHandler,
@@ -67,6 +64,7 @@ import {
   RemoveChatFromChatsListHandler,
 } from "../handlers";
 import { CreateGroupChatComposHandler, RemoveMemberFromGroupChatComposHandler } from "../handlers/compositions";
+import { LeaveFromGroupChatComposHandler } from "../handlers/compositions/chat/LeaveFromGroupChatComposHandler";
 
 export async function getUserChats(r) {
   const searchByQuestNameLiteral = literal(
@@ -655,21 +653,11 @@ export async function leaveFromGroupChat(r) {
 
   const { chatId } = r.params as { chatId: string };
 
-  const groupChat = await new GetGroupChatPostValidationHandler(
-    new GetGroupChatHandler()
-  ).Handle({ chatId });
-
-  const meMember = await new GetChatMemberPostFullAccessPermissionHandler(
-    new GetChatMemberPostValidationHandler(
-      new GetChatMemberByUserHandler()
-    )
-  ).Handle({ chat: groupChat, user: meUser });
-
-  const messageWithInfo = await new LeaveFromGroupChatPreValidateHandler(
-    new LeaveFromGroupChatPreAccessPermissionHandler(
-      new LeaveFromGroupChatHandler(r.server.app.db)
-    )
-  ).Handle({ member: meMember, groupChat });
+  const [groupChat, messageWithInfo, meMember] = await new LeaveFromGroupChatComposHandler(r.server.app.db)
+    .Handle({
+      chatId,
+      meUser,
+    });
 
   await incrementUnreadCountMessageOfMembersJob({
     chatId: groupChat.id,

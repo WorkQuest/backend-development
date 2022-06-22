@@ -1,18 +1,18 @@
-import { GroupChatValidator } from './GroupChatValidator';
-import { Options, IHandler, BaseDecoratorHandler } from '../../types';
-import { GroupChatAccessPermission } from './GroupChatAccessPermission';
+import { GroupChatValidator } from "./GroupChatValidator";
+import { BaseDecoratorHandler, BaseDomainHandler, IHandler, Options } from "../../types";
+import { GroupChatAccessPermission } from "./GroupChatAccessPermission";
 import {
   Chat,
-  Message,
   ChatMember,
-  InfoMessage,
-  MessageType,
-  MemberStatus,
-  MessageAction,
   ChatMemberData,
   ChatMemberDeletionData,
-  ReasonForRemovingFromChat,
-} from '@workquest/database-models/lib/models';
+  InfoMessage,
+  MemberStatus,
+  Message,
+  MessageAction,
+  MessageType,
+  ReasonForRemovingFromChat
+} from "@workquest/database-models/lib/models";
 
 export interface LeaveFromGroupChatCommand {
   readonly member: ChatMember;
@@ -23,12 +23,7 @@ interface LeaveMemberPayload extends LeaveFromGroupChatCommand {
   readonly lastMessage: Message;
 }
 
-export class LeaveFromGroupChatHandler implements IHandler<LeaveFromGroupChatCommand, Promise<Message>> {
-  constructor(
-    private readonly dbContext: any,
-  ) {
-  }
-
+export class LeaveFromGroupChatHandler extends BaseDomainHandler<LeaveFromGroupChatCommand, Promise<Message>> {
   private static getLastMessage(chat: Chat, options: Options = {}): Promise<Message> {
     return Message.findOne({
       where: { chatId: chat.id },
@@ -84,18 +79,13 @@ export class LeaveFromGroupChatHandler implements IHandler<LeaveFromGroupChatCom
   }
 
   public async Handle(command: LeaveFromGroupChatCommand): Promise<Message> {
-    const [[deletionData], messageWithInfo] = await this.dbContext.transaction(async (tx) => {
-      const lastMessage = await LeaveFromGroupChatHandler.getLastMessage(command.groupChat, { tx });
+    const lastMessage = await LeaveFromGroupChatHandler.getLastMessage(command.groupChat, { tx: this.options.tx });
 
-      const payload = { ...command, lastMessage };
+    const payload = { ...command, lastMessage };
 
-      return Promise.all([
-        LeaveFromGroupChatHandler.leaveMember(payload, { tx }),
-        LeaveFromGroupChatHandler.sendInfoMessageAboutLeaveMember(payload, { tx }),
-      ]);
-    });
+    await LeaveFromGroupChatHandler.leaveMember(payload, { tx: this.options.tx });
 
-    return messageWithInfo;
+    return await LeaveFromGroupChatHandler.sendInfoMessageAboutLeaveMember(payload, { tx: this.options.tx });
   }
 }
 
