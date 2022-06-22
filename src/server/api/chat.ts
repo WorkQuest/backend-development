@@ -39,12 +39,9 @@ import {
   GetChatMemberPostFullAccessPermissionHandler,
   GetChatMemberPostLimitedAccessPermissionHandler,
   GetChatMemberPostValidationHandler,
-  GetChatMessageByIdHandler,
-  GetChatMessageByIdPostValidatorHandler,
   MarkChatStarHandler,
   RemoveStarFromChatHandler,
   RemoveStarFromMessageHandler,
-  UserMarkMessageStarHandler,
 } from "../handlers";
 import {
   CreateGroupChatComposHandler,
@@ -56,6 +53,7 @@ import {
   RemoveChatFromListComposHandler,
   SetMessagesAsReadComposHandler
 } from "../handlers/compositions";
+import { MarkMessageStarComposHandler } from "../handlers/compositions/chat/MarkMessageStarComposHandler";
 //TODO - ?
 export async function getUserChats(r) {
   const searchByQuestNameLiteral = literal(
@@ -738,7 +736,7 @@ export async function removeChatFromList(r) {
 
   return output();
 }
-//Здесь не композиция, нужно подумать, какой base handler использовать
+//TODO Здесь не композиция, нужно подумать, какой base handler использовать
 export async function setMessagesAsRead(r) {
   const meUser: User = r.auth.credentials
   const { chatId } = r.params as { chatId: string };
@@ -814,27 +812,17 @@ export async function getUserStarredMessages(r) {
 
   return output({ count, messages: rows });
 }
-
+//TODO Здесь не композиция, нужно подумать, какой base handler использовать
 export async function markMessageStar(r) {
   const meUser: User = r.auth.credentials;
 
   const { chatId, messageId } = r.params as { chatId: string, messageId: string };
 
-  const chat = await new GetChatByIdPostValidationHandler(
-    new GetChatByIdHandler()
-  ).Handle({ chatId });
-
-  const meMember = await new GetChatMemberPostValidationHandler(
-    new GetChatMemberPostLimitedAccessPermissionHandler(
-      new GetChatMemberByUserHandler()
-    )
-  ).Handle({ chat, user: meUser });
-
-  const message = await new GetChatMessageByIdPostValidatorHandler(
-    new GetChatMessageByIdHandler()
-  ).Handle({ messageId, chat });
-
-  await new UserMarkMessageStarHandler().Handle({ user: meUser, message });
+  await new MarkMessageStarComposHandler(r.server.app.db).Handle({
+    meUser,
+    chatId,
+    messageId,
+  });
 
   return output();
 }
