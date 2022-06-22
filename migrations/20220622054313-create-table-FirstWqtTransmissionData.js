@@ -32,7 +32,7 @@ module.exports = {
         type: Sequelize.DataTypes.DECIMAL
       },
       platformCommissionCoefficient: {
-        type: Sequelize.DataTypes.DOUBLE PRECISION
+        type: Sequelize.DataTypes.DOUBLE
       },
       status: {
         type: Sequelize.DataTypes.INTEGER,

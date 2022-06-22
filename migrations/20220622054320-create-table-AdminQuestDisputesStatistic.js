@@ -20,7 +20,7 @@ module.exports = {
         defaultValue: 0
       },
       averageMark: {
-        type: Sequelize.DataTypes.DOUBLE PRECISION,
+        type: Sequelize.DataTypes.DOUBLE,
         defaultValue: null
       },
       resolvedQuestDisputes: {
@@ -28,7 +28,7 @@ module.exports = {
         defaultValue: 0
       },
       averageResolutionTimeInSeconds: {
-        type: Sequelize.DataTypes.DOUBLE PRECISION,
+        type: Sequelize.DataTypes.DOUBLE,
         defaultValue: null
       },
       createdAt: {
