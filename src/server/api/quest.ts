@@ -26,6 +26,11 @@ import {
   User,
   UserRole,
 } from '@workquest/database-models/lib/models';
+import {
+  GetMediaByIdsHandler,
+  GetMediasPostValidationHandler, GetUserByIdHandler,
+  GetUserByIdPostAccessPermissionHandler, GetUserByIdPostValidationHandler, UserValidator
+} from "../handlers";
 
 
 export const searchQuestFields = [
@@ -120,7 +125,15 @@ export async function getQuest(r) {
 }
 
 export async function createQuest(r) {
-  const mediaModels = await MediaController.getMedias(r.payload.medias);
+  const mediaIds = r.payload.medias;
+  const employer = r.auth.credentials;
+
+  new UserValidator().MustBeEmployer(employer);
+
+  const medias = await new GetMediasPostValidationHandler(
+    new GetMediaByIdsHandler()
+  ).Handle({ mediaIds });
+
   const employerController = EmployerControllerFactory.createByUserModel(r.auth.credentials);
 
   const avatarModel = mediaModels.length === 0
