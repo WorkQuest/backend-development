@@ -115,9 +115,9 @@ export async function getDisputes(r) {
         { openDisputeUserId: r.auth.credentials.id }
       ],
     },
-    include,
     distinct: true,
     col: 'id',
+    include,
     limit: r.query.limit,
     offset: r.query.offset,
     order: [['createdAt', 'DESC']],
