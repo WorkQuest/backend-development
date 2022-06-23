@@ -14,7 +14,7 @@ import {
   QuestStatus,
   QuestDispute,
   DisputeStatus,
-  QuestDisputeReview, DisputesPlatformStatisticFields
+  QuestDisputeReview,
 } from '@workquest/database-models/lib/models';
 
 export async function createDispute(r) {
@@ -64,22 +64,16 @@ export async function createDispute(r) {
 
 export async function getDispute(r) {
   const user: User = r.auth.credentials;
-  const questChatWorkerLiteral = literal('"quest->questChat"."workerId" = "quest"."assignedWorkerId"');
 
   const include = [{
-    model: QuestDisputeReview,
+    model: QuestDisputeReview.unscoped(),
+    attributes: ["mark", "message", "toAdminId"],
     as: 'currentUserDisputeReview',
     where: {
       fromUserId: user.id,
     },
     required: false,
-  }, {
-    model: Quest,
-    include: [{
-      model: QuestChat.unscoped(),
-      where: { questChatWorkerLiteral },
-    },],
-  }];
+  },];
 
   const dispute = await QuestDispute.findByPk(r.params.disputeId, {
     include,
@@ -100,12 +94,21 @@ export async function getDispute(r) {
 
 export async function getDisputes(r) {
   const include = [{
-    model: QuestDisputeReview,
+    model: QuestDisputeReview.unscoped(),
+    attributes: ["mark", "message", "toAdminId"],
     as: 'currentUserDisputeReview',
     where: {
       fromUserId: r.auth.credentials.id,
     },
     required: false,
+  }, {
+    model: Quest.unscoped(),
+    attributes: ["id", "title", "price"],
+    as: 'quest',
+    include: [{
+      model: User.scope('shortForList'),
+      as: 'user'
+    }]
   }];
 
   const { count, rows } = await QuestDispute.findAndCountAll({
