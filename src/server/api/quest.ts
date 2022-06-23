@@ -51,14 +51,11 @@ export async function getQuest(r) {
     required: false
   }, {
     model: User.scope('shortWithWallet'),
-    as: 'user'
-  }, {
-    model: User.scope('shortWithWallet'),
-    as: 'assignedWorker'
+    as: 'assignedWorker',
   }, {
     model: QuestDispute.unscoped(),
     as: 'openDispute',
-    required: false,
+    attributes: ["id", "status"],
     where: {
       [Op.or]: [
         { opponentUserId: r.auth.credentials.id },
@@ -66,8 +63,9 @@ export async function getQuest(r) {
       ],
       status: { [Op.in]: [DisputeStatus.Pending, DisputeStatus.Created, DisputeStatus.InProgress] },
     },
+    required: false,
   }, {
-    model: QuestsReview.unscoped(),
+    model: QuestsReview,
     as: 'yourReview',
     where: { fromUserId: r.auth.credentials.id },
     required: false,
@@ -75,7 +73,8 @@ export async function getQuest(r) {
 
   if (user.role === UserRole.Worker) {
     include.push({
-      model: QuestChat.scope('forQuestChat'),
+      model: QuestChat.unscoped(),
+      attributes: ["chatId"],
       as: 'questChat',
       required: false,
       where: { workerId: user.id },
