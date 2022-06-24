@@ -38,7 +38,7 @@ export async function getCases(r) {
 export async function deleteCase(r) {
   const meUser: User = r.auth.credentials;
 
-  const { portfolioId } = r.payload.params as { portfolioId: string };
+  const { portfolioId } = r.params as { portfolioId: string };
 
   await new DeletePortfolioCaseComposeHandler(r.server.app.db).Handle({
     portfolioId,
