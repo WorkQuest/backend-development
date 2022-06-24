@@ -30,7 +30,7 @@
     "@types/dotenv": "^6.1.1",
     "@types/joi": "^14.3.4",
     "@types/validator": "^13.1.0",
-    "@workquest/contract-data-pools": "github:WorkQuest/contract-data-pools#testnet",
+    "@workquest/contract-data-pools": "github:WorkQuest/contract-data-pools#f7a715f24cd9707852b90f6228706d62e07567f4",
     "@workquest/database-models": "git+https://github.com/WorkQuest/database-models.git#a76d641d4a6cb856d1b1ed64a5732e678530730f",
     "amqplib": "^0.8.0",
     "aws-sdk": "^2.918.0",
