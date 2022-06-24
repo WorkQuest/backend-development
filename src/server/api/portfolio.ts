@@ -51,8 +51,8 @@ export async function deleteCase(r) {
 export async function editCase(r) {
   const meUser: User = r.auth.credentials;
 
-  const { portfolioId } = r.payload.params as { portfolioId: string }
-  const { mediaIds, title, description } = r.payload as { mediaIds: string[], title: string, description: string }
+  const { portfolioId } = r.params as { portfolioId: string };
+  const { mediaIds, title, description } = r.payload as { mediaIds: string[], title: string, description: string };
 
   const portfolio = await new EditPortfolioCaseComposHandler(r.server.app.db).Handle({
     title,
