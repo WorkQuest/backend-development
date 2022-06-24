@@ -272,7 +272,7 @@ export async function logout(r) {
       logoutAt: Date.now(),
     },
     {
-      where: { id: r.auth.artifacts.sessionId },
+      where: { id: r.auth.artifacts.session.id },
     },
   );
 
@@ -373,7 +373,7 @@ export async function validateUserTotp(r) {
   const isValid = userControllerFactory.user.isTOTPEnabled() ?
     totpValidate(r.payload.token, userControllerFactory.user.settings.security.TOTP.secret) : true;
 
-  await Session.update({ isTotpPassed: isValid }, { where: { id: r.auth.artifacts.sessionId } });
+  await Session.update({ isTotpPassed: isValid }, { where: { id: r.auth.artifacts.session.id } });
 
   return output({ isValid });
 }

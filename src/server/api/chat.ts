@@ -27,8 +27,10 @@ import {
   SenderMessageStatus,
   StarredChat,
   StarredMessage,
-  User
-} from '@workquest/database-models/lib/models';
+  User,
+  QuestsResponse,
+  QuestsResponseStatus,
+} from "@workquest/database-models/lib/models";
 import {
   AddUsersInGroupChatHandler,
   AddUsersInGroupChatPreAccessPermissionHandler,
@@ -190,6 +192,16 @@ export async function getUserChats(r) {
     include.push({
       model: QuestChat,
       as: 'questChat',
+      include: [{
+        model: QuestsResponse.unscoped(),
+        as: 'response',
+        attributes: ["id"],
+        where: {
+          status: {
+            [Op.notIn]: [QuestsResponseStatus.Closed, QuestsResponseStatus.Rejected]
+          }
+        }
+      }],
       where: {
         status: r.query.questChatStatus,
       },
