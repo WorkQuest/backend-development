@@ -112,25 +112,30 @@ export async function getUserChats(r) {
   const replacements = {};
 
   const include: any[] = [{
-    model: ChatMember,
-    where: { userId: r.auth.credentials.id },
+    model: ChatData.unscoped(),
+    as: 'chatData',
+    attributes:{
+      include: ["chatId", "lastMessageId", "createdAt"]
+    },
     include: [{
-      model: ChatMemberDeletionData,
-      as: 'chatMemberDeletionData',
+      model: Message.unscoped(),
+      as: 'lastMessage',
+      attributes: {
+        include: ["id", "number", "chatId", "senderStatus", "type", "text", "createdAt"]
+      },
       include: [{
-        model: Message.unscoped(),
-        as: 'beforeDeletionMessage'
-      }]
-    }, {
-    model: User.unscoped(),
-    as: 'user',
-    attributes: ["id", "avatarId", "firstName", "lastName"],
-    include: [{
-      model: Media,
-      as: 'avatar',
+        model: ChatMember.scope('forChatsList'),
+        as: 'sender',
+      }, {
+        model: InfoMessage,
+        as: 'infoMessage'
+      }],
     }],
   }, {
-    model: ChatMemberData,
+    model: ChatMember.scope('forChatsList'),
+    where: { userId: r.auth.credentials.id },
+    include: [{
+    model: ChatMemberData.unscoped(),
     as: 'chatMemberData',
     attributes: [
       "lastReadMessageId",
@@ -146,26 +151,7 @@ export async function getUserChats(r) {
     as: 'star',
     required: r.query.starred,
   }, {
-    model: ChatData,
-    as: 'chatData',
-    include: [{
-      model: Message,
-      as: 'lastMessage',
-      include: [{
-        model: ChatMember,
-        as: 'sender',
-        include: [{
-          model: User.unscoped(),
-          as: 'user',
-          attributes: ["id", "firstName", "lastName"]
-        }],
-      }, {
-        model: InfoMessage,
-        as: 'infoMessage'
-      }],
-    }],
-  }, {
-    model: ChatMember,
+    model: ChatMember.scope('forChatsList'),
     as: 'members',
     where: {
       [Op.and]: [
@@ -179,18 +165,6 @@ export async function getUserChats(r) {
       ]
     },
     include: [{
-      model: User.unscoped(),
-      as: 'user',
-      attributes: ["id", "firstName", "lastName"],
-      include: [{
-        model: Media,
-        as: 'avatar'
-      }]
-    }, {
-      model: Admin.unscoped(),
-      as: 'admin',
-      attributes: ["id", "firstName", "lastName"],
-    }, {
       model: ChatMemberData,
       as: 'chatMemberData',
       attributes: [
@@ -201,7 +175,8 @@ export async function getUserChats(r) {
     }],
     required: false,
   }, {
-    model: QuestChat,
+    model: QuestChat.unscoped(),
+    attributes: ["id"],
     as: 'questChat',
     include: {
       model: Quest.unscoped(),
