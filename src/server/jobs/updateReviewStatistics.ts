@@ -2,6 +2,10 @@ import { UserStatisticController } from '../controllers/statistic/controller.use
 import { addJob } from '../utils/scheduler';
 import { col, fn } from 'sequelize';
 import {
+  ControllerBroker,
+  QuestNotificationActions
+} from '../controllers/controller.broker';
+import {
   Quest,
   QuestsReview,
   QuestStatus,
@@ -11,7 +15,6 @@ import {
   User,
   UserRole
 } from '@workquest/database-models/lib/models';
-import { ControllerBroker, QuestNotificationActions } from '../controllers/controller.broker';
 
 /**
  * 1 уровень Verified.
