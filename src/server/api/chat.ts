@@ -112,17 +112,11 @@ export async function getUserChats(r) {
   const replacements = {};
 
   const include: any[] = [{
-    model: ChatData.unscoped(),
+    model: ChatData.scope('forChatListWithoutMessage'),
     as: 'chatData',
-    attributes:{
-      include: ["chatId", "lastMessageId", "createdAt"]
-    },
     include: [{
-      model: Message.unscoped(),
+      model: Message.scope('lastMessage'),
       as: 'lastMessage',
-      attributes: {
-        include: ["id", "number", "chatId", "senderStatus", "type", "text", "createdAt"]
-      },
       include: [{
         model: ChatMember.scope('forChatsList'),
         as: 'sender',
@@ -133,23 +127,18 @@ export async function getUserChats(r) {
     }],
   }, {
     model: ChatMember.scope('forChatsList'),
+    as: 'meMember',
     where: { userId: r.auth.credentials.id },
     include: [{
-    model: ChatMemberData.unscoped(),
-    as: 'chatMemberData',
-    attributes: [
-      "lastReadMessageId",
-      "unreadCountMessages",
-      "lastReadMessageNumber",
-    ],
-  }],
+      model: ChatMemberData.unscoped(),
+      as: 'chatMemberData',
+      attributes: [
+        "lastReadMessageId",
+        "unreadCountMessages",
+        "lastReadMessageNumber",
+      ],
+    }],
     required: true,
-    as: 'meMember',
-  }, {
-    model: StarredChat,
-    where: { userId: r.auth.credentials.id },
-    as: 'star',
-    required: r.query.starred,
   }, {
     model: ChatMember.scope('forChatsList'),
     as: 'members',
@@ -165,7 +154,7 @@ export async function getUserChats(r) {
       ]
     },
     include: [{
-      model: ChatMemberData,
+      model: ChatMemberData.unscoped(),
       as: 'chatMemberData',
       attributes: [
         "lastReadMessageId",
@@ -176,7 +165,7 @@ export async function getUserChats(r) {
     required: false,
   }, {
     model: QuestChat.unscoped(),
-    attributes: ["id"],
+    attributes: ["questId"],
     as: 'questChat',
     include: {
       model: Quest.unscoped(),
@@ -184,9 +173,16 @@ export async function getUserChats(r) {
       attributes: ["id", "title"],
     }
   }, {
-    model: GroupChat,
+    model: GroupChat.unscoped(),
     as: 'groupChat',
-  }];
+    attributes: ["ownerMemberId"],
+  }, {
+    model: StarredChat.unscoped(),
+    as: 'star',
+    attributes: ["id"],
+    where: { userId: r.auth.credentials.id },
+    required: r.query.starred,
+  },];
 
   if (
     (r.query.questChatStatus === QuestChatStatus.Open || r.query.questChatStatus === QuestChatStatus.Close) &&
