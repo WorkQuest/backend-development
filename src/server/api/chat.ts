@@ -257,27 +257,16 @@ export async function getChatMessages(r) {
     where: { userId: meMember.userId },
     required: r.query.starred,
   }, {
-    model: ChatMember,
+    model: ChatMember.scope('forChatsList'),
     as: 'sender',
     include: [{
-      model: User.unscoped(),
-      as: 'user',
-      attributes: ["id", "avatarId", "firstName", "lastName"],
-      include: [{
-        model: Media,
-        as: 'avatar',
-      }],
-    }, {
-      model: ChatMemberData,
+      model: ChatMemberData.unscoped(),
       as: 'chatMemberData',
       attributes: [
         "lastReadMessageId",
         "unreadCountMessages",
         "lastReadMessageNumber"
       ],
-    }, {
-      model: ChatDeletionData,
-      as: 'chatDeletionData',
     }],
   }, {
     model: Media,
