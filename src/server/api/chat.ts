@@ -98,11 +98,14 @@ export async function getUserChats(r) {
   const chatTypeLiteral = literal(
     `("Chat"."type" = '${ ChatType.Private }' OR "Chat"."type" = '${ ChatType.Quest }')`
   );
-  const chatDeletionDataLiteral = literal((
+  const chatDeletionDataLiteral = literal(
     `(NOT EXISTS(SELECT "id" FROM "ChatDeletionData" WHERE "chatMemberId" = "meMember"."id") ` +
     'OR (SELECT "createdAt" FROM "Messages" WHERE "Chat"."id" = "Messages"."chatId" ORDER BY "Messages"."createdAt" DESC LIMIT 1 OFFSET 0 ) > ' +
     '(SELECT "updatedAt" FROM "ChatDeletionData" WHERE "chatMemberId" = "meMember"."id"))'
-  ));
+  );
+  const lastMessageLiteral = literal(
+    `(SELECT "id" FROM "ChatMemberDeletionData")`
+  )
 
   const where = {
     chatDeletionDataLiteral,
