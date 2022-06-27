@@ -367,7 +367,7 @@ export function editProfile(userRole: UserRole) {
       editableUser.setDataValue('userSpecializations', userSpecializations);
       editableUser.setDataValue('workerProfileVisibilitySetting', workerProfileVisibilitySetting);
 
-      return editableUser;
+      return output(editableUser);
     }
     if (userRole === UserRole.Employer) {
       const [editableUser, employerProfileVisibilitySetting] = await new EditProfileComposHandler(r.server.app.db).Handle({
@@ -382,7 +382,7 @@ export function editProfile(userRole: UserRole) {
 
       editableUser.setDataValue('employerProfileVisibilitySetting', employerProfileVisibilitySetting);
 
-      return editableUser;
+      return output(editableUser);
     }
   };
 }
