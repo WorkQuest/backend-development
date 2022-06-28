@@ -104,7 +104,12 @@ export async function getUserChats(r) {
     '(SELECT "updatedAt" FROM "ChatDeletionData" WHERE "chatMemberId" = "meMember"."id"))'
   );
   const lastMessageLiteral = literal(
-    `(SELECT "id" FROM "ChatMemberDeletionData")`
+    '"chatData->lastMessage"."id" = (CASE WHEN EXISTS (SELECT "ChatMemberDeletionData"."id" FROM "ChatMemberDeletionData" ' +
+  `WHERE "chatMemberId" = (SELECT "id" FROM "ChatMembers" WHERE "userId" = '${ r.auth.credentials.id }' AND "chatId" = "Chat"."id")) THEN null ` +
+  'ELSE "lastMessageId" END)'
+  );
+  const senderUserInfoLiteral = literal(
+    `SELECT`
   )
 
   const where = {
@@ -120,6 +125,7 @@ export async function getUserChats(r) {
     include: [{
       model: Message.scope('lastMessage'),
       as: 'lastMessage',
+      where: { lastMessageLiteral },
       include: [{
         model: ChatMember.scope('forChatsList'),
         as: 'sender',
