@@ -107,7 +107,7 @@ export async function getUserChats(r) {
   `WHERE "chatMemberId" = (SELECT "id" FROM "ChatMembers" WHERE "userId" = '${ r.auth.credentials.id }' AND "chatId" = "chatData->lastMessage"."chatId")) THEN null ` +
   'ELSE "chatData->lastMessage"."id" END)'
   );
-  ));
+
   const openQuestChatLiteral = literal(
     '"questChat->quest"."assignedWorkerId" IS NOT NULL'
   )
