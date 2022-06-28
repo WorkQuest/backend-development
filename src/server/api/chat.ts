@@ -147,7 +147,7 @@ export async function getUserChats(r) {
       required: false,
     }],
   }, {
-    model: ChatMember.scope('forChatsList'),
+    model: ChatMember.scope('userOnly'),
     as: 'meMember',
     where: { userId: r.auth.credentials.id },
     include: [{
@@ -179,10 +179,6 @@ export async function getUserChats(r) {
             include: [{
               model: User.unscoped(),
               as: 'user',
-              attributes: ["id", "firstName", "lastName"]
-            }, {
-              model: Admin.unscoped(),
-              as: 'admin',
               attributes: ["id", "firstName", "lastName"]
             }]
           }]
