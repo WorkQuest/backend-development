@@ -104,11 +104,8 @@ export async function getUserChats(r) {
   );
   const lastMessageLiteral = literal(
     '"chatData->lastMessage"."id" = (CASE WHEN EXISTS (SELECT "ChatMemberDeletionData"."id" FROM "ChatMemberDeletionData" ' +
-  `WHERE "chatMemberId" = (SELECT "id" FROM "ChatMembers" WHERE "userId" = '${ r.auth.credentials.id }' AND "chatId" = "Chat"."id")) THEN null ` +
+  `WHERE "chatMemberId" = (SELECT "id" FROM "ChatMembers" WHERE "userId" = '${ r.auth.credentials.id }' AND "chatId" = "chatData->lastMessage"."chatId")) THEN null ` +
   'ELSE "chatData->lastMessage"."id" END)'
-  );
-  const senderFirstNameLiteral = literal(
-    `(SELECT "firstName" FROM "Users") `
   );
 
   const where = {
@@ -124,7 +121,7 @@ export async function getUserChats(r) {
     include: [{
       model: Message.scope('lastMessage'),
       as: 'lastMessage',
-      //where: { lastMessageLiteral },
+      where: { lastMessageLiteral },
       include: [{
         model: ChatMember.scope('forChatsList'),
         as: 'sender',
@@ -133,6 +130,7 @@ export async function getUserChats(r) {
         as: 'infoMessage',
         attributes: ["messageAction", "memberId", "messageId"]
       }],
+      required: false,
     }],
   }, {
     model: ChatMember.scope('forChatsList'),
@@ -148,17 +146,18 @@ export async function getUserChats(r) {
       ],
     }, {
       model: ChatMemberDeletionData.unscoped(),
-      as: 'chatMemberDeletionData',
-      attributes: [],
+      as: 'deletionData',
+      attributes: ["id"],
       include: [{
         model: Message.scope('lastMessage'),
-        as: 'beforeDeletionMessage',
+        as: 'message',
         include: [{
-          model: ChatMember,
+          model: ChatMember.scope('forChatsList'),
           as: 'sender',
-          attributes: {
-            include: [[senderFirstNameLiteral, 'firstName']]
-          }
+        }, {
+          model: InfoMessage,
+          as: 'infoMessage',
+          attributes: ["messageAction", "memberId", "messageId"]
         }]
       }]
     }],
@@ -248,6 +247,7 @@ export async function getUserChats(r) {
     include,
     replacements,
     distinct: true,
+    col: 'id',
     limit: r.query.limit,
     offset: r.query.offset,
     order: [[orderByMessageDateLiteral, r.query.sort.lastMessageDate]],
@@ -272,7 +272,7 @@ export async function getChatMessages(r) {
 
   const where = {
     chatId: chat.id,
-    ...(meMember.chatMemberDeletionData && { createdAt: { [Op.lte]: meMember.chatMemberDeletionData.beforeDeletionMessage.createdAt } }),
+    ...(meMember.deletionData && { createdAt: { [Op.lte]: meMember.deletionData.message.createdAt } }),
   }
 
   const include = [{
