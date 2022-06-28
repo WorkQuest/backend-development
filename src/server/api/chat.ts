@@ -28,7 +28,6 @@ import {
   QuestsResponse,
   StarredMessage,
   QuestChatStatus,
-  ChatDeletionData,
   SenderMessageStatus,
   QuestsResponseStatus,
   ChatMemberDeletionData,
@@ -106,11 +105,11 @@ export async function getUserChats(r) {
   const lastMessageLiteral = literal(
     '"chatData->lastMessage"."id" = (CASE WHEN EXISTS (SELECT "ChatMemberDeletionData"."id" FROM "ChatMemberDeletionData" ' +
   `WHERE "chatMemberId" = (SELECT "id" FROM "ChatMembers" WHERE "userId" = '${ r.auth.credentials.id }' AND "chatId" = "Chat"."id")) THEN null ` +
-  'ELSE "lastMessageId" END)'
+  'ELSE "chatData->lastMessage"."id" END)'
   );
-  const senderUserInfoLiteral = literal(
-    `SELECT`
-  )
+  const senderFirstNameLiteral = literal(
+    `(SELECT "firstName" FROM "Users") `
+  );
 
   const where = {
     chatDeletionDataLiteral,
@@ -125,13 +124,14 @@ export async function getUserChats(r) {
     include: [{
       model: Message.scope('lastMessage'),
       as: 'lastMessage',
-      where: { lastMessageLiteral },
+      //where: { lastMessageLiteral },
       include: [{
         model: ChatMember.scope('forChatsList'),
         as: 'sender',
       }, {
         model: InfoMessage,
-        as: 'infoMessage'
+        as: 'infoMessage',
+        attributes: ["messageAction", "memberId", "messageId"]
       }],
     }],
   }, {
@@ -146,6 +146,21 @@ export async function getUserChats(r) {
         "unreadCountMessages",
         "lastReadMessageNumber",
       ],
+    }, {
+      model: ChatMemberDeletionData.unscoped(),
+      as: 'chatMemberDeletionData',
+      attributes: [],
+      include: [{
+        model: Message.scope('lastMessage'),
+        as: 'beforeDeletionMessage',
+        include: [{
+          model: ChatMember,
+          as: 'sender',
+          attributes: {
+            include: [[senderFirstNameLiteral, 'firstName']]
+          }
+        }]
+      }]
     }],
     required: true,
   }, {
