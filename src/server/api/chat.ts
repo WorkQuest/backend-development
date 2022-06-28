@@ -107,6 +107,10 @@ export async function getUserChats(r) {
   `WHERE "chatMemberId" = (SELECT "id" FROM "ChatMembers" WHERE "userId" = '${ r.auth.credentials.id }' AND "chatId" = "chatData->lastMessage"."chatId")) THEN null ` +
   'ELSE "chatData->lastMessage"."id" END)'
   );
+  ));
+  const openQuestChatLiteral = literal(
+    '"questChat->quest"."assignedWorkerId" IS NOT NULL'
+  )
 
   const where = {
     chatDeletionDataLiteral,
@@ -239,17 +243,12 @@ export async function getUserChats(r) {
       model: QuestChat,
       as: 'questChat',
       include: [{
-        model: QuestsResponse.unscoped(),
-        as: 'response',
+        model: Quest.unscoped(),
         attributes: ["id"],
+        as: 'quest',
         where: {
-          status: {
-            [Op.notIn]: [
-              QuestsResponseStatus.Closed,
-              QuestsResponseStatus.Rejected,
-            ],
-          },
-        },
+          assignedWorkerId: openQuestChatLiteral,
+        }
       }],
       where: { status: r.query.questChatStatus },
     });
