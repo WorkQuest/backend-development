@@ -34,16 +34,16 @@ export class RemoveChatFromChatsListHandler implements IHandler<RemoveChatFromCh
       defaults: {
         chatMemberId: payload.meMember.id,
         chatId: payload.chat.id,
-        beforeDeletionMessageId: payload.chat.chatData.lastMessageId,
-        beforeDeletionMessageNumber: payload.chat.chatData.lastMessage.number,
+        beforeDeletionMessageId: payload.lastMessage.id,
+        beforeDeletionMessageNumber: payload.lastMessage.number,
       },
       transaction: options.tx
     });
 
     if (!isCreated) {
       await chatDeletionData.update({
-        beforeDeletionMessageId: payload.chat.chatData.lastMessageId,
-        beforeDeletionMessageNumber: payload.chat.chatData.lastMessage.number,
+        beforeDeletionMessageId: payload.lastMessage.id,
+        beforeDeletionMessageNumber: payload.lastMessage.number,
       }, { transaction: options.tx });
     }
   }

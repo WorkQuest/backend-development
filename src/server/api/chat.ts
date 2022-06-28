@@ -126,9 +126,23 @@ export async function getUserChats(r) {
         model: ChatMember.scope('forChatsList'),
         as: 'sender',
       }, {
-        model: InfoMessage,
+        model: InfoMessage.unscoped(),
         as: 'infoMessage',
-        attributes: ["messageAction", "memberId", "messageId"]
+        attributes: ["memberId", "messageId", "messageAction"],
+        include: [{
+          model: ChatMember.unscoped(),
+          as: 'member',
+          attributes: ["adminId", "userId"],
+          include: [{
+            model: User.unscoped(),
+            as: 'user',
+            attributes: ["id", "firstName", "lastName"]
+          }, {
+            model: Admin.unscoped(),
+            as: 'admin',
+            attributes: ["id", "firstName", "lastName"]
+          }]
+        }]
       }],
       required: false,
     }],
@@ -155,9 +169,23 @@ export async function getUserChats(r) {
           model: ChatMember.scope('forChatsList'),
           as: 'sender',
         }, {
-          model: InfoMessage,
+          model: InfoMessage.unscoped(),
           as: 'infoMessage',
-          attributes: ["messageAction", "memberId", "messageId"]
+          attributes: ["memberId", "messageId", "messageAction"],
+          include: [{
+            model: ChatMember.unscoped(),
+            as: 'member',
+            attributes: ["adminId", "userId"],
+            include: [{
+              model: User.unscoped(),
+              as: 'user',
+              attributes: ["id", "firstName", "lastName"]
+            }, {
+              model: Admin.unscoped(),
+              as: 'admin',
+              attributes: ["id", "firstName", "lastName"]
+            }]
+          }]
         }]
       }]
     }],
