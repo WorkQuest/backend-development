@@ -86,6 +86,9 @@ export async function getUserChats(r) {
     'OR (SELECT "createdAt" FROM "Messages" WHERE "Chat"."id" = "Messages"."chatId" ORDER BY "Messages"."createdAt" DESC LIMIT 1 OFFSET 0 ) > ' +
     '(SELECT "updatedAt" FROM "ChatDeletionData" WHERE "chatMemberId" = "meMember"."id"))'
   ));
+  const openQuestChatLiteral = literal(
+    '"questChat->quest"."assignedWorkerId" IS NOT NULL'
+  )
 
   const where = {
     chatDeletionDataLiteral,
@@ -204,17 +207,12 @@ export async function getUserChats(r) {
       model: QuestChat,
       as: 'questChat',
       include: [{
-        model: QuestsResponse.unscoped(),
-        as: 'response',
+        model: Quest.unscoped(),
         attributes: ["id"],
+        as: 'quest',
         where: {
-          status: {
-            [Op.notIn]: [
-              QuestsResponseStatus.Closed,
-              QuestsResponseStatus.Rejected,
-            ],
-          },
-        },
+          assignedWorkerId: openQuestChatLiteral,
+        }
       }],
       where: { status: r.query.questChatStatus },
     });
