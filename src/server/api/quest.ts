@@ -136,9 +136,9 @@ export async function createQuest(r) {
 
   const employerController = EmployerControllerFactory.createByUserModel(r.auth.credentials);
 
-  const avatarModel = mediaModels.length === 0
+  const avatarModel = medias.length === 0
     ? null
-    : mediaModels[0]
+    : medias[0]
 
   const questController = await r.server.app.db.transaction(async (tx) => {
    const questController = await QuestController.create({
@@ -149,7 +149,7 @@ export async function createQuest(r) {
 
    await Promise.all([
      questController.createRaiseView({ tx }),
-     questController.setMedias(mediaModels, { tx }),
+     questController.setMedias(medias, { tx }),
      questController.setQuestSpecializations(r.payload.specializationKeys, { tx }),
    ]);
 

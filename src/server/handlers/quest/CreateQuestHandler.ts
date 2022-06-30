@@ -1,129 +1,124 @@
 import { BaseDomainHandler, IHandler, Options } from "../../types";
 import {
   Chat,
-  ChatMember,
-  ChatMemberData,
-  ChatType,
-  GroupChat,
-  InfoMessage,
-  MemberStatus,
-  MemberType,
+  LocationType,
   Message,
-  MessageAction,
-  MessageType,
-  User
+  PayPeriod, Quest, QuestSpecializationFilter, QuestStatus, SpecializationFilter,
+  User, WorkPlace
 } from "@workquest/database-models/lib/models";
 
-export interface CreateGroupChatCommand {
-  readonly chatName: string;
-  readonly chatCreator: User;
-  readonly invitedUsers: ReadonlyArray<User>;
+import { Priority, QuestEmployment } from "@workquest/database-models/src/models";
+import { transformToGeoPostGIS } from "../../utils/postGIS";
+import { error } from "../../utils";
+import { Errors } from "../../utils/errors";
+
+export interface CreateQuestCommand {
+  readonly questCreator: User;
+  workplace: WorkPlace,
+  payPeriod: PayPeriod,
+  typeOfEmployment: QuestEmployment,
+  priority: Priority,
+  title: string,
+  description: string,
+  price: string,
+  medias: string[],
+  locationFull: {
+    location: LocationType;
+    locationPlaceName: string;
+  },
 }
 
-interface GroupChatInfoCommand {
-  chat: Chat,
-  groupChat: GroupChat,
-  owner: ChatMember
-}
-
-interface CreateChatDataAndChatMemberDataPayload extends GroupChatInfoCommand {
-  message: Message,
-}
-
-interface CreateGroupChatPayload extends CreateGroupChatCommand {
+interface CreateQuestPayload extends CreateQuestCommand {
 
 }
 
-interface SendInfoMessagePayload extends GroupChatInfoCommand {
-
+interface SetSpecializationsPayload {
+  quest: Quest,
+  specializationKeys: string[],
 }
 
-export class CreateGroupChatHandler extends BaseDomainHandler<CreateGroupChatCommand, Promise<[Chat, Message]>> {
-  private static async sendInfoMessageAboutGroupChatCreate(payload: SendInfoMessagePayload, options: Options = {}): Promise<Message> {
-    const message = Message.build({
-      number: 1,
-      type: MessageType.Info,
-      chatId: payload.chat.id,
-      senderMemberId: payload.groupChat.ownerMemberId,
+export type ModelRecord = {
+  path: string;
+  industryKey: string;
+  specializationKey: string;
+  [alias: string]: string;
+};
+
+export class CreateQuestHandler extends BaseDomainHandler<CreateQuestCommand, Promise<Quest>> {
+  private static async setSpecializations(payload: SetSpecializationsPayload, options: Options = {}): Promise<Quest> {
+    const questId = payload.quest.id;
+
+    const counter = await QuestSpecializationFilter.count({
+      where: { questId: payload.quest.id },
     });
-    const info = InfoMessage.build({
-      memberId: null,
-      messageId: message.id,
-      messageAction: MessageAction.GroupChatCreate,
-    });
 
-    await Promise.all([
-      message.save({ transaction: options.tx }),
-      info.save({ transaction: options.tx }),
-    ]);
-
-    message.setDataValue('infoMessage', info);
-
-    return message;
-  }
-
-  private static async createGroupChatAndAddMembers(payload: CreateGroupChatPayload, options: Options = {}): Promise<GroupChatInfoCommand> {
-    const chat = await Chat.create({ type: ChatType.Group }, { transaction: options.tx });
-
-    const members = ChatMember.bulkBuild(
-      payload.invitedUsers.map(user => ({
-        chatId: chat.id,
-        userId: user.id,
-        type: MemberType.User,
-        status: MemberStatus.Active,
-      }))
-    );
-
-    if (!members.find(members => members.userId === payload.chatCreator.id)) {
-      members.push(
-        ChatMember.build({
-          chatId: chat.id,
-          type: MemberType.User,
-          status: MemberStatus.Active,
-          userId: payload.chatCreator.id,
-        })
-      )
+    if (counter !== 0) {
+      await QuestSpecializationFilter.destroy({
+        where: { questId }, transaction: options.tx,
+      });
+    }
+    if (keys.length === 0) {
+      return;
     }
 
-    await Promise.all(
-      members.map(async member => member.save({ transaction: options.tx })),
-    );
+    const specializations: ModelRecord[] = [];
+    const mapSpecializations = await SpecializationFilter.findAll();
+    for (const keysPair of specializationKeys) {
+      const [industryKey, specializationKey] = keysPair.split(/\./) as [string, string];
 
-    const owner = members.find(members => members.userId === payload.chatCreator.id);
+      if (!this.mapSpecializations[pair]) {
+        throw error(Errors.NotFound, 'Keys pair path in specialization filters not found', {
+          keysPair: pair,
+        });
+      }
+      records.push({
+        path: keysPair,
+        industryKey,
+        specializationKey,
+        questId,
+      });
+    }
 
-    const groupChat = await GroupChat.create({
-      chatId: chat.id,
-      name: payload.chatName,
-      ownerMemberId: owner.id,
+    await QuestSpecializationFilter.bulkCreate(specializations, {
+      transaction: options.tx,
+    });
+
+  }
+
+  private static async createQuest(payload: CreateQuestPayload, options: Options = {}): Promise<Quest> {
+    const avatarModel = medias.length === 0
+      ? null
+      : payload.medias[0];
+
+    const quest = await Quest.create({
+      avatarId: avatarModel?.id,
+      userId: payload.questCreator.id,
+      status: QuestStatus.Pending,
+      workplace: payload.workplace,
+      payPeriod: payload.payPeriod,
+      typeOfEmployment: payload.typeOfEmployment,
+      priority: payload.priority,
+      title: payload.title,
+      description: payload.description,
+      price: payload.price,
+      location: payload.locationFull.location,
+      locationPlaceName: payload.locationFull.locationPlaceName,
+      locationPostGIS: transformToGeoPostGIS(payload.locationFull.location),
     }, { transaction: options.tx });
 
-    groupChat.setDataValue('ownerMember', owner);
-    chat.setDataValue('groupChat', groupChat);
-    chat.setDataValue('members', members);
+    await this.quest.$set('medias', payload.medias,  {
+      transaction: options.tx,
+    });
 
-    return { chat, groupChat, owner };
-  }
-//TODO: подумай, как вынести в джобу
-  private static async createChatDataAndChatMemberData(payload: CreateChatDataAndChatMemberDataPayload, options: Options = {}) {
-    const chatMemberData = ChatMemberData.bulkBuild(
-      payload.chat.getDataValue('members').map(member => ({
-        chatMemberId: member.id,
-        lastReadMessageId: member.id === payload.owner.id ? payload.message.id : null,
-        unreadCountMessages: member.id === payload.owner.id ? 0 : 1,
-        lastReadMessageNumber: member.id === payload.owner.id ? payload.message.number : null,
-      }))
-    );
 
-    await Promise.all(
-      chatMemberData.map(async chatMemberData => chatMemberData.save({ transaction: options.tx })),
-    );
+    return quest;
   }
 
-  public async Handle(command: CreateGroupChatCommand): Promise<[Chat, Message]> {
-    const chatInfo = await CreateGroupChatHandler.createGroupChatAndAddMembers({ ...command }, { tx: this.options.tx });
-    const messageWithInfo = await CreateGroupChatHandler.sendInfoMessageAboutGroupChatCreate({ ...command, ...chatInfo }, { tx: this.options.tx });
-    await CreateGroupChatHandler.createChatDataAndChatMemberData({ ...chatInfo, message: messageWithInfo }, { tx: this.options.tx });
+  public async Handle(command: CreateQuestCommand): Promise<[Chat, Message]> {
+    const quest = await CreateQuestHandler.createQuest({ ...command }, { tx: this.options.tx });
 
-    return [chatInfo.chat, messageWithInfo];
+    await CreateQuestHandler.setSpecializations()
+
+    return quest;
   }
 }
