@@ -98,6 +98,10 @@ export class EditWorkerProfileHandler extends BaseDomainHandler<EditWorkerProfil
     payload.user.priority = payload.priority;
     payload.user.workplace = payload.workplace;
     payload.user.payPeriod = payload.payPeriod;
+
+    if (payload.avatar) {
+      payload.user.setDataValue('avatar', payload.avatar);
+    }
   }
 
   private editPhoneNumber(payload: EditPhoneNumberPayload) {
