@@ -78,6 +78,10 @@ export class EditEmployerProfileHandler extends BaseDomainHandler<EditEmployerPr
     payload.user.lastName = payload.lastName;
     payload.user.firstName = payload.firstName;
     payload.user.additionalInfo = payload.additionalInfo;
+
+    if (payload.avatar) {
+      payload.user.setDataValue('avatar', payload.avatar);
+    }
   }
 
   private async updateEmployerProfileVisibility(payload: UpdateEmployerProfileVisibilityPayload): Promise<EmployerProfileVisibilitySetting> {
