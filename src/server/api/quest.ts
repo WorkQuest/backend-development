@@ -31,6 +31,7 @@ import {
   GetMediasPostValidationHandler, GetUserByIdHandler,
   GetUserByIdPostAccessPermissionHandler, GetUserByIdPostValidationHandler, UserValidator
 } from "../handlers";
+import { CreateQuestHandler } from "../handlers/quest/CreateQuestHandler";
 
 
 export const searchQuestFields = [
@@ -86,6 +87,10 @@ export async function getQuest(r) {
       where: { workerId: user.id },
     });
   }
+  ldnlsdjflk
+  const a;
+  const a.
+
 
   if (user.role === UserRole.Employer) {
     const excludeStatuses = [
@@ -134,6 +139,20 @@ export async function createQuest(r) {
     new GetMediaByIdsHandler()
   ).Handle({ mediaIds });
 
+  // const quest = await new CreateQuestHandler().Handle({
+  //   questCreator: employer,
+  //   workplace: r.payload.workplace,
+  //   payPeriod: r.payload.payPeriod,
+  //   typeOfEmployment: r.payload.typeOfEmployment,
+  //   priority: r.payload.priority,
+  //   title: r.payload.title,
+  //   description: r.payload.description,
+  //   price: r.payload.price,
+  //   medias,
+  //   locationFull: r.payload.locationFull,
+  //   specializationKeys: r.payload.specializationKeys,
+  // });
+
   const employerController = EmployerControllerFactory.createByUserModel(r.auth.credentials);
 
   const avatarModel = medias.length === 0
@@ -164,6 +183,8 @@ export async function createQuest(r) {
   await QuestStatisticController.createQuestAction(questController.quest.price);
 
   return output(questController.quest);
+
+  //return quest;
 }
 
 export async function editQuest(r) {

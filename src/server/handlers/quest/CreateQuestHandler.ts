@@ -1,7 +1,7 @@
-import { BaseDomainHandler, IHandler, Options } from "../../types";
+import { BaseDomainHandler, IHandler, Options } from "../types";
 import {
   Chat,
-  LocationType,
+  LocationType, Media,
   Message,
   PayPeriod, Quest, QuestSpecializationFilter, QuestStatus, SpecializationFilter,
   User, WorkPlace
@@ -21,11 +21,14 @@ export interface CreateQuestCommand {
   title: string,
   description: string,
   price: string,
-  medias: string[],
+  medias: Media[],
+
   locationFull: {
     location: LocationType;
     locationPlaceName: string;
   },
+
+  specializationKeys: string[],
 }
 
 interface CreateQuestPayload extends CreateQuestCommand {
@@ -41,52 +44,12 @@ export type ModelRecord = {
   path: string;
   industryKey: string;
   specializationKey: string;
-  [alias: string]: string;
+  questId: string;
 };
 
 export class CreateQuestHandler extends BaseDomainHandler<CreateQuestCommand, Promise<Quest>> {
-  private static async setSpecializations(payload: SetSpecializationsPayload, options: Options = {}): Promise<Quest> {
-    const questId = payload.quest.id;
-
-    const counter = await QuestSpecializationFilter.count({
-      where: { questId: payload.quest.id },
-    });
-
-    if (counter !== 0) {
-      await QuestSpecializationFilter.destroy({
-        where: { questId }, transaction: options.tx,
-      });
-    }
-    if (keys.length === 0) {
-      return;
-    }
-
-    const specializations: ModelRecord[] = [];
-    const mapSpecializations = await SpecializationFilter.findAll();
-    for (const keysPair of specializationKeys) {
-      const [industryKey, specializationKey] = keysPair.split(/\./) as [string, string];
-
-      if (!this.mapSpecializations[pair]) {
-        throw error(Errors.NotFound, 'Keys pair path in specialization filters not found', {
-          keysPair: pair,
-        });
-      }
-      records.push({
-        path: keysPair,
-        industryKey,
-        specializationKey,
-        questId,
-      });
-    }
-
-    await QuestSpecializationFilter.bulkCreate(specializations, {
-      transaction: options.tx,
-    });
-
-  }
-
   private static async createQuest(payload: CreateQuestPayload, options: Options = {}): Promise<Quest> {
-    const avatarModel = medias.length === 0
+    const avatarModel = payload.medias.length === 0
       ? null
       : payload.medias[0];
 
@@ -106,18 +69,58 @@ export class CreateQuestHandler extends BaseDomainHandler<CreateQuestCommand, Pr
       locationPostGIS: transformToGeoPostGIS(payload.locationFull.location),
     }, { transaction: options.tx });
 
-    await this.quest.$set('medias', payload.medias,  {
+    await quest.$set('medias', payload.medias,  {
       transaction: options.tx,
     });
-
-
     return quest;
   }
 
-  public async Handle(command: CreateQuestCommand): Promise<[Chat, Message]> {
+  public async Handle(command: CreateQuestCommand): Promise<Quest> {
     const quest = await CreateQuestHandler.createQuest({ ...command }, { tx: this.options.tx });
 
-    await CreateQuestHandler.setSpecializations()
+    await CreateQuestHandler.setSpecializations({ quest, specializationKeys: command.specializationKeys }, {
+      tx: this.options.tx
+    });
+
+    return quest;
+  }
+}
+
+
+export class SetQuestMediaHandler extends BaseDomainHandler<CreateQuestCommand, Promise<Quest>> {
+  private static async createQuest(payload: CreateQuestPayload, options: Options = {}): Promise<Quest> {
+    const avatarModel = payload.medias.length === 0
+      ? null
+      : payload.medias[0];
+
+    const quest = await Quest.create({
+      avatarId: avatarModel?.id,
+      userId: payload.questCreator.id,
+      status: QuestStatus.Pending,
+      workplace: payload.workplace,
+      payPeriod: payload.payPeriod,
+      typeOfEmployment: payload.typeOfEmployment,
+      priority: payload.priority,
+      title: payload.title,
+      description: payload.description,
+      price: payload.price,
+      location: payload.locationFull.location,
+      locationPlaceName: payload.locationFull.locationPlaceName,
+      locationPostGIS: transformToGeoPostGIS(payload.locationFull.location),
+    }, { transaction: options.tx });
+
+    await quest.$set('medias', payload.medias,  {
+      transaction: options.tx,
+    });
+    return quest;
+  }
+
+  public async Handle(command: CreateQuestCommand): Promise<Quest> {
+    const quest = await CreateQuestHandler.createQuest({ ...command }, { tx: this.options.tx });
+
+    await CreateQuestHandler.setSpecializations({ quest, specializationKeys: command.specializationKeys }, {
+      tx: this.options.tx
+    });
 
     return quest;
   }
