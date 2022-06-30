@@ -464,7 +464,7 @@ export async function changeUserRole(r) {
   await new ChangeRoleComposHandler(r.server.app.db).Handle({
     user: meUser,
     code2FA: totp,
-  })
+  });
 
   await deleteUserFiltersJob({
     userId: meUser.id
