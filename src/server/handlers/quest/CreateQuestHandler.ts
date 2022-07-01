@@ -1,43 +1,46 @@
-import { BaseDomainHandler, IHandler, Options } from "../types";
+import { BaseDecoratorHandler, BaseDomainHandler, IHandler, Options } from '../types';
+import { Priority, QuestEmployment } from '@workquest/database-models/src/models';
+import { transformToGeoPostGIS } from '../../utils/postGIS';
+import { error } from '../../utils';
+import { Errors } from '../../utils/errors';
 import {
   Chat,
-  LocationType, Media,
+  LocationType,
+  Media,
   Message,
-  PayPeriod, Quest, QuestSpecializationFilter, QuestStatus, SpecializationFilter,
-  User, WorkPlace
-} from "@workquest/database-models/lib/models";
-
-import { Priority, QuestEmployment } from "@workquest/database-models/src/models";
-import { transformToGeoPostGIS } from "../../utils/postGIS";
-import { error } from "../../utils";
-import { Errors } from "../../utils/errors";
+  PayPeriod,
+  Quest,
+  QuestSpecializationFilter,
+  QuestStatus,
+  SpecializationFilter,
+  User,
+  WorkPlace,
+} from '@workquest/database-models/lib/models';
+import { UserValidator } from '../user';
 
 export interface CreateQuestCommand {
-  readonly questCreator: User;
-  workplace: WorkPlace,
-  payPeriod: PayPeriod,
-  typeOfEmployment: QuestEmployment,
-  priority: Priority,
-  title: string,
-  description: string,
-  price: string,
-  medias: Media[],
+  questCreator: User;
+  workplace: WorkPlace;
+  payPeriod: PayPeriod;
+  typeOfEmployment: QuestEmployment;
+  priority: Priority;
+  title: string;
+  description: string;
+  price: string;
+
+  medias: Media[];
 
   locationFull: {
     location: LocationType;
     locationPlaceName: string;
-  },
-
-  specializationKeys: string[],
+  };
 }
 
-interface CreateQuestPayload extends CreateQuestCommand {
-
-}
+type CreateQuestPayload = CreateQuestCommand;
 
 interface SetSpecializationsPayload {
-  quest: Quest,
-  specializationKeys: string[],
+  quest: Quest;
+  specializationKeys: string[];
 }
 
 export type ModelRecord = {
@@ -49,79 +52,51 @@ export type ModelRecord = {
 
 export class CreateQuestHandler extends BaseDomainHandler<CreateQuestCommand, Promise<Quest>> {
   private static async createQuest(payload: CreateQuestPayload, options: Options = {}): Promise<Quest> {
-    const avatarModel = payload.medias.length === 0
-      ? null
-      : payload.medias[0];
+    const avatarModel = payload.medias.length === 0 ? null : payload.medias[0];
 
-    const quest = await Quest.create({
-      avatarId: avatarModel?.id,
-      userId: payload.questCreator.id,
-      status: QuestStatus.Pending,
-      workplace: payload.workplace,
-      payPeriod: payload.payPeriod,
-      typeOfEmployment: payload.typeOfEmployment,
-      priority: payload.priority,
-      title: payload.title,
-      description: payload.description,
-      price: payload.price,
-      location: payload.locationFull.location,
-      locationPlaceName: payload.locationFull.locationPlaceName,
-      locationPostGIS: transformToGeoPostGIS(payload.locationFull.location),
-    }, { transaction: options.tx });
+    const quest = await Quest.create(
+      {
+        avatarId: avatarModel?.id,
+        userId: payload.questCreator.id,
+        status: QuestStatus.Pending,
+        workplace: payload.workplace,
+        payPeriod: payload.payPeriod,
+        typeOfEmployment: payload.typeOfEmployment,
+        priority: payload.priority,
+        title: payload.title,
+        description: payload.description,
+        price: payload.price,
+        location: payload.locationFull.location,
+        locationPlaceName: payload.locationFull.locationPlaceName,
+        locationPostGIS: transformToGeoPostGIS(payload.locationFull.location),
+      },
+      { transaction: options.tx },
+    );
 
-    await quest.$set('medias', payload.medias,  {
+    await quest.$set('medias', payload.medias, {
       transaction: options.tx,
     });
+
     return quest;
   }
 
   public async Handle(command: CreateQuestCommand): Promise<Quest> {
-    const quest = await CreateQuestHandler.createQuest({ ...command }, { tx: this.options.tx });
-
-    await CreateQuestHandler.setSpecializations({ quest, specializationKeys: command.specializationKeys }, {
-      tx: this.options.tx
-    });
-
-    return quest;
+    return await CreateQuestHandler.createQuest({ ...command }, { tx: this.options.tx });
   }
 }
 
+export class CreateQuestEmployerPreValidationHandler extends BaseDecoratorHandler<CreateQuestCommand, Promise<Quest>> {
+  private readonly userValidator: UserValidator;
 
-export class SetQuestMediaHandler extends BaseDomainHandler<CreateQuestCommand, Promise<Quest>> {
-  private static async createQuest(payload: CreateQuestPayload, options: Options = {}): Promise<Quest> {
-    const avatarModel = payload.medias.length === 0
-      ? null
-      : payload.medias[0];
+  constructor(protected readonly decorated: IHandler<CreateQuestCommand, Promise<Quest>>) {
+    super(decorated);
 
-    const quest = await Quest.create({
-      avatarId: avatarModel?.id,
-      userId: payload.questCreator.id,
-      status: QuestStatus.Pending,
-      workplace: payload.workplace,
-      payPeriod: payload.payPeriod,
-      typeOfEmployment: payload.typeOfEmployment,
-      priority: payload.priority,
-      title: payload.title,
-      description: payload.description,
-      price: payload.price,
-      location: payload.locationFull.location,
-      locationPlaceName: payload.locationFull.locationPlaceName,
-      locationPostGIS: transformToGeoPostGIS(payload.locationFull.location),
-    }, { transaction: options.tx });
-
-    await quest.$set('medias', payload.medias,  {
-      transaction: options.tx,
-    });
-    return quest;
+    this.userValidator = new UserValidator();
   }
 
-  public async Handle(command: CreateQuestCommand): Promise<Quest> {
-    const quest = await CreateQuestHandler.createQuest({ ...command }, { tx: this.options.tx });
+  public Handle(command: CreateQuestCommand): Promise<Quest> {
+    this.userValidator.MustBeEmployer(command.questCreator);
 
-    await CreateQuestHandler.setSpecializations({ quest, specializationKeys: command.specializationKeys }, {
-      tx: this.options.tx
-    });
-
-    return quest;
+    return this.decorated.Handle(command);
   }
 }
