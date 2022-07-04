@@ -127,8 +127,10 @@ export async function getQuest(r) {
 }
 
 export async function createQuest(r) {
+  const userId = r.auth.credentials.id;
+
   const quest = await new CreateQuestComposHandler(r.server.app.db).Handle({
-    questCreatorId: r.auth.credentials.id,
+    questCreatorId: userId,
     workplace: r.payload.workplace,
     payPeriod: r.payload.payPeriod,
     typeOfEmployment: r.payload.typeOfEmployment,
@@ -144,7 +146,7 @@ export async function createQuest(r) {
   });
 
   await updateQuestsStatisticJob({
-    userId: r.auth.credentials.id,
+    userId,
     role: UserRole.Employer,
   });
 

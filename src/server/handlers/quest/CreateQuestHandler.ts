@@ -1,18 +1,12 @@
 import { BaseDecoratorHandler, BaseDomainHandler, IHandler, Options } from '../types';
 import { Priority, QuestEmployment } from '@workquest/database-models/src/models';
 import { transformToGeoPostGIS } from '../../utils/postGIS';
-import { error } from '../../utils';
-import { Errors } from '../../utils/errors';
 import {
-  Chat,
   LocationType,
   Media,
-  Message,
   PayPeriod,
   Quest,
-  QuestSpecializationFilter,
   QuestStatus,
-  SpecializationFilter,
   User,
   WorkPlace,
 } from '@workquest/database-models/lib/models';
@@ -37,18 +31,6 @@ export interface CreateQuestCommand {
 }
 
 type CreateQuestPayload = CreateQuestCommand;
-
-interface SetSpecializationsPayload {
-  quest: Quest;
-  specializationKeys: string[];
-}
-
-export type ModelRecord = {
-  path: string;
-  industryKey: string;
-  specializationKey: string;
-  questId: string;
-};
 
 export class CreateQuestHandler extends BaseDomainHandler<CreateQuestCommand, Promise<Quest>> {
   private static async createQuest(payload: CreateQuestPayload, options: Options = {}): Promise<Quest> {

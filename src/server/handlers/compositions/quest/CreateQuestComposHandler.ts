@@ -1,11 +1,9 @@
 import { BaseCompositeHandler } from '../../types';
-import { CreateGroupChatHandler } from '../../chat';
-import { LocationType, Media, PayPeriod, User, WorkPlace } from '@workquest/database-models/lib/models';
+import { User } from '@workquest/database-models/lib/models';
 import { CreateQuestComposCommand, CreateQuestComposResults } from './types';
 import { GetUserByIdHandler, GetUserByIdPostAccessPermissionHandler, GetUserByIdPostValidationHandler } from '../../user';
 import { CreateQuestEmployerPreValidationHandler, CreateQuestHandler } from '../../quest/CreateQuestHandler';
 import { GetMediaByIdsHandler, GetMediasPostValidationHandler } from '../../media';
-import { Priority, QuestEmployment } from '@workquest/database-models/src/models';
 import { SetQuestSpecializationHandler, SetQuestSpecializationPreValidationHandler } from '../../specializations/SetQuestSpecialization';
 
 export class CreateQuestComposHandler extends BaseCompositeHandler<CreateQuestComposCommand, CreateQuestComposResults> {
