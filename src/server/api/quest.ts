@@ -143,39 +143,14 @@ export async function createQuest(r) {
     specializationKeys: r.payload.specializationKeys,
   });
 
-  // const employerController = EmployerControllerFactory.createByUserModel(r.auth.credentials);
-  //
-  // const avatarModel = medias.length === 0 ? null : medias[0];
-  //
-  // const questController = (await r.server.app.db.transaction(async (tx) => {
-  //   const questController = await QuestController.create(
-  //     {
-  //       avatar: avatarModel,
-  //       employer: employerController.user,
-  //       ...r.payload,
-  //     },
-  //     { tx },
-  //   );
-  //
-  //   await Promise.all([
-  //     questController.createRaiseView({ tx }),
-  //     questController.setMedias(medias, { tx }),
-  //     questController.setQuestSpecializations(r.payload.specializationKeys, { tx }),
-  //   ]);
-  //
-  //   return questController;
-  // })) as QuestController;
-  //
-  // await updateQuestsStatisticJob({
-  //   userId: employerController.user.id,
-  //   role: UserRole.Employer,
-  // });
-  //
-  // await QuestStatisticController.createQuestAction(questController.quest.price);
-  //
-  // return output(questController.quest);
+  await updateQuestsStatisticJob({
+    userId: r.auth.credentials.id,
+    role: UserRole.Employer,
+  });
 
-  return quest;
+  await QuestStatisticController.createQuestAction(quest.price);
+
+  return output(quest);
 }
 
 export async function editQuest(r) {
