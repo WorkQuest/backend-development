@@ -381,7 +381,6 @@ export async function currentSessionValidateTotp(r) {
 
   if (isValid) {
     await Session.update({ isTotpPassed: isValid }, { where: { id: r.auth.artifacts.session.id } });
-    return output({ isValid });
   }
 
   return output({ isValid });
