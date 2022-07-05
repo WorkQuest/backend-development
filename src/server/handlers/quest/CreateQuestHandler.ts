@@ -30,7 +30,7 @@ export interface CreateQuestCommand {
   };
 }
 
-type CreateQuestPayload = CreateQuestCommand;
+interface CreateQuestPayload extends CreateQuestCommand {};
 
 export class CreateQuestHandler extends BaseDomainHandler<CreateQuestCommand, Promise<Quest>> {
   private static async createQuest(payload: CreateQuestPayload, options: Options = {}): Promise<Quest> {
