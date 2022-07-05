@@ -222,7 +222,7 @@ export default [
     handler: handlers.currentSessionValidateTotp,
     options: {
       auth: 'jwt-access',
-      id: 'v1.auth.currentSessionValidateTotp',
+      id: 'v1.auth.session.current.activeByTotp',
       tags: ['api', 'auth'],
       description: 'Validate totp for current session',
       validate: {
