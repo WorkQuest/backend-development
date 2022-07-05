@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { Op } from 'sequelize';
+import * as speakeasy from 'speakeasy';
 import * as querystring from 'querystring';
 import config from '../config/config';
 import { Errors } from '../utils/errors';
@@ -367,13 +368,26 @@ export async function validateUserPassword(r) {
   });
 }
 
+export async function currentSessionValidateTotp(r) {
+  const userControllerFactory = await UserControllerFactory.createByIdWithPassword(r.auth.credentials.id);
+
+  if (r.auth.artifacts.session.isTotpPassed) {
+    return r.auth.artifacts.session.isTotpPassed
+  } else {
+    const isValid = userControllerFactory.user.isTOTPEnabled() ?
+      totpValidate(r.payload.token, userControllerFactory.user.settings.security.TOTP.secret) : true;
+
+    await Session.update({ isTotpPassed: isValid }, { where: { id: r.auth.artifacts.session.id } });
+
+    return output({ isValid });
+  }
+}
+
 export async function validateUserTotp(r) {
   const userControllerFactory = await UserControllerFactory.createByIdWithPassword(r.auth.credentials.id);
 
   const isValid = userControllerFactory.user.isTOTPEnabled() ?
     totpValidate(r.payload.token, userControllerFactory.user.settings.security.TOTP.secret) : true;
-
-  await Session.update({ isTotpPassed: isValid }, { where: { id: r.auth.artifacts.session.id } });
 
   return output({ isValid });
 }

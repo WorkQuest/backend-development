@@ -17,6 +17,7 @@ import {
   walletPublicKeySchema,
   walletSignatureSchema
 } from '@workquest/database-models/lib/schemes';
+import { currentSessionValidateTotp } from "../../api/auth";
 
 export default [
   {
@@ -216,8 +217,29 @@ export default [
         ).label('ValidateUserPasswordResponse'),
       },
     },
-  },
-  {
+  }, {
+    method: 'POST',
+    path: '/v1/auth/curen-session/validate-totp',
+    handler: handlers.currentSessionValidateTotp,
+    options: {
+      auth: 'jwt-access',
+      id: 'v1.auth.currentSessionValidateTotp',
+      tags: ['api', 'auth'],
+      description: 'Validate totp for current session',
+      validate: {
+        payload: Joi.object({
+          token: totpSchema.required(),
+        }).label('ValidateUserCurrentSessionTotpPayload'),
+      },
+      response: {
+        schema: outputOkSchema(
+          Joi.object({
+            isValid: Joi.boolean(),
+          }).label('ValidateUserTotp'),
+        ).label('ValidateUserCurrentSessionTotpResponse'),
+      },
+    },
+  },  {
     method: 'POST',
     path: '/v1/auth/validate-totp',
     handler: handlers.validateUserTotp,
