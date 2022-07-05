@@ -40,8 +40,15 @@ export interface EditQuestComposCommand {
   specializationKeys: string[];
 }
 
+export interface MarkQuestStarComposCommand {
+  meUser: User,
+  questId: string,
+}
+
 /** Results */
 
 export type CreateQuestComposResults = Promise<Quest>;
 
 export type EditQuestComposResults = Promise<Quest>;
+
+export type MarkQuestStarComposResults = Promise<void>

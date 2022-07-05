@@ -57,7 +57,7 @@ export interface MarkMessageStarComposCommand {
   messageId: string,
 }
 
-export interface MarkChateStarComposCommand {
+export interface MarkChatStarComposCommand {
   meUser: User,
   chatId: string,
 }

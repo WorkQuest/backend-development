@@ -8,18 +8,18 @@ import {
   MarkChatStarHandler,
 } from "../../chat";
 import {
-  MarkChateStarComposCommand,
+  MarkChatStarComposCommand,
   MarkChatStarComposResults,
 } from "./types";
 
-export class MarkChatStarComposHandler extends BaseCompositeHandler<MarkChateStarComposCommand, MarkChatStarComposResults> {
+export class MarkChatStarComposHandler extends BaseCompositeHandler<MarkChatStarComposCommand, MarkChatStarComposResults> {
   constructor(
     protected readonly dbContext: any,
   ) {
     super(dbContext);
   }
 
-  public async Handle(command: MarkChateStarComposCommand): MarkChatStarComposResults {
+  public async Handle(command: MarkChatStarComposCommand): MarkChatStarComposResults {
     const chat = await new GetChatByIdPostValidationHandler(
       new GetChatByIdHandler()
     ).Handle({ chatId: command.chatId });

@@ -10,7 +10,7 @@ export class GetQuestByIdHandler implements IHandler<GetQuestByIdCommand, GetQue
   }
 }
 
-export class GetQuestByIdPostValidationHandler extends BaseDecoratorHandler<GetQuestByIdCommand, GetQuestByIdResult> {
+export class GetQuestByIdValidationHandler extends BaseDecoratorHandler<GetQuestByIdCommand, GetQuestByIdResult> {
 
   private readonly validator: QuestValidator;
 

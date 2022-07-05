@@ -4,7 +4,7 @@ import { GetMediaByIdsHandler, GetMediasPostValidationHandler } from '../../medi
 import { SetQuestSpecializationHandler, SetQuestSpecializationPreValidationHandler } from '../../specializations/SetQuestSpecialization';
 import {
   EditQuestEmployerPreValidationHandler,
-  EditQuestHandler, GetQuestByIdHandler, GetQuestByIdPostValidationHandler
+  EditQuestHandler, GetQuestByIdHandler, GetQuestByIdValidationHandler
 } from "../../quest";
 
 export class EditQuestComposHandler extends BaseCompositeHandler<EditQuestComposCommand, EditQuestComposResults> {
@@ -13,7 +13,7 @@ export class EditQuestComposHandler extends BaseCompositeHandler<EditQuestCompos
   }
 
   public async Handle(command: EditQuestComposCommand): EditQuestComposResults {
-    const quest = await new GetQuestByIdPostValidationHandler(new GetQuestByIdHandler()).Handle({ questId: command.questId });
+    const quest = await new GetQuestByIdValidationHandler(new GetQuestByIdHandler()).Handle({ questId: command.questId });
 
     const medias = await new GetMediasPostValidationHandler(new GetMediaByIdsHandler()).Handle({ mediaIds: command.mediaIds });
 

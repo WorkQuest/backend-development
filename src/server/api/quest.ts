@@ -31,6 +31,8 @@ import {
 import { CreateQuestComposHandler } from '../handlers/compositions/quest/CreateQuestComposHandler';
 import { Priority, QuestEmployment } from '@workquest/database-models/src/models';
 import { EditQuestComposHandler } from "../handlers/compositions/quest";
+import { MarkQuestStarHandler } from "../handlers/quest/star/MarkQuestStarHandler";
+import { MarkQuestStarComposHandler } from "../handlers/compositions/quest/MarkQuestStarComposHandler";
 
 export const searchQuestFields = ['title', 'description', 'locationPlaceName'];
 
@@ -389,9 +391,12 @@ export function getQuests(type: 'list' | 'points', requester?: 'worker' | 'emplo
 
 export async function setStar(r) {
   const { questId } = r.params;
-  const user: User = r.auth.credentials;
+  const meUser: User = r.auth.credentials;
 
-  await (await QuestControllerFactory.createById(questId)).setStar(user);
+  await new MarkQuestStarComposHandler(r.server.app.db).Handle({
+    questId,
+    meUser,
+  });
 
   return output();
 }
