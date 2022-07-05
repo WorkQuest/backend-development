@@ -44,4 +44,4 @@ export interface EditQuestComposCommand {
 
 export type CreateQuestComposResults = Promise<Quest>;
 
-export type EditQuestComposResults = Promise<void>;
+export type EditQuestComposResults = Promise<Quest>;

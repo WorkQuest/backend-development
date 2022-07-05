@@ -2,7 +2,7 @@ import { BaseCompositeHandler } from '../../types';
 import { User } from '@workquest/database-models/lib/models';
 import { CreateQuestComposCommand, CreateQuestComposResults } from './types';
 import { GetUserByIdHandler, GetUserByIdPostAccessPermissionHandler, GetUserByIdPostValidationHandler } from '../../user';
-import { CreateQuestEmployerPreValidationHandler, CreateQuestHandler } from '../../quest/CreateQuestHandler';
+import { CreateQuestEmployerPreValidationHandler, CreateQuestHandler } from "../../quest";
 import { GetMediaByIdsHandler, GetMediasPostValidationHandler } from '../../media';
 import { SetQuestSpecializationHandler, SetQuestSpecializationPreValidationHandler } from '../../specializations/SetQuestSpecialization';
 
@@ -37,8 +37,6 @@ export class CreateQuestComposHandler extends BaseCompositeHandler<CreateQuestCo
           questId: quest.id,
           keys: command.specializationKeys,
         });
-
-      return quest;
     });
   }
 }

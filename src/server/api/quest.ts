@@ -26,10 +26,11 @@ import {
   User,
   UserRole,
   PayPeriod,
-  LocationType,
-} from '@workquest/database-models/lib/models';
+  LocationType, WorkPlace
+} from "@workquest/database-models/lib/models";
 import { CreateQuestComposHandler } from '../handlers/compositions/quest/CreateQuestComposHandler';
 import { Priority, QuestEmployment } from '@workquest/database-models/src/models';
+import { EditQuestComposHandler } from "../handlers/compositions/quest";
 
 export const searchQuestFields = ['title', 'description', 'locationPlaceName'];
 
@@ -156,12 +157,23 @@ export async function createQuest(r) {
 }
 
 export async function editQuest(r) {
-  const quest =
+  const quest = await new EditQuestComposHandler(r.server.app.db)
+    .Handle({
+      questId: r.params.questId,
+      mediaIds: r.payload.medias,
+      priority: r.payload.priority,
+      payPeriod: r.payload.payPeriod,
+      workplace: r.payload.workplace,
+      questCreator: r.auth.credentials,
+      locationFull: r.payload.locationFull,
+      typeOfEmployment: r.payload.typeOfEmployment,
+      specializationKeys: r.payload.specializationKeys,
+    });
 
   const questsResponseWorkerIds = await QuestsResponse.unscoped().findAll({
     attributes: [[fn('array_agg', col('"workerId"')), 'workerIds'], 'type'],
     where: {
-      questId: questController.quest.id,
+      questId: quest.id,
       status: QuestsResponseStatus.Open,
     },
     group: ['type'],
@@ -173,12 +185,12 @@ export async function editQuest(r) {
       r.server.app.broker.sendQuestNotification({
         action: QuestNotificationActions.questEdited,
         recipients: response.getDataValue('workerIds'),
-        data: { ...questController.quest.toJSON(), responseType: response.type },
+        data: { ...quest.toJSON(), responseType: response.type },
       });
     }
   }
 
-  return output(questController.quest);
+  return output(quest);
 }
 
 // TODO отрефракторить!

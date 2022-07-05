@@ -49,10 +49,6 @@ export class SetQuestSpecializationHandler extends BaseDomainHandler<SetQuestSpe
   }
 
   public async Handle(command: SetQuestSpecializationsCommand): Promise<void> {
-    const count = await QuestSpecializationFilter.count({
-      where: { questId: command.questId },
-    });
-
     await QuestSpecializationFilter.destroy({
       where: { questId: command.questId },
       transaction: this.options.tx,

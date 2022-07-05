@@ -7,7 +7,7 @@ import {
   EditQuestHandler, GetQuestByIdHandler, GetQuestByIdPostValidationHandler
 } from "../../quest";
 
-export class CreateQuestComposHandler extends BaseCompositeHandler<EditQuestComposCommand, EditQuestComposResults> {
+export class EditQuestComposHandler extends BaseCompositeHandler<EditQuestComposCommand, EditQuestComposResults> {
   constructor(protected readonly dbContext: any) {
     super(dbContext);
   }
@@ -17,9 +17,9 @@ export class CreateQuestComposHandler extends BaseCompositeHandler<EditQuestComp
 
     const medias = await new GetMediasPostValidationHandler(new GetMediaByIdsHandler()).Handle({ mediaIds: command.mediaIds });
 
-    return await this.dbContext.transaction(async (tx) => {
+    await this.dbContext.transaction(async (tx) => {
       await new EditQuestEmployerPreValidationHandler(
-        new EditQuestHandler().setOptions({ tx }))
+         new EditQuestHandler().setOptions({ tx }))
         .Handle({
           quest,
           medias,
@@ -37,5 +37,8 @@ export class CreateQuestComposHandler extends BaseCompositeHandler<EditQuestComp
         keys: command.specializationKeys,
       });
     });
+
+    return quest;
+
   }
 }
