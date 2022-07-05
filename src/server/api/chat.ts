@@ -321,7 +321,17 @@ export async function getChatMessages(r) {
   }, {
     model: InfoMessage.unscoped(),
     attributes: ["messageId", "messageAction"],
-    as: 'infoMessage'
+    as: 'infoMessage',
+    include: [{
+      model: ChatMember,
+      as: 'member',
+      attributes: ["id"],
+      include: [{
+        model: User,
+        as: 'user',
+        attributes: ["id", "firstName", "lastName"]
+      }]
+    }]
   }];
 
   const { count, rows } = await Message.findAndCountAll({
