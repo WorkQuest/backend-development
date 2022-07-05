@@ -323,7 +323,7 @@ export async function getChatMessages(r) {
     attributes: ["messageId", "messageAction"],
     as: 'infoMessage',
     include: [{
-      model: ChatMember,
+      model: ChatMember.unscoped(),
       as: 'member',
       attributes: ["id"],
       include: [{
