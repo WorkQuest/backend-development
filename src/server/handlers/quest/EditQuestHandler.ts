@@ -40,7 +40,7 @@ export class EditQuestHandler extends BaseDomainHandler<EditQuestCommand, Promis
   private static async editQuest(payload: EditQuestPayload, options: Options = {}): Promise<void> {
     const avatarModel = payload.medias.length === 0 ? null : payload.medias[0];
 
-    payload.quest.update(
+    await payload.quest.update(
       {
         avatarId: avatarModel?.id,
         priority: payload.priority,
@@ -67,13 +67,12 @@ export class EditQuestHandler extends BaseDomainHandler<EditQuestCommand, Promis
   }
 }
 
-export class EditQuestPreValidationHandler extends BaseDecoratorHandler<EditQuestCommand, Promise<void>> {
+export class EditQuestEmployerPreValidationHandler extends BaseDecoratorHandler<EditQuestCommand, Promise<void>> {
   private readonly userValidator: UserValidator;
 
   constructor(protected readonly decorated: IHandler<EditQuestCommand, Promise<void>>) {
     super(decorated);
 
-    this.userValidator = new UserValidator();
     this.userValidator = new UserValidator();
   }
 

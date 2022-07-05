@@ -24,7 +24,7 @@ export interface CreateQuestComposCommand {
 
 export interface EditQuestComposCommand {
   questCreator: User;
-  quest: Quest,
+  questId: string,
 
   priority: Priority;
   workplace: WorkPlace;

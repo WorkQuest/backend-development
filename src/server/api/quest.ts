@@ -156,24 +156,7 @@ export async function createQuest(r) {
 }
 
 export async function editQuest(r) {
-  const employerController = EmployerControllerFactory.createByUserModel(r.auth.credentials);
-  const questController = await QuestControllerFactory.createById(r.params.questId);
-
-  const checksListQuest = new ChecksListQuest(questController.quest);
-
-  checksListQuest.checkOwner(employerController.user).checkQuestStatuses(QuestStatus.Pending, QuestStatus.Recruitment);
-
-  const mediaModels = await MediaController.getMedias(r.payload.medias);
-
-  const avatarId = mediaModels.length === 0 ? null : mediaModels[0].id;
-
-  await r.server.app.db.transaction(async (tx) => {
-    await Promise.all([
-      questController.setMedias(mediaModels, { tx }),
-      questController.setQuestSpecializations(r.payload.specializationKeys, { tx }),
-      questController.update({ avatarId, ...r.payload }, { tx }),
-    ]);
-  });
+  const quest =
 
   const questsResponseWorkerIds = await QuestsResponse.unscoped().findAll({
     attributes: [[fn('array_agg', col('"workerId"')), 'workerIds'], 'type'],

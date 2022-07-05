@@ -30,24 +30,3 @@ export class GetQuestByIdPostValidationHandler extends BaseDecoratorHandler<GetQ
     return quest;
   }
 }
-
-export class GetQuestByIdPostAccessPermissionHandler extends BaseDecoratorHandler<GetQuestByIdCommand, GetQuestByIdResult> {
-
-  private readonly accessPermission: QuestAcc;
-
-  constructor(
-    protected readonly decorated: IHandler<GetQuestByIdCommand, GetQuestByIdResult>,
-  ) {
-    super(decorated);
-
-    this.accessPermission = new UserAccessPermission();
-  }
-
-  public async Handle(command: GetQuestByIdCommand): GetQuestByIdResult {
-    const user = await this.decorated.Handle(command);
-
-    this.accessPermission.HasConfirmedAccess(user);
-
-    return user;
-  }
-}
