@@ -115,4 +115,9 @@ export class UserValidator {
       throw error(Errors.NotFound, 'Users not found', { userIds: notFoundUserIds });
     }
   }
+  public MustBeQuestOwner(quest: Quest, userId: string) {
+    if (quest.userId !== userId) {
+      throw error(Errors.NotQuestOwner, 'User is not quest owner', { userId, questId: quest.id });
+    }
+  }
 }

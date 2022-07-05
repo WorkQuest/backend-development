@@ -22,6 +22,7 @@ export enum Errors {
   NoRole = 400017,
   UnknownBucketError = 400018,
   UserLeaveChat = 400019,
+  NotQuestOwner = 400020,
   // Authorization errors (401)
   TokenExpired = 401001,
   TokenInvalid = 401002,

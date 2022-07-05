@@ -22,6 +22,26 @@ export interface CreateQuestComposCommand {
   specializationKeys: string[];
 }
 
+export interface EditQuestComposCommand {
+  questCreator: User;
+  quest: Quest,
+
+  priority: Priority;
+  workplace: WorkPlace;
+  payPeriod: PayPeriod;
+  typeOfEmployment: QuestEmployment;
+  mediaIds: string[];
+
+  locationFull: {
+    location: LocationType;
+    locationPlaceName: string;
+  };
+
+  specializationKeys: string[];
+}
+
 /** Results */
 
 export type CreateQuestComposResults = Promise<Quest>;
+
+export type EditQuestComposResults = Promise<void>;
