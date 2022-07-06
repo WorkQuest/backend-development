@@ -1,16 +1,17 @@
-import { GroupChatValidator } from './GroupChatValidator';
-import { Options, BaseDecoratorHandler, BaseDomainHandler, IHandler } from "../../types";
-import { GroupChatAccessPermission } from './GroupChatAccessPermission';
+import { GroupChatValidator } from "./GroupChatValidator";
+import { BaseDecoratorHandler, IHandler, Options } from "../../types";
+import { GroupChatAccessPermission } from "./GroupChatAccessPermission";
 import {
   Chat,
-  Message,
   ChatMember,
-  InfoMessage,
-  MessageType,
-  MemberStatus,
-  MessageAction,
+  ChatMemberData,
   ChatMemberDeletionData,
-  ReasonForRemovingFromChat, ChatMemberData
+  InfoMessage,
+  MemberStatus,
+  Message,
+  MessageAction,
+  MessageType,
+  ReasonForRemovingFromChat, User
 } from "@workquest/database-models/lib/models";
 
 export interface DeleteMemberFromGroupChatCommand {
@@ -73,7 +74,21 @@ export class DeletedMemberFromGroupChatHandler extends BaseDomainHandler<DeleteM
       info.save({ transaction: options.tx }),
     ]);
 
-    message.setDataValue('infoMessage', info);
+    const infoMessageWithUserInfo = await InfoMessage.findByPk(info.id, {
+      include: [{
+        model: ChatMember.unscoped(),
+        as: 'member',
+        attributes: ["id"],
+        include: [{
+          model: User.unscoped(),
+          as: 'user',
+          attributes: ["id", "firstName", "lastName"]
+        }]
+      }],
+      transaction: options.tx,
+    });
+
+    message.setDataValue('infoMessage', infoMessageWithUserInfo);
 
     return message;
   }

@@ -177,7 +177,7 @@ export class AddUsersInGroupChatHandler extends BaseDomainHandler<AddUsersInGrou
       },
       include: [{
         model: ChatMemberDeletionData,
-        as: 'chatMemberDeletionData',
+        as: 'deletionData',
         where: { reason: ReasonForRemovingFromChat.Removed },
         required: true,
       }, {
