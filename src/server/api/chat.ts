@@ -327,7 +327,7 @@ export async function getChatMessages(r) {
       as: 'member',
       attributes: ["id"],
       include: [{
-        model: User,
+        model: User.unscoped(),
         as: 'user',
         attributes: ["id", "firstName", "lastName"]
       }]
