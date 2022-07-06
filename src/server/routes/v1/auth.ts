@@ -216,6 +216,28 @@ export default [
         ).label('ValidateUserPasswordResponse'),
       },
     },
+  }, {
+    method: 'POST',
+    path: '/v1/auth/session/current/validate-totp',
+    handler: handlers.currentSessionValidateTotp,
+    options: {
+      auth: 'jwt-access',
+      id: 'v1.auth.session.current.activeByTotp',
+      tags: ['api', 'auth'],
+      description: 'Validate totp for current session',
+      validate: {
+        payload: Joi.object({
+          token: totpSchema.required(),
+        }).label('ValidateUserCurrentSessionTotpPayload'),
+      },
+      response: {
+        schema: outputOkSchema(
+          Joi.object({
+            isValid: Joi.boolean(),
+          }).label('ValidateUserTotp'),
+        ).label('ValidateUserCurrentSessionTotpResponse'),
+      },
+    },
   },
   ...[
     'google',

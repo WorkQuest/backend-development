@@ -1,6 +1,7 @@
 import * as Joi from 'joi';
 import { emptyOkSchema, hexTokenSchema, outputOkSchema, totpSchema } from '@workquest/database-models/lib/schemes';
 import * as handlers from "../../api/totp";
+import { validateTotp } from "../../api/totp";
 
 export default [
   {
@@ -55,36 +56,13 @@ export default [
         schema: emptyOkSchema,
       },
     },
-  },
-  {
-    method: 'POST',
-    path: '/v1/auth/session/current/validate-totp',
-    handler: handlers.currentSessionValidateTotp,
-    options: {
-      auth: 'jwt-access',
-      id: 'v1.auth.session.current.activeByTotp',
-      tags: ['api', 'auth'],
-      description: 'Validate totp for current session',
-      validate: {
-        payload: Joi.object({
-          token: totpSchema.required(),
-        }).label('ValidateUserCurrentSessionTotpPayload'),
-      },
-      response: {
-        schema: outputOkSchema(
-          Joi.object({
-            isValid: Joi.boolean(),
-          }).label('ValidateUserTotp'),
-        ).label('ValidateUserCurrentSessionTotpResponse'),
-      },
-    },
   }, {
     method: 'POST',
-    path: '/v1/auth/validate-totp',
-    handler: handlers.validateUserTotp,
+    path: '/v1/totp/validate',
+    handler: handlers.validateTotp,
     options: {
       auth: 'jwt-access',
-      id: 'v1.auth.validateTotp',
+      id: 'v1.totp.validate',
       tags: ['api', 'auth'],
       description: 'Validate totp',
       validate: {

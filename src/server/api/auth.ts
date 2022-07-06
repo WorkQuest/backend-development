@@ -366,3 +366,22 @@ export async function validateUserPassword(r) {
     isValid: await userControllerFactory.user.passwordCompare(r.payload.password),
   });
 }
+
+export async function currentSessionValidateTotp(r) {
+  const userControllerFactory = await UserControllerFactory.createByIdWithPassword(r.auth.credentials.id);
+
+  if (r.auth.artifacts.session.isTotpPassed) {
+    return output({ isValid: r.auth.artifacts.session.isTotpPassed });
+  }
+
+  const isValid =
+    userControllerFactory.user.isTOTPEnabled()
+      ? totpValidate(r.payload.token, userControllerFactory.user.settings.security.TOTP.secret)
+      : true
+
+  if (isValid) {
+    await Session.update({ isTotpPassed: isValid }, { where: { id: r.auth.artifacts.session.id } });
+  }
+
+  return output({ isValid });
+}
