@@ -14,7 +14,7 @@ export class UserAccessPermission {
     }
   }
   public UsersHasConfirmedAccess(users: User[]) {
-    const unconfirmedUsers = users.filter(user => {
+    const unconfirmedUsers = users.map(user => {
       if (user.status !== UserStatus.Confirmed) {
         return user.id
       }
