@@ -28,11 +28,13 @@ import {
   PayPeriod,
   LocationType, WorkPlace
 } from "@workquest/database-models/lib/models";
-import { CreateQuestComposHandler } from '../handlers/compositions/quest/CreateQuestComposHandler';
+import {
+  EditQuestComposHandler,
+  CreateQuestComposHandler,
+  MarkQuestStarComposHandler,
+} from '../handlers/compositions/quest';
+import { RemoveStarFromQuestHandler } from "../handlers/quest";
 import { Priority, QuestEmployment } from '@workquest/database-models/src/models';
-import { EditQuestComposHandler } from "../handlers/compositions/quest";
-import { MarkQuestStarHandler } from "../handlers/quest/star/MarkQuestStarHandler";
-import { MarkQuestStarComposHandler } from "../handlers/compositions/quest/MarkQuestStarComposHandler";
 
 
 export const searchQuestFields = [
@@ -400,8 +402,7 @@ export async function removeStar(r) {
   const { questId } = r.params;
   const user: User = r.auth.credentials;
 
-  await (await QuestControllerFactory.createById(questId))
-    .removeStar(user);
+  await new RemoveStarFromQuestHandler
 
   return output();
 }
