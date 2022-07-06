@@ -4,9 +4,11 @@ import { addSendEmailJob } from '../jobs/sendEmail';
 import * as path from 'path';
 import * as fs from 'fs';
 import Handlebars = require('handlebars');
-import { User } from '@workquest/database-models/lib/models';
+import { Session, User } from "@workquest/database-models/lib/models";
 import { UserOldController } from '../controllers/user/controller.user';
 import { UserStatisticController } from '../controllers/statistic/controller.userStatistic';
+import { UserControllerFactory } from "../factories/factory.userController";
+import { totpValidate } from "@workquest/database-models/lib/utils";
 
 const confirmTemplatePath = path.join(__dirname, '..', '..', '..', 'templates', 'confirm2FA.html');
 const confirmTemplate = Handlebars.compile(
@@ -78,4 +80,34 @@ export async function disableTOTP(r) {
   await UserStatisticController.disableTOTPAction();
 
   return output();
+}
+
+export async function currentSessionValidateTotp(r) {
+  const userControllerFactory = await UserControllerFactory.createByIdWithPassword(r.auth.credentials.id);
+
+  if (r.auth.artifacts.session.isTotpPassed) {
+    return output({ isValid: r.auth.artifacts.session.isTotpPassed });
+  }
+
+  const isValid =
+    userControllerFactory.user.isTOTPEnabled()
+      ? totpValidate(r.payload.token, userControllerFactory.user.settings.security.TOTP.secret)
+      : true
+
+  if (isValid) {
+    await Session.update({ isTotpPassed: isValid }, { where: { id: r.auth.artifacts.session.id } });
+  }
+
+  return output({ isValid });
+}
+
+export async function validateUserTotp(r) {
+  const userControllerFactory = await UserControllerFactory.createByIdWithPassword(r.auth.credentials.id);
+
+  const isValid =
+    userControllerFactory.user.isTOTPEnabled()
+      ? totpValidate(r.payload.token, userControllerFactory.user.settings.security.TOTP.secret)
+      : true
+
+  return output({ isValid });
 }
