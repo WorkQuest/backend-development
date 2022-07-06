@@ -682,10 +682,12 @@ export async function removeMemberFromGroupChat(r) {
 
   await updateCountUnreadChatsJob({ members });
 
+  const recipients = members.map(({ userId, adminId }) => userId ||adminId).filter(id => meUser.id !== id);
+
   r.server.app.broker.sendChatNotification({
     data: messageWithInfo.toJSON(),
     action: ChatNotificationActions.groupChatDeleteUser,
-    recipients: members.map(({ userId, adminId }) => userId ||adminId).filter(id => meUser.id !== id),
+    recipients: [...recipients, userId],
   });
 
   return output(messageWithInfo);
