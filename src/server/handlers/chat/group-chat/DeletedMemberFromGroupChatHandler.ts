@@ -1,16 +1,17 @@
-import { GroupChatValidator } from './GroupChatValidator';
-import { Options, BaseDecoratorHandler, IHandler } from '../../types';
-import { GroupChatAccessPermission } from './GroupChatAccessPermission';
+import { GroupChatValidator } from "./GroupChatValidator";
+import { BaseDecoratorHandler, IHandler, Options } from "../../types";
+import { GroupChatAccessPermission } from "./GroupChatAccessPermission";
 import {
   Chat,
-  Message,
   ChatMember,
-  InfoMessage,
-  MessageType,
-  MemberStatus,
-  MessageAction,
+  ChatMemberData,
   ChatMemberDeletionData,
-  ReasonForRemovingFromChat, ChatMemberData
+  InfoMessage,
+  MemberStatus,
+  Message,
+  MessageAction,
+  MessageType,
+  ReasonForRemovingFromChat
 } from "@workquest/database-models/lib/models";
 
 export interface DeleteMemberFromGroupChatCommand {
@@ -84,18 +85,17 @@ export class DeletedMemberFromGroupChatHandler implements IHandler<DeleteMemberF
   }
 
   public async Handle(command: DeleteMemberFromGroupChatCommand): Promise<Message> {
-    const [[deletedMember, deletionData], infoMessage] = await this.dbContext.transaction(async (tx) => {
+    return await this.dbContext.transaction(async (tx) => {
       const lastMessage = await DeletedMemberFromGroupChatHandler.getLastMessage(command.groupChat, { tx });
 
       const payload = { ...command, lastMessage };
 
-      return await Promise.all([
-        DeletedMemberFromGroupChatHandler.deleteMember(payload, { tx }),
-        DeletedMemberFromGroupChatHandler.sendInfoMessageAboutDeleteMember(payload, { tx }),
-      ]);
-    });
+      payload.lastMessage = await DeletedMemberFromGroupChatHandler.sendInfoMessageAboutDeleteMember(payload, { tx });
 
-    return infoMessage;
+      await DeletedMemberFromGroupChatHandler.deleteMember(payload, { tx });
+
+      return payload.lastMessage;
+    });
   }
 }
 
