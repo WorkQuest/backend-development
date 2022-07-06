@@ -11,7 +11,7 @@ import {
   Message,
   MessageAction,
   MessageType,
-  ReasonForRemovingFromChat
+  ReasonForRemovingFromChat, User
 } from "@workquest/database-models/lib/models";
 
 export interface DeleteMemberFromGroupChatCommand {
@@ -79,7 +79,21 @@ export class DeletedMemberFromGroupChatHandler implements IHandler<DeleteMemberF
       info.save({ transaction: options.tx }),
     ]);
 
-    message.setDataValue('infoMessage', info);
+    const infoMessageWithUserInfo = await InfoMessage.findByPk(info.id, {
+      include: [{
+        model: ChatMember.unscoped(),
+        as: 'member',
+        attributes: ["id"],
+        include: [{
+          model: User.unscoped(),
+          as: 'user',
+          attributes: ["id", "firstName", "lastName"]
+        }]
+      }],
+      transaction: options.tx,
+    });
+
+    message.setDataValue('infoMessage', infoMessageWithUserInfo);
 
     return message;
   }
