@@ -226,7 +226,7 @@ export async function getUserChats(r) {
   }, {
     model: GroupChat.unscoped(),
     as: 'groupChat',
-    attributes: ["ownerMemberId"],
+    attributes: ["name", "ownerMemberId"],
   }, {
     model: StarredChat.unscoped(),
     as: 'star',
@@ -327,7 +327,7 @@ export async function getChatMessages(r) {
       as: 'member',
       attributes: ["id"],
       include: [{
-        model: User,
+        model: User.unscoped(),
         as: 'user',
         attributes: ["id", "firstName", "lastName"]
       }]
@@ -682,10 +682,12 @@ export async function removeMemberFromGroupChat(r) {
 
   await updateCountUnreadChatsJob({ members });
 
+  const recipients = members.map(({ userId, adminId }) => userId ||adminId).filter(id => meUser.id !== id);
+
   r.server.app.broker.sendChatNotification({
     data: messageWithInfo.toJSON(),
     action: ChatNotificationActions.groupChatDeleteUser,
-    recipients: members.map(({ userId, adminId }) => userId ||adminId).filter(id => meUser.id !== id),
+    recipients: [...recipients, userId],
   });
 
   return output(messageWithInfo);
