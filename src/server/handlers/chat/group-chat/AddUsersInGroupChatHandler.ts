@@ -182,7 +182,7 @@ export class AddUsersInGroupChatHandler implements IHandler<AddUsersInGroupChatC
       },
       include: [{
         model: ChatMemberDeletionData,
-        as: 'chatMemberDeletionData',
+        as: 'deletionData',
         where: { reason: ReasonForRemovingFromChat.Removed },
         required: true,
       }, {

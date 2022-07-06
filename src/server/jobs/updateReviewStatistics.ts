@@ -128,17 +128,19 @@ export default async function (payload: StatisticPayload) {
 
   const status = ratingStatus(user, completedQuestsCount, averageMarkResult.getDataValue('avgMark'));
 
-  await UserStatisticController.setRatingStatusAction(status, ratingStatistic.status);
+  if (status !== ratingStatistic.status) {
+    await UserStatisticController.setRatingStatusAction(status, ratingStatistic.status);
+
+    brokerController.sendQuestNotification({
+      action: QuestNotificationActions.updateRatingStatistic,
+      recipients: [ratingStatistic.userId],
+      data: ratingStatistic
+    });
+  }
 
   await ratingStatistic.update({
     status,
     reviewCount,
     averageMark: averageMarkResult.getDataValue('avgMark'),
-  });
-
-  brokerController.sendQuestNotification({
-    action: QuestNotificationActions.updateRatingStatistic,
-    recipients: [ratingStatistic.userId],
-    data: ratingStatistic
   });
 }
