@@ -226,7 +226,7 @@ export async function getUserChats(r) {
   }, {
     model: GroupChat.unscoped(),
     as: 'groupChat',
-    attributes: ["ownerMemberId"],
+    attributes: ["name", "ownerMemberId"],
   }, {
     model: StarredChat.unscoped(),
     as: 'star',
