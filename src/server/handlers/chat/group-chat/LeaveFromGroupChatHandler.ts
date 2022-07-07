@@ -1,5 +1,5 @@
 import { GroupChatValidator } from "./GroupChatValidator";
-import { BaseDecoratorHandler, IHandler, Options } from "../../types";
+import { BaseDecoratorHandler, BaseDomainHandler, IHandler, Options } from "../../types";
 import { GroupChatAccessPermission } from "./GroupChatAccessPermission";
 import {
   Chat,

@@ -10,7 +10,7 @@ export class RemoveStarFromQuestHandler implements IHandler<RemoveStarFromQuestC
   public async Handle(command: RemoveStarFromQuestCommand): Promise<void> {
     await StarredChat.destroy({
       where: {
-        chatId: command.chatId,
+        chatId: command.questId,
         userId: command.user.id,
       },
     });
