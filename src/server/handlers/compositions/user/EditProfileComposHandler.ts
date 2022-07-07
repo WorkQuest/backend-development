@@ -32,11 +32,13 @@ export class EditProfileComposHandler extends BaseCompositeHandler<EditProfileCo
       ).Handle({ mediaId: command.avatarId });
     }
 
-    return this.dbContext.transaction(async (tx) => {
-      return await new EditEmployerProfilePreValidateHandler(
+    const [editableUser, workerProfileVisibilitySetting, userSpecializations] = this.dbContext.transaction(async (tx) => {
+      await new EditEmployerProfilePreValidateHandler(
         new EditEmployerProfileHandler().setOptions({ tx })
       ).Handle({ avatar, ...command as EditEmployerProfileCommand })
     });
+
+    return [editableUser, workerProfileVisibilitySetting, userSpecializations];
   }
 
   private async editWorker(command: EditProfileCommand): EditEmployerProfileResult {

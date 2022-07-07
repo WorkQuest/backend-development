@@ -39,6 +39,5 @@ export class EditQuestComposHandler extends BaseCompositeHandler<EditQuestCompos
     });
 
     return quest;
-
   }
 }
