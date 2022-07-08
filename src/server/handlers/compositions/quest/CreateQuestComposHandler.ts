@@ -4,7 +4,7 @@ import { CreateQuestComposCommand, CreateQuestComposResults } from './types';
 import { GetUserByIdHandler, GetUserByIdPostAccessPermissionHandler, GetUserByIdPostValidationHandler } from '../../user';
 import { CreateQuestEmployerPreValidationHandler, CreateQuestHandler } from "../../quest";
 import { GetMediaByIdsHandler, GetMediasPostValidationHandler } from '../../media';
-import { SetQuestSpecializationHandler, SetQuestSpecializationPreValidationHandler } from '../../specializations/SetQuestSpecialization';
+import { SetQuestSpecializationHandler, SetSpecializationPreValidationHandler } from '../../specializations/SetSpecialization';
 
 export class CreateQuestComposHandler extends BaseCompositeHandler<CreateQuestComposCommand, CreateQuestComposResults> {
   constructor(protected readonly dbContext: any) {
@@ -32,7 +32,7 @@ export class CreateQuestComposHandler extends BaseCompositeHandler<CreateQuestCo
         locationFull: command.locationFull,
       });
 
-      await new SetQuestSpecializationPreValidationHandler(new SetQuestSpecializationHandler().setOptions({ tx }))
+      await new SetSpecializationPreValidationHandler(new SetQuestSpecializationHandler().setOptions({ tx }))
         .Handle({
           questId: quest.id,
           keys: command.specializationKeys,

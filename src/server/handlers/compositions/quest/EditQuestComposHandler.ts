@@ -1,7 +1,7 @@
 import { BaseCompositeHandler } from '../../types';
 import { EditQuestComposCommand, EditQuestComposResults } from './types';
 import { GetMediaByIdsHandler, GetMediasPostValidationHandler } from '../../media';
-import { SetQuestSpecializationHandler, SetQuestSpecializationPreValidationHandler } from '../../specializations/SetQuestSpecialization';
+import { SetQuestSpecializationHandler, SetSpecializationPreValidationHandler } from '../../specializations/SetSpecialization';
 import {
   EditQuestEmployerPreValidationHandler,
   EditQuestHandler, GetQuestByIdHandler, GetQuestByIdValidationHandler
@@ -31,7 +31,7 @@ export class EditQuestComposHandler extends BaseCompositeHandler<EditQuestCompos
           typeOfEmployment: command.typeOfEmployment,
         });
 
-      await new SetQuestSpecializationPreValidationHandler(new SetQuestSpecializationHandler().setOptions({ tx }))
+      await new SetSpecializationPreValidationHandler(new SetQuestSpecializationHandler().setOptions({ tx }))
         .Handle({
         questId: quest.id,
         keys: command.specializationKeys,

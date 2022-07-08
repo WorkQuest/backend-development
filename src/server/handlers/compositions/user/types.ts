@@ -48,8 +48,8 @@ export interface EditEmployerProfileCommand {
 }
 
 export type EditProfileCommand =
-  | EditWorkerProfileCommand
-  | EditEmployerProfileCommand
+  & EditWorkerProfileCommand
+  & EditEmployerProfileCommand
 
 export interface ChangeUserPasswordCommand {
   readonly user: User;

@@ -10,7 +10,7 @@ import {
   User,
   WorkPlace,
 } from '@workquest/database-models/lib/models';
-import { GetUsersByIdCommand, GetUsersByIdResult, UserAccessPermission, UserValidator } from "../user";
+import { UserValidator } from "../user";
 
 export interface EditQuestEmployerCommand {
   questCreator: User;

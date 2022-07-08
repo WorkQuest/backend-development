@@ -15,6 +15,11 @@ import {
   EditWorkerProfilePreValidateHandler,
   EditEmployerProfilePreValidateHandler,
 } from '../../user';
+import {
+  SetQuestSpecializationHandler,
+  SetSpecializationPreValidationHandler,
+  SetUserSpecializationHandler,
+} from '../../specializations/SetSpecialization';
 
 export class EditProfileComposHandler extends BaseCompositeHandler<EditProfileCommand, EditProfileResult> {
   constructor(
@@ -23,7 +28,7 @@ export class EditProfileComposHandler extends BaseCompositeHandler<EditProfileCo
     super(dbContext);
   }
 
-  private async editEmployer(command: EditProfileCommand): EditWorkerProfileResult {
+  private async editEmployer(command: EditProfileCommand): EditEmployerProfileResult {
     let avatar: Media | null = null;
 
     if (command.avatarId) {
@@ -32,16 +37,14 @@ export class EditProfileComposHandler extends BaseCompositeHandler<EditProfileCo
       ).Handle({ mediaId: command.avatarId });
     }
 
-    const [editableUser, workerProfileVisibilitySetting, userSpecializations] = this.dbContext.transaction(async (tx) => {
-      await new EditEmployerProfilePreValidateHandler(
+    return this.dbContext.transaction(async (tx) => {
+      return await new EditEmployerProfilePreValidateHandler(
         new EditEmployerProfileHandler().setOptions({ tx })
       ).Handle({ avatar, ...command as EditEmployerProfileCommand })
     });
-
-    return [editableUser, workerProfileVisibilitySetting, userSpecializations];
   }
 
-  private async editWorker(command: EditProfileCommand): EditEmployerProfileResult {
+  private async editWorker(command: EditProfileCommand): EditWorkerProfileResult {
     let avatar: Media | null = null;
 
     if (command.avatarId) {
@@ -50,13 +53,21 @@ export class EditProfileComposHandler extends BaseCompositeHandler<EditProfileCo
       ).Handle({ mediaId: command.avatarId });
     }
 
-    if (command.editableRole === UserRole.Worker) {
-      return this.dbContext.transaction(async (tx) => {
-        return await new EditWorkerProfilePreValidateHandler(
-          new EditWorkerProfileHandler().setOptions({ tx })
-        ).Handle({ avatar, ...command as EditWorkerProfileCommand })
-      });
-    }
+
+    return this.dbContext.transaction(async (tx) => {
+      const [editableUser, workerProfileVisibilitySetting, userSpecializations] = await new EditWorkerProfilePreValidateHandler(
+        new EditWorkerProfileHandler().setOptions({ tx })
+      ).Handle({ avatar, ...command as EditWorkerProfileCommand });
+
+      await new SetSpecializationPreValidationHandler(new SetUserSpecializationHandler().setOptions({ tx }))
+        .Handle({
+          userId: editableUser.id,
+          keys: command.specializationKeys as any,
+        });
+
+      return [editableUser, workerProfileVisibilitySetting, userSpecializations];
+    });
+
   }
 
   public async Handle(command: EditProfileCommand): EditProfileResult {
