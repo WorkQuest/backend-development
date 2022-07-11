@@ -223,8 +223,10 @@ export function getQuests(type: 'list' | 'points', requester?: 'worker' | 'emplo
     );
     const userSearchLiteral = literal(
       // TODO добавь эти поля в replace типо так ILIKE '%:searchByFirstName%'`
-      `(SELECT "firstName" FROM "Users" WHERE "id" = "Quest"."userId") ILIKE '%${r.query.q}%'` +
-      `OR (SELECT "lastName" FROM "Users" WHERE "id" = "Quest"."userId") ILIKE '%${r.query.q}%'`
+      `(SELECT "firstName" FROM "Users" WHERE "id" = "Quest"."userId") ILIKE '%${r.query.q}%' ` +
+      `OR (SELECT "lastName" FROM "Users" WHERE "id" = "Quest"."userId") ILIKE '%${r.query.q}%' ` +
+      `OR (SELECT CONCAT_WS(' ', "firstName", NULL, "lastName") FROM "Users" WHERE "id" = "Quest"."userId")  ILIKE '%${r.query.q}%' ` +
+      `OR (SELECT CONCAT_WS(' ', "lastName", NULL, "firstName") FROM "Users" WHERE "id" = "Quest"."userId")  ILIKE '%${r.query.q}%' `
     );
     const questChatWorkerLiteral = literal(
       '"questChat"."workerId" = "Quest"."assignedWorkerId"'

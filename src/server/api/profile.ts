@@ -122,6 +122,14 @@ export async function getAllUsers(r) {
     'ELSE TRUE END) '
   );
 
+  const userSearchLiteral = literal(
+    // TODO добавь эти поля в replace типо так ILIKE '%:searchByFirstName%'`
+    `(SELECT "firstName" FROM "Users" WHERE "id" = "User"."id") ILIKE '%${r.query.q}%' ` +
+    `OR (SELECT "lastName" FROM "Users" WHERE "id" = "User"."id") ILIKE '%${r.query.q}%' ` +
+    `OR (SELECT CONCAT_WS(' ', "firstName", NULL, "lastName") FROM "Users" WHERE "id" = "User"."id")  ILIKE '%${r.query.q}%' ` +
+    `OR (SELECT CONCAT_WS(' ', "lastName", NULL, "firstName") FROM "Users" WHERE "id" = "User"."id")  ILIKE '%${r.query.q}%' `
+  );
+
   const where = {
     status: UserStatus.Confirmed,
     id: { [Op.ne]: r.auth.credentials.id }
@@ -139,6 +147,8 @@ export async function getAllUsers(r) {
     where[Op.or] = searchFields.map(
       field => ({ [field]: { [Op.iLike]: `%${r.query.q}%` }})
     );
+
+    where[Op.or].push(userSearchLiteral)
   }
 
   if (r.auth.credentials.role === UserRole.Worker) {
@@ -167,6 +177,14 @@ export async function getAllUsers(r) {
 }
 
 export async function getAllUsersDao(r) {
+  const userSearchLiteral = literal(
+    // TODO добавь эти поля в replace типо так ILIKE '%:searchByFirstName%'`
+    `(SELECT "firstName" FROM "Users" WHERE "id" = "User"."id") ILIKE '%${r.query.q}%' ` +
+    `OR (SELECT "lastName" FROM "Users" WHERE "id" = "User"."id") ILIKE '%${r.query.q}%' ` +
+    `OR (SELECT CONCAT_WS(' ', "firstName", NULL, "lastName") FROM "Users" WHERE "id" = "User"."id")  ILIKE '%${r.query.q}%' ` +
+    `OR (SELECT CONCAT_WS(' ', "lastName", NULL, "firstName") FROM "Users" WHERE "id" = "User"."id")  ILIKE '%${r.query.q}%' `
+  );
+
   const where = {
     status: UserStatus.Confirmed,
   };
@@ -183,6 +201,8 @@ export async function getAllUsersDao(r) {
     where[Op.or] = searchFields.map(
       field => ({ [field]: { [Op.iLike]: `%${r.query.q}%` }})
     );
+
+    where[Op.or].push(userSearchLiteral)
   }
 
   const { count, rows } = await User.findAndCountAll({
