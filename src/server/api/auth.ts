@@ -371,7 +371,7 @@ export async function currentSessionValidateTotp(r) {
   const userControllerFactory = await UserControllerFactory.createByIdWithPassword(r.auth.credentials.id);
 
   if (r.auth.artifacts.session.isTotpPassed) {
-    return output({ isValid: r.auth.artifacts.session.isTotpPassed });
+    return output({ isValid: true });
   }
 
   const isValid =
