@@ -1,5 +1,5 @@
 import { BaseCompositeHandler } from '../../types';
-import { UserRole, Media } from '@workquest/database-models/lib/models';
+import { User, UserRole, Media } from '@workquest/database-models/lib/models';
 import { GetMediaByIdHandler, GetMediaPostValidationHandler } from '../../media';
 import {
   EditProfileResult,
@@ -28,7 +28,7 @@ export class EditProfileComposHandler extends BaseCompositeHandler<EditProfileCo
     super(dbContext);
   }
 
-  private async editEmployer(command: EditProfileCommand): EditEmployerProfileResult {
+  private async editEmployer(command: EditProfileCommand): EditProfileResult {
     let avatar: Media | null = null;
 
     if (command.avatarId) {
@@ -38,13 +38,17 @@ export class EditProfileComposHandler extends BaseCompositeHandler<EditProfileCo
     }
 
     return this.dbContext.transaction(async (tx) => {
-      return await new EditEmployerProfilePreValidateHandler(
+      const [editableUser, employerProfileVisibilitySetting] = await new EditEmployerProfilePreValidateHandler(
         new EditEmployerProfileHandler().setOptions({ tx })
-      ).Handle({ avatar, ...command as EditEmployerProfileCommand })
+      ).Handle({ avatar, ...command as EditEmployerProfileCommand });
+
+      editableUser.setDataValue('employerProfileVisibilitySetting', employerProfileVisibilitySetting);
+
+      return [editableUser, employerProfileVisibilitySetting];
     });
   }
 
-  private async editWorker(command: EditProfileCommand): EditWorkerProfileResult {
+  private async editWorker(command: EditProfileCommand): EditProfileResult {
     let avatar: Media | null = null;
 
     if (command.avatarId) {
@@ -65,7 +69,10 @@ export class EditProfileComposHandler extends BaseCompositeHandler<EditProfileCo
           keys: command.specializationKeys as any,
         });
 
-      return [editableUser, workerProfileVisibilitySetting, userSpecializations];
+      editableUser.setDataValue('userSpecializations', userSpecializations);
+      editableUser.setDataValue('workerProfileVisibilitySetting', workerProfileVisibilitySetting);
+
+      return editableUser;
     });
 
   }

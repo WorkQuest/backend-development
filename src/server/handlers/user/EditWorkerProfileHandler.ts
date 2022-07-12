@@ -67,8 +67,8 @@ export class EditWorkerProfileHandler extends BaseDomainHandler<EditWorkerProfil
   }
 
   private async updateWorkerProfileVisibility(payload: UpdateWorkerProfileVisibilityPayload): Promise<WorkerProfileVisibilitySetting> {
-    let ratingStatusCanInviteMeOnQuest = RatingStatus.NoStatus;
-    let ratingStatusInMySearch = RatingStatus.NoStatus;
+    let ratingStatusCanInviteMeOnQuest = 0;
+    let ratingStatusInMySearch = 0;
 
     payload.profileVisibility.ratingStatusInMySearch.forEach(status =>
       (ratingStatusInMySearch |= status)
