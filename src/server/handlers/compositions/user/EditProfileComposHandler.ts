@@ -78,6 +78,7 @@ export class EditProfileComposHandler extends BaseCompositeHandler<EditProfileCo
   }
 
   public async Handle(command: EditProfileCommand): EditProfileResult {
+    //TODO: editableRole можно получать из command.user.role
     if (command.editableRole === UserRole.Employer) {
       return this.editEmployer(command);
     }

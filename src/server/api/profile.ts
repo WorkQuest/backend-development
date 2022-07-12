@@ -353,37 +353,17 @@ export function editProfile(userRole: UserRole) {
   return async function (r) {
     const meUser: User = r.auth.credentials;
 
-    if (userRole === UserRole.Worker) {
-      const [editableUser, workerProfileVisibilitySetting, userSpecializations] = await new EditProfileComposHandler(r.server.app.db).Handle({
-        user: meUser,
-        editableRole: userRole,
-        ... r.payload,
-      });
+    const editableUser = await new EditProfileComposHandler(r.server.app.db).Handle({
+      user: meUser,
+      editableRole: userRole,
+      ... r.payload,
+    });
 
-      await addUpdateReviewStatisticsJob({
-        userId: meUser.id,
-      });
+    await addUpdateReviewStatisticsJob({
+      userId: meUser.id,
+    });
 
-      editableUser.setDataValue('userSpecializations', userSpecializations);
-      editableUser.setDataValue('workerProfileVisibilitySetting', workerProfileVisibilitySetting);
-
-      return output(editableUser);
-    }
-    if (userRole === UserRole.Employer) {
-      const [editableUser, employerProfileVisibilitySetting] = await new EditProfileComposHandler(r.server.app.db).Handle({
-        user: meUser,
-        editableRole: userRole,
-        ... r.payload,
-      });
-
-      await addUpdateReviewStatisticsJob({
-        userId: meUser.id,
-      });
-
-      editableUser.setDataValue('employerProfileVisibilitySetting', employerProfileVisibilitySetting);
-
-      return output(editableUser);
-    }
+    return output(editableUser);
   };
 }
 
