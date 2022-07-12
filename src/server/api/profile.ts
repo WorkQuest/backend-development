@@ -123,12 +123,13 @@ export async function getAllUsers(r) {
   );
 
   const userSearchLiteral = literal(
-    // TODO добавь эти поля в replace типо так ILIKE '%:searchByFirstName%'`
-    `(SELECT "firstName" FROM "Users" WHERE "id" = "User"."id") ILIKE '%${r.query.q}%' ` +
-    `OR (SELECT "lastName" FROM "Users" WHERE "id" = "User"."id") ILIKE '%${r.query.q}%' ` +
-    `OR (SELECT CONCAT_WS(' ', "firstName", NULL, "lastName") FROM "Users" WHERE "id" = "User"."id")  ILIKE '%${r.query.q}%' ` +
-    `OR (SELECT CONCAT_WS(' ', "lastName", NULL, "firstName") FROM "Users" WHERE "id" = "User"."id")  ILIKE '%${r.query.q}%' `
+    `(SELECT "firstName" FROM "Users" WHERE "id" = "User"."id") ILIKE :searchByName ` +
+    `OR (SELECT "lastName" FROM "Users" WHERE "id" = "User"."id") ILIKE :searchByName ` +
+    `OR (SELECT CONCAT_WS(' ', "firstName", NULL, "lastName") FROM "Users" WHERE "id" = "User"."id")  ILIKE :searchByName ` +
+    `OR (SELECT CONCAT_WS(' ', "lastName", NULL, "firstName") FROM "Users" WHERE "id" = "User"."id")  ILIKE :searchByName `
   );
+
+  const replacements = {};
 
   const where = {
     status: UserStatus.Confirmed,
@@ -148,6 +149,7 @@ export async function getAllUsers(r) {
       field => ({ [field]: { [Op.iLike]: `%${r.query.q}%` }})
     );
 
+    replacements['searchByName'] = r.query.q;
     where[Op.or].push(userSearchLiteral)
   }
 
@@ -169,6 +171,7 @@ export async function getAllUsers(r) {
     col: 'id',
     distinct: true,
     include,
+    replacements,
     limit: r.query.limit,
     offset: r.query.offset,
   });
@@ -178,13 +181,13 @@ export async function getAllUsers(r) {
 
 export async function getAllUsersDao(r) {
   const userSearchLiteral = literal(
-    // TODO добавь эти поля в replace типо так ILIKE '%:searchByFirstName%'`
-    `(SELECT "firstName" FROM "Users" WHERE "id" = "User"."id") ILIKE '%${r.query.q}%' ` +
-    `OR (SELECT "lastName" FROM "Users" WHERE "id" = "User"."id") ILIKE '%${r.query.q}%' ` +
-    `OR (SELECT CONCAT_WS(' ', "firstName", NULL, "lastName") FROM "Users" WHERE "id" = "User"."id")  ILIKE '%${r.query.q}%' ` +
-    `OR (SELECT CONCAT_WS(' ', "lastName", NULL, "firstName") FROM "Users" WHERE "id" = "User"."id")  ILIKE '%${r.query.q}%' `
+    `(SELECT "firstName" FROM "Users" WHERE "id" = "User"."id") ILIKE :searchByName ` +
+    `OR (SELECT "lastName" FROM "Users" WHERE "id" = "User"."id") ILIKE :searchByName ` +
+    `OR (SELECT CONCAT_WS(' ', "firstName", NULL, "lastName") FROM "Users" WHERE "id" = "User"."id")  ILIKE :searchByName ` +
+    `OR (SELECT CONCAT_WS(' ', "lastName", NULL, "firstName") FROM "Users" WHERE "id" = "User"."id")  ILIKE :searchByName `
   );
 
+  const replacements = {};
   const where = {
     status: UserStatus.Confirmed,
   };
@@ -202,6 +205,7 @@ export async function getAllUsersDao(r) {
       field => ({ [field]: { [Op.iLike]: `%${r.query.q}%` }})
     );
 
+    replacements['searchByName'] = r.query.q;
     where[Op.or].push(userSearchLiteral)
   }
 
@@ -210,6 +214,7 @@ export async function getAllUsersDao(r) {
     col: 'id',
     distinct: true,
     include,
+    replacements,
     limit: r.query.limit,
     offset: r.query.offset,
   });
