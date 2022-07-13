@@ -12,6 +12,7 @@ import {
   StarredDiscussion,
   DiscussionCommentLike,
 } from '@workquest/database-models/lib/models';
+import * as console from 'console';
 
 const searchFields = ['title', 'description'];
 
@@ -223,44 +224,39 @@ export async function sendComment(r) {
 }
 
 export async function putDiscussionLike(r) {
-  try {
-    const user: User = r.auth.credentials;
-    const userController = new UserOldController(user);
+  const user: User = r.auth.credentials;
+  const userController = new UserOldController(user);
 
-    const discussion = await Discussion.findByPk(r.params.discussionId);
+  const discussion = await Discussion.findByPk(r.params.discussionId);
 
-    if (!discussion) {
-      return error(Errors.NotFound, 'Discussion not found', {});
-    }
-
-    const transaction = await r.server.app.db.transaction();
-
-    const [like, isCreated] = await DiscussionLike.findOrCreate({
-      where: { userId: r.auth.credentials.id, discussionId: r.params.discussionId },
-      defaults: { userId: r.auth.credentials.id, discussionId: r.params.discussionId },
-      transaction,
-    });
-
-    if (isCreated) {
-      await discussion.increment('amountLikes', { transaction });
-    }
-
-    await transaction.commit();
-
-    like.setDataValue('discussion', discussion);
-    like.setDataValue('user', userController.shortCredentials);
-
-    r.server.app.broker.sendDaoNotification({
-      action: DaoNotificationActions.newDiscussionLike,
-      recipients: [discussion.authorId],
-      data: like,
-    });
-
-    return output();
-  } catch (e) {
-    console.error(e);
-    throw e;
+  if (!discussion) {
+    return error(Errors.NotFound, 'Discussion not found', {});
   }
+
+  const transaction = await r.server.app.db.transaction();
+
+  const [like, isCreated] = await DiscussionLike.findOrCreate({
+    where: { userId: r.auth.credentials.id, discussionId: r.params.discussionId },
+    defaults: { userId: r.auth.credentials.id, discussionId: r.params.discussionId },
+    transaction,
+  });
+
+  if (isCreated) {
+    await discussion.increment('amountLikes', { transaction });
+  }
+
+  await transaction.commit();
+
+  like.setDataValue('discussion', discussion);
+  like.setDataValue('user', userController.shortCredentials);
+
+  r.server.app.broker.sendDaoNotification({
+    action: DaoNotificationActions.newDiscussionLike,
+    recipients: [discussion.authorId],
+    data: like,
+  });
+
+  return output();
 }
 
 export async function removeDiscussionLike(r) {
@@ -287,39 +283,44 @@ export async function removeDiscussionLike(r) {
 }
 
 export async function putCommentLike(r) {
-  const user: User = r.auth.credentials;
-  const userController = new UserOldController(user);
+  try {
+    const user: User = r.auth.credentials;
+    const userController = new UserOldController(user);
 
-  const comment = await DiscussionComment.findByPk(r.params.commentId);
+    const comment = await DiscussionComment.findByPk(r.params.commentId);
 
-  if (!comment) {
-    return error(Errors.NotFound, 'Comment not found', {});
-  }
-
-  const [like, ] = await r.server.app.db.transaction(async (tx) => {
-    const [like, isCreated] = await DiscussionCommentLike.findOrCreate({
-      where: { userId: r.auth.credentials.id, commentId: r.params.commentId },
-      defaults: { userId: r.auth.credentials.id, commentId: r.params.commentId },
-      transaction: tx,
-    });
-
-    if (isCreated) {
-      await comment.increment('amountLikes', { transaction: tx });
+    if (!comment) {
+      return error(Errors.NotFound, 'Comment not found', {});
     }
 
-    return [like, isCreated];
-  });
+    const [like, ] = await r.server.app.db.transaction(async (tx) => {
+      const [like, isCreated] = await DiscussionCommentLike.findOrCreate({
+        where: { userId: r.auth.credentials.id, commentId: r.params.commentId },
+        defaults: { userId: r.auth.credentials.id, commentId: r.params.commentId },
+        transaction: tx,
+      });
 
-  like.setDataValue('comment', comment);
-  like.setDataValue('user', userController.shortCredentials);
+      if (isCreated) {
+        await comment.increment('amountLikes', { transaction: tx });
+      }
 
-  r.server.app.broker.sendDaoNotification({
-    action: DaoNotificationActions.commentLiked,
-    recipients: [comment.authorId],
-    data: like,
-  });
+      return [like, isCreated];
+    });
 
-  return output();
+    like.setDataValue('comment', comment);
+    like.setDataValue('user', userController.shortCredentials);
+
+    r.server.app.broker.sendDaoNotification({
+      action: DaoNotificationActions.commentLiked,
+      recipients: [comment.authorId],
+      data: like,
+    });
+
+    return output();
+  } catch (e) {
+    console.error(e);
+    throw e;
+  }
 }
 
 export async function removeCommentLike(r) {
