@@ -1,15 +1,15 @@
 import { col, fn, literal, Op } from 'sequelize';
-import { Errors } from "../utils/errors";
-import { QuestController } from "../controllers/quest/controller.quest";
-import { error, output } from "../utils";
-import { ChecksListQuest } from "../checks-list/checksList.quest";
-import { ChecksListUser } from "../checks-list/checksList.user";
-import { QuestNotificationActions } from "../controllers/controller.broker";
-import { MediaController } from "../controllers/controller.media";
-import { updateQuestsStatisticJob } from "../jobs/updateQuestsStatistic";
-import { SkillsFiltersController } from "../controllers/controller.skillsFilters";
-import { EmployerControllerFactory, WorkerControllerFactory } from "../factories/factory.userController";
-import { QuestControllerFactory } from "../factories/factory.questController";
+import { Errors } from '../utils/errors';
+import { QuestController } from '../controllers/quest/controller.quest';
+import { error, output } from '../utils';
+import { ChecksListQuest } from '../checks-list/checksList.quest';
+import { ChecksListUser } from '../checks-list/checksList.user';
+import { QuestNotificationActions } from '../controllers/controller.broker';
+import { MediaController } from '../controllers/controller.media';
+import { updateQuestsStatisticJob } from '../jobs/updateQuestsStatistic';
+import { SkillsFiltersController } from '../controllers/controller.skillsFilters';
+import { EmployerControllerFactory, WorkerControllerFactory } from '../factories/factory.userController';
+import { QuestControllerFactory } from '../factories/factory.questController';
 import { QuestStatisticController } from '../controllers/statistic/controller.questStatistic';
 import {
   DisputeStatus,
@@ -25,7 +25,16 @@ import {
   QuestStatus,
   User,
   UserRole,
-} from '@workquest/database-models/lib/models';
+  PayPeriod,
+  LocationType, WorkPlace
+} from "@workquest/database-models/lib/models";
+import {
+  EditQuestComposHandler,
+  CreateQuestComposHandler,
+  MarkQuestStarComposHandler,
+} from '../handlers/compositions/quest';
+import { RemoveStarFromQuestHandler } from "../handlers/quest";
+import { Priority, QuestEmployment } from '@workquest/database-models/src/models';
 
 
 export const searchQuestFields = [
@@ -88,7 +97,7 @@ export async function getQuest(r) {
       QuestStatus.Blocked,
       QuestStatus.Pending,
       QuestStatus.Recruitment,
-      QuestStatus.WaitingForConfirmFromWorkerOnAssign
+      QuestStatus.WaitingForConfirmFromWorkerOnAssign,
     ];
 
     include.push({
@@ -99,7 +108,11 @@ export async function getQuest(r) {
       },
       as: 'questChat',
       required: false,
-      where: literal(`"questChat"."employerId" = $employerId AND "Quest"."status" NOT IN (${excludeStatuses.join(',')}) AND "questChat"."status" = ${QuestChatStatus.Open}`),
+      where: literal(
+        `"questChat"."employerId" = $employerId AND "Quest"."status" NOT IN (${excludeStatuses.join(',')}) AND "questChat"."status" = ${
+          QuestChatStatus.Open
+        }`,
+      ),
     });
 
     bind['employerId'] = r.auth.credentials.id;
@@ -119,74 +132,56 @@ export async function getQuest(r) {
 }
 
 export async function createQuest(r) {
-  const mediaModels = await MediaController.getMedias(r.payload.medias);
-  const employerController = EmployerControllerFactory.createByUserModel(r.auth.credentials);
+  const userId = r.auth.credentials.id;
 
-  const avatarModel = mediaModels.length === 0
-    ? null
-    : mediaModels[0]
+  const quest = await new CreateQuestComposHandler(r.server.app.db).Handle({
+    questCreatorId: userId,
+    workplace: r.payload.workplace,
+    payPeriod: r.payload.payPeriod,
+    typeOfEmployment: r.payload.typeOfEmployment,
+    priority: r.payload.priority,
+    title: r.payload.title,
+    description: r.payload.description,
+    price: r.payload.price,
+    mediaIds: r.payload.medias,
 
-  const questController = await r.server.app.db.transaction(async (tx) => {
-   const questController = await QuestController.create({
-     avatar: avatarModel,
-     employer: employerController.user,
-      ...r.payload,
-    }, { tx });
+    locationFull: r.payload.locationFull,
 
-   await Promise.all([
-     questController.createRaiseView({ tx }),
-     questController.setMedias(mediaModels, { tx }),
-     questController.setQuestSpecializations(r.payload.specializationKeys, { tx }),
-   ]);
-
-    return questController;
-  }) as QuestController;
+    specializationKeys: r.payload.specializationKeys,
+  });
 
   await updateQuestsStatisticJob({
-    userId: employerController.user.id,
+    userId,
     role: UserRole.Employer,
   });
 
-  await QuestStatisticController.createQuestAction(questController.quest.price);
+  await QuestStatisticController.createQuestAction(quest.price);
 
-  return output(questController.quest);
+  return output(quest);
 }
 
 export async function editQuest(r) {
-  const employerController = EmployerControllerFactory.createByUserModel(r.auth.credentials);
-  const questController = await QuestControllerFactory.createById(r.params.questId);
-
-  const checksListQuest = new ChecksListQuest(questController.quest);
-
-  checksListQuest
-    .checkOwner(employerController.user)
-    .checkQuestStatuses(QuestStatus.Pending, QuestStatus.Recruitment)
-
-  const mediaModels = await MediaController.getMedias(r.payload.medias);
-
-  const avatarId = mediaModels.length === 0
-    ? null
-    : mediaModels[0].id
-
-  await r.server.app.db.transaction(async (tx) => {
-    await Promise.all([
-      questController.setMedias(mediaModels, { tx }),
-      questController.setQuestSpecializations(r.payload.specializationKeys, { tx }),
-      questController.update({ avatarId, ...r.payload }, { tx }),
-    ]);
-  });
+  const quest = await new EditQuestComposHandler(r.server.app.db)
+    .Handle({
+      questId: r.params.questId,
+      mediaIds: r.payload.medias,
+      priority: r.payload.priority,
+      payPeriod: r.payload.payPeriod,
+      workplace: r.payload.workplace,
+      questCreator: r.auth.credentials,
+      locationFull: r.payload.locationFull,
+      typeOfEmployment: r.payload.typeOfEmployment,
+      specializationKeys: r.payload.specializationKeys,
+    });
 
   const questsResponseWorkerIds = await QuestsResponse.unscoped().findAll({
-    attributes: [
-      [fn('array_agg', col('"workerId"')), 'workerIds'],
-      'type'
-    ],
+    attributes: [[fn('array_agg', col('"workerId"')), 'workerIds'], 'type'],
     where: {
-      questId: questController.quest.id,
+      questId: quest.id,
       status: QuestsResponseStatus.Open,
     },
     group: ['type'],
-    order: [['type', 'ASC']]
+    order: [['type', 'ASC']],
   });
 
   if (questsResponseWorkerIds.length !== 0) {
@@ -194,12 +189,12 @@ export async function editQuest(r) {
       r.server.app.broker.sendQuestNotification({
         action: QuestNotificationActions.questEdited,
         recipients: response.getDataValue('workerIds'),
-        data: { ...questController.quest.toJSON(), responseType: response.type },
+        data: { ...quest.toJSON(), responseType: response.type },
       });
     }
   }
 
-  return output(questController.quest);
+  return output(quest);
 }
 
 // TODO отрефракторить!
@@ -260,7 +255,7 @@ export function getQuests(type: 'list' | 'points', requester?: 'worker' | 'emplo
         [field]: { [Op.iLike]: `%${r.query.q}%` }
       })));
 
-      where[Op.or].push(userSearchLiteral)
+      where[Op.or].push(userSearchLiteral);
     }
     if (requester && requester === 'worker') {
       checksListUser
@@ -380,20 +375,25 @@ export function getQuests(type: 'list' | 'points', requester?: 'worker' | 'emplo
       return output({ count, quests: rows });
     } else if (type === 'points') {
       const quests = await Quest.findAll({
-        include, order, where, replacements,
+        include,
+        order,
+        where,
+        replacements,
       });
 
       return output({ quests });
     }
-  }
+  };
 }
 
 export async function setStar(r) {
   const { questId } = r.params;
-  const user: User = r.auth.credentials;
+  const meUser: User = r.auth.credentials;
 
-  await (await QuestControllerFactory.createById(questId))
-    .setStar(user)
+  await new MarkQuestStarComposHandler(r.server.app.db).Handle({
+    questId,
+    meUser,
+  });
 
   return output();
 }
@@ -402,8 +402,7 @@ export async function removeStar(r) {
   const { questId } = r.params;
   const user: User = r.auth.credentials;
 
-  await (await QuestControllerFactory.createById(questId))
-    .removeStar(user);
+  await new RemoveStarFromQuestHandler
 
   return output();
 }
@@ -411,7 +410,7 @@ export async function removeStar(r) {
 export async function getAvailableQuestsForWorker(r) {
   const workerResponseLiteral = literal(
     '1 = (CASE WHEN NOT EXISTS (SELECT "QuestsResponses"."id" FROM "QuestsResponses" WHERE "QuestsResponses"."workerId"=:workerId ' +
-      'AND "QuestsResponses"."questId" = "Quest"."id") THEN 1 END)'
+      'AND "QuestsResponses"."questId" = "Quest"."id") THEN 1 END)',
   );
 
   const { workerId } = r.params;
@@ -429,7 +428,7 @@ export async function getAvailableQuestsForWorker(r) {
     },
     limit: r.query.limit,
     offset: r.query.offset,
-    replacements: { workerId: workerController.user.id }
+    replacements: { workerId: workerController.user.id },
   });
 
   return output({ count, quests: rows });

@@ -28,49 +28,34 @@ import {
   QuestsResponse,
   StarredMessage,
   QuestChatStatus,
+  ChatDeletionData,
   SenderMessageStatus,
   QuestsResponseStatus,
   ChatMemberDeletionData,
 } from "@workquest/database-models/lib/models";
 import {
-  GetUsersByIdsPostValidationHandler,
-  AddUsersInGroupChatHandler,
-  AddUsersInGroupChatPreAccessPermissionHandler,
-  AddUsersInGroupChatPreValidateHandler,
-  CreateGroupChatHandler,
-  DeletedMemberFromGroupChatHandler,
-  DeletedMemberFromGroupChatPreAccessPermissionHandler,
-  DeletedMemberFromGroupChatPreValidateHandler,
   GetChatByIdHandler,
   GetChatByIdPostValidationHandler,
-  GetChatMemberByIdHandler,
   GetChatMemberByUserHandler,
   GetChatMemberPostFullAccessPermissionHandler,
   GetChatMemberPostLimitedAccessPermissionHandler,
   GetChatMemberPostValidationHandler,
-  GetChatMessageByIdHandler,
-  GetChatMessageByIdPostValidatorHandler,
-  GetGroupChatHandler,
-  GetGroupChatPostValidationHandler,
-  GetMediaByIdsHandler,
-  GetMediasPostValidationHandler,
-  GetUserByIdHandler,
-  GetUsersByIdsPostAccessPermissionHandler,
-  GetUsersByIdsHandler,
-  GetUserByIdPostAccessPermissionHandler,
-  GetUserByIdPostValidationHandler,
-  LeaveFromGroupChatHandler,
-  LeaveFromGroupChatPreAccessPermissionHandler,
-  LeaveFromGroupChatPreValidateHandler,
-  MarkChatStarHandler,
   RemoveStarFromChatHandler,
   RemoveStarFromMessageHandler,
-  SendMessageToChatHandler,
-  SendMessageToUserHandler,
-  UserMarkMessageStarHandler,
-  RemoveChatFromChatsListHandler,
 } from "../handlers";
-
+import {
+  CreateGroupChatComposHandler,
+  SendMessageToUserComposHandler,
+  LeaveFromGroupChatComposHandler,
+  AddUsersInGroupChatComposHandler,
+  RemoveMemberFromGroupChatComposHandler,
+  SendMessageToChatComposHandler,
+  RemoveChatFromListComposHandler,
+  SetMessagesAsReadComposHandler
+} from "../handlers/compositions";
+import { MarkMessageStarComposHandler } from "../handlers/compositions/chat/MarkMessageStarComposHandler";
+import { MarkChatStarComposHandler } from "../handlers/compositions/chat/MarkChatStarComposHandler";
+//TODO - ?
 export async function getUserChats(r) {
   const searchByQuestNameLiteral = literal(
     `(SELECT "title" FROM "Quests" WHERE "id" = ` +
@@ -278,7 +263,7 @@ export async function getUserChats(r) {
 
   return output({ count, chats: rows });
 }
-
+//TODO - ?
 export async function getChatMessages(r) {
   const { chatId } = r.params as { chatId: string };
   const meUser = r.auth.credentials;
@@ -345,7 +330,7 @@ export async function getChatMessages(r) {
 
   return output({ count, messages: rows, chat });
 }
-
+//TODO - ?
 export async function getUserChat(r) {
   const { chatId } = r.params as { chatId: string };
 
@@ -355,7 +340,7 @@ export async function getUserChat(r) {
 
   return output(chat);
 }
-
+//TODO - ?
 export async function listOfUsersByChats(r) {
   const options = {
     replacements: {
@@ -384,7 +369,7 @@ export async function listOfUsersByChats(r) {
 
   return output({ count: parseInt(countResults[0].count), users });
 }
-
+//TODO - ?
 export async function getChatMembers(r) {
   const meUser: User = r.auth.credentials;
 
@@ -417,23 +402,18 @@ export async function getChatMembers(r) {
 
   return output({ count, members: rows });
 }
-
+//TODO: test
 export async function createGroupChat(r) {
   const chatName: string = r.payload.name;
   const chatCreator: User = r.auth.credentials;
   const userIds: string[] = r.payload.userIds;
 
-  const invitedUsers: User[] = await new GetUsersByIdsPostValidationHandler(
-    new GetUsersByIdsPostAccessPermissionHandler(
-      new GetUsersByIdsHandler()
-    )
-  ).Handle({ userIds });
-
-  const [chat, messageWithInfo] = await new CreateGroupChatHandler(r.server.app.db).Handle({
-    chatName,
-    chatCreator,
-    invitedUsers,
-  });
+  const [chat, messageWithInfo] = await new CreateGroupChatComposHandler(r.server.app.db)
+    .Handle({
+      userIds,
+      chatName,
+      chatCreator,
+    });
 
   await updateChatDataJob({
     chatId: chat.id,
@@ -466,29 +446,20 @@ export async function createGroupChat(r) {
 
   return output({ chat, infoMessage: messageWithInfo });
 }
-
+//TODO: test
 export async function sendMessageToUser(r) {
   const meUser: User = r.auth.credentials;
 
   const { userId } = r.params as { userId: string };
   const { text, mediaIds } = r.payload as { text: string, mediaIds: string[] }
 
-  const recipientUser = await new GetUserByIdPostAccessPermissionHandler(
-    new GetUserByIdPostValidationHandler(
-      new GetUserByIdHandler()
-    )
-  ).Handle({ userId });
-
-  const medias = await new GetMediasPostValidationHandler(
-    new GetMediaByIdsHandler()
-  ).Handle({ mediaIds });
-
-  const message = await new SendMessageToUserHandler(r.server.app.db).Handle({
-    text,
-    medias,
-    sender: meUser,
-    recipient: recipientUser,
-  });
+  const [recipientUser, message] = await new SendMessageToUserComposHandler(r.server.app.db)
+    .Handle({
+      text,
+      userId,
+      meUser,
+      mediaIds,
+    });
 
   const meMember = await new GetChatMemberByUserHandler().Handle({ user: meUser, chat: message.getDataValue('chat') });
 
@@ -534,33 +505,20 @@ export async function sendMessageToUser(r) {
 
   return output(message);
 }
-
+//TODO: test
 export async function sendMessageToChat(r) {
   const meUser: User = r.auth.credentials;
 
   const { chatId } = r.params as { chatId: string };
   const { text, mediaIds } = r.payload as { text: string, mediaIds: string[] };
 
-  const chat = await new GetChatByIdPostValidationHandler(
-    new GetChatByIdHandler()
-  ).Handle({ chatId });
-
-  const meMember = await new GetChatMemberPostFullAccessPermissionHandler(
-    new GetChatMemberPostValidationHandler(
-      new GetChatMemberByUserHandler()
-    )
-  ).Handle({ user: meUser, chat });
-
-  const medias = await new GetMediasPostValidationHandler(
-    new GetMediaByIdsHandler()
-  ).Handle({ mediaIds });
-
-  const message = await new SendMessageToChatHandler(r.server.app.db).Handle({
-    chat,
-    text,
-    medias,
-    sender: meMember,
-  });
+  const [ chat, message, meMember ] = await new SendMessageToChatComposHandler(r.server.app.db)
+    .Handle({
+      text,
+      meUser,
+      chatId,
+      mediaIds,
+    });
 
   await resetUnreadCountMessagesOfMemberJob({
     memberId: meMember.id,
@@ -616,33 +574,18 @@ export async function sendMessageToChat(r) {
 
   return output(message);
 }
-
+//TODO: test
 export async function removeMemberFromGroupChat(r) {
   const meUser: User = r.auth.credentials;
 
   const { chatId, userId } = r.params as { chatId: string, userId: string };
 
-  const groupChat = await new GetGroupChatPostValidationHandler(
-    new GetGroupChatHandler()
-  ).Handle({ chatId });
-
-  const member = await new GetChatMemberPostFullAccessPermissionHandler(
-    new GetChatMemberPostValidationHandler(
-      new GetChatMemberByIdHandler()
-    )
-  ).Handle({ chat: groupChat, id: userId });
-
-  const meMember = await new GetChatMemberPostFullAccessPermissionHandler(
-    new GetChatMemberPostValidationHandler(
-      new GetChatMemberByUserHandler()
-    )
-  ).Handle({ chat: groupChat, user: meUser });
-
-  const messageWithInfo = await new DeletedMemberFromGroupChatPreAccessPermissionHandler(
-    new DeletedMemberFromGroupChatPreValidateHandler(
-      new DeletedMemberFromGroupChatHandler(r.server.app.db)
-    )
-  ).Handle({ member, groupChat, deletionInitiator: meMember });
+  const [groupChat, messageWithInfo, meMember] = await new RemoveMemberFromGroupChatComposHandler(r.server.app.db)
+    .Handle({
+      meUser,
+      chatId,
+      userId,
+    });
 
   await resetUnreadCountMessagesOfMemberJob({
     chatId: groupChat.id,
@@ -692,27 +635,17 @@ export async function removeMemberFromGroupChat(r) {
 
   return output(messageWithInfo);
 }
-
+//TODO: test
 export async function leaveFromGroupChat(r) {
   const meUser: User = r.auth.credentials;
 
   const { chatId } = r.params as { chatId: string };
 
-  const groupChat = await new GetGroupChatPostValidationHandler(
-    new GetGroupChatHandler()
-  ).Handle({ chatId });
-
-  const meMember = await new GetChatMemberPostFullAccessPermissionHandler(
-    new GetChatMemberPostValidationHandler(
-      new GetChatMemberByUserHandler()
-    )
-  ).Handle({ chat: groupChat, user: meUser });
-
-  const messageWithInfo = await new LeaveFromGroupChatPreValidateHandler(
-    new LeaveFromGroupChatPreAccessPermissionHandler(
-      new LeaveFromGroupChatHandler(r.server.app.db)
-    )
-  ).Handle({ member: meMember, groupChat });
+  const [groupChat, messageWithInfo, meMember] = await new LeaveFromGroupChatComposHandler(r.server.app.db)
+    .Handle({
+      chatId,
+      meUser,
+    });
 
   await incrementUnreadCountMessageOfMembersJob({
     chatId: groupChat.id,
@@ -748,34 +681,19 @@ export async function leaveFromGroupChat(r) {
 
   return output(messageWithInfo);
 }
-
+//TODO: test
 export async function addUsersInGroupChat(r) {
   const meUser: User = r.auth.credentials;
 
   const { chatId } = r.params as { chatId: string };
   const { userIds } = r.payload as { userIds: string[] };
 
-  const groupChat = await new GetGroupChatPostValidationHandler(
-    new GetGroupChatHandler()
-  ).Handle({ chatId });
-
-  const meMember = await new GetChatMemberPostValidationHandler(
-    new GetChatMemberPostFullAccessPermissionHandler(
-      new GetChatMemberByUserHandler()
-    )
-  ).Handle({ chat: groupChat, user: meUser });
-
-  const users = await new GetUsersByIdsPostValidationHandler(
-    new GetUsersByIdsPostAccessPermissionHandler(
-      new GetUsersByIdsHandler()
-    )
-  ).Handle({ userIds });
-
-  const messagesWithInfo = await new AddUsersInGroupChatPreValidateHandler(
-    new AddUsersInGroupChatPreAccessPermissionHandler(
-      new AddUsersInGroupChatHandler(r.server.app.db)
-    )
-  ).Handle({ groupChat, users, addInitiator: meMember })
+  const [ groupChat, messagesWithInfo, meMember ] = await new AddUsersInGroupChatComposHandler(r.server.app.db)
+    .Handle({
+      meUser,
+      chatId,
+      userIds,
+    });
 
   const lastMessage = messagesWithInfo[messagesWithInfo.length - 1];
 
@@ -826,55 +744,31 @@ export async function addUsersInGroupChat(r) {
 
   return output(messagesWithInfo);
 }
-
+//TODO: test
 export async function removeChatFromList(r) {
   const meUser: User = r.auth.credentials;
-
   const { chatId } = r.params as { chatId: string };
 
-  const chat = await new GetChatByIdPostValidationHandler(
-    new  GetChatByIdHandler()
-  ).Handle({ chatId });
-
-  const meMember = await new GetChatMemberByUserHandler().Handle({ user: meUser, chat });
-
-  await new RemoveChatFromChatsListHandler(r.server.app.db).Handle({
-    chat,
-    meMember,
-  });
+  await new RemoveChatFromListComposHandler(r.server.app.db)
+    .Handle({
+      meUser,
+      chatId
+    });
 
   return output();
 }
-
+//TODO Здесь не композиция, нужно подумать, какой base handler использовать
 export async function setMessagesAsRead(r) {
   const meUser: User = r.auth.credentials
   const { chatId } = r.params as { chatId: string };
   const { messageId } = r.payload as { messageId: string };
 
-  const chat = await new GetChatByIdPostValidationHandler(
-    new GetChatByIdHandler()
-  ).Handle({ chatId });
-
-  const meMember = await new GetChatMemberPostValidationHandler(
-    new GetChatMemberPostLimitedAccessPermissionHandler(
-      new GetChatMemberByUserHandler()
-    )
-  ).Handle({ chat, user: meUser });
-
-  const message = await new GetChatMessageByIdPostValidatorHandler(
-    new GetChatMessageByIdHandler()
-  ).Handle({ messageId, chat });
-
-  const otherSenders = await Message.unscoped().findAll({
-    attributes: ['senderMemberId'],
-    where: {
-      chatId: chat.id,
-      senderMemberId: { [Op.ne]: meMember.id },
-      senderStatus: SenderMessageStatus.Unread,
-      number: { [Op.gte]: message.number },
-    },
-    group: ['senderMemberId'],
-  });
+  const [chat, message, meMember] = await new SetMessagesAsReadComposHandler(r.server.app.db)
+    .Handle({
+      meUser,
+      chatId,
+      messageId,
+    });
 
   await updateCountUnreadMessagesJob({
     lastUnreadMessage: { id: message.id, number: message.number },
@@ -882,18 +776,15 @@ export async function setMessagesAsRead(r) {
     readerMemberId: meMember.id,
   });
 
-  if (otherSenders.length === 0) {
-    return output();
-  }
-
   await setMessageAsReadJob({
     lastUnreadMessage: { id: message.id, number: message.number },
     chatId: r.params.chatId,
     senderMemberId: meMember.id,
   });
-  // await updateCountUnreadChatsJob({
-  //   userIds: [r.auth.credentials.id],
-  // });
+
+  await updateCountUnreadChatsJob({
+    members: [meMember],
+  });
 
   // r.server.app.broker.sendChatNotification({
   //   action: ChatNotificationActions.messageReadByRecipient,
@@ -903,7 +794,7 @@ export async function setMessagesAsRead(r) {
 
   return output();
 }
-
+//TODO - ?
 export async function getUserStarredMessages(r) {
   const { count, rows } = await Message.findAndCountAll({
     distinct: true,
@@ -942,31 +833,21 @@ export async function getUserStarredMessages(r) {
 
   return output({ count, messages: rows });
 }
-
+//TODO Здесь не композиция, нужно подумать, какой base handler использовать
 export async function markMessageStar(r) {
   const meUser: User = r.auth.credentials;
 
   const { chatId, messageId } = r.params as { chatId: string, messageId: string };
 
-  const chat = await new GetChatByIdPostValidationHandler(
-    new GetChatByIdHandler()
-  ).Handle({ chatId });
-
-  const meMember = await new GetChatMemberPostValidationHandler(
-    new GetChatMemberPostLimitedAccessPermissionHandler(
-      new GetChatMemberByUserHandler()
-    )
-  ).Handle({ chat, user: meUser });
-
-  const message = await new GetChatMessageByIdPostValidatorHandler(
-    new GetChatMessageByIdHandler()
-  ).Handle({ messageId, chat });
-
-  await new UserMarkMessageStarHandler().Handle({ user: meUser, message });
+  await new MarkMessageStarComposHandler(r.server.app.db).Handle({
+    meUser,
+    chatId,
+    messageId,
+  });
 
   return output();
 }
-
+//TODO - ?
 export async function removeStarFromMessage(r) {
   const meUser: User = r.auth.credentials;
 
@@ -976,27 +857,21 @@ export async function removeStarFromMessage(r) {
 
   return output();
 }
-
+//TODO Здесь не композиция, нужно подумать, какой base handler использовать
 export async function markChatStar(r) {
   const meUser: User = r.auth.credentials;
 
   const { chatId } = r.params as { chatId: string };
 
-  const chat = await new GetChatByIdPostValidationHandler(
-    new GetChatByIdHandler()
-  ).Handle({ chatId });
-
-  await new GetChatMemberPostValidationHandler(
-    new GetChatMemberPostLimitedAccessPermissionHandler(
-      new GetChatMemberByUserHandler()
-    )
-  ).Handle({ chat, user: meUser });
-
-  await new MarkChatStarHandler().Handle({ chat, user: meUser });
+  await new MarkChatStarComposHandler(r.server.app.db)
+    .Handle({
+      chatId,
+      meUser,
+    });
 
   return output();
 }
-
+//TODO - ?
 export async function removeStarFromChat(r) {
   const meUser: User = r.auth.credentials;
 

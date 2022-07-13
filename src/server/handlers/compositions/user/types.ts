@@ -48,8 +48,8 @@ export interface EditEmployerProfileCommand {
 }
 
 export type EditProfileCommand =
-  | EditWorkerProfileCommand
-  | EditEmployerProfileCommand
+  & EditWorkerProfileCommand
+  & EditEmployerProfileCommand
 
 export interface ChangeUserPasswordCommand {
   readonly user: User;
@@ -64,10 +64,7 @@ export interface ChangeRoleCommand {
 }
 
 /** Results */
-export type EditProfileResult = Promise<
-  | EditWorkerProfileResult
-  | EditEmployerProfileResult
->
+export type EditProfileResult = Promise<User>
 
 export type ChangeUserPasswordResult = Promise<void>
 

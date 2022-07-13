@@ -1,4 +1,4 @@
-import { IHandler, Options } from "../../types";
+import { BaseDomainHandler, IHandler, Options } from "../../types";
 import {
   Chat,
   ChatMember,
@@ -38,12 +38,7 @@ interface SendInfoMessagePayload extends GroupChatInfoCommand {
 
 }
 
-export class CreateGroupChatHandler implements IHandler<CreateGroupChatCommand, Promise<[Chat, Message]>> {
-  constructor(
-    private readonly dbContext: any,
-  ) {
-  }
-
+export class CreateGroupChatHandler extends BaseDomainHandler<CreateGroupChatCommand, Promise<[Chat, Message]>> {
   private static async sendInfoMessageAboutGroupChatCreate(payload: SendInfoMessagePayload, options: Options = {}): Promise<Message> {
     const message = Message.build({
       number: 1,
@@ -125,12 +120,10 @@ export class CreateGroupChatHandler implements IHandler<CreateGroupChatCommand, 
   }
 
   public async Handle(command: CreateGroupChatCommand): Promise<[Chat, Message]> {
-    return await this.dbContext.transaction(async (tx) => {
-      const chatInfo = await CreateGroupChatHandler.createGroupChatAndAddMembers({ ...command }, { tx });
-      const messageWithInfo = await CreateGroupChatHandler.sendInfoMessageAboutGroupChatCreate({ ...command, ...chatInfo }, { tx });
-      await CreateGroupChatHandler.createChatDataAndChatMemberData({ ...chatInfo, message: messageWithInfo }, { tx });
+      const chatInfo = await CreateGroupChatHandler.createGroupChatAndAddMembers({ ...command }, { tx: this.options.tx });
+      const messageWithInfo = await CreateGroupChatHandler.sendInfoMessageAboutGroupChatCreate({ ...command, ...chatInfo }, { tx: this.options.tx });
+      await CreateGroupChatHandler.createChatDataAndChatMemberData({ ...chatInfo, message: messageWithInfo }, { tx: this.options.tx });
 
       return [chatInfo.chat, messageWithInfo];
-    });
   }
 }

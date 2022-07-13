@@ -1,8 +1,9 @@
 import { GroupChatValidator } from "./GroupChatValidator";
-import { BaseDecoratorHandler, IHandler, Options } from "../../types";
+import { BaseDecoratorHandler, BaseDomainHandler, IHandler, Options } from "../../types";
 import { GroupChatAccessPermission } from "./GroupChatAccessPermission";
 import {
   Chat,
+  User,
   ChatMember,
   ChatMemberData,
   ChatMemberDeletionData,
@@ -11,7 +12,7 @@ import {
   Message,
   MessageAction,
   MessageType,
-  ReasonForRemovingFromChat, User
+  ReasonForRemovingFromChat,
 } from "@workquest/database-models/lib/models";
 
 export interface LeaveFromGroupChatCommand {
@@ -23,12 +24,7 @@ interface LeaveMemberPayload extends LeaveFromGroupChatCommand {
   readonly lastMessage: Message;
 }
 
-export class LeaveFromGroupChatHandler implements IHandler<LeaveFromGroupChatCommand, Promise<Message>> {
-  constructor(
-    private readonly dbContext: any,
-  ) {
-  }
-
+export class LeaveFromGroupChatHandler extends BaseDomainHandler<LeaveFromGroupChatCommand, Promise<Message>> {
   private static getLastMessage(chat: Chat, options: Options = {}): Promise<Message> {
     return Message.findOne({
       where: { chatId: chat.id },
@@ -98,17 +94,13 @@ export class LeaveFromGroupChatHandler implements IHandler<LeaveFromGroupChatCom
   }
 
   public async Handle(command: LeaveFromGroupChatCommand): Promise<Message> {
-    return await this.dbContext.transaction(async (tx) => {
-      const lastMessage = await LeaveFromGroupChatHandler.getLastMessage(command.groupChat, { tx });
+    const lastMessage = await LeaveFromGroupChatHandler.getLastMessage(command.groupChat, { tx: this.options.tx });
 
       const payload = { ...command, lastMessage };
 
-      payload.lastMessage = await LeaveFromGroupChatHandler.sendInfoMessageAboutLeaveMember(payload, { tx });
+    await LeaveFromGroupChatHandler.leaveMember(payload, { tx: this.options.tx });
 
-      await LeaveFromGroupChatHandler.leaveMember(payload, { tx });
-
-      return payload.lastMessage;
-    });
+    return await LeaveFromGroupChatHandler.sendInfoMessageAboutLeaveMember(payload, { tx: this.options.tx });
   }
 }
 

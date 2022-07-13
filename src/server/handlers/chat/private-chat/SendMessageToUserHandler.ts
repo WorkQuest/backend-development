@@ -1,4 +1,4 @@
-import { IHandler, Options } from "../../types";
+import { BaseDomainHandler, IHandler, Options } from "../../types";
 import {
   Chat,
   ChatData,
@@ -37,12 +37,7 @@ export interface SendMessageToMemberPayload {
   readonly medias: ReadonlyArray<Media>;
 }
 
-export class SendMessageToUserHandler implements IHandler<SendMessageToUserCommand, Promise<Message>> {
-  constructor(
-    private readonly dbContext: any,
-  ) {
-  }
-
+export class SendMessageToUserHandler extends BaseDomainHandler<SendMessageToUserCommand, Promise<Message>> {
   private static async addP2PMembers(payload: AddP2PMembersPayload, options: Options = {}): Promise<[sender: ChatMember, recipient: ChatMember]> {
     const sender = ChatMember.build({
       chatId: payload.privateChat.id,
@@ -131,28 +126,26 @@ export class SendMessageToUserHandler implements IHandler<SendMessageToUserComma
   }
 
   public async Handle(command: SendMessageToUserCommand): Promise<Message> {
-    return await this.dbContext.transaction(async (tx) => {
-      const [privateChat, isCreated] = await SendMessageToUserHandler.findOrCreatePrivateChat({ ...command }, { tx });
+    const [privateChat, isCreated] = await SendMessageToUserHandler.findOrCreatePrivateChat({ ...command }, { tx: this.options.tx });
 
-      if (isCreated) {
-        const [sender, recipient] = await SendMessageToUserHandler.addP2PMembers({ ...command, privateChat }, { tx });
+    if (isCreated) {
+      const [sender, recipient] = await SendMessageToUserHandler.addP2PMembers({ ...command, privateChat }, { tx: this.options.tx });
 
-        const payload: SendMessageToMemberPayload = { ...command, sender, recipient, privateChat };
+      const payload: SendMessageToMemberPayload = { ...command, sender, recipient, privateChat };
 
-        return await SendMessageToUserHandler.sendMessage(payload, { tx });
-      } else {
-        const lastMessage = await SendMessageToUserHandler.getLastMessage(privateChat, { tx });
+      return await SendMessageToUserHandler.sendMessage(payload, { tx: this.options.tx });
+    } else {
+      const lastMessage = await SendMessageToUserHandler.getLastMessage(privateChat, { tx: this.options.tx });
 
-        const payload: SendMessageToMemberPayload = {
-          ...command,
-          lastMessage,
-          privateChat,
-          sender: privateChat.senderInPrivateChat,
-          recipient: privateChat.recipientInPrivateChat,
-        }
-
-        return SendMessageToUserHandler.sendMessage(payload, { tx });
+      const payload: SendMessageToMemberPayload = {
+        ...command,
+        lastMessage,
+        privateChat,
+        sender: privateChat.senderInPrivateChat,
+        recipient: privateChat.recipientInPrivateChat,
       }
-    });
+
+      return SendMessageToUserHandler.sendMessage(payload, { tx: this.options.tx });
+    }
   }
 }

@@ -1,4 +1,4 @@
-import { IHandler, Options } from '../types';
+import { BaseDomainHandler, IHandler, Options } from "../types";
 import { Chat, ChatDeletionData, ChatMember, Message } from "@workquest/database-models/lib/models";
 
 export interface RemoveChatFromChatsListCommand {
@@ -10,12 +10,7 @@ export interface RemoveChatFromChatsListPayload extends RemoveChatFromChatsListC
   readonly lastMessage: Message;
 }
 
-export class RemoveChatFromChatsListHandler implements IHandler<RemoveChatFromChatsListCommand, Promise<Message>> {
-  constructor(
-    private readonly dbContext: any,
-  ) {
-  }
-
+export class RemoveChatFromChatsListHandler extends BaseDomainHandler<RemoveChatFromChatsListCommand, Promise<void>> {
   private static getLastMessage(chat: Chat, options: Options = {}): Promise<Message> {
     return Message.findOne({
       where: { chatId: chat.id },
@@ -48,13 +43,11 @@ export class RemoveChatFromChatsListHandler implements IHandler<RemoveChatFromCh
     }
   }
 
-  public async Handle(command: RemoveChatFromChatsListCommand): Promise<Message> {
-    return await this.dbContext.transaction(async (tx) => {
-      const lastMessage = await RemoveChatFromChatsListHandler.getLastMessage(command.chat, { tx });
+  public async Handle(command: RemoveChatFromChatsListCommand): Promise<void> {
+    const lastMessage = await RemoveChatFromChatsListHandler.getLastMessage(command.chat, { tx: this.options.tx });
 
-      const payload: RemoveChatFromChatsListPayload = { ...command, lastMessage };
+    const payload: RemoveChatFromChatsListPayload = { ...command, lastMessage };
 
-      return await RemoveChatFromChatsListHandler.removeChat(payload, { tx });
-    });
+    await RemoveChatFromChatsListHandler.removeChat(payload, { tx: this.options.tx });
   }
 }
