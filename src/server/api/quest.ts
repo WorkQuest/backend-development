@@ -222,9 +222,10 @@ export function getQuests(type: 'list' | 'points', requester?: 'worker' | 'emplo
       'OR (1 = (CASE WHEN EXISTS (SELECT * FROM "QuestSpecializationFilters" WHERE "questId" = "Quest"."id" AND "QuestSpecializationFilters"."industryKey" IN (:industryKey)) THEN 1 END))'
     );
     const userSearchLiteral = literal(
-      // TODO добавь эти поля в replace типо так ILIKE '%:searchByFirstName%'`
-      `(SELECT "firstName" FROM "Users" WHERE "id" = "Quest"."userId") ILIKE '%${r.query.q}%'` +
-      `OR (SELECT "lastName" FROM "Users" WHERE "id" = "Quest"."userId") ILIKE '%${r.query.q}%'`
+      `(SELECT "firstName" FROM "Users" WHERE "id" = "Quest"."userId") ILIKE :searchByName ` +
+      `OR (SELECT "lastName" FROM "Users" WHERE "id" = "Quest"."userId") ILIKE :searchByName ` +
+      `OR (SELECT CONCAT_WS(' ', "firstName", NULL, "lastName") FROM "Users" WHERE "id" = "Quest"."userId")  ILIKE :searchByName ` +
+      `OR (SELECT CONCAT_WS(' ', "lastName", NULL, "firstName") FROM "Users" WHERE "id" = "Quest"."userId")  ILIKE :searchByName `
     );
     const questChatWorkerLiteral = literal(
       '"questChat"."workerId" = "Quest"."assignedWorkerId"'
@@ -260,7 +261,9 @@ export function getQuests(type: 'list' | 'points', requester?: 'worker' | 'emplo
         [field]: { [Op.iLike]: `%${r.query.q}%` }
       })));
 
-      where[Op.or].push(userSearchLiteral)
+      replacements['searchByName'] = r.query.q;
+
+      where[Op.or].push(userSearchLiteral);
     }
     if (requester && requester === 'worker') {
       checksListUser

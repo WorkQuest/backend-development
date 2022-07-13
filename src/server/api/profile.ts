@@ -122,6 +122,15 @@ export async function getAllUsers(r) {
     'ELSE TRUE END) '
   );
 
+  const userSearchLiteral = literal(
+    `(SELECT "firstName" FROM "Users" WHERE "id" = "User"."id") ILIKE :searchByName ` +
+    `OR (SELECT "lastName" FROM "Users" WHERE "id" = "User"."id") ILIKE :searchByName ` +
+    `OR (SELECT CONCAT_WS(' ', "firstName", NULL, "lastName") FROM "Users" WHERE "id" = "User"."id")  ILIKE :searchByName ` +
+    `OR (SELECT CONCAT_WS(' ', "lastName", NULL, "firstName") FROM "Users" WHERE "id" = "User"."id")  ILIKE :searchByName `
+  );
+
+  const replacements = {};
+
   const where = {
     status: UserStatus.Confirmed,
     id: { [Op.ne]: r.auth.credentials.id }
@@ -139,6 +148,9 @@ export async function getAllUsers(r) {
     where[Op.or] = searchFields.map(
       field => ({ [field]: { [Op.iLike]: `%${r.query.q}%` }})
     );
+
+    replacements['searchByName'] = r.query.q;
+    where[Op.or].push(userSearchLiteral)
   }
 
   if (r.auth.credentials.role === UserRole.Worker) {
@@ -159,6 +171,7 @@ export async function getAllUsers(r) {
     col: 'id',
     distinct: true,
     include,
+    replacements,
     limit: r.query.limit,
     offset: r.query.offset,
   });
@@ -167,6 +180,14 @@ export async function getAllUsers(r) {
 }
 
 export async function getAllUsersDao(r) {
+  const userSearchLiteral = literal(
+    `(SELECT "firstName" FROM "Users" WHERE "id" = "User"."id") ILIKE :searchByName ` +
+    `OR (SELECT "lastName" FROM "Users" WHERE "id" = "User"."id") ILIKE :searchByName ` +
+    `OR (SELECT CONCAT_WS(' ', "firstName", NULL, "lastName") FROM "Users" WHERE "id" = "User"."id")  ILIKE :searchByName ` +
+    `OR (SELECT CONCAT_WS(' ', "lastName", NULL, "firstName") FROM "Users" WHERE "id" = "User"."id")  ILIKE :searchByName `
+  );
+
+  const replacements = {};
   const where = {
     status: UserStatus.Confirmed,
   };
@@ -183,6 +204,9 @@ export async function getAllUsersDao(r) {
     where[Op.or] = searchFields.map(
       field => ({ [field]: { [Op.iLike]: `%${r.query.q}%` }})
     );
+
+    replacements['searchByName'] = r.query.q;
+    where[Op.or].push(userSearchLiteral)
   }
 
   const { count, rows } = await User.findAndCountAll({
@@ -190,6 +214,7 @@ export async function getAllUsersDao(r) {
     col: 'id',
     distinct: true,
     include,
+    replacements,
     limit: r.query.limit,
     offset: r.query.offset,
   });
