@@ -138,20 +138,21 @@ export async function getRootComments(r) {
 
 export async function createDiscussion(r) {
   const medias = await MediaController.getMedias(r.payload.medias);
-  const transaction = await r.server.app.db.transaction();
 
-  const discussion = await Discussion.create(
-    {
-      authorId: r.auth.credentials.id,
-      title: r.payload.title,
-      description: r.payload.description,
-    },
-    { transaction },
-  );
+  const [discussion] = await r.server.app.db.transaction(async (tx) => {
+    const discussion = await Discussion.create(
+      {
+        authorId: r.auth.credentials.id,
+        title: r.payload.title,
+        description: r.payload.description,
+      },
+      { transaction: tx },
+    );
 
-  await discussion.$set('medias', medias, { transaction });
+    await discussion.$set('medias', medias, { transaction: tx });
 
-  await transaction.commit();
+    return [discussion];
+  });
 
   return output(discussion);
 }
@@ -175,40 +176,38 @@ export async function sendComment(r) {
 
   const notificationRecipients = [discussion.authorId];
 
-  const transaction = await r.server.app.db.transaction();
+  const [comment] = await r.server.app.db.transaction(async (tx) => {
+    if (r.payload.rootCommentId) {
+      rootComment = await DiscussionComment.findByPk(r.payload.rootCommentId);
 
-  if (r.payload.rootCommentId) {
-    rootComment = await DiscussionComment.findByPk(r.payload.rootCommentId);
+      if (!rootComment) {
+        throw error(Errors.NotFound, 'Discussion comment not found', {});
+      }
 
-    if (!rootComment) {
-      await transaction.rollback();
+      await rootComment.increment('amountSubComments', { transaction: tx });
+      await discussion.increment('amountComments', { transaction: tx });
 
-      return error(Errors.NotFound, 'Discussion comment not found', {});
+      notificationRecipients.push(rootComment.authorId);
+      commentLevel = rootComment.level + 1;
+    } else {
+      await discussion.increment('amountComments', { transaction: tx });
     }
 
-    await rootComment.increment('amountSubComments', { transaction });
-    await discussion.increment('amountComments', { transaction });
+    const comment = await DiscussionComment.create(
+      {
+        authorId: r.auth.credentials.id,
+        discussionId: r.params.discussionId,
+        rootCommentId: r.payload.rootCommentId,
+        text: r.payload.text,
+        level: commentLevel,
+      },
+      { transaction: tx },
+    );
 
-    notificationRecipients.push(rootComment.authorId);
-    commentLevel = rootComment.level + 1;
-  } else {
-    await discussion.increment('amountComments', { transaction });
-  }
+    await comment.$set('medias', medias, { transaction: tx });
 
-  const comment = await DiscussionComment.create(
-    {
-      authorId: r.auth.credentials.id,
-      discussionId: r.params.discussionId,
-      rootCommentId: r.payload.rootCommentId,
-      text: r.payload.text,
-      level: commentLevel,
-    },
-    { transaction },
-  );
-
-  await comment.$set('medias', medias, { transaction });
-
-  await transaction.commit();
+    return [comment];
+  });
 
   comment.setDataValue('discussion', discussion);
   comment.setDataValue('rootComment', rootComment);
@@ -233,19 +232,19 @@ export async function putDiscussionLike(r) {
     return error(Errors.NotFound, 'Discussion not found', {});
   }
 
-  const transaction = await r.server.app.db.transaction();
+  const [like, isCreated] = await r.server.app.db.transaction(async (tx) => {
+    const [like, isCreated] = await DiscussionLike.findOrCreate({
+      where: { userId: r.auth.credentials.id, discussionId: r.params.discussionId },
+      defaults: { userId: r.auth.credentials.id, discussionId: r.params.discussionId },
+      transaction: tx,
+    });
 
-  const [like, isCreated] = await DiscussionLike.findOrCreate({
-    where: { userId: r.auth.credentials.id, discussionId: r.params.discussionId },
-    defaults: { userId: r.auth.credentials.id, discussionId: r.params.discussionId },
-    transaction,
+    if (isCreated) {
+      await discussion.increment('amountLikes', { transaction: tx });
+    }
+
+    return [like, isCreated];
   });
-
-  if (isCreated) {
-    await discussion.increment('amountLikes', { transaction });
-  }
-
-  await transaction.commit();
 
   like.setDataValue('discussion', discussion);
   like.setDataValue('user', userController.shortCredentials);
@@ -283,44 +282,39 @@ export async function removeDiscussionLike(r) {
 }
 
 export async function putCommentLike(r) {
-  try {
-    const user: User = r.auth.credentials;
-    const userController = new UserOldController(user);
+  const user: User = r.auth.credentials;
+  const userController = new UserOldController(user);
 
-    const comment = await DiscussionComment.findByPk(r.params.commentId);
+  const comment = await DiscussionComment.findByPk(r.params.commentId);
 
-    if (!comment) {
-      return error(Errors.NotFound, 'Comment not found', {});
+  if (!comment) {
+    return error(Errors.NotFound, 'Comment not found', {});
+  }
+
+  const [like, ] = await r.server.app.db.transaction(async (tx) => {
+    const [like, isCreated] = await DiscussionCommentLike.findOrCreate({
+      where: { userId: r.auth.credentials.id, commentId: r.params.commentId },
+      defaults: { userId: r.auth.credentials.id, commentId: r.params.commentId },
+      transaction: tx,
+    });
+
+    if (isCreated) {
+      await comment.increment('amountLikes', { transaction: tx });
     }
 
-    const [like, ] = await r.server.app.db.transaction(async (tx) => {
-      const [like, isCreated] = await DiscussionCommentLike.findOrCreate({
-        where: { userId: r.auth.credentials.id, commentId: r.params.commentId },
-        defaults: { userId: r.auth.credentials.id, commentId: r.params.commentId },
-        transaction: tx,
-      });
+    return [like, isCreated];
+  });
 
-      if (isCreated) {
-        await comment.increment('amountLikes', { transaction: tx });
-      }
+  like.setDataValue('comment', comment);
+  like.setDataValue('user', userController.shortCredentials);
 
-      return [like, isCreated];
-    });
+  r.server.app.broker.sendDaoNotification({
+    action: DaoNotificationActions.commentLiked,
+    recipients: [comment.authorId],
+    data: like,
+  });
 
-    like.setDataValue('comment', comment);
-    like.setDataValue('user', userController.shortCredentials);
-
-    r.server.app.broker.sendDaoNotification({
-      action: DaoNotificationActions.commentLiked,
-      recipients: [comment.authorId],
-      data: like,
-    });
-
-    return output();
-  } catch (e) {
-    console.error(e);
-    throw e;
-  }
+  return output();
 }
 
 export async function removeCommentLike(r) {
@@ -330,18 +324,16 @@ export async function removeCommentLike(r) {
     return error(Errors.NotFound, 'Comment not found', {});
   }
 
-  const transaction = await r.server.app.db.transaction();
+  await r.server.app.db.transaction(async (tx) => {
+    const numberOfDestroyedLikes = await DiscussionCommentLike.destroy({
+      where: { commentId: r.params.commentId, userId: r.auth.credentials.id },
+      transaction: tx,
+    });
 
-  const numberOfDestroyedLikes = await DiscussionCommentLike.destroy({
-    where: { commentId: r.params.commentId, userId: r.auth.credentials.id },
-    transaction,
+    if (numberOfDestroyedLikes !== 0) {
+      await comment.decrement('amountLikes', { transaction: tx });
+    }
   });
-
-  if (numberOfDestroyedLikes !== 0) {
-    await comment.decrement('amountLikes', { transaction });
-  }
-
-  await transaction.commit();
 
   return output();
 }
