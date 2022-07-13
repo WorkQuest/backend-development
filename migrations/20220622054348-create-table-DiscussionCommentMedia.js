@@ -10,7 +10,6 @@ module.exports = {
       mediaId: {
         type: Sequelize.DataTypes.STRING,
         allowNull: false,
-        unique: true,
         references: {
           model: 'Media',
           key: 'id'
@@ -19,7 +18,6 @@ module.exports = {
       commentId: {
         type: Sequelize.DataTypes.STRING,
         allowNull: false,
-        unique: true,
         references: {
           model: 'DiscussionComments',
           key: 'id'
