@@ -2,11 +2,11 @@ import { Pool } from 'pg';
 import config from '../config/config';
 
 // TODO: Maybe should rewrite and document function
-export async function addJob(taskName: string, payload?: any, userOptions: any = {}) {
+export async function addJob(taskName: string, payload?: any, options: any = {}) {
   try {
     const pool = new Pool({ connectionString: config.dbLink });
     const args = ['$1::text'];
-    const options = { ...{ max_attempts: 25 }, ...userOptions };
+    options.max_attempts ??= 1;
     const values = [taskName];
     if (payload) {
       args.push('payload := $2');
