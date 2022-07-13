@@ -26,18 +26,18 @@ export async function createProposal(r) {
 
   const medias = await MediaController.getMedias(r.payload.medias);
 
-  const transaction = await r.server.app.db.transaction();
+  const [proposal] = await r.server.app.db.transaction(async (tx) => {
+    const proposal = await Proposal.create({
+      proposerUserId: r.auth.credentials.id,
+      title: r.payload.title,
+      description: r.payload.description,
+      status: ProposalStatus.Pending,
+    }, { transaction: tx });
 
-  const proposal = await Proposal.create({
-    proposerUserId: r.auth.credentials.id,
-    title: r.payload.title,
-    description: r.payload.description,
-    status: ProposalStatus.Pending,
-  }, { transaction });
+    await proposal.$set('medias', medias, { transaction: tx });
 
-  await proposal.$set('medias', medias, { transaction });
-
-  await transaction.commit();
+    return [proposal];
+  });
 
   return output(proposal);
 }

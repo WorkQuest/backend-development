@@ -265,18 +265,16 @@ export async function removeDiscussionLike(r) {
     return error(Errors.NotFound, 'Discussion not found', {});
   }
 
-  const transaction = await r.server.app.db.transaction();
+  await r.server.app.db.transaction(async (tx) => {
+    const numberOfDestroyedLikes = await DiscussionLike.destroy({
+      where: { discussionId: r.params.discussionId, userId: r.auth.credentials.id },
+      transaction: tx,
+    });
 
-  const numberOfDestroyedLikes = await DiscussionLike.destroy({
-    where: { discussionId: r.params.discussionId, userId: r.auth.credentials.id },
-    transaction,
+    if (numberOfDestroyedLikes !== 0) {
+      await discussion.decrement('amountLikes', { transaction: tx });
+    }
   });
-
-  if (numberOfDestroyedLikes !== 0) {
-    await discussion.decrement('amountLikes', { transaction });
-  }
-
-  await transaction.commit();
 
   return output();
 }
