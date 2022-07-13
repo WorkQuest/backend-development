@@ -1,5 +1,5 @@
 import { BaseCompositeHandler } from '../../types';
-import { ChangeRoleCommand, ChangeRoleResult } from './types';
+import { ChangeRoleComposCommand, ChangeRoleComposResult } from "./types";
 import { UserRole } from '@workquest/database-models/lib/models';
 import {
   ChangeRoleFromWorkerHandler,
@@ -13,15 +13,15 @@ import {
   ChangeRoleFromEmployerPreAccessPermissionHandler,
 } from '../../user';
 
-interface ChangeFromWorkerPayload extends ChangeRoleCommand {
+interface ChangeFromWorkerPayload extends ChangeRoleComposCommand {
 
 }
 
-interface ChangeFromEmployerPayload extends ChangeRoleCommand {
+interface ChangeFromEmployerPayload extends ChangeRoleComposCommand {
 
 }
 
-export class ChangeRoleComposHandler extends BaseCompositeHandler<ChangeRoleCommand, ChangeRoleResult> {
+export class ChangeRoleComposHandler extends BaseCompositeHandler<ChangeRoleComposCommand, ChangeRoleComposResult> {
   constructor(
     protected readonly dbContext: any,
   ) {
@@ -48,7 +48,7 @@ export class ChangeRoleComposHandler extends BaseCompositeHandler<ChangeRoleComm
     });
   }
 
-  public async Handle(command: ChangeRoleCommand): ChangeRoleResult {
+  public async Handle(command: ChangeRoleComposCommand): ChangeRoleComposResult {
     const user = await new GetUserByIdPostAccessPermissionHandler(
       new GetUserByIdPostValidationHandler(
         new GetUserByIdWithFullAccessHandler()

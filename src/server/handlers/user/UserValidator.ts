@@ -120,4 +120,14 @@ export class UserValidator {
       throw error(Errors.NotQuestOwner, 'User is not quest owner', { userId, questId: quest.id });
     }
   }
+  public MustHaveVerificationPhone(user: User) {
+    if (!user.tempPhone) {
+      throw error(Errors.InvalidPayload, 'User does not have verification phone', {});
+    }
+  }
+  public MustHaveRightPhoneConfirmationCode(user: User, confirmCode: string) {
+    if (user.settings.phoneConfirm !== confirmCode) {
+      throw error(Errors.Forbidden, 'Confirmation code is not correct', {});
+    }
+  }
 }

@@ -33,8 +33,9 @@ import {
 import {
   GetUserByIdHandler,
   GetUserByIdPostAccessPermissionHandler,
-  GetUserByIdPostValidationHandler
+  GetUserByIdPostValidationHandler, GetUserByIdWithFullAccessHandler
 } from "../handlers";
+import { ConfirmPhoneNumberComposHandler } from "../handlers/compositions/user/ConfirmPhoneNumberComposHandler";
 
 export const searchFields = [
   "firstName",
@@ -388,20 +389,13 @@ export async function changePassword(r) {
 }
 //controller
 export async function confirmPhoneNumber(r) {
-  const user = await User.scope('withPassword').findByPk(r.auth.credentials.id);
+  const user = r.auth.credentials;
+  const confirmCode = r.payload.confirmCode;
 
-  const userController = new UserOldController(user);
-
-  const recipientUser = await new GetUserByIdPostAccessPermissionHandler(
-    new GetUserByIdPostValidationHandler(
-      new GetUserByIdHandler()
-    )
-  ).Handle({ userId: user.id });
-//сделать отдельный хэндлер на получение телефона с верификацией
-  await userController
-    .userMustHaveVerificationPhone()
-    .checkPhoneConfirmationCode(r.payload.confirmCode)
-    .confirmPhoneNumber()
+  await new ConfirmPhoneNumberComposHandler(r.server.app.db).Handle({
+    user,
+    confirmCode,
+  });
 
   await UserStatisticController.smsPassedAction();
 

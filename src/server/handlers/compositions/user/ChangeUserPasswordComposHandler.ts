@@ -1,5 +1,5 @@
 import { BaseCompositeHandler } from '../../types';
-import { ChangeUserPasswordResult, ChangeUserPasswordCommand } from './types';
+import { ChangeUserPasswordComposCommand, ChangeUserPasswordComposResult } from "./types";
 import {
   ChangeUserPasswordHandler,
   LogoutOtherSessionsHandler,
@@ -9,14 +9,14 @@ import {
   ChangeUserPasswordPreAccessPermissionHandler,
 } from '../../user';
 
-export class ChangeUserPasswordComposHandler extends BaseCompositeHandler<ChangeUserPasswordCommand, ChangeUserPasswordResult> {
+export class ChangeUserPasswordComposHandler extends BaseCompositeHandler<ChangeUserPasswordComposCommand, ChangeUserPasswordComposResult> {
   constructor(
     protected readonly dbContext: any,
   ) {
     super(dbContext);
   }
 
-  public async Handle(command: ChangeUserPasswordCommand): ChangeUserPasswordResult {
+  public async Handle(command: ChangeUserPasswordComposCommand): ChangeUserPasswordComposResult {
     const user = await new GetUserByIdPostAccessPermissionHandler(
        new GetUserByIdPostValidationHandler(
          new GetUserByIdWithFullAccessHandler()

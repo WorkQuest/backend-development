@@ -18,7 +18,7 @@ import {
 } from '@workquest/database-models/lib/models';
 
 /** Commands */
-export interface EditWorkerProfileCommand {
+export interface EditWorkerProfileComposCommand {
   readonly user: User;
   readonly editableRole: UserRole;
   readonly avatarId: string | null;
@@ -35,7 +35,7 @@ export interface EditWorkerProfileCommand {
   readonly specializationKeys: ReadonlyArray<string>;
 }
 
-export interface EditEmployerProfileCommand {
+export interface EditEmployerProfileComposCommand {
   readonly user: User;
   readonly editableRole: UserRole;
   readonly avatarId: string | null;
@@ -47,27 +47,33 @@ export interface EditEmployerProfileCommand {
   readonly additionalInfo: AdditionalInfoEmployer;
 }
 
-export type EditProfileCommand =
-  & EditWorkerProfileCommand
-  & EditEmployerProfileCommand
+export type EditProfileComposCommand =
+  & EditWorkerProfileComposCommand
+  & EditEmployerProfileComposCommand
 
-export interface ChangeUserPasswordCommand {
+export interface ChangeUserPasswordComposCommand {
   readonly user: User;
   readonly newPassword: string;
   readonly oldPassword: string;
   readonly currentSession: Session;
 }
 
-export interface ChangeRoleCommand {
+export interface ChangeRoleComposCommand {
   readonly user: User;
   readonly code2FA: string;
 }
 
+export interface ConfirmPhoneNumberComposCommand {
+  readonly user: User;
+  readonly confirmCode: string;
+}
 /** Results */
-export type EditProfileResult = Promise<User>
+export type EditProfileComposResult = Promise<User>
 
-export type ChangeUserPasswordResult = Promise<void>
+export type ChangeUserPasswordComposResult = Promise<void>
 
-export type ChangeRoleResult = Promise<void>
+export type ChangeRoleComposResult = Promise<void>
+
+export type ConfirmPhoneNumberComposResult = Promise<void>
 
 
