@@ -30,6 +30,11 @@ import {
   WorkerProfileVisibilitySetting,
   EmployerProfileVisibilitySetting,
 } from '@workquest/database-models/lib/models';
+import {
+  GetUserByIdHandler,
+  GetUserByIdPostAccessPermissionHandler,
+  GetUserByIdPostValidationHandler
+} from "../handlers";
 
 export const searchFields = [
   "firstName",
@@ -348,7 +353,7 @@ export async function setRole(r) {
 
   return output();
 }
-
+//TODO: test
 export function editProfile(userRole: UserRole) {
   return async function (r) {
     const meUser: User = r.auth.credentials;
@@ -381,12 +386,18 @@ export async function changePassword(r) {
 
   return output();
 }
-
+//controller
 export async function confirmPhoneNumber(r) {
   const user = await User.scope('withPassword').findByPk(r.auth.credentials.id);
 
   const userController = new UserOldController(user);
 
+  const recipientUser = await new GetUserByIdPostAccessPermissionHandler(
+    new GetUserByIdPostValidationHandler(
+      new GetUserByIdHandler()
+    )
+  ).Handle({ userId: user.id });
+//сделать отдельный хэндлер на получение телефона с верификацией
   await userController
     .userMustHaveVerificationPhone()
     .checkPhoneConfirmationCode(r.payload.confirmCode)
@@ -396,7 +407,7 @@ export async function confirmPhoneNumber(r) {
 
   return output();
 }
-
+//controller
 export async function sendCodeOnPhoneNumber(r) {
   const userWithPassword = await User.scope('withPassword').findByPk(r.auth.credentials.id);
   const confirmCode = getRandomCodeNumber();
@@ -460,7 +471,7 @@ export async function changeUserRole(r) {
 
   return output();
 }
-
+//TODO: нужен ли этот роут?
 export async function payForMyRaiseView(r) {
 //TODO: логику оплаты
   const userController = new UserOldController(await User.findByPk(r.auth.credentials.id));
