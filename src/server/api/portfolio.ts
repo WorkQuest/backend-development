@@ -27,6 +27,8 @@ export async function getCases(r) {
 
   const { count, rows } = await Portfolio.findAndCountAll({
     where: { userId: workerController.user.id },
+    distinct: true,
+    col: '"Portfolio"."id"',
     limit: r.query.limit,
     offset: r.query.offset,
     order: [['createdAt', 'DESC']],
