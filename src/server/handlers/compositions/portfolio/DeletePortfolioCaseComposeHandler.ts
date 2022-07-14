@@ -6,6 +6,8 @@ import {
   GetPortfolioCaseByIdPostValidation,
   DeletePortfolioCasePreAccessPermissionHandler,
 } from '../../portfolio';
+import { UserController } from "../../../controllers/user/controller.user";
+import { UserStatisticController } from "../../../controllers/statistic/controller.userStatistic";
 
 export class DeletePortfolioCaseComposeHandler extends BaseCompositeHandler<DeletePortfolioCaseCommand, DeletePortfolioCaseResult> {
   constructor(
@@ -19,8 +21,11 @@ export class DeletePortfolioCaseComposeHandler extends BaseCompositeHandler<Dele
       new GetPortfolioCaseByIdHandler()
     ).Handle({ portfolioId: command.portfolioId })
 
-    await new DeletePortfolioCasePreAccessPermissionHandler(
-      new DeletePortfolioCaseHandler()
-    )
+
+    await this.dbContext.transaction(async (tx) => {
+      await new DeletePortfolioCasePreAccessPermissionHandler(
+        new DeletePortfolioCaseHandler().setOptions(tx)
+      ).Handle({ portfolio, user: command.user });
+    });
   }
 }
