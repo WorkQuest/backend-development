@@ -16,6 +16,7 @@ import {
   AdditionalInfoWorker,
   AdditionalInfoEmployer,
 } from '@workquest/database-models/lib/models';
+import { SendCodeOnPhoneNumberComposHandler } from "./ConfirmPhoneNumberComposHandler";
 
 /** Commands */
 export interface EditWorkerProfileComposCommand {
@@ -67,6 +68,11 @@ export interface ConfirmPhoneNumberComposCommand {
   readonly user: User;
   readonly confirmCode: string;
 }
+
+export interface SendCodeOnPhoneNumberComposCommand {
+  readonly user: User;
+  readonly confirmCode: string;
+}
 /** Results */
 export type EditProfileComposResult = Promise<User>
 
@@ -75,5 +81,7 @@ export type ChangeUserPasswordComposResult = Promise<void>
 export type ChangeRoleComposResult = Promise<void>
 
 export type ConfirmPhoneNumberComposResult = Promise<void>
+
+export type SendCodeOnPhoneNumberComposResult = Promise<User>
 
 

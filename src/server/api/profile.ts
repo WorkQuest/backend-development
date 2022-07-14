@@ -35,7 +35,10 @@ import {
   GetUserByIdPostAccessPermissionHandler,
   GetUserByIdPostValidationHandler, GetUserByIdWithFullAccessHandler
 } from "../handlers";
-import { ConfirmPhoneNumberComposHandler } from "../handlers/compositions/user/ConfirmPhoneNumberComposHandler";
+import {
+  ConfirmPhoneNumberComposHandler,
+  SendCodeOnPhoneNumberComposHandler
+} from "../handlers/compositions/user/ConfirmPhoneNumberComposHandler";
 
 export const searchFields = [
   "firstName",
@@ -387,7 +390,7 @@ export async function changePassword(r) {
 
   return output();
 }
-//controller
+//TODO: test
 export async function confirmPhoneNumber(r) {
   const user = r.auth.credentials;
   const confirmCode = r.payload.confirmCode;
@@ -401,21 +404,15 @@ export async function confirmPhoneNumber(r) {
 
   return output();
 }
-//controller
+//TODO: test
 export async function sendCodeOnPhoneNumber(r) {
-  const userWithPassword = await User.scope('withPassword').findByPk(r.auth.credentials.id);
-  const confirmCode = getRandomCodeNumber();
+  const user = r.auth.credentials;
+  const confirmCode = getRandomCodeNumber().toString();
 
-  const userController = new UserOldController(userWithPassword);
-
-  if (userWithPassword.phone) { //TODO Возможно что-то подобное есть
-    return error(Errors.PhoneNumberAlreadyConfirmed, 'Phone number already confirmed', {});
-  }
-  if (!userWithPassword.tempPhone) { // TODO -> userMustHaveVerificationPhone
-    return error(Errors.NotFound, 'Phone number for verification not found', {});
-  }
-
-  await userController.setConfirmCodeToVerifyCodeNumber(confirmCode);
+  const userWithPassword = await new SendCodeOnPhoneNumberComposHandler(r.server.app.db).Handle({
+    user,
+    confirmCode,
+  });
 
   await addSendSmsJob({
     toPhoneNumber: userWithPassword.tempPhone.fullPhone,

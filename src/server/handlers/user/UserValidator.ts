@@ -130,4 +130,9 @@ export class UserValidator {
       throw error(Errors.Forbidden, 'Confirmation code is not correct', {});
     }
   }
+  public MustNotHavePhone(user: User) {
+    if (user.phone) {
+      throw error(Errors.NotFound, 'Phone number for verification not found', {});
+    }
+  }
 }
