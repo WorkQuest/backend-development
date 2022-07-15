@@ -390,7 +390,7 @@ export function editProfile(userRole: UserRole) {
 
 export async function changePassword(r) {
   const meUser: User = r.auth.credentials;
-  const meSession: Session = r.auth.artifacts.session;
+  const mySession: Session = r.auth.artifacts.session;
 
   const { oldPassword, newPassword } = r.payload as { oldPassword: string, newPassword: string }
 
@@ -398,7 +398,7 @@ export async function changePassword(r) {
     oldPassword,
     newPassword,
     user: meUser,
-    currentSession: meSession,
+    currentSession: mySession,
   });
 
   return output();
