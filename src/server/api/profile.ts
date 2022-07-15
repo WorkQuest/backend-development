@@ -149,7 +149,7 @@ export async function getAllUsers(r) {
       field => ({ [field]: { [Op.iLike]: `%${r.query.q}%` }})
     );
 
-    replacements['searchByName'] = r.query.q;
+    replacements['searchByName'] = `%${r.query.q}%`;
     where[Op.or].push(userSearchLiteral)
   }
 
@@ -205,7 +205,7 @@ export async function getAllUsersDao(r) {
       field => ({ [field]: { [Op.iLike]: `%${r.query.q}%` }})
     );
 
-    replacements['searchByName'] = r.query.q;
+    replacements['searchByName'] = `%${r.query.q}%`;
     where[Op.or].push(userSearchLiteral)
   }
 

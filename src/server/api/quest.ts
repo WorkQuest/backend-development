@@ -237,7 +237,7 @@ export function getQuests(type: 'list' | 'points', requester?: 'worker' | 'emplo
       `(1 = (CASE WHEN EXISTS (SELECT * FROM "QuestsResponses" as qResp ` +
       `WHERE qResp."questId" = "Quest"."id" AND (qResp."workerId"  = '${ user.id }' AND ` +
         `qResp."status" IN (${ QuestsResponseStatus.Open }, ${ QuestsResponseStatus.Accepted }))) THEN 1 END)) `
-    )
+    );
 
     const include = [];
     const replacements = {};
@@ -257,11 +257,11 @@ export function getQuests(type: 'list' | 'points', requester?: 'worker' | 'emplo
     };
 
     if (r.query.q) {
-      where[Op.or].push(searchQuestFields.map(field => ({
-        [field]: { [Op.iLike]: `%${r.query.q}%` }
+      where[Op.or] = (searchQuestFields.map(field => ({
+        [field]: {[Op.iLike]: `%${r.query.q}%` }
       })));
 
-      replacements['searchByName'] = r.query.q;
+      replacements['searchByName'] = `%${r.query.q}%`;
 
       where[Op.or].push(userSearchLiteral);
     }
