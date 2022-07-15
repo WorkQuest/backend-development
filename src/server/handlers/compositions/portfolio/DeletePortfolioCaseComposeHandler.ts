@@ -19,8 +19,11 @@ export class DeletePortfolioCaseComposeHandler extends BaseCompositeHandler<Dele
       new GetPortfolioCaseByIdHandler()
     ).Handle({ portfolioId: command.portfolioId })
 
-    await new DeletePortfolioCasePreAccessPermissionHandler(
-      new DeletePortfolioCaseHandler()
-    )
+
+    await this.dbContext.transaction(async (tx) => {
+      await new DeletePortfolioCasePreAccessPermissionHandler(
+        new DeletePortfolioCaseHandler().setOptions(tx)
+      ).Handle({ portfolio, user: command.user });
+    });
   }
 }
