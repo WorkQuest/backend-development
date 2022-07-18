@@ -104,7 +104,11 @@ jobs:
           BRIDGE_CONTRACT_PRIVAT_KEY=${{ secrets.PROD_BRIDGE_CONTRACT_PRIVAT_KEY }} \
 
           REFERRAL_CONTRACT_PRIVAT_KEY=${{ secrets.PROD_REFERRAL_CONTRACT_PRIVAT_KEY }} \
-
+          
+          GOOGLE_ANALYTICS_API_FILE_NAME=${{ secrets.PROD_GOOGLE_ANALYTICS_API_FILE_NAME }} \
+          GOOGLE_ANALYTICS_API_FILE_DATA=${{ secrets.PROD_GOOGLE_ANALYTICS_API_FILE_DATA }} \
+          GOOGLE_ANALYTICS_API_VIEW_ID=${{ secrets.PROD_GOOGLE_ANALYTICS_API_VIEW_ID }} \
+          
           DEBUG=${{ secrets.PROD_DEBUG }} \
           BASE_URL=${{ secrets.PROD_BASE_URL }} \
           BASE_URL_DAO=${{ secrets.PROD_BASE_URL_DAO }} \
@@ -191,7 +195,11 @@ jobs:
             BRIDGE_CONTRACT_PRIVAT_KEY=${{ secrets.DEV_BRIDGE_CONTRACT_PRIVAT_KEY }} \
 
             REFERRAL_CONTRACT_PRIVAT_KEY=${{ secrets.DEV_REFERRAL_CONTRACT_PRIVAT_KEY }} \
-
+          
+            GOOGLE_ANALYTICS_API_FILE_DATA=${{ secrets.DEV_GOOGLE_ANALYTICS_API_FILE_DATA }} \
+            GOOGLE_ANALYTICS_API_FILE_NAME=${{ secrets.DEV_GOOGLE_ANALYTICS_API_FILE_NAME }} \
+            GOOGLE_ANALYTICS_API_VIEW_ID=${{ secrets.DEV_GOOGLE_ANALYTICS_API_VIEW_ID }} \
+            
             DEBUG=${{ secrets.DEV_DEBUG }} \
             BASE_URL=${{ secrets.DEV_BASE_URL }} \
             BASE_URL_DAO=${{ secrets.DEV_BASE_URL_DAO }} \
@@ -278,6 +286,10 @@ jobs:
             BRIDGE_CONTRACT_PRIVAT_KEY=${{ secrets.BRIDGE_CONTRACT_PRIVAT_KEY }} \
 
             REFERRAL_CONTRACT_PRIVAT_KEY=${{ secrets.REFERRAL_CONTRACT_PRIVAT_KEY }} \
+          
+            GOOGLE_ANALYTICS_API_FILE_NAME=${{ secrets.GOOGLE_ANALYTICS_API_FILE_NAME }} \
+            GOOGLE_ANALYTICS_API_FILE_DATA=${{ secrets.GOOGLE_ANALYTICS_API_FILE_DATA }} \
+            GOOGLE_ANALYTICS_API_VIEW_ID=${{ secrets.GOOGLE_ANALYTICS_API_VIEW_ID }} \
 
             DEBUG=${{ secrets.DEBUG }} \
             BASE_URL=${{ secrets.BASE_URL }} \

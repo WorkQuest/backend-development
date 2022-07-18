@@ -1,8 +1,6 @@
-import { Op } from "sequelize";
 import { addJob } from "../utils/scheduler";
 import {
   ChatData,
-  Message,
 } from "@workquest/database-models/lib/models";
 
 export type UpdateChatDataPayload = {

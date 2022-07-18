@@ -367,13 +367,21 @@ export async function validateUserPassword(r) {
   });
 }
 
-export async function validateUserTotp(r) {
+export async function currentSessionValidateTotp(r) {
   const userControllerFactory = await UserControllerFactory.createByIdWithPassword(r.auth.credentials.id);
 
-  const isValid = userControllerFactory.user.isTOTPEnabled() ?
-    totpValidate(r.payload.token, userControllerFactory.user.settings.security.TOTP.secret) : true;
+  if (r.auth.artifacts.session.isTotpPassed) {
+    return output({ isValid: true });
+  }
 
-  await Session.update({ isTotpPassed: isValid }, { where: { id: r.auth.artifacts.session.id } });
+  const isValid =
+    userControllerFactory.user.isTOTPEnabled()
+      ? totpValidate(r.payload.token, userControllerFactory.user.settings.security.TOTP.secret)
+      : true
+
+  if (isValid) {
+    await Session.update({ isTotpPassed: isValid }, { where: { id: r.auth.artifacts.session.id } });
+  }
 
   return output({ isValid });
 }

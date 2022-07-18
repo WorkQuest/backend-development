@@ -2,14 +2,18 @@ import { UserStatisticController } from '../controllers/statistic/controller.use
 import { addJob } from '../utils/scheduler';
 import { col, fn } from 'sequelize';
 import {
-  User,
+  ControllerBroker,
+  QuestNotificationActions
+} from '../controllers/controller.broker';
+import {
   Quest,
-  UserRole,
-  StatusKYC,
-  QuestStatus,
-  RatingStatus,
   QuestsReview,
+  QuestStatus,
   RatingStatistic,
+  RatingStatus,
+  StatusKYC,
+  User,
+  UserRole
 } from '@workquest/database-models/lib/models';
 
 /**
@@ -36,6 +40,8 @@ import {
  *    Заполнение соцсетей (добавлено 3 соцсети).
  *    Заполнение Employment information
  */
+
+const brokerController = new ControllerBroker();
 
 export interface StatisticPayload {
   userId: string;
@@ -122,7 +128,15 @@ export default async function (payload: StatisticPayload) {
 
   const status = ratingStatus(user, completedQuestsCount, averageMarkResult.getDataValue('avgMark'));
 
-  await UserStatisticController.setRatingStatusAction(status, ratingStatistic.status);
+  if (status !== ratingStatistic.status) {
+    await UserStatisticController.setRatingStatusAction(status, ratingStatistic.status);
+
+    brokerController.sendQuestNotification({
+      action: QuestNotificationActions.updateRatingStatistic,
+      recipients: [ratingStatistic.userId],
+      data: ratingStatistic
+    });
+  }
 
   await ratingStatistic.update({
     status,
