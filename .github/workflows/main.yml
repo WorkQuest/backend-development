@@ -386,6 +386,10 @@ jobs:
           
             WORK_QUEST_TEST_NETWORK_RPC_PROVIDER=${{ secrets.WORK_QUEST_TEST_NETWORK_RPC_PROVIDER }} \
 
+            GOOGLE_ANALYTICS_API_FILE_NAME=${{ secrets.GOOGLE_ANALYTICS_API_FILE_NAME }} \
+            GOOGLE_ANALYTICS_API_FILE_DATA=${{ secrets.GOOGLE_ANALYTICS_API_FILE_DATA }} \
+            GOOGLE_ANALYTICS_API_VIEW_ID=${{ secrets.GOOGLE_ANALYTICS_API_VIEW_ID }} \
+
             DEBUG=${{ secrets.DEBUG }} \
             BASE_URL=${{ secrets.BASE_URL }} \
             BASE_URL_DAO=${{ secrets.BASE_URL_DAO }} \
