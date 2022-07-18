@@ -1,11 +1,12 @@
-import { Op } from "sequelize";
+import { literal, Op } from "sequelize";
 import { addJob } from "../utils/scheduler";
 import {
   AdminChatStatistic,
   ChatMember,
   ChatMemberData, MemberStatus,
   MemberType,
-  UserChatsStatistic
+  UserChatsStatistic,
+  ChatDeletionData
 } from "@workquest/database-models/lib/models";
 
 export type UpdateCountUnreadChatsPayload = {
@@ -39,8 +40,11 @@ async function updateAdminChatStatistic(adminId: string, unreadChatsCounter: num
 }
 
 export default async function updateCountUnreadChats(payload: UpdateCountUnreadChatsPayload) {
-  // TODO для юзеров и для админов + вынести в отдельные функции
   for (const member of payload.members) {
+    const userOrAdminLiteral = literal(
+      `(CASE WHEN EXISTS (SELECT "id" FROM "Users" WHERE "Users"."id" = '${ member.userId }') ` +
+      `THEN "userId" = '${ member.userId }' ELSE "adminId" = '${ member.adminId }' END)`
+    )
     const unreadChatsCounter = await ChatMember.unscoped().count({
       include: [{
         model: ChatMemberData,
@@ -48,9 +52,12 @@ export default async function updateCountUnreadChats(payload: UpdateCountUnreadC
         where: {
           unreadCountMessages: { [Op.ne]: 0 },
         },
+      }, {
+        model: ChatDeletionData,
+        as: 'chatDeletionData'
       }],
       where: {
-        [Op.or]: [{ userId: member.userId }, { adminId: member.adminId }],
+        userOrAdminLiteral,
         status: MemberStatus.Active,
       }
     });
@@ -63,34 +70,4 @@ export default async function updateCountUnreadChats(payload: UpdateCountUnreadC
       await updateAdminChatStatistic(member.adminId, unreadChatsCounter);
     }
   }
-
-  // const updateValueLiteral = literal(`
-  //   (SELECT COUNT("ChatMembers"."id")
-  //   FROM "ChatMembers"
-  //   WHERE
-  //       "ChatMembers"."userId" != '${ payload.senderMemberId }'
-  //       AND 1 = (
-  //           CASE WHEN EXISTS(
-  //               SELECT "ChatMemberData"."id"
-  //               FROM "ChatMemberData"
-  //               WHERE
-  //                   "ChatMemberData"."chatMemberId" = "ChatMembers"."id"
-  //                   AND "ChatMemberData"."unreadCountMessages" != 0
-  //           ) THEN 1 END
-  //       )) FROM "ChatMembers"
-  // `);
-  //
-  // const whereLiteralBuilder = (chatId: string) => literal(`
-  //   "ChatMembers"."chatId" = '${ chatId }'
-  //   AND "ChatMembers"."status" = ${ MemberStatus.Active }
-  //   AND "ChatMembers"."type" = '${ MemberType.User }'
-  // `);
-  //
-  // await UserChatsStatistic.update({ updatedAt: new Date(), unreadCountChats: updateValueLiteral }, {
-  //   where: {
-  //     [Op.and]: [
-  //       whereLiteralBuilder(payload.chatId),
-  //     ]
-  //   },
-  // })
 }

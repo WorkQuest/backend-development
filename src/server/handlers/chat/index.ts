@@ -1,6 +1,7 @@
 export * from "./GetChatByIdHandler";
 export * from "./GetChatByIdValidator";
 export * from "./SendMessageToChatHandler";
+export * from "./RemoveChatFromChatsListHandler";
 
 export * from "./chat-member/ChatMemberValidator";
 export * from "./chat-member/GetChatMemberHandlers"

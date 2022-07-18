@@ -5,6 +5,7 @@ import { ChecksListQuest } from '../checks-list/checksList.quest';
 import { UserOldController } from "../controllers/user/controller.user";
 import { QuestControllerFactory } from '../factories/factory.questController';
 import { addUpdateDisputeReviewStatisticsJob } from "../jobs/updateDisputeReviewStatistics";
+import { QuestStatisticController } from '../controllers/statistic/controller.questStatistic';
 import {
   User,
   Admin,
@@ -14,7 +15,7 @@ import {
   QuestDispute,
   DisputeStatus,
   QuestDisputeReview,
-} from "@workquest/database-models/lib/models";
+} from '@workquest/database-models/lib/models';
 
 export async function createDispute(r) {
   const user: User = r.auth.credentials;
@@ -56,21 +57,26 @@ export async function createDispute(r) {
     problemDescription: r.payload.problemDescription,
   });
 
+  await QuestStatisticController.createDisputeAction();
+
   return output(await QuestDispute.findByPk(dispute.id));
 }
 
 export async function getDispute(r) {
   const user: User = r.auth.credentials;
-  const questChatWorkerLiteral = literal('"quest->questChat"."workerId" = "quest"."assignedWorkerId"');
+
+  const include = [{
+    model: QuestDisputeReview.unscoped(),
+    attributes: ["mark", "message", "toAdminId"],
+    as: 'currentUserDisputeReview',
+    where: {
+      fromUserId: user.id,
+    },
+    required: false,
+  },];
 
   const dispute = await QuestDispute.findByPk(r.params.disputeId, {
-    include: {
-      model: Quest,
-      include: [{
-        model: QuestChat.unscoped(),
-        where: { questChatWorkerLiteral },
-      }],
-    },
+    include,
   });
 
   if (!dispute) {
@@ -87,6 +93,24 @@ export async function getDispute(r) {
 }
 
 export async function getDisputes(r) {
+  const include = [{
+    model: QuestDisputeReview.unscoped(),
+    attributes: ["mark", "message", "toAdminId"],
+    as: 'currentUserDisputeReview',
+    where: {
+      fromUserId: r.auth.credentials.id,
+    },
+    required: false,
+  }, {
+    model: Quest.unscoped(),
+    attributes: ["id", "title", "price"],
+    as: 'quest',
+    include: [{
+      model: User.scope('shortForList'),
+      as: 'user'
+    }]
+  }];
+
   const { count, rows } = await QuestDispute.findAndCountAll({
     where: {
       [Op.or]: [
@@ -94,6 +118,9 @@ export async function getDisputes(r) {
         { openDisputeUserId: r.auth.credentials.id }
       ],
     },
+    distinct: true,
+    col: 'id',
+    include,
     limit: r.query.limit,
     offset: r.query.offset,
     order: [['createdAt', 'DESC']],

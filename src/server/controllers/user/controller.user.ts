@@ -5,6 +5,7 @@ import { Errors } from "../../utils/errors";
 import { totpValidate } from "@workquest/database-models/lib/utils";
 import { SkillsFiltersController } from "../controller.skillsFilters";
 import { createReferralProgramJob } from "../../jobs/createReferralProgram";
+import { UserStatisticController } from '../statistic/controller.userStatistic';
 import {
   UpdateWorkerProfileVisibilityPayload,
   UpdateEmployerProfileVisibilityPayload,
@@ -106,6 +107,8 @@ abstract class UserHelper {
     });
 
     await UserOldController.createStatistics(user.id);
+
+    await UserStatisticController.addSocialNetworkAction(network);
 
     return user;
   }
@@ -552,7 +555,7 @@ export class UserController {
       (ratingStatusCanInviteMeOnQuest |= status)
     );
 
-    return  WorkerProfileVisibilitySetting.update({ ratingStatusInMySearch, ratingStatusCanInviteMeOnQuest }, {
+    return WorkerProfileVisibilitySetting.update({ ratingStatusInMySearch, ratingStatusCanInviteMeOnQuest }, {
       where: { userId: this.user.id },
       transaction: options.tx,
     });

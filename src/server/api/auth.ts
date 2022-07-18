@@ -8,12 +8,20 @@ import converter from 'bech32-converting';
 import { addSendEmailJob } from '../jobs/sendEmail';
 import { generateJwt } from '../utils/auth';
 import { UserController, UserOldController } from '../controllers/user/controller.user';
+import { UserStatisticController } from '../controllers/statistic/controller.userStatistic';
 import { ChecksListUser } from '../checks-list/checksList.user';
 import { totpValidate } from '@workquest/database-models/lib/utils';
 import { createReferralProgramJob } from '../jobs/createReferralProgram';
 import { UserControllerFactory } from '../factories/factory.userController';
 import { error, getDevice, getGeo, getRandomHexToken, getRealIp, output } from '../utils';
-import { defaultUserSettings, Session, User, UserStatus, Wallet } from '@workquest/database-models/lib/models';
+import { LoginApp } from '@workquest/database-models/lib/models/user/types';
+import {
+  defaultUserSettings,
+  Session,
+  User,
+  UserStatus,
+  Wallet
+} from '@workquest/database-models/lib/models';
 import Handlebars = require('handlebars');
 
 
@@ -82,6 +90,9 @@ export function register(host: 'dao' | 'main') {
       ...generateJwt({ id: session.id, userId: session.userId }),
       userStatus: user.status,
     };
+
+    await UserStatisticController.loginAction(session);
+    await UserStatisticController.registeredAction();
 
     return output(result);
   };
@@ -152,6 +163,8 @@ export function getLoginViaSocialNetworkHandler(returnType: 'token' | 'redirect'
       userStatus: user.status,
     };
 
+    await UserStatisticController.loginAction(session);
+
     if (returnType === 'redirect') {
       const qs = querystring.stringify(result);
 
@@ -182,10 +195,13 @@ export async function confirmEmail(r) {
     if (role) {
       await userController.confirmUser(role, { tx });
       await UserController.createProfileVisibility({ userId: userController.user.id, role }, { tx });
+      await UserStatisticController.addRoleAction(role);
     } else {
       await userController.confirmUserWithStatusNeedSetRole({ tx });
     }
   });
+
+  await UserStatisticController.finishedAction();
 
   return output({ status: userController.user.status });
 }
@@ -212,6 +228,7 @@ export async function login(r) {
     isTotpPassed: !userTotpActiveStatus,
     place: getGeo(r),
     ip: getRealIp(r),
+    app: LoginApp.App,
     device: getDevice(r),
   });
 
@@ -221,6 +238,8 @@ export async function login(r) {
     totpIsActive: userTotpActiveStatus,
     address: user.wallet ? user.wallet.address : null,
   };
+
+  await UserStatisticController.loginAction(session);
 
   return output(result);
 }
@@ -232,6 +251,7 @@ export async function refreshTokens(r) {
     isTotpPassed: true,
     place: getGeo(r),
     ip: getRealIp(r),
+    app: LoginApp.App,
     device: getDevice(r),
   });
 
@@ -239,6 +259,8 @@ export async function refreshTokens(r) {
     ...generateJwt({ id: newSession.id, userId: newSession.userId }),
     userStatus: r.auth.credentials.status,
   };
+
+  await UserStatisticController.loginAction(newSession);
 
   return output(result);
 }
@@ -250,7 +272,7 @@ export async function logout(r) {
       logoutAt: Date.now(),
     },
     {
-      where: { id: r.auth.artifacts.sessionId },
+      where: { id: r.auth.artifacts.session.id },
     },
   );
 
@@ -320,6 +342,7 @@ export async function loginWallet(r) {
     place: getGeo(r),
     ip: getRealIp(r),
     device: getDevice(r),
+    app: LoginApp.Wallet,
     isTotpPassed: !userTotpActiveStatus,
   });
 
@@ -330,6 +353,8 @@ export async function loginWallet(r) {
     address: wallet.address,
     userId: user.id,
   };
+
+  await UserStatisticController.loginAction(session);
 
   return output(result);
 }
@@ -342,13 +367,21 @@ export async function validateUserPassword(r) {
   });
 }
 
-export async function validateUserTotp(r) {
+export async function currentSessionValidateTotp(r) {
   const userControllerFactory = await UserControllerFactory.createByIdWithPassword(r.auth.credentials.id);
 
-  const isValid = userControllerFactory.user.isTOTPEnabled() ?
-    totpValidate(r.payload.token, userControllerFactory.user.settings.security.TOTP.secret) : true;
+  if (r.auth.artifacts.session.isTotpPassed) {
+    return output({ isValid: true });
+  }
 
-  await Session.update({ isTotpPassed: isValid }, { where: { id: r.auth.artifacts.sessionId } });
+  const isValid =
+    userControllerFactory.user.isTOTPEnabled()
+      ? totpValidate(r.payload.token, userControllerFactory.user.settings.security.TOTP.secret)
+      : true
+
+  if (isValid) {
+    await Session.update({ isTotpPassed: isValid }, { where: { id: r.auth.artifacts.session.id } });
+  }
 
   return output({ isValid });
 }

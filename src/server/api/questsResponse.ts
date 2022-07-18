@@ -21,8 +21,8 @@ import {
   QuestStatus,
   QuestsResponse,
   QuestsResponseType,
-  QuestsResponseStatus,
-} from '@workquest/database-models/lib/models';
+  QuestsResponseStatus, Wallet
+} from "@workquest/database-models/lib/models";
 
 export async function responseOnQuest(r) {
   const { message, medias } = r.payload;
@@ -52,6 +52,7 @@ export async function responseOnQuest(r) {
 
     const questChatController = await QuestChatController.create({
       message,
+      medias,
       quest: questController.quest,
       worker: workerController.user,
       questResponse: questResponseController.questResponse,
@@ -59,6 +60,15 @@ export async function responseOnQuest(r) {
 
     return [questResponseController, questChatController];
   }) as [QuestResponseController, QuestChatController];
+
+  const wallet = await Wallet.unscoped().findOne({
+    where: {
+      userId: workerController.user.id
+    },
+    attributes: ["address"]
+  });
+
+  questResponseController.worker.wallet = wallet;
 
   r.server.app.broker.sendChatNotification({
     action: ChatNotificationActions.newMessage,
@@ -211,6 +221,15 @@ export async function acceptInviteOnQuest(r) {
     await questInviteController.acceptInvitation({ tx });
     await questChatController.sendInfoMessageAboutAcceptInvite({ tx });
   });
+
+  const wallet = await Wallet.unscoped().findOne({
+    where: {
+      userId: workerController.user.id
+    },
+    attributes: ["address"]
+  });
+
+  questInviteController.worker.wallet = wallet;
 
   r.server.app.broker.sendQuestNotification({
     action: QuestNotificationActions.workerAcceptedInvitationToQuest,

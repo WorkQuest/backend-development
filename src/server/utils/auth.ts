@@ -44,12 +44,12 @@ export function tokenValidate(tokenType: 'access' | 'refresh', allowedUnconfirme
     if (session.user.status === UserStatus.Blocked) {
       throw error(Errors.BlockedUser, 'Blocked user', {});
     }
-    if (!session.isTotpPassed && r.route.path !== '/api/v1/auth/validate-totp') {
+    if (!session.isTotpPassed && r.route.path !== '/api/v1/auth/session/current/validate-totp') {
       throw error(Errors.Forbidden, 'User must pass 2FA', {});
     } else if (session.user.status === UserStatus.Unconfirmed && !allowedUnconfirmedRoutes.includes(r.route.path)) {
       throw error(Errors.UnconfirmedUser, 'Unconfirmed user', {});
     }
 
-    return { isValid: true, credentials: session.user, artifacts: { token, type: tokenType, sessionId: session.id } };
+    return { isValid: true, credentials: session.user, artifacts: { token, type: tokenType, session: session } };
   };
 }

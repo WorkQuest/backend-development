@@ -4,8 +4,11 @@ import { addSendEmailJob } from '../jobs/sendEmail';
 import * as path from 'path';
 import * as fs from 'fs';
 import Handlebars = require('handlebars');
-import { User } from '@workquest/database-models/lib/models';
+import { Session, User } from "@workquest/database-models/lib/models";
 import { UserOldController } from '../controllers/user/controller.user';
+import { UserStatisticController } from '../controllers/statistic/controller.userStatistic';
+import { UserControllerFactory } from "../factories/factory.userController";
+import { totpValidate } from "@workquest/database-models/lib/utils";
 
 const confirmTemplatePath = path.join(__dirname, '..', '..', '..', 'templates', 'confirm2FA.html');
 const confirmTemplate = Handlebars.compile(
@@ -40,6 +43,8 @@ export async function enableTOTP(r) {
     html: emailHtml,
   });
 
+  await UserStatisticController.enableTOTPAction();
+
   return output(base32);
 }
 
@@ -72,5 +77,18 @@ export async function disableTOTP(r) {
     'settings.security.TOTP.secret': null,
   });
 
+  await UserStatisticController.disableTOTPAction();
+
   return output();
+}
+
+export async function validateTotp(r) {
+  const userControllerFactory = await UserControllerFactory.createByIdWithPassword(r.auth.credentials.id);
+
+  const isValid =
+    userControllerFactory.user.isTOTPEnabled()
+      ? totpValidate(r.payload.token, userControllerFactory.user.settings.security.TOTP.secret)
+      : true
+
+  return output({ isValid });
 }

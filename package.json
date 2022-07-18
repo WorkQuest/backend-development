@@ -1,6 +1,6 @@
 {
   "name": "work-quest-backend",
-  "version": "1.0.11",
+  "version": "1.0.13",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -30,8 +30,7 @@
     "@types/dotenv": "^6.1.1",
     "@types/joi": "^14.3.4",
     "@types/validator": "^13.1.0",
-    "@workquest/contract-data-pools": "github:WorkQuest/contract-data-pools#testnet",
-    "@workquest/database-models": "git+https://github.com/WorkQuest/database-models.git#2f6c3538eb44d0bd2f93b07b24822f668b3c6e10",
+    "@workquest/database-models": "git+https://github.com/WorkQuest/database-models.git#dedbf08d2ddb08bc9a82295b7fe5d380a23af92f",
     "amqplib": "^0.8.0",
     "aws-sdk": "^2.918.0",
     "axios": "^0.21.1",
@@ -42,6 +41,7 @@
     "ethers": "^5.5.1",
     "filepaths": "^0.3.0",
     "geoip-lite": "^1.4.2",
+    "googleapis": "^103.0.0",
     "graphile-worker": "^0.6.0",
     "handlebars": "^4.7.7",
     "hapi-auth-bearer-token": "^6.1.6",

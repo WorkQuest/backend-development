@@ -1,5 +1,5 @@
 import { ChatMemberValidator } from './ChatMemberValidator';
-import { HandlerDecoratorBase, IHandler } from '../../types';
+import { BaseDecoratorHandler, IHandler } from '../../types';
 import { ChatMemberAccessPermission } from './ChatMemberAccessPermission';
 import { ChatMember, User, Chat } from '@workquest/database-models/lib/models';
 
@@ -47,7 +47,7 @@ export class GetChatMembersByIdsHandler implements IHandler<GetChatMembersByIdsC
   }
 }
 
-export class GetChatMemberPostValidationHandler<Tin extends { chat: Chat }> extends HandlerDecoratorBase<Tin, Promise<ChatMember>> {
+export class GetChatMemberPostValidationHandler<Tin extends { chat: Chat }> extends BaseDecoratorHandler<Tin, Promise<ChatMember>> {
 
   private readonly validator: ChatMemberValidator;
 
@@ -68,7 +68,7 @@ export class GetChatMemberPostValidationHandler<Tin extends { chat: Chat }> exte
   }
 }
 
-export class GetChatMemberPostFullAccessPermissionHandler<Tin extends { chat: Chat }> extends HandlerDecoratorBase<Tin, Promise<ChatMember>> {
+export class GetChatMemberPostFullAccessPermissionHandler<Tin extends { chat: Chat }> extends BaseDecoratorHandler<Tin, Promise<ChatMember>> {
 
   private readonly accessPermission: ChatMemberAccessPermission;
 
@@ -89,7 +89,7 @@ export class GetChatMemberPostFullAccessPermissionHandler<Tin extends { chat: Ch
   }
 }
 
-export class GetChatMemberPostLimitedAccessPermissionHandler<Tin extends { chat: Chat }> extends HandlerDecoratorBase<Tin, Promise<ChatMember>> {
+export class GetChatMemberPostLimitedAccessPermissionHandler<Tin extends { chat: Chat }> extends BaseDecoratorHandler<Tin, Promise<ChatMember>> {
 
   private readonly accessPermission: ChatMemberAccessPermission;
 
@@ -110,7 +110,7 @@ export class GetChatMemberPostLimitedAccessPermissionHandler<Tin extends { chat:
   }
 }
 
-export class GetChatMembersPostValidationHandler<Tin extends { chat: Chat }> extends HandlerDecoratorBase<Tin, Promise<ChatMember[]>> {
+export class GetChatMembersPostValidationHandler<Tin extends { chat: Chat }> extends BaseDecoratorHandler<Tin, Promise<ChatMember[]>> {
 
   private readonly validator: ChatMemberValidator;
 
@@ -131,7 +131,7 @@ export class GetChatMembersPostValidationHandler<Tin extends { chat: Chat }> ext
   }
 }
 
-export class GetActiveChatMembersPostAccessPermissionHandler<Tin extends { chat: Chat }> extends HandlerDecoratorBase<Tin, Promise<ChatMember[]>> {
+export class GetActiveChatMembersPostAccessPermissionHandler<Tin extends { chat: Chat }> extends BaseDecoratorHandler<Tin, Promise<ChatMember[]>> {
 
   private readonly accessPermission: ChatMemberAccessPermission;
 

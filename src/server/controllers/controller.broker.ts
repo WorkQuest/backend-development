@@ -29,6 +29,9 @@ export const enum QuestNotificationActions {
   userLeftReviewAboutQuest = 'userLeftReviewAboutQuest',
   /** Dispute */
   openDispute = 'openDispute',
+  /** Other */
+  newQuestForSpecialization = 'newQuestForSpecialization',
+  updateRatingStatistic = 'updateRatingStatistic'
 }
 
 export const enum ChatNotificationActions {

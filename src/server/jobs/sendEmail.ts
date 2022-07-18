@@ -13,7 +13,7 @@ export interface SendEmailPayload {
 }
 
 export async function addSendEmailJob(payload: SendEmailPayload) {
-  return addJob('sendEmail', payload);
+  return addJob('sendEmail', payload, { max_attempts: 25 });
 }
 
 export default async function (p: SendEmailPayload) {
