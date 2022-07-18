@@ -51,14 +51,11 @@ export async function getQuest(r) {
     required: false
   }, {
     model: User.scope('shortWithWallet'),
-    as: 'user'
-  }, {
-    model: User.scope('shortWithWallet'),
-    as: 'assignedWorker'
+    as: 'assignedWorker',
   }, {
     model: QuestDispute.unscoped(),
     as: 'openDispute',
-    required: false,
+    attributes: ["id", "status"],
     where: {
       [Op.or]: [
         { opponentUserId: r.auth.credentials.id },
@@ -66,8 +63,9 @@ export async function getQuest(r) {
       ],
       status: { [Op.in]: [DisputeStatus.Pending, DisputeStatus.Created, DisputeStatus.InProgress] },
     },
+    required: false,
   }, {
-    model: QuestsReview.unscoped(),
+    model: QuestsReview,
     as: 'yourReview',
     where: { fromUserId: r.auth.credentials.id },
     required: false,
@@ -75,7 +73,8 @@ export async function getQuest(r) {
 
   if (user.role === UserRole.Worker) {
     include.push({
-      model: QuestChat.scope('forQuestChat'),
+      model: QuestChat.unscoped(),
+      attributes: ["chatId"],
       as: 'questChat',
       required: false,
       where: { workerId: user.id },
@@ -212,9 +211,6 @@ export function getQuests(type: 'list' | 'points', requester?: 'worker' | 'emplo
     const entersAreaLiteral = literal(
       'st_within("Quest"."locationPostGIS", st_makeenvelope(:northLng, :northLat, :southLng, :southLat, 4326))'
     );
-    const questChatLiteral = literal(
-      'CASE WHEN "questChat->quest" = NULL THEN NULL ELSE "questChat->quest"."id" END'
-    );
     const questSpecializationOnlyPathsLiteral = literal(
       '(1 = (CASE WHEN EXISTS (SELECT "id" FROM "QuestSpecializationFilters" WHERE "questId" = "Quest"."id" AND "QuestSpecializationFilters"."path" IN (:path)) THEN 1 END))'
     );
@@ -226,9 +222,10 @@ export function getQuests(type: 'list' | 'points', requester?: 'worker' | 'emplo
       'OR (1 = (CASE WHEN EXISTS (SELECT * FROM "QuestSpecializationFilters" WHERE "questId" = "Quest"."id" AND "QuestSpecializationFilters"."industryKey" IN (:industryKey)) THEN 1 END))'
     );
     const userSearchLiteral = literal(
-      // TODO добавь эти поля в replace типо так ILIKE '%:searchByFirstName%'`
-      `(SELECT "firstName" FROM "Users" WHERE "id" = "Quest"."userId") ILIKE '%${r.query.q}%'` +
-      `OR (SELECT "lastName" FROM "Users" WHERE "id" = "Quest"."userId") ILIKE '%${r.query.q}%'`
+      `(SELECT "firstName" FROM "Users" WHERE "id" = "Quest"."userId") ILIKE :searchByName ` +
+      `OR (SELECT "lastName" FROM "Users" WHERE "id" = "Quest"."userId") ILIKE :searchByName ` +
+      `OR (SELECT CONCAT_WS(' ', "firstName", NULL, "lastName") FROM "Users" WHERE "id" = "Quest"."userId")  ILIKE :searchByName ` +
+      `OR (SELECT CONCAT_WS(' ', "lastName", NULL, "firstName") FROM "Users" WHERE "id" = "Quest"."userId")  ILIKE :searchByName `
     );
     const questChatWorkerLiteral = literal(
       '"questChat"."workerId" = "Quest"."assignedWorkerId"'
@@ -240,7 +237,7 @@ export function getQuests(type: 'list' | 'points', requester?: 'worker' | 'emplo
       `(1 = (CASE WHEN EXISTS (SELECT * FROM "QuestsResponses" as qResp ` +
       `WHERE qResp."questId" = "Quest"."id" AND (qResp."workerId"  = '${ user.id }' AND ` +
         `qResp."status" IN (${ QuestsResponseStatus.Open }, ${ QuestsResponseStatus.Accepted }))) THEN 1 END)) `
-    )
+    );
 
     const include = [];
     const replacements = {};
@@ -260,11 +257,13 @@ export function getQuests(type: 'list' | 'points', requester?: 'worker' | 'emplo
     };
 
     if (r.query.q) {
-      where[Op.or].push(searchQuestFields.map(field => ({
-        [field]: { [Op.iLike]: `%${r.query.q}%` }
+      where[Op.or] = (searchQuestFields.map(field => ({
+        [field]: {[Op.iLike]: `%${r.query.q}%` }
       })));
 
-      where[Op.or].push(userSearchLiteral)
+      replacements['searchByName'] = `%${r.query.q}%`;
+
+      where[Op.or].push(userSearchLiteral);
     }
     if (requester && requester === 'worker') {
       checksListUser
@@ -313,7 +312,8 @@ export function getQuests(type: 'list' | 'points', requester?: 'worker' | 'emplo
     }
     if (user.role === UserRole.Worker) {
       include.push({
-        model: QuestChat.scope('forQuestChat'),
+        model: QuestChat.unscoped(),
+        attributes: ["chatId"],
         where: { workerId: user.id },
         as: 'questChat',
         required: false,
@@ -321,26 +321,11 @@ export function getQuests(type: 'list' | 'points', requester?: 'worker' | 'emplo
     }
     if (user.role === UserRole.Employer) {
       include.push({
-        model: QuestChat.scope('forQuestChat'),
+        model: QuestChat.unscoped(),
         as: 'questChat',
-        attributes: {
-          include: [[questChatLiteral, 'id']],
-        },
+        attributes: ["chatId"],
         where: { employerId: user.id, questChatWorkerLiteral },
         required: false,
-        include: {
-          model: Quest.unscoped(),
-          as: 'quest',
-          attributes: ['id', 'status'],
-          where: {
-            status: [
-              QuestStatus.Dispute,
-              QuestStatus.Recruitment,
-              QuestStatus.WaitingForConfirmFromWorkerOnAssign,
-            ],
-          },
-          required: false,
-        },
       });
     }
 

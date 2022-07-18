@@ -14,7 +14,6 @@ module.exports = {
           model: 'DiscussionComments',
           key: 'id'
         },
-        unique: true
       },
       userId: {
         type: Sequelize.DataTypes.STRING,
@@ -23,7 +22,6 @@ module.exports = {
           model: 'Users',
           key: 'id'
         },
-        unique: true
       },
       createdAt: {
         type: Sequelize.DataTypes.DATE,

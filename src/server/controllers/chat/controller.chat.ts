@@ -85,7 +85,7 @@ export class ChatController {
       },
       include: {
         model: ChatMemberDeletionData,
-        as: 'chatMemberDeletionData',
+        as: 'deletionData',
       }
     });
   }
