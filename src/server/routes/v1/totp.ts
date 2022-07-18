@@ -1,7 +1,11 @@
 import * as Joi from 'joi';
-import { emptyOkSchema, hexTokenSchema, outputOkSchema, totpSchema } from '@workquest/database-models/lib/schemes';
 import * as handlers from "../../api/totp";
-import { validateTotp } from "../../api/totp";
+import {
+  totpSchema,
+  emptyOkSchema,
+  hexTokenSchema,
+  outputOkSchema,
+} from '@workquest/database-models/lib/schemes';
 
 export default [
   {
