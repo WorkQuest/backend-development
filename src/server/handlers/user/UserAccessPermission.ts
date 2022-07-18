@@ -14,11 +14,9 @@ export class UserAccessPermission {
     }
   }
   public UsersHasConfirmedAccess(users: User[]) {
-    const unconfirmedUsers = users.filter(user => {
-      if (user.status !== UserStatus.Confirmed) {
-        return user.id
-      }
-    });
+    const unconfirmedUsers = users
+      .filter(user => user.status !== UserStatus.Confirmed)
+      .map(user => { return user.id });
 
     if (unconfirmedUsers.length !== 0 ) {
       throw error(Errors.InvalidStatus, 'Users must have confirmed status', {

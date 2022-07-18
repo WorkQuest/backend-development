@@ -66,7 +66,7 @@ const init = async () => {
     host: config.server.host,
     query: { parser: (query) => Qs.parse(query) },
     routes: {
-      validate: {
+      validate: { 
         options: { abortEarly: false },
         failAction: handleValidationError,
       },
