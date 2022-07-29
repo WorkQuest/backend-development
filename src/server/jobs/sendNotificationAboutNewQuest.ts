@@ -27,6 +27,8 @@ export default async function(payload: SendNotificationAboutNewQuestPayload) {
     where: { questId: quest.id }
   });
 
+  const recipients: string[] = [];
+
   for (const { industryKey, specializationKey } of specializations) {
     const count = await UserSpecializationFilter.count({
       where: { industryKey, specializationKey },
@@ -41,11 +43,15 @@ export default async function(payload: SendNotificationAboutNewQuestPayload) {
         offset
       });
 
-      brokerController.sendQuestNotification({
-        action: QuestNotificationActions.newQuestForSpecialization,
-        recipients: [...new Set(users.map(({ userId }) => userId))],
-        data: quest
-      });
+      recipients.push(...users.map(({ userId }) => userId));
     }
+  }
+
+  if (recipients.length) {
+    brokerController.sendQuestNotification({
+      action: QuestNotificationActions.newQuestForSpecialization,
+      recipients: [...new Set(recipients)],
+      data: quest
+    });
   }
 }
