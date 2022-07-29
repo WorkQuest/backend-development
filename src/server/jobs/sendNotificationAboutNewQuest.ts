@@ -32,7 +32,7 @@ export default async function(payload: SendNotificationAboutNewQuestPayload) {
       where: { industryKey, specializationKey },
     });
 
-    for (let offset = 0; offset <=  count; offset += 100) {
+    for (let offset = 0; offset <= count; offset += 100) {
       const users = await UserSpecializationFilter.findAll({
         where: { industryKey, specializationKey },
         order: [['createdAt', 'ASC']],
@@ -43,7 +43,7 @@ export default async function(payload: SendNotificationAboutNewQuestPayload) {
 
       brokerController.sendQuestNotification({
         action: QuestNotificationActions.newQuestForSpecialization,
-        recipients: users.map(({ userId }) => userId),
+        recipients: [...new Set(users.map(({ userId }) => userId))],
         data: quest
       });
     }
