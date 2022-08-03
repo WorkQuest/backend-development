@@ -15,12 +15,17 @@ import {
 export async function getMyReferrals(r) {
   const affiliateUser: User = r.auth.credentials;
 
+  const where = {
+    ...(r.query.referralStatus && { referralStatus: r.query.referralStatus })
+  };
+
   const { count, rows } = await User.scope('short').findAndCountAll({
     include: [{
       model: ReferralProgramReferral.unscoped(),
       as: 'referralUser',
       attributes: ['id', 'referralStatus'],
       required: true,
+      where,
       include: [{
         model: ReferralProgramAffiliate.unscoped(),
         as: 'referralProgramAffiliate',
@@ -69,7 +74,7 @@ export async function getMySignedCreatedReferrals(r) {
     return output(null);
   }
 
-  const data = r.server.app.web3.utils.soliditySha3({ t:'address', v: affiliateAddress.affiliateUser.wallet.address }, { t: 'address', v: referralAddresses });
+  const data = r.server.app.web3.utils.soliditySha3({ t: 'address', v: affiliateAddress.affiliateUser.wallet.address }, { t: 'address', v: referralAddresses });
   const signed = await r.server.app.web3.eth.accounts.sign(data, configReferral.privateKey);
 
   return output({
@@ -98,5 +103,5 @@ export async function getMyReferralProgramClaimedAndPaidEvents(r) {
     }
   })
 
-  return output ({ count: countResults[0].count, events: eventsResult });
+  return output({ count: countResults[0].count, events: eventsResult });
 }

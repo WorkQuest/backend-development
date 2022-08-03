@@ -6,6 +6,7 @@ import {
   referralSchema,
   outputOkSchema,
   accountAddressSchema,
+  referralStatusSchema,
   outputPaginationSchema,
   accountAddressesSchema,
   referralProgramClaimedAndPaidEventSchema,
@@ -22,6 +23,7 @@ export default [{
     description: 'Get my referrals',
     validate: {
       query: Joi.object({
+        referralStatus: referralStatusSchema,
         offset: offsetSchema,
         limit: limitSchema,
       }).label('GetMyReferralsQuery')
