@@ -15,12 +15,17 @@ import {
 export async function getMyReferrals(r) {
   const affiliateUser: User = r.auth.credentials;
 
+  const where = {
+    ...(r.query.referralStatus && { referralStatus: r.query.referralStatus })
+  };
+
   const { count, rows } = await User.scope('short').findAndCountAll({
     include: [{
       model: ReferralProgramReferral.unscoped(),
       as: 'referralUser',
       attributes: ['id', 'referralStatus'],
       required: true,
+      where,
       include: [{
         model: ReferralProgramAffiliate.unscoped(),
         as: 'referralProgramAffiliate',
