@@ -172,7 +172,11 @@ export async function sendComment(r) {
     return error(Errors.NotFound, 'Discussion not found', {});
   }
 
-  const notificationRecipients = [discussion.authorId];
+  const notificationRecipients = [];
+
+  if (discussion.authorId !== user.id) {
+    notificationRecipients.push(discussion.authorId);
+  }
 
   const transaction = await r.server.app.db.transaction();
 
@@ -188,7 +192,10 @@ export async function sendComment(r) {
     await rootComment.increment('amountSubComments', { transaction });
     await discussion.increment('amountComments', { transaction });
 
-    notificationRecipients.push(rootComment.authorId);
+    if (rootComment.authorId !== user.id) {
+      notificationRecipients.push(rootComment.authorId);
+    }
+
     commentLevel = rootComment.level + 1;
   } else {
     await discussion.increment('amountComments', { transaction });
@@ -213,11 +220,13 @@ export async function sendComment(r) {
   comment.setDataValue('rootComment', rootComment);
   comment.setDataValue('user', userController.shortCredentials);
 
-  r.server.app.broker.sendDaoNotification({
-    action: DaoNotificationActions.newCommentInDiscussion,
-    recipients: notificationRecipients,
-    data: comment,
-  });
+  if (notificationRecipients.length) {
+    r.server.app.broker.sendDaoNotification({
+      action: DaoNotificationActions.newCommentInDiscussion,
+      recipients: notificationRecipients,
+      data: comment,
+    });
+  }
 
   return output(comment);
 }
