@@ -11,6 +11,11 @@ import {
   proposalDescriptionSchema,
   proposalVoteCastEventSchema,
   proposalVoteCastEventQuerySchema,
+  walletAddressSchema,
+  limitSchema,
+  offsetSchema,
+  proposalDelegateChangedEventSchema,
+  proposalDelegateVotesChangedEventSchema
 } from '@workquest/database-models/lib/schemes';
 
 export default [
@@ -91,4 +96,51 @@ export default [
       },
     },
   },
+  {
+    method: 'GET',
+    path: '/v1/proposal/delegate/changed',
+    handler: handlers.getDelegateChangedEvents,
+    options: {
+      auth: 'jwt-access',
+      id: 'v1.proposal.getDelegateChangedEvents',
+      tags: ['api', 'proposal'],
+      description: 'Get delegate changed events',
+      validate: {
+        query: Joi.object({
+          delegator: walletAddressSchema,
+          fromDelegate: walletAddressSchema,
+          toDelegate: walletAddressSchema,
+          limit: limitSchema,
+          offset: offsetSchema,
+        }).label('GetDelegateChangedEventsQuery'),
+      },
+      response: {
+        schema: outputPaginationSchema('delegates', proposalDelegateChangedEventSchema)
+          .label('GetDelegateChangedEventsResponse'),
+      }
+    }
+  },
+  {
+    method: 'GET',
+    path: '/v1/proposal/delegate/votes',
+    handler: handlers.getDelegateVotesChangedEvents,
+    options: {
+      auth: 'jwt-access',
+      id: 'v1.proposal.getDelegateVotesChangedEvents',
+      tags: ['api', 'proposal'],
+      description: 'Get delegate votes changed events',
+      validate: {
+        query: Joi.object({
+          delegator: walletAddressSchema,
+          delegatee: walletAddressSchema,
+          limit: limitSchema,
+          offset: offsetSchema,
+        }).label('GetDelegateVotesChangedEventsQuery'),
+      },
+      response: {
+        schema: outputPaginationSchema('votes', proposalDelegateVotesChangedEventSchema)
+          .label('GetDelegateVotesChangedEventsResponse'),
+      }
+    }
+  }
 ];

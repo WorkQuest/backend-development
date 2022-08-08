@@ -1,4 +1,4 @@
-import { Op, literal } from 'sequelize';
+import { Op, literal, IncludeOptions } from 'sequelize';
 import { error, output } from '../utils';
 import { Errors } from '../utils/errors';
 import { MediaController } from '../controllers/controller.media';
@@ -9,9 +9,26 @@ import {
   ProposalStatus,
   ProposalCreatedEvent,
   ProposalVoteCastEvent,
+  ProposalDelegateChangedEvent,
+  ProposalDelegateVotesChangedEvent
 } from '@workquest/database-models/lib/models';
 
 const searchFields = ['title', 'description'];
+
+function getDelegateIncludeOptions(modelAlias) {
+  return {
+    model: Wallet,
+    as: modelAlias,
+    attributes: [
+      'address',
+      'bech32Address'
+    ],
+    include: [{
+      model: User.scope('short'),
+      as: 'user'
+    }]
+  } as IncludeOptions
+}
 
 export async function createProposal(r) {
   const user: User = r.auth.credentials;
@@ -125,4 +142,62 @@ export async function getVoteCastEventsProposal(r) {
   });
 
   return { count, votes: rows };
+}
+
+export async function getDelegateChangedEvents(r) {
+  const where = {
+    ...(r.query.delegator && { delegator: r.query.delegator.toLowerCase() }),
+    ...(r.query.fromDelegate && { fromDelegate: r.query.fromDelegate.toLowerCase() }),
+    ...(r.query.toDelegate && { toDelegate: r.query.toDelegate.toLowerCase() }),
+  }
+
+  const { count, rows: delegates } = await ProposalDelegateChangedEvent.findAndCountAll({
+    where,
+    attributes: {
+      exclude: [
+        'id',
+        'network',
+        'createdAt',
+        'updatedAt'
+      ],
+    },
+    include: [
+      getDelegateIncludeOptions('delegatorWallet'),
+      getDelegateIncludeOptions('fromDelegateWallet'),
+      getDelegateIncludeOptions('toDelegateWallet'),
+    ],
+    limit: r.query.limit,
+    offset: r.query.offset,
+    order: [['timestamp', 'DESC']]
+  });
+
+  return output({ count, delegates });
+}
+
+export async function getDelegateVotesChangedEvents(r) {
+  const where = {
+    ...(r.query.delegator && { delegator: r.query.delegator.toLowerCase() }),
+    ...(r.query.delegatee && { delegatee: r.query.delegatee.toLowerCase() })
+  }
+
+  const { count, rows: votes } = await ProposalDelegateVotesChangedEvent.findAndCountAll({
+    where,
+    attributes: {
+      exclude: [
+        'id',
+        'network',
+        'createdAt',
+        'updatedAt'
+      ],
+    },
+    include: [
+      getDelegateIncludeOptions('delegatorWallet'),
+      getDelegateIncludeOptions('delegateeWallet'),
+    ],
+    limit: r.query.limit,
+    offset: r.query.offset,
+    order: [['timestamp', 'DESC']]
+  });
+
+  return output({ count, votes });
 }
