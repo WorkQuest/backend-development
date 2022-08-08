@@ -15,7 +15,7 @@ import {
   limitSchema,
   offsetSchema,
   proposalDelegateChangedEventSchema,
-  proposalDelegateVotesChangedEventSchema
+  proposalDelegateVotesChangedEventSchema, proposalDelegateUserHistorySchema
 } from '@workquest/database-models/lib/schemes';
 
 export default [
@@ -140,6 +140,21 @@ export default [
       response: {
         schema: outputPaginationSchema('votes', proposalDelegateVotesChangedEventSchema)
           .label('GetDelegateVotesChangedEventsResponse'),
+      }
+    }
+  },
+  {
+    method: 'GET',
+    path: '/v1/proposal/delegate/my',
+    handler: handlers.getMyDelegateHistory,
+    options: {
+      auth: 'jwt-access',
+      id: 'v1.proposal/getMyDelegatesHistory',
+      tags: ['api', 'proposal'],
+      description: 'Get delegates history for user',
+      response: {
+        schema: outputPaginationSchema('delegates', proposalDelegateUserHistorySchema)
+          .label('GetMyDelegatesHistoryResponse'),
       }
     }
   }

@@ -10,7 +10,7 @@ import {
   ProposalCreatedEvent,
   ProposalVoteCastEvent,
   ProposalDelegateChangedEvent,
-  ProposalDelegateVotesChangedEvent
+  ProposalDelegateVotesChangedEvent, ProposalDelegateUserHistory
 } from '@workquest/database-models/lib/models';
 
 const searchFields = ['title', 'description'];
@@ -168,6 +168,34 @@ export async function getDelegateChangedEvents(r) {
     ],
     limit: r.query.limit,
     offset: r.query.offset,
+    order: [['timestamp', 'DESC']]
+  });
+
+  return output({ count, delegates });
+}
+
+export async function getMyDelegateHistory(r) {
+  const delegatorWallet = await Wallet.findOne({
+    attributes: ['address'],
+    where: { userId: r.auth.credentials.id }
+  });
+
+  if (!delegatorWallet) {
+    return error(Errors.NotFound, 'User wallet not found', {});
+  }
+
+  const { count, rows: delegates } = await ProposalDelegateUserHistory.findAndCountAll({
+    include: [{
+      model: Wallet,
+      as: 'delegateeWallet',
+      attributes: ['address', 'bech32Address'],
+      include: [{
+        model: User.scope('short'),
+        as: 'user'
+      }]
+    }],
+    attributes: ['delegator', 'delegatee', 'timestamp'],
+    where: { delegator: delegatorWallet.address },
     order: [['timestamp', 'DESC']]
   });
 
