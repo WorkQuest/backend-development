@@ -194,6 +194,8 @@ export async function getMyDelegateHistory(r) {
         as: 'user'
       }]
     }],
+    limit: r.query.limit,
+    offset: r.query.offset,
     attributes: ['delegator', 'delegatee', 'timestamp'],
     where: { delegator: delegatorWallet.address },
     order: [['timestamp', 'DESC']]

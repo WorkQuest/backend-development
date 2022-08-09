@@ -145,13 +145,19 @@ export default [
   },
   {
     method: 'GET',
-    path: '/v1/proposal/delegate/my',
+    path: '/v1/proposal/delegate/history',
     handler: handlers.getMyDelegateHistory,
     options: {
       auth: 'jwt-access',
       id: 'v1.proposal/getMyDelegatesHistory',
       tags: ['api', 'proposal'],
       description: 'Get delegates history for user',
+      validate: {
+        query: Joi.object({
+          limit: limitSchema,
+          offset: offsetSchema,
+        }).label('GetMyDelegateHistory')
+      },
       response: {
         schema: outputPaginationSchema('delegates', proposalDelegateUserHistorySchema)
           .label('GetMyDelegatesHistoryResponse'),
