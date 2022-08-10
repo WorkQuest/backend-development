@@ -215,16 +215,20 @@ export async function getDelegateVotesChangedEvents(r) {
   const { count, rows: votes } = await ProposalDelegateVotesChangedEvent.findAndCountAll({
     where,
     attributes: {
-      exclude: [
-        'id',
-        'network',
-        'createdAt',
-        'updatedAt'
-      ],
+      exclude: ['id', 'network', 'createdAt', 'updatedAt', 'timestamp'],
+      include: [
+        [literal('"newBalance" - "previousBalance"'), 'delegated'],
+        [literal(`
+          CASE WHEN "newBalance" - "previousBalance" > 0 
+            THEN 'delegate' 
+            ELSE 'undelegate' END
+        `), 'type'],
+        [literal('"timestamp"'), 'delegateTimestamp']
+      ]
     },
     limit: r.query.limit,
     offset: r.query.offset,
-    order: [['timestamp', 'DESC']]
+    order: literal('timestamp DESC, delegated DESC')
   });
 
   return output({ count, votes });
