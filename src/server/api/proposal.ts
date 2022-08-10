@@ -185,6 +185,7 @@ export async function getMyDelegateHistory(r) {
   }
 
   const { count, rows: delegates } = await ProposalDelegateUserHistory.findAndCountAll({
+    distinct: true,
     include: [{
       model: Wallet,
       as: 'delegateeWallet',
