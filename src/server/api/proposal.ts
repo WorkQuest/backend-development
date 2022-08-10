@@ -24,7 +24,7 @@ function getDelegateIncludeOptions(modelAlias) {
       'bech32Address'
     ],
     include: [{
-      model: User.scope('short'),
+      model: User.scope('shortForList'),
       as: 'user'
     }]
   } as IncludeOptions
@@ -192,7 +192,7 @@ export async function getMyDelegateHistory(r) {
       as: 'delegateeWallet',
       attributes: ['address', 'bech32Address'],
       include: [{
-        model: User.scope('short'),
+        model: User.scope('shortForList'),
         as: 'user'
       }],
     }],
@@ -222,10 +222,6 @@ export async function getDelegateVotesChangedEvents(r) {
         'updatedAt'
       ],
     },
-    include: [
-      getDelegateIncludeOptions('delegatorWallet'),
-      getDelegateIncludeOptions('delegateeWallet'),
-    ],
     limit: r.query.limit,
     offset: r.query.offset,
     order: [['timestamp', 'DESC']]
