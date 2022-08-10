@@ -186,6 +186,7 @@ export async function getMyDelegateHistory(r) {
 
   const { count, rows: delegates } = await ProposalDelegateUserHistory.findAndCountAll({
     distinct: true,
+    col: 'delegatee',
     include: [{
       model: Wallet,
       as: 'delegateeWallet',
@@ -193,7 +194,7 @@ export async function getMyDelegateHistory(r) {
       include: [{
         model: User.scope('short'),
         as: 'user'
-      }]
+      }],
     }],
     limit: r.query.limit,
     offset: r.query.offset,
