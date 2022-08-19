@@ -40,6 +40,10 @@ interface UpdateEmployerProfileInfoPayload {
 }
 
 export class EditEmployerProfileHandler extends BaseDomainHandler<EditEmployerProfileCommand, EditEmployerProfileResult> {
+  private async updateMetadata(user: User) {
+    await user.update({ "metadata.state.neverEditedProfileFlag": false }, { transaction: this.options.tx });
+  }
+
   private editPhoneNumber(payload: EditPhoneNumberPayload) {
     const phonesFields = payload.phoneNumber
       ? { tempPhone: payload.user.tempPhone, phone: payload.user.phone }
@@ -112,6 +116,7 @@ export class EditEmployerProfileHandler extends BaseDomainHandler<EditEmployerPr
     this.editLocation(command.profile);
     this.editPhoneNumber(command.profile);
     this.updateEmployerProfileInfo(command.profile);
+    await this.updateMetadata(command.profile.user);
 
     return Promise.all([
       command.profile.user.save({ transaction: this.options.tx }),
