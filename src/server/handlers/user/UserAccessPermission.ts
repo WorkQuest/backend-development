@@ -29,6 +29,16 @@ export class UserAccessPermission {
       throw error(Errors.InvalidPayload, 'TOTP is invalid', [{ field: 'totp', reason: 'invalid' }]);
     }
   }
+  public HasChangeProfileAccess(user: User, totpCode?: string) {
+    if (user.metadata.state.neverEditedProfileFlag) {
+      return;
+    }
+    if (!totpCode) {
+      throw error(Errors.Forbidden, 'User can edit profile via 2FA', {});
+    }
+
+    this.Has2FAAccess(user, totpCode);
+  }
   public async HasPasswordAccess(user: User, password: string) {
     if (!user.password) {
       throw error(Errors.Forbidden, 'User not found or password does not match', {});

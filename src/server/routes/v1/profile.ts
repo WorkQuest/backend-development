@@ -174,13 +174,16 @@ export default [{
     description: "Edit employer profile information",
     validate: {
       payload: Joi.object({
-        avatarId: idSchema.allow(null).required(),
-        firstName: userFirstNameSchema.required(),
-        lastName: userLastNameSchema.required(),
-        phoneNumber: phoneSchema.allow(null).required(),
-        locationFull: locationFullSchema.allow(null).required(),
-        additionalInfo: userAdditionalInfoEmployerSchema.required(),
-        profileVisibility: employerProfileVisibilitySettingsSchema.required(),
+        totpCode: totpSchema,
+        profile: Joi.object({
+          avatarId: idSchema.allow(null).required(),
+          firstName: userFirstNameSchema.required(),
+          lastName: userLastNameSchema.required(),
+          phoneNumber: phoneSchema.allow(null).required(),
+          locationFull: locationFullSchema.allow(null).required(),
+          additionalInfo: userAdditionalInfoEmployerSchema.required(),
+          profileVisibility: employerProfileVisibilitySettingsSchema.required(),
+        }).required().label('EditEmployerProfile'),
       }).label("EditEmployerProfilePayload")
     },
     response: {
@@ -198,18 +201,21 @@ export default [{
     description: "Edit worker profile",
     validate: {
       payload: Joi.object({
-        lastName: userLastNameSchema.required(),
-        firstName: userFirstNameSchema.required(),
-        avatarId: idSchema.allow(null).required(),
-        phoneNumber: phoneSchema.allow(null).required(),
-        priority: prioritySchema.allow(null).required(),
-        locationFull: locationFullSchema.allow(null).required(),
-        workplace: workPlaceSchema.allow(null).required(),
-        payPeriod: payPeriodSchema.allow(null).required(),
-        additionalInfo: userAdditionalInfoWorkerSchema.required(),
-        costPerHour: workerCostPerHourSchema.allow(null).required(),
-        specializationKeys: specializationKeysSchema.required().unique(),
-        profileVisibility: workerProfileVisibilitySettingsSchema.required(),
+        totpCode: totpSchema,
+        profile: Joi.object({
+          lastName: userLastNameSchema.required(),
+          firstName: userFirstNameSchema.required(),
+          avatarId: idSchema.allow(null).required(),
+          phoneNumber: phoneSchema.allow(null).required(),
+          priority: prioritySchema.allow(null).required(),
+          locationFull: locationFullSchema.allow(null).required(),
+          workplace: workPlaceSchema.allow(null).required(),
+          payPeriod: payPeriodSchema.allow(null).required(),
+          additionalInfo: userAdditionalInfoWorkerSchema.required(),
+          costPerHour: workerCostPerHourSchema.allow(null).required(),
+          specializationKeys: specializationKeysSchema.required().unique(),
+          profileVisibility: workerProfileVisibilitySettingsSchema.required(),
+        }).required().label('EditWorkerProfile'),
       }).label("EditWorkerProfilePayload")
     },
     response: {

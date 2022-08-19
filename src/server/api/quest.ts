@@ -428,7 +428,7 @@ export async function getAvailableQuestsForWorker(r) {
     where: {
       userId: employerController.user.id,
       workerResponseLiteral,
-      status: QuestStatus.Recruitment,
+      status: [QuestStatus.Recruitment, QuestStatus.WaitingForConfirmFromWorkerOnAssign],
     },
     limit: r.query.limit,
     offset: r.query.offset,

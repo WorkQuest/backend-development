@@ -42,6 +42,7 @@ export async function getMe(r) {
   const user: User = r.auth.credentials;
 
   const totpIsActiveLiteral = literal(`"User"."settings"->'security'->'TOTP'->'active'`);
+  const neverEditedProfileLiteral = literal(`"User"."metadata"->'state'->'neverEditedProfileFlag'`);
 
   const include = [
     { model: Wallet, as: 'wallet', attributes: ['address'] },
@@ -62,7 +63,12 @@ export async function getMe(r) {
   }
 
   const meUser = await User.findByPk(r.auth.credentials.id, {
-    attributes: { include: [[totpIsActiveLiteral, 'totpIsActive']] },
+    attributes: {
+      include: [
+        [totpIsActiveLiteral, 'totpIsActive'],
+        [neverEditedProfileLiteral, 'neverEditedProfileFlag'],
+      ],
+    },
     include,
   });
 
@@ -381,9 +387,12 @@ export function editProfile(userRole: UserRole) {
 
     if (userRole === UserRole.Worker) {
       const [editableUser, workerProfileVisibilitySetting, userSpecializations] = await new EditProfileComposHandler(r.server.app.db).Handle({
-        user: meUser,
-        editableRole: userRole,
-        ... r.payload,
+        profile: {
+          user: meUser,
+          editableRole: userRole,
+          ...r.payload.profile,
+        },
+        secure: { totpCode: r.payload.totpCode },
       });
 
       await addUpdateReviewStatisticsJob({
@@ -397,9 +406,12 @@ export function editProfile(userRole: UserRole) {
     }
     if (userRole === UserRole.Employer) {
       const [editableUser, employerProfileVisibilitySetting] = await new EditProfileComposHandler(r.server.app.db).Handle({
-        user: meUser,
-        editableRole: userRole,
-        ... r.payload,
+        profile: {
+          user: meUser,
+          editableRole: userRole,
+          ...r.payload.profile,
+        },
+        secure: { totpCode: r.payload.totpCode },
       });
 
       await addUpdateReviewStatisticsJob({
