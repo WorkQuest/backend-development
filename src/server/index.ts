@@ -90,12 +90,12 @@ const init = async () => {
   //server.app.db = Database.instance();
   server.app.web3 = new Web3();
   server.app.broker = new ControllerBroker();
-  // server.app.scheduler = await run({
-  //   connectionString: config.dbLink,
-  //   concurrency: 5,
-  //   pollInterval: 1000,
-  //   taskDirectory: `${__dirname}/jobs`, // Папка с исполняемыми тасками.
-  // });
+  server.app.scheduler = await run({
+    connectionString: config.dbLink,
+    concurrency: 5,
+    pollInterval: 1000,
+    taskDirectory: `${__dirname}/jobs`, // Папка с исполняемыми тасками.
+  });
 
   /** JWT Auth */
   server.auth.strategy('jwt-access', 'bearer-access-token', {
