@@ -178,43 +178,42 @@ export async function sendComment(r) {
     notificationRecipients.push(discussion.authorId);
   }
 
-  const transaction = await r.server.app.db.transaction();
+  const [comment] = await r.server.app.db.transaction(async tx => {
 
-  if (r.payload.rootCommentId) {
-    rootComment = await DiscussionComment.findByPk(r.payload.rootCommentId);
+    if (r.payload.rootCommentId) {
+      rootComment = await DiscussionComment.findByPk(r.payload.rootCommentId);
 
-    if (!rootComment) {
-      await transaction.rollback();
+      if (!rootComment) {
+        throw error(Errors.NotFound, 'Discussion comment not found', {});
+      }
 
-      return error(Errors.NotFound, 'Discussion comment not found', {});
+      await rootComment.increment('amountSubComments', { transaction: tx });
+      await discussion.increment('amountComments', { transaction: tx });
+
+      if (rootComment.authorId !== user.id) {
+        notificationRecipients.push(rootComment.authorId);
+      }
+
+      commentLevel = rootComment.level + 1;
+    } else {
+      await discussion.increment('amountComments', { transaction: tx });
     }
 
-    await rootComment.increment('amountSubComments', { transaction });
-    await discussion.increment('amountComments', { transaction });
+    const comment = await DiscussionComment.create(
+      {
+        authorId: r.auth.credentials.id,
+        discussionId: r.params.discussionId,
+        rootCommentId: r.payload.rootCommentId,
+        text: r.payload.text,
+        level: commentLevel,
+      },
+      { transaction: tx },
+    );
 
-    if (rootComment.authorId !== user.id) {
-      notificationRecipients.push(rootComment.authorId);
-    }
+    await comment.$set('medias', medias, { transaction: tx });
 
-    commentLevel = rootComment.level + 1;
-  } else {
-    await discussion.increment('amountComments', { transaction });
-  }
-
-  const comment = await DiscussionComment.create(
-    {
-      authorId: r.auth.credentials.id,
-      discussionId: r.params.discussionId,
-      rootCommentId: r.payload.rootCommentId,
-      text: r.payload.text,
-      level: commentLevel,
-    },
-    { transaction },
-  );
-
-  await comment.$set('medias', medias, { transaction });
-
-  await transaction.commit();
+    return [comment];
+  });
 
   comment.setDataValue('discussion', discussion);
   comment.setDataValue('rootComment', rootComment);
