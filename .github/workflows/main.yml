@@ -20,7 +20,7 @@ jobs:
           node-version: '14.x'
       
       - name: Install pnpm
-        run: npm i -g pnpm
+        run: npm i -g pnpm && echo "auto-install-peers=true" < .npmrc
 
       - name: Install npm dependencies
         run: pnpm install
