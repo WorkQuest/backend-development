@@ -39,7 +39,7 @@ export async function responseOnQuest(r) {
     .checkUserRole(UserRole.Worker)
     .checkWorkerRatingMustMatchEmployerVisibilitySettings(questController.quest.user)
   checksListQuest
-    .checkQuestStatuses(QuestStatus.Recruitment)
+    .checkQuestStatuses(QuestStatus.Recruitment, QuestStatus.WaitingForConfirmFromWorkerOnAssign)
 
   const [questResponseController, questChatController] = await r.server.app.db.transaction(async (tx) => {
     const questResponseController = await QuestResponseController.sendRequest({

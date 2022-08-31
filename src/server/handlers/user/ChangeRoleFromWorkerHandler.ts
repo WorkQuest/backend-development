@@ -2,7 +2,12 @@ import { UserValidator } from './UserValidator';
 import { UserAccessPermission } from './UserAccessPermission';
 import { BaseDecoratorHandler, BaseDomainHandler, IHandler } from '../types';
 import { ChangeRoleFromWorkerCommand, ChangeRoleFromWorkerResult } from './types';
-import { UserChangeRoleData, UserRole } from '@workquest/database-models/lib/models';
+import {
+  UserRole,
+  UserChangeRoleData,
+  WorkerProfileVisibilitySetting,
+  EmployerProfileVisibilitySetting,
+} from '@workquest/database-models/lib/models';
 
 export class ChangeRoleFromWorkerHandler extends BaseDomainHandler<ChangeRoleFromWorkerCommand, ChangeRoleFromWorkerResult> {
   private static getDefaultAdditionalInfo(role: UserRole) {
@@ -53,7 +58,16 @@ export class ChangeRoleFromWorkerHandler extends BaseDomainHandler<ChangeRoleFro
         costPerHour: null,
         role: UserRole.Employer,
         additionalInfo: ChangeRoleFromWorkerHandler.getDefaultAdditionalInfo(UserRole.Employer),
-      }, { transaction: this.options.tx })
+      }, { transaction: this.options.tx }),
+      EmployerProfileVisibilitySetting.findOrCreate({
+        where: { userId: command.user.id },
+        defaults: { userId: command.user.id },
+        transaction: this.options.tx,
+      }),
+      WorkerProfileVisibilitySetting.destroy({
+        where: { userId: command.user.id },
+        transaction: this.options.tx,
+      }),
     ]);
   }
 }
