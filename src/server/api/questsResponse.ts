@@ -126,7 +126,7 @@ export async function inviteOnQuest(r) {
 
   r.server.app.broker.sendChatNotification({
     action: ChatNotificationActions.newMessage,
-    recipients: [employerController.user.id],
+    recipients: [workerController.user.id],
     data: await questChatController.firstMessage(),
   });
 
