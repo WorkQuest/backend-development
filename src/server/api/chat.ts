@@ -865,41 +865,29 @@ export async function setMessagesAsRead(r) {
     new GetChatMessageByIdHandler()
   ).Handle({ messageId, chat });
 
-  const otherSenders = await Message.unscoped().findAll({
-    attributes: ['senderMemberId'],
-    where: {
-      chatId: chat.id,
-      senderMemberId: { [Op.ne]: meMember.id },
-      senderStatus: SenderMessageStatus.Unread,
-      number: { [Op.gte]: message.number },
-    },
-    group: ['senderMemberId'],
-  });
-
   await updateCountUnreadMessagesJob({
     lastUnreadMessage: { id: message.id, number: message.number },
     chatId: chat.id,
     readerMemberId: meMember.id,
   });
 
-  if (otherSenders.length === 0) {
-    return output();
-  }
-
   await setMessageAsReadJob({
     lastUnreadMessage: { id: message.id, number: message.number },
     chatId: r.params.chatId,
     senderMemberId: meMember.id,
   });
+
   // await updateCountUnreadChatsJob({
   //   userIds: [r.auth.credentials.id],
   // });
 
-  // r.server.app.broker.sendChatNotification({
-  //   action: ChatNotificationActions.messageReadByRecipient,
-  //   recipients: otherSenders.map((sender) => sender.senderMemberId),
-  //   data: message,
-  // });
+  if (meUser.id !== message.sender.userId) {
+    r.server.app.broker.sendChatNotification({
+      action: ChatNotificationActions.messageReadByRecipient,
+      recipients: [message.sender.userId],
+      data: message,
+    });
+  }
 
   return output();
 }
