@@ -1,5 +1,13 @@
+import { Op } from 'sequelize';
 import { IHandler, Options } from '../types';
-import { Chat, ChatDeletionData, ChatMember, Message } from "@workquest/database-models/lib/models";
+import {
+  Chat,
+  Message,
+  ChatType,
+  GroupChat,
+  ChatMember,
+  ChatDeletionData,
+} from '@workquest/database-models/lib/models';
 
 export interface RemoveChatFromChatsListCommand {
   readonly chat: Chat;
@@ -23,6 +31,35 @@ export class RemoveChatFromChatsListHandler implements IHandler<RemoveChatFromCh
       lock: 'UPDATE' as any,
       transaction: options.tx,
     });
+  }
+
+  private static async removeChatForAllMembers(payload: RemoveChatFromChatsListPayload, options: Options = {}) {
+    await ChatDeletionData.update({
+      beforeDeletionMessageId: payload.lastMessage.id,
+      beforeDeletionMessageNumber: payload.lastMessage.number,
+    }, {
+      where: { chatId: payload.chat.id },
+      transaction: options.tx,
+    });
+
+    const membersWithoutChatDeletionData = await ChatMember.unscoped().findAll({
+      include: {
+        model: ChatDeletionData,
+        as: 'chatDeletionData',
+        required: false,
+      },
+      where: { chatDeletionData: { [Op.is]: null } },
+    })
+
+    await ChatDeletionData.bulkCreate(
+      membersWithoutChatDeletionData.map(member => ({
+        chatId: payload.chat.id,
+        chatMemberId: member.id,
+        beforeDeletionMessageId: payload.lastMessage.id,
+        beforeDeletionMessageNumber: payload.lastMessage.number,
+      })),
+      { transaction: options.tx },
+    );
   }
 
   private static async removeChat(payload: RemoveChatFromChatsListPayload, options: Options = {}) {
@@ -54,7 +91,17 @@ export class RemoveChatFromChatsListHandler implements IHandler<RemoveChatFromCh
 
       const payload: RemoveChatFromChatsListPayload = { ...command, lastMessage };
 
-      return await RemoveChatFromChatsListHandler.removeChat(payload, { tx });
+      if (command.chat.type === ChatType.Group) {
+        const groupChat = await GroupChat
+          .unscoped()
+          .findOne({ where: { chatId: payload.chat.id } })
+
+        if (groupChat.ownerMemberId === payload.meMember.id) {
+          return RemoveChatFromChatsListHandler.removeChatForAllMembers(payload, { tx });
+        }
+      }
+
+      return RemoveChatFromChatsListHandler.removeChat(payload, { tx });
     });
   }
 }
