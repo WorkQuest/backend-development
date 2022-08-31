@@ -847,7 +847,7 @@ export async function removeChatFromList(r) {
 }
 
 export async function setMessagesAsRead(r) {
-  const meUser: User = r.auth.credentials
+  const meUser: User = r.auth.credentials;
   const { chatId } = r.params as { chatId: string };
   const { messageId } = r.payload as { messageId: string };
 
