@@ -48,7 +48,7 @@ export class RemoveChatFromChatsListHandler implements IHandler<RemoveChatFromCh
         as: 'chatDeletionData',
         required: false,
       },
-      where: { chatDeletionData: { [Op.is]: null } },
+      where: { '"ChatMembers"."chatDeletionData"': { [Op.is]: null } },
     })
 
     await ChatDeletionData.bulkCreate(
