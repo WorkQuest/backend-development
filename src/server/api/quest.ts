@@ -26,6 +26,7 @@ import {
   User,
   UserRole,
 } from '@workquest/database-models/lib/models';
+import { sendNotificationAboutNewQuestJob } from '../jobs/sendNotificationAboutNewQuest';
 
 
 export const searchQuestFields = [
@@ -188,6 +189,19 @@ export async function editQuest(r) {
     group: ['type'],
     order: [['type', 'ASC']]
   });
+
+  if (r.payload.specializationKeys.length) {
+    const isChangedCurrent = questController.quest.questSpecializations.every(currentSpecialization => {
+      return !r.payload.specializationKeys.some(key => key === currentSpecialization.path);
+    });
+
+    if (isChangedCurrent || r.payload.specializationKeys.length !== questController.quest.questSpecializations.length) {
+      await sendNotificationAboutNewQuestJob({
+        questId: questController.quest.id,
+        excludeWorkerIds: [].concat(...questsResponseWorkerIds.map(res => res.getDataValue('workerIds')))
+      });
+    }
+  }
 
   if (questsResponseWorkerIds.length !== 0) {
     for (const response of questsResponseWorkerIds) {
