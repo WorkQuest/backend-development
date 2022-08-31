@@ -1,4 +1,4 @@
-import { Op } from 'sequelize';
+import { literal, Op } from 'sequelize';
 import { IHandler, Options } from '../types';
 import {
   Chat,
@@ -50,7 +50,9 @@ export class RemoveChatFromChatsListHandler implements IHandler<RemoveChatFromCh
       },
       where: {
         chatId: payload.chat.id,
-        '"ChatMembers"."chatDeletionData"': { [Op.is]: null },
+        [Op.and]: [
+          literal('"chatDeletionData->beforeDeletionMessage"."id" IS NULL'),
+        ],
       },
     });
 
