@@ -56,6 +56,7 @@ export async function createAccessToken(r) {
 
   try {
     const qs = querystring.stringify({
+      levelName: 'basic-kyc-level',
       userId: r.auth.credentials.id,
       ttlInSecs: serverConfig.sumsub.accessTokenTTL,
     });
