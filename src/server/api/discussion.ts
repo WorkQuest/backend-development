@@ -417,3 +417,4 @@ export async function removeDiscussionStar(r) {
 
   return output();
 }
+
