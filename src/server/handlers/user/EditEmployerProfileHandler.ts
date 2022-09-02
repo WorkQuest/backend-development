@@ -14,6 +14,7 @@ import {
   AdditionalInfoEmployer,
   EmployerProfileVisibilitySetting,
 } from '@workquest/database-models/lib/models';
+import { UserAccessPermission } from './UserAccessPermission';
 
 interface EditPhoneNumberPayload {
   readonly user: User;
@@ -39,6 +40,10 @@ interface UpdateEmployerProfileInfoPayload {
 }
 
 export class EditEmployerProfileHandler extends BaseDomainHandler<EditEmployerProfileCommand, EditEmployerProfileResult> {
+  private async updateMetadata(user: User) {
+    await user.update({ "metadata.state.neverEditedProfileFlag": false }, { transaction: this.options.tx });
+  }
+
   private editPhoneNumber(payload: EditPhoneNumberPayload) {
     const phonesFields = payload.phoneNumber
       ? { tempPhone: payload.user.tempPhone, phone: payload.user.phone }
@@ -108,13 +113,14 @@ export class EditEmployerProfileHandler extends BaseDomainHandler<EditEmployerPr
   }
 
   public async Handle(command: EditEmployerProfileCommand): EditEmployerProfileResult {
-    this.editLocation(command);
-    this.editPhoneNumber(command);
-    this.updateEmployerProfileInfo(command);
+    this.editLocation(command.profile);
+    this.editPhoneNumber(command.profile);
+    this.updateEmployerProfileInfo(command.profile);
+    await this.updateMetadata(command.profile.user);
 
     return Promise.all([
-      command.user.save({ transaction: this.options.tx }),
-      this.updateEmployerProfileVisibility(command),
+      command.profile.user.save({ transaction: this.options.tx }),
+      this.updateEmployerProfileVisibility(command.profile),
     ]);
   }
 }
@@ -131,8 +137,35 @@ export class EditEmployerProfilePreValidateHandler extends BaseDecoratorHandler<
     this.validator = new UserValidator();
   }
 
-  public Handle(command: EditEmployerProfileCommand): EditEmployerProfileResult {
-    this.validator.MustBeEmployer(command.user);
+  public async Handle(command: EditEmployerProfileCommand): EditEmployerProfileResult {
+    this.validator.MustBeEmployer(command.profile.user);
+
+    if (command.secure.totpCode) {
+      const userWithPassword = await User.scope('withPassword').findByPk(command.profile.user.id);
+
+      this.validator.HasActiveStatusTOTP(userWithPassword);
+    }
+
+    return this.decorated.Handle(command);
+  }
+}
+
+export class EditEmployerProfilePreAccessPermissionHandler extends BaseDecoratorHandler<EditEmployerProfileCommand, EditEmployerProfileResult> {
+
+  private readonly accessPermission: UserAccessPermission;
+
+  constructor(
+    protected readonly decorated: IHandler<EditEmployerProfileCommand, EditEmployerProfileResult>
+  ) {
+    super(decorated);
+
+    this.accessPermission = new UserAccessPermission();
+  }
+
+  public async Handle(command: EditEmployerProfileCommand): EditEmployerProfileResult {
+    const user = await User.scope('withPassword').findByPk(command.profile.user.id);
+
+    this.accessPermission.HasChangeProfileAccess(user, command.secure?.totpCode);
 
     return this.decorated.Handle(command);
   }

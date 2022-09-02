@@ -172,52 +172,60 @@ export async function sendComment(r) {
     return error(Errors.NotFound, 'Discussion not found', {});
   }
 
-  const notificationRecipients = [discussion.authorId];
+  const notificationRecipients = [];
 
-  const transaction = await r.server.app.db.transaction();
-
-  if (r.payload.rootCommentId) {
-    rootComment = await DiscussionComment.findByPk(r.payload.rootCommentId);
-
-    if (!rootComment) {
-      await transaction.rollback();
-
-      return error(Errors.NotFound, 'Discussion comment not found', {});
-    }
-
-    await rootComment.increment('amountSubComments', { transaction });
-    await discussion.increment('amountComments', { transaction });
-
-    notificationRecipients.push(rootComment.authorId);
-    commentLevel = rootComment.level + 1;
-  } else {
-    await discussion.increment('amountComments', { transaction });
+  if (discussion.authorId !== user.id) {
+    notificationRecipients.push(discussion.authorId);
   }
 
-  const comment = await DiscussionComment.create(
-    {
-      authorId: r.auth.credentials.id,
-      discussionId: r.params.discussionId,
-      rootCommentId: r.payload.rootCommentId,
-      text: r.payload.text,
-      level: commentLevel,
-    },
-    { transaction },
-  );
+  const [comment] = await r.server.app.db.transaction(async tx => {
 
-  await comment.$set('medias', medias, { transaction });
+    if (r.payload.rootCommentId) {
+      rootComment = await DiscussionComment.findByPk(r.payload.rootCommentId);
 
-  await transaction.commit();
+      if (!rootComment) {
+        throw error(Errors.NotFound, 'Discussion comment not found', {});
+      }
+
+      await rootComment.increment('amountSubComments', { transaction: tx });
+      await discussion.increment('amountComments', { transaction: tx });
+
+      if (rootComment.authorId !== user.id) {
+        notificationRecipients.push(rootComment.authorId);
+      }
+
+      commentLevel = rootComment.level + 1;
+    } else {
+      await discussion.increment('amountComments', { transaction: tx });
+    }
+
+    const comment = await DiscussionComment.create(
+      {
+        authorId: r.auth.credentials.id,
+        discussionId: r.params.discussionId,
+        rootCommentId: r.payload.rootCommentId,
+        text: r.payload.text,
+        level: commentLevel,
+      },
+      { transaction: tx },
+    );
+
+    await comment.$set('medias', medias, { transaction: tx });
+
+    return [comment];
+  });
 
   comment.setDataValue('discussion', discussion);
   comment.setDataValue('rootComment', rootComment);
   comment.setDataValue('user', userController.shortCredentials);
 
-  r.server.app.broker.sendDaoNotification({
-    action: DaoNotificationActions.newCommentInDiscussion,
-    recipients: notificationRecipients,
-    data: comment,
-  });
+  if (notificationRecipients.length) {
+    r.server.app.broker.sendDaoNotification({
+      action: DaoNotificationActions.newCommentInDiscussion,
+      recipients: notificationRecipients,
+      data: comment,
+    });
+  }
 
   return output(comment);
 }

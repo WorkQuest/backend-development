@@ -26,6 +26,7 @@ import {
   User,
   UserRole,
 } from '@workquest/database-models/lib/models';
+import { sendNotificationAboutNewQuestJob } from '../jobs/sendNotificationAboutNewQuest';
 
 
 export const searchQuestFields = [
@@ -230,8 +231,14 @@ export function getQuests(type: 'list' | 'points', requester?: 'worker' | 'emplo
     const questChatWorkerLiteral = literal(
       '"questChat"."workerId" = "Quest"."assignedWorkerId"'
     );
-    const questRaiseViewLiteral = literal(
+    const byQuestRaiseViewOrderLiteral = literal(
       '(SELECT "type" FROM "QuestRaiseViews" WHERE "questId" = "Quest"."id" AND "QuestRaiseViews"."status" = 0)'
+    );
+    const byCreatedAtOfInvitedOrderLiteral = literal(
+      '"invited.createdAt"'
+    );
+    const byCreatedAtOfRespondedOrderLiteral = literal(
+      '"responded.createdAt"'
     );
     const requesterWorkerLiteral = literal(
       `(1 = (CASE WHEN EXISTS (SELECT * FROM "QuestsResponses" as qResp ` +
@@ -241,7 +248,7 @@ export function getQuests(type: 'list' | 'points', requester?: 'worker' | 'emplo
 
     const include = [];
     const replacements = {};
-    const order = [[questRaiseViewLiteral, 'asc']] as any[];
+    const order = [[byQuestRaiseViewOrderLiteral, 'asc']] as any[];
     const where = {
       [Op.and]: [],
       [Op.or]: [],
@@ -358,7 +365,22 @@ export function getQuests(type: 'list' | 'points', requester?: 'worker' | 'emplo
     });
 
     for (const [key, value] of Object.entries(r.query.sort || {})) {
-      order.push([key, value]);
+      let insertKey: any = key;
+
+      if (key === 'invitedCreatedAt' && ( !(r.query.invited) || requester !== 'worker') ) {
+        continue;
+      }
+      if (key === 'respondedCreatedAt' && ( !(r.query.responded) || requester !== 'worker') ) {
+        continue;
+      }
+      if (key === 'invitedCreatedAt') {
+        insertKey = byCreatedAtOfInvitedOrderLiteral;
+      }
+      if (key === 'respondedCreatedAt') {
+        insertKey = byCreatedAtOfRespondedOrderLiteral;
+      }
+
+      order.push([insertKey, value]);
     }
 
     if (where[Op.or].length === 0) {
@@ -428,7 +450,7 @@ export async function getAvailableQuestsForWorker(r) {
     where: {
       userId: employerController.user.id,
       workerResponseLiteral,
-      status: QuestStatus.Recruitment,
+      status: [QuestStatus.Recruitment, QuestStatus.WaitingForConfirmFromWorkerOnAssign],
     },
     limit: r.query.limit,
     offset: r.query.offset,

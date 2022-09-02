@@ -15,13 +15,8 @@ import { createReferralProgramJob } from '../jobs/createReferralProgram';
 import { UserControllerFactory } from '../factories/factory.userController';
 import { error, getDevice, getGeo, getRandomHexToken, getRealIp, output } from '../utils';
 import { LoginApp } from '@workquest/database-models/lib/models/user/types';
-import {
-  defaultUserSettings,
-  Session,
-  User,
-  UserStatus,
-  Wallet
-} from '@workquest/database-models/lib/models';
+import { defaultUserSettings, Session, User, UserStatus, Wallet } from '@workquest/database-models/lib/models';
+import { UserNotificationActions } from '../controllers/controller.broker';
 import Handlebars = require('handlebars');
 
 
@@ -93,6 +88,12 @@ export function register(host: 'dao' | 'main') {
 
     await UserStatisticController.loginAction(session);
     await UserStatisticController.registeredAction();
+
+    r.server.app.broker.sendUserNotification({
+      recipients: [user.id],
+      action: UserNotificationActions.UserRegistered,
+      data: {}
+    });
 
     return output(result);
   };

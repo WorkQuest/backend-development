@@ -9,7 +9,7 @@ import {
   referralStatusSchema,
   outputPaginationSchema,
   accountAddressesSchema,
-  referralProgramClaimedAndPaidEventSchema,
+  referralProgramClaimedAndPaidEventSchema
 } from '@workquest/database-models/lib/schemes';
 
 export default [{

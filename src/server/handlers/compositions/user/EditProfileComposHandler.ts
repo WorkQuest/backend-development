@@ -1,11 +1,9 @@
 import { BaseCompositeHandler } from '../../types';
-import { UserRole, Media } from '@workquest/database-models/lib/models';
+import { UserRole } from '@workquest/database-models/lib/models';
 import { GetMediaByIdHandler, GetMediaPostValidationHandler } from '../../media';
 import {
   EditProfileResult,
   EditProfileCommand,
-  EditWorkerProfileCommand,
-  EditEmployerProfileCommand,
 } from './types';
 import {
   EditWorkerProfileResult,
@@ -14,6 +12,8 @@ import {
   EditEmployerProfileHandler,
   EditWorkerProfilePreValidateHandler,
   EditEmployerProfilePreValidateHandler,
+  EditWorkerProfilePreAccessPermissionHandler,
+  EditEmployerProfilePreAccessPermissionHandler,
 } from '../../user';
 
 export class EditProfileComposHandler extends BaseCompositeHandler<EditProfileCommand, EditProfileResult> {
@@ -23,45 +23,49 @@ export class EditProfileComposHandler extends BaseCompositeHandler<EditProfileCo
     super(dbContext);
   }
 
-  private async editEmployer(command: EditProfileCommand): EditWorkerProfileResult {
-    let avatar: Media | null = null;
+  private async editEmployer(command: EditProfileCommand): EditEmployerProfileResult {
+    const editEmployerProfileCommand: any = command;
 
-    if (command.avatarId) {
-      avatar = await new GetMediaPostValidationHandler(
+    if (command.profile.avatarId) {
+      editEmployerProfileCommand.profile.avatar = await new GetMediaPostValidationHandler(
         new GetMediaByIdHandler()
-      ).Handle({ mediaId: command.avatarId });
+      ).Handle({ mediaId: command.profile.avatarId })
     }
 
     return this.dbContext.transaction(async (tx) => {
       return await new EditEmployerProfilePreValidateHandler(
-        new EditEmployerProfileHandler().setOptions({ tx })
-      ).Handle({ avatar, ...command as EditEmployerProfileCommand })
+        new EditEmployerProfilePreAccessPermissionHandler(
+          new EditEmployerProfileHandler().setOptions({ tx })
+        )
+      ).Handle(editEmployerProfileCommand)
     });
   }
 
-  private async editWorker(command: EditProfileCommand): EditEmployerProfileResult {
-    let avatar: Media | null = null;
+  private async editWorker(command: EditProfileCommand): EditWorkerProfileResult {
+    const editWorkerProfileCommand: any = command;
 
-    if (command.avatarId) {
-      avatar = await new GetMediaPostValidationHandler(
+    if (command.profile.avatarId) {
+      editWorkerProfileCommand.profile.avatar = await new GetMediaPostValidationHandler(
         new GetMediaByIdHandler()
-      ).Handle({ mediaId: command.avatarId });
+      ).Handle({ mediaId: command.profile.avatarId });
     }
 
-    if (command.editableRole === UserRole.Worker) {
+    if (command.profile.editableRole === UserRole.Worker) {
       return this.dbContext.transaction(async (tx) => {
         return await new EditWorkerProfilePreValidateHandler(
-          new EditWorkerProfileHandler().setOptions({ tx })
-        ).Handle({ avatar, ...command as EditWorkerProfileCommand })
+          new EditWorkerProfilePreAccessPermissionHandler(
+            new EditWorkerProfileHandler().setOptions({ tx })
+          )
+        ).Handle(editWorkerProfileCommand)
       });
     }
   }
 
   public async Handle(command: EditProfileCommand): EditProfileResult {
-    if (command.editableRole === UserRole.Employer) {
+    if (command.profile.editableRole === UserRole.Employer) {
       return this.editEmployer(command);
     }
-    if (command.editableRole === UserRole.Worker) {
+    if (command.profile.editableRole === UserRole.Worker) {
       return this.editWorker(command);
     }
   }

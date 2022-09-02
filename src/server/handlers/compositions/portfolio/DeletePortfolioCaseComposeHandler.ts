@@ -6,8 +6,6 @@ import {
   GetPortfolioCaseByIdPostValidation,
   DeletePortfolioCasePreAccessPermissionHandler,
 } from '../../portfolio';
-import { UserController } from "../../../controllers/user/controller.user";
-import { UserStatisticController } from "../../../controllers/statistic/controller.userStatistic";
 
 export class DeletePortfolioCaseComposeHandler extends BaseCompositeHandler<DeletePortfolioCaseCommand, DeletePortfolioCaseResult> {
   constructor(

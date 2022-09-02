@@ -19,32 +19,38 @@ import {
 
 /** Commands */
 export interface EditWorkerProfileCommand {
-  readonly user: User;
-  readonly editableRole: UserRole;
-  readonly avatarId: string | null;
-  readonly firstName: string;
-  readonly lastName: string;
-  readonly costPerHour: string;
-  readonly priority: Priority;
-  readonly workplace: WorkPlace;
-  readonly payPeriod: PayPeriod;
-  readonly phoneNumber: Phone | null;
-  readonly locationFull: LocationFull | null;
-  readonly profileVisibility: WorkerVisibility;
-  readonly additionalInfo: AdditionalInfoWorker;
-  readonly specializationKeys: ReadonlyArray<string>;
+  readonly secure: { totpCode?: string },
+  readonly profile: {
+    readonly user: User;
+    readonly editableRole: UserRole;
+    readonly avatarId: string | null;
+    readonly firstName: string;
+    readonly lastName: string;
+    readonly costPerHour: string;
+    readonly priority: Priority;
+    readonly workplace: WorkPlace;
+    readonly payPeriod: PayPeriod;
+    readonly phoneNumber: Phone | null;
+    readonly locationFull: LocationFull | null;
+    readonly profileVisibility: WorkerVisibility;
+    readonly additionalInfo: AdditionalInfoWorker;
+    readonly specializationKeys: ReadonlyArray<string>;
+  }
 }
 
 export interface EditEmployerProfileCommand {
-  readonly user: User;
-  readonly editableRole: UserRole;
-  readonly avatarId: string | null;
-  readonly firstName: string;
-  readonly lastName: string;
-  readonly phoneNumber: Phone | null;
-  readonly locationFull: LocationFull | null;
-  readonly profileVisibility: EmployerVisibility;
-  readonly additionalInfo: AdditionalInfoEmployer;
+  readonly secure: { totpCode?: string },
+  readonly profile: {
+    readonly user: User;
+    readonly editableRole: UserRole;
+    readonly avatarId: string | null;
+    readonly firstName: string;
+    readonly lastName: string;
+    readonly phoneNumber: Phone | null;
+    readonly locationFull: LocationFull | null;
+    readonly profileVisibility: EmployerVisibility;
+    readonly additionalInfo: AdditionalInfoEmployer;
+  }
 }
 
 export type EditProfileCommand =
