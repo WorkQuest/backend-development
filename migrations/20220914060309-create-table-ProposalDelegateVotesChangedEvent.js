@@ -19,7 +19,7 @@ module.exports = {
         type: Sequelize.DataTypes.DECIMAL,
       },
       newBalance: {
-        type: Sequelize.DataTypes.DECIMAl,
+        type: Sequelize.DataTypes.DECIMAL,
       },
       timestamp: {
         type: Sequelize.DataTypes.STRING,
