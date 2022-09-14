@@ -39,7 +39,7 @@ export async function responseOnQuest(r) {
     .checkUserRole(UserRole.Worker)
     .checkWorkerRatingMustMatchEmployerVisibilitySettings(questController.quest.user)
   checksListQuest
-    .checkQuestStatuses(QuestStatus.Recruitment)
+    .checkQuestStatuses(QuestStatus.Recruitment, QuestStatus.WaitingForConfirmFromWorkerOnAssign)
 
   const [questResponseController, questChatController] = await r.server.app.db.transaction(async (tx) => {
     const questResponseController = await QuestResponseController.sendRequest({
@@ -126,7 +126,7 @@ export async function inviteOnQuest(r) {
 
   r.server.app.broker.sendChatNotification({
     action: ChatNotificationActions.newMessage,
-    recipients: [employerController.user.id],
+    recipients: [workerController.user.id],
     data: await questChatController.firstMessage(),
   });
 

@@ -6,7 +6,8 @@ export const enum MainBrokerQueues {
   Chat = 'chat',
   Quest = 'quest',
   DAO = 'dao',
-  Report = 'report'
+  Report = 'report',
+  User = 'user',
 }
 
 export const enum QuestNotificationActions {
@@ -56,6 +57,10 @@ export const enum DaoNotificationActions {
 
 export const enum ReportNotificationActions {
   ReportSubmitted = 'ReportSubmitted'
+}
+
+export const enum UserNotificationActions {
+  UserRegistered = 'UserRegistered'
 }
 
 type Notification<Action> = {
@@ -137,5 +142,13 @@ export class ControllerBroker {
     const convertedData = ControllerBroker.convertData(notification);
 
     this.channel.sendToQueue(MainBrokerQueues.Report, convertedData);
+  }
+
+  public sendUserNotification(notification: Notification<UserNotificationActions>) {
+    if (!this.channel) return;
+
+    const convertedData = ControllerBroker.convertData(notification);
+
+    this.channel.sendToQueue(MainBrokerQueues.User, convertedData);
   }
 }

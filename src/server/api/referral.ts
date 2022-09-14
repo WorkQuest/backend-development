@@ -9,18 +9,23 @@ import {
   User,
   ReferralStatus,
   ReferralProgramReferral,
-  ReferralProgramAffiliate,
+  ReferralProgramAffiliate, Wallet
 } from '@workquest/database-models/lib/models';
 
 export async function getMyReferrals(r) {
   const affiliateUser: User = r.auth.credentials;
 
+  const where = {
+    ...(r.query.referralStatus && { referralStatus: r.query.referralStatus })
+  };
+
   const { count, rows } = await User.scope('short').findAndCountAll({
-    include: {
+    include: [{
       model: ReferralProgramReferral.unscoped(),
       as: 'referralUser',
       attributes: ['id', 'referralStatus'],
       required: true,
+      where,
       include: [{
         model: ReferralProgramAffiliate.unscoped(),
         as: 'referralProgramAffiliate',
@@ -28,7 +33,12 @@ export async function getMyReferrals(r) {
         attributes: ["referralCodeId"],
         required: true,
       }]
-    },
+    }, {
+      model: Wallet,
+      as: 'wallet',
+      attributes: [],
+      required: true,
+    }],
     limit: r.query.limit,
     offset: r.query.offset,
   });

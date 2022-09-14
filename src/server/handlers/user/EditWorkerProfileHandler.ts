@@ -1,8 +1,14 @@
-import { UserValidator } from './UserValidator';
-import { transformToGeoPostGIS } from '../../utils/postGIS';
-import { BaseDecoratorHandler, BaseDomainHandler, IHandler } from '../types';
-import { SkillsFiltersController } from '../../controllers/controller.skillsFilters';
-import { EditWorkerProfileCommand, EditWorkerProfileResult, LocationFull, WorkerVisibility } from './types';
+import {UserValidator} from './UserValidator';
+import {transformToGeoPostGIS} from '../../utils/postGIS';
+import {UserAccessPermission} from './UserAccessPermission';
+import {BaseDecoratorHandler, BaseDomainHandler, IHandler} from '../types';
+import {SkillsFiltersController} from '../../controllers/controller.skillsFilters';
+import {
+  LocationFull,
+  WorkerVisibility,
+  EditWorkerProfileResult,
+  EditWorkerProfileCommand,
+} from './types';
 import {
   User,
   Phone,
@@ -49,6 +55,10 @@ interface UpdateWorkerProfileInfoPayload {
 }
 
 export class EditWorkerProfileHandler extends BaseDomainHandler<EditWorkerProfileCommand, EditWorkerProfileResult> {
+  private async updateMetadata(user: User) {
+    await user.update({ "metadata.state.neverEditedProfileFlag": false }, { transaction: this.options.tx });
+  }
+
   private async setWorkerSpecializations(payload: SetWorkerSpecializationsPayload): Promise<UserSpecializationFilter[]> {
     await UserSpecializationFilter.destroy({
       where: { userId: payload.user.id },
@@ -139,14 +149,15 @@ export class EditWorkerProfileHandler extends BaseDomainHandler<EditWorkerProfil
   }
 
   public async Handle(command: EditWorkerProfileCommand): EditWorkerProfileResult {
-    this.editLocation(command);
-    this.editPhoneNumber(command);
-    this.updateWorkerProfileInfo(command);
+    this.editLocation(command.profile);
+    this.editPhoneNumber(command.profile);
+    this.updateWorkerProfileInfo(command.profile);
+    await this.updateMetadata(command.profile.user);
 
     return Promise.all([
-      command.user.save({ transaction: this.options.tx }),
-      this.updateWorkerProfileVisibility(command),
-      this.setWorkerSpecializations(command),
+      command.profile.user.save({ transaction: this.options.tx }),
+      this.updateWorkerProfileVisibility(command.profile),
+      this.setWorkerSpecializations(command.profile),
     ]);
   }
 }
@@ -163,8 +174,35 @@ export class EditWorkerProfilePreValidateHandler extends BaseDecoratorHandler<Ed
     this.validator = new UserValidator();
   }
 
-  public Handle(command: EditWorkerProfileCommand): EditWorkerProfileResult {
-    this.validator.MustBeWorker(command.user);
+  public async Handle(command: EditWorkerProfileCommand): EditWorkerProfileResult {
+    this.validator.MustBeWorker(command.profile.user);
+
+    if (command.secure.totpCode) {
+      const userWithPassword = await User.scope('withPassword').findByPk(command.profile.user.id);
+
+      this.validator.HasActiveStatusTOTP(userWithPassword);
+    }
+
+    return this.decorated.Handle(command);
+  }
+}
+
+export class EditWorkerProfilePreAccessPermissionHandler extends BaseDecoratorHandler<EditWorkerProfileCommand, EditWorkerProfileResult> {
+
+  private readonly accessPermission: UserAccessPermission;
+
+  constructor(
+    protected readonly decorated: IHandler<EditWorkerProfileCommand, EditWorkerProfileResult>
+  ) {
+    super(decorated);
+
+    this.accessPermission = new UserAccessPermission();
+  }
+
+  public async Handle(command: EditWorkerProfileCommand): EditWorkerProfileResult {
+    const user = await User.scope('withPassword').findByPk(command.profile.user.id);
+
+    this.accessPermission.HasChangeProfileAccess(user, command.secure?.totpCode);
 
     return this.decorated.Handle(command);
   }

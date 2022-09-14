@@ -12,7 +12,6 @@ import {
   StarredDiscussion,
   DiscussionCommentLike,
 } from '@workquest/database-models/lib/models';
-import * as console from 'console';
 
 const searchFields = ['title', 'description'];
 
@@ -174,9 +173,14 @@ export async function sendComment(r) {
     return error(Errors.NotFound, 'Discussion not found', {});
   }
 
-  const notificationRecipients = [discussion.authorId];
+  const notificationRecipients = [];
 
-  const [comment] = await r.server.app.db.transaction(async (tx) => {
+  if (discussion.authorId !== user.id) {
+    notificationRecipients.push(discussion.authorId);
+  }
+
+  const [comment] = await r.server.app.db.transaction(async tx => {
+
     if (r.payload.rootCommentId) {
       rootComment = await DiscussionComment.findByPk(r.payload.rootCommentId);
 
@@ -187,7 +191,10 @@ export async function sendComment(r) {
       await rootComment.increment('amountSubComments', { transaction: tx });
       await discussion.increment('amountComments', { transaction: tx });
 
-      notificationRecipients.push(rootComment.authorId);
+      if (rootComment.authorId !== user.id) {
+        notificationRecipients.push(rootComment.authorId);
+      }
+
       commentLevel = rootComment.level + 1;
     } else {
       await discussion.increment('amountComments', { transaction: tx });
@@ -213,11 +220,21 @@ export async function sendComment(r) {
   comment.setDataValue('rootComment', rootComment);
   comment.setDataValue('user', userController.shortCredentials);
 
-  r.server.app.broker.sendDaoNotification({
-    action: DaoNotificationActions.newCommentInDiscussion,
-    recipients: notificationRecipients,
-    data: comment,
-  });
+  if (notificationRecipients.length) {
+    r.server.app.broker.sendDaoNotification({
+      action: DaoNotificationActions.newCommentInDiscussion,
+      recipients: notificationRecipients,
+      data: comment,
+    });
+  }
+
+  if (notificationRecipients.length) {
+    r.server.app.broker.sendDaoNotification({
+      action: DaoNotificationActions.newCommentInDiscussion,
+      recipients: notificationRecipients,
+      data: comment,
+    });
+  }
 
   return output(comment);
 }
