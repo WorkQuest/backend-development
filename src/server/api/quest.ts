@@ -190,19 +190,6 @@ export async function editQuest(r) {
     order: [['type', 'ASC']]
   });
 
-  if (r.payload.specializationKeys.length) {
-    const isChangedCurrent = questController.quest.questSpecializations.every(currentSpecialization => {
-      return !r.payload.specializationKeys.some(key => key === currentSpecialization.path);
-    });
-
-    if (isChangedCurrent || r.payload.specializationKeys.length !== questController.quest.questSpecializations.length) {
-      await sendNotificationAboutNewQuestJob({
-        questId: questController.quest.id,
-        excludeWorkerIds: [].concat(...questsResponseWorkerIds.map(res => res.getDataValue('workerIds')))
-      });
-    }
-  }
-
   if (questsResponseWorkerIds.length !== 0) {
     for (const response of questsResponseWorkerIds) {
       r.server.app.broker.sendQuestNotification({
