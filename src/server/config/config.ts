@@ -92,4 +92,7 @@ export default {
     pubUrl: process.env.CDN_PUB_END_POINT,
     expiresIn: parseInt(process.env.CDN_EXPIRES_IN),
   },
+  quiknode: {
+    bscBaseUrl: process.env.QUIKNODE_BSC_TESNET
+  }
 };

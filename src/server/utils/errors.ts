@@ -33,4 +33,6 @@ export enum Errors {
   // Conflict (409)
   SumSubError = 409001,
   LiquidityError = 409002,
+  // Quiknode Send request error
+  QuikNodeError = 409003,
 }
