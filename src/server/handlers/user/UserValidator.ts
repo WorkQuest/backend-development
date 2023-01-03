@@ -36,7 +36,7 @@ export class UserValidator {
   }
   public async CanChangeRoleByDateRange(user: User) {
     /** 1 Mount - 2592000000, for DEBUG - 1 minute - 60000 */
-    const roleChangeTimeLimitInMilliseconds = 60000;
+    const roleChangeTimeLimitInMilliseconds = 2592000000; // Changed by Sarvar on task WOR-34
 
     const lastRoleChangeData = await UserChangeRoleData.findOne({
       where: { userId: user.id },

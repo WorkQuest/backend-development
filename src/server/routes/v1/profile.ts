@@ -373,4 +373,23 @@ export default [{
       schema: outputOkSchema(userWorkersSchema).label("GetWorkersMapPointsResponse")
     },
   }
+},{
+  method: "POST",
+  path: "/v1/profile/quiknode/send",
+  handler: handlers.sendToQuiknode,
+  options: {
+    auth: 'jwt-access',
+    id: "v1.profile.quiknode.send",
+    tags: ["api", "profile"],
+    description: "Send request to Quiknode",
+    validate: {
+      payload: Joi.object({
+        data: Joi.object().example('{"jsonrpc":"2.0","id":8678463868673222,"method":"eth_getBalance","params":["0xeb3961126cdd75f419714ca5815bdb9ef30888b3","latest"]}').label('DataToSend'),
+        method: Joi.string().example('bsc, usdt, btc, eth').label('MethodName'),
+      }).label('PhoneConfirmPayload')
+    },
+    response: {
+      schema: emptyOkSchema,
+    },
+  },
 },];

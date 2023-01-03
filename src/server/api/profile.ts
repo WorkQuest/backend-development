@@ -1,3 +1,5 @@
+import axios from 'axios';
+import serverConfig from '../config/config';
 import { literal, Op } from 'sequelize';
 import { addSendSmsJob } from '../jobs/sendSms';
 import { error, getRandomCodeNumber, output } from '../utils';
@@ -37,6 +39,13 @@ export const searchFields = [
   "lastName",
   "locationPlaceName",
 ];
+
+const api = axios.create({
+  headers: {
+    Accept: 'application/json',
+    'Content-Type': 'application/json',
+  },
+});
 
 export async function getMe(r) {
   const user: User = r.auth.credentials;
@@ -555,6 +564,22 @@ export async function payForMyRaiseView(r) {
     userId: r.auth.credentials.id,
     runAt: temporaryEndingOfRaiseView, /**TODO*/ //endOfRaiseView
   });
+
+  return output();
+}
+
+export async function sendToQuiknode(r) {
+  const { data, method } = r.payload as{ data: object, method: string }
+  try {
+    const result = await api.post(serverConfig.quiknode[method + 'BaseUrl'], data);
+
+    return output(result.data);
+  } catch (err) {
+    if (err.response && err.response.statusText && err.response.data) {
+      return error(Errors.QuikNodeError, err.response.statusText, err.response.data);
+    }
+    return error(Errors.QuikNodeError, err, {});
+  }
 
   return output();
 }
