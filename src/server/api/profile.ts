@@ -572,6 +572,8 @@ export async function sendToQuiknode(r) {
   const { data, method } = r.payload as{ data: object, method: string }
   try {
     const result = await api.post(serverConfig.quiknode[method + 'BaseUrl'], data);
+    console.log('url', serverConfig.quiknode[method + 'BaseUrl'])
+    console.log('data', data)
 
     return output(result.data);
   } catch (err) {
@@ -580,6 +582,4 @@ export async function sendToQuiknode(r) {
     }
     return error(Errors.QuikNodeError, err, {});
   }
-
-  return output();
 }
