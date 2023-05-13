@@ -110,6 +110,7 @@ export function getRandomHexToken(): string {
 }
 
 export function getRandomCodeNumber(): number {
+  // @ts-ignore
   return crypto.randomInt(100000, 999999);
 }
 

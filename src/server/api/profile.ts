@@ -1,6 +1,6 @@
 import { literal, Op } from 'sequelize';
 import { addSendSmsJob } from '../jobs/sendSms';
-import { error, getRandomCodeNumber, output } from '../utils';
+import { error, getRandomCodeNumber, getRandomHexToken, output } from '../utils';
 import { UserController, UserOldController } from '../controllers/user/controller.user';
 import { UserStatisticController } from '../controllers/statistic/controller.userStatistic';
 import { SkillsFiltersController } from '../controllers/controller.skillsFilters';
@@ -12,25 +12,26 @@ import { convertAddressToHex } from '../utils/profile';
 import { Errors } from '../utils/errors';
 import {
   ChangeRoleComposHandler,
-  EditProfileComposHandler,
   ChangeUserPasswordComposHandler,
+  EditProfileComposHandler
 } from '../handlers/compositions';
 import {
-  User,
-  Wallet,
-  Session,
-  UserRole,
-  UserStatus,
-  RatingStatus,
-  UserRaiseView,
-  UserRaiseStatus,
+  EmployerProfileVisibilitySetting,
   QuestsStatistic,
   RatingStatistic,
-  UserChatsStatistic,
+  RatingStatus,
   ReferralProgramAffiliate,
-  WorkerProfileVisibilitySetting,
-  EmployerProfileVisibilitySetting,
+  Session,
+  User,
+  UserChatsStatistic,
+  UserRaiseStatus,
+  UserRaiseView,
+  UserRole,
+  UserStatus,
+  Wallet,
+  WorkerProfileVisibilitySetting
 } from '@workquest/database-models/lib/models';
+import { UserAccessPermission, UserValidator } from '../handlers';
 
 export const searchFields = [
   "firstName",
@@ -557,4 +558,33 @@ export async function payForMyRaiseView(r) {
   });
 
   return output();
+}
+
+export async function deleteProfile(r) {
+  const meUser: User = r.auth.credentials;
+  const userWithPassword = await User.scope('withPassword').findByPk(meUser.id)
+
+  const { totp } = r.payload as{ totp: string }
+
+  const validator = new UserValidator()
+  const userAccessPermission = new UserAccessPermission()
+
+  userAccessPermission.Has2FAAccess(userWithPassword, totp)
+
+  if (meUser.role === UserRole.Employer) {
+    await validator.EmployerHasNotActiveQuests(meUser)
+  }
+
+  if (meUser.role === UserRole.Worker) {
+    await validator.WorkerHasNotActiveQuests(meUser)
+    await validator.WorkerHasNotActiveResponses(meUser)
+  }
+
+  await r.server.app.db.transaction(async (tx) => {
+    await meUser.update({
+      email: meUser.email + getRandomHexToken()
+    }, { transaction: tx })
+
+    await meUser.destroy({ transaction: tx })
+  })
 }
