@@ -382,7 +382,7 @@ export default [{
     id: "v1.deleteProfile",
     tags: ["api", "profile"],
     description: "Delete profile",
-    validation: {
+    validate: {
       payload: Joi.object({
         totp: totpSchema.required(),
       }).required().label('DeleteProfilePayload')
