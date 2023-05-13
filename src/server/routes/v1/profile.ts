@@ -373,4 +373,22 @@ export default [{
       schema: outputOkSchema(userWorkersSchema).label("GetWorkersMapPointsResponse")
     },
   }
-},];
+}, {
+  method: "DELETE",
+  path: "/v1/profile",
+  handler: handlers.deleteProfile,
+  options: {
+    auth: 'jwt-access',
+    id: "v1.deleteProfile",
+    tags: ["api", "profile"],
+    description: "Delete profile",
+    validation: {
+      payload: Joi.object({
+        totp: totpSchema.required(),
+      }).required().label('DeleteProfilePayload')
+    },
+    response: {
+      schema: emptyOkSchema,
+    },
+  }
+}];
