@@ -13,7 +13,7 @@ export async function getMints(r) {
     order: [['timestamp', 'DESC']],
   });
 
-  return output({ count, mints: rows });
+  return output({ count, events: rows });
 }
 
 export async function getBurns(r) {
@@ -23,7 +23,7 @@ export async function getBurns(r) {
     order: [['timestamp', 'DESC']],
   });
 
-  return output({ count, burn: rows });
+  return output({ count, events: rows });
 }
 
 export async function getSwaps(r) {
@@ -33,7 +33,7 @@ export async function getSwaps(r) {
     order: [['timestamp', 'DESC']],
   });
 
-  return output({ count, data: rows });
+  return output({ count, events: rows });
 }
 
 export async function getTokenDayData(r) {

@@ -141,7 +141,7 @@ export async function getVoteCastEventsProposal(r) {
     offset: r.query.offset,
   });
 
-  return { count, votes: rows };
+  return { count, events: rows };
 }
 
 export async function getDelegateChangedEvents(r) {
